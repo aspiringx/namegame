@@ -1,5 +1,5 @@
 {
-  "name": "namegameWasp",
+  "name": "namegame",
   "type": "module",
   "dependencies": {
     "wasp": "file:.wasp/out/sdk/wasp",

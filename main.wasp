@@ -1,8 +1,8 @@
-app namegameWasp {
+app NameGame {
   wasp: {
     version: "^0.16.6"
   },
-  title: "namegame-wasp"
+  title: "NameGame"
 }
 
 route RootRoute { path: "/", to: MainPage }
