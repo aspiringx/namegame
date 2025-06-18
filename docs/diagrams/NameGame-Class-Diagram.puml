@@ -1,0 +1,472 @@
+@startuml NameGame-Class-Diagram
+
+' Visibility symbols:
+' + Public - green circle
+' - Private - red square
+' # Protected - yellow diamond
+' ~ Package - blue triangle
+
+' isBlocked can happen on multiple entities.
+' e.g. a photo or message might be blocked, immediately hiding it from all
+' users. Moderators blocking an entity can choose to block the user as well,
+' hiding all their content from the parent and all sub-groups until unblocked
+' or deleted.
+
+title NameGame Class Diagram
+
+' A person/player in NameGame.
+' PK id
+class User {
+  +id: int
+  +username: string
+  +pin: string
+  +firstName: string
+  +lastName: string
+  +created: datetime
+  +updated: datetime
+  +deleted: datetime
+
+  +users: UserUser[]
+  +groups: GroupUser[]
+  +photos: Photo[]
+  +messages: Message[]
+
+  +addPhoto(): boolean
+  +deletePhoto(): boolean
+  +addMessage(): boolean
+  +updateMessage(): boolean
+  +deleteMessage(): boolean
+  +blockEntity(): boolean
+  +createCode(): Code
+  +createGroup(): Group
+  +updateGroup(): Group
+  +deleteGroup(): boolean
+}
+
+' Relationships between users. Relationships exist within the parent group
+' so people aren't automatically connected if join another parent group
+' together (but NameGame may see this and identify people they may
+' already know from other groups).
+' Users who already know each other can update the relation to friend or family.
+' Family is shown to others who look at the user's details.
+' greetCount is a talley of Greetings between two users within the parent group.
+' PK user1Id, user2Id, groupId
+class UserUser {
+  +user1: User
+  +user1Id: int
+  +user2: User
+  +user2Id: int
+  +groupId: int
+  +greetCount: int
+  +relationType: UserUserRelationTypes
+  +created: datetime
+  +updated: datetime
+  +deleted: datetime
+}
+
+' Users can be directly related in
+' multiple ways.
+' - acquaintance: Default
+' - friend: Greeted 10 times
+' - family: Related
+note right of UserUser::relationType
+  enum UserUserRelationTypes {
+    acquaintance
+    friend
+    family
+  }
+end note
+
+' A group or sub-group.
+' Each group starts with a top-level group. Members can create random sub-groups
+' to gather around any shared interest.
+'
+' idTree is a hierarchical identifier for sub-groups nested at any level under a
+' parent group. e.g.:
+
+' - 0 (top-level group ID)
+' - 0.0 (subgroup of 0)
+' - 0.0.0 (subgroup of 0.0)
+' - 0.0.1 (subgroup of 0.0)
+' - etc.
+'
+' Whoever creates a group is the owner, can manage it, and can set others as
+' admins.
+'
+' We don't use a GroupGroup relation. We manage this with the idTree that shows
+' the hierarchy of groups instead of limited to parent/child.
+' See GroupUser below, needed to manage relationship properties (role).
+' PK id
+' UNIQUE idTree. Parent group URL slugs must be unique among parent groups, but
+' not for sub-groups, so not enforced in the database.
+' geo is the latitude and longitude of the group
+'
+' Soon, groups will need events, schedules, etc.
+class Group {
+  +id: int
+  +idTree: string
+  +name: string
+  +slug: string
+  +description: string
+  +geo: string
+  +type: GroupType
+  +visibility: GroupVisibility
+  +isBlocked: boolean
+  +created: datetime
+  +updated: datetime
+  +deleted: datetime
+
+  +links: Link[]
+  +photos: Photo[]
+  +messages: Message[]
+
+  +createCode(): string
+}
+
+note right of Group::type
+  enum GroupType {
+    official - groups created by main group admins
+    interest - groups anyone can create around shared interests
+    family - optional group type admins can enable
+    welcome - private group auto-created for new guests
+  }
+  enum GroupAccess{
+    open - anyone can join
+    by_approval - see group description
+    private - only invited users see
+  }
+end note
+
+' Relationships between user and groups. A user's intro and isBlocked status is
+' tied to a parent group, visible in all sub-groups.
+class GroupUser {
+  +user: User
+  +userId: int
+  +group: Group
+  +groupId: int
+  +role: GroupUserRoles
+  +intro: string
+  +isBlocked: boolean
+  +created: datetime
+  +updated: datetime
+  +deleted: datetime
+}
+
+' Users can be related to groups with different roles.
+' - requested: Default for private groups
+' - member: Default for open groups or when accepted to a private group
+' - admin: Member that can manage the group and its approve members (private)
+note right of GroupUser::role
+  enum GroupUserRoles {
+    admin - manage group
+    follower - follow messages
+    requested - requested to join group
+    member - member of group
+    moderator - manage group content
+  }
+end note
+
+' Group or user links to external resources (group websites, social media, etc.).
+' All links open in new tab.
+class Link {
+  +id: int
+  +userId: int
+  +entityType: EntityType
+  +entityId: int
+  +title: string
+  +url: string
+  +type: LinkType
+  +isBlocked: boolean
+  +created: datetime
+  +deleted: datetime
+}
+
+note right of Link::type
+  enum LinkType {
+    group_website
+    group_social
+    other
+  }
+end note
+
+' A QR greeting code generated by a User within a Group.
+' A "code" is a unique URL used to create a QR code that others can scan.
+' Codes are specific to a location (geo) and may expire (created+n hours/days).
+' People must be physically together (within about 30 feet) for code to work.
+' PK - id
+' UQ - userId + groupId + geo
+' geo - latitude and longitude where the code was created.
+' TODO: is this useful? should it be on greeting instead? don't require anon guests to give geo permission.
+class Code {
+  +id: int
+  +userId: int
+  +parentGroupId: int
+  +groupId: int
+  +url: string
+  +geo: Unsupported('point')
+  +created: datetime
+}
+note right of Code::entityType
+  Codes generated by a user can be
+  for the user (self) or group to
+  which user belongs.
+end note
+
+' A photo uploaded by a user.
+' Photos can be tied to a user or a group. If it's set as default, it's
+' the main photo for the user (album) or group (banner).
+' Any admin can block a photo and optionally everything from a user, if
+' something is weird.
+class Photo {
+  +id: int
+  +userId: int
+  +entityType: EntityType
+  +entityId: int
+  +url: string
+  +type: PhotoType
+  +isBlocked: boolean
+  +uploadedAt: datetime
+  +created: datetime
+  +deleted: datetime
+}
+note right of Photo::entityType
+  Photos added by a user (userId), can be
+  for the user (self), group, or message.
+  A user's `isDefault` photo appears in
+  group albums. A group's `isDefault`
+  photo appears in the gruop's banner.
+end note
+note right of Photo::type
+  enum PhotoType {
+    logo - group logo
+    primary - user profile or group banner
+    other - all other photos
+  }
+end note
+' A simple message sent by a user to another user or group. No threads. Users
+' can attach up to 10 photos to a message via the photo's entityType/Id.
+class Message {
+  +id: int
+  +userId: int
+  +entityType: EntityType
+  +entityId: int
+  +message: string
+  +recipientType: EntityType
+  +recipientId: int
+  +isBlocked: boolean
+  +created: datetime
+  +deleted: datetime
+}
+note right of Message::entityType
+  Messages sent by a user (userId), can be
+  to a user or group, shown in order.
+  No threads/replies to keep it simple.
+end note
+
+' Greetings are created when a user shares a greeting Code with other users.
+' When somone scans their code (or clicks the code's url):
+' 1. If the recipient is not authenticated, they're prompted to log in or
+'    just add their first name and proceed as a guest.
+'   a. If guest, we create an anonymous user with only first name and a
+'      randomly generated username (e.g. guest123) and pin (4-digit), which
+'      creates an auth token valid for the parent group, expiring in 60 days.
+'   b. Or user logs in with username+pin. If we have it in localStorage of the
+'      device browser, we just use it and give a new 60-day token.
+'   c. Then we add/update a UserUser relation of type `acquaintance` and
+'      increment greetCount, starting from 0. If 10, update relation to `friend`.
+' 2. Recipient sees a "Joe just said hello!" message with Joe's pic at the top
+'    of the group album. Recipient can see others who have greeted them in
+'    album and click on a photo for more details about the person (bio, what
+'    groups they're in, etc.).
+' e.g. user1 initiated greeting (showed code), user2 received it (scanned code).
+' If it's the first greeting between two users, we create a new UserUser
+' relation of type `acquaintance`. At 10 greetings, we change relation to
+' `friend`.
+' Groups can greet people by
+class Greeting {
+  +user1: User
+  +user1Id: int
+  +user2: User
+  +user2Id: int
+  +geo: Unsupported('point')
+  +created: datetime
+  +updated: datetime
+}
+
+' Icebreaker questions/conversation starters that appear during greetings.
+' Users can ignore them. Groups can add their own to the pool an indicate
+' whether to use the predefined questions or not.
+class IceBreaker {
+  +id: int
+  +groupId: int
+  +question: string
+}
+
+' GROUPS
+' Many User can be in many Group with a role via GroupUser.
+Group "1" -- "*" GroupUser : has members >
+' 1 User can be in many Groups and 1 Group can have many Users.
+
+User "1" -- "*" GroupUser : member of >
+' Many User can be in many Group with a role via GroupUser.
+Group "1" -- "*" GroupUser : has members >
+
+' USERS
+' 1 User can be related to many User with a relation type via UserUser.
+User "1" -- "*" UserUser: relates to >
+User "1" -- "*" UserUser: is related to >
+
+' User can create resources.
+User "1" -- "*" Code: generates >
+User "1" -- "*" Greeting : shares via code >
+User "1" -- "*" Photo : uploads >
+User "1" -- "*" Message : sends >
+
+' Group can create resources.
+Group "1" -- "*" Code: generates >
+Group "1" -- "*" Link: has >
+Group "1" -- "*" IceBreaker: has >
+Group "1" -- "*" Photo: uploads >
+@enduml
+
+
+' For later versions.
+
+' NEED
+' - "how do I fit into this group" feature
+' - Wizard that lets people describe themselves from big categories to see relevant groups, content, ways of belonging
+'   - Answers saved in UserProfileValues that can be anonymously(?) matched with other users
+'   - Some general questions with pre-defined choices. Others free-form.
+' - Group content/FAQ
+' - Surveys / polls
+'   - Random
+'   - Recurring
+' - Events
+'   - Single or recurring
+'   - RSVP that lets others see who's going
+'   - Content, photos, video embeds, feedback, for both pre-post capturing of the event
+' - Visibility - ability to share dynamic group page links that can show NameGame content to non-NameGame users based on querystring
+' - Simplify giving/donating/paying - optional module
+'   - Any group should be able to show a Venmo/PayPal/Credit Card link
+'   - One-time/recurring
+'   - PayPal and Breeze integration
+'
+
+' User profile keys (fields, questions, etc.) users can optionally answer to
+' help connect them with others in the group.
+' Contact info, demographics, etc.
+' class UserProfileKey {
+'   +id: int
+'   +userId: int
+'   +name: string
+'   +description: string
+'   +type: UserProfileKeyTypes
+'   +isRequired: boolean
+'   +isPublic: boolean
+'   +created: datetime
+'   +updated: datetime
+' }
+' enum UserProfileKeyTypes {
+'   contact
+'   demographic
+'   interests
+' }
+
+' Values in response to the UserProfileKey questions.
+' Question: how to decide if/when these values are visible to others (by group)?
+' - group: visible to members of a group (and all it's sub-groups since all members join via parent group)
+' - private: visible only to the user
+' class UserProfileValues {
+'   +id: int
+'   +userId: int
+'   +key: UserProfileKey
+'   +value: string
+'   +created: datetime
+'   +updated: datetime
+'   +deleted: datetime
+' }
+
+' Log some activities needed for managing a group.
+' the snapshot is an optional JSON string of the state of an entity before
+' it was changed.
+' class ActivityLog {
+'   +id: int
+'   +type: ActivityLogTypes
+'   +entityType: EntityType
+'   +entityId: int
+'   +snapshot: string
+'   +userId: int
+'   +reason: string
+'   +created: datetime
+' }
+
+' enum ActivityLogTypes {
+'   groupBlocked
+'   groupCreated
+'   groupDeleted
+'   groupUnblocked
+'   groupUpdated
+'   linkAdded
+'   linkBlocked
+'   linkDeleted
+'   linkUnblocked
+'   messageAdded
+'   messageUpdated
+'   messageDeleted
+'   pageAdded
+'   pageUpdated
+'   pageDeleted
+'   photoAdded
+'   photoBlocked
+'   photoDeleted
+'   photoUnblocked
+'   profileValueAdded
+'   profileValueUpdated
+'   profileValueDeleted
+'   questionAdded
+'   questionUpdated
+'   questionDeleted
+'   userBlocked
+'   userCreated
+'   userUpdated
+'   userDeleted
+'   userUnblocked
+' }
+
+' class Question {
+'   +id: int
+'   +entityType: EntityType
+'   +entityId: int
+'   +question: string
+'   +answer: string
+'   +created: datetime
+'   +updated: datetime
+'   +deleted: datetime
+
+'   +addAnswer(): Answer
+' }
+' ' Answers to questions.
+' class QuestionOptions {
+'   +id: int
+'   +question: Question
+'   +questionId: int
+'   +userId: int
+'   +answer: string
+'   +created: datetime
+'   +updated: datetime
+'   +deleted: datetime
+' }
+
+' Allows groups and users to created pages with basic content.
+' Start with just basic text and look to embed images at some point.
+' class Page {
+'   +id: int
+'   +entityType: EntityType
+'   +entityId: int
+'   +title: string
+'   +content: string
+'   +created: datetime
+'   +updated: datetime
+'   +deleted: datetime
+' }
+
