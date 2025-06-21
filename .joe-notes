@@ -1,0 +1,23 @@
+
+## OpenRouter API Key
+This has a $25 limit. May need to generate new one after that is used. 
+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
+
+Open Windsurf User Settings > Cascade to update API key / credits. 
+6/20/2025 - still have 25 free trial credits to use before adding openrouter key. 
+
+
+wasp cli
+
+- wasp start: start client and server
+
+- wasp db migrate-dev: update db after changing schema.prisma models/entities
+
+- wasp db studio: open browser db client
+
+If you make a change to models/entities, operations (queries and actions) or tsx that uses them, currently, since we're using typescript, it may not automatically rebuild correctly. You can fix with:
+
+- Stop and restart with `wasp start`
+- In a ts/js/tsx file, cmd-p > Typescript: Restart TS server
+
+Typescript adds enough value that it's worth this to me until wasp fixes it.
