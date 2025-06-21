@@ -1,5 +1,5 @@
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   // Wasp requires that the url is set to the DATABASE_URL environment variable.
   url      = env("DATABASE_URL")
 }
@@ -7,4 +7,161 @@ datasource db {
 // Wasp requires the `prisma-client-js` generator to be present.
 generator client {
   provider = "prisma-client-js"
+}
+
+model User {
+  id        Int       @id @default(autoincrement())
+  username  String    @unique
+  pin       String
+  firstName String
+  lastName  String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  // Relations
+  codes         Code[]
+  photos        Photo[]
+  messages      Message[]
+  greetingsSent Greeting[] @relation("GreetingUser1")
+  greetingsRcvd Greeting[] @relation("GreetingUser2")
+
+  @@map("users")
+}
+
+// model UserUser {
+//   id           Int       @id @default(autoincrement())
+//   user1        User      @relation("User1Relation", fields: [user1Id], references: [id])
+//   user1Id      Int
+//   user2        User      @relation("User2Relation", fields: [user2Id], references: [id])
+//   user2Id      Int
+//   groupId      Int
+//   greetCount   Int       @default(0)
+//   relationType String    @default("acquaintance")
+//   createdAt    DateTime  @default(now())
+//   updatedAt    DateTime  @updatedAt
+//   deletedAt    DateTime?
+
+//   @@unique([user1Id, user2Id, groupId])
+//   @@map("user_users")
+// }
+
+model Group {
+  id          Int       @id @default(autoincrement())
+  name        String
+  slug        String    @unique
+  description String?
+  parentId    Int?
+  idTree      String    @unique
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  // Relations
+  codes       Code[]
+  links       Link[]
+  iceBreakers IceBreaker[]
+  photos      Photo[]
+
+  @@map("groups")
+}
+
+// model GroupUser {
+//   id        Int       @id @default(autoincrement())
+//   user      User      @relation(fields: [userId], references: [id])
+//   userId    Int
+//   group     Group     @relation(fields: [groupId], references: [id])
+//   groupId   Int
+//   role      String    @default("member")
+//   createdAt DateTime  @default(now())
+//   updatedAt DateTime  @updatedAt
+//   deletedAt DateTime?
+
+//   @@unique([userId, groupId])
+//   @@map("group_users")
+// }
+
+model Code {
+  id            Int      @id @default(autoincrement())
+  userId        Int
+  user          User     @relation(fields: [userId], references: [id])
+  parentGroupId Int
+  groupId       Int
+  group         Group    @relation(fields: [groupId], references: [id])
+  url           String   @unique
+  geo           String? // Store as string for now
+  createdAt     DateTime @default(now())
+
+  @@unique([userId, groupId, geo])
+  @@map("codes")
+}
+
+model Photo {
+  id         Int       @id @default(autoincrement())
+  userId     Int
+  user       User      @relation(fields: [userId], references: [id])
+  groupId    Int
+  group      Group     @relation(fields: [groupId], references: [id])
+  entityType String
+  entityId   Int
+  url        String
+  type       String    @default("other")
+  isBlocked  Boolean   @default(false)
+  uploadedAt DateTime  @default(now())
+  createdAt  DateTime  @default(now())
+  deletedAt  DateTime?
+
+  @@map("photos")
+}
+
+model Message {
+  id            Int       @id @default(autoincrement())
+  userId        Int
+  user          User      @relation(fields: [userId], references: [id])
+  entityType    String
+  entityId      Int
+  message       String
+  recipientType String
+  recipientId   Int
+  isBlocked     Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  deletedAt     DateTime?
+
+  @@map("messages")
+}
+
+model Greeting {
+  id        Int      @id @default(autoincrement())
+  user1     User     @relation("GreetingUser1", fields: [user1Id], references: [id])
+  user1Id   Int
+  user2     User     @relation("GreetingUser2", fields: [user2Id], references: [id])
+  user2Id   Int
+  geo       String? // Store as string for now
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("greetings")
+}
+
+model IceBreaker {
+  id        Int      @id @default(autoincrement())
+  groupId   Int
+  group     Group    @relation(fields: [groupId], references: [id])
+  question  String
+  createdAt DateTime @default(now())
+
+  @@map("ice_breakers")
+}
+
+model Link {
+  id          Int      @id @default(autoincrement())
+  groupId     Int
+  group       Group    @relation(fields: [groupId], references: [id])
+  url         String
+  title       String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("links")
 }

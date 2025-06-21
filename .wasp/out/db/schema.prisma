@@ -1,0 +1,157 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id            Int        @id @default(autoincrement())
+  username      String     @unique
+  pin           String
+  firstName     String
+  lastName      String
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  deletedAt     DateTime?
+  codes         Code[]
+  photos        Photo[]
+  messages      Message[]
+  greetingsSent Greeting[] @relation("GreetingUser1")
+  greetingsRcvd Greeting[] @relation("GreetingUser2")
+  auth          Auth?
+
+  @@map("users")
+}
+
+model Group {
+  id          Int          @id @default(autoincrement())
+  name        String
+  slug        String       @unique
+  description String?
+  parentId    Int?
+  idTree      String       @unique
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  deletedAt   DateTime?
+  codes       Code[]
+  links       Link[]
+  iceBreakers IceBreaker[]
+  photos      Photo[]
+
+  @@map("groups")
+}
+
+model Code {
+  id            Int      @id @default(autoincrement())
+  userId        Int
+  user          User     @relation(fields: [userId], references: [id])
+  parentGroupId Int
+  groupId       Int
+  group         Group    @relation(fields: [groupId], references: [id])
+  url           String   @unique
+  geo           String?
+  createdAt     DateTime @default(now())
+
+  @@unique([userId, groupId, geo])
+  @@map("codes")
+}
+
+model Photo {
+  id         Int       @id @default(autoincrement())
+  userId     Int
+  user       User      @relation(fields: [userId], references: [id])
+  groupId    Int
+  group      Group     @relation(fields: [groupId], references: [id])
+  entityType String
+  entityId   Int
+  url        String
+  type       String    @default("other")
+  isBlocked  Boolean   @default(false)
+  uploadedAt DateTime  @default(now())
+  createdAt  DateTime  @default(now())
+  deletedAt  DateTime?
+
+  @@map("photos")
+}
+
+model Message {
+  id            Int       @id @default(autoincrement())
+  userId        Int
+  user          User      @relation(fields: [userId], references: [id])
+  entityType    String
+  entityId      Int
+  message       String
+  recipientType String
+  recipientId   Int
+  isBlocked     Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  deletedAt     DateTime?
+
+  @@map("messages")
+}
+
+model Greeting {
+  id        Int      @id @default(autoincrement())
+  user1     User     @relation("GreetingUser1", fields: [user1Id], references: [id])
+  user1Id   Int
+  user2     User     @relation("GreetingUser2", fields: [user2Id], references: [id])
+  user2Id   Int
+  geo       String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("greetings")
+}
+
+model IceBreaker {
+  id        Int      @id @default(autoincrement())
+  groupId   Int
+  group     Group    @relation(fields: [groupId], references: [id])
+  question  String
+  createdAt DateTime @default(now())
+
+  @@map("ice_breakers")
+}
+
+model Link {
+  id          Int      @id @default(autoincrement())
+  groupId     Int
+  group       Group    @relation(fields: [groupId], references: [id])
+  url         String
+  title       String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("links")
+}
+
+model Auth {
+  id         String         @id @default(uuid())
+  userId     Int?           @unique
+  user       User?          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  identities AuthIdentity[]
+  sessions   Session[]
+}
+
+model AuthIdentity {
+  providerName   String
+  providerUserId String
+  providerData   String @default("{}")
+  authId         String
+  auth           Auth   @relation(fields: [authId], references: [id], onDelete: Cascade)
+
+  @@id([providerName, providerUserId])
+}
+
+model Session {
+  id        String   @id @unique
+  expiresAt DateTime
+  userId    String
+  auth      Auth     @relation(references: [id], fields: [userId], onDelete: Cascade)
+
+  @@index([userId])
+}

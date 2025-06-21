@@ -21,3 +21,14 @@ If you make a change to models/entities, operations (queries and actions) or tsx
 - In a ts/js/tsx file, cmd-p > Typescript: Restart TS server
 
 Typescript adds enough value that it's worth this to me until wasp fixes it.
+
+
+Best Practices from Duane
+
+* Include a file and say, "Ask me clarifying questions" (about the file).
+    * Or "make trenchant observations"
+Instructions:
+1. Read our plan at @2-data-model.md 
+2. Make trenchant observations.
+3. Ask me clarifying questions.
+4. Re-write the plan based on the result. 
