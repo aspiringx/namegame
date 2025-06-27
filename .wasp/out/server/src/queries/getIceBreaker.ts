@@ -8,6 +8,7 @@ export default async function (args, context) {
     ...context,
     entities: {
       IceBreaker: prisma.iceBreaker,
+      User: prisma.user,
       Group: prisma.group,
     },
   })

@@ -8,40 +8,76 @@ generator client {
 }
 
 model User {
-  id            Int        @id @default(autoincrement())
-  username      String     @unique
-  pin           String
-  firstName     String
-  lastName      String
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
-  deletedAt     DateTime?
-  codes         Code[]
-  photos        Photo[]
-  messages      Message[]
-  greetingsSent Greeting[] @relation("GreetingUser1")
-  greetingsRcvd Greeting[] @relation("GreetingUser2")
-  auth          Auth?
+  id               Int         @id @default(autoincrement())
+  username         String      @unique
+  password         String
+  firstName        String
+  lastName         String
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  deletedAt        DateTime?
+  codes            Code[]
+  photos           Photo[]
+  messages         Message[]
+  greetingsSent    Greeting[]  @relation("GreetingUser1")
+  greetingsRcvd    Greeting[]  @relation("GreetingUser2")
+  userRelations1   UserUser[]  @relation("User1Relation")
+  userRelations2   UserUser[]  @relation("User2Relation")
+  groupMemberships GroupUser[]
+  auth             Auth?
 
   @@map("users")
 }
 
+model UserUser {
+  user1        User                 @relation("User1Relation", fields: [user1Id], references: [id])
+  user1Id      Int
+  user2        User                 @relation("User2Relation", fields: [user2Id], references: [id])
+  user2Id      Int
+  group        Group                @relation(fields: [groupId], references: [id])
+  groupId      Int
+  greetCount   Int                  @default(0)
+  relationType UserUserRelationType @default(acquaintance)
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  deletedAt    DateTime?
+
+  @@id([user1Id, user2Id, groupId])
+  @@map("user_users")
+}
+
 model Group {
-  id          Int          @id @default(autoincrement())
-  name        String
-  slug        String       @unique
-  description String?
-  parentId    Int?
-  idTree      String       @unique
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  deletedAt   DateTime?
-  codes       Code[]
-  links       Link[]
-  iceBreakers IceBreaker[]
-  photos      Photo[]
+  id            Int          @id @default(autoincrement())
+  name          String
+  slug          String       @unique
+  description   String?
+  parentId      Int?
+  idTree        String       @unique
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  deletedAt     DateTime?
+  codes         Code[]
+  links         Link[]
+  iceBreakers   IceBreaker[]
+  photos        Photo[]
+  userRelations UserUser[]
+  members       GroupUser[]
 
   @@map("groups")
+}
+
+model GroupUser {
+  user      User          @relation(fields: [userId], references: [id])
+  userId    Int
+  group     Group         @relation(fields: [groupId], references: [id])
+  groupId   Int
+  role      GroupUserRole @default(member)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  deletedAt DateTime?
+
+  @@id([userId, groupId])
+  @@map("group_users")
 }
 
 model Code {
@@ -68,7 +104,7 @@ model Photo {
   entityType String
   entityId   Int
   url        String
-  type       String    @default("other")
+  type       PhotoType @default(other)
   isBlocked  Boolean   @default(false)
   uploadedAt DateTime  @default(now())
   createdAt  DateTime  @default(now())
@@ -154,4 +190,22 @@ model Session {
   auth      Auth     @relation(references: [id], fields: [userId], onDelete: Cascade)
 
   @@index([userId])
+}
+
+enum UserUserRelationType {
+  acquaintance
+  friend
+  family
+}
+
+enum GroupUserRole {
+  owner
+  admin
+  member
+}
+
+enum PhotoType {
+  logo
+  primary
+  other
 }

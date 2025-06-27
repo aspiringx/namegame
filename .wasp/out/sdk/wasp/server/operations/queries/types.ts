@@ -2,12 +2,14 @@
 import {
   type _User,
   type _Group,
-  type _Link,
-  type _Code,
+  type _GroupUser,
   type _Photo,
   type _Message,
-  type _Greeting,
+  type _Link,
   type _IceBreaker,
+  type _Code,
+  type _Greeting,
+  type _UserUser,
   type AuthenticatedQueryDefinition,
   type Payload,
 } from 'wasp/server/_types'
@@ -37,6 +39,12 @@ export type GetGroup<Input extends Payload = never, Output extends Payload = Pay
   AuthenticatedQueryDefinition<
     [
       _Group,
+      _User,
+      _GroupUser,
+      _Photo,
+      _Message,
+      _Link,
+      _IceBreaker,
     ],
     Input,
     Output
@@ -46,52 +54,6 @@ export type GetGroup<Input extends Payload = never, Output extends Payload = Pay
 export type GetGroups<Input extends Payload = never, Output extends Payload = Payload> = 
   AuthenticatedQueryDefinition<
     [
-      _Group,
-    ],
-    Input,
-    Output
-  >
-
-// PUBLIC API
-export type GetLink<Input extends Payload = never, Output extends Payload = Payload> = 
-  AuthenticatedQueryDefinition<
-    [
-      _Link,
-      _Group,
-    ],
-    Input,
-    Output
-  >
-
-// PUBLIC API
-export type GetLinks<Input extends Payload = never, Output extends Payload = Payload> = 
-  AuthenticatedQueryDefinition<
-    [
-      _Link,
-      _Group,
-    ],
-    Input,
-    Output
-  >
-
-// PUBLIC API
-export type GetCode<Input extends Payload = never, Output extends Payload = Payload> = 
-  AuthenticatedQueryDefinition<
-    [
-      _Code,
-      _User,
-      _Group,
-    ],
-    Input,
-    Output
-  >
-
-// PUBLIC API
-export type GetCodes<Input extends Payload = never, Output extends Payload = Payload> = 
-  AuthenticatedQueryDefinition<
-    [
-      _Code,
-      _User,
       _Group,
     ],
     Input,
@@ -128,6 +90,7 @@ export type GetMessage<Input extends Payload = never, Output extends Payload = P
     [
       _Message,
       _User,
+      _Group,
     ],
     Input,
     Output
@@ -139,6 +102,31 @@ export type GetMessages<Input extends Payload = never, Output extends Payload = 
     [
       _Message,
       _User,
+      _Group,
+    ],
+    Input,
+    Output
+  >
+
+// PUBLIC API
+export type GetCode<Input extends Payload = never, Output extends Payload = Payload> = 
+  AuthenticatedQueryDefinition<
+    [
+      _Code,
+      _User,
+      _Group,
+    ],
+    Input,
+    Output
+  >
+
+// PUBLIC API
+export type GetCodes<Input extends Payload = never, Output extends Payload = Payload> = 
+  AuthenticatedQueryDefinition<
+    [
+      _Code,
+      _User,
+      _Group,
     ],
     Input,
     Output
@@ -149,7 +137,7 @@ export type GetGreeting<Input extends Payload = never, Output extends Payload = 
   AuthenticatedQueryDefinition<
     [
       _Greeting,
-      _User,
+      _UserUser,
     ],
     Input,
     Output
@@ -160,7 +148,29 @@ export type GetGreetings<Input extends Payload = never, Output extends Payload =
   AuthenticatedQueryDefinition<
     [
       _Greeting,
-      _User,
+      _UserUser,
+    ],
+    Input,
+    Output
+  >
+
+// PUBLIC API
+export type GetLink<Input extends Payload = never, Output extends Payload = Payload> = 
+  AuthenticatedQueryDefinition<
+    [
+      _Link,
+      _Group,
+    ],
+    Input,
+    Output
+  >
+
+// PUBLIC API
+export type GetLinks<Input extends Payload = never, Output extends Payload = Payload> = 
+  AuthenticatedQueryDefinition<
+    [
+      _Link,
+      _Group,
     ],
     Input,
     Output
@@ -171,6 +181,7 @@ export type GetIceBreaker<Input extends Payload = never, Output extends Payload 
   AuthenticatedQueryDefinition<
     [
       _IceBreaker,
+      _User,
       _Group,
     ],
     Input,
@@ -182,6 +193,7 @@ export type GetIceBreakers<Input extends Payload = never, Output extends Payload
   AuthenticatedQueryDefinition<
     [
       _IceBreaker,
+      _User,
       _Group,
     ],
     Input,

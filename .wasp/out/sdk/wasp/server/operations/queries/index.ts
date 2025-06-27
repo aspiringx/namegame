@@ -10,16 +10,16 @@ import { getUser as getUser_ext } from 'wasp/src/queries'
 import { getUsers as getUsers_ext } from 'wasp/src/queries'
 import { getGroup as getGroup_ext } from 'wasp/src/queries'
 import { getGroups as getGroups_ext } from 'wasp/src/queries'
-import { getLink as getLink_ext } from 'wasp/src/queries'
-import { getLinks as getLinks_ext } from 'wasp/src/queries'
-import { getCode as getCode_ext } from 'wasp/src/queries'
-import { getCodes as getCodes_ext } from 'wasp/src/queries'
 import { getPhoto as getPhoto_ext } from 'wasp/src/queries'
 import { getPhotos as getPhotos_ext } from 'wasp/src/queries'
 import { getMessage as getMessage_ext } from 'wasp/src/queries'
 import { getMessages as getMessages_ext } from 'wasp/src/queries'
+import { getCode as getCode_ext } from 'wasp/src/queries'
+import { getCodes as getCodes_ext } from 'wasp/src/queries'
 import { getGreeting as getGreeting_ext } from 'wasp/src/queries'
 import { getGreetings as getGreetings_ext } from 'wasp/src/queries'
+import { getLink as getLink_ext } from 'wasp/src/queries'
+import { getLinks as getLinks_ext } from 'wasp/src/queries'
 import { getIceBreaker as getIceBreaker_ext } from 'wasp/src/queries'
 import { getIceBreakers as getIceBreakers_ext } from 'wasp/src/queries'
 
@@ -58,6 +58,12 @@ export const getGroup: AuthenticatedOperationFor<GetGroup_ext> =
     getGroup_ext,
     {
       Group: prisma.group,
+      User: prisma.user,
+      GroupUser: prisma.groupUser,
+      Photo: prisma.photo,
+      Message: prisma.message,
+      Link: prisma.link,
+      IceBreaker: prisma.iceBreaker,
     },
   )
 
@@ -70,64 +76,6 @@ export const getGroups: AuthenticatedOperationFor<GetGroups_ext> =
   createAuthenticatedOperation(
     getGroups_ext,
     {
-      Group: prisma.group,
-    },
-  )
-
-
-// PRIVATE API
-export type GetLink_ext = typeof getLink_ext
-
-// PUBLIC API
-export const getLink: AuthenticatedOperationFor<GetLink_ext> =
-  createAuthenticatedOperation(
-    getLink_ext,
-    {
-      Link: prisma.link,
-      Group: prisma.group,
-    },
-  )
-
-
-// PRIVATE API
-export type GetLinks_ext = typeof getLinks_ext
-
-// PUBLIC API
-export const getLinks: AuthenticatedOperationFor<GetLinks_ext> =
-  createAuthenticatedOperation(
-    getLinks_ext,
-    {
-      Link: prisma.link,
-      Group: prisma.group,
-    },
-  )
-
-
-// PRIVATE API
-export type GetCode_ext = typeof getCode_ext
-
-// PUBLIC API
-export const getCode: AuthenticatedOperationFor<GetCode_ext> =
-  createAuthenticatedOperation(
-    getCode_ext,
-    {
-      Code: prisma.code,
-      User: prisma.user,
-      Group: prisma.group,
-    },
-  )
-
-
-// PRIVATE API
-export type GetCodes_ext = typeof getCodes_ext
-
-// PUBLIC API
-export const getCodes: AuthenticatedOperationFor<GetCodes_ext> =
-  createAuthenticatedOperation(
-    getCodes_ext,
-    {
-      Code: prisma.code,
-      User: prisma.user,
       Group: prisma.group,
     },
   )
@@ -173,6 +121,7 @@ export const getMessage: AuthenticatedOperationFor<GetMessage_ext> =
     {
       Message: prisma.message,
       User: prisma.user,
+      Group: prisma.group,
     },
   )
 
@@ -187,6 +136,37 @@ export const getMessages: AuthenticatedOperationFor<GetMessages_ext> =
     {
       Message: prisma.message,
       User: prisma.user,
+      Group: prisma.group,
+    },
+  )
+
+
+// PRIVATE API
+export type GetCode_ext = typeof getCode_ext
+
+// PUBLIC API
+export const getCode: AuthenticatedOperationFor<GetCode_ext> =
+  createAuthenticatedOperation(
+    getCode_ext,
+    {
+      Code: prisma.code,
+      User: prisma.user,
+      Group: prisma.group,
+    },
+  )
+
+
+// PRIVATE API
+export type GetCodes_ext = typeof getCodes_ext
+
+// PUBLIC API
+export const getCodes: AuthenticatedOperationFor<GetCodes_ext> =
+  createAuthenticatedOperation(
+    getCodes_ext,
+    {
+      Code: prisma.code,
+      User: prisma.user,
+      Group: prisma.group,
     },
   )
 
@@ -200,7 +180,7 @@ export const getGreeting: AuthenticatedOperationFor<GetGreeting_ext> =
     getGreeting_ext,
     {
       Greeting: prisma.greeting,
-      User: prisma.user,
+      UserUser: prisma.userUser,
     },
   )
 
@@ -214,7 +194,35 @@ export const getGreetings: AuthenticatedOperationFor<GetGreetings_ext> =
     getGreetings_ext,
     {
       Greeting: prisma.greeting,
-      User: prisma.user,
+      UserUser: prisma.userUser,
+    },
+  )
+
+
+// PRIVATE API
+export type GetLink_ext = typeof getLink_ext
+
+// PUBLIC API
+export const getLink: AuthenticatedOperationFor<GetLink_ext> =
+  createAuthenticatedOperation(
+    getLink_ext,
+    {
+      Link: prisma.link,
+      Group: prisma.group,
+    },
+  )
+
+
+// PRIVATE API
+export type GetLinks_ext = typeof getLinks_ext
+
+// PUBLIC API
+export const getLinks: AuthenticatedOperationFor<GetLinks_ext> =
+  createAuthenticatedOperation(
+    getLinks_ext,
+    {
+      Link: prisma.link,
+      Group: prisma.group,
     },
   )
 
@@ -228,6 +236,7 @@ export const getIceBreaker: AuthenticatedOperationFor<GetIceBreaker_ext> =
     getIceBreaker_ext,
     {
       IceBreaker: prisma.iceBreaker,
+      User: prisma.user,
       Group: prisma.group,
     },
   )
@@ -242,6 +251,7 @@ export const getIceBreakers: AuthenticatedOperationFor<GetIceBreakers_ext> =
     getIceBreakers_ext,
     {
       IceBreaker: prisma.iceBreaker,
+      User: prisma.user,
       Group: prisma.group,
     },
   )

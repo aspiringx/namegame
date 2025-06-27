@@ -228,7 +228,7 @@
             "file",
             "../out/sdk/wasp/client/operations/actions/index.ts"
         ],
-        "246823e2446114189c40bb85795a8ebd0c5eb1badcba540c13fff3b161eac3f4"
+        "e52a3d723ce4c2254eec33d4e77a0a82ebf8ab84e3dae836246778d7e51088df"
     ],
     [
         [
@@ -277,7 +277,7 @@
             "file",
             "../out/sdk/wasp/client/operations/queries/index.ts"
         ],
-        "2a50733477f5e28d787737cd5c002a55f9a81a25a55b39189ca78c3b917b2a8d"
+        "246eaf40f1d88fbda3c935d53daf80ddb57edb1a8ab94b77d1d5224b7c3bf124"
     ],
     [
         [
@@ -305,7 +305,7 @@
             "file",
             "../out/sdk/wasp/client/router/index.ts"
         ],
-        "c74d48a106eac711d15f37a0fe4cdca0daf906d92160fd0673e6c5d6d7d211eb"
+        "afd94be4ed9b449b47e699a8268e03abf7453fd3a03f339ada03d7ad8fbc9bc6"
     ],
     [
         [
@@ -368,7 +368,7 @@
             "file",
             "../out/sdk/wasp/entities/index.ts"
         ],
-        "e9c249080877299db2222623d17b748bab8dc2ae0b673a79908dd50f389a5b8c"
+        "be36d55fdf9cd84afbd67e5526866427742387e8622e6f549ca714eff76a58cb"
     ],
     [
         [
@@ -410,7 +410,7 @@
             "file",
             "../out/sdk/wasp/server/_types/index.ts"
         ],
-        "eb08fc33cd8b779b301a51f4ad5939d8064fa2e1a999fead270aba05888f6745"
+        "b55461f7c2d338b36a764eeec054a71fe0b12ffd6efaae31a3b306055ebb1116"
     ],
     [
         [
@@ -424,7 +424,7 @@
             "file",
             "../out/sdk/wasp/server/_types/taggedEntities.ts"
         ],
-        "8d3e122cb04c7f881d90bc491fed6a694296f61f9f0ccb995dc747726b0bd0ad"
+        "342b4c91e8b4dad92f620aae32725be3b96bae5bdd785400ddb92bb4919112d1"
     ],
     [
         [
@@ -501,35 +501,35 @@
             "file",
             "../out/sdk/wasp/server/operations/actions/index.ts"
         ],
-        "4d758e3a0c4a8a989b01671a41ce8d4a6549fabdd46346d52391bdb6d78987df"
+        "0cd5277b5ace96f930264179ee24a442f2165ea09ca9bff965993168457526cd"
     ],
     [
         [
             "file",
             "../out/sdk/wasp/server/operations/actions/types.ts"
         ],
-        "cc03111599e32695d677e8ac4e65b98cf90e0cb066e71c3da06af254c784b489"
+        "08e305015da51425e94ea36ba784b6ecc263f218d2358019fc72f33ab01b37a9"
     ],
     [
         [
             "file",
             "../out/sdk/wasp/server/operations/index.ts"
         ],
-        "fd1595d327e089c1c7480dbe05fced5d402a793fe3e9aac69873f1e965427449"
+        "c27d1251b79906ec66307c18a514b165e3ac24a949ba77cab9937aa42233dd74"
     ],
     [
         [
             "file",
             "../out/sdk/wasp/server/operations/queries/index.ts"
         ],
-        "75d771e54249a92abea0d71ae1ca76ccb5d035085c1b9591ff017210e621bea2"
+        "a90411f59e8ec10d2907c4218986419173eb4ec6a287518714fb1106ede410ab"
     ],
     [
         [
             "file",
             "../out/sdk/wasp/server/operations/queries/types.ts"
         ],
-        "4f431fb4a276cbceaf7004103e6fc5963577bdf7f354c0777e9d5bd349fbef9a"
+        "e99f454174ce599426e27ed417753b3aba9925613f3979011349257e0738c92e"
     ],
     [
         [
@@ -578,14 +578,91 @@
             "file",
             "../out/sdk/wasp/src/actions.ts"
         ],
-        "a1eb94137a22e86420cf46921e3ef2152538f3dce6193d4a275196841ff04726"
+        "bcdd133a31fff4a21535bd0c223899a482815a8196d207e9cc8dc8d9c0b0939b"
+    ],
+    [
+        [
+            "file",
+            "../out/sdk/wasp/src/actions/auth.ts"
+        ],
+        "296e3826827e96cdaee522da47b09be11300550d36e7a11bcfc3866e3456acaa"
+    ],
+    [
+        [
+            "file",
+            "../out/sdk/wasp/src/actions/code.ts"
+        ],
+        "6c71cfe7a9ebc7cf0c5b14bdeb5b26ce3a54303232985eb0553c25a84f8589fc"
+    ],
+    [
+        [
+            "file",
+            "../out/sdk/wasp/src/actions/greeting.ts"
+        ],
+        "5667585bcab549549df70ce4a93c52b46add9283034fdb4769454b821b24a9f4"
+    ],
+    [
+        [
+            "file",
+            "../out/sdk/wasp/src/actions/group.ts"
+        ],
+        "6a95461c83859cf2d70dc246f0f09174267470cf6cae574488dc67343d2104f3"
+    ],
+    [
+        [
+            "file",
+            "../out/sdk/wasp/src/actions/groupUser.ts"
+        ],
+        "252b365d19a3366ba43391e22875eacee59d412df796bab935172a2b07045bdc"
+    ],
+    [
+        [
+            "file",
+            "../out/sdk/wasp/src/actions/iceBreaker.ts"
+        ],
+        "769ddaa564868c51361caabd6e1728736f41b6644e14c1452f9fe7c0776bb4e7"
+    ],
+    [
+        [
+            "file",
+            "../out/sdk/wasp/src/actions/link.ts"
+        ],
+        "5f0233184057f59442ebeb155c49f61c28531c336d08046c25914f7694de111f"
+    ],
+    [
+        [
+            "file",
+            "../out/sdk/wasp/src/actions/message.ts"
+        ],
+        "097beeab1668d1ec0e64a14d1055852569543403a1679f244906f0c9af45d702"
+    ],
+    [
+        [
+            "file",
+            "../out/sdk/wasp/src/actions/photo.ts"
+        ],
+        "6c848c944ac6adffec7544095bd75fc0aaa4194a88428c262455f58685d75057"
+    ],
+    [
+        [
+            "file",
+            "../out/sdk/wasp/src/actions/user.ts"
+        ],
+        "9ef010ef1c4291beab89cf04215f7c438194338cfa3006d3ea8d23d0624633da"
+    ],
+    [
+        [
+            "file",
+            "../out/sdk/wasp/src/actions/userUser.ts"
+        ],
+        "9caabae7adfb662849cba078e1d0f97149b5166ca456a40efc439b41af6326c6"
     ],
     [
         [
             "file",
             "../out/sdk/wasp/src/queries.ts"
         ],
-        "8f83c8b547b5bbdd715e659f3f52eba26167071db6e29c6c1efa29941f2a6058"
+        "6e9a2804fb55760e2416666f34645585b1b47a6c8531ba399f7138d3eb28f35c"
     ],
     [
         [
@@ -659,10 +736,17 @@
     ],
     [
         [
+            "dir",
+            "db/migrations/"
+        ],
+        "856f1b046ccef45af4cfeb731b842cd4e1b428d1fb493af9e9e545edd7860d51"
+    ],
+    [
+        [
             "file",
             "db/schema.prisma"
         ],
-        "ff09636086448ad0ae9a3bb099c5b554603681c0b94d9f5e120612fc4213677d"
+        "b80d362ff418fe16d5b5af4d04253077f00696fdba326ce990ae61d99d6df901"
     ],
     [
         [
@@ -712,6 +796,209 @@
             "server/rollup.config.js"
         ],
         "3ebb3ad0b85eb393862b12bcf3b087bc852e768ea4fbcc5d90d4265f85fac7cb"
+    ],
+    [
+        [
+            "file",
+            "server/src/actions/createCode.ts"
+        ],
+        "29482f158b3756b8f67db6debadf025be2dc0f8f64030ae2df5ea4cff6ce7fd8"
+    ],
+    [
+        [
+            "file",
+            "server/src/actions/createGreeting.ts"
+        ],
+        "3b9f6d2a3c8348e316be6075f1fbaa28b11262489c865ec220e415e1b93110b4"
+    ],
+    [
+        [
+            "file",
+            "server/src/actions/createGroup.ts"
+        ],
+        "39b5e35e0d39d246d1e4fd3c833670385bf02a0b795db65b47968b7da635d47f"
+    ],
+    [
+        [
+            "file",
+            "server/src/actions/createIceBreaker.ts"
+        ],
+        "d395e4e5a9cbd9922d9ee3796b328971bcfc4dc8966f0af74cfba9a8cb215333"
+    ],
+    [
+        [
+            "file",
+            "server/src/actions/createLink.ts"
+        ],
+        "5e076289688244b7a109849e014ca3fb09a801b6200e7faf35a2e708ae874678"
+    ],
+    [
+        [
+            "file",
+            "server/src/actions/createMessage.ts"
+        ],
+        "5dcd952463d6c064f86015764d36fd2743ec11c691417e32f977cf3c3b1a3aef"
+    ],
+    [
+        [
+            "file",
+            "server/src/actions/createPhoto.ts"
+        ],
+        "407a966e83231d9ddc14e8bf728639f85df27b0d1918d910b2da5257a78727bd"
+    ],
+    [
+        [
+            "file",
+            "server/src/actions/createUserUser.ts"
+        ],
+        "56a7f7208570b987fa4ea10cda5b08dc0e2b2b3db0f9feb3d423565688518de4"
+    ],
+    [
+        [
+            "file",
+            "server/src/actions/deleteCode.ts"
+        ],
+        "6aa21ff63688dbfb80b9cb90f6aac26f4057de01627fb2c289ef0fdc3cad3aa1"
+    ],
+    [
+        [
+            "file",
+            "server/src/actions/deleteGreeting.ts"
+        ],
+        "ca14e0a5ec72aacf591e1d3cea3595fd54a4a367c8547c30f1cede3024ed7afb"
+    ],
+    [
+        [
+            "file",
+            "server/src/actions/deleteGroup.ts"
+        ],
+        "0d59f892da338d44bade32d364da7ad3f6d42d3da1b065accaa5ef0f53a0dc46"
+    ],
+    [
+        [
+            "file",
+            "server/src/actions/deleteIceBreaker.ts"
+        ],
+        "f2f18490e01e93a7f6a1d7c2d5d043253d8fb00c0801f08896009ad7b327b123"
+    ],
+    [
+        [
+            "file",
+            "server/src/actions/deleteLink.ts"
+        ],
+        "72af5674bc9c6bb4f980f1afc31f65eef53492c8da95c8d0d8d05f225be1f44b"
+    ],
+    [
+        [
+            "file",
+            "server/src/actions/deleteMessage.ts"
+        ],
+        "cbf2905deb0017c9c3ed6026e67496e1e1414e33b42216dbcca0df346b6367f4"
+    ],
+    [
+        [
+            "file",
+            "server/src/actions/deletePhoto.ts"
+        ],
+        "c5af4ea3e35df7cebfd6928cbb7309cd9cab5f64f6771ce2aa98b91daa1db48e"
+    ],
+    [
+        [
+            "file",
+            "server/src/actions/deleteUser.ts"
+        ],
+        "160e91b0604ea0e2f468740b6cc3be8158662261e8a2857990bce7b3a6e65a80"
+    ],
+    [
+        [
+            "file",
+            "server/src/actions/deleteUserUser.ts"
+        ],
+        "8a59085c91f15ab701f07b56db2b23d117648a95a79725ccd5bd48826aaeee73"
+    ],
+    [
+        [
+            "file",
+            "server/src/actions/joinGroup.ts"
+        ],
+        "634dba9243384462eb2fbd0093a0487889f9ae755344e5ba4d31a61f85aa5cc3"
+    ],
+    [
+        [
+            "file",
+            "server/src/actions/leaveGroup.ts"
+        ],
+        "0866a7e082c95afa39a01350154a46f90d5b3bb589c4b4987ff23ed0c616b603"
+    ],
+    [
+        [
+            "file",
+            "server/src/actions/updateCode.ts"
+        ],
+        "3e9fe2d885193755cb1482816f70425c03b9391b0fc39d359f91f9876330edd0"
+    ],
+    [
+        [
+            "file",
+            "server/src/actions/updateGreeting.ts"
+        ],
+        "e7011834d12fa0018da140a8b472c7b59ecb145a4cf9dc6293a5e2c88dc753f8"
+    ],
+    [
+        [
+            "file",
+            "server/src/actions/updateGroup.ts"
+        ],
+        "caf58ce3ec542a58bffd61e80eeebcd455311fcfe1758b8fc60d169f221589ba"
+    ],
+    [
+        [
+            "file",
+            "server/src/actions/updateIceBreaker.ts"
+        ],
+        "47311be19f4cb167173850857949059309e96b4293b38bb7ca8cd8dbdbfa60ff"
+    ],
+    [
+        [
+            "file",
+            "server/src/actions/updateLink.ts"
+        ],
+        "334112ee99eae92eb565b885fb6fff0941c4d19287634d7616b9604fe35a72a2"
+    ],
+    [
+        [
+            "file",
+            "server/src/actions/updateMessage.ts"
+        ],
+        "623b01fcd044a5c0174673539972b974cad124b6d61b8df2a36a5df1119c8d4d"
+    ],
+    [
+        [
+            "file",
+            "server/src/actions/updatePhoto.ts"
+        ],
+        "7ea189193bdb546f4432a4a20c42608790bf472dc1381004caf6d2f466089aa9"
+    ],
+    [
+        [
+            "file",
+            "server/src/actions/updateUser.ts"
+        ],
+        "4e8bb489248a130907f0f08be9f7fc33042c56ca591fd1f24611bd132cb8de98"
+    ],
+    [
+        [
+            "file",
+            "server/src/actions/updateUserRole.ts"
+        ],
+        "f8c73a917fab07ef66e3a993dd2c811dbb4574c1bdd399522544d2a0d57ad3dd"
+    ],
+    [
+        [
+            "file",
+            "server/src/actions/updateUserUser.ts"
+        ],
+        "033213cf43e6ee6485b9461f4517fc9ad40bd8ca6d4f6da510b7d15a062fd61f"
     ],
     [
         [
@@ -802,21 +1089,21 @@
             "file",
             "server/src/queries/getGreeting.ts"
         ],
-        "0bfe6603745bbe4a055987c9e73d6b1a55cf830a06f6e961e915360103accca5"
+        "88fe68e91f11d8dcefec93ee6f9f915c4e8ce5eb2c5bc1467947f8365cd604e8"
     ],
     [
         [
             "file",
             "server/src/queries/getGreetings.ts"
         ],
-        "96ea83235a9b70465349a4e917696b9080cff37bfe31c2b92568c0ac62070680"
+        "59c68f354f007857adac6d704ce0a5d4fd42d9f18ddb5cdea2703a9f4b08e27d"
     ],
     [
         [
             "file",
             "server/src/queries/getGroup.ts"
         ],
-        "4d748ee37810b64e34c0ee4c237e765e2dcb4074549f4e9d13795b56d9e8c9e6"
+        "d19a8bc44feb08353923e8726c506d01f0381d1845b6d238b1252dd13cc49305"
     ],
     [
         [
@@ -830,14 +1117,14 @@
             "file",
             "server/src/queries/getIceBreaker.ts"
         ],
-        "c5927d7271aeba272a508fdc017657e625e7e760ba339655b86e5821065d01b4"
+        "8485a78955f7da09e1e1fc82acd5f87c6a2a0e3258827d542e9b86df528ed898"
     ],
     [
         [
             "file",
             "server/src/queries/getIceBreakers.ts"
         ],
-        "f73fc02e75f95a78c847ee3b9ad0beb18c0d2c1f05396fb159e77e44ba0eece4"
+        "0fa01874d562df40f7540acf0fbe78dfd3de9247760802d580d142a96a4859bc"
     ],
     [
         [
@@ -858,14 +1145,14 @@
             "file",
             "server/src/queries/getMessage.ts"
         ],
-        "939f9a8f2fcab006a89112f35f9bd7a885a88909634d45ed31b18bfae0bc7b33"
+        "86d6bd5f7558fec39691bdb8964064ba36253ae14cbef42715841036a4896a59"
     ],
     [
         [
             "file",
             "server/src/queries/getMessages.ts"
         ],
-        "3fd38010da463cd5b0fdf4c5c733cdbd83b907897b7e6e426ab4515cbe5994ff"
+        "e84dee3bba3c455ed1f13fd86a329df4990b9e9f6e367569d7a214212ed66942"
     ],
     [
         [
@@ -922,6 +1209,125 @@
             "server/src/routes/index.js"
         ],
         "82de90912ac6e93d1c068073d703b9bc76db0670cc42bdc5fbc718b5aa9d39fd"
+    ],
+    [
+        [
+            "file",
+            "server/src/routes/operations/createCode.js"
+        ],
+        "294d28c6f3d9d760fa852558f73d6b2283f779f4564f1d8947093692375bbfc8"
+    ],
+    [
+        [
+            "file",
+            "server/src/routes/operations/createGreeting.js"
+        ],
+        "8cea352e11791fc22f3f6139c5c38d7152f5ce25e4d332cd0ce25dc5cd9b3c26"
+    ],
+    [
+        [
+            "file",
+            "server/src/routes/operations/createGroup.js"
+        ],
+        "49e86c2024462531712d6172f1074ea61f4e86a73e5f336b6551760f547090b8"
+    ],
+    [
+        [
+            "file",
+            "server/src/routes/operations/createIceBreaker.js"
+        ],
+        "ae792dbc4714d63ecc10a587b2d96771096a5b50643279b0e1d31ec65eb73eb3"
+    ],
+    [
+        [
+            "file",
+            "server/src/routes/operations/createLink.js"
+        ],
+        "4a02e3ccfb94843b268877e9dbcc1bf87319bd0ce2950ca467711411915fdca0"
+    ],
+    [
+        [
+            "file",
+            "server/src/routes/operations/createMessage.js"
+        ],
+        "6d1722a826ba1cc8ac39bb8b9e1fc9be3e2017ca3bb1f9804e4dfb6ff6d5c63d"
+    ],
+    [
+        [
+            "file",
+            "server/src/routes/operations/createPhoto.js"
+        ],
+        "7b6cf05c5d7411baeb0713f6a4b5d9ca31469627a0c2dc9af7570ba76e59df40"
+    ],
+    [
+        [
+            "file",
+            "server/src/routes/operations/createUserUser.js"
+        ],
+        "e9ec6419c105d0b4fccf86b63e8392fec7fffaebe9212271b49a8d5e79b054c5"
+    ],
+    [
+        [
+            "file",
+            "server/src/routes/operations/deleteCode.js"
+        ],
+        "7deba525baa91c60c1dfcf0b160af2c22de2ffd3f9c63092ead4a3de5aed7e3b"
+    ],
+    [
+        [
+            "file",
+            "server/src/routes/operations/deleteGreeting.js"
+        ],
+        "b7915259e83dabe395c3466b8ca718a2f95353e37577062fee4cafac4584ccab"
+    ],
+    [
+        [
+            "file",
+            "server/src/routes/operations/deleteGroup.js"
+        ],
+        "a828e4aa95e704479bcf5bda55ad448d2f473cf4cd98a14b35a04d4a56deb8d6"
+    ],
+    [
+        [
+            "file",
+            "server/src/routes/operations/deleteIceBreaker.js"
+        ],
+        "3331a09abbebac6365a235df4066039f8cb6ff892338e74d95968b32c20c0b76"
+    ],
+    [
+        [
+            "file",
+            "server/src/routes/operations/deleteLink.js"
+        ],
+        "eaefce609c0db1c3a45068dc6c756688b44d4138a95ffe068767bec48786c1f7"
+    ],
+    [
+        [
+            "file",
+            "server/src/routes/operations/deleteMessage.js"
+        ],
+        "12921c2a8582531622072fbd2a192269419e6f90ef4dc7cfa19c918b8c3e1a06"
+    ],
+    [
+        [
+            "file",
+            "server/src/routes/operations/deletePhoto.js"
+        ],
+        "5d42e7b547ecb95fd4fca4d3a70b536614d9eacaf76658c5d83f3f2bfe06084e"
+    ],
+    [
+        [
+            "file",
+            "server/src/routes/operations/deleteUser.js"
+        ],
+        "abb8165f4744ed81cb2deba24dc9efea1da6740e6fd1cb1ed57cc762552f4f93"
+    ],
+    [
+        [
+            "file",
+            "server/src/routes/operations/deleteUserUser.js"
+        ],
+        "6a414e757b12dbddb753eea482a054ab8b8735c11ad66163adf6d2ccc54cf52f"
     ],
     [
         [
@@ -1040,7 +1446,91 @@
             "file",
             "server/src/routes/operations/index.js"
         ],
-        "a6f261a55cee5c38bce7e04df8d1604ac2557ba7e855031a3f6f2005a45da257"
+        "b76ced268032c6805db109eda21a9cd016323dd8b7f759a154b411ecb14fc04e"
+    ],
+    [
+        [
+            "file",
+            "server/src/routes/operations/joinGroup.js"
+        ],
+        "e61a2f1a7bc00411fec28b57c1276e42d95564ff51321e56838f89299ec8cb9d"
+    ],
+    [
+        [
+            "file",
+            "server/src/routes/operations/leaveGroup.js"
+        ],
+        "cd141d092eabc1442044191872d89e0bac85d7aab5709c8101034fb2245c9628"
+    ],
+    [
+        [
+            "file",
+            "server/src/routes/operations/updateCode.js"
+        ],
+        "35f9491a4933e932f80d5cf2b8f19976542befe6e6a44fc523e819181bb51890"
+    ],
+    [
+        [
+            "file",
+            "server/src/routes/operations/updateGreeting.js"
+        ],
+        "68d4b3ac169a7fe874afc6115ec95bd4136159f77b143aa4e7f8277c92fdd3d8"
+    ],
+    [
+        [
+            "file",
+            "server/src/routes/operations/updateGroup.js"
+        ],
+        "dff6b1c44410a86d6f01151537b7b7fce0976e792df0a916d7caeb661ac6335b"
+    ],
+    [
+        [
+            "file",
+            "server/src/routes/operations/updateIceBreaker.js"
+        ],
+        "4c2dbb8e79cb73362411cc1f15ecdaa2c0a76946e20caed55247e7443cf11519"
+    ],
+    [
+        [
+            "file",
+            "server/src/routes/operations/updateLink.js"
+        ],
+        "012dde1a77cf09ca19d0ddf0c65f7ef093022d66807d7c0170f9186b65aed5ae"
+    ],
+    [
+        [
+            "file",
+            "server/src/routes/operations/updateMessage.js"
+        ],
+        "c23ac74416fd917860bd35c8903e65c38f99caf5d45a1e450e496756deafc1cd"
+    ],
+    [
+        [
+            "file",
+            "server/src/routes/operations/updatePhoto.js"
+        ],
+        "bd4a092b3b1c59e7a6e45b7c28303d6c1bd9cf942f5d7d7f3f5d044523929ccd"
+    ],
+    [
+        [
+            "file",
+            "server/src/routes/operations/updateUser.js"
+        ],
+        "4257d93a05ed58010cf0d0dcdea34fcd4d42427a2d5d9cd14cf9f17780824c7e"
+    ],
+    [
+        [
+            "file",
+            "server/src/routes/operations/updateUserRole.js"
+        ],
+        "f4311fe477e09d9a26186fe5546ef86ec2431026cb6ece3baf4a5b2dfa40d30a"
+    ],
+    [
+        [
+            "file",
+            "server/src/routes/operations/updateUserUser.js"
+        ],
+        "221b1091c1faea98bdc8c4b32b7f31c71b20d9134f4d0e774d2936d2626cb218"
     ],
     [
         [
@@ -1187,7 +1677,7 @@
             "file",
             "web-app/src/router.tsx"
         ],
-        "40d6f4687f3ba52ce6d75886b20dfd3db6c0f56dc0648b2f625c08bab2e44ab9"
+        "7f810c09c472946eaceeb8b9acfe60769b111c64b9a19bfb5ff93bcf912e158e"
     ],
     [
         [

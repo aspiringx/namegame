@@ -8,7 +8,7 @@ export default async function (args, context) {
     ...context,
     entities: {
       Greeting: prisma.greeting,
-      User: prisma.user,
+      UserUser: prisma.userUser,
     },
   })
 }

@@ -19,7 +19,7 @@ title NameGame Class Diagram
 class User {
   +id: int
   +username: string
-  +pin: string
+  +password: string
   +firstName: string
   +lastName: string
   +created: datetime
@@ -264,9 +264,9 @@ end note
 ' 1. If the recipient is not authenticated, they're prompted to log in or
 '    just add their first name and proceed as a guest.
 '   a. If guest, we create an anonymous user with only first name and a
-'      randomly generated username (e.g. guest123) and pin (4-digit), which
+'      randomly generated username (e.g. guest123) and password which
 '      creates an auth token valid for the parent group, expiring in 60 days.
-'   b. Or user logs in with username+pin. If we have it in localStorage of the
+'   b. Or user logs in with username+password. If we have it in localStorage of the
 '      device browser, we just use it and give a new 60-day token.
 '   c. Then we add/update a UserUser relation of type `acquaintance` and
 '      increment greetCount, starting from 0. If 10, update relation to `friend`.

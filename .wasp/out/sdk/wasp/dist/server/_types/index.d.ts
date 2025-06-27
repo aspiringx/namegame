@@ -20,7 +20,9 @@ export type EntityMap<Entities extends _Entity[]> = {
 };
 export type PrismaDelegate = {
     "User": typeof prisma.user;
+    "UserUser": typeof prisma.userUser;
     "Group": typeof prisma.group;
+    "GroupUser": typeof prisma.groupUser;
     "Code": typeof prisma.code;
     "Photo": typeof prisma.photo;
     "Message": typeof prisma.message;

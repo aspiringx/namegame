@@ -21,7 +21,7 @@ export const routes = {
         options?.hash
       ),
   },
-  LoginPage: {
+  LoginRoute: {
     to: "/login",
     build: (
       options?:
@@ -29,19 +29,6 @@ export const routes = {
     ) => interpolatePath(
         
         "/login",
-        undefined,
-        options?.search,
-        options?.hash
-      ),
-  },
-  SignupPage: {
-    to: "/signup",
-    build: (
-      options?:
-      OptionalRouteOptions
-    ) => interpolatePath(
-        
-        "/signup",
         undefined,
         options?.search,
         options?.hash

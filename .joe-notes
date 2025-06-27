@@ -32,3 +32,13 @@ Instructions:
 2. Make trenchant observations.
 3. Ask me clarifying questions.
 4. Re-write the plan based on the result. 
+
+
+Idea: try guiding it with TDD approach. 
+* Problem: would require 100% code coverage.
+
+Write vs. Chat mode
+* Use chat mode to think through things without writing to files, except maybe ...
+* Does windsurf give chat permission to write plan files? Or require write mode?
+
+Cline - open source alternative. VS code extension. 

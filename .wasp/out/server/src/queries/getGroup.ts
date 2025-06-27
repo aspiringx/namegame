@@ -8,6 +8,12 @@ export default async function (args, context) {
     ...context,
     entities: {
       Group: prisma.group,
+      User: prisma.user,
+      GroupUser: prisma.groupUser,
+      Photo: prisma.photo,
+      Message: prisma.message,
+      Link: prisma.link,
+      IceBreaker: prisma.iceBreaker,
     },
   })
 }

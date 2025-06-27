@@ -3,8 +3,8 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 
 import createAuthRequiredPage from "./auth/pages/createAuthRequiredPage"
 
-import { MainPage } from '../../../../src/MainPage'
-import { AuthPage } from '../../../../src/AuthPage'
+import { MainPage } from '../../../../src/MainPage.tsx'
+import { AuthPage } from '../../../../src/AuthPage.tsx'
 
 
 import { DefaultRootErrorBoundary } from './components/DefaultRootErrorBoundary'
@@ -12,9 +12,8 @@ import { DefaultRootErrorBoundary } from './components/DefaultRootErrorBoundary'
 import { routes } from 'wasp/client/router'
 
 export const routeNameToRouteComponent = {
-  RootRoute: MainPage,
-  LoginPage: AuthPage,
-  SignupPage: AuthPage,
+  RootRoute: createAuthRequiredPage(MainPage),
+  LoginRoute: AuthPage,
 } as const;
 
 const waspDefinedRoutes = [

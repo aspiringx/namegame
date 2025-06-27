@@ -13,229 +13,82 @@ app namegame {
   }
 }
 
+// =========== ROUTES & PAGES ===========
+
 route RootRoute { path: "/", to: MainPage }
 page MainPage {
-  component: import { MainPage } from "@src/MainPage"
+  component: import { MainPage } from "@src/MainPage.tsx",
+  authRequired: true
 }
 
-route LoginPage { path: "/login", to: AuthPage }
-route SignupPage { path: "/signup", to: AuthPage }
+route LoginRoute { path: "/login", to: AuthPage }
 page AuthPage {
-  component: import { AuthPage } from "@src/AuthPage"
+  component: import { AuthPage } from "@src/AuthPage.tsx"
 }
 
-// User Queries and Actions
-query getUser {
-  fn: import { getUser } from "@src/queries",
-  entities: [User],
-  auth: true
-}
-query getUsers {
-  fn: import { getUsers } from "@src/queries",
-  entities: [User],
-  auth: true
-}
-// action createUser {
-//   fn: import { createUser } from "@src/actions",
-//   entities: [User],
-//   auth: false
-// }
-// action updateUser {
-//   fn: import { updateUser } from "@src/actions",
-//   entities: [User],
-//   auth: true
-// }
-// action deleteUser {
-//   fn: import { deleteUser } from "@src/actions",
-//   entities: [User],
-//   auth: true
-// }
+// =========== QUERIES & ACTIONS ===========
 
-// Group Queries and Actions
-query getGroup {
-  fn: import { getGroup } from "@src/queries",
-  entities: [Group],
-  auth: true
-}
-query getGroups {
-  fn: import { getGroups } from "@src/queries",
-  entities: [Group],
-  auth: true
-}
-// action createGroup {
-//   fn: import { createGroup } from "@src/actions",
-//   entities: [Group],
-//   auth: true
-// }
-// action updateGroup {
-//   fn: import { updateGroup } from "@src/actions",
-//   entities: [Group],
-//   auth: true
-// }
-// action deleteGroup {
-//   fn: import { deleteGroup } from "@src/actions",
-//   entities: [Group],
-//   auth: true
-// }
+// User
+query getUser { fn: import { getUser } from "@src/queries", entities: [User], auth: true }
+query getUsers { fn: import { getUsers } from "@src/queries", entities: [User], auth: true }
+action updateUser { fn: import { updateUser } from "@src/actions", entities: [User], auth: true }
+action deleteUser { fn: import { deleteUser } from "@src/actions", entities: [User], auth: true }
 
-// Link Queries and Actions
-query getLink {
-  fn: import { getLink } from "@src/queries",
-  entities: [Link, Group],
-  auth: true
-}
-query getLinks {
-  fn: import { getLinks } from "@src/queries",
-  entities: [Link, Group],
-  auth: true
-}
-// action createLink {
-//   fn: import { createLink } from "@src/actions",
-//   entities: [Link, Group],
-//   auth: true
-// }
-// action updateLink {
-//   fn: import { updateLink } from "@src/actions",
-//   entities: [Link, Group],
-//   auth: true
-// }
-// action deleteLink {
-//   fn: import { deleteLink } from "@src/actions",
-//   entities: [Link, Group],
-//   auth: true
-// }
+// Group
+query getGroup { fn: import { getGroup } from "@src/queries", entities: [Group, User, GroupUser, Photo, Message, Link, IceBreaker], auth: true }
+query getGroups { fn: import { getGroups } from "@src/queries", entities: [Group], auth: true }
+action createGroup { fn: import { createGroup } from "@src/actions", entities: [Group, GroupUser], auth: true }
+action updateGroup { fn: import { updateGroup } from "@src/actions", entities: [Group, GroupUser], auth: true }
+action deleteGroup { fn: import { deleteGroup } from "@src/actions", entities: [Group, GroupUser], auth: true }
 
-// Code Queries and Actions
-query getCode {
-  fn: import { getCode } from "@src/queries",
-  entities: [Code, User, Group],
-  auth: true
-}
-query getCodes {
-  fn: import { getCodes } from "@src/queries",
-  entities: [Code, User, Group],
-  auth: true
-}
-// action createCode {
-//   fn: import { createCode } from "@src/actions",
-//   entities: [Code, User, Group],
-//   auth: true
-// }
-// action updateCode {
-//   fn: import { updateCode } from "@src/actions",
-//   entities: [Code, User, Group],
-//   auth: true
-// }
-// action deleteCode {
-//   fn: import { deleteCode } from "@src/actions",
-//   entities: [Code, User, Group],
-//   auth: true
-// }
+// Photo
+query getPhoto { fn: import { getPhoto } from "@src/queries", entities: [Photo, User, Group], auth: true }
+query getPhotos { fn: import { getPhotos } from "@src/queries", entities: [Photo, User, Group], auth: true }
+action createPhoto { fn: import { createPhoto } from "@src/actions", entities: [Photo, User, Group, GroupUser], auth: true }
+action updatePhoto { fn: import { updatePhoto } from "@src/actions", entities: [Photo, User, Group, GroupUser], auth: true }
+action deletePhoto { fn: import { deletePhoto } from "@src/actions", entities: [Photo, User, Group, GroupUser], auth: true }
 
-// Photo Queries and Actions
-query getPhoto {
-  fn: import { getPhoto } from "@src/queries",
-  entities: [Photo, User, Group],
-  auth: true
-}
-query getPhotos {
-  fn: import { getPhotos } from "@src/queries",
-  entities: [Photo, User, Group],
-  auth: true
-}
-// action createPhoto {
-//   fn: import { createPhoto } from "@src/actions",
-//   entities: [Photo, User, Group],
-//   auth: true
-// }
-// action updatePhoto {
-//   fn: import { updatePhoto } from "@src/actions",
-//   entities: [Photo, User, Group],
-//   auth: true
-// }
-// action deletePhoto {
-//   fn: import { deletePhoto } from "@src/actions",
-//   entities: [Photo, User, Group],
-//   auth: true
-// }
+// Message
+query getMessage { fn: import { getMessage } from "@src/queries", entities: [Message, User, Group], auth: true }
+query getMessages { fn: import { getMessages } from "@src/queries", entities: [Message, User, Group], auth: true }
+action createMessage { fn: import { createMessage } from "@src/actions", entities: [Message], auth: true }
+action updateMessage { fn: import { updateMessage } from "@src/actions", entities: [Message], auth: true }
+action deleteMessage { fn: import { deleteMessage } from "@src/actions", entities: [Message], auth: true }
 
-// Message Queries and Actions
-query getMessage {
-  fn: import { getMessage } from "@src/queries",
-  entities: [Message, User],
-  auth: true
-}
-query getMessages {
-  fn: import { getMessages } from "@src/queries",
-  entities: [Message, User],
-  auth: true
-}
-// action createMessage {
-//   fn: import { createMessage } from "@src/actions",
-//   entities: [Message, User],
-//   auth: true
-// }
-// action updateMessage {
-//   fn: import { updateMessage } from "@src/actions",
-//   entities: [Message, User],
-//   auth: true
-// }
-// action deleteMessage {
-//   fn: import { deleteMessage } from "@src/actions",
-//   entities: [Message, User],
-//   auth: true
-// }
+// UserUser (Relationships)
+action createUserUser { fn: import { createUserUser } from "@src/actions", entities: [UserUser, GroupUser], auth: true }
+action updateUserUser { fn: import { updateUserUser } from "@src/actions", entities: [UserUser, GroupUser], auth: true }
+action deleteUserUser { fn: import { deleteUserUser } from "@src/actions", entities: [UserUser, GroupUser], auth: true }
 
-// Greeting Queries and Actions
-query getGreeting {
-  fn: import { getGreeting } from "@src/queries",
-  entities: [Greeting, User],
-  auth: true
-}
-query getGreetings {
-  fn: import { getGreetings } from "@src/queries",
-  entities: [Greeting, User],
-  auth: true
-}
-// action createGreeting {
-//   fn: import { createGreeting } from "@src/actions",
-//   entities: [Greeting, User],
-//   auth: true
-// }
-// action updateGreeting {
-//   fn: import { updateGreeting } from "@src/actions",
-//   entities: [Greeting, User],
-//   auth: true
-// }
-// action deleteGreeting {
-//   fn: import { deleteGreeting } from "@src/actions",
-//   entities: [Greeting, User],
-//   auth: true
-// }
+// GroupUser (Memberships)
+action joinGroup { fn: import { joinGroup } from "@src/actions", entities: [GroupUser, Code, Group], auth: true }
+action leaveGroup { fn: import { leaveGroup } from "@src/actions", entities: [GroupUser], auth: true }
+action updateUserRole { fn: import { updateUserRole } from "@src/actions", entities: [GroupUser], auth: true }
 
-// IceBreaker Queries and Actions
-query getIceBreaker {
-  fn: import { getIceBreaker } from "@src/queries",
-  entities: [IceBreaker, Group],
-  auth: true
-}
-query getIceBreakers {
-  fn: import { getIceBreakers } from "@src/queries",
-  entities: [IceBreaker, Group],
-  auth: true
-}
-// action createIceBreaker {
-//   fn: import { createIceBreaker } from "@src/actions",
-//   entities: [IceBreaker, Group],
-//   auth: true
-// }
-// action updateIceBreaker {
-//   fn: import { updateIceBreaker } from "@src/actions",
-//   entities: [IceBreaker, Group],
-//   auth: true
-// }
-// action deleteIceBreaker {
-//   fn: import { deleteIceBreaker } from "@src/actions",
-//   entities: [IceBreaker, Group],
-//   auth: true
-// }
+// Code
+query getCode { fn: import { getCode } from "@src/queries", entities: [Code, User, Group], auth: true }
+query getCodes { fn: import { getCodes } from "@src/queries", entities: [Code, User, Group], auth: true }
+action createCode { fn: import { createCode } from "@src/actions", entities: [Code, User, Group, GroupUser], auth: true }
+action updateCode { fn: import { updateCode } from "@src/actions", entities: [Code, User, Group, GroupUser], auth: true }
+action deleteCode { fn: import { deleteCode } from "@src/actions", entities: [Code, User, Group, GroupUser], auth: true }
+
+// Greeting
+query getGreeting { fn: import { getGreeting } from "@src/queries", entities: [Greeting, UserUser], auth: true }
+query getGreetings { fn: import { getGreetings } from "@src/queries", entities: [Greeting, UserUser], auth: true }
+action createGreeting { fn: import { createGreeting } from "@src/actions", entities: [Greeting, UserUser], auth: true }
+action updateGreeting { fn: import { updateGreeting } from "@src/actions", entities: [Greeting, UserUser], auth: true }
+action deleteGreeting { fn: import { deleteGreeting } from "@src/actions", entities: [Greeting, UserUser], auth: true }
+
+// Link
+query getLink { fn: import { getLink } from "@src/queries", entities: [Link, Group], auth: true }
+query getLinks { fn: import { getLinks } from "@src/queries", entities: [Link, Group], auth: true }
+action createLink { fn: import { createLink } from "@src/actions", entities: [Link, Group, GroupUser], auth: true }
+action updateLink { fn: import { updateLink } from "@src/actions", entities: [Link, Group, GroupUser], auth: true }
+action deleteLink { fn: import { deleteLink } from "@src/actions", entities: [Link, Group, GroupUser], auth: true }
+
+// IceBreaker
+query getIceBreaker { fn: import { getIceBreaker } from "@src/queries", entities: [IceBreaker, User, Group], auth: true }
+query getIceBreakers { fn: import { getIceBreakers } from "@src/queries", entities: [IceBreaker, User, Group], auth: true }
+action createIceBreaker { fn: import { createIceBreaker } from "@src/actions", entities: [IceBreaker, GroupUser], auth: true }
+action updateIceBreaker { fn: import { updateIceBreaker } from "@src/actions", entities: [IceBreaker, GroupUser], auth: true }
+action deleteIceBreaker { fn: import { deleteIceBreaker } from "@src/actions", entities: [IceBreaker, GroupUser], auth: true }

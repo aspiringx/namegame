@@ -7,7 +7,9 @@ import {
   type Entity, 
   type EntityName,
   type User,
+  type UserUser,
   type Group,
+  type GroupUser,
   type Code,
   type Photo,
   type Message,
@@ -17,7 +19,9 @@ import {
 } from 'wasp/entities'
 
 export type _User = WithName<User, "User">
+export type _UserUser = WithName<UserUser, "UserUser">
 export type _Group = WithName<Group, "Group">
+export type _GroupUser = WithName<GroupUser, "GroupUser">
 export type _Code = WithName<Code, "Code">
 export type _Photo = WithName<Photo, "Photo">
 export type _Message = WithName<Message, "Message">
@@ -27,7 +31,9 @@ export type _Link = WithName<Link, "Link">
 
 export type _Entity = 
   | _User
+  | _UserUser
   | _Group
+  | _GroupUser
   | _Code
   | _Photo
   | _Message

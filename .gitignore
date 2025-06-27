@@ -1,6 +1,6 @@
 # Comment .wasp while vibe coding so it can access generated types. 
 # TODO: uncomment this before committing!
-# .wasp/
+.wasp/
 node_modules/
 
 # Ignore all dotenv files by default to prevent accidentally committing any secrets.

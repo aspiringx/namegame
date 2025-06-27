@@ -1,6 +1,8 @@
 import {
   type User,
+  type UserUser,
   type Group,
+  type GroupUser,
   type Code,
   type Photo,
   type Message,
@@ -11,7 +13,9 @@ import {
 
 export {
   type User,
+  type UserUser,
   type Group,
+  type GroupUser,
   type Code,
   type Photo,
   type Message,
@@ -24,7 +28,9 @@ export {
 
 export type Entity = 
   | User
+  | UserUser
   | Group
+  | GroupUser
   | Code
   | Photo
   | Message
@@ -35,7 +41,9 @@ export type Entity =
 
 export type EntityName = 
   | "User"
+  | "UserUser"
   | "Group"
+  | "GroupUser"
   | "Code"
   | "Photo"
   | "Message"
