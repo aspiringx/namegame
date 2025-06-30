@@ -9,13 +9,18 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// wasp's built-in auth service stores the username and password separate from 
+// the User entity, so not needed here. 
+//
+// We'll provide default username (based on their firstName) so they can just 
+// enter one thing (first name) when a guest. Since it must be unique, before 
+// attempting signup(), we'll see if it's taken and append number if needed.
 model User {
   id        Int       @id @default(autoincrement())
-  username  String    @unique
-  password  String
-  firstName String
-  lastName  String
-  createdAt DateTime  @default(now())
+  // username  String    @unique
+  firstName String?
+  lastName  String?
+  createdAt  DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 

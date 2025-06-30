@@ -1,15 +1,36 @@
+-- CreateEnum
+CREATE TYPE "UserUserRelationType" AS ENUM ('acquaintance', 'friend', 'family');
+
+-- CreateEnum
+CREATE TYPE "GroupUserRole" AS ENUM ('owner', 'admin', 'member');
+
+-- CreateEnum
+CREATE TYPE "PhotoType" AS ENUM ('logo', 'primary', 'other');
+
 -- CreateTable
 CREATE TABLE "users" (
     "id" SERIAL NOT NULL,
-    "username" TEXT NOT NULL,
-    "pin" TEXT NOT NULL,
-    "firstName" TEXT NOT NULL,
-    "lastName" TEXT NOT NULL,
+    "firstName" TEXT,
+    "lastName" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "deletedAt" TIMESTAMP(3),
 
     CONSTRAINT "users_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "user_users" (
+    "user1Id" INTEGER NOT NULL,
+    "user2Id" INTEGER NOT NULL,
+    "groupId" INTEGER NOT NULL,
+    "greetCount" INTEGER NOT NULL DEFAULT 0,
+    "relationType" "UserUserRelationType" NOT NULL DEFAULT 'acquaintance',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "deletedAt" TIMESTAMP(3),
+
+    CONSTRAINT "user_users_pkey" PRIMARY KEY ("user1Id","user2Id","groupId")
 );
 
 -- CreateTable
@@ -25,6 +46,18 @@ CREATE TABLE "groups" (
     "deletedAt" TIMESTAMP(3),
 
     CONSTRAINT "groups_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "group_users" (
+    "userId" INTEGER NOT NULL,
+    "groupId" INTEGER NOT NULL,
+    "role" "GroupUserRole" NOT NULL DEFAULT 'member',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "deletedAt" TIMESTAMP(3),
+
+    CONSTRAINT "group_users_pkey" PRIMARY KEY ("userId","groupId")
 );
 
 -- CreateTable
@@ -48,7 +81,7 @@ CREATE TABLE "photos" (
     "entityType" TEXT NOT NULL,
     "entityId" INTEGER NOT NULL,
     "url" TEXT NOT NULL,
-    "type" TEXT NOT NULL DEFAULT 'other',
+    "type" "PhotoType" NOT NULL DEFAULT 'other',
     "isBlocked" BOOLEAN NOT NULL DEFAULT false,
     "uploadedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -136,9 +169,6 @@ CREATE TABLE "Session" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "users_username_key" ON "users"("username");
-
--- CreateIndex
 CREATE UNIQUE INDEX "groups_slug_key" ON "groups"("slug");
 
 -- CreateIndex
@@ -158,6 +188,21 @@ CREATE UNIQUE INDEX "Session_id_key" ON "Session"("id");
 
 -- CreateIndex
 CREATE INDEX "Session_userId_idx" ON "Session"("userId");
+
+-- AddForeignKey
+ALTER TABLE "user_users" ADD CONSTRAINT "user_users_user1Id_fkey" FOREIGN KEY ("user1Id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "user_users" ADD CONSTRAINT "user_users_user2Id_fkey" FOREIGN KEY ("user2Id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "user_users" ADD CONSTRAINT "user_users_groupId_fkey" FOREIGN KEY ("groupId") REFERENCES "groups"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "group_users" ADD CONSTRAINT "group_users_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "group_users" ADD CONSTRAINT "group_users_groupId_fkey" FOREIGN KEY ("groupId") REFERENCES "groups"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "codes" ADD CONSTRAINT "codes_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

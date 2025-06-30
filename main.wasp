@@ -7,11 +7,15 @@ app namegame {
   auth: {
     userEntity: User,
     methods: {
-      usernameAndPassword: {}
+      usernameAndPassword: {
+        userSignupFields: import { userSignupFields } from "@src/auth/userSignupFields.ts"
+      }
     },
     onAuthFailedRedirectTo: "/login"
   }
 }
+
+// =========== AUTH ACTIONS ===========
 
 // =========== ROUTES & PAGES ===========
 
@@ -22,6 +26,7 @@ page MainPage {
 }
 
 route LoginRoute { path: "/login", to: AuthPage }
+route SignupRoute { path: "/signup", to: AuthPage }
 page AuthPage {
   component: import { AuthPage } from "@src/AuthPage.tsx"
 }
