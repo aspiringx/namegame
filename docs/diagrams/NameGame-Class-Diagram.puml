@@ -19,7 +19,6 @@ title NameGame Class Diagram
 class User {
   +id: int
   +username: string
-  +password: string
   +firstName: string
   +lastName: string
   +created: datetime
