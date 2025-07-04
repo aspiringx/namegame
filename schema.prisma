@@ -172,6 +172,7 @@ enum GroupUserRole {
   owner
   admin
   member
+  super
 }
 
 enum PhotoType {
