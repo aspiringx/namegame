@@ -1,3 +1,34 @@
+# NameGame
+
+**The relationship game that starts with a name.**
+
+NameGame makes it fun for people in a group to meet, remember names, 
+and get acquainted. Groups can play for a fee at 
+[namegame.app](https://namegame.app) or host it themselves.
+
+NameGame is an open source [AspiringX project](https://github.com/aspiringx/.github).
+If you're in software (engineer, UX, product management, etc.) and want to 
+contribute, mentor, and/or learn by being part of this project, contact me
+(Joe Tippetts) on <a href="https://www.linkedin.com/in/jtippetts/" target="_blank">LinkedIn</a>.
+
+TODO: 
+
+- Add instructions for running this locally:
+  - On host machine
+  - In docker
+- Add instructions for deploying this app for groups that want to host it themselves. 
+  - On the same platform we use for namegame.app (Digital Ocean)
+    - Cheap and simple for small deployments
+  - Possibly elsewhere (AWS, Google Cloud, etc.) if we can vibe code (use AI) to easily generate it and have people willing to do the leg work to test and maintain it.
+
+- Add instructions for contributing to this project.
+  - How we verify identities of people we don't already know
+  - How people can contribute without the risk of breaking it, accidentally or on purpose, etc.
+
+
+
+## Default README content from next.js
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
