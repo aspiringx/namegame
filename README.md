@@ -1,3 +1,8 @@
+**Notice: As of July 2025, this is the official NameGame codebase. The AspiringX 
+org has various other namegame repos that people were using for learning/trying 
+different languages and features, etc. When this goes live, we'll retire those 
+to avoid confusion.**
+
 # NameGame
 
 **The relationship game that starts with a name.**
