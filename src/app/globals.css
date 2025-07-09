@@ -24,3 +24,58 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+@media print {
+  header, footer, nav {
+    display: none;
+  }
+
+  body {
+    font-size: 12pt;
+    background: #fff;
+    color: #000;
+  }
+
+  main {
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  section {
+    margin-top: 1.5rem;
+    page-break-inside: avoid;
+  }
+
+  p, li, h1, h2, h3, h4 {
+    orphans: 3;
+    widows: 3;
+  }
+
+  a {
+    color: #000 !important; /* Ensure links are black */
+    text-decoration: underline;
+  }
+
+  img {
+    max-width: 100% !important;
+    page-break-inside: avoid;
+  }
+
+  .shadow-lg, .shadow-xl {
+    box-shadow: none !important;
+  }
+
+  .bg-gray-50, .bg-white {
+    background-color: transparent !important;
+  }
+
+  .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900 {
+    color: #000 !important;
+  }
+
+  .text-blue-600 {
+    color: #000 !important;
+  }
+}
