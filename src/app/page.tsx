@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import Link from 'next/link';
 
 export default function Home() {
   return (
@@ -82,10 +83,20 @@ export default function Home() {
           <h2 className="text-3xl font-bold text-center mb-6">How to Play</h2>
           <p className="text-lg mb-6">To start playing NameGame:</p>
           <ul className="list-disc list-inside space-y-4 text-gray-700">
-            <li>Create a private group</li>
+            <li>
+              <Link href="/signup" className="text-indigo-600 hover:text-indigo-500">
+                Sign up
+              </Link>{' '}
+              or{' '}
+              <Link href="/login" className="text-indigo-600 hover:text-indigo-500">
+                login
+              </Link>
+            </li>
+            <li>Create a private group*</li>
             <li>Add your name and pic</li>
             <li>Greet someone with a code</li>
           </ul>
+          <p className="text-sm italic">*Currently not available publicly</p>
           <div className="mt-6">
             <p className="text-lg mb-6">When they scan your greeting code (with their phone), they can instantly:</p>
             <ul className="list-disc list-inside space-y-4 text-gray-700">

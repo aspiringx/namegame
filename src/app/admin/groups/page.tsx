@@ -2,6 +2,8 @@ import { prisma } from '@/lib/prisma';
 import Link from 'next/link';
 import { DeleteGroupButton } from './DeleteGroupButton';
 
+export const dynamic = 'force-dynamic';
+
 // This page is a React Server Component, so we can fetch data directly.
 export default async function AdminGroupsPage() {
   const groups = await prisma.group.findMany({
