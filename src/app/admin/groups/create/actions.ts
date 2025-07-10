@@ -6,6 +6,7 @@ import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { EntityType, PhotoType } from '@/generated/prisma';
 import { processImage } from '@/lib/photo-processing';
+import bcrypt from 'bcrypt';
 
 // Define the schema for form validation using Zod
 const GroupSchema = z.object({
@@ -52,10 +53,13 @@ export async function createGroup(formData: FormData) {
       // TODO: This is a placeholder for real authentication.
       let adminUser = await prisma.user.findFirst();
       if (!adminUser) {
+        const hashedPassword = await bcrypt.hash('password123', 10);
         adminUser = await prisma.user.create({
           data: {
+            username: 'admin',
             firstName: 'Default',
             lastName: 'Admin',
+            password: hashedPassword,
           },
         });
       }
