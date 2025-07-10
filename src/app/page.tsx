@@ -20,13 +20,26 @@ export default function Home() {
         </header>
 
         <section className="text-lg leading-relaxed space-y-6">
+          <p className="text-center text-gray-600 text-sm">
+            Ready to play?&nbsp;
+              <Link href="/signup" className="text-indigo-600 hover:text-indigo-500">
+                Sign up
+              </Link>{' '}
+              or{' '}
+              <Link href="/login" className="text-indigo-600 hover:text-indigo-500">
+                login
+              </Link>.&nbsp;
+            Or read on to learn more.
+
+
+          </p>
           <p>
             <b>We’re all part of groups...</b> families, friends, schools, jobs, neighborhoods, churches, teams, etc.
           </p>
           <p className="mb-4 bg-yellow-300 p-4 rounded-lg">
             <b>Some groups feel like sunshine!</b> People know each other’s names, are comfortable together, and talking is easy.
           </p>
-          <p className="mb-4 bg-sky-100 p-4 rounded-lg">
+          <div className="mb-4 bg-sky-100 p-4 rounded-lg">
             <p className="mb-4">
               <b>Some groups feel like ice!</b> Many people don’t know each other 
               and feel anxious about meeting, remembering names, and knowing what 
@@ -37,7 +50,7 @@ export default function Home() {
               great while others, especially new or reserved people, may feel 
               invisible or unimportant.
             </p>
-          </p>
+          </div>
         </section>
 
         <section className="mt-8">
@@ -75,7 +88,7 @@ export default function Home() {
             alt="NameGame social butterflies"
             width={70}
             height={70}
-            className="mx-auto h-auto center"
+            className="mx-auto w-auto h-auto center"
           />
         </section>
 
@@ -114,15 +127,17 @@ export default function Home() {
             alt="NameGame social butterflies"
             width={70}
             height={70}
-            className="mx-auto h-auto center"
+            className="mx-auto w-auto h-auto center"
           />
 
           <h3 className="text-3xl font-bold text-center mb-6">Here Comes the Sun</h3>
           <p className="mb-4">
-            When you begin, your group's smiley extroverts and established 
-            connectors will help you start melting the ice. But <b>NameGame is 
-            not a popularity contest!</b> Your group only "wins" by including
-            everyone!
+            <b>NameGame is not a popularity contest!</b>&nbsp;
+            When you begin, your shiny-happy extroverts and connectors 
+            will help you start melting the ice, but aren't rewarded for having 
+            the most connections. Your group succeeds when <i>everyone 
+            connects with a few people</i>, not when <i>a few people connect with 
+            everyone</i>.
           </p>
         </section>
 
@@ -132,14 +147,14 @@ export default function Home() {
             alt="NameGame social butterflies"
             width={70}
             height={70}
-            className="mx-auto h-auto center"
+            className="mx-auto w-auto h-auto center"
           />
           <h3 className="text-3xl font-bold text-center mb-6">Sun Decks and Ice Blocks</h3>
           <p className="text-lg mb-4">In the game, people's photos are divided into two sections:</p>
           <p className="mb-4 bg-yellow-300 p-4 rounded-lg">
             Your <b>Sun Deck</b> shows who you’ve greeted, their names, and chat 
-            links. Social Butterflies help you remember names and have fun things 
-            to talk about.
+            links. Social Butterflies (in the game) help you remember names and 
+            provide fun conversation questions so you never feel stuck.  
           </p>
           <p className="mb-4 bg-sky-100 p-4 rounded-lg">
             Your <b>Ice Block</b> shows dim, frozen faces with only a first name. 
@@ -150,7 +165,7 @@ export default function Home() {
             alt="NameGame social butterflies"
             width={70}
             height={70}
-            className="mx-auto h-auto center"
+            className="mx-auto w-auto h-auto center"
           />
 
           <h3 className="mt-8 text-3xl font-bold text-center mb-6">Game Tips</h3>
@@ -172,36 +187,22 @@ export default function Home() {
           </p>
           <p className="mb-4">
             <b>We only have time to be close friends with a few people.</b>&nbsp;
-            It's normal for most people in a group to be nice acquaintances. 
-            Close friendships develop when people consistently spend <i>time 
-            together</i> in spaces where they can talk freely and personally. 
+            It's normal for most people in a group to just be acquaintances. 
           </p>
           <p className="mb-4">
             <b>Participating in formal group roles and activities</b> is a great 
-            way to do this, but only when it includes enough open time 
-            together. If you engage and find yourself acting alone or in settings 
-            too formal or large for regular personal interactions, you may just 
-            feel used and tired instead of fulfilled. <i>Smart groups know
-            this.</i>
+            way to do this when it brings people together with plenty of time for 
+            free, personal conversations. If you find yourself acting alone or in 
+            settings too formal or large for regular personal interactions, you 
+            may just feel used and tired instead of fulfilled. 
           </p>
           <p className="mb-4">
-            <b>Do you have <i>group-friends</i> and <i>friend-friends</i>?</b>&nbsp;
-            You only do things with <i>group-friends</i> in the group. Like a 
-            school or work friend you never see outside of school or work. 
-            Groups are better when you have a <i>friend-friend</i> or two
-            that you spend time with independent of the group. 
-          </p>
-          <p className="mb-4">
-            <b><i>Friend-friendships</i> take precious time.</b>&nbsp; 
-            Some people's buckets are currently full with existing relationships 
-            and responsibilities. Others might have time and be craving more,
-            especially after a big change (graduation, moving, marriage, divorce, 
-            joining your group, etc.). 
-          </p>
-          <p className="mb-4">
-            <b>Buckets change over time.</b> When your group helps more people 
-            connect, important <i>group-friendships</i> can form and make&nbsp;
-            <i>friend-friendships</i> possible when the time is right. 
+            <b><i>Group-friends</i> and <i>friend-friends</i>?</b>&nbsp;
+            Group friends are a great start. Like a school or work friend you 
+            never see outside of school or work. Groups are better when you also 
+            have a <i>friend-friend</i> or two. The kind you spend time with, 
+            independent of the group. If you really click with someone, start 
+            acting like a <i>friend-friend</i>, not just a <i>group-friend</i>.
           </p>
           <p className="mb-4">
             <b>When your group consistently plays NameGame</b>, soon everyone 
@@ -222,7 +223,7 @@ export default function Home() {
             alt="NameGame social butterflies"
             width={70}
             height={70}
-            className="mx-auto h-auto center"
+            className="mx-auto w-auto h-auto center"
           />
         </section>
         <section className="mt-8 text-lg leading-relaxed">
