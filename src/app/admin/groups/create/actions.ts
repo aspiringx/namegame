@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { EntityType, PhotoType } from '@/generated/prisma';
-import { processImage } from '@/lib/photo-processing';
+import { uploadFile } from '@/lib/storage';
 import bcrypt from 'bcrypt';
 
 // Define the schema for form validation using Zod
@@ -48,7 +48,7 @@ export async function createGroup(formData: FormData) {
     });
 
     if (logo && logo.size > 0) {
-      const logoPath = await processImage(logo, newGroup.id);
+            const logoPath = await uploadFile(logo, 'groups', newGroup.id);
 
       // TODO: This is a placeholder for real authentication.
       let adminUser = await prisma.user.findFirst();

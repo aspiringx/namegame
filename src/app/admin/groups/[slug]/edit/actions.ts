@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { EntityType, PhotoType } from '@/generated/prisma';
-import { processImage, deleteImage } from '@/lib/photo-processing';
+import { uploadFile, deleteFile } from '@/lib/storage';
 import { auth } from '@/auth';
 
 // Define the schema for form validation using Zod
@@ -59,7 +59,7 @@ export async function updateGroup(formData: FormData) {
         },
       });
 
-      const logoPath = await processImage(logo, updatedGroup.id);
+            const logoPath = await uploadFile(logo, 'groups', updatedGroup.id);
 
       if (existingLogo) {
         await prisma.photo.update({
@@ -70,7 +70,7 @@ export async function updateGroup(formData: FormData) {
           },
         });
         // After successfully updating the DB, delete the old image.
-        await deleteImage(existingLogo.url);
+                await deleteFile(existingLogo.url);
       } else {
         await prisma.photo.create({
           data: {

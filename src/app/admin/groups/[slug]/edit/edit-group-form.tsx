@@ -2,8 +2,9 @@
 
 import { updateGroup } from './actions';
 import type { Group } from '@/generated/prisma';
+import Image from 'next/image';
 
-export default function EditGroupForm({ group }: { group: Group }) {
+export default function EditGroupForm({ group, logoUrl }: { group: Group, logoUrl: string }) {
   return (
     <form action={updateGroup} className="space-y-6">
       <input type="hidden" name="groupId" value={group.id} />
@@ -76,6 +77,18 @@ export default function EditGroupForm({ group }: { group: Group }) {
         <label htmlFor="logo" className="block text-sm font-medium text-gray-700">
           Logo
         </label>
+        {logoUrl && (
+          <div className="mt-2 mb-4">
+            <p className="text-sm text-gray-500 mb-2">Current Logo:</p>
+            <Image
+              src={logoUrl}
+              alt={`${group.name} logo`}
+              width={100}
+              height={100}
+              className="rounded-md object-cover"
+            />
+          </div>
+        )}
         <input
           type="file"
           id="logo"
