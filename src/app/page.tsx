@@ -153,12 +153,12 @@ export default function Home() {
           <p className="text-lg mb-4">In the game, people's photos are divided into two sections:</p>
           <p className="mb-4 bg-yellow-300 p-4 rounded-lg">
             Your <b>Sun Deck</b> shows who you’ve greeted, their names, and chat 
-            links. Social Butterflies (in the game) help you remember names and 
-            provide fun conversation questions so you never feel stuck.  
+            links. Social Butterflies flutter around your Sun Deck to help you 
+            remember names and prompt interesting conversations.
           </p>
           <p className="mb-4 bg-sky-100 p-4 rounded-lg">
             Your <b>Ice Block</b> shows dim, frozen faces with only a first name. 
-            Say hello to welcome someone in your Ice Block to your cozy Sun Deck.
+            Say hello to welcome someone to your cozy Sun Deck.
           </p>
           <Image
             src="/images/butterflies.png"
