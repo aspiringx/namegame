@@ -2,13 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import EditGroupForm from './edit-group-form';
 
-type PageProps = {
-  params: { 
-    slug: string;
-  };
-};
-
-export default async function EditGroupPage({ params }: PageProps) {
+export default async function EditGroupPage({ params }: { params: { slug: string } }) {
   const group = await prisma.group.findUnique({
     where: {
       slug: params.slug,

@@ -6,6 +6,7 @@ import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { EntityType, PhotoType } from '@/generated/prisma';
 import { processImage, deleteImage } from '@/lib/photo-processing';
+import { auth } from '@/auth';
 
 // Define the schema for form validation using Zod
 const GroupSchema = z.object({
@@ -17,7 +18,12 @@ const GroupSchema = z.object({
   logo: z.instanceof(File).optional(),
 });
 
-export async function updateGroup(groupId: number, formData: FormData) {
+export async function updateGroup(formData: FormData) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    throw new Error('You must be logged in to update a group.');
+  }
+  const userId = session.user.id;
   // Extract and validate data
   const validatedFields = GroupSchema.safeParse({
     name: formData.get('name'),
@@ -37,7 +43,9 @@ export async function updateGroup(groupId: number, formData: FormData) {
   const { logo, ...groupData } = validatedFields.data;
 
   try {
-    const updatedGroup = await prisma.group.update({
+      const groupId = Number(formData.get('groupId'));
+
+  const updatedGroup = await prisma.group.update({
       where: { id: groupId },
       data: { ...groupData },
     });
@@ -53,20 +61,12 @@ export async function updateGroup(groupId: number, formData: FormData) {
 
       const logoPath = await processImage(logo, updatedGroup.id);
 
-      // TODO: This is a placeholder for real authentication.
-      let adminUser = await prisma.user.findFirst();
-      if (!adminUser) {
-        adminUser = await prisma.user.create({
-          data: { firstName: 'Default', lastName: 'Admin' },
-        });
-      }
-
       if (existingLogo) {
         await prisma.photo.update({
           where: { id: existingLogo.id },
           data: {
             url: logoPath,
-            user: { connect: { id: adminUser.id } },
+            user: { connect: { id: userId } },
           },
         });
         // After successfully updating the DB, delete the old image.
@@ -79,7 +79,7 @@ export async function updateGroup(groupId: number, formData: FormData) {
             entityType: EntityType.group,
             entityId: updatedGroup.id,
             group: { connect: { id: updatedGroup.id } },
-            user: { connect: { id: adminUser.id } },
+            user: { connect: { id: userId } },
           },
         });
       }

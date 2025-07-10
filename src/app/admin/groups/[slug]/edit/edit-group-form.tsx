@@ -4,10 +4,9 @@ import { updateGroup } from './actions';
 import type { Group } from '@/generated/prisma';
 
 export default function EditGroupForm({ group }: { group: Group }) {
-  const updateGroupWithId = updateGroup.bind(null, group.id);
-
   return (
-    <form action={updateGroupWithId} className="space-y-6">
+    <form action={updateGroup} className="space-y-6">
+      <input type="hidden" name="groupId" value={group.id} />
       <div>
         <label htmlFor="name" className="block text-sm font-medium text-gray-700">
           Name

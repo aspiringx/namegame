@@ -49,15 +49,22 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
+// With next-auth, we manage the username and (hashed) password in the users 
+// table. Other user data (photos, messages, addresses, etc.) will be in 
+// separate tables and unique to a parent[+sub] group. 
+// 
+// We attempt to derive a username from the firstName (i.e. Joe -> joe or joeN
+// if joe is already taken). Initially, passwords are generated. 
 model User {
   id             String    @id @default(cuid())
-  name           String?
-  firstName      String?
+  username       String    @unique
+  password       String
+  firstName      String
   lastName       String?
   email          String?   @unique
   emailVerified  DateTime?
-  image          String?
-  hashedPassword String?
+  phone          String?   @unique
+  phoneVerified  DateTime?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
   deletedAt      DateTime?
