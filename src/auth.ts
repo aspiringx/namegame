@@ -49,14 +49,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   callbacks: {
     jwt({ token, user }) {
-      if (user) {
+      if (user) { // User is available on initial sign-in
         token.id = user.id;
+        token.firstName = user.firstName;
       }
       return token;
     },
     session({ session, token }) {
       if (session.user) {
-        session.user.id = token.id as string;
+        session.user.id = token.id;
+        session.user.firstName = token.firstName;
       }
       return session;
     },

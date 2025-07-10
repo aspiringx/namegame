@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 export default function Home() {
   return (
-    <main className="bg-gray-50 font-sans text-gray-800">
+    <main className="font-sans text-gray-800">
       <div className="container mx-auto max-w-3xl p-8">
         <header className="text-center mb-8">
           <Image
