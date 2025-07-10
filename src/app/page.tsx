@@ -96,7 +96,7 @@ export default function Home() {
             <li>Add your name and pic</li>
             <li>Greet someone with a code</li>
           </ul>
-          <p className="text-sm italic">*Currently not available publicly</p>
+          <p className="mt-4 text-sm italic text-gray-400">* Currently not available publicly</p>
           <div className="mt-6">
             <p className="text-lg mb-6">When they scan your greeting code (with their phone), they can instantly:</p>
             <ul className="list-disc list-inside space-y-4 text-gray-700">
@@ -104,7 +104,7 @@ export default function Home() {
                 <li>See your name and pic</li>
                 <li>Chat with you*</li>
             </ul>
-            <p className="mt-4 text-sm italic">*Chat messages are limited. There to help melt the ice, then you can share phone numbers or get together to continue the conversation.</p>
+            <p className="mt-4 text-sm italic text-gray-400">* Chat messages are intentionally limited. Don't chat, talk!</p>
           </div>
         </section>
 
