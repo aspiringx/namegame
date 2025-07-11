@@ -15,23 +15,21 @@ export default function Home() {
           />
 
           <p className="text-2xl text-gray-600">
-            The ice-melting game that starts with a name
+            The ice-melting game that <i>starts with a name!</i>
           </p>
         </header>
 
         <section className="text-lg leading-relaxed space-y-6">
-          <p className="text-center text-gray-600 text-sm">
+          <p className="text-center text-gray-600 text-sm shadow-sm p-4 bg-orange-300 rounded-lg">
             Ready to play?&nbsp;
-              <Link href="/signup" className="text-indigo-600 hover:text-indigo-500">
-                Sign up
-              </Link>{' '}
-              or{' '}
-              <Link href="/login" className="text-indigo-600 hover:text-indigo-500">
-                login
-              </Link>.&nbsp;
+            <Link href="/signup" className="text-indigo-600 hover:text-indigo-500">
+              Sign up
+            </Link>{' '}
+            or{' '}
+            <Link href="/login" className="text-indigo-600 hover:text-indigo-500">
+              login
+            </Link> to get started.&nbsp;
             Or read on to learn more.
-
-
           </p>
           <p>
             <b>We’re all part of groups...</b> families, friends, schools, jobs, neighborhoods, churches, teams, etc.
@@ -46,9 +44,8 @@ export default function Home() {
               to say.
             </p>
             <p>
-              <b>The ice is relative.</b> Established group members may feel 
-              great while others, especially new or reserved people, may feel 
-              invisible or unimportant.
+              <b>The ice is relative.</b> Long-time group members may feel 
+              great while others feel invisible or uncomfortable.
             </p>
           </div>
         </section>
@@ -92,9 +89,9 @@ export default function Home() {
           />
         </section>
 
-        <section className="mt-8 p-8 bg-white rounded-lg shadow-lg">
+        <section className="mt-8 p-6 bg-white rounded-lg shadow-lg">
           <h2 className="text-3xl font-bold text-center mb-6">How to Play</h2>
-          <p className="text-lg mb-6">To start playing NameGame:</p>
+          <p className="text-lg mb-6">To play NameGame:</p>
           <ul className="list-disc list-inside space-y-4 text-gray-700">
             <li>
               <Link href="/signup" className="text-indigo-600 hover:text-indigo-500">
@@ -109,36 +106,16 @@ export default function Home() {
             <li>Add your name and pic</li>
             <li>Greet someone with a code</li>
           </ul>
-          <p className="mt-4 text-sm italic text-gray-400">* Currently not available publicly</p>
+          <p className="mt-4 text-sm italic text-gray-400">* Currently not available publicly. See more below.</p>
           <div className="mt-6">
-            <p className="text-lg mb-6">When they scan your greeting code (with their phone), they can instantly:</p>
+            <p className="text-lg mb-6">When they scan your greeting code, they can instantly:</p>
             <ul className="list-disc list-inside space-y-4 text-gray-700">
                 <li>Join with only their first name</li>
                 <li>See your name and pic</li>
                 <li>Chat with you*</li>
             </ul>
-            <p className="mt-4 text-sm italic text-gray-400">* Chat messages are intentionally limited. Don't chat, talk!</p>
+            <p className="mt-4 text-sm italic text-gray-400">* Chat messages are intentionally limited to encourage personal interactions over devices.</p>
           </div>
-        </section>
-
-        <section className="mt-12 text-lg leading-relaxed">
-          <Image
-            src="/images/butterflies.png"
-            alt="NameGame social butterflies"
-            width={70}
-            height={70}
-            className="mx-auto w-auto h-auto center"
-          />
-
-          <h3 className="text-3xl font-bold text-center mb-6">Here Comes the Sun</h3>
-          <p className="mb-4">
-            <b>NameGame is not a popularity contest!</b>&nbsp;
-            When you begin, your shiny-happy extroverts and connectors 
-            will help you start melting the ice, but aren't rewarded for having 
-            the most connections. Your group succeeds when <i>everyone 
-            connects with a few people</i>, not when <i>a few people connect with 
-            everyone</i>.
-          </p>
         </section>
 
         <section className="mt-8 leading-relaxed">
@@ -168,52 +145,68 @@ export default function Home() {
             className="mx-auto w-auto h-auto center"
           />
 
+          <h3 className="mt-8 text-3xl font-bold text-center mb-6">How to "Win"</h3>
+          <p className="mb-4">
+            <b>NameGame rewards inclusion, not individual popularity.</b>&nbsp;
+            As you play, everyone can see the group score. 
+          </p>
+          <p className="mb-8">
+            <b>Initially, a few people will connect with many people</b>, 
+            inviting them into the game. Including everyone is an important 
+            start.
+            <Image
+              src="/images/graph-popular.png"
+              alt="One popular person"
+              width={250}
+              height={250}
+              className="mx-auto w-auto h-auto center my-4 shadow-lg"
+              style={{ minWidth: '250px' }}
+            />
+            <b>Your score increases as more people <i>gradually</i> connect</b>.&nbsp;
+            Don't rush it. The game should feel fun and natural, not 
+            stressful and forced. Think tortoise, not hare.
+            <Image
+              src="/images/graph-inclusive.png"
+              alt="Many people interconnected"
+              width={250}
+              height={250}
+              className="mx-auto w-auto h-auto center my-4 shadow-lg"
+              style={{ minWidth: '250px' }}
+            />
+            <b>You don't need a score to know when you're "winning".</b>&nbsp; 
+            Your group will just feel it. 
+          </p>
+
+          <Image
+            src="/images/butterflies.png"
+            alt="NameGame social butterflies"
+            width={70}
+            height={70}
+            className="mx-auto w-auto h-auto center"
+          />
           <h3 className="mt-8 text-3xl font-bold text-center mb-6">Game Tips</h3>
           <p className="mb-4">
-            <b>If you feel uncomfortable approaching new people, no worries!</b>&nbsp; 
-            Just greet someone familiar from your Sun Deck (or let them greet 
-            you). Sun Decks are a safe, personal gathering place to get to know 
-            people without stress. 
+            <b>If approaching people stresses you out, no worries!</b>&nbsp; 
+            Just greet someone comfortable and familiar from your Sun Deck (or 
+            let them greet you). The game will do the rest. 
           </p>
           <p className="mb-4">
             <b>If you feel responsible for helping everyone feel welcome, chillax!</b>&nbsp;
-            NameGame has you covered! You can now be the person who spends 30 minutes 
-            with <i>someone</i> rather than 30 seconds with <i>everyone</i>.
+            NameGame has you covered! Spend 30 minutes with <i>someone</i>&nbsp; 
+            rather than 30 seconds with <i>everyone</i>.
           </p>
           <p className="mb-4">
-            <b>When your group meets, regularly encourage and make time for playing.</b>&nbsp;
-            Make it visible. Show your group's score. For many, being social is 
-            awkward, but playing a game is fun. 
+            <b>When your group meets, make the game visible.</b>&nbsp;
+            Talk about it. Show your score. Make it fun. When people see others 
+            doing it, they'll want to play. 
           </p>
           <p className="mb-4">
-            <b>We only have time to be close friends with a few people.</b>&nbsp;
-            It's normal for most people in a group to just be acquaintances. 
+            <b>When more people know each other</b>, they naturally talk more, 
+            discover common interests, do things together, make friends,
+            and have more fun.
           </p>
           <p className="mb-4">
-            <b>Participating in formal group roles and activities</b> is a great 
-            way to do this when it brings people together with plenty of time for 
-            free, personal conversations. If you find yourself acting alone or in 
-            settings too formal or large for regular personal interactions, you 
-            may just feel used and tired instead of fulfilled. 
-          </p>
-          <p className="mb-4">
-            <b><i>Group-friends</i> and <i>friend-friends</i>?</b>&nbsp;
-            Group friends are a great start. Like a school or work friend you 
-            never see outside of school or work. Groups are better when you also 
-            have a <i>friend-friend</i> or two. The kind you spend time with, 
-            independent of the group. If you really click with someone, start 
-            acting like a <i>friend-friend</i>, not just a <i>group-friend</i>.
-          </p>
-          <p className="mb-4">
-            <b>When your group consistently plays NameGame</b>, soon everyone 
-            will have a Sun Deck of friends and acquaintances they can 
-            confidently greet by name. Nobody will be invisible. 
-          </p>
-          <p className="mb-4">
-            <b>When people know each other better</b>, they naturally talk more, 
-            find more common interests, do more together, care more, and have 
-            more fun. As the Cheers song said, "You wanna be where everybody 
-            knows your name."
+            <i>"You wanna be where everybody knows your name."</i> ~Cheers
           </p>
           <p className="mb-4">
             <b><i>It all starts with a name.</i></b> 

@@ -25,7 +25,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               {children}
             </main>
           </AuthProvider>
-          <footer className="fixed bottom-0 left-0 w-full h-10 bg-white text-center py-2 shadow-[0_-2px_4px_rgba(0,0,0,0.1)]">
+          <footer className="fixed bottom-0 left-0 w-full h-16 bg-white text-center py-4 shadow-[0_-2px_4px_rgba(0,0,0,0.1)]">
             <p className="text-gray-600">&copy; 2025 NameGame</p>
           </footer>
         </div>

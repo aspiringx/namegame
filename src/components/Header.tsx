@@ -8,8 +8,8 @@ export default async function Header() {
   const user = session?.user;
 
   return (
-    <header className="bg-white shadow-md">
-      <div className="container mx-auto flex justify-between items-center px-5 h-full">
+    <header className="bg-white shadow-md fixed top-0 left-0 w-full">
+      <div className="container mx-auto flex justify-between items-center px-5 py-3 h-full">
         <Link href="/" className="text-2xl font-bold text-indigo-600">
           NameGame
         </Link>
