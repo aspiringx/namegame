@@ -20,15 +20,15 @@ export default function Home() {
         </header>
 
         <section className="text-lg leading-relaxed space-y-6">
-          <p className="text-center text-gray-600 text-sm shadow-sm p-4 bg-orange-300 rounded-lg">
-            Ready to play?&nbsp;
+          <p className="text-gray-600 shadow-sm p-4 rounded-lg" style={{ backgroundColor: '#84E6D9' }}>
+            <p className="text-center font-bold">Ready to play?</p>&nbsp;
             <Link href="/signup" className="text-indigo-600 hover:text-indigo-500">
               Sign up
             </Link>{' '}
             or{' '}
             <Link href="/login" className="text-indigo-600 hover:text-indigo-500">
               login
-            </Link> to get started.&nbsp;
+            </Link> to start.&nbsp;
             Or read on to learn more.
           </p>
           <p>
@@ -89,10 +89,10 @@ export default function Home() {
           />
         </section>
 
-        <section className="mt-8 p-6 bg-white rounded-lg shadow-lg">
+        <section className="mt-8">
           <h2 className="text-3xl font-bold text-center mb-6">How to Play</h2>
-          <p className="text-lg mb-6">To play NameGame:</p>
-          <ul className="list-disc list-inside space-y-4 text-gray-700">
+          <p className="mb-4">To play NameGame:</p>
+          <ul className="list-disc list-inside space-y-2 text-gray-700">
             <li>
               <Link href="/signup" className="text-indigo-600 hover:text-indigo-500">
                 Sign up
@@ -108,8 +108,8 @@ export default function Home() {
           </ul>
           <p className="mt-4 text-sm italic text-gray-400">* Currently not available publicly. See more below.</p>
           <div className="mt-6">
-            <p className="text-lg mb-6">When they scan your greeting code, they can instantly:</p>
-            <ul className="list-disc list-inside space-y-4 text-gray-700">
+            <p className="mb-4">When they scan your greeting code, they can instantly:</p>
+            <ul className="list-disc list-inside space-y-2 text-gray-700">
                 <li>Join with only their first name</li>
                 <li>See your name and pic</li>
                 <li>Chat with you*</li>
@@ -129,9 +129,9 @@ export default function Home() {
           <h3 className="text-3xl font-bold text-center mb-6">Sun Decks and Ice Blocks</h3>
           <p className="text-lg mb-4">In the game, people's photos are divided into two sections:</p>
           <p className="mb-4 bg-yellow-300 p-4 rounded-lg">
-            Your <b>Sun Deck</b> shows who you’ve greeted, their names, and chat 
-            links. Social Butterflies flutter around your Sun Deck to help you 
-            remember names and prompt interesting conversations.
+            Your <b>Sun Deck</b> shows the names and pics of people you’ve greeted, 
+            with chat links. Social Butterflies help you remember names and
+            prompt interesting conversations.
           </p>
           <p className="mb-4 bg-sky-100 p-4 rounded-lg">
             Your <b>Ice Block</b> shows dim, frozen faces with only a first name. 
@@ -164,7 +164,7 @@ export default function Home() {
             />
             <b>Your score increases as more people <i>gradually</i> connect</b>.&nbsp;
             Don't rush it. The game should feel fun and natural, not 
-            stressful and forced. Think tortoise, not hare.
+            forced. Think tortoise, not hare.
             <Image
               src="/images/graph-inclusive.png"
               alt="Many people interconnected"
@@ -219,10 +219,10 @@ export default function Home() {
             className="mx-auto w-auto h-auto center"
           />
         </section>
-        <section className="mt-8 text-lg leading-relaxed">
-          <h3 className="text-3xl font-bold text-center mb-6">Ready to Play?</h3>
+        <section className="mt-8 leading-relaxed">
+          <h3 className="text-3xl font-bold text-center mb-6">Wanna Play?</h3>
           <p className="mb-4">
-            NameGame is currently in a private and invitation-only beta.
+            NameGame is currently in private beta, available by invitation only.
           </p>
           <p className="mb-4">
             If you'd like to play it in your group, connect with me (Joe) on&nbsp; 
