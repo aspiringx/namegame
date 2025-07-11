@@ -20,17 +20,18 @@ export default function Home() {
         </header>
 
         <section className="text-lg leading-relaxed space-y-6">
-          <p className="text-gray-600 shadow-sm p-4 rounded-lg" style={{ backgroundColor: '#84E6D9' }}>
-            <p className="text-center font-bold">Ready to play?</p>&nbsp;
-            <Link href="/signup" className="text-indigo-600 hover:text-indigo-500">
-              Sign up
-            </Link>{' '}
-            or{' '}
-            <Link href="/login" className="text-indigo-600 hover:text-indigo-500">
-              login
-            </Link> to start.&nbsp;
-            Or read on to learn more.
-          </p>
+          {/* <div className="text-gray-600 shadow-sm p-4 rounded-lg" style={{ backgroundColor: '#adf7ed' }}>
+            <p className="text-center font-bold">Ready to play?</p>
+            <p className="text-center">
+              <Link href="/signup" className="text-indigo-600 hover:text-indigo-500">
+                Sign up
+              </Link>{' '}
+              or{' '}
+              <Link href="/login" className="text-indigo-600 hover:text-indigo-500">
+                login
+              </Link> to start. Or read on to learn more.
+            </p>
+          </div> */}
           <p>
             <b>We’re all part of groups...</b> families, friends, schools, jobs, neighborhoods, churches, teams, etc.
           </p>
@@ -52,7 +53,7 @@ export default function Home() {
 
         <section className="mt-8">
           <div className="flex flex-col md:flex-row md:space-x-8">
-            <div className="md:w-1/2 p-6 bg-white rounded-lg shadow-lg mb-8 md:mb-0 border border-sky-100 border-4">
+            <div className="md:w-1/2 p-6 bg-white rounded-lg shadow-lg mb-4 md:mb-0 border border-sky-100 border-4">
               <h3 className="text-2xl font-bold text-center mb-4">Breaking ice is hard</h3>
               <ul className="list-disc list-inside space-y-2">
                 <li>Fast and forceful</li>
@@ -89,7 +90,7 @@ export default function Home() {
           />
         </section>
 
-        <section className="mt-8">
+        <section className="mt-8 shadow-sm p-4 rounded-lg" style={{ backgroundColor: '#adf7ed' }}>
           <h2 className="text-3xl font-bold text-center mb-6">How to Play</h2>
           <p className="mb-4">To play NameGame:</p>
           <ul className="list-disc list-inside space-y-2 text-gray-700">
@@ -192,8 +193,8 @@ export default function Home() {
           </p>
           <p className="mb-4">
             <b>If you feel responsible for helping everyone feel welcome, chillax!</b>&nbsp;
-            NameGame has you covered! Spend 30 minutes with <i>someone</i>&nbsp; 
-            rather than 30 seconds with <i>everyone</i>.
+            NameGame does it for you. Spend 10 minutes with <i>someone</i>&nbsp;
+            instead of 10 seconds with <i>everyone</i>. 
           </p>
           <p className="mb-4">
             <b>When your group meets, make the game visible.</b>&nbsp;

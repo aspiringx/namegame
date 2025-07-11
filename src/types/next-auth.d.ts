@@ -1,23 +1,33 @@
-import NextAuth, { DefaultSession, DefaultUser } from 'next-auth';
+import type { Role as UserRole } from '@prisma/client';
+import { type DefaultSession, type DefaultUser } from 'next-auth';
+import { type JWT as NextAuthJWT } from 'next-auth/jwt';
+
+// The shape of the role object stored in the JWT and session
+export interface Role {
+  role: UserRole;
+  groupId: number;
+  groupSlug: string;
+}
+
+declare module 'next-auth/jwt' {
+  interface JWT extends NextAuthJWT {
+    id: string;
+    firstName: string | null;
+    roles: Role[];
+  }
+}
 
 declare module 'next-auth' {
-  /**
-   * Returned by `useSession`, `getSession` and received as a prop on the `SessionProvider` React Context
-   */
-  interface Session {
+  interface Session extends DefaultSession {
     user: {
-      /** The user's id. */
       id: string;
-      /** The user's first name. */
-      firstName: string;
+      firstName: string | null;
+      roles: Role[];
     } & DefaultSession['user'];
   }
 
-  /**
-   * The shape of the user object returned in the OAuth providers' `profile` callback,
-   * or the second parameter of the `session` callback, when using a database.
-   */
   interface User extends DefaultUser {
-    firstName: string;
+    firstName: string | null;
+    roles: Role[];
   }
 }

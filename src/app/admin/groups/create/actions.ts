@@ -18,7 +18,26 @@ const GroupSchema = z.object({
   logo: z.instanceof(File).optional(),
 });
 
-export async function createGroup(formData: FormData) {
+export type State = {
+  errors?: {
+    name?: string[];
+    slug?: string[];
+    description?: string[];
+    address?: string[];
+    phone?: string[];
+    logo?: string[];
+  };
+  message?: string | null;
+  values?: {
+    name: string;
+    slug: string;
+    description: string;
+    address: string;
+    phone: string;
+  };
+};
+
+export async function createGroup(prevState: State, formData: FormData): Promise<State> {
   // Extract and validate data
   const validatedFields = GroupSchema.safeParse({
     name: formData.get('name'),
@@ -29,16 +48,44 @@ export async function createGroup(formData: FormData) {
     logo: formData.get('logo'),
   });
 
+  // Keep a reference to the raw form data
+  const rawFormData = {
+    name: formData.get('name') as string,
+    slug: formData.get('slug') as string,
+    description: formData.get('description') as string,
+    address: formData.get('address') as string,
+    phone: formData.get('phone') as string,
+    logo: formData.get('logo') as File,
+  };
+
   if (!validatedFields.success) {
-    // Handle validation errors
-    // In a real app, you'd return these errors to the form
-    console.error(validatedFields.error);
-    throw new Error('Invalid form data.');
+    const fieldErrors = validatedFields.error.flatten().fieldErrors;
+    const errorFields = Object.keys(fieldErrors)
+      .map((field) => field.charAt(0).toUpperCase() + field.slice(1))
+      .join(', ');
+
+    return {
+      errors: fieldErrors,
+      message: `Please correct the invalid fields: ${errorFields}.`,
+      values: rawFormData,
+    };
   }
 
   const { logo, ...groupData } = validatedFields.data;
 
   try {
+    const existingGroup = await prisma.group.findUnique({
+      where: { slug: validatedFields.data.slug },
+    });
+
+    if (existingGroup) {
+      return {
+        errors: { slug: ['This slug is already in use.'] },
+        message: 'Slug is already in use.',
+        values: rawFormData,
+      };
+    }
+
     const newGroup = await prisma.group.create({
       data: {
         ...groupData,
@@ -81,11 +128,16 @@ export async function createGroup(formData: FormData) {
     }
   } catch (error) {
     console.error('Database Error:', error);
-    throw new Error('Failed to create group.');
+    return {
+      message: 'Database Error: Failed to create group.',
+      values: rawFormData,
+    };
   }
 
-  // Revalidate the path to show the new group in the list
+  // Revalidate the path to show the new group in the list and redirect
   revalidatePath('/admin/groups');
-  // Redirect to the group list page
   redirect('/admin/groups');
+
+  // This part is unreachable due to the redirect, but satisfies TypeScript
+  return { message: 'Successfully created group.' };
 }

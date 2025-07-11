@@ -17,18 +17,18 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html lang="en">
-      <body className={inter.className}>
-        <div className="flex flex-col min-h-screen">
-          <Header />
-          <AuthProvider session={session}>
-            <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <body className={inter.className} suppressHydrationWarning={true}>
+        <AuthProvider session={session}>
+          <div className="flex flex-col min-h-screen">
+            <Header />
+            <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
               {children}
             </main>
-          </AuthProvider>
-          <footer className="fixed bottom-0 left-0 w-full h-16 bg-white text-center py-4 shadow-[0_-2px_4px_rgba(0,0,0,0.1)]">
-            <p className="text-gray-600">&copy; 2025 NameGame</p>
-          </footer>
-        </div>
+            <footer className="fixed bottom-0 left-0 w-full h-16 bg-white text-center py-4 shadow-[0_-2px_4px_rgba(0,0,0,0.1)]">
+              <p className="text-gray-600">&copy; 2025 NameGame</p>
+            </footer>
+          </div>
+        </AuthProvider>
       </body>
     </html>
   );

@@ -1,10 +1,42 @@
-import { createGroup } from './actions';
+'use client';
 
-export default function GlobalGroupCreatePage() {
+import { useFormState, useFormStatus } from 'react-dom';
+import { createGroup, type State } from './actions';
+
+const initialState: State = {
+  message: null,
+  errors: {},
+  values: {
+    name: '',
+    slug: '',
+    description: '',
+    address: '',
+    phone: '',
+  },
+};
+
+function SubmitButton() {
+  const { pending } = useFormStatus();
+
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-indigo-400"
+    >
+      {pending ? 'Creating...' : 'Create Group'}
+    </button>
+  );
+}
+
+export default function CreateGroupPage() {
+  const [state, formAction] = useFormState(createGroup, initialState);
+
   return (
     <div className="max-w-2xl mx-auto p-8">
       <h1 className="text-2xl font-bold mb-6">Create New Group</h1>
-      <form action={createGroup} className="space-y-6">
+      {state.message && <p className="text-red-500 mb-4">{state.message}</p>}
+      <form action={formAction} className="space-y-6">
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-gray-700">
             Group Name
@@ -15,7 +47,9 @@ export default function GlobalGroupCreatePage() {
             name="name"
             required
             className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            defaultValue={state.values?.name}
           />
+          {state.errors?.name && <p className="text-red-500 text-sm mt-1">{state.errors.name[0]}</p>}
         </div>
 
         <div>
@@ -28,7 +62,9 @@ export default function GlobalGroupCreatePage() {
             name="slug"
             required
             className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            defaultValue={state.values?.slug}
           />
+          {state.errors?.slug && <p className="text-red-500 text-sm mt-1">{state.errors.slug[0]}</p>}
         </div>
 
         <div>
@@ -40,7 +76,9 @@ export default function GlobalGroupCreatePage() {
             name="description"
             rows={3}
             className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-          ></textarea>
+            defaultValue={state.values?.description}
+          />
+          {state.errors?.description && <p className="text-red-500 text-sm mt-1">{state.errors.description[0]}</p>}
         </div>
 
         <div>
@@ -52,7 +90,9 @@ export default function GlobalGroupCreatePage() {
             id="address"
             name="address"
             className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            defaultValue={state.values?.address}
           />
+          {state.errors?.address && <p className="text-red-500 text-sm mt-1">{state.errors.address[0]}</p>}
         </div>
 
         <div>
@@ -64,7 +104,9 @@ export default function GlobalGroupCreatePage() {
             id="phone"
             name="phone"
             className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            defaultValue={state.values?.phone}
           />
+          {state.errors?.phone && <p className="text-red-500 text-sm mt-1">{state.errors.phone[0]}</p>}
         </div>
 
         <div>
@@ -76,16 +118,12 @@ export default function GlobalGroupCreatePage() {
             id="logo"
             name="logo"
             accept="image/*"
-            className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100"
+            className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100"
           />
+          {state.errors?.logo && <p className="text-red-500 text-sm mt-1">{state.errors.logo[0]}</p>}
         </div>
 
-        <button
-          type="submit"
-          className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-        >
-          Create Group
-        </button>
+        <SubmitButton />
       </form>
     </div>
   );

@@ -3,14 +3,11 @@
 import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { signOut } from 'next-auth/react';
-import type { User } from 'next-auth';
+import { signOut, useSession } from 'next-auth/react';
 
-interface UserMenuProps {
-  user: User | undefined;
-}
-
-export default function UserMenu({ user }: UserMenuProps) {
+export default function UserMenu() {
+  const { data: session } = useSession();
+  const user = session?.user;
   const [isDropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -35,7 +32,9 @@ export default function UserMenu({ user }: UserMenuProps) {
   };
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="flex items-center">
+      {user && <p className="mr-4 text-gray-700">{user.firstName}</p>}
+      <div className="relative" ref={dropdownRef}>
       <Image
         src={user?.image || '/images/user-icon.png'}
         alt="User Profile"
@@ -71,6 +70,7 @@ export default function UserMenu({ user }: UserMenuProps) {
           )}
         </div>
       )}
+      </div>
     </div>
   );
 }

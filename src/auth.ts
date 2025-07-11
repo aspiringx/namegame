@@ -1,71 +1,74 @@
 import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import { PrismaAdapter } from '@auth/prisma-adapter';
-
 import bcrypt from 'bcrypt';
-import type { Adapter } from '@auth/core/adapters';
 
-import { prisma } from '@/lib/prisma';
+import { prisma as db } from '@/lib/prisma';
+import { authConfig } from './auth.config';
+import type { Role } from './types/next-auth';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: PrismaAdapter(prisma) as Adapter,
-  providers: [
-    Credentials({
-      name: 'credentials',
-      credentials: {
-        username: { label: 'username', type: 'text' },
-        password: { label: 'password', type: 'password' },
-      },
-      async authorize(credentials) {
-        const { username, password } = credentials;
-
-        if (typeof username !== 'string' || typeof password !== 'string') {
-          throw new Error('Invalid credentials');
-        }
-
-        const user = await prisma.user.findUnique({
-          where: { username }, 
-        });
-
-        if (!user || !user.password) {
-          throw new Error('Invalid credentials');
-        }
-
-        const isCorrectPassword = await bcrypt.compare(
-          password,
-          user.password
-        );
-
-        if (!isCorrectPassword) {
-          throw new Error('Invalid credentials');
-        }
-
-        return user;
-      },
-    }),
-  ],
+  ...authConfig,
+  adapter: PrismaAdapter(db),
   session: {
     strategy: 'jwt',
   },
-  callbacks: {
-    jwt({ token, user }) {
-      if (user) { // User is available on initial sign-in
-        token.id = user.id;
-        token.firstName = user.firstName;
-      }
-      return token;
-    },
-    session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.id;
-        session.user.firstName = token.firstName;
-      }
-      return session;
-    },
-  },
-  secret: process.env.AUTH_SECRET,
-  pages: {
-    signIn: '/login',
-  },
+  providers: [
+    Credentials({
+      credentials: {
+        username: { label: 'Username', type: 'text' },
+        password: { label: 'Password', type: 'password' },
+      },
+      async authorize(credentials) {
+        if (!credentials?.username || !credentials.password) {
+          return null;
+        }
+
+        const user = await db.user.findUnique({
+          where: {
+            username: String(credentials.username),
+          },
+          include: {
+            groupMemberships: {
+              include: {
+                group: {
+                  select: {
+                    slug: true,
+                  },
+                },
+              },
+            },
+          },
+        });
+
+        if (!user || !user.password) {
+          return null;
+        }
+
+        const isPasswordValid = await bcrypt.compare(
+          String(credentials.password),
+          user.password
+        );
+
+        if (!isPasswordValid) {
+          return null;
+        }
+
+        const userRoles: Role[] = user.groupMemberships.map((mem) => ({
+          groupId: mem.groupId,
+          role: mem.role,
+          groupSlug: mem.group.slug,
+        }));
+
+        return {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          roles: userRoles,
+        };
+      },
+    }),
+  ],
 });
+
 

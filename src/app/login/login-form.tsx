@@ -29,7 +29,7 @@ export default function LoginForm() {
   };
 
   return (
-    <div className="flex flex-col justify-start items-center min-h-screen bg-gray-100 pt-12 sm:pt-12">
+    <div className="flex flex-col justify-start items-center min-h-screen pt-12 sm:pt-12">
       <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md">
         <h1 className="text-2xl font-bold text-center text-gray-900">Login</h1>
         <p className="mt-2 text-center text-sm text-gray-600">
