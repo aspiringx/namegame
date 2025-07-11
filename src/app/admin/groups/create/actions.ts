@@ -6,7 +6,7 @@ import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { EntityType, PhotoType } from '@/generated/prisma';
 import { uploadFile } from '@/lib/storage';
-import bcrypt from 'bcrypt';
+import { auth } from '@/auth';
 
 // Define the schema for form validation using Zod
 const GroupSchema = z.object({
@@ -15,7 +15,7 @@ const GroupSchema = z.object({
   description: z.string().optional(),
   address: z.string().optional(),
   phone: z.string().optional(),
-  logo: z.instanceof(File).optional(),
+  logo: z.string().optional(), // Logo is a base64 string
 });
 
 export type State = {
@@ -38,7 +38,14 @@ export type State = {
 };
 
 export async function createGroup(prevState: State, formData: FormData): Promise<State> {
-  // Extract and validate data
+  const session = await auth();
+  if (!session?.user?.id) {
+    return {
+      message: 'You must be logged in to create a group.',
+    };
+  }
+  const userId = session.user.id;
+
   const validatedFields = GroupSchema.safeParse({
     name: formData.get('name'),
     slug: formData.get('slug'),
@@ -48,14 +55,12 @@ export async function createGroup(prevState: State, formData: FormData): Promise
     logo: formData.get('logo'),
   });
 
-  // Keep a reference to the raw form data
   const rawFormData = {
     name: formData.get('name') as string,
     slug: formData.get('slug') as string,
     description: formData.get('description') as string,
     address: formData.get('address') as string,
     phone: formData.get('phone') as string,
-    logo: formData.get('logo') as File,
   };
 
   if (!validatedFields.success) {
@@ -75,7 +80,7 @@ export async function createGroup(prevState: State, formData: FormData): Promise
 
   try {
     const existingGroup = await prisma.group.findUnique({
-      where: { slug: validatedFields.data.slug },
+      where: { slug: groupData.slug },
     });
 
     if (existingGroup) {
@@ -89,55 +94,44 @@ export async function createGroup(prevState: State, formData: FormData): Promise
     const newGroup = await prisma.group.create({
       data: {
         ...groupData,
-        // This is a placeholder for idTree logic
-        idTree: Math.random().toString(36).substring(2, 15),
+        idTree: Math.random().toString(36).substring(2, 15), // Placeholder
       },
     });
 
-    if (logo && logo.size > 0) {
-            const logoPath = await uploadFile(logo, 'groups', newGroup.id);
+    if (logo) {
+      const matches = logo.match(/^data:(.+);base64,(.+)$/);
+      if (matches && matches.length === 3) {
+        const mimeType = matches[1];
+        const base64Data = matches[2];
+        const buffer = Buffer.from(base64Data, 'base64');
+        const file = new File([buffer], 'logo.jpg', { type: mimeType });
 
-      // TODO: This is a placeholder for real authentication.
-      let adminUser = await prisma.user.findFirst();
-      if (!adminUser) {
-        const hashedPassword = await bcrypt.hash('password123', 10);
-        adminUser = await prisma.user.create({
+        const logoPath = await uploadFile(file, 'groups', newGroup.id);
+
+        await prisma.photo.create({
           data: {
-            username: 'admin',
-            firstName: 'Default',
-            lastName: 'Admin',
-            password: hashedPassword,
+            url: logoPath,
+            entityId: newGroup.id,
+            entityType: EntityType.group,
+            type: PhotoType.logo,
+            group: {
+              connect: { id: newGroup.id },
+            },
+            user: {
+              connect: { id: userId },
+            },
           },
         });
       }
-
-      await prisma.photo.create({
-        data: {
-          url: logoPath,
-          type: PhotoType.logo,
-          entityType: EntityType.group,
-          entityId: newGroup.id,
-          group: {
-            connect: { id: newGroup.id },
-          },
-          user: {
-            connect: { id: adminUser.id },
-          },
-        },
-      });
     }
-  } catch (error) {
-    console.error('Database Error:', error);
+  } catch (e) {
+    const message = e instanceof Error ? e.message : 'An unknown error occurred.';
     return {
-      message: 'Database Error: Failed to create group.',
+      message: `Database Error: ${message}`,
       values: rawFormData,
     };
   }
 
-  // Revalidate the path to show the new group in the list and redirect
   revalidatePath('/admin/groups');
   redirect('/admin/groups');
-
-  // This part is unreachable due to the redirect, but satisfies TypeScript
-  return { message: 'Successfully created group.' };
 }

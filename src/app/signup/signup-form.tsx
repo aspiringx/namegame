@@ -45,7 +45,7 @@ export default function SignupForm() {
                 htmlFor="username"
                 className="block text-sm font-medium text-gray-700"
               >
-                Username
+                Username <span className="text-red-500">*</span>
               </label>
               <div className="mt-1">
                 <input
@@ -70,7 +70,7 @@ export default function SignupForm() {
                 htmlFor="firstName"
                 className="block text-sm font-medium text-gray-700"
               >
-                First Name
+                First Name <span className="text-red-500">*</span>
               </label>
               <div className="mt-1">
                 <input
@@ -94,7 +94,7 @@ export default function SignupForm() {
                 htmlFor="lastName"
                 className="block text-sm font-medium text-gray-700"
               >
-                Last Name (Optional)
+                Last Name
               </label>
               <div className="mt-1">
                 <input
@@ -111,7 +111,7 @@ export default function SignupForm() {
                 htmlFor="password"
                 className="block text-sm font-medium text-gray-700"
               >
-                Password
+                Password <span className="text-red-500">*</span>
               </label>
               <div className="mt-1">
                 <input

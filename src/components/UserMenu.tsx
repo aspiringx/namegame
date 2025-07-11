@@ -8,6 +8,9 @@ import { signOut, useSession } from 'next-auth/react';
 export default function UserMenu() {
   const { data: session } = useSession();
   const user = session?.user;
+  const isSuperAdmin = user?.roles?.some(
+    (role) => role.groupSlug === 'global-admin' && role.role === 'super'
+  );
   const [isDropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -46,12 +49,30 @@ export default function UserMenu() {
       {isDropdownOpen && (
         <div className="absolute top-14 right-0 bg-white rounded-md shadow-lg py-2 z-50 w-48">
           {user ? (
-            <button
-              onClick={() => signOut({ callbackUrl: '/' })}
-              className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100"
-            >
-              Logout
-            </button>
+            <>
+              {isSuperAdmin && (
+                <>
+                  <Link
+                    href="/admin"
+                    className="block px-4 py-2 text-gray-800 hover:bg-gray-100"
+                  >
+                    Admin
+                  </Link>
+                  <Link
+                    href="/admin/groups"
+                    className="block pl-8 pr-4 py-2 text-gray-800 hover:bg-gray-100"
+                  >
+                    Groups
+                  </Link>
+                </>
+              )}
+              <button
+                onClick={() => signOut({ callbackUrl: '/' })}
+                className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100"
+              >
+                Logout
+              </button>
+            </>
           ) : (
             <>
               <Link
