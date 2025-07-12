@@ -176,6 +176,7 @@ export async function updateUser(id: string, prevState: State, formData: FormDat
         values: { ...formValues, password: password || '' },
       };
     }
+    console.error('Update user error:', error);
     return {
       errors: null,
       message: 'An unexpected error occurred. Please try again.',
