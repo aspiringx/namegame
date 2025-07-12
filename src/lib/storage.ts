@@ -20,7 +20,7 @@ if (STORAGE_PROVIDER === 'do_spaces') {
     throw new Error('DigitalOcean Spaces environment variables are not fully configured.');
   }
   s3Client = new S3Client({
-    endpoint: `https://${env.DO_SPACES_ENDPOINT}`,
+    endpoint: env.DO_SPACES_ENDPOINT,
     region: env.DO_SPACES_REGION,
     credentials: {
       accessKeyId: env.DO_SPACES_KEY,
