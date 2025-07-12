@@ -68,27 +68,27 @@ export default async function UsersTable({ query, sort, order }: UsersTableProps
   };
 
   return (
-    <div className="-mx-4 mt-8 overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:-mx-6 md:mx-0 md:rounded-lg">
-      <table className="min-w-full divide-y divide-gray-300">
+    <div className="-mx-4 mt-8 overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:-mx-6 md:mx-0 md:rounded-lg dark:ring-white dark:ring-opacity-10">
+      <table className="min-w-full divide-y divide-gray-300 dark:divide-gray-700">
         <thead>
           <tr>
             <th scope="col" className="relative py-3.5 pl-4 pr-3 sm:pl-6">
               <span className="sr-only">Photo</span>
             </th>
-            <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">
+            <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 dark:text-white sm:pl-6">
               <SortableHeader column="username" title="Username" />
             </th>
-            <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 sm:table-cell">
+            <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white sm:table-cell">
               <SortableHeader column="firstName" title="First Name" />
             </th>
-            <th scope="col" className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 md:table-cell">
+            <th scope="col" className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white md:table-cell">
               <SortableHeader column="lastName" title="Last Name" />
             </th>
 
-            <th scope="col" className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 md:table-cell">
+            <th scope="col" className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white md:table-cell">
               <SortableHeader column="createdAt" title="Created" />
             </th>
-            <th scope="col" className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 md:table-cell">
+            <th scope="col" className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white md:table-cell">
               <SortableHeader column="updatedAt" title="Updated" />
             </th>
             <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6">
@@ -96,9 +96,9 @@ export default async function UsersTable({ query, sort, order }: UsersTableProps
             </th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-200 bg-white">
+        <tbody className="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-800">
           {usersWithPhotos.map((user) => (
-            <tr key={user.id} className={user.deletedAt ? 'bg-gray-200' : ''}>
+            <tr key={user.id} className={user.deletedAt ? 'bg-gray-200 dark:bg-gray-700' : ''}>
               <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm sm:pl-6">
                 <div className="flex items-center">
                   <div className="h-10 w-10 flex-shrink-0">
@@ -112,25 +112,25 @@ export default async function UsersTable({ query, sort, order }: UsersTableProps
                   </div>
                 </div>
               </td>
-              <td className="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6">
+              <td className="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 dark:text-white sm:w-auto sm:max-w-none sm:pl-6">
                 {user.username}
               </td>
-              <td className="px-3 py-4 text-sm text-gray-500 sm:table-cell">
+              <td className="px-3 py-4 text-sm text-gray-500 dark:text-gray-400 sm:table-cell">
                 {user.firstName}
               </td>
-              <td className="hidden px-3 py-4 text-sm text-gray-500 md:table-cell">{user.lastName}</td>
+              <td className="hidden px-3 py-4 text-sm text-gray-500 dark:text-gray-400 md:table-cell">{user.lastName}</td>
 
-              <td className="hidden px-3 py-4 text-sm text-gray-500 md:table-cell">{new Date(user.createdAt).toLocaleDateString()}</td>
-              <td className="hidden px-3 py-4 text-sm text-gray-500 md:table-cell">{new Date(user.updatedAt).toLocaleDateString()}</td>
+              <td className="hidden px-3 py-4 text-sm text-gray-500 dark:text-gray-400 md:table-cell">{new Date(user.createdAt).toLocaleDateString()}</td>
+              <td className="hidden px-3 py-4 text-sm text-gray-500 dark:text-gray-400 md:table-cell">{new Date(user.updatedAt).toLocaleDateString()}</td>
               <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
                 {user.deletedAt ? (
                   <UndeleteUserButton userId={user.id} />
                 ) : (
-                  <Link href={`/admin/users/${user.id}/edit`} className="text-indigo-600 hover:text-indigo-900">
+                  <Link href={`/admin/users/${user.id}/edit`} className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-200">
                     Edit
                   </Link>
                 )}
-                <span className="text-gray-300 mx-2">|</span>
+                <span className="text-gray-300 dark:text-gray-600 mx-2">|</span>
                 <DeleteUserButton userId={user.id} />
               </td>
             </tr>

@@ -44,23 +44,23 @@ export default async function GroupsTable({ query, sort, order }: GroupsTablePro
   };
 
   return (
-    <div className="-mx-4 mt-8 overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:-mx-6 md:mx-0 md:rounded-lg">
-      <table className="min-w-full divide-y divide-gray-300">
+    <div className="-mx-4 mt-8 overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:-mx-6 md:mx-0 md:rounded-lg dark:ring-white dark:ring-opacity-10">
+      <table className="min-w-full divide-y divide-gray-300 dark:divide-gray-700">
         <thead>
           <tr>
-            <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">
+            <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 dark:text-white sm:pl-6">
               <SortableHeader column="name" title="Name" />
             </th>
-            <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 sm:table-cell">
+            <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white sm:table-cell">
               <SortableHeader column="slug" title="Slug" />
             </th>
-            <th scope="col" className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 md:table-cell">
+            <th scope="col" className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white md:table-cell">
               <SortableHeader column="description" title="Description" />
             </th>
-            <th scope="col" className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 md:table-cell">
+            <th scope="col" className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white md:table-cell">
               <SortableHeader column="createdAt" title="Created" />
             </th>
-            <th scope="col" className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 md:table-cell">
+            <th scope="col" className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white md:table-cell">
               <SortableHeader column="updatedAt" title="Updated" />
             </th>
             <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6">
@@ -68,29 +68,29 @@ export default async function GroupsTable({ query, sort, order }: GroupsTablePro
             </th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-200 bg-white">
+        <tbody className="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-800">
           {groups.map((group) => (
-            <tr key={group.id} className={group.deletedAt ? 'bg-gray-200' : ''}>
-              <td className="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6">
+            <tr key={group.id} className={group.deletedAt ? 'bg-gray-200 dark:bg-gray-700' : ''}>
+              <td className="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 dark:text-white sm:w-auto sm:max-w-none sm:pl-6">
                 {group.name}
               </td>
-              <td className="px-3 py-4 text-sm text-gray-500 sm:table-cell">
+              <td className="px-3 py-4 text-sm text-gray-500 dark:text-gray-400 sm:table-cell">
                 <Link href={`/${group.slug}`} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-900">
                   {group.slug}
                 </Link>
               </td>
-              <td className="hidden px-3 py-4 text-sm text-gray-500 md:table-cell">{group.description}</td>
-              <td className="hidden px-3 py-4 text-sm text-gray-500 md:table-cell">{new Date(group.createdAt).toLocaleDateString()}</td>
-              <td className="hidden px-3 py-4 text-sm text-gray-500 md:table-cell">{new Date(group.updatedAt).toLocaleDateString()}</td>
+              <td className="hidden px-3 py-4 text-sm text-gray-500 dark:text-gray-400 md:table-cell">{group.description}</td>
+              <td className="hidden px-3 py-4 text-sm text-gray-500 dark:text-gray-400 md:table-cell">{new Date(group.createdAt).toLocaleDateString()}</td>
+              <td className="hidden px-3 py-4 text-sm text-gray-500 dark:text-gray-400 md:table-cell">{new Date(group.updatedAt).toLocaleDateString()}</td>
               <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
                 {group.deletedAt ? (
                   <UndeleteGroupButton groupId={group.id} />
                 ) : (
-                  <Link href={`/admin/groups/${group.slug}/edit`} className="text-indigo-600 hover:text-indigo-900">
+                  <Link href={`/admin/groups/${group.slug}/edit`} className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-200">
                     Edit
                   </Link>
                 )}
-                <span className="text-gray-300 mx-2">|</span>
+                <span className="text-gray-300 dark:text-gray-600 mx-2">|</span>
                 <DeleteGroupButton groupId={group.id} />
               </td>
             </tr>

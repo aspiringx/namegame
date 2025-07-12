@@ -41,9 +41,9 @@ export default async function EditUserPage(props: {
   ];
 
   return (
-    <div className="max-w-2xl mx-auto p-8 space-y-6">
+    <div className="max-w-2xl mx-auto p-8 space-y-6 dark:bg-gray-900">
       <Breadcrumbs breadcrumbs={breadcrumbs} />
-      <h1 className="text-2xl font-bold mb-6">Edit User</h1>
+      <h1 className="text-2xl font-bold mb-6 dark:text-white">Edit User</h1>
       <EditUserForm user={user} photoUrl={publicPhotoUrl} hasPhoto={hasPhoto} />
     </div>
   );
