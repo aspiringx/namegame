@@ -1,5 +1,8 @@
-import prisma from '@/lib/prisma';
+import Image from 'next/image';
 import Link from 'next/link';
+import prisma from '@/lib/prisma';
+import { getPublicUrl } from '@/lib/storage';
+import { EntityType, PhotoType } from '@/generated/prisma';
 import { DeleteUserButton } from './DeleteUserButton';
 import { UndeleteUserButton } from './UndeleteUserButton';
 
@@ -30,7 +33,26 @@ export default async function UsersTable({ query, sort, order }: UsersTableProps
     orderBy: {
       [sort]: order,
     },
+    include: {
+      photos: {
+        where: {
+          type: PhotoType.primary,
+          entityType: EntityType.user,
+        },
+        select: {
+          url: true,
+        },
+        take: 1,
+      },
+    },
   });
+
+  const usersWithPhotos = await Promise.all(
+    users.map(async (user) => {
+      const photoUrl = user.photos[0]?.url ? await getPublicUrl(user.photos[0].url) : '/images/default-avatar.png';
+      return { ...user, photoUrl };
+    })
+  );
 
   const SortableHeader = ({ column, title }: { column: SortableColumn, title: string }) => {
     const isCurrentSort = sort === column;
@@ -50,6 +72,9 @@ export default async function UsersTable({ query, sort, order }: UsersTableProps
       <table className="min-w-full divide-y divide-gray-300">
         <thead>
           <tr>
+            <th scope="col" className="relative py-3.5 pl-4 pr-3 sm:pl-6">
+              <span className="sr-only">Photo</span>
+            </th>
             <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">
               <SortableHeader column="username" title="Username" />
             </th>
@@ -59,11 +84,12 @@ export default async function UsersTable({ query, sort, order }: UsersTableProps
             <th scope="col" className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 md:table-cell">
               <SortableHeader column="lastName" title="Last Name" />
             </th>
+
             <th scope="col" className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 md:table-cell">
-              <SortableHeader column="email" title="Email" />
+              <SortableHeader column="createdAt" title="Created" />
             </th>
             <th scope="col" className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 md:table-cell">
-              <SortableHeader column="phone" title="Phone" />
+              <SortableHeader column="updatedAt" title="Updated" />
             </th>
             <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6">
               <span className="sr-only">Actions</span>
@@ -71,8 +97,21 @@ export default async function UsersTable({ query, sort, order }: UsersTableProps
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-200 bg-white">
-          {users.map((user) => (
+          {usersWithPhotos.map((user) => (
             <tr key={user.id} className={user.deletedAt ? 'bg-gray-200' : ''}>
+              <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm sm:pl-6">
+                <div className="flex items-center">
+                  <div className="h-10 w-10 flex-shrink-0">
+                    <Image
+                      className="h-10 w-10 rounded-full"
+                      src={user.photoUrl}
+                      alt={`${user.username}'s profile picture`}
+                      width={40}
+                      height={40}
+                    />
+                  </div>
+                </div>
+              </td>
               <td className="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6">
                 {user.username}
               </td>
@@ -80,8 +119,9 @@ export default async function UsersTable({ query, sort, order }: UsersTableProps
                 {user.firstName}
               </td>
               <td className="hidden px-3 py-4 text-sm text-gray-500 md:table-cell">{user.lastName}</td>
-              <td className="hidden px-3 py-4 text-sm text-gray-500 md:table-cell">{user.email}</td>
-              <td className="hidden px-3 py-4 text-sm text-gray-500 md:table-cell">{user.phone}</td>
+
+              <td className="hidden px-3 py-4 text-sm text-gray-500 md:table-cell">{new Date(user.createdAt).toLocaleDateString()}</td>
+              <td className="hidden px-3 py-4 text-sm text-gray-500 md:table-cell">{new Date(user.updatedAt).toLocaleDateString()}</td>
               <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
                 {user.deletedAt ? (
                   <UndeleteUserButton userId={user.id} />
