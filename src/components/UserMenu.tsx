@@ -39,7 +39,7 @@ export default function UserMenu() {
       {user && <p className="mr-4 text-gray-700">{user.firstName}</p>}
       <div className="relative" ref={dropdownRef}>
       <Image
-        src={user?.image || '/images/user-icon.png'}
+        src={user?.image || '/images/default-avatar.png'}
         alt="User Profile"
         width={40}
         height={40}
@@ -63,6 +63,12 @@ export default function UserMenu() {
                     className="block pl-8 pr-4 py-2 text-gray-800 hover:bg-gray-100"
                   >
                     Groups
+                  </Link>
+                  <Link
+                    href="/admin/users"
+                    className="block pl-8 pr-4 py-2 text-gray-800 hover:bg-gray-100"
+                  >
+                    Users
                   </Link>
                 </>
               )}

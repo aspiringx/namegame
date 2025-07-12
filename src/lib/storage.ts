@@ -65,7 +65,8 @@ export async function uploadFile(file: File, prefix: string, entityId: string | 
     const filepath = path.join(uploadsDir, filename);
     await mkdir(uploadsDir, { recursive: true });
     await writeFile(filepath, resizedBuffer);
-    return `/uploads/${key}`;
+    // Return a path relative to the `public` directory, without a leading slash
+    return `uploads/${key}`;
   }
 }
 
@@ -81,10 +82,15 @@ export async function deleteFile(storagePath: string): Promise<void> {
     }
   } else {
     try {
+      // storagePath is relative to `public`, so we join it directly
       const filepath = path.join(process.cwd(), 'public', storagePath);
       await unlink(filepath);
-    } catch (error) {
-      console.error(`Failed to delete local file: ${storagePath}`, error);
+    } catch (e: unknown) {
+      const error = e as { code?: string };
+      // It's okay if the file doesn't exist
+      if (error.code !== 'ENOENT') {
+        console.error(`Failed to delete local file: ${storagePath}`, error);
+      }
     }
   }
 }
@@ -100,7 +106,7 @@ export async function getPublicUrl(storagePath: string | null | undefined): Prom
     // Generate a signed URL that expires in 1 hour (3600 seconds)
     return getSignedUrl(s3Client, command, { expiresIn: 3600 });
   } else {
-    // For local storage, the path is already the public URL
-    return storagePath;
+    // For local storage, ensure the path is a valid root-relative URL
+    return `/${storagePath.replace(/^\/+|\/$/g, '')}`;
   }
 }

@@ -1,6 +1,6 @@
 'use server';
 
-import { prisma } from '@/lib/prisma';
+import prisma from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
@@ -95,6 +95,8 @@ export async function createGroup(prevState: State, formData: FormData): Promise
       data: {
         ...groupData,
         idTree: Math.random().toString(36).substring(2, 15), // Placeholder
+        createdById: userId,
+        updatedById: userId,
       },
     });
 
@@ -106,12 +108,12 @@ export async function createGroup(prevState: State, formData: FormData): Promise
         const buffer = Buffer.from(base64Data, 'base64');
         const file = new File([buffer], 'logo.jpg', { type: mimeType });
 
-        const logoPath = await uploadFile(file, 'groups', newGroup.id);
+        const logoPath = await uploadFile(file, 'groups', newGroup.id.toString());
 
         await prisma.photo.create({
           data: {
             url: logoPath,
-            entityId: newGroup.id,
+            entityId: newGroup.id.toString(),
             entityType: EntityType.group,
             type: PhotoType.logo,
             group: {

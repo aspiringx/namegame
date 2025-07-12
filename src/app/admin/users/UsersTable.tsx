@@ -1,29 +1,31 @@
 import prisma from '@/lib/prisma';
 import Link from 'next/link';
-import { DeleteGroupButton } from './DeleteGroupButton';
-import { UndeleteGroupButton } from './UndeleteGroupButton';
+import { DeleteUserButton } from './DeleteUserButton';
+import { UndeleteUserButton } from './UndeleteUserButton';
 
-type SortableColumn = 'name' | 'slug' | 'description' | 'createdAt' | 'updatedAt';
+type SortableColumn = 'username' | 'firstName' | 'lastName' | 'email' | 'phone' | 'createdAt' | 'updatedAt';
 type Order = 'asc' | 'desc';
 
-interface GroupsTableProps {
+interface UsersTableProps {
   query: string;
   sort: SortableColumn;
   order: Order;
 }
 
-export default async function GroupsTable({ query, sort, order }: GroupsTableProps) {
+export default async function UsersTable({ query, sort, order }: UsersTableProps) {
   const where = query
     ? {
         OR: [
-          { name: { contains: query, mode: 'insensitive' as const } },
-          { slug: { contains: query, mode: 'insensitive' as const } },
-          { description: { contains: query, mode: 'insensitive' as const } },
+          { username: { contains: query, mode: 'insensitive' as const } },
+          { firstName: { contains: query, mode: 'insensitive' as const } },
+          { lastName: { contains: query, mode: 'insensitive' as const } },
+          { email: { contains: query, mode: 'insensitive' as const } },
+          { phone: { contains: query, mode: 'insensitive' as const } },
         ],
       }
     : {};
 
-  const groups = await prisma.group.findMany({
+  const users = await prisma.user.findMany({
     where,
     orderBy: {
       [sort]: order,
@@ -36,7 +38,7 @@ export default async function GroupsTable({ query, sort, order }: GroupsTablePro
     const arrow = isCurrentSort ? (order === 'asc' ? '↑' : '↓') : '';
 
     return (
-      <Link href={`/admin/groups?sort=${column}&order=${newOrder}&query=${query}`} className="flex items-center gap-2 whitespace-nowrap">
+      <Link href={`/admin/users?sort=${column}&order=${newOrder}&query=${query}`} className="flex items-center gap-2 whitespace-nowrap">
         {title}
         {arrow && <span>{arrow}</span>}
       </Link>
@@ -49,19 +51,19 @@ export default async function GroupsTable({ query, sort, order }: GroupsTablePro
         <thead>
           <tr>
             <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">
-              <SortableHeader column="name" title="Name" />
+              <SortableHeader column="username" title="Username" />
             </th>
             <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 sm:table-cell">
-              <SortableHeader column="slug" title="Slug" />
+              <SortableHeader column="firstName" title="First Name" />
             </th>
             <th scope="col" className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 md:table-cell">
-              <SortableHeader column="description" title="Description" />
+              <SortableHeader column="lastName" title="Last Name" />
             </th>
             <th scope="col" className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 md:table-cell">
-              <SortableHeader column="createdAt" title="Created" />
+              <SortableHeader column="email" title="Email" />
             </th>
             <th scope="col" className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 md:table-cell">
-              <SortableHeader column="updatedAt" title="Updated" />
+              <SortableHeader column="phone" title="Phone" />
             </th>
             <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6">
               <span className="sr-only">Actions</span>
@@ -69,29 +71,27 @@ export default async function GroupsTable({ query, sort, order }: GroupsTablePro
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-200 bg-white">
-          {groups.map((group) => (
-            <tr key={group.id} className={group.deletedAt ? 'bg-gray-200' : ''}>
+          {users.map((user) => (
+            <tr key={user.id} className={user.deletedAt ? 'bg-gray-200' : ''}>
               <td className="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6">
-                {group.name}
+                {user.username}
               </td>
               <td className="px-3 py-4 text-sm text-gray-500 sm:table-cell">
-                <Link href={`/${group.slug}`} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-900">
-                  {group.slug}
-                </Link>
+                {user.firstName}
               </td>
-              <td className="hidden px-3 py-4 text-sm text-gray-500 md:table-cell">{group.description}</td>
-              <td className="hidden px-3 py-4 text-sm text-gray-500 md:table-cell">{new Date(group.createdAt).toLocaleDateString()}</td>
-              <td className="hidden px-3 py-4 text-sm text-gray-500 md:table-cell">{new Date(group.updatedAt).toLocaleDateString()}</td>
+              <td className="hidden px-3 py-4 text-sm text-gray-500 md:table-cell">{user.lastName}</td>
+              <td className="hidden px-3 py-4 text-sm text-gray-500 md:table-cell">{user.email}</td>
+              <td className="hidden px-3 py-4 text-sm text-gray-500 md:table-cell">{user.phone}</td>
               <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                {group.deletedAt ? (
-                  <UndeleteGroupButton groupId={group.id} />
+                {user.deletedAt ? (
+                  <UndeleteUserButton userId={user.id} />
                 ) : (
-                  <Link href={`/admin/groups/${group.slug}/edit`} className="text-indigo-600 hover:text-indigo-900">
+                  <Link href={`/admin/users/${user.id}/edit`} className="text-indigo-600 hover:text-indigo-900">
                     Edit
                   </Link>
                 )}
                 <span className="text-gray-300 mx-2">|</span>
-                <DeleteGroupButton groupId={group.id} />
+                <DeleteUserButton userId={user.id} />
               </td>
             </tr>
           ))}

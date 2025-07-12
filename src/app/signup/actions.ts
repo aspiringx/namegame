@@ -1,7 +1,7 @@
 'use server';
 
 import { z } from 'zod';
-import { prisma } from '@/lib/prisma';
+import prisma from '@/lib/prisma';
 import bcrypt from 'bcrypt';
 import { redirect } from 'next/navigation';
 

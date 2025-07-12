@@ -15,18 +15,18 @@ generator client {
 }
 
 model Account {
-  id                 String  @id @default(cuid())
-  userId             String
-  type               String
-  provider           String
-  providerAccountId  String
-  refresh_token      String? @db.Text
-  access_token       String? @db.Text
-  expires_at         Int?
-  token_type         String?
-  scope              String?
-  id_token           String? @db.Text
-  session_state      String?
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -56,18 +56,23 @@ model VerificationToken {
 // We attempt to derive a username from the firstName (i.e. Joe -> joe or joeN
 // if joe is already taken). Initially, passwords are generated. 
 model User {
-  id             String    @id @default(cuid())
-  username       String    @unique
-  password       String
-  firstName      String
-  lastName       String?
-  email          String?   @unique
-  emailVerified  DateTime?
-  phone          String?   @unique
-  phoneVerified  DateTime?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  deletedAt      DateTime?
+  id            String    @id @default(cuid())
+  username      String    @unique
+  password      String
+  firstName     String
+  lastName      String?
+  email         String?   @unique
+  emailVerified DateTime?
+  phone         String?   @unique
+  phoneVerified DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+
+  createdById    String?
+  createdBy      User?     @relation("UserCreatedBy", fields: [createdById], references: [id])
+  updatedById    String?
+  updatedBy      User?     @relation("UserUpdatedBy", fields: [updatedById], references: [id])
 
   // Relations
   accounts         Account[]
@@ -80,21 +85,25 @@ model User {
   userRelations1   UserUser[]  @relation("User1Relation")
   userRelations2   UserUser[]  @relation("User2Relation")
   groupMemberships GroupUser[]
+  createdUsers     User[]      @relation("UserCreatedBy")
+  updatedUsers     User[]      @relation("UserUpdatedBy")
+  createdGroups    Group[]     @relation("GroupCreatedBy")
+  updatedGroups    Group[]     @relation("GroupUpdatedBy")
 
   @@map("users")
 }
 
 model UserUser {
-  user1        User      @relation("User1Relation", fields: [user1Id], references: [id])
+  user1        User                 @relation("User1Relation", fields: [user1Id], references: [id])
   user1Id      String
-  user2        User      @relation("User2Relation", fields: [user2Id], references: [id])
+  user2        User                 @relation("User2Relation", fields: [user2Id], references: [id])
   user2Id      String
-  group        Group     @relation(fields: [groupId], references: [id])
+  group        Group                @relation(fields: [groupId], references: [id])
   groupId      Int
-  greetCount   Int       @default(0)
+  greetCount   Int                  @default(0)
   relationType UserUserRelationType @default(acquaintance)
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
   deletedAt    DateTime?
 
   @@id([user1Id, user2Id, groupId])
@@ -114,6 +123,11 @@ model Group {
   updatedAt   DateTime  @updatedAt
   deletedAt   DateTime?
 
+  createdById String
+  createdBy   User      @relation("GroupCreatedBy", fields: [createdById], references: [id])
+  updatedById String
+  updatedBy   User      @relation("GroupUpdatedBy", fields: [updatedById], references: [id])
+
   // Relations
   codes         Code[]
   links         Link[]
@@ -126,13 +140,13 @@ model Group {
 }
 
 model GroupUser {
-  user      User     @relation(fields: [userId], references: [id])
+  user      User          @relation(fields: [userId], references: [id])
   userId    String
-  group     Group     @relation(fields: [groupId], references: [id])
+  group     Group         @relation(fields: [groupId], references: [id])
   groupId   Int
   role      GroupUserRole @default(member)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
   deletedAt DateTime?
 
   @@id([userId, groupId])
@@ -155,34 +169,34 @@ model Code {
 }
 
 model Photo {
-  id         Int       @id @default(autoincrement())
+  id         Int        @id @default(autoincrement())
   userId     String?
-  user       User?     @relation(fields: [userId], references: [id])
-  groupId    Int
-  group      Group     @relation(fields: [groupId], references: [id])
+  user       User?      @relation(fields: [userId], references: [id])
+  groupId    Int?
+  group      Group?     @relation(fields: [groupId], references: [id])
   entityType EntityType
-  entityId   Int
+  entityId   String
   url        String
-  type       PhotoType @default(other)
-  isBlocked  Boolean   @default(false)
-  uploadedAt DateTime  @default(now())
-  createdAt  DateTime  @default(now())
+  type       PhotoType  @default(other)
+  isBlocked  Boolean    @default(false)
+  uploadedAt DateTime   @default(now())
+  createdAt  DateTime   @default(now())
   deletedAt  DateTime?
 
   @@map("photos")
 }
 
 model Message {
-  id            Int       @id @default(autoincrement())
+  id            Int        @id @default(autoincrement())
   userId        String
-  user          User      @relation(fields: [userId], references: [id])
+  user          User       @relation(fields: [userId], references: [id])
   entityType    EntityType
   entityId      Int
   message       String
   recipientType String
   recipientId   Int
-  isBlocked     Boolean   @default(false)
-  createdAt     DateTime  @default(now())
+  isBlocked     Boolean    @default(false)
+  createdAt     DateTime   @default(now())
   deletedAt     DateTime?
 
   @@map("messages")
@@ -190,10 +204,10 @@ model Message {
 
 model Greeting {
   id        Int      @id @default(autoincrement())
-  user1      User     @relation("GreetingUser1", fields: [user1Id], references: [id])
-  user1Id    String
-  user2      User     @relation("GreetingUser2", fields: [user2Id], references: [id])
-  user2Id    String
+  user1     User     @relation("GreetingUser1", fields: [user1Id], references: [id])
+  user1Id   String
+  user2     User     @relation("GreetingUser2", fields: [user2Id], references: [id])
+  user2Id   String
   geo       String? // Store as string for now
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

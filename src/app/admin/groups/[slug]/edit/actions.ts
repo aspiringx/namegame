@@ -1,6 +1,6 @@
 'use server';
 
-import { prisma } from '@/lib/prisma';
+import prisma from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
@@ -47,19 +47,22 @@ export async function updateGroup(formData: FormData) {
 
   const updatedGroup = await prisma.group.update({
       where: { id: groupId },
-      data: { ...groupData },
+      data: { 
+        ...groupData, 
+        updatedBy: { connect: { id: userId } } 
+      },
     });
 
     if (logo && logo.size > 0) {
       const existingLogo = await prisma.photo.findFirst({
         where: {
           entityType: EntityType.group,
-          entityId: updatedGroup.id,
+          entityId: updatedGroup.id.toString(),
           type: PhotoType.logo,
         },
       });
 
-            const logoPath = await uploadFile(logo, 'groups', updatedGroup.id);
+            const logoPath = await uploadFile(logo, 'groups', updatedGroup.id.toString());
 
       if (existingLogo) {
         await prisma.photo.update({
@@ -77,7 +80,7 @@ export async function updateGroup(formData: FormData) {
             url: logoPath,
             type: PhotoType.logo,
             entityType: EntityType.group,
-            entityId: updatedGroup.id,
+            entityId: updatedGroup.id.toString(),
             group: { connect: { id: updatedGroup.id } },
             user: { connect: { id: userId } },
           },

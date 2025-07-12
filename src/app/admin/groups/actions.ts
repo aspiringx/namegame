@@ -2,8 +2,9 @@
 
 import { z } from 'zod';
 import { redirect } from 'next/navigation';
-import { prisma } from '@/lib/prisma';
+import prisma from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
+import { auth } from '@/auth';
 
 export interface FormState {
   message?: string;
@@ -21,6 +22,13 @@ const GroupSchema = z.object({
 });
 
 export async function createGroup(prevState: FormState, formData: FormData): Promise<FormState> {
+  const session = await auth();
+  const userId = session?.user?.id;
+
+  if (!userId) {
+    return { message: 'You must be logged in to create a group.' };
+  }
+
   const validatedFields = GroupSchema.safeParse({
     name: formData.get('name'),
     slug: formData.get('slug'),
@@ -41,6 +49,8 @@ export async function createGroup(prevState: FormState, formData: FormData): Pro
           slug: validatedFields.data.slug,
           description: validatedFields.data.description,
           idTree: validatedFields.data.slug + '-' + Date.now(), // Temporary unique value
+          createdBy: { connect: { id: userId } },
+          updatedBy: { connect: { id: userId } },
         },
       });
 
@@ -59,10 +69,20 @@ export async function createGroup(prevState: FormState, formData: FormData): Pro
 }
 
 export async function softDeleteGroup(groupId: number) {
+  const session = await auth();
+  const userId = session?.user?.id;
+
+  if (!userId) {
+    return { success: false, message: 'You must be logged in to perform this action.' };
+  }
+
   try {
     await prisma.group.update({
       where: { id: groupId },
-      data: { deletedAt: new Date() },
+      data: { 
+        deletedAt: new Date(),
+        updatedBy: { connect: { id: userId } } 
+      },
     });
     revalidatePath('/admin/groups');
     return { success: true, message: 'Group soft-deleted successfully.' };
@@ -104,10 +124,20 @@ export async function hardDeleteGroup(groupId: number) {
 }
 
 export async function undeleteGroup(groupId: number) {
+  const session = await auth();
+  const userId = session?.user?.id;
+
+  if (!userId) {
+    return { success: false, message: 'You must be logged in to perform this action.' };
+  }
+
   try {
     await prisma.group.update({
       where: { id: groupId },
-      data: { deletedAt: null },
+      data: { 
+        deletedAt: null,
+        updatedBy: { connect: { id: userId } }
+      },
     });
     revalidatePath('/admin/groups');
     return { success: true, message: 'Group restored successfully.' };

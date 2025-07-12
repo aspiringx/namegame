@@ -6,6 +6,7 @@ import { useActionState, useState, useRef } from 'react';
 import { useFormStatus } from 'react-dom';
 import imageCompression from 'browser-image-compression';
 import { createGroup, type State } from './actions';
+import Breadcrumbs from '../../../../components/Breadcrumbs';
 
 const initialState: State = {
   message: null,
@@ -99,7 +100,8 @@ export default function CreateGroupPage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-8">
+        <div className="max-w-2xl mx-auto p-8">
+      <Breadcrumbs />
       <h1 className="text-2xl font-bold mb-6">Create New Group</h1>
       {state.message && <p className="text-red-500 mb-4">{state.message}</p>}
       <form ref={formRef} action={formAction} className="space-y-6">

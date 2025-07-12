@@ -6,29 +6,49 @@ const prisma = new PrismaClient();
 async function main() {
   console.log(`Start seeding ...`);
 
+  // Create the 'system' user if it doesn't exist
+  const systemUserPassword = await bcrypt.hash('password123', 10);
+  const systemUser = await prisma.user.upsert({
+    where: { username: 'system' },
+    update: {},
+    create: {
+      username: 'system',
+      firstName: 'System',
+      password: systemUserPassword,
+    },
+  });
+  console.log(`Created/found 'system' user with id: ${systemUser.id}`);
+
   // Create the Global Admin group if it doesn't exist
   const adminGroup = await prisma.group.upsert({
     where: { slug: 'global-admin' },
-    update: {},
+    update: {
+      updatedById: systemUser.id,
+    },
     create: {
       name: 'Global Admin',
       slug: 'global-admin',
       description: 'Group for super administrators of the entire application.',
-      // A unique value is required for idTree, using slug for simplicity
       idTree: 'global-admin',
+      createdById: systemUser.id,
+      updatedById: systemUser.id,
     },
   });
   console.log(`Created/found group '${adminGroup.name}' with id: ${adminGroup.id}`);
 
   // Create the 'joe' user if he doesn't exist
-  const hashedPassword = await bcrypt.hash('password123', 10); // Replace with a secure password
+  const hashedPassword = await bcrypt.hash('password123', 10);
   const joeUser = await prisma.user.upsert({
     where: { username: 'joe' },
-    update: {},
+    update: {
+      updatedById: systemUser.id,
+    },
     create: {
       username: 'joe',
       firstName: 'Joe',
       password: hashedPassword,
+      createdById: systemUser.id,
+      updatedById: systemUser.id,
     },
   });
   console.log(`Created/found user '${joeUser.username}' with id: ${joeUser.id}`);
@@ -41,9 +61,7 @@ async function main() {
         groupId: adminGroup.id,
       },
     },
-    update: {
-      role: GroupUserRole.super,
-    },
+    update: {},
     create: {
       userId: joeUser.id,
       groupId: adminGroup.id,
