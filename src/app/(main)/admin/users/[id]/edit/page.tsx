@@ -1,7 +1,7 @@
 import prisma from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import EditUserForm from './edit-user-form';
-import Breadcrumbs from '../../../../../components/Breadcrumbs';
+import Breadcrumbs from '@/components/Breadcrumbs';
 import { getPublicUrl } from '@/lib/storage';
 import { PhotoType } from '@/generated/prisma';
 

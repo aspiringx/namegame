@@ -4,8 +4,8 @@ import prisma from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
-import { EntityType, PhotoType } from '@/generated/prisma';
-import { uploadFile, deleteFile } from '@/lib/storage';
+import { EntityType, PhotoType, GroupUserRole } from '@/generated/prisma';
+import { uploadFile, deleteFile, getPublicUrl } from '@/lib/storage';
 import { auth } from '@/auth';
 
 // Define the schema for form validation using Zod
@@ -95,4 +95,104 @@ export async function updateGroup(formData: FormData) {
   revalidatePath('/admin/groups');
   revalidatePath(`/admin/groups/${groupData.slug}`);
   redirect('/admin/groups');
+}
+
+export async function searchUsers(groupId: number, query: string) {
+  if (!query) {
+    return [];
+  }
+
+  const users = await prisma.user.findMany({
+    where: {
+      deletedAt: null,
+      groupMemberships: {
+        none: {
+          groupId: groupId,
+        },
+      },
+      OR: [
+        { username: { contains: query, mode: 'insensitive' } },
+        { firstName: { contains: query, mode: 'insensitive' } },
+        { lastName: { contains: query, mode: 'insensitive' } },
+        { email: { contains: query, mode: 'insensitive' } },
+      ],
+    },
+    take: 10,
+    include: {
+      photos: {
+        where: {
+          type: PhotoType.primary,
+        },
+        take: 1,
+      },
+    },
+  });
+
+  return Promise.all(
+    users.map(async (user) => ({
+      ...user,
+      photoUrl: user.photos[0]?.url ? await getPublicUrl(user.photos[0].url) : '/images/default-avatar.png',
+    }))
+  );
+}
+
+const AddMemberSchema = z.object({
+  groupId: z.coerce.number(),
+  userId: z.string(),
+  role: z.nativeEnum(GroupUserRole),
+});
+
+export async function addMember(formData: FormData) {
+  const validatedFields = AddMemberSchema.safeParse({
+    groupId: formData.get('groupId'),
+    userId: formData.get('userId'),
+    role: formData.get('role'),
+  });
+
+  if (!validatedFields.success) {
+    throw new Error('Invalid form data.');
+  }
+
+  const { groupId, userId, role } = validatedFields.data;
+
+  await prisma.groupUser.create({
+    data: {
+      groupId,
+      userId,
+      role,
+    },
+  });
+
+  const group = await prisma.group.findUnique({ where: { id: groupId } });
+  revalidatePath(`/admin/groups/${group?.slug}/edit`);
+}
+
+const RemoveMemberSchema = z.object({
+  groupId: z.coerce.number(),
+  userId: z.string(),
+});
+
+export async function removeMember(formData: FormData) {
+  const validatedFields = RemoveMemberSchema.safeParse({
+    groupId: formData.get('groupId'),
+    userId: formData.get('userId'),
+  });
+
+  if (!validatedFields.success) {
+    throw new Error('Invalid form data.');
+  }
+
+  const { groupId, userId } = validatedFields.data;
+
+  await prisma.groupUser.delete({
+    where: {
+      userId_groupId: {
+        userId,
+        groupId,
+      },
+    },
+  });
+
+  const group = await prisma.group.findUnique({ where: { id: groupId } });
+  revalidatePath(`/admin/groups/${group?.slug}/edit`);
 }

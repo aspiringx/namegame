@@ -21,6 +21,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user) {
         token.id = user.id ?? '';
         token.roles = user.roles;
+        token.firstName = user.firstName;
         token.picture = user.image; // This comes from the authorize callback
       }
 
@@ -64,6 +65,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (token) {
         session.user.id = token.id as string;
         session.user.roles = token.roles as Role[];
+        session.user.firstName = token.firstName as string;
         session.user.image = token.picture as string | null;
       }
       return session;

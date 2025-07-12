@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import Breadcrumbs from '../../components/Breadcrumbs';
+import Breadcrumbs from '@/components/Breadcrumbs';
 
 export default function AdminPage() {
   return (

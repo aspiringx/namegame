@@ -75,7 +75,7 @@ export default async function GroupsTable({ query, sort, order }: GroupsTablePro
                 {group.name}
               </td>
               <td className="px-3 py-4 text-sm text-gray-500 dark:text-gray-400 sm:table-cell">
-                <Link href={`/${group.slug}`} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-900">
+                <Link href={`/g/${group.slug}`} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-200">
                   {group.slug}
                 </Link>
               </td>

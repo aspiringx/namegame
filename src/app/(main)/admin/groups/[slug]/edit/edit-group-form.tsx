@@ -4,7 +4,7 @@ import { updateGroup } from './actions';
 import type { Group } from '@/generated/prisma';
 import Image from 'next/image';
 
-export default function EditGroupForm({ group, logoUrl }: { group: Group, logoUrl: string }) {
+export default function EditGroupForm({ group, logoUrl }: { group: Group; logoUrl?: string }) {
   return (
     <form action={updateGroup} className="space-y-6">
       <input type="hidden" name="groupId" value={group.id} />

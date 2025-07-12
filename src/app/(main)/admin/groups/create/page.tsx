@@ -6,7 +6,7 @@ import { useActionState, useState, useRef } from 'react';
 import { useFormStatus } from 'react-dom';
 import imageCompression from 'browser-image-compression';
 import { createGroup, type State } from './actions';
-import Breadcrumbs from '../../../../components/Breadcrumbs';
+import Breadcrumbs from '@/components/Breadcrumbs';
 
 const initialState: State = {
   message: null,

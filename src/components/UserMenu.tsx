@@ -36,7 +36,7 @@ export default function UserMenu() {
 
   return (
     <div className="flex items-center">
-      {user && <p className="mr-4 text-gray-700">{user.firstName}</p>}
+      {user && <p className="mr-4 text-gray-700 dark:text-gray-300">{user.firstName}</p>}
       <div className="relative" ref={dropdownRef}>
       <Image
         src={user?.image || '/images/default-avatar.png'}
