@@ -131,7 +131,16 @@ export async function searchUsers(groupId: number, query: string) {
   return Promise.all(
     users.map(async (user) => ({
       ...user,
-      photoUrl: user.photos[0]?.url ? await getPublicUrl(user.photos[0].url) : '/images/default-avatar.png',
+      photoUrl: await (async () => {
+        const rawUrl = user.photos[0]?.url;
+        if (rawUrl) {
+          if (rawUrl.startsWith('http')) {
+            return rawUrl;
+          }
+          return getPublicUrl(rawUrl);
+        }
+        return '/images/default-avatar.png';
+      })(),
     }))
   );
 }
@@ -140,6 +149,12 @@ const AddMemberSchema = z.object({
   groupId: z.coerce.number(),
   userId: z.string(),
   role: z.nativeEnum(GroupUserRole),
+  memberSince: z
+    .preprocess(
+      (val) => (val === '' ? null : val),
+      z.coerce.number().int().optional().nullable(),
+    )
+    .transform((val) => val ?? new Date().getFullYear()),
 });
 
 export async function addMember(formData: FormData) {
@@ -147,19 +162,21 @@ export async function addMember(formData: FormData) {
     groupId: formData.get('groupId'),
     userId: formData.get('userId'),
     role: formData.get('role'),
+    memberSince: formData.get('memberSince'),
   });
 
   if (!validatedFields.success) {
     throw new Error('Invalid form data.');
   }
 
-  const { groupId, userId, role } = validatedFields.data;
+  const { groupId, userId, role, memberSince } = validatedFields.data;
 
   await prisma.groupUser.create({
     data: {
       groupId,
       userId,
       role,
+      memberSince,
     },
   });
 
@@ -190,6 +207,48 @@ export async function removeMember(formData: FormData) {
         userId,
         groupId,
       },
+    },
+  });
+
+  const group = await prisma.group.findUnique({ where: { id: groupId } });
+  revalidatePath(`/admin/groups/${group?.slug}/edit`);
+}
+
+const UpdateMemberSchema = z.object({
+  groupId: z.coerce.number(),
+  userId: z.string(),
+  role: z.nativeEnum(GroupUserRole),
+  memberSince: z.preprocess(
+    (val) => (val === '' ? null : val),
+    z.coerce.number().int().optional().nullable()
+  ),
+});
+
+export async function updateMember(formData: FormData) {
+  const validatedFields = UpdateMemberSchema.safeParse({
+    groupId: formData.get('groupId'),
+    userId: formData.get('userId'),
+    role: formData.get('role'),
+    memberSince: formData.get('memberSince'),
+  });
+
+  if (!validatedFields.success) {
+    console.error(validatedFields.error);
+    throw new Error('Invalid form data.');
+  }
+
+  const { groupId, userId, role, memberSince } = validatedFields.data;
+
+  await prisma.groupUser.update({
+    where: {
+      userId_groupId: {
+        userId,
+        groupId,
+      },
+    },
+    data: {
+      role,
+      memberSince,
     },
   });
 

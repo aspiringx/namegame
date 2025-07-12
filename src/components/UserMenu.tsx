@@ -34,20 +34,24 @@ export default function UserMenu() {
     setDropdownOpen(!isDropdownOpen);
   };
 
+  const closeDropdown = () => {
+    setDropdownOpen(false);
+  };
+
   return (
-    <div className="flex items-center">
-      {user && <p className="mr-4 text-gray-700 dark:text-gray-300">{user.firstName}</p>}
-      <div className="relative" ref={dropdownRef}>
-      <Image
-        src={user?.image || '/images/default-avatar.png'}
-        alt="User Profile"
-        width={40}
-        height={40}
-        className="w-10 h-10 rounded-full cursor-pointer"
-        onClick={toggleDropdown}
-      />
+    <div className="relative" ref={dropdownRef}>
+      <button onClick={toggleDropdown} className="flex items-center p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
+        {user && <p className="mr-4 text-gray-700 dark:text-gray-300">Hi, {user.firstName}</p>}
+        <Image
+          src={user?.image || '/images/default-avatar.png'}
+          alt="User Profile"
+          width={40}
+          height={40}
+          className="w-10 h-10 rounded-full"
+        />
+      </button>
       {isDropdownOpen && (
-        <div className="absolute top-14 right-0 bg-white rounded-md shadow-lg py-2 z-50 w-48">
+        <div className="absolute top-full mt-2 right-0 bg-white rounded-md shadow-lg py-2 z-50 w-48 dark:bg-gray-800">
           {user ? (
             <>
               {isSuperAdmin && (
@@ -55,25 +59,31 @@ export default function UserMenu() {
                   <Link
                     href="/admin"
                     className="block px-4 py-2 text-gray-800 hover:bg-gray-100"
+                    onClick={closeDropdown}
                   >
                     Admin
                   </Link>
                   <Link
                     href="/admin/groups"
                     className="block pl-8 pr-4 py-2 text-gray-800 hover:bg-gray-100"
+                    onClick={closeDropdown}
                   >
                     Groups
                   </Link>
                   <Link
                     href="/admin/users"
                     className="block pl-8 pr-4 py-2 text-gray-800 hover:bg-gray-100"
+                    onClick={closeDropdown}
                   >
                     Users
                   </Link>
                 </>
               )}
               <button
-                onClick={() => signOut({ callbackUrl: '/' })}
+                onClick={() => {
+                  signOut({ callbackUrl: '/' });
+                  closeDropdown();
+                }}
                 className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100"
               >
                 Logout
@@ -83,21 +93,15 @@ export default function UserMenu() {
             <>
               <Link
                 href="/login"
-                className="block px-4 py-2 text-gray-800 hover:bg-gray-100"
+                className="block px-4 py-2 text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
+                onClick={closeDropdown}
               >
                 Login
-              </Link>
-              <Link
-                href="/signup"
-                className="block px-4 py-2 text-gray-800 hover:bg-gray-100"
-              >
-                Sign Up
               </Link>
             </>
           )}
         </div>
       )}
-      </div>
     </div>
   );
 }

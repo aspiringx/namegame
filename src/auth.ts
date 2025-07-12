@@ -51,10 +51,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           });
 
           if (fullUser) {
-            const photoUrl = fullUser.photos[0]?.url
-              ? await getPublicUrl(fullUser.photos[0].url)
-              : null;
-            token.picture = photoUrl;
+            const rawUrl = fullUser.photos[0]?.url;
+            if (rawUrl) {
+              if (rawUrl.startsWith('http')) {
+                token.picture = rawUrl;
+              } else {
+                token.picture = await getPublicUrl(rawUrl);
+              }
+            } else {
+              token.picture = null;
+            }
           }
         }
       }
@@ -128,9 +134,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           groupSlug: mem.group.slug,
         }));
 
-        const primaryPhotoUrl = user.photos[0]?.url
-          ? await getPublicUrl(user.photos[0].url)
-          : null;
+        const rawUrl = user.photos[0]?.url;
+        let primaryPhotoUrl: string | null = null;
+        if (rawUrl) {
+          if (rawUrl.startsWith('http')) {
+            primaryPhotoUrl = rawUrl;
+          } else {
+            primaryPhotoUrl = await getPublicUrl(rawUrl);
+          }
+        }
 
         return {
           id: user.id,

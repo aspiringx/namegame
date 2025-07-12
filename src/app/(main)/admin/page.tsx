@@ -3,23 +3,23 @@ import Breadcrumbs from '@/components/Breadcrumbs';
 
 export default function AdminPage() {
   return (
-    <div>
+    <div className="max-w-4xl mx-auto p-8">
       <Breadcrumbs />
-      <h1 className="text-2xl font-bold mb-6">Global Admin</h1>
-      <nav>
-        <ul>
-          <li>
-            <Link href="/admin/groups" className="text-indigo-600 hover:text-indigo-800 hover:underline">
-              Manage Groups
-            </Link>
-          </li>
-          <li>
-            <Link href="/admin/users" className="text-indigo-600 hover:text-indigo-800 hover:underline">
-              Manage Users
-            </Link>
-          </li>
-        </ul>
-      </nav>
+      <h1 className="text-3xl font-bold mb-8 text-center dark:text-white">Admin Dashboard</h1>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <Link
+          href="/admin/groups"
+          className="bg-indigo-600 text-white font-bold py-8 px-6 rounded-lg text-center text-2xl hover:bg-indigo-700 transition-colors shadow-lg flex items-center justify-center"
+        >
+          Groups
+        </Link>
+        <Link
+          href="/admin/users"
+          className="bg-green-600 text-white font-bold py-8 px-6 rounded-lg text-center text-2xl hover:bg-green-700 transition-colors shadow-lg flex items-center justify-center"
+        >
+          Users
+        </Link>
+      </div>
     </div>
   );
 }

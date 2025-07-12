@@ -15,7 +15,7 @@ const GroupSchema = z.object({
   description: z.string().optional(),
   address: z.string().optional(),
   phone: z.string().optional(),
-  logo: z.string().optional(), // Logo is a base64 string
+  logo: z.string().optional().nullable(), // Logo is a base64 string
 });
 
 export type State = {
@@ -76,7 +76,8 @@ export async function createGroup(prevState: State, formData: FormData): Promise
     };
   }
 
-  const { logo, ...groupData } = validatedFields.data;
+  const { logo: initialLogo, ...groupData } = validatedFields.data;
+  const logo = initialLogo === '' ? null : initialLogo;
 
   try {
     const existingGroup = await prisma.group.findUnique({

@@ -1,17 +1,11 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-}
-
-generator client {
-  provider = "prisma-client-js"
-  output   = "../src/generated/prisma"
 }
 
 model Account {
@@ -20,15 +14,14 @@ model Account {
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
@@ -49,105 +42,93 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-// With next-auth, we manage the username and (hashed) password in the users 
-// table. Other user data (photos, messages, addresses, etc.) will be in 
-// separate tables and unique to a parent[+sub] group. 
-// 
-// We attempt to derive a username from the firstName (i.e. Joe -> joe or joeN
-// if joe is already taken). Initially, passwords are generated. 
 model User {
-  id            String    @id @default(cuid())
-  username      String    @unique
-  password      String
-  firstName     String
-  lastName      String?
-  email         String?   @unique
-  emailVerified DateTime?
-  phone         String?   @unique
-  phoneVerified DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  deletedAt     DateTime?
-
-  createdById    String?
-  createdBy      User?     @relation("UserCreatedBy", fields: [createdById], references: [id])
-  updatedById    String?
-  updatedBy      User?     @relation("UserUpdatedBy", fields: [updatedById], references: [id])
-
-  // Relations
+  id               String      @id @default(cuid())
+  username         String      @unique
+  password         String
+  firstName        String
+  lastName         String?
+  email            String?     @unique
+  emailVerified    DateTime?
+  phone            String?     @unique
+  phoneVerified    DateTime?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  deletedAt        DateTime?
+  createdById      String?
+  updatedById      String?
   accounts         Account[]
   sessions         Session[]
   codes            Code[]
-  photos           Photo[]
-  messages         Message[]
   greetingsSent    Greeting[]  @relation("GreetingUser1")
   greetingsRcvd    Greeting[]  @relation("GreetingUser2")
-  userRelations1   UserUser[]  @relation("User1Relation")
-  userRelations2   UserUser[]  @relation("User2Relation")
   groupMemberships GroupUser[]
-  createdUsers     User[]      @relation("UserCreatedBy")
-  updatedUsers     User[]      @relation("UserUpdatedBy")
   createdGroups    Group[]     @relation("GroupCreatedBy")
   updatedGroups    Group[]     @relation("GroupUpdatedBy")
+  messages         Message[]
+  photos           Photo[]
+  userRelations1   UserUser[]  @relation("User1Relation")
+  userRelations2   UserUser[]  @relation("User2Relation")
+  createdBy        User?       @relation("UserCreatedBy", fields: [createdById], references: [id])
+  createdUsers     User[]      @relation("UserCreatedBy")
+  updatedBy        User?       @relation("UserUpdatedBy", fields: [updatedById], references: [id])
+  updatedUsers     User[]      @relation("UserUpdatedBy")
 
   @@map("users")
 }
 
 model UserUser {
-  user1        User                 @relation("User1Relation", fields: [user1Id], references: [id])
   user1Id      String
-  user2        User                 @relation("User2Relation", fields: [user2Id], references: [id])
   user2Id      String
-  group        Group                @relation(fields: [groupId], references: [id])
   groupId      Int
   greetCount   Int                  @default(0)
   relationType UserUserRelationType @default(acquaintance)
   createdAt    DateTime             @default(now())
   updatedAt    DateTime             @updatedAt
   deletedAt    DateTime?
+  group        Group                @relation(fields: [groupId], references: [id])
+  user1        User                 @relation("User1Relation", fields: [user1Id], references: [id])
+  user2        User                 @relation("User2Relation", fields: [user2Id], references: [id])
 
   @@id([user1Id, user2Id, groupId])
   @@map("user_users")
 }
 
 model Group {
-  id          Int       @id @default(autoincrement())
-  name        String
-  slug        String    @unique
-  description String?
-  address     String?
-  phone       String?
-  parentId    Int?
-  idTree      String    @unique
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  deletedAt   DateTime?
-
-  createdById String
-  createdBy   User      @relation("GroupCreatedBy", fields: [createdById], references: [id])
-  updatedById String
-  updatedBy   User      @relation("GroupUpdatedBy", fields: [updatedById], references: [id])
-
-  // Relations
+  id            Int         @id @default(autoincrement())
+  idTree        String      @unique
+  name          String
+  slug          String      @unique
+  description   String?
+  address       String?
+  phone         String?
+  createdById   String?
+  updatedById   String?
+  createdBy     User?       @relation("GroupCreatedBy", fields: [createdById], references: [id])
+  updatedBy     User?       @relation("GroupUpdatedBy", fields: [updatedById], references: [id])
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  deletedAt     DateTime?
+  members       GroupUser[]
   codes         Code[]
   links         Link[]
   iceBreakers   IceBreaker[]
   photos        Photo[]
   userRelations UserUser[]
-  members       GroupUser[]
 
   @@map("groups")
 }
 
 model GroupUser {
-  user      User          @relation(fields: [userId], references: [id])
   userId    String
-  group     Group         @relation(fields: [groupId], references: [id])
   groupId   Int
-  role      GroupUserRole @default(member)
+  role        GroupUserRole @default(guest)
+  memberSince Int?
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
   deletedAt DateTime?
+  group     Group         @relation(fields: [groupId], references: [id])
+  user      User          @relation(fields: [userId], references: [id])
 
   @@id([userId, groupId])
   @@map("group_users")
@@ -156,13 +137,13 @@ model GroupUser {
 model Code {
   id            Int      @id @default(autoincrement())
   userId        String
-  user          User     @relation(fields: [userId], references: [id])
   parentGroupId Int
   groupId       Int
-  group         Group    @relation(fields: [groupId], references: [id])
   url           String   @unique
-  geo           String? // Store as string for now
+  geo           String?
   createdAt     DateTime @default(now())
+  group         Group    @relation(fields: [groupId], references: [id])
+  user          User     @relation(fields: [userId], references: [id])
 
   @@unique([userId, groupId, geo])
   @@map("codes")
@@ -171,9 +152,7 @@ model Code {
 model Photo {
   id         Int        @id @default(autoincrement())
   userId     String?
-  user       User?      @relation(fields: [userId], references: [id])
   groupId    Int?
-  group      Group?     @relation(fields: [groupId], references: [id])
   entityType EntityType
   entityId   String
   url        String
@@ -182,6 +161,8 @@ model Photo {
   uploadedAt DateTime   @default(now())
   createdAt  DateTime   @default(now())
   deletedAt  DateTime?
+  group      Group?     @relation(fields: [groupId], references: [id])
+  user       User?      @relation(fields: [userId], references: [id])
 
   @@map("photos")
 }
@@ -189,7 +170,6 @@ model Photo {
 model Message {
   id            Int        @id @default(autoincrement())
   userId        String
-  user          User       @relation(fields: [userId], references: [id])
   entityType    EntityType
   entityId      Int
   message       String
@@ -198,19 +178,20 @@ model Message {
   isBlocked     Boolean    @default(false)
   createdAt     DateTime   @default(now())
   deletedAt     DateTime?
+  user          User       @relation(fields: [userId], references: [id])
 
   @@map("messages")
 }
 
 model Greeting {
   id        Int      @id @default(autoincrement())
-  user1     User     @relation("GreetingUser1", fields: [user1Id], references: [id])
   user1Id   String
-  user2     User     @relation("GreetingUser2", fields: [user2Id], references: [id])
   user2Id   String
-  geo       String? // Store as string for now
+  geo       String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  user1     User     @relation("GreetingUser1", fields: [user1Id], references: [id])
+  user2     User     @relation("GreetingUser2", fields: [user2Id], references: [id])
 
   @@map("greetings")
 }
@@ -218,11 +199,24 @@ model Greeting {
 model IceBreaker {
   id        Int      @id @default(autoincrement())
   groupId   Int
-  group     Group    @relation(fields: [groupId], references: [id])
   question  String
   createdAt DateTime @default(now())
+  group     Group    @relation(fields: [groupId], references: [id])
 
   @@map("ice_breakers")
+}
+
+model Link {
+  id          Int      @id @default(autoincrement())
+  groupId     Int
+  url         String
+  title       String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  group       Group    @relation(fields: [groupId], references: [id])
+
+  @@map("links")
 }
 
 enum UserUserRelationType {
@@ -232,10 +226,10 @@ enum UserUserRelationType {
 }
 
 enum GroupUserRole {
-  owner
   admin
   member
   super
+  guest
 }
 
 enum EntityType {
@@ -247,17 +241,4 @@ enum PhotoType {
   logo
   primary
   other
-}
-
-model Link {
-  id          Int      @id @default(autoincrement())
-  groupId     Int
-  group       Group    @relation(fields: [groupId], references: [id])
-  url         String
-  title       String
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@map("links")
 }

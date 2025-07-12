@@ -49,7 +49,17 @@ export default async function UsersTable({ query, sort, order }: UsersTableProps
 
   const usersWithPhotos = await Promise.all(
     users.map(async (user) => {
-      const photoUrl = user.photos[0]?.url ? await getPublicUrl(user.photos[0].url) : '/images/default-avatar.png';
+      const rawUrl = user.photos[0]?.url;
+      let photoUrl: string;
+      if (rawUrl) {
+        if (rawUrl.startsWith('http')) {
+          photoUrl = rawUrl;
+        } else {
+          photoUrl = await getPublicUrl(rawUrl);
+        }
+      } else {
+        photoUrl = '/images/default-avatar.png';
+      }
       return { ...user, photoUrl };
     })
   );

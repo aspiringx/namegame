@@ -4,6 +4,7 @@ import { z } from 'zod';
 import prisma from '@/lib/prisma';
 import bcrypt from 'bcrypt';
 import { redirect } from 'next/navigation';
+import { EntityType, PhotoType } from '@/generated/prisma';
 
 const SignupSchema = z.object({
   username: z.string().min(3, 'Username must be at least three characters.'),
@@ -59,13 +60,28 @@ export async function signup(
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    await prisma.user.create({
-      data: {
-        username,
-        firstName,
-        lastName: lastName || null,
-        password: hashedPassword,
-      },
+    await prisma.$transaction(async (tx) => {
+      const newUser = await tx.user.create({
+        data: {
+          username,
+          firstName,
+          lastName: lastName || null,
+          password: hashedPassword,
+        },
+      });
+
+      // Use the user's ID as a seed for a unique, deterministic avatar
+      const avatarUrl = `https://api.dicebear.com/8.x/micah/png?seed=${newUser.id}`;
+
+      await tx.photo.create({
+        data: {
+          url: avatarUrl,
+          type: PhotoType.primary,
+          entityType: EntityType.user,
+          entityId: newUser.id,
+          userId: newUser.id,
+        },
+      });
     });
   } catch (error) {
     return {

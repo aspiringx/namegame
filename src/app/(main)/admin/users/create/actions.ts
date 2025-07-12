@@ -93,21 +93,48 @@ export async function createUser(prevState: State, formData: FormData): Promise<
   }
 
   const { photo, password, ...userData } = validatedFields.data;
-  let newUser;
 
   try {
-    const hashedPassword = await bcrypt.hash(password, 10);
-    newUser = await prisma.user.create({
-      data: {
-        username: userData.username,
-        password: hashedPassword,
-        firstName: userData.firstName || '',
-        lastName: userData.lastName || null,
-        email: userData.email || null,
-        phone: userData.phone || null,
-        createdBy: { connect: { id: creatorId } },
-        updatedBy: { connect: { id: creatorId } },
-      },
+    await prisma.$transaction(async (tx) => {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const newUser = await tx.user.create({
+        data: {
+          username: userData.username,
+          password: hashedPassword,
+          firstName: userData.firstName || '',
+          lastName: userData.lastName || null,
+          email: userData.email || null,
+          phone: userData.phone || null,
+          createdBy: { connect: { id: creatorId } },
+          updatedBy: { connect: { id: creatorId } },
+        },
+      });
+
+      try {
+        let photoUrl: string;
+        if (photo && photo.size > 0) {
+          console.log('Photo provided, uploading...');
+          photoUrl = await uploadFile(photo, 'user-photos', newUser.id);
+        } else {
+          console.log('No photo provided, generating default avatar...');
+          photoUrl = `https://api.dicebear.com/8.x/micah/png?seed=${newUser.id}`;
+        }
+
+        await tx.photo.create({
+          data: {
+            url: photoUrl,
+            type: PhotoType.primary,
+            entityType: EntityType.user,
+            entityId: newUser.id,
+            userId: newUser.id,
+          },
+        });
+        console.log('Photo record created successfully.');
+      } catch (photoError) {
+        console.error('Error creating or uploading photo:', photoError);
+        // Throw an error to ensure the transaction is rolled back
+        throw new Error('Failed to create photo for user.');
+      }
     });
   } catch (error: any) {
     if (error.code === 'P2002' && error.meta?.target?.includes('username')) {
@@ -117,27 +144,8 @@ export async function createUser(prevState: State, formData: FormData): Promise<
         values: formValues,
       };
     }
-    return { errors: null, message: 'Database Error: Failed to create user.', values: formValues };
-  }
-
-  if (photo && photo.size > 0) {
-    try {
-      const url = await uploadFile(photo, 'user-photos', newUser.id.toString());
-      await prisma.photo.create({
-        data: {
-          url,
-          type: PhotoType.primary,
-          entityType: EntityType.user,
-          entityId: newUser.id.toString(),
-          userId: newUser.id.toString(),
-        },
-      });
-    } catch (error: any) {
-      console.error('Photo upload failed:', error);
-      // Note: The user is already created at this point.
-      // You might want to add logic to handle this case, e.g., by deleting the user or marking them as incomplete.
-      return { errors: null, message: `Failed to upload photo: ${error.message}`, values: formValues };
-    }
+    console.error('Transaction failed:', error);
+    return { errors: null, message: `Failed to create user: ${error.message}`, values: formValues };
   }
 
   revalidatePath('/admin/users');

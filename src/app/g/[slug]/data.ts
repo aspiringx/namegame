@@ -14,6 +14,9 @@ export const getGroup = cache(async (slug: string): Promise<GroupWithMembers | n
     include: {
       photos: true,
       members: {
+        orderBy: {
+          updatedAt: 'desc',
+        },
         include: {
           user: {
             include: {
@@ -29,11 +32,16 @@ export const getGroup = cache(async (slug: string): Promise<GroupWithMembers | n
     return null;
   }
 
-  const otherMembers = currentUserId ? group.members.filter((member) => member.userId !== currentUserId) : group.members;
-
-  const memberPromises = otherMembers.map(async (member) => {
+  const memberPromises = group.members.map(async (member) => {
     const primaryPhoto = member.user.photos.find((p) => p.type === 'primary');
-    const photoUrl = primaryPhoto ? await getPublicUrl(primaryPhoto.url) : undefined;
+    let photoUrl: string | undefined;
+    if (primaryPhoto?.url) {
+      if (primaryPhoto.url.startsWith('http')) {
+        photoUrl = primaryPhoto.url;
+      } else {
+        photoUrl = await getPublicUrl(primaryPhoto.url);
+      }
+    }
     const name = [member.user.firstName, member.user.lastName].filter(Boolean).join(' ');
 
     return {
