@@ -1,0 +1,104 @@
+'use client';
+
+import { useState, useTransition } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import { handleGuestGreeting, CodeData } from '@/app/greet/[code]/actions';
+
+export default function GreetPageClient({ codeData, isValidCode }: { codeData: CodeData | null; isValidCode: boolean }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const [isPending, startTransition] = useTransition();
+  const [showSignupForm, setShowSignupForm] = useState(false);
+  const [firstName, setFirstName] = useState('');
+
+  const handleLogin = () => {
+    router.push(`/login?callbackUrl=${encodeURIComponent(pathname)}`);
+  };
+
+  const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!firstName.trim()) {
+      alert('Please enter your first name.');
+      return;
+    }
+
+    startTransition(async () => {
+      if (!codeData) {
+        alert('An unexpected error occurred. Invalid data.');
+        return;
+      }
+      try {
+        const result = await handleGuestGreeting(firstName, codeData);
+        if (result.success) {
+          // The guest user was created and logged in successfully.
+          // Now, redirect to the group page.
+          window.location.href = `/g/${codeData.group.slug}`;
+        } else {
+          alert(result.error || 'An unknown error occurred.');
+        }
+      } catch (error) {
+        console.error('Guest signup failed:', error);
+        alert('An unexpected error occurred. Please try again.');
+      }
+    });
+  };
+
+  if (!isValidCode || !codeData) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen text-center p-4">
+        <div className="max-w-md w-full">
+          <h1 className="text-4xl font-bold mb-4 text-destructive">Invalid Link</h1>
+          <p className="text-xl">
+            This greeting link is either expired or invalid. Please ask for a new one.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen text-center p-4">
+      <div className="max-w-md w-full">
+        <h1 className="text-4xl font-bold mb-4">Welcome!</h1>
+        <p className="text-xl mb-8">
+          You just met {codeData.user.firstName || 'a new friend'}!
+        </p>
+
+        {!showSignupForm ? (
+          <div className="space-y-4">
+            <p>Join the group to connect!</p>
+            <div className="flex justify-center gap-4">
+              <button onClick={handleLogin} className="px-6 py-2 rounded-md border">
+                Login
+              </button>
+              <button
+                onClick={() => setShowSignupForm(true)}
+                className="px-6 py-2 rounded-md bg-primary text-primary-foreground"
+              >
+                Sign Up
+              </button>
+            </div>
+          </div>
+        ) : (
+          <form onSubmit={handleFormSubmit} className="space-y-4">
+            <input
+              type="text"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              placeholder="Enter your first name"
+              className="w-full px-4 py-2 border rounded-md dark:bg-gray-800"
+              required
+            />
+            <button
+              type="submit"
+              disabled={isPending}
+              className="w-full px-6 py-2 rounded-md bg-primary text-primary-foreground disabled:opacity-50"
+            >
+              {isPending ? 'Joining...' : 'Join the Group'}
+            </button>
+          </form>
+        )}
+      </div>
+    </div>
+  );
+}

@@ -1,0 +1,183 @@
+'use server';
+
+import { auth } from '@/auth';
+import { createId } from '@paralleldrive/cuid2';
+
+import prisma from '@/lib/prisma';
+import bcrypt from 'bcrypt';
+import { signIn } from '@/auth';
+import { EntityType, PhotoType } from '@/generated/prisma';
+
+
+// A helper type for the codeData object to avoid passing the full prisma type to the client
+export interface CodeData {
+  id: number;
+  userId: string;
+  parentGroupId: number;
+  groupId: number;
+  code: string;
+  user: {
+    firstName: string | null;
+    id: string;
+  };
+  group: {
+    slug: string;
+    id: number;
+  };
+}
+
+/**
+ * Handles the greeting logic when an authenticated user scans a code.
+ * It creates or updates the relationship between the two users and
+ * ensures the scanner is a member of the group.
+ */
+export async function handleAuthenticatedGreeting(codeData: CodeData, currentUserId: string) {
+  const user1Id = currentUserId < codeData.user.id ? currentUserId : codeData.user.id;
+  const user2Id = currentUserId > codeData.user.id ? currentUserId : codeData.user.id;
+
+  await prisma.$transaction(async (tx) => {
+    // 1. Create or update the UserUser relationship
+    await tx.userUser.upsert({
+      where: {
+        user1Id_user2Id_groupId: {
+          user1Id,
+          user2Id,
+          groupId: codeData.groupId,
+        },
+      },
+      update: {
+        greetCount: { increment: 1 },
+      },
+      create: {
+        user1Id,
+        user2Id,
+        groupId: codeData.groupId,
+        relationType: 'acquaintance',
+        greetCount: 1,
+      },
+    });
+
+    // 2. Ensure the scanning user is a member of the group
+    await tx.groupUser.upsert({
+      where: {
+        userId_groupId: {
+          userId: currentUserId,
+          groupId: codeData.groupId,
+        },
+      },
+      update: {},
+      create: {
+        userId: currentUserId,
+        groupId: codeData.groupId,
+        role: 'guest',
+      },
+    });
+  });
+}
+
+/**
+ * Handles the greeting and sign-up logic for a new, unauthenticated user.
+ * It creates a new user, establishes the relationship, and adds them to the group.
+ */
+export async function createGreetingCode(groupId: number) {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    throw new Error('You must be logged in to create a greeting code.');
+  }
+
+  const newCode = await prisma.code.upsert({
+    where: {
+      userId_groupId: {
+        userId: session.user.id,
+        groupId: groupId,
+      },
+    },
+    update: {
+      code: createId(),
+    },
+    create: {
+      userId: session.user.id,
+      groupId: groupId,
+      parentGroupId: groupId, // As per instructions
+      code: createId(),
+    },
+  });
+
+  return newCode;
+}
+
+/**
+ * Handles the greeting and sign-up logic for a new, unauthenticated user.
+ * It creates a new user, establishes the relationship, and adds them to the group.
+ */
+export async function handleGuestGreeting(firstName: string, codeData: CodeData) {
+  const hashedPassword = await bcrypt.hash('password123', 10);
+  const username = `guest-${firstName.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`;
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      // 1. Create the new guest user
+      const newUser = await tx.user.create({
+        data: {
+          username,
+          password: hashedPassword,
+          firstName,
+        },
+      });
+
+      // 2. Create the UserUser relationship
+      const user1Id = newUser.id < codeData.user.id ? newUser.id : codeData.user.id;
+      const user2Id = newUser.id > codeData.user.id ? newUser.id : codeData.user.id;
+
+            // 3. Create a default profile picture for the new user
+      const avatarUrl = `https://api.dicebear.com/8.x/initials/png?seed=${newUser.id}`;
+
+      await tx.photo.create({
+        data: {
+          userId: newUser.id,
+          entityType: EntityType.user,
+          entityId: newUser.id,
+          url: avatarUrl,
+          type: PhotoType.primary,
+        },
+      });
+
+      // 4. Create the UserUser relationship
+      await tx.userUser.create({
+        data: {
+          user1Id,
+          user2Id,
+          groupId: codeData.groupId,
+          relationType: 'acquaintance',
+          greetCount: 1,
+        },
+      });
+
+      // 3. Add the new user to the group as a guest
+      await tx.groupUser.create({
+        data: {
+          userId: newUser.id,
+          groupId: codeData.groupId,
+          role: 'guest',
+        },
+      });
+    });
+
+    // 4. After the transaction is successful, sign the new user in
+    await signIn('credentials', {
+      username,
+      password: 'password123',
+      redirect: false, // We will handle redirection on the client
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error('Guest greeting failed:', error);
+    // Check for unique constraint violation on username, though it's highly unlikely
+    if (error instanceof Error && error.message.includes('Unique constraint failed')) {
+      return { success: false, error: 'A user with a similar name already exists. Please try again.' };
+    }
+    return { success: false, error: 'Could not create guest account. Please try again later.' };
+  }
+}

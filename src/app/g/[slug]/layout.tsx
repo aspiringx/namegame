@@ -3,6 +3,7 @@ import GreetButton from '@/components/GreetButton';
 import Header from '@/components/Header';
 import { GroupProvider } from '@/components/GroupProvider';
 import { getGroup } from './data';
+import { headers } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
 import type { Metadata } from 'next';
 
@@ -30,6 +31,8 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
 }
 
 export default async function GroupLayout(props: { children: React.ReactNode; params: Promise<{ slug: string }> }) {
+  const headersList = await headers();
+  const pathname = headersList.get('next-url') || '';
   const params = await props.params;
 
   const {
@@ -51,7 +54,8 @@ export default async function GroupLayout(props: { children: React.ReactNode; pa
       (r) => r.groupSlug === 'global-admin' && r.role === 'super'
     ) ?? false;
 
-  if (!currentUserMembership && !isSuperAdmin) {
+  // The /greet page is public and should not be protected by this authorization.
+  if (!pathname.includes('/greet') && !currentUserMembership && !isSuperAdmin) {
     redirect('/');
   }
 

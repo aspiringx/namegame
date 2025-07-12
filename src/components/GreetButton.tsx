@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useGroup } from './GroupProvider';
-import { createGreetingCode } from '../app/g/[slug]/actions';
+import { createGreetingCode } from '@/app/greet/[code]/actions';
 import QRCodeModal from './QRCodeModal';
 
 export default function GreetButton() {
@@ -20,7 +20,7 @@ export default function GreetButton() {
     setIsLoading(true);
     try {
       const newCode = await createGreetingCode(group.id);
-      const url = `${window.location.origin}/g/${group.slug}/greet/${newCode.code}`;
+      const url = `${window.location.origin}/greet/${newCode.code}`;
       setGreetingUrl(url);
       setIsModalOpen(true);
     } catch (error) {
