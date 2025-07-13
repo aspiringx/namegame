@@ -101,7 +101,7 @@ export default function GroupTabs({ sunDeckMembers, iceBlockMembers }: GroupTabs
               <>
                 {type === 'sunDeck' && (
                   <div className="mb-4 rounded-md bg-blue-50 p-4 text-sm text-blue-700 dark:bg-blue-900 dark:text-blue-300">
-                    <p>People you've greeted and how long ago.</p>
+                    <p>People you've greeted and when.</p>
                   </div>
                 )}
                 {type === 'iceBlock' && (
