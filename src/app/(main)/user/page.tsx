@@ -5,7 +5,7 @@ import UserProfileForm from './_components/user-profile-form';
 import { getPublicUrl } from '@/lib/storage';
 import Link from 'next/link';
 
-export default async function UserProfilePage() {
+export default async function UserProfilePage({ searchParams }: { searchParams?: { welcome?: string } }) {
   const session = await auth();
   if (!session?.user?.id) {
     redirect('/login?callbackUrl=/user');
@@ -46,6 +46,11 @@ export default async function UserProfilePage() {
   return (
     <main className="container mx-auto px-4 py-8">
       <div className="max-w-2xl mx-auto">
+        {searchParams?.welcome === 'true' && user && (
+          <div className="mb-4 rounded-md bg-green-50 p-4 text-sm text-green-700 dark:bg-green-900 dark:text-green-300">
+            Welcome, {user.firstName}! Click a group link below to start playing.
+          </div>
+        )}
         <h1 className="text-3xl font-bold mb-6">My Profile</h1>
         <UserProfileForm user={user} photoUrl={photoUrl} />
 

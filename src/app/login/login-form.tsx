@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { getLoginRedirectPath } from './actions';
 
 export default function LoginForm() {
   const [username, setUsername] = useState('');
@@ -23,10 +24,15 @@ export default function LoginForm() {
       password,
     });
 
-    if (result?.error) {
-      setError('Invalid username or password');
+    if (result?.ok && !result.error) {
+      if (callbackUrl) {
+        router.push(callbackUrl);
+      } else {
+        const redirectPath = await getLoginRedirectPath();
+        router.push(redirectPath);
+      }
     } else {
-      router.push(callbackUrl || '/');
+      setError('Invalid username or password.');
     }
   };
 

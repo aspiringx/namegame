@@ -4,18 +4,20 @@
 
 import { createContext, useContext } from 'react';
 import { GroupWithMembers } from '@/types';
-import { Group } from '@/generated/prisma';
+import { Group, GroupUser, User } from '@/generated/prisma';
 
 export interface GroupPageData {
   group: Group | null;
   sunDeckMembers: GroupWithMembers['members'];
   iceBlockMembers: GroupWithMembers['members'];
+  currentUserMembership: (GroupUser & { user: User }) | undefined;
 }
 
-const GroupContext = createContext<GroupPageData>({ 
-  group: null, 
-  sunDeckMembers: [], 
-  iceBlockMembers: [] 
+const GroupContext = createContext<GroupPageData>({
+  group: null,
+  sunDeckMembers: [],
+  iceBlockMembers: [],
+  currentUserMembership: undefined,
 });
 
 export function GroupProvider({ children, value }: { children: React.ReactNode; value: GroupPageData }) {

@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
 import { revalidatePath, revalidateTag } from 'next/cache';
+import { GroupUserRole } from '@/generated/prisma';
 import { uploadFile, deleteFile, getPublicUrl } from '@/lib/storage';
 
 export type State = {
@@ -84,6 +85,25 @@ export async function updateUserProfile(prevState: State, formData: FormData): P
         lastName,
       },
     });
+
+    // Check for profile completeness to promote from guest to member
+    const hasPrimaryPhoto = await prisma.photo.findFirst({
+      where: { entityId: userId, entityType: 'user', type: 'primary' },
+    });
+
+    if (updatedUser.lastName && hasPrimaryPhoto) {
+      // firstName is already required by the Zod schema
+      await prisma.groupUser.updateMany({
+        where: {
+          userId: userId,
+          role: GroupUserRole.guest,
+        },
+        data: {
+          role: GroupUserRole.member,
+        },
+      });
+    }
+
 
   } catch (error) {
     console.error('Failed to update user profile:', error);
