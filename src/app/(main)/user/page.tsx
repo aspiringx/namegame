@@ -5,7 +5,12 @@ import UserProfileForm from './_components/user-profile-form';
 import { getPublicUrl } from '@/lib/storage';
 import Link from 'next/link';
 
-export default async function UserProfilePage({ searchParams }: { searchParams?: { welcome?: string } }) {
+
+
+export default async function UserProfilePage(props: {
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
+  const searchParams = await props.searchParams;
   const session = await auth();
   if (!session?.user?.id) {
     redirect('/login?callbackUrl=/user');
