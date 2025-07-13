@@ -102,6 +102,7 @@ model Group {
   description   String?
   address       String?
   phone         String?
+  parentId      Int?
   createdById   String?
   updatedById   String?
   createdBy     User?       @relation("GroupCreatedBy", fields: [createdById], references: [id])
@@ -109,6 +110,8 @@ model Group {
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
   deletedAt     DateTime?
+  parent        Group?      @relation("GroupToGroup", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  children      Group[]     @relation("GroupToGroup")
   members       GroupUser[]
   codes         Code[]
   links         Link[]
