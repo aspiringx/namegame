@@ -6,7 +6,7 @@ import { createGreetingCode } from '@/app/greet/[code]/actions';
 import QRCodeModal from './QRCodeModal';
 
 export default function GreetButton() {
-  const group = useGroup();
+  const { group } = useGroup();
   const [isLoading, setIsLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [greetingUrl, setGreetingUrl] = useState('');

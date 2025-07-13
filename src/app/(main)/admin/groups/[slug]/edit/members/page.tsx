@@ -1,91 +1,105 @@
 import prisma from '@/lib/prisma';
 import { notFound } from 'next/navigation';
-import { getPublicUrl } from '@/lib/storage';
-import { EntityType, PhotoType, Prisma } from '@/generated/prisma';
 import { auth } from '@/auth';
-import GroupMembers from '../group-members';
-import { GroupWithMembers, GroupPayload } from '../layout';
+import { getPublicUrl } from '@/lib/storage';
+import GroupMembers, { GroupMember } from '../group-members';
+import { PhotoType, EntityType } from '@/generated/prisma';
+import type { GroupWithMembers } from '../layout';
 
-export default async function ManageMembersPage({ params }: { params: { slug: string } }) {
-  const { slug } = params;
+const MEMBERS_PER_PAGE = 25;
+
+export default async function ManageMembersPage({ 
+  params: paramsProp,
+  searchParams: searchParamsProp,
+}: {
+  params: Promise<{ slug: string }>;
+  searchParams?: Promise<{ page?: string }>;
+}) {
+  const params = await paramsProp;
+  const searchParams = await searchParamsProp;
+  const page = Number(searchParams?.page) || 1;
+
   const session = await auth();
+  const currentUserId = session?.user?.id;
+
+  if (!currentUserId) {
+    notFound();
+  }
+
+  const currentUser = await prisma.user.findUnique({
+    where: { id: currentUserId },
+    include: { groupMemberships: { include: { group: true } } },
+  });
+
+  const isSuperAdmin =
+    currentUser?.groupMemberships.some(
+      (m) => m.group.slug === 'global-admin' && m.role === 'super'
+    ) ?? false;
+
+  if (!isSuperAdmin) {
+    notFound();
+  }
+
   const group = await prisma.group.findUnique({
-    where: {
-      slug: slug,
-    },
-    include: {
-      members: {
-        include: {
-          user: {
-            include: {
-              photos: {
-                where: {
-                  entityType: EntityType.user,
-                  type: PhotoType.primary,
-                },
-                take: 1,
-              },
-            },
-          },
-        },
-        orderBy: {
-          user: {
-            username: 'asc',
-          },
-        },
-      },
-    },
+    where: { slug: params.slug },
   });
 
   if (!group) {
     notFound();
   }
 
-  const currentUser = session?.user?.id
-    ? await prisma.user.findUnique({
-        where: { id: session.user.id },
-        include: {
-          groupMemberships: {
-            include: {
-              group: true,
+  const [totalMembers, members] = await prisma.$transaction([
+    prisma.groupUser.count({ where: { groupId: group.id } }),
+    prisma.groupUser.findMany({
+      where: { groupId: group.id },
+      include: {
+        user: {
+          include: {
+            photos: {
+              where: {
+                entityType: EntityType.user,
+                type: PhotoType.primary,
+              },
+              take: 1,
             },
           },
         },
-      })
-    : null;
+      },
+      take: MEMBERS_PER_PAGE,
+      skip: (page - 1) * MEMBERS_PER_PAGE,
+      orderBy: {
+        createdAt: 'desc',
+      },
+    }),
+  ]);
 
-  const isSuperAdmin =
-    currentUser?.groupMemberships.some((m: { group: { slug: string }; role: string }) => m.group.slug === 'global-admin' && m.role === 'super') ?? false;
-
+  const totalPages = Math.ceil(totalMembers / MEMBERS_PER_PAGE);
   const isGlobalAdminGroup = group.slug === 'global-admin';
 
-  const groupWithMemberPhotos = {
-    ...group,
-    members: await Promise.all(
-      group.members.map(async (member: GroupPayload['members'][number]) => ({
-        ...member,
-        user: {
-          ...member.user,
-          photoUrl: await (async () => {
-            const rawUrl = member.user.photos?.[0]?.url;
-            if (rawUrl) {
-              if (rawUrl.startsWith('http')) {
-                return rawUrl;
-              }
-              return getPublicUrl(rawUrl);
-            }
-            return '/images/default-avatar.png';
-          })(),
-        },
-      }))
-    ),
-  };
+  const membersWithPhoto = await Promise.all(members.map(async (member) => {
+    const photo = member.user.photos[0];
+    const photoUrl = photo ? await getPublicUrl(photo.url) : '/images/default-avatar.png';
+    return {
+      ...member,
+      user: {
+        ...member.user,
+        photoUrl,
+      },
+    };
+  }));
 
   return (
-    <GroupMembers
-      group={groupWithMemberPhotos as unknown as GroupWithMembers}
-      isSuperAdmin={isSuperAdmin}
-      isGlobalAdminGroup={isGlobalAdminGroup}
-    />
+    <div>
+      <h1 className="text-2xl font-bold mb-4">Manage Members for {group.name}</h1>
+      <GroupMembers
+        group={group as GroupWithMembers}
+        members={membersWithPhoto as GroupMember[]}
+        totalMembers={totalMembers}
+        isSuperAdmin={isSuperAdmin}
+        isGlobalAdminGroup={isGlobalAdminGroup}
+        page={page}
+        totalPages={totalPages}
+      />
+    </div>
   );
 }

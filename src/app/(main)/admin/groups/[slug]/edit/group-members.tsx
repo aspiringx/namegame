@@ -3,23 +3,32 @@
 import { useState, useTransition, ChangeEvent, useMemo } from 'react';
 import type { GroupWithMembers } from './layout';
 import Image from 'next/image';
+import Link from 'next/link';
 import { searchUsers, addMember, removeMember, updateMember } from './actions';
-import { GroupUserRole } from '@/generated/prisma';
+import { GroupUserRole, GroupUser, User } from '@/generated/prisma';
 
 type UserWithPhotoUrl = Awaited<ReturnType<typeof searchUsers>>[0];
 
+export type GroupMember = GroupUser & {
+  user: User & { photoUrl: string };
+};
+
 interface GroupMembersProps {
   group: GroupWithMembers;
+  members: GroupMember[];
+  totalMembers: number;
   isSuperAdmin: boolean;
   isGlobalAdminGroup: boolean;
+  page: number;
+  totalPages: number;
 }
 
-export default function GroupMembers({ group, isSuperAdmin, isGlobalAdminGroup }: GroupMembersProps) {
+export default function GroupMembers({ group, members, totalMembers, isSuperAdmin, isGlobalAdminGroup, page, totalPages }: GroupMembersProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<UserWithPhotoUrl[]>([]);
   const [isSearching, startSearchTransition] = useTransition();
   const [isAdding, startAddTransition] = useTransition();
-  const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
+  const [editingMemberUserId, setEditingMemberUserId] = useState<string | null>(null);
   const [memberSearchQuery, setMemberSearchQuery] = useState('');
 
   type SortableKey = 'username' | 'name' | 'role' | 'memberSince';
@@ -50,7 +59,7 @@ export default function GroupMembers({ group, isSuperAdmin, isGlobalAdminGroup }
   };
 
   const sortedMembers = useMemo(() => {
-    let sortableItems = [...group.members];
+    let sortableItems = [...members];
     if (sortConfig !== null) {
       sortableItems.sort((a, b) => {
         let aValue, bValue;
@@ -82,7 +91,7 @@ export default function GroupMembers({ group, isSuperAdmin, isGlobalAdminGroup }
       });
     }
     return sortableItems;
-  }, [group.members, sortConfig]);
+  }, [members, sortConfig]);
 
   const filteredMembers = useMemo(() => {
     return sortedMembers.filter((member) => {
@@ -188,7 +197,7 @@ export default function GroupMembers({ group, isSuperAdmin, isGlobalAdminGroup }
       </div>
 
       <div>
-        <h2 className="text-xl font-semibold mb-4">Current Members ({filteredMembers.length})</h2>
+        <h2 className="text-xl font-semibold mb-4">Current Members ({totalMembers})</h2>
         <div className="mb-4 max-w-lg">
           <input
             type="text"
@@ -200,161 +209,156 @@ export default function GroupMembers({ group, isSuperAdmin, isGlobalAdminGroup }
         </div>
         <div className="-mx-4 mt-8 overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:-mx-6 md:mx-0 md:rounded-lg dark:ring-white dark:ring-opacity-10">
           <table className="min-w-full divide-y divide-gray-300 dark:divide-gray-700">
-            <thead className="bg-gray-50 dark:bg-gray-800">
+            <thead className="bg-gray-50 dark:bg-gray-700">
               <tr>
-                <th scope="col" className="relative py-3.5 pl-4 pr-3 sm:pl-6">
-                  <span className="sr-only">Photo</span>
-                </th>
-                <th
-                  scope="col"
-                  className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 dark:text-white sm:pl-6"
-                >
-                  <button type="button" className="font-semibold" onClick={() => requestSort('username')}>
-                    Username
-                    <span className="ml-1">{getSortIndicator('username')}</span>
-                  </button>
-                </th>
-                <th
-                  scope="col"
-                  className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white sm:table-cell"
-                >
-                  <button type="button" className="font-semibold" onClick={() => requestSort('name')}>
+                <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6 dark:text-white">
+                  <button onClick={() => requestSort('name')} className="group inline-flex">
                     Name
-                    <span className="ml-1">{getSortIndicator('name')}</span>
+                    <span className="ml-2 flex-none rounded text-gray-400 group-hover:bg-gray-200 dark:group-hover:bg-gray-600">
+                      {getSortIndicator('name')}
+                    </span>
                   </button>
                 </th>
                 <th
                   scope="col"
-                  className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white md:table-cell"
+                  className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 sm:table-cell dark:text-white"
                 >
-                  <button type="button" className="font-semibold" onClick={() => requestSort('role')}>
+                  <button onClick={() => requestSort('username')} className="group inline-flex">
+                    Username
+                    <span className="ml-2 flex-none rounded text-gray-400 group-hover:bg-gray-200 dark:group-hover:bg-gray-600">
+                      {getSortIndicator('username')}
+                    </span>
+                  </button>
+                </th>
+                <th
+                  scope="col"
+                  className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell dark:text-white"
+                >
+                  <button onClick={() => requestSort('role')} className="group inline-flex">
                     Role
-                    <span className="ml-1">{getSortIndicator('role')}</span>
+                    <span className="ml-2 flex-none rounded text-gray-400 group-hover:bg-gray-200 dark:group-hover:bg-gray-600">
+                      {getSortIndicator('role')}
+                    </span>
                   </button>
                 </th>
                 <th
                   scope="col"
-                  className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white md:table-cell"
+                  className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white"
                 >
-                  <button type="button" className="font-semibold" onClick={() => requestSort('memberSince')}>
+                  <button onClick={() => requestSort('memberSince')} className="group inline-flex">
                     Member Since
-                    <span className="ml-1">{getSortIndicator('memberSince')}</span>
+                    <span className="ml-2 flex-none rounded text-gray-400 group-hover:bg-gray-200 dark:group-hover:bg-gray-600">
+                      {getSortIndicator('memberSince')}
+                    </span>
                   </button>
                 </th>
                 <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6">
-                  <span className="sr-only">Actions</span>
+                  <span className="sr-only">Edit</span>
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
-              {filteredMembers.map((member) =>
-                editingMemberId === member.userId ? (
-                  <tr key={member.userId}>
-                    <td colSpan={6} className="p-0">
-                      <form action={updateMember} onSubmit={() => setEditingMemberId(null)} className="w-full">
-                        <input type="hidden" name="groupId" value={group.id} />
-                        <input type="hidden" name="userId" value={member.userId} />
-                        <div className="flex items-center justify-between p-4">
-                          <div className="flex items-center gap-4 flex-grow">
-                            <Image
-                              className="h-10 w-10 rounded-full object-cover"
-                              src={member.user.photoUrl!}
-                              alt={`${member.user.username}'s profile picture`}
-                              width={40}
-                              height={40}
-                            />
-                            <div className="w-full max-w-xs sm:max-w-none">
-                              <p className="font-medium text-gray-900 dark:text-white">{member.user.username}</p>
-                              <p className="text-sm text-gray-500 dark:text-gray-400 sm:table-cell">
-                                {member.user.firstName} {member.user.lastName}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <select
-                              name="role"
-                              defaultValue={member.role}
-                              className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                            >
-                              {(() => {
-                                const availableRoles: GroupUserRole[] = [
-                                  GroupUserRole.guest,
-                                  GroupUserRole.member,
-                                  GroupUserRole.admin,
-                                ];
-                                if (isSuperAdmin && isGlobalAdminGroup) {
-                                  availableRoles.push(GroupUserRole.super);
-                                }
-                                return availableRoles.map((role) => (
-                                  <option key={role} value={role}>
-                                    {role}
-                                  </option>
-                                ));
-                              })()}
-                            </select>
-                            <input
-                              type="number"
-                              name="memberSince"
-                              defaultValue={member.memberSince ?? ''}
-                              placeholder="YYYY"
-                              className="block w-24 px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                            />
-                          </div>
-                          <div className="flex items-center gap-2 pl-4">
-                            <button
-                              type="submit"
-                              className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-200"
-                            >
-                              Save
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setEditingMemberId(null)}
-                              className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        </div>
-                      </form>
-                    </td>
-                  </tr>
-                ) : (
-                  <tr key={member.userId}>
-                    <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm sm:pl-6">
-                      <div className="flex items-center">
-                        <div className="h-10 w-10 flex-shrink-0">
-                          <Image
-                            className="h-10 w-10 rounded-full object-cover"
-                            src={member.user.photoUrl!}
-                            alt={`${member.user.username}'s profile picture`}
-                            width={40}
-                            height={40}
-                          />
-                        </div>
+            <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-600 dark:bg-gray-800">
+              {filteredMembers.map((member) => (
+                <tr key={member.userId}>
+                  <td className="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6 dark:text-white">
+                    <div className="flex items-center gap-4">
+                      <Image
+                        src={member.user.photoUrl}
+                        alt={`${member.user.username}'s profile picture`}
+                        width={40}
+                        height={40}
+                        className="rounded-full"
+                      />
+                      <div>
+                        {member.user.firstName} {member.user.lastName}
+                        <dl className="font-normal lg:hidden">
+                          <dt className="sr-only">Username</dt>
+                          <dd className="mt-1 truncate text-gray-700 dark:text-gray-400">@{member.user.username}</dd>
+                        </dl>
                       </div>
-                    </td>
-                    <td className="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 dark:text-white sm:w-auto sm:max-w-none sm:pl-6">
-                      {member.user.username}
-                    </td>
-                    <td className="px-3 py-4 text-sm text-gray-500 dark:text-gray-400 sm:table-cell">
-                      {member.user.firstName} {member.user.lastName}
-                    </td>
-                    <td className="hidden px-3 py-4 text-sm text-gray-500 dark:text-gray-400 md:table-cell">{member.role}</td>
-                    <td className="hidden px-3 py-4 text-sm text-gray-500 dark:text-gray-400 md:table-cell">
-                      {member.memberSince}
-                    </td>
-                    <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                      <div className="flex items-center justify-end gap-4">
+                    </div>
+                  </td>
+                  <td className="hidden px-3 py-4 text-sm text-gray-500 sm:table-cell dark:text-gray-400">
+                    @{member.user.username}
+                  </td>
+                  <td className="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell dark:text-gray-400">
+                    {editingMemberUserId === member.userId ? (
+                      <form action={updateMember}>
+                        <input type="hidden" name="groupId" value={member.groupId} />
+                        <input type="hidden" name="userId" value={member.userId} />
+                        <select
+                          name="role"
+                          defaultValue={member.role}
+                          className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                        >
+                          {(() => {
+                            const availableRoles: GroupUserRole[] = [
+                              GroupUserRole.guest,
+                              GroupUserRole.member,
+                              GroupUserRole.admin,
+                            ];
+                            if (isSuperAdmin && isGlobalAdminGroup) {
+                              availableRoles.push(GroupUserRole.super);
+                            }
+                            return availableRoles.map((role) => (
+                              <option key={role} value={role}>
+                                {role}
+                              </option>
+                            ));
+                          })()}
+                        </select>
+                      </form>
+                    ) : (
+                      member.role
+                    )}
+                  </td>
+                  <td className="px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
+                    {editingMemberUserId === member.userId ? (
+                      <form action={updateMember}>
+                        <input type="hidden" name="groupId" value={member.groupId} />
+                        <input type="hidden" name="userId" value={member.userId} />
+                        <input
+                          type="number"
+                          name="memberSince"
+                          defaultValue={member.memberSince ?? new Date().getFullYear()}
+                          placeholder="YYYY"
+                          className="block w-24 px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                        />
+                      </form>
+                    ) : (
+                      member.memberSince
+                    )}
+                  </td>
+                  <td className="py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                    {editingMemberUserId === member.userId ? (
+                      <div className="flex gap-2">
+                        <form action={updateMember}>
+                          <input type="hidden" name="groupId" value={member.groupId} />
+                          <input type="hidden" name="userId" value={member.userId} />
+                          <button
+                            type="submit"
+                            className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-200"
+                          >
+                            Save
+                          </button>
+                        </form>
                         <button
-                          type="button"
-                          onClick={() => setEditingMemberId(member.userId)}
+                          onClick={() => setEditingMemberUserId(null)}
+                          className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setEditingMemberUserId(member.userId)}
                           className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-200"
                         >
                           Edit
                         </button>
-                        <form action={removeMember} className="m-0">
-                          <input type="hidden" name="groupId" value={group.id} />
+                        <form action={removeMember}>
+                          <input type="hidden" name="groupId" value={member.groupId} />
                           <input type="hidden" name="userId" value={member.userId} />
                           <button
                             type="submit"
@@ -364,12 +368,34 @@ export default function GroupMembers({ group, isSuperAdmin, isGlobalAdminGroup }
                           </button>
                         </form>
                       </div>
-                    </td>
-                  </tr>
-                )
-              )}
+                    )}
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
+        </div>
+
+        <div className="mt-4 flex items-center justify-between">
+          <span className="text-sm text-gray-700 dark:text-gray-400">
+            Page {page} of {totalPages}
+          </span>
+          <div className="flex items-center gap-2">
+            <Link
+              href={`?page=${page - 1}`}
+              className={`px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md shadow-sm hover:bg-indigo-700 ${
+                page <= 1 ? 'pointer-events-none opacity-50' : ''
+              }`}
+            >
+              Previous
+            </Link>
+            <Link
+              href={`?page=${page + 1}`}
+              className={`px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md shadow-sm hover:bg-indigo-700 ${page >= totalPages ? 'pointer-events-none opacity-50' : ''}`}>
+
+              Next
+            </Link>
+          </div>
         </div>
       </div>
     </div>

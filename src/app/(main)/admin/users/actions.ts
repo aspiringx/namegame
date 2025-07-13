@@ -87,33 +87,58 @@ export async function undeleteUser(userId: string) {
 }
 
 export async function hardDeleteUser(userId: string) {
+  const session = await auth();
+  const currentUserId = session?.user?.id;
+
+  if (!currentUserId) {
+    return { success: false, message: 'You must be logged in to perform this action.' };
+  }
+
   try {
+    // First, get all photos of the user to delete files from storage
     const photos = await prisma.photo.findMany({
       where: { userId: userId },
     });
 
     for (const photo of photos) {
       if (photo.url) {
-        await deleteFile(photo.url);
+        await deleteFile(photo.url); // Assuming deleteFile is an async operation that deletes from storage
       }
     }
 
-    await prisma.$transaction([
-      prisma.photo.deleteMany({
+    await prisma.$transaction(async (tx) => {
+      // Delete all relations in UserUser table
+      await tx.userUser.deleteMany({
+        where: {
+          OR: [{ user1Id: userId }, { user2Id: userId }],
+        },
+      });
+
+      // Delete all relations in GroupUser table
+      await tx.groupUser.deleteMany({
         where: { userId: userId },
-      }),
-      prisma.user.delete({
+      });
+
+      // Delete all photos from the database
+      await tx.photo.deleteMany({
+        where: { userId: userId },
+      });
+
+      // Delete all codes
+      await tx.code.deleteMany({
+        where: { userId: userId },
+      });
+
+      // Finally, delete the user
+      await tx.user.delete({
         where: { id: userId },
-      }),
-    ]);
+      });
+    });
 
     revalidatePath('/admin/users');
-    return { success: true, message: 'User permanently deleted.' };
-  } catch (error: any) {
-    console.error('Hard Delete Error:', error);
-    if (error.code === 'P2003') { // Foreign key constraint
-      return { success: false, message: 'Cannot delete user. They may be associated with other records.' };
-    }
+    return { success: true, message: 'User and all related data permanently deleted.' };
+  } catch (error) {
+    console.error('Database Error:', error);
     return { success: false, message: 'Failed to permanently delete user.' };
   }
 }

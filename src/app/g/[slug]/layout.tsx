@@ -17,16 +17,16 @@ interface GroupLayoutProps {
 export async function generateMetadata(props: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const params = await props.params;
   const { slug } = params;
-  const group = await getGroup(slug);
+  const data = await getGroup(slug, 5);
 
-  if (!group) {
+  if (!data || !data.group) {
     return {
       title: 'Group Not Found',
     };
   }
 
   return {
-    title: group.name,
+    title: data.group.name,
   };
 }
 
@@ -41,11 +41,13 @@ export default async function GroupLayout(props: { children: React.ReactNode; pa
 
   const { slug } = params;
   const session = await auth();
-  const group = await getGroup(slug);
+  const data = await getGroup(slug, 5);
 
-  if (!group) {
+  if (!data || !data.group) {
     notFound();
   }
+
+  const { group, sunDeckMembers, iceBlockMembers } = data;
 
   const currentUserMembership = group.members.find((m) => m.user.id === session?.user?.id);
 
@@ -64,7 +66,7 @@ export default async function GroupLayout(props: { children: React.ReactNode; pa
   const isAuthorizedMember = currentUserMembership && ['admin', 'member'].includes(currentUserMembership.role);
 
   return (
-    <GroupProvider group={group}>
+    <GroupProvider value={{ group, sunDeckMembers, iceBlockMembers }}>
       <div className="flex flex-col min-h-screen">
         <Header />
         <main className="flex-grow pt-20 pb-24">

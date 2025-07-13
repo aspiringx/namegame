@@ -10,17 +10,21 @@ type SortableColumn = 'username' | 'firstName' | 'lastName' | 'email' | 'phone' 
 type Order = 'asc' | 'desc';
 
 
-export default async function AdminUsersPage({ searchParams: searchParamsProp }: {
+export default async function AdminUsersPage({
+  searchParams: searchParamsProp,
+}: {
   searchParams?: Promise<{
     query?: string;
     sort?: SortableColumn;
     order?: Order;
+    page?: string;
   }>;
 }) {
   const searchParams = await searchParamsProp;
   const query = searchParams?.query || '';
   const sort = searchParams?.sort || 'createdAt';
   const order = searchParams?.order || 'desc';
+  const page = Number(searchParams?.page) || 1;
 
   return (
         <div className="max-w-4xl mx-auto p-8">
@@ -44,7 +48,7 @@ export default async function AdminUsersPage({ searchParams: searchParamsProp }:
         <Search placeholder="Search users..." />
       </div>
       <Suspense fallback={<div>Loading...</div>}>
-        <UsersTable query={query} sort={sort} order={order} /> 
+        <UsersTable query={query} sort={sort} order={order} page={page} /> 
       </Suspense>
     </div>
   );

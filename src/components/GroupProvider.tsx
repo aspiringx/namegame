@@ -1,18 +1,31 @@
 'use client';
 
+'use client';
+
 import { createContext, useContext } from 'react';
 import { GroupWithMembers } from '@/types';
+import { Group } from '@/generated/prisma';
 
-const GroupContext = createContext<GroupWithMembers | null>(null);
+export interface GroupPageData {
+  group: Group | null;
+  sunDeckMembers: GroupWithMembers['members'];
+  iceBlockMembers: GroupWithMembers['members'];
+}
 
-export function GroupProvider({ children, group }: { children: React.ReactNode; group: GroupWithMembers | null }) {
-  return <GroupContext.Provider value={group}>{children}</GroupContext.Provider>;
+const GroupContext = createContext<GroupPageData>({ 
+  group: null, 
+  sunDeckMembers: [], 
+  iceBlockMembers: [] 
+});
+
+export function GroupProvider({ children, value }: { children: React.ReactNode; value: GroupPageData }) {
+  return <GroupContext.Provider value={value}>{children}</GroupContext.Provider>;
 }
 
 export function useGroup() {
   const context = useContext(GroupContext);
-  // If the context is null (which it will be outside of a GroupProvider),
-  // we return null. This allows components to conditionally render based
-  // on whether they are in a group context or not.
+  if (context === undefined) {
+    throw new Error('useGroup must be used within a GroupProvider');
+  }
   return context;
 }

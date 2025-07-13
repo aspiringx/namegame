@@ -5,7 +5,7 @@ import UserMenu from './UserMenu';
 import { useGroup } from './GroupProvider';
 
 export default function Header() {
-  const group = useGroup();
+  const { group } = useGroup();
 
   return (
     <header className="bg-white dark:bg-gray-900 shadow-md fixed top-0 left-0 w-full z-50">

@@ -28,15 +28,5 @@ Cool. Now let's create a page for that code URL. When another person scans it:
   * If the user is not already a member of the group, add a GroupUser relation with the role of 'guest'
   * Then redirect to the group page at "/g/[slug]"
 
-* If the user is not authenticated, this page should say, "Welcome, you just met [firstName of the user from codes.userId]!" 
-* Prompt the user to Login or Sign up
-* If they choose Login, redirect to the /login page, then back to this page
-* If they don't choose Login, have an inline form with just a First name input
-* When they submit the first name:
-  * Create a new user with the firstName and "guest" + timestamp as the username
-  * Set the password to "password1" (they'll change it later)
-  * Before submitting it to the server to create the user, check the users table to see if another user exists with that username. If it's taken, change the username to "username"+new timestamp to ensure it's unique.
- * After the new user is created:
-    * Create a UserUser relation between this new user and the code.userId user with a relationType of 'acquaintance'
-    * Create a GroupUser relation between this new user and the current group (from code.parentGroupId) with a role of 'guest'
+
 

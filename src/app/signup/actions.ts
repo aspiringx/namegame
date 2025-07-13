@@ -71,7 +71,7 @@ export async function signup(
       });
 
       // Use the user's ID as a seed for a unique, deterministic avatar
-      const avatarUrl = `https://api.dicebear.com/8.x/micah/png?seed=${newUser.id}`;
+            const avatarUrl = `https://api.dicebear.com/8.x/personas/png?seed=${newUser.id}`;
 
       await tx.photo.create({
         data: {

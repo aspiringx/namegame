@@ -5,7 +5,7 @@ import { getPublicUrl } from '@/lib/storage';
 import { GroupWithMembers } from '@/types';
 import { auth } from '@/auth';
 
-export const getGroup = cache(async (slug: string): Promise<GroupWithMembers | null> => {
+export const getGroup = cache(async (slug: string, limit?: number) => {
   const session = await auth();
   const currentUserId = session?.user?.id;
 
@@ -56,10 +56,61 @@ export const getGroup = cache(async (slug: string): Promise<GroupWithMembers | n
 
   const resolvedMembers = await Promise.all(memberPromises);
 
-  const groupWithMemberDetails: GroupWithMembers = {
-    ...group,
-    members: resolvedMembers,
-  };
+  // Fetch UserUser relations for the current user in this group
+  const userRelations = await prisma.userUser.findMany({
+    where: {
+      groupId: group.id,
+      OR: [{ user1Id: currentUserId }, { user2Id: currentUserId }],
+    },
+  });
 
-  return groupWithMemberDetails;
+  const relatedUserMap = new Map<string, Date>();
+  userRelations.forEach((relation) => {
+    const otherUserId = relation.user1Id === currentUserId ? relation.user2Id : relation.user1Id;
+    relatedUserMap.set(otherUserId, relation.updatedAt);
+  });
+
+  const sunDeckMembers: GroupWithMembers['members'] = [];
+  const iceBlockMembers: GroupWithMembers['members'] = [];
+
+  resolvedMembers.forEach((member) => {
+    if (member.userId === currentUserId) {
+      return; // Skip the current user
+    }
+
+    if (relatedUserMap.has(member.userId)) {
+      sunDeckMembers.push({
+        ...member,
+        relationUpdatedAt: relatedUserMap.get(member.userId),
+      });
+    } else {
+      iceBlockMembers.push(member);
+    }
+  });
+
+  // Sort sunDeckMembers by the relation's updatedAt date, descending
+  sunDeckMembers.sort((a, b) => {
+    if (a.relationUpdatedAt && b.relationUpdatedAt) {
+      return b.relationUpdatedAt.getTime() - a.relationUpdatedAt.getTime();
+    }
+    return 0;
+  });
+
+  // Sort iceBlockMembers by lastName, then firstName, ascending
+  iceBlockMembers.sort((a, b) => {
+    const lastNameComparison = (a.user.lastName || '').localeCompare(b.user.lastName || '');
+    if (lastNameComparison !== 0) {
+      return lastNameComparison;
+    }
+    return (a.user.firstName || '').localeCompare(b.user.firstName || '');
+  });
+
+  const limitedSunDeckMembers = limit ? sunDeckMembers.slice(0, limit) : sunDeckMembers;
+  const limitedIceBlockMembers = limit ? iceBlockMembers.slice(0, limit) : iceBlockMembers;
+
+  return {
+    group,
+    sunDeckMembers: limitedSunDeckMembers,
+    iceBlockMembers: limitedIceBlockMembers,
+  };
 });

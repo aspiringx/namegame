@@ -12,7 +12,13 @@ export default function GreetPageClient({ codeData, isValidCode }: { codeData: C
   const [firstName, setFirstName] = useState('');
 
   const handleLogin = () => {
-    router.push(`/login?callbackUrl=${encodeURIComponent(pathname)}`);
+    if (codeData?.group?.slug) {
+      const callbackUrl = `/g/${codeData.group.slug}`;
+      router.push(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`);
+    } else {
+      // Fallback to the default login page if slug is not available
+      router.push('/login');
+    }
   };
 
   const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {

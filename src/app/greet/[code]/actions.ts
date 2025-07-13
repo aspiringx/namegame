@@ -131,7 +131,7 @@ export async function handleGuestGreeting(firstName: string, codeData: CodeData)
       const user2Id = newUser.id > codeData.user.id ? newUser.id : codeData.user.id;
 
             // 3. Create a default profile picture for the new user
-      const avatarUrl = `https://api.dicebear.com/8.x/initials/png?seed=${newUser.id}`;
+            const avatarUrl = `https://api.dicebear.com/8.x/personas/png?seed=${newUser.id}`;
 
       await tx.photo.create({
         data: {

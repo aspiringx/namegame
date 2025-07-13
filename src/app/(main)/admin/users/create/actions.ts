@@ -117,7 +117,7 @@ export async function createUser(prevState: State, formData: FormData): Promise<
           photoUrl = await uploadFile(photo, 'user-photos', newUser.id);
         } else {
           console.log('No photo provided, generating default avatar...');
-          photoUrl = `https://api.dicebear.com/8.x/micah/png?seed=${newUser.id}`;
+                    photoUrl = `https://api.dicebear.com/8.x/personas/png?seed=${newUser.id}`;
         }
 
         await tx.photo.create({
