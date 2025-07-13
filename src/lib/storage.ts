@@ -101,6 +101,11 @@ export async function getPublicUrl(storagePath: string | null | undefined): Prom
     return '/images/default-avatar.png';
   }
 
+  // If the path is already a full URL, return it as is.
+  if (storagePath.startsWith('http://') || storagePath.startsWith('https://')) {
+    return storagePath;
+  }
+
   if (STORAGE_PROVIDER === 'do_spaces' && s3Client) {
     const command = new GetObjectCommand({ Bucket: BUCKET_NAME, Key: storagePath });
     // Generate a signed URL that expires in 1 hour (3600 seconds)

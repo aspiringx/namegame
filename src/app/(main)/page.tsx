@@ -52,7 +52,7 @@ export default function Home() {
 
         <section className="mt-8">
           <h2 className="text-3xl font-bold text-center mb-6">How to Play</h2>
-          <ul className="text-lg list-disc list-inside space-y-2"> 
+          <ul className="list-disc list-inside space-y-2"> 
             <li>
               <Link href="/signup" className="text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300">
                 Sign up

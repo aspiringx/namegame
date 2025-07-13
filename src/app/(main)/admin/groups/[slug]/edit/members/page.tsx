@@ -78,7 +78,9 @@ export default async function ManageMembersPage({
 
   const membersWithPhoto = await Promise.all(members.map(async (member) => {
     const photo = member.user.photos[0];
-    const photoUrl = photo ? await getPublicUrl(photo.url) : '/images/default-avatar.png';
+    const photoUrl = photo
+      ? await getPublicUrl(photo.url)
+      : `https://api.dicebear.com/8.x/personas/png?seed=${member.user.id}`;
     return {
       ...member,
       user: {
