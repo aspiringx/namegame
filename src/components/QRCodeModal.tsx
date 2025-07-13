@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { QRCodeCanvas as QRCode } from 'qrcode.react';
 
 interface QRCodeModalProps {
@@ -9,6 +10,19 @@ interface QRCodeModalProps {
 }
 
 export default function QRCodeModal({ isOpen, url, onClose }: QRCodeModalProps) {
+  const [isCopied, setIsCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(url);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000); // Reset after 2 seconds
+    } catch (err) {
+      console.error('Failed to copy URL: ', err);
+      alert('Failed to copy URL.');
+    }
+  };
+
   if (!isOpen) {
     return null;
   }
@@ -27,15 +41,16 @@ export default function QRCodeModal({ isOpen, url, onClose }: QRCodeModalProps) 
         <div className="p-4 bg-white inline-block rounded-md">
           <QRCode value={url} size={200} />
         </div>
-        <div className="mt-2">
-          <a
-            href={url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm text-blue-500 hover:underline break-all"
-          >
+        <div className="mt-4 flex items-center bg-gray-100 dark:bg-gray-700 rounded-lg p-2">
+          <p className="text-sm text-gray-600 dark:text-gray-300 break-all flex-grow mr-2">
             {url}
-          </a>
+          </p>
+          <button
+            onClick={handleCopy}
+            className={`px-4 py-2 text-sm font-semibold rounded-md ${isCopied ? 'bg-green-500 text-white' : 'bg-blue-500 text-white hover:bg-blue-600'}`}
+          >
+            {isCopied ? 'Copied!' : 'Copy'}
+          </button>
         </div>
       </div>
     </div>
