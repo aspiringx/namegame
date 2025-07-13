@@ -60,8 +60,8 @@ function MemberList({ initialMembers, listType }: { initialMembers: GroupWithMem
 
 export default function GroupTabs({ sunDeckMembers, iceBlockMembers }: GroupTabsProps) {
   const categories = {
-    'Sun Deck': { members: sunDeckMembers, type: 'sunDeck' as const },
-    'Ice Block': { members: iceBlockMembers, type: 'iceBlock' as const },
+    'Greeted': { members: sunDeckMembers, type: 'sunDeck' as const },
+    'Not Greeted': { members: iceBlockMembers, type: 'iceBlock' as const },
   };
 
   return (
@@ -79,7 +79,7 @@ export default function GroupTabs({ sunDeckMembers, iceBlockMembers }: GroupTabs
                   'ring-white/60 ring-offset-2 ring-offset-blue-400 focus:outline-none focus:ring-2',
                   selected
                     ? 'bg-white text-blue-700 shadow'
-                    : 'text-blue-100 hover:bg-white/[0.12] hover:text-white'
+                    : 'text-blue-700 hover:bg-blue-500/10 dark:text-blue-200 dark:hover:bg-white/10 dark:hover:text-white'
                 )}>
                   {category}
                 </button>

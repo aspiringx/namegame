@@ -66,22 +66,22 @@ export default function GreetPageClient({ codeData, isValidCode }: { codeData: C
     <div className="flex flex-col items-center justify-center min-h-screen text-center p-4">
       <div className="max-w-md w-full">
         <h1 className="text-4xl font-bold mb-4">Welcome!</h1>
-        <p className="text-xl mb-8">
+        <p className="text-xl mb-4">
           You just met {codeData.user.firstName || 'a new friend'}!
         </p>
 
         {!showSignupForm ? (
           <div className="space-y-4">
-            <p>Join the group to connect!</p>
+            <p className="text-left mb-8">Join (with only your first name) or Login to remember each other and see people in this private group!</p>
             <div className="flex justify-center gap-4">
-              <button onClick={handleLogin} className="px-6 py-2 rounded-md border">
-                Login
-              </button>
               <button
                 onClick={() => setShowSignupForm(true)}
-                className="px-6 py-2 rounded-md bg-primary text-primary-foreground"
+                className="px-6 py-2 rounded-md border"
               >
-                Sign Up
+                Join
+              </button>
+              <button onClick={handleLogin} className="px-6 py-2 rounded-md bg-primary text-primary-foreground">
+                Login
               </button>
             </div>
           </div>
