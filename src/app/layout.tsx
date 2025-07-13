@@ -21,11 +21,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
+      <body className={`${inter.className} bg-background text-foreground`}>
         <Providers>
-          <AuthProvider session={session}>
-            {children}
-          </AuthProvider>
+          <div className="relative flex min-h-screen flex-col">
+            <AuthProvider session={session}>
+              {children}
+            </AuthProvider>
+          </div>
         </Providers>
       </body>
     </html>

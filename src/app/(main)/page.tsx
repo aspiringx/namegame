@@ -6,7 +6,7 @@ const nunito = Nunito({ subsets: ['latin'], weight: ['400', '700'] });
 
 export default function Home() {
   return (
-    <main className="font-sans text-gray-800 dark:text-gray-200">
+    <div className="font-sans text-gray-800 dark:text-gray-200">
       <div className="container mx-auto max-w-3xl p-8 pt-0">
         <header className="text-center mb-8">
           <Image
@@ -74,6 +74,6 @@ export default function Home() {
           <p className="my-4">That's it.</p>
         </section>
       </div>
-    </main>
+    </div>
   );
 }
