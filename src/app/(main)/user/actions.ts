@@ -1,6 +1,7 @@
 'use server';
 
 import { z } from 'zod';
+import bcrypt from 'bcryptjs';
 import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
 import { revalidatePath, revalidateTag } from 'next/cache';
@@ -16,6 +17,7 @@ export type State = {
 };
 
 const UserProfileSchema = z.object({
+  password: z.string().min(6, 'Password must be at least 6 characters.').optional().or(z.literal('')),
   username: z.string().min(3, 'Username must be at least 3 characters long.'),
   firstName: z.string().min(1, 'First name is required'),
   lastName: z.string().optional(),
@@ -33,6 +35,7 @@ export async function updateUserProfile(prevState: State, formData: FormData): P
     firstName: formData.get('firstName'),
     lastName: formData.get('lastName'),
     photo: formData.get('photo'),
+    password: formData.get('password'),
   });
 
   if (!validatedFields.success) {
@@ -40,7 +43,7 @@ export async function updateUserProfile(prevState: State, formData: FormData): P
     return { success: false, error: 'Invalid data provided. Please check the form and try again.', message: null };
   }
 
-  const { username, firstName, lastName, photo } = validatedFields.data;
+  const { username, firstName, lastName, photo, password } = validatedFields.data;
   const userId = session.user.id;
   let newPublicUrl: string | null = null;
   let updatedUser;
@@ -77,13 +80,19 @@ export async function updateUserProfile(prevState: State, formData: FormData): P
       }
     }
 
+    const dataToUpdate: any = {
+      username,
+      firstName,
+      lastName,
+    };
+
+    if (password) {
+      dataToUpdate.password = await bcrypt.hash(password, 10);
+    }
+
     updatedUser = await prisma.user.update({
       where: { id: userId },
-      data: {
-        username,
-        firstName,
-        lastName,
-      },
+      data: dataToUpdate,
     });
 
     // Check for profile completeness to promote from guest to member

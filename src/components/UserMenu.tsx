@@ -58,21 +58,21 @@ export default function UserMenu() {
                 <>
                   <Link
                     href="/admin"
-                    className="block px-4 py-2 text-gray-800 hover:bg-gray-100"
+                    className="block px-4 py-2 text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
                     onClick={closeDropdown}
                   >
                     Admin
                   </Link>
                   <Link
                     href="/admin/groups"
-                    className="block pl-8 pr-4 py-2 text-gray-800 hover:bg-gray-100"
+                    className="block pl-8 pr-4 py-2 text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
                     onClick={closeDropdown}
                   >
                     Groups
                   </Link>
                   <Link
                     href="/admin/users"
-                    className="block pl-8 pr-4 py-2 text-gray-800 hover:bg-gray-100"
+                    className="block pl-8 pr-4 py-2 text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
                     onClick={closeDropdown}
                   >
                     Users
@@ -114,6 +114,14 @@ export default function UserMenu() {
               </Link>
             </>
           )}
+          <hr className="my-2 border-gray-200 dark:border-gray-700" />
+          <Link
+            href="/"
+            className="block px-4 py-2 text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
+            onClick={closeDropdown}
+          >
+            How to Play
+          </Link>
         </div>
       )}
     </div>

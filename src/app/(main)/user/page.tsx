@@ -51,21 +51,22 @@ export default async function UserProfilePage(props: {
   return (
     <main className="container mx-auto px-4 py-8">
       <div className="max-w-2xl mx-auto">
-        {searchParams?.welcome === 'true' && user && (
+        {searchParams?.welcome === 'true' && user && user.groupMemberships.length > 0 ? (
           <div className="mb-4 rounded-md bg-green-50 p-4 text-sm text-green-700 dark:bg-green-900 dark:text-green-300">
-            Welcome, {user.firstName}! Click a group link below to start playing.
+            Welcome, {user.firstName}! Click a group to start playing or update your profile below.
+          </div>
+        ) : (
+          <div className="mb-4 rounded-md bg-green-50 p-4 text-sm text-green-700 dark:bg-green-900 dark:text-green-300">
+            Welcome, {user.firstName}! 
           </div>
         )}
-        <h1 className="text-3xl font-bold mb-6">My Profile</h1>
-        <UserProfileForm user={user} photoUrl={photoUrl} />
 
-        <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
-          <h2 className="text-2xl font-bold mb-4">My Groups</h2>
-          {user.groupMemberships.length > 0 ? (
-            <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-md">
-              <ul className="divide-y divide-gray-200 dark:divide-gray-700">
-                {user.groupMemberships.map((membership) => (
-                  <li key={membership.groupId}>
+        <h2 className="text-2xl font-bold mb-4">My Groups</h2>
+        {user.groupMemberships.length > 0 ? (
+          <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-md">
+            <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+              {user.groupMemberships.map((membership) => (
+                <li key={membership.groupId}>
                     <Link
                       href={`/g/${membership.group.slug}`}
                       className="block hover:bg-gray-50 dark:hover:bg-gray-700 px-4 py-4 sm:px-6"
@@ -81,7 +82,17 @@ export default async function UserProfilePage(props: {
           ) : (
             <p className="text-gray-500 dark:text-gray-400">You are not a member of any groups yet.</p>
           )}
+
         </div>
+
+        <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
+        <h2 className="text-2xl font-bold mb-6">My Profile</h2>
+        <div className="mb-4 rounded-md bg-green-50 p-4 text-sm text-green-700 dark:bg-green-900 dark:text-green-300">
+          <p>Complete your profile to unlock all features. You can change it anytime.</p>
+        </div>
+
+        <UserProfileForm user={user} photoUrl={photoUrl} />
+
       </div>
     </main>
   );

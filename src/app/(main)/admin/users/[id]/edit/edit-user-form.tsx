@@ -10,11 +10,26 @@ import Link from 'next/link';
 import { updateUser, type State } from './actions';
 
 function generateRandomPassword(length: number) {
-  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  const letters = 'abcdefghijklmnopqrstuvwxyz';
+  const numbers = '123456789';
+  const allChars = letters + numbers;
   let result = '';
+
+  // Generate a random string of the given length
   for (let i = 0; i < length; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
+    result += allChars.charAt(Math.floor(Math.random() * allChars.length));
   }
+
+  // Check if it has at least one number
+  const hasNumber = numbers.split('').some(num => result.includes(num));
+
+  // If not, replace a random character with a random number
+  if (!hasNumber) {
+    const randomIndex = Math.floor(Math.random() * length);
+    const randomNumber = numbers.charAt(Math.floor(Math.random() * numbers.length));
+    result = result.substring(0, randomIndex) + randomNumber + result.substring(randomIndex + 1);
+  }
+
   return result;
 }
 

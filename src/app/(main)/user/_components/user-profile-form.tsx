@@ -8,6 +8,30 @@ import type { User } from '@/generated/prisma';
 import Image from 'next/image';
 import { updateUserProfile, type State } from '../actions';
 
+function generateRandomPassword(length: number) {
+  const letters = 'abcdefghijklmnopqrstuvwxyz';
+  const numbers = '123456789';
+  const allChars = letters + numbers;
+  let result = '';
+
+  // Generate a random string of the given length
+  for (let i = 0; i < length; i++) {
+    result += allChars.charAt(Math.floor(Math.random() * allChars.length));
+  }
+
+  // Check if it has at least one number
+  const hasNumber = numbers.split('').some(num => result.includes(num));
+
+  // If not, replace a random character with a random number
+  if (!hasNumber) {
+    const randomIndex = Math.floor(Math.random() * length);
+    const randomNumber = numbers.charAt(Math.floor(Math.random() * numbers.length));
+    result = result.substring(0, randomIndex) + randomNumber + result.substring(randomIndex + 1);
+  }
+
+  return result;
+}
+
 interface UserWithPhoto extends User {
   photoUrl?: string;
 }
@@ -30,6 +54,7 @@ export default function UserProfileForm({ user, photoUrl }: { user: UserWithPhot
   const { data: session, update: updateSession } = useSession();
   const router = useRouter();
   const [previewUrl, setPreviewUrl] = useState<string>(photoUrl);
+  const [password, setPassword] = useState('');
   const formSubmitted = useRef(false);
 
   const initialState: State = {
@@ -52,6 +77,17 @@ export default function UserProfileForm({ user, photoUrl }: { user: UserWithPhot
       });
     }
   }, [state, updateSession, router]);
+
+  const handleGeneratePassword = () => {
+    setPassword(generateRandomPassword(6));
+  };
+
+  const handleCopyPassword = () => {
+    if (password) {
+      navigator.clipboard.writeText(password);
+      alert('Password copied to clipboard!');
+    }
+  };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -81,6 +117,11 @@ export default function UserProfileForm({ user, photoUrl }: { user: UserWithPhot
           defaultValue={user.username}
           className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
         />
+        {user.username.startsWith('guest-') && (
+          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+            This username was made for you as a guest. Update it to something easier.
+          </p>
+        )}
       </div>
 
       <div>
@@ -108,6 +149,42 @@ export default function UserProfileForm({ user, photoUrl }: { user: UserWithPhot
           defaultValue={user.lastName || ''}
           className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
         />
+      </div>
+
+      <div>
+        <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          New Password
+        </label>
+        <div className="mt-1 flex rounded-md shadow-sm">
+          <input
+            type="text"
+            id="password"
+            name="password"
+            className="flex-1 block w-full min-w-0 rounded-none rounded-l-md px-3 py-2 bg-white border border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
+            placeholder="Leave blank to keep current password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          <button
+            type="button"
+            onClick={handleGeneratePassword}
+            className="inline-flex items-center px-3 rounded-none border border-l-0 border-gray-300 bg-gray-50 text-gray-500 text-sm hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600"
+          >
+            Generate
+          </button>
+          <button
+            type="button"
+            onClick={handleCopyPassword}
+            className="inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-300 bg-gray-50 text-gray-500 text-sm hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600"
+          >
+            Copy
+          </button>
+        </div>
+        {user.username.startsWith('guest-') && (
+          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+            Your guest password is 'password123'. Change this and your username above.
+          </p>
+        )}
       </div>
 
       <div>
