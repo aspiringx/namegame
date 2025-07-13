@@ -41,7 +41,7 @@ async function validateAndResizeImage(file: File): Promise<Buffer> {
   const bytes = await file.arrayBuffer();
   const buffer = Buffer.from(bytes);
 
-  return sharp(buffer).resize({ width: MAX_WIDTH }).toBuffer();
+  return sharp(buffer).rotate().resize({ width: MAX_WIDTH }).toBuffer();
 }
 
 export async function uploadFile(file: File, prefix: string, entityId: string | number): Promise<string> {
