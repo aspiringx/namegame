@@ -192,9 +192,9 @@ export default function UserProfileForm({ user, photoUrl }: { user: UserWithPhot
           </button>
         </div>
         {user.username.startsWith('guest-') && (
-          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-            Your guest password is 'password123'. Change this and your username above.
-          </p>
+          <div className="mt-2 rounded-md bg-red-50 p-2 text-sm text-red-700 dark:bg-red-900 dark:text-red-300">
+            <p>Change your guest password (password123) to something more secure.</p>
+          </div>
         )}
       </div>
 

@@ -88,7 +88,7 @@ export default async function UserProfilePage(props: {
 
         </div>
 
-        <div className="mt-12">
+        <div className="mt-12 max-w-2xl mx-auto">
         <h2 className="text-2xl font-bold mb-6">My Profile</h2>
         {isGuest && (
           <div className="mb-4 rounded-md bg-blue-50 p-4 text-sm text-blue-700 dark:bg-blue-900 dark:text-blue-300">
