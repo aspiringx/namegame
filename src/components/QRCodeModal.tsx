@@ -24,10 +24,12 @@ export default function QRCodeModal({ isOpen, url, onClose }: QRCodeModalProps) 
           &times;
         </button>
         <h2 className="text-2xl font-bold mb-4">Scan to Greet!</h2>
+        <p className="text-gray-600 dark:text-gray-400 mb-4">Just scan with a phone camera to connect with this person and group.</p>
         <div className="p-4 bg-white inline-block rounded-md">
           <QRCode value={url} size={256} />
         </div>
         <div className="mt-4">
+          <p className="text-gray-600 dark:text-gray-400 mb-2">Or share this link:</p>
           <a
             href={url}
             target="_blank"
