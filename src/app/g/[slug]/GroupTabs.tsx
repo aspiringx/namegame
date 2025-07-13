@@ -42,7 +42,7 @@ function MemberList({ initialMembers, listType }: { initialMembers: GroupWithMem
   }, [inView, hasMore, isLoading, slug, listType, page]);
 
   return (
-    <div className="grid grid-cols-1 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {members.map((member) => (
         <MemberCard key={member.userId} member={member} />
       ))}
@@ -65,7 +65,7 @@ export default function GroupTabs({ sunDeckMembers, iceBlockMembers }: GroupTabs
   };
 
   return (
-    <div className="w-full max-w-md px-2 sm:px-0">
+        <div className="w-full max-w-5xl mx-auto px-2 sm:px-0">
       <Tab.Group>
         <Tab.List className="flex space-x-1 rounded-xl bg-blue-900/20 p-1">
           {Object.keys(categories).map((category) => (
@@ -96,7 +96,14 @@ export default function GroupTabs({ sunDeckMembers, iceBlockMembers }: GroupTabs
                 'ring-white/60 ring-offset-2 ring-offset-blue-400 focus:outline-none focus:ring-2'
               )}
             >
-              <MemberList initialMembers={members} listType={type} />
+              <>
+                {type === 'iceBlock' && (
+                  <div className="mb-4 rounded-md bg-blue-50 p-4 text-sm text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+                    <p>Greet these people to see last names (if available).</p>
+                  </div>
+                )}
+                <MemberList initialMembers={members} listType={type} />
+              </>
             </Tab.Panel>
           ))}
         </Tab.Panels>

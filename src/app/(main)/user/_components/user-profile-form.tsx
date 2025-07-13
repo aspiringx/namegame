@@ -70,10 +70,21 @@ export default function UserProfileForm({ user, photoUrl }: { user: UserWithPhot
   useEffect(() => {
     if (state.success && !formSubmitted.current) {
       formSubmitted.current = true;
+
+      if (state.newPhotoUrl) {
+        setPreviewUrl(state.newPhotoUrl);
+      }
+
       // We pass `newFirstName` as `name` to session.update to mirror the admin flow.
       // The `auth.ts` jwt callback will handle updating both `name` and `firstName` in the token.
       updateSession({ name: state.newFirstName, image: state.newPhotoUrl }).then(() => {
-        router.push('/user');
+        if (state.redirectUrl) {
+          router.push(state.redirectUrl);
+        } else {
+          // Optionally, you could refresh the current page to show updated data
+          // or just rely on the success message.
+          // For now, we do nothing to let the user see the success message.
+        }
       });
     }
   }, [state, updateSession, router]);
@@ -118,9 +129,9 @@ export default function UserProfileForm({ user, photoUrl }: { user: UserWithPhot
           className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
         />
         {user.username.startsWith('guest-') && (
-          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-            This username was made for you as a guest. Update it to something easier.
-          </p>
+          <div className="mt-2 rounded-md bg-red-50 p-2 text-sm text-red-700 dark:bg-red-900 dark:text-red-300">
+            <p>This is a random guest username. You can update it so it's easier to login.</p>
+          </div>
         )}
       </div>
 
@@ -191,9 +202,9 @@ export default function UserProfileForm({ user, photoUrl }: { user: UserWithPhot
         <label htmlFor="photo" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
           Profile Picture
         </label>
-        <div className="mt-1 flex items-center">
-          <span className="inline-block h-12 w-12 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-700">
-            <Image src={previewUrl} alt="Profile photo preview" width={48} height={48} className="h-full w-full text-gray-300" />
+        <div className="mt-2 flex flex-col items-start space-y-4">
+                    <span className="inline-block h-64 w-64 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-700">
+            <Image src={previewUrl} alt="Profile photo preview" width={256} height={256} className="h-full w-full object-cover text-gray-300" />
           </span>
           <input
             type="file"
@@ -201,13 +212,13 @@ export default function UserProfileForm({ user, photoUrl }: { user: UserWithPhot
             name="photo"
             accept="image/*"
             onChange={handleFileChange}
-            className="ml-5 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium leading-4 text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600 dark:focus:ring-offset-gray-800"
+            className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium leading-4 text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600 dark:focus:ring-offset-gray-800"
           />
         </div>
       </div>
 
-      {state.error && <p className="text-red-500">{state.error}</p>}
-      {state.message && <p className="text-green-500">{state.message}</p>}
+      {!state?.success && state?.error && <p className="text-red-500">{state.error}</p>}
+      {state?.success && state?.message && <p className="text-green-500">{state.message}</p>}
 
       <SubmitButton />
     </form>

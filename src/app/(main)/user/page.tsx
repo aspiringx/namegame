@@ -4,6 +4,7 @@ import prisma from '@/lib/prisma';
 import UserProfileForm from './_components/user-profile-form';
 import { getPublicUrl } from '@/lib/storage';
 import Link from 'next/link';
+import { GroupUserRole } from '@/generated/prisma';
 
 
 
@@ -48,6 +49,8 @@ export default async function UserProfilePage(props: {
 
   const photoUrl = await getPublicUrl(user.photos[0]?.url);
 
+  const isGuest = user.groupMemberships.some(m => m.role === GroupUserRole.guest);
+
   return (
     <main className="container mx-auto px-4 py-8">
       <div className="max-w-2xl mx-auto">
@@ -85,11 +88,14 @@ export default async function UserProfilePage(props: {
 
         </div>
 
-        <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
+        <div className="mt-12">
         <h2 className="text-2xl font-bold mb-6">My Profile</h2>
-        <div className="mb-4 rounded-md bg-green-50 p-4 text-sm text-green-700 dark:bg-green-900 dark:text-green-300">
-          <p>Complete your profile to unlock all features. You can change it anytime.</p>
-        </div>
+        {isGuest && (
+          <div className="mb-4 rounded-md bg-blue-50 p-4 text-sm text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+            <p>You're playing as a guest. Complete your profile with a last name 
+            and photo to unlock all features and be more visible in groups.</p>
+          </div>
+        )}
 
         <UserProfileForm user={user} photoUrl={photoUrl} />
 

@@ -14,6 +14,7 @@ export type State = {
   message: string | null;
   newPhotoUrl?: string | null;
   newFirstName?: string | null;
+  redirectUrl?: string | null;
 };
 
 const UserProfileSchema = z.object({
@@ -129,6 +130,16 @@ export async function updateUserProfile(prevState: State, formData: FormData): P
   revalidatePath('/', 'layout'); // Revalidate header
   revalidateTag('user-photo');
 
+  const userGroups = await prisma.groupUser.findMany({
+    where: { userId: userId },
+    select: { group: { select: { slug: true } } },
+  });
+
+  let redirectUrl: string | null = null;
+  if (userGroups.length === 1 && userGroups[0].group.slug) {
+    redirectUrl = `/g/${userGroups[0].group.slug}`;
+  }
+
   // Append a timestamp to the URL to bust the cache. This is the key to ensuring the new image is displayed.
   const cacheBustedUrl = newPublicUrl ? `${newPublicUrl}?v=${Date.now()}` : null;
 
@@ -138,5 +149,6 @@ export async function updateUserProfile(prevState: State, formData: FormData): P
     error: null,
     newPhotoUrl: cacheBustedUrl,
     newFirstName: updatedUser.firstName,
+    redirectUrl,
   };
 }
