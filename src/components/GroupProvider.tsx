@@ -10,14 +10,14 @@ export interface GroupPageData {
   group: Group | null;
   sunDeckMembers: GroupWithMembers['members'];
   iceBlockMembers: GroupWithMembers['members'];
-  currentUserMembership: (GroupUser & { user: User }) | undefined;
+  currentUserMember: (GroupUser & { user: User }) | undefined;
 }
 
 const GroupContext = createContext<GroupPageData>({
   group: null,
   sunDeckMembers: [],
   iceBlockMembers: [],
-  currentUserMembership: undefined,
+  currentUserMember: undefined,
 });
 
 export function GroupProvider({ children, value }: { children: React.ReactNode; value: GroupPageData }) {

@@ -105,10 +105,20 @@ export async function getPaginatedMembers(
   const memberPromises = sortedMembers.map(async (member) => {
     const primaryPhoto = member.user.photos[0];
     const photoUrl = primaryPhoto ? await getPublicUrl(primaryPhoto.url) : '/images/default-avatar.png';
-    const name = [member.user.firstName, member.user.lastName].filter(Boolean).join(' ');
+
+    let name: string;
+    let relationUpdatedAt: Date | undefined;
+
+    if (listType === 'sunDeck') {
+      name = [member.user.firstName, member.user.lastName].filter(Boolean).join(' ');
+      relationUpdatedAt = relatedUserMap.get(member.userId);
+    } else {
+      name = member.user.firstName;
+    }
 
     return {
       ...member,
+      relationUpdatedAt,
       user: {
         ...member.user,
         name,

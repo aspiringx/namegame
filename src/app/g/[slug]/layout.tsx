@@ -7,13 +7,6 @@ import { headers } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
 import type { Metadata } from 'next';
 
-interface GroupLayoutProps {
-  children: React.ReactNode;
-  params: {
-    slug: string;
-  };
-}
-
 export async function generateMetadata(props: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const params = await props.params;
   const { slug } = params;
@@ -47,9 +40,7 @@ export default async function GroupLayout(props: { children: React.ReactNode; pa
     notFound();
   }
 
-  const { group, sunDeckMembers, iceBlockMembers } = data;
-
-  const currentUserMembership = group.members.find((m) => m.user.id === session?.user?.id);
+  const { group, sunDeckMembers, iceBlockMembers, currentUserMember } = data;
 
   const isSuperAdmin =
     session?.user?.roles.some(
@@ -57,16 +48,16 @@ export default async function GroupLayout(props: { children: React.ReactNode; pa
     ) ?? false;
 
   // The /greet page is public and should not be protected by this authorization.
-  if (!pathname.includes('/greet') && !currentUserMembership && !isSuperAdmin) {
+  if (!pathname.includes('/greet') && !currentUserMember && !isSuperAdmin) {
     redirect('/');
   }
 
 
 
-  const isAuthorizedMember = currentUserMembership && ['admin', 'member', 'super'].includes(currentUserMembership.role);
+  const isAuthorizedMember = currentUserMember && ['admin', 'member', 'super'].includes(currentUserMember.role);
 
   return (
-    <GroupProvider value={{ group, sunDeckMembers, iceBlockMembers, currentUserMembership }}>
+    <GroupProvider value={{ group, sunDeckMembers, iceBlockMembers, currentUserMember }}>
       <div className="flex flex-col min-h-screen">
         <Header />
         <main className="flex-grow pt-20 pb-24">

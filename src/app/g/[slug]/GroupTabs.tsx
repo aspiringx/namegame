@@ -12,20 +12,39 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 interface GroupTabsProps {
   sunDeckMembers: GroupWithMembers['members'];
   iceBlockMembers: GroupWithMembers['members'];
+  currentUserMember: GroupWithMembers['members'][0] | undefined;
 }
 
 function classNames(...classes: (string | boolean)[]) {
   return classes.filter(Boolean).join(' ');
 }
 
-function MemberList({ initialMembers, listType }: { initialMembers: GroupWithMembers['members']; listType: 'sunDeck' | 'iceBlock' }) {
-  const params = useParams();
-  const slug = params.slug as string;
+function MemberList({
+  initialMembers,
+  listType,
+  currentUserMember,
+  slug,
+}: {
+  initialMembers: GroupWithMembers['members'];
+  listType: 'sunDeck' | 'iceBlock';
+  currentUserMember?: GroupWithMembers['members'][0];
+  slug: string;
+}) {
   const [members, setMembers] = useState(initialMembers);
   const [page, setPage] = useState(2);
   const [hasMore, setHasMore] = useState(initialMembers.length > 0);
   const [isLoading, setIsLoading] = useState(false);
   const { ref, inView } = useInView({ threshold: 0 });
+
+  useEffect(() => {
+    // When the list has loaded all items, and if it's the sunDeck, add the current user
+    if (listType === 'sunDeck' && !hasMore && currentUserMember) {
+      // Check if the user is already in the list to avoid duplicates
+      if (!members.find((m) => m.userId === currentUserMember.userId)) {
+        setMembers((prev) => [...prev, currentUserMember]);
+      }
+    }
+  }, [hasMore, listType, currentUserMember, members]);
 
   useEffect(() => {
     if (inView && hasMore && !isLoading) {
@@ -59,7 +78,9 @@ function MemberList({ initialMembers, listType }: { initialMembers: GroupWithMem
   );
 }
 
-export default function GroupTabs({ sunDeckMembers, iceBlockMembers }: GroupTabsProps) {
+export default function GroupTabs({ sunDeckMembers, iceBlockMembers, currentUserMember }: GroupTabsProps) {
+  const params = useParams();
+  const slug = params.slug as string;
   const categories = {
     'Greeted': { members: sunDeckMembers, type: 'sunDeck' as const },
     'Not Greeted': { members: iceBlockMembers, type: 'iceBlock' as const },
@@ -109,7 +130,12 @@ export default function GroupTabs({ sunDeckMembers, iceBlockMembers }: GroupTabs
                     <p>Greet these people to see last names.</p>
                   </div>
                 )}
-                <MemberList initialMembers={members} listType={type} />
+                <MemberList
+                  initialMembers={members}
+                  listType={type}
+                  currentUserMember={type === 'sunDeck' ? currentUserMember : undefined}
+                  slug={slug}
+                />
               </>
             </Tab.Panel>
           ))}

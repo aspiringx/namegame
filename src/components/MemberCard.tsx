@@ -43,11 +43,7 @@ export default function MemberCard({ member, listType }: MemberCardProps) {
                 <p>{new Date(member.relationUpdatedAt).toLocaleString()}</p>
               </TooltipContent>
             </Tooltip>
-          ) : (
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              This is you. Greet yourself any time.
-            </p>
-          )}
+          ) : null}
         </>
       )}
     </div>

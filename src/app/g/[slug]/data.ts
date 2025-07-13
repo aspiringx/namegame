@@ -73,7 +73,8 @@ export const getGroup = cache(async (slug: string, limit?: number) => {
   const sunDeckMembers: GroupWithMembers['members'] = [];
   const iceBlockMembers: GroupWithMembers['members'] = [];
 
-  const currentUserMember = resolvedMembers.find((member) => member.userId === currentUserId);
+  const foundMember = resolvedMembers.find((member) => member.userId === currentUserId);
+  const currentUserMember = foundMember ? JSON.parse(JSON.stringify(foundMember)) : undefined;
 
   resolvedMembers.forEach((member) => {
     if (member.userId === currentUserId) {
@@ -86,13 +87,7 @@ export const getGroup = cache(async (slug: string, limit?: number) => {
         relationUpdatedAt: relatedUserMap.get(member.userId),
       });
     } else {
-      iceBlockMembers.push({
-        ...member,
-        user: {
-          ...member.user,
-          name: member.user.firstName || '', // Only show first name for ice block
-        },
-      });
+      iceBlockMembers.push(member);
     }
   });
 
@@ -103,11 +98,6 @@ export const getGroup = cache(async (slug: string, limit?: number) => {
     }
     return 0;
   });
-
-  // Add the current user to the bottom of the sun deck
-  if (currentUserMember) {
-    sunDeckMembers.push(currentUserMember);
-  }
 
   // Sort iceBlockMembers by lastName, then firstName, ascending
   iceBlockMembers.sort((a, b) => {
@@ -125,5 +115,6 @@ export const getGroup = cache(async (slug: string, limit?: number) => {
     group,
     sunDeckMembers: limitedSunDeckMembers,
     iceBlockMembers: limitedIceBlockMembers,
+    currentUserMember,
   };
 });
