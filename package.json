@@ -21,11 +21,16 @@
     "@headlessui/react": "^2.2.4",
     "@paralleldrive/cuid2": "^2.2.2",
     "@prisma/client": "^6.11.1",
+    "@radix-ui/react-tooltip": "^1.2.7",
     "@types/bcryptjs": "^2.4.6",
     "@types/qrcode.react": "^1.0.5",
     "bcrypt": "^6.0.0",
     "bcryptjs": "^3.0.2",
     "browser-image-compression": "^2.0.2",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
+    "lucide-react": "^0.525.0",
     "next": "^15.0.0-rc.0",
     "next-auth": "^5.0.0-beta.19",
     "next-themes": "^0.4.6",
@@ -34,6 +39,7 @@
     "react-dom": "^19.0.0-rc.0",
     "react-intersection-observer": "^9.16.0",
     "sharp": "^0.34.2",
+    "tailwind-merge": "^3.3.1",
     "use-debounce": "^10.0.5",
     "zod": "^3.25.74"
   },
@@ -49,6 +55,7 @@
     "prisma": "^6.11.1",
     "tailwindcss": "^4",
     "ts-node": "^10.9.2",
+    "tw-animate-css": "^1.3.5",
     "typescript": "^5.5"
   }
 }

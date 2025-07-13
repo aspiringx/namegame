@@ -10,31 +10,31 @@ export default function Home() {
       <div className="container mx-auto max-w-3xl p-8 pt-0">
         <header className="text-center mb-8">
           <Image
-            src="/images/NameGame-500x222-yellow.png"
+            src="/images/NameGame-600x267.png"
             alt="NameGame logo"
-            width={500}
-            height={222}
+            width={600}
+            height={267}
             className="mx-auto h-auto md:max-w-[500px]"
           />
 
           <p className={`${nunito.className} text-2xl text-gray-600 dark:text-gray-400`}>
-            How people in groups meet and remember names
+            Easily meet people and remember names
           </p>
         </header>
 
         <section className="text-lg leading-relaxed space-y-6">
           <p>
-            <b>You're in a group...</b> an extended family, school, job, 
-            neighborhood, church, team, etc. 
+            <b>You're in groups...</b> extended families, schools, jobs, 
+            neighborhoods, churches, teams, etc. 
           </p>
           <p>
             <b>Remembering names can be tricky.</b>&nbsp;
-            It's embarrassing to forget.
+            Forgetting them and asking for reminders is embarrassing.
           </p>
           <p>
-            <b>NameGame is a private group photo album.</b>&nbsp;
-            Anyone with a phone can "play". 
-          </p> 
+            <b>You don't have to be a social butterfly</b>&nbsp;
+            to meet people and remember their names. 
+          </p>
 
         </section>
 
@@ -64,11 +64,12 @@ export default function Home() {
             <li>Add your name and pic</li>
             <li>Greet someone with a code</li>
           </ul>
-          <p className="my-4">When they scan your code and provide their first 
-          name, they are added to your group's private album. 
+          <p className="my-4">When people scan your code, you instantly see 
+            each other's names and photos to remember each other.
           </p>
-          <p className="my-4">People start as guests with a random avatar, but 
-          can add their last name and a photo for full access.
+          <p className="my-4">
+            New people can play as a <i>guest</i> with just their first name. 
+            If/when they want, they can add their photo and last name. 
           </p>
           <p className="my-4">That's it.</p>
         </section>

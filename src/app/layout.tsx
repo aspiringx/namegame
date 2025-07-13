@@ -10,7 +10,10 @@ const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'NameGame',
-  description: 'The relationship game that starts with a name',
+  description: 'Easily meet people and remember names',
+  icons: {
+    icon: '/icon.png',
+  },
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {

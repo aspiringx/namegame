@@ -7,6 +7,7 @@ import { GroupWithMembers } from '@/types';
 import MemberCard from '@/components/MemberCard';
 import { getPaginatedMembers } from './actions';
 import { useParams } from 'next/navigation';
+import { TooltipProvider } from '@/components/ui/tooltip';
 
 interface GroupTabsProps {
   sunDeckMembers: GroupWithMembers['members'];
@@ -42,9 +43,9 @@ function MemberList({ initialMembers, listType }: { initialMembers: GroupWithMem
   }, [inView, hasMore, isLoading, slug, listType, page]);
 
   return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {members.map((member) => (
-        <MemberCard key={member.userId} member={member} />
+        <MemberCard key={member.userId} member={member} listType={listType} />
       ))}
       {members.length === 0 && !hasMore && (
         <p className="text-center text-gray-500 dark:text-gray-400 col-span-1">No members found.</p>
@@ -65,28 +66,29 @@ export default function GroupTabs({ sunDeckMembers, iceBlockMembers }: GroupTabs
   };
 
   return (
-        <div className="w-full max-w-5xl mx-auto px-2 sm:px-0">
-      <Tab.Group>
-        <Tab.List className="flex space-x-1 rounded-xl bg-blue-900/20 p-1">
-          {Object.keys(categories).map((category) => (
-            <Tab
-              key={category}
-              as={Fragment}
-            >
-              {({ selected }) => (
-                <button className={classNames(
-                  'w-full rounded-lg py-2.5 text-sm font-medium leading-5',
-                  'ring-white/60 ring-offset-2 ring-offset-blue-400 focus:outline-none focus:ring-2',
-                  selected
-                    ? 'bg-white text-blue-700 shadow'
-                    : 'text-blue-700 hover:bg-blue-500/10 dark:text-blue-200 dark:hover:bg-white/10 dark:hover:text-white'
-                )}>
-                  {category}
-                </button>
-              )}
-            </Tab>
-          ))}
-        </Tab.List>
+    <TooltipProvider>
+      <div className="w-full max-w-5xl mx-auto px-2 sm:px-0">
+        <Tab.Group>
+          <Tab.List className="flex space-x-1 rounded-xl bg-blue-900/20 p-1">
+            {Object.keys(categories).map((category) => (
+              <Tab
+                key={category}
+                as={Fragment}
+              >
+                {({ selected }) => (
+                  <button className={classNames(
+                    'w-full rounded-lg py-2.5 text-sm font-medium leading-5',
+                    'ring-white/60 ring-offset-2 ring-offset-blue-400 focus:outline-none focus:ring-2',
+                    selected
+                      ? 'bg-white text-blue-700 shadow'
+                      : 'text-blue-700 hover:bg-blue-500/10 dark:text-blue-200 dark:hover:bg-white/10 dark:hover:text-white'
+                  )}>
+                    {category}
+                  </button>
+                )}
+              </Tab>
+            ))}
+          </Tab.List>
         <Tab.Panels className="mt-2">
           {Object.values(categories).map(({ members, type }, idx) => (
             <Tab.Panel
@@ -97,9 +99,14 @@ export default function GroupTabs({ sunDeckMembers, iceBlockMembers }: GroupTabs
               )}
             >
               <>
+                {type === 'sunDeck' && (
+                  <div className="mb-4 rounded-md bg-blue-50 p-4 text-sm text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+                    <p>People you've greeted and how long ago.</p>
+                  </div>
+                )}
                 {type === 'iceBlock' && (
                   <div className="mb-4 rounded-md bg-blue-50 p-4 text-sm text-blue-700 dark:bg-blue-900 dark:text-blue-300">
-                    <p>Greet these people to see last names (if available).</p>
+                    <p>Greet these people to see last names.</p>
                   </div>
                 )}
                 <MemberList initialMembers={members} listType={type} />
@@ -109,5 +116,6 @@ export default function GroupTabs({ sunDeckMembers, iceBlockMembers }: GroupTabs
         </Tab.Panels>
       </Tab.Group>
     </div>
+  </TooltipProvider>
   );
 }
