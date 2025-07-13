@@ -16,49 +16,51 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     strategy: 'jwt',
   },
   callbacks: {
-    async jwt({ token, user, trigger, session }) {
-      // Initial sign-in
+        async jwt({ token, user, trigger, session }) {
+      // Initial sign-in: Augment the token with custom data.
       if (user) {
         token.id = user.id ?? '';
+        token.name = user.name;
         token.roles = user.roles;
         token.firstName = user.firstName;
-        token.picture = user.image; // This comes from the authorize callback
+        token.picture = user.image;
       }
 
-      // This trigger is fired when the user updates their profile, or when the
-      // client calls the `update` function.
-      if (trigger === 'update' && session?.user) {
-        // The client can pass the new image URL directly. If it does, we use it.
-        // This is the most reliable way to ensure the UI updates instantly.
-        if (typeof session.user.image !== 'undefined') {
-          token.picture = session.user.image;
-        } else {
-          // As a fallback, refetch the user from the database.
-          const fullUser = await prisma.user.findUnique({
-            where: { id: token.id as string },
-            include: {
-              photos: {
-                where: {
-                  type: PhotoType.primary,
-                  entityType: EntityType.user,
-                },
-                select: {
-                  url: true,
-                },
-                take: 1,
+      // Handle session updates, e.g., when a user updates their profile.
+      if (trigger === 'update') {
+        // Refetch the user from the database to get the most up-to-date info.
+        // This is the most reliable way to ensure the token is fresh.
+        const fullUser = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          include: {
+            photos: {
+              where: {
+                type: PhotoType.primary,
+                entityType: EntityType.user,
               },
+              select: { url: true },
+              take: 1,
             },
-          });
+          },
+        });
 
-          if (fullUser) {
+        if (fullUser) {
+          // Update the name and firstName on the token.
+          token.firstName = fullUser.firstName;
+          token.name = `${fullUser.firstName} ${fullUser.lastName || ''}`.trim();
+
+          // If the client passed a new image URL, use it for instant UI feedback.
+          // Otherwise, use the URL from the database.
+          if (typeof session?.user?.image !== 'undefined') {
+            token.picture = session.user.image;
+          } else {
             const rawUrl = fullUser.photos[0]?.url;
             if (rawUrl) {
-              if (rawUrl.startsWith('http')) {
-                token.picture = rawUrl;
-              } else {
-                token.picture = await getPublicUrl(rawUrl);
-              }
+              token.picture = rawUrl.startsWith('http')
+                ? rawUrl
+                : await getPublicUrl(rawUrl);
             } else {
+              // Fallback to a default if no photo exists.
               token.picture = null;
             }
           }
@@ -70,6 +72,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async session({ session, token }) {
       if (token) {
         session.user.id = token.id as string;
+        session.user.name = token.name as string;
         session.user.roles = token.roles as Role[];
         session.user.firstName = token.firstName as string;
         session.user.image = token.picture as string | null;
@@ -147,6 +150,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         return {
           id: user.id,
           email: user.email,
+          name: `${user.firstName} ${user.lastName || ''}`.trim(),
           firstName: user.firstName,
           roles: userRoles,
           image: primaryPhotoUrl,

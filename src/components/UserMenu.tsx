@@ -79,12 +79,19 @@ export default function UserMenu() {
                   </Link>
                 </>
               )}
+              <Link
+                href="/user"
+                className="block px-4 py-2 text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
+                onClick={closeDropdown}
+              >
+                My Profile
+              </Link>
               <button
                 onClick={() => {
                   signOut({ callbackUrl: '/' });
                   closeDropdown();
                 }}
-                className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100"
+                className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
               >
                 Logout
               </button>

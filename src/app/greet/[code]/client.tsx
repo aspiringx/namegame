@@ -13,7 +13,7 @@ export default function GreetPageClient({ codeData, isValidCode }: { codeData: C
 
   const handleLogin = () => {
     if (codeData?.group?.slug) {
-      const callbackUrl = `/g/${codeData.group.slug}`;
+      const callbackUrl = pathname;
       router.push(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`);
     } else {
       // Fallback to the default login page if slug is not available

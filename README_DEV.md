@@ -29,5 +29,5 @@ Cool. Now let's create a page for that code URL. When another person scans it:
   * Then redirect to the group page at "/g/[slug]"
 
 
-
+Next:
 Add a new link to the authenticated UserMenu called My Profile, pointing to a new route, "/user". This should be a form for the currently authenticated user, much like the existing "/admin/users/
