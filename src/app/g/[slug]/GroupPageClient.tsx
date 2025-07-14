@@ -19,7 +19,7 @@ export default function GroupPageClient({ groupData }: { groupData: GroupData })
       {currentUserMember && (
         <div className="mb-4 rounded-md bg-yellow-50 p-4 text-sm text-yellow-800 dark:bg-yellow-950 dark:text-yellow-300">
           <p className="mb-4">
-            Hi {currentUserMember.user.firstName}, you're playing as a guest.
+            Welcome {currentUserMember.user.firstName}, you're playing as a guest.
             {' '}
             <Link href="/user" className="font-bold underline hover:text-yellow-900 dark:hover:text-yellow-200">
               Click here to change your profile.
@@ -30,7 +30,7 @@ export default function GroupPageClient({ groupData }: { groupData: GroupData })
               onClick={() => setIsExpanded(!isExpanded)} 
               className="focus:outline-none hover:underline hover:text-yellow-900 dark:hover:text-yellow-200"
               aria-expanded={isExpanded}
-            >Click here to learn more {isExpanded ? '▼' : '▶'}
+            >Learn more {isExpanded ? '▼' : '▶'}
             </button>
           </p>
           
