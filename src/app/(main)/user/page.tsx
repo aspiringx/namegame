@@ -4,6 +4,7 @@ import prisma from '@/lib/prisma';
 import UserProfileForm from './_components/user-profile-form';
 import { getPublicUrl } from '@/lib/storage';
 import Link from 'next/link';
+import Image from 'next/image';
 import { GroupUserRole } from '@/generated/prisma';
 
 
@@ -58,12 +59,15 @@ export default async function UserProfilePage(props: {
           <div className="mb-4 rounded-md bg-green-50 p-4 text-sm text-green-700 dark:bg-green-900 dark:text-green-300">
             Welcome, {user.firstName}! Click a group to start playing or update your profile below.
           </div>
-        ) : (
-          <div className="mb-4 rounded-md bg-green-50 p-4 text-sm text-green-700 dark:bg-green-900 dark:text-green-300">
-            Welcome, {user.firstName}! 
-          </div>
-        )}
+        ) : null }
 
+        <Image
+          src="/images/butterflies.png"
+          alt="NameGame social butterflies"
+          width={70}
+          height={70}
+          className="float-right" style={{ marginTop: '-1rem' }}
+        />
         <h2 className="text-2xl font-bold mb-4">My Groups</h2>
         {user.groupMemberships.length > 0 ? (
           <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-md">
@@ -89,18 +93,20 @@ export default async function UserProfilePage(props: {
         </div>
 
         <div className="mt-12 max-w-2xl mx-auto">
+        <Image
+          src="/images/butterflies.png"
+          alt="NameGame social butterflies"
+          width={70}
+          height={70}
+          className="float-right" style={{ marginTop: '-1rem' }}
+        />
         <h2 className="text-2xl font-bold mb-6">My Profile</h2>
         {isGuest && (
           <div className="mb-4 rounded-md bg-yellow-50 p-4 text-sm text-yellow-800 dark:bg-yellow-950 dark:text-yellow-300">
-            <p className="font-bold mb-4">You're playing as a guest with limited features:</p>
+            <p className="font-bold mb-4">You're playing as a guest with limited features.</p>
             <ul className="list-disc list-outside space-y-2 ml-4">
-              <li>All guests start with the unsecure password: <i>password123</i></li>
-              <li>To secure your account and unlock features:
-                <ul className="list-disc list-outside space-y-2 ml-8 pt-2">
-                  <li>Change your username and password</li>
-                  <li>Add your last name and a real profile pic</li>
-                </ul>
-              </li>
+              <li><b>Tip:</b> You can change your username and password (default for new players is <i>password123</i>) and continue as a guest</li>
+              <li><b>Tip:</b> Add your last name and a profile pic to unlock all features and become more visible</li>
             </ul>
           </div>
         )}

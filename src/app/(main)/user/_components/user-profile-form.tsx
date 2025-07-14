@@ -93,13 +93,6 @@ export default function UserProfileForm({ user, photoUrl }: { user: UserWithPhot
     setPassword(generateRandomPassword(6));
   };
 
-  const handleCopyPassword = () => {
-    if (password) {
-      navigator.clipboard.writeText(password);
-      alert('Password copied to clipboard!');
-    }
-  };
-
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -129,10 +122,10 @@ export default function UserProfileForm({ user, photoUrl }: { user: UserWithPhot
           className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
         />
         {user.username.startsWith('guest-') && (
-          <div className="mt-2 rounded-md bg-red-50 p-2 text-sm text-red-700 dark:bg-red-900 dark:text-red-300">
-            <p>This is a random guest username. You should update it.</p>
-          </div>
-        )}
+          <p className="mt-1 rounded-md text-xs bg-red-50 p-2 text-sm text-red-700 dark:bg-red-900 dark:text-red-300">
+            This is a random guest username. You should update it.
+          </p>
+         )}
       </div>
 
       <div>
@@ -160,6 +153,9 @@ export default function UserProfileForm({ user, photoUrl }: { user: UserWithPhot
           defaultValue={user.lastName || ''}
           className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
         />
+        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+          <i>Not required for guests.</i>
+        </p>
       </div>
 
       <div>
@@ -183,16 +179,9 @@ export default function UserProfileForm({ user, photoUrl }: { user: UserWithPhot
           >
             Generate
           </button>
-          {/* <button
-            type="button"
-            onClick={handleCopyPassword}
-            className="inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-300 bg-gray-50 text-gray-500 text-sm hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600"
-          >
-            Copy
-          </button> */}
         </div>
-        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-          Leave blank to keep current password. Enter or generate a new one.
+        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+          Leave blank to keep current password. Enter a new one (6+ chars with letters and numbers) or click Generate to change it.
         </p>
       </div>
 
@@ -201,7 +190,7 @@ export default function UserProfileForm({ user, photoUrl }: { user: UserWithPhot
           Profile Picture
         </label>
         <div className="mt-2 flex flex-col items-start space-y-4">
-                    <span className="inline-block h-64 w-64 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-700">
+          <span className="inline-block h-64 w-64 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-700">
             <Image src={previewUrl} alt="Profile photo preview" width={256} height={256} className="h-full w-full object-cover text-gray-300" />
           </span>
           <input
@@ -212,6 +201,9 @@ export default function UserProfileForm({ user, photoUrl }: { user: UserWithPhot
             onChange={handleFileChange}
             className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium leading-4 text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600 dark:focus:ring-offset-gray-800"
           />
+          <p className="text-xs -mt-3 text-gray-500 dark:text-gray-400">
+            <i>Choose File</i> to upload or take a new pic. <i>Not required for guests.</i>
+          </p>
         </div>
       </div>
 

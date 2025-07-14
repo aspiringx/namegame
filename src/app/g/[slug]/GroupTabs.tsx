@@ -124,6 +124,16 @@ export default function GroupTabs({ sunDeckMembers, iceBlockMembers, currentUser
                   'ring-white/60 ring-offset-2 ring-offset-blue-400 focus:outline-none focus:ring-2'
                 )}
               >
+                {type === 'sunDeck' ? (
+                  <p className="text-sm mb-2 text-gray-500 dark:text-gray-400">
+                    People you've greeted and when.
+                  </p>
+                ) : (
+                  <p className="text-sm mb-2 text-gray-500 dark:text-gray-400">
+                    Greet these people to see bigger color pics and info they've shared.
+                  </p>
+                )}
+
                 <div className="mb-4">
                   <input
                     type="text"
