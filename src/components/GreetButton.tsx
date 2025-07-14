@@ -42,8 +42,9 @@ export default function GreetButton() {
         onClick={handleClick}
         disabled={isLoading}
         className="bg-blue-600 text-white hover:bg-blue-700 px-6 py-2 rounded-lg font-bold disabled:opacity-50 shadow-lg transform hover:scale-105 transition-transform duration-300 ease-in-out"
+        title="Share a greeting code or url"
       >
-        {isLoading ? 'Generating...' : 'Greet someone!'}
+        {isLoading ? 'Generating...' : 'Greet'}
       </button>
       <QRCodeModal
         isOpen={isModalOpen}

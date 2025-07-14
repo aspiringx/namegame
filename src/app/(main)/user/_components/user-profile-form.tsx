@@ -130,7 +130,7 @@ export default function UserProfileForm({ user, photoUrl }: { user: UserWithPhot
         />
         {user.username.startsWith('guest-') && (
           <div className="mt-2 rounded-md bg-red-50 p-2 text-sm text-red-700 dark:bg-red-900 dark:text-red-300">
-            <p>This is a random guest username. You can update it so it's easier to login.</p>
+            <p>This is a random guest username. You should update it.</p>
           </div>
         )}
       </div>
@@ -179,23 +179,21 @@ export default function UserProfileForm({ user, photoUrl }: { user: UserWithPhot
           <button
             type="button"
             onClick={handleGeneratePassword}
-            className="inline-flex items-center px-3 rounded-none border border-l-0 border-gray-300 bg-gray-50 text-gray-500 text-sm hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600"
+            className="inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-300 bg-gray-50 text-gray-500 text-sm hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600"
           >
             Generate
           </button>
-          <button
+          {/* <button
             type="button"
             onClick={handleCopyPassword}
             className="inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-300 bg-gray-50 text-gray-500 text-sm hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600"
           >
             Copy
-          </button>
+          </button> */}
         </div>
-        {user.username.startsWith('guest-') && (
-          <div className="mt-2 rounded-md bg-red-50 p-2 text-sm text-red-700 dark:bg-red-900 dark:text-red-300">
-            <p>Change your guest password (password123) to something more secure.</p>
-          </div>
-        )}
+        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+          Leave blank to keep current password. Enter or generate a new one.
+        </p>
       </div>
 
       <div>

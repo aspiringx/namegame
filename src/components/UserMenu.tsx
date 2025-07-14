@@ -6,7 +6,15 @@ import Link from 'next/link';
 import { signOut, useSession } from 'next-auth/react';
 
 export default function UserMenu() {
-  const { data: session } = useSession();
+  const { data: session, update } = useSession();
+  const [imgError, setImgError] = useState(false);
+
+  const handleImageError = () => {
+    if (!imgError) {
+      setImgError(true);
+      update();
+    }
+  };
   const user = session?.user;
   const isSuperAdmin = user?.roles?.some(
     (role) => role.groupSlug === 'global-admin' && role.role === 'super'
@@ -41,7 +49,7 @@ export default function UserMenu() {
   return (
     <div className="relative" ref={dropdownRef}>
       <button onClick={toggleDropdown} className="flex items-center p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
-        {user && <p className="mr-4 text-gray-700 dark:text-gray-300">Hi, {user.firstName}</p>}
+        {user && <p className="mr-4 text-gray-700 dark:text-gray-300">{user.firstName}</p>}
         <Image
           src={user?.image || '/images/default-avatar.png'}
           alt="User Profile"
@@ -54,6 +62,14 @@ export default function UserMenu() {
         <div className="absolute top-full mt-2 right-0 bg-white rounded-md shadow-lg py-2 z-50 w-48 dark:bg-gray-800">
           {user ? (
             <>
+              <Link
+                href={`/user`}
+                className="block px-4 py-2 text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
+                onClick={closeDropdown}
+              >
+                My Profile
+              </Link>
+              <hr className="my-2 border-gray-200 dark:border-gray-700" />
               {isSuperAdmin && (
                 <>
                   <Link
@@ -61,7 +77,7 @@ export default function UserMenu() {
                     className="block px-4 py-2 text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
                     onClick={closeDropdown}
                   >
-                    Admin
+                    Global Admin
                   </Link>
                   <Link
                     href="/admin/groups"
@@ -79,13 +95,7 @@ export default function UserMenu() {
                   </Link>
                 </>
               )}
-              <Link
-                href="/user"
-                className="block px-4 py-2 text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
-                onClick={closeDropdown}
-              >
-                My Profile
-              </Link>
+              <hr className="my-2 border-gray-200 dark:border-gray-700" />
               <button
                 onClick={() => {
                   signOut({ callbackUrl: '/' });

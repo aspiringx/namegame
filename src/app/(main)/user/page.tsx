@@ -91,9 +91,17 @@ export default async function UserProfilePage(props: {
         <div className="mt-12 max-w-2xl mx-auto">
         <h2 className="text-2xl font-bold mb-6">My Profile</h2>
         {isGuest && (
-          <div className="mb-4 rounded-md bg-blue-50 p-4 text-sm text-blue-700 dark:bg-blue-900 dark:text-blue-300">
-            <p>You're playing as a guest. Complete your profile with a last name 
-            and photo to unlock all features and be more visible in groups.</p>
+          <div className="mb-4 rounded-md bg-yellow-50 p-4 text-sm text-yellow-800 dark:bg-yellow-950 dark:text-yellow-300">
+            <p className="font-bold mb-4">You're playing as a guest with limited features:</p>
+            <ul className="list-disc list-outside space-y-2 ml-4">
+              <li>All guests start with the unsecure password: <i>password123</i></li>
+              <li>To secure your account and unlock features:
+                <ul className="list-disc list-outside space-y-2 ml-8 pt-2">
+                  <li>Change your username and password</li>
+                  <li>Add your last name and a real profile pic</li>
+                </ul>
+              </li>
+            </ul>
           </div>
         )}
 
