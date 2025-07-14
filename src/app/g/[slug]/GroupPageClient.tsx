@@ -1,0 +1,29 @@
+'use client';
+
+import { GroupData } from '@/types';
+import Link from 'next/link';
+import GroupTabs from './GroupTabs';
+
+export default function GroupPageClient({ groupData }: { groupData: GroupData }) {
+  if (!groupData) {
+    return <div>Group not found.</div>;
+  }
+
+  const { sunDeckMembers, iceBlockMembers, currentUserMember } = groupData;
+
+  return (
+    <div className="container mx-auto px-4 py-0">
+      <h1 className="text-2xl font-bold mb-4">{groupData.name}</h1>
+      {currentUserMember?.role === 'guest' && (
+        <div className="mb-4 rounded-md bg-blue-50 p-4 text-sm text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+          Hi {currentUserMember.user.firstName}, you're playing as a guest. If/when you want to unlock all features,{' '}
+          <Link href="/user" className="font-bold underline hover:text-blue-800 dark:hover:text-blue-200">
+            complete your profile here
+          </Link>{' '}
+          with just a last name and photo.
+        </div>
+      )}
+      <GroupTabs sunDeckMembers={sunDeckMembers} iceBlockMembers={iceBlockMembers} currentUserMember={currentUserMember} />
+    </div>
+  );
+}

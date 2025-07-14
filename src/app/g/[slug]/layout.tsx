@@ -12,14 +12,14 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
   const { slug } = params;
   const data = await getGroup(slug, 5);
 
-  if (!data || !data.group) {
+  if (!data) {
     return {
       title: 'Group Not Found',
     };
   }
 
   return {
-    title: data.group.name,
+    title: data.name,
   };
 }
 
@@ -36,16 +36,11 @@ export default async function GroupLayout(props: { children: React.ReactNode; pa
   const session = await auth();
   const data = await getGroup(slug, 5);
 
-  if (!data || !data.group) {
+  if (!data) {
     notFound();
   }
 
-  const { group, sunDeckMembers, iceBlockMembers, currentUserMember } = data;
-
-  const isSuperAdmin =
-    session?.user?.roles.some(
-      (r) => r.groupSlug === 'global-admin' && r.role === 'super'
-    ) ?? false;
+  const { sunDeckMembers, iceBlockMembers, currentUserMember, isSuperAdmin } = data;
 
   // The /greet page is public and should not be protected by this authorization.
   if (!pathname.includes('/greet') && !currentUserMember && !isSuperAdmin) {
@@ -57,7 +52,7 @@ export default async function GroupLayout(props: { children: React.ReactNode; pa
   const isAuthorizedMember = currentUserMember && ['admin', 'member', 'super'].includes(currentUserMember.role);
 
   return (
-    <GroupProvider value={{ group, sunDeckMembers, iceBlockMembers, currentUserMember }}>
+    <GroupProvider value={{ group: data, sunDeckMembers, iceBlockMembers, currentUserMember, isSuperAdmin }}>
       <div className="flex flex-col min-h-screen">
         <Header />
         <main className="flex-grow pt-20 pb-24">

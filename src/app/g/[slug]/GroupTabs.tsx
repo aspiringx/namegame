@@ -3,55 +3,59 @@
 import { useState, useEffect, Fragment } from 'react';
 import { Tab } from '@headlessui/react';
 import { useInView } from 'react-intersection-observer';
-import { GroupWithMembers } from '@/types';
+import { GroupData, MemberWithUser } from '@/types';
 import MemberCard from '@/components/MemberCard';
 import { getPaginatedMembers } from './actions';
 import { useParams } from 'next/navigation';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
 interface GroupTabsProps {
-  sunDeckMembers: GroupWithMembers['members'];
-  iceBlockMembers: GroupWithMembers['members'];
-  currentUserMember: GroupWithMembers['members'][0] | undefined;
+  sunDeckMembers: MemberWithUser[];
+  iceBlockMembers: MemberWithUser[];
+  currentUserMember: MemberWithUser | undefined;
 }
 
 function classNames(...classes: (string | boolean)[]) {
   return classes.filter(Boolean).join(' ');
 }
 
-function MemberList({
+function SearchableMemberList({
   initialMembers,
   listType,
   currentUserMember,
   slug,
+  searchQuery,
 }: {
-  initialMembers: GroupWithMembers['members'];
+  initialMembers: MemberWithUser[];
   listType: 'sunDeck' | 'iceBlock';
-  currentUserMember?: GroupWithMembers['members'][0];
+  currentUserMember?: MemberWithUser;
   slug: string;
+  searchQuery: string;
 }) {
   const [members, setMembers] = useState(initialMembers);
-  const [page, setPage] = useState(2);
-  const [hasMore, setHasMore] = useState(initialMembers.length > 0);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(initialMembers.length > 9);
   const [isLoading, setIsLoading] = useState(false);
   const { ref, inView } = useInView({ threshold: 0 });
 
   useEffect(() => {
-    // When the list has loaded all items, and if it's the sunDeck, add the current user
-    if (listType === 'sunDeck' && !hasMore && currentUserMember) {
-      // Check if the user is already in the list to avoid duplicates
-      if (!members.find((m) => m.userId === currentUserMember.userId)) {
-        setMembers((prev) => [...prev, currentUserMember]);
-      }
-    }
-  }, [hasMore, listType, currentUserMember, members]);
+    setMembers(
+      initialMembers.filter((member) =>
+        member.user.name.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    );
+  }, [searchQuery, initialMembers]);
 
   useEffect(() => {
     if (inView && hasMore && !isLoading) {
       setIsLoading(true);
       getPaginatedMembers(slug, listType, page).then((newMembers) => {
         if (newMembers.length > 0) {
-          setMembers((prev) => [...prev, ...newMembers]);
+          setMembers((prev) => {
+            const existingUserIds = new Set(prev.map((m) => m.userId));
+            const uniqueNewMembers = newMembers.filter((m) => !existingUserIds.has(m.userId));
+            return [...prev, ...uniqueNewMembers];
+          });
           setPage((prev) => prev + 1);
         } else {
           setHasMore(false);
@@ -79,6 +83,7 @@ function MemberList({
 }
 
 export default function GroupTabs({ sunDeckMembers, iceBlockMembers, currentUserMember }: GroupTabsProps) {
+  const [searchQueries, setSearchQueries] = useState({ sunDeck: '', iceBlock: '' });
   const params = useParams();
   const slug = params.slug as string;
   const categories = {
@@ -110,38 +115,36 @@ export default function GroupTabs({ sunDeckMembers, iceBlockMembers, currentUser
               </Tab>
             ))}
           </Tab.List>
-        <Tab.Panels className="mt-2">
-          {Object.values(categories).map(({ members, type }, idx) => (
-            <Tab.Panel
-              key={idx}
-              className={classNames(
-                'rounded-xl bg-white dark:bg-gray-800 p-3',
-                'ring-white/60 ring-offset-2 ring-offset-blue-400 focus:outline-none focus:ring-2'
-              )}
-            >
-              <>
-                {type === 'sunDeck' && (
-                  <div className="mb-4 rounded-md bg-blue-50 p-4 text-sm text-blue-700 dark:bg-blue-900 dark:text-blue-300">
-                    <p>People you've greeted and when.</p>
-                  </div>
+          <Tab.Panels className="mt-2">
+            {Object.values(categories).map(({ members, type }, idx) => (
+              <Tab.Panel
+                key={idx}
+                className={classNames(
+                  'rounded-xl bg-white dark:bg-gray-800 p-3',
+                  'ring-white/60 ring-offset-2 ring-offset-blue-400 focus:outline-none focus:ring-2'
                 )}
-                {type === 'iceBlock' && (
-                  <div className="mb-4 rounded-md bg-blue-50 p-4 text-sm text-blue-700 dark:bg-blue-900 dark:text-blue-300">
-                    <p>Greet these people to see last names.</p>
-                  </div>
-                )}
-                <MemberList
+              >
+                <div className="mb-4">
+                  <input
+                    type="text"
+                    placeholder={`Search ${type === 'sunDeck' ? 'greeted' : 'not greeted'} members...`}
+                    value={searchQueries[type]}
+                    onChange={(e) => setSearchQueries({ ...searchQueries, [type]: e.target.value })}
+                    className="w-full px-3 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-md dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                                <SearchableMemberList
                   initialMembers={members}
                   listType={type}
-                  currentUserMember={type === 'sunDeck' ? currentUserMember : undefined}
+                  currentUserMember={currentUserMember}
                   slug={slug}
+                  searchQuery={searchQueries[type]}
                 />
-              </>
-            </Tab.Panel>
-          ))}
-        </Tab.Panels>
-      </Tab.Group>
-    </div>
-  </TooltipProvider>
+              </Tab.Panel>
+            ))}
+          </Tab.Panels>
+        </Tab.Group>
+      </div>
+    </TooltipProvider>
   );
 }

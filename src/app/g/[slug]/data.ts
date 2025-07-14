@@ -2,15 +2,39 @@ import 'server-only';
 import { cache } from 'react';
 import prisma from '@/lib/prisma';
 import { getPublicUrl } from '@/lib/storage';
-import { GroupWithMembers } from '@/types';
+import { GroupData, MemberWithUser } from '@/types';
 import { auth } from '@/auth';
 
-export const getGroup = cache(async (slug: string, limit?: number) => {
+export const getGroup = async (slug: string, limit?: number): Promise<GroupData | null> => {
+
   const session = await auth();
   const currentUserId = session?.user?.id;
 
-  const group = await prisma.group.findUnique({
-    where: { slug },
+  if (!currentUserId) {
+    return null; // Not authenticated
+  }
+
+  // Check if the user is a super admin
+  const superAdminMembership = await prisma.groupUser.findFirst({
+    where: {
+      userId: currentUserId,
+      group: { slug: 'global-admin' },
+      role: 'super',
+    },
+  });
+
+  const whereClause: any = { slug };
+  if (!superAdminMembership) {
+    whereClause.members = {
+      some: {
+        userId: currentUserId,
+      },
+    };
+  }
+
+  const group = await prisma.group.findFirst({
+    where: whereClause,
+    
     include: {
       photos: true,
       members: {
@@ -32,31 +56,7 @@ export const getGroup = cache(async (slug: string, limit?: number) => {
     return null;
   }
 
-  const memberPromises = group.members.map(async (member) => {
-    const primaryPhoto = member.user.photos.find((p) => p.type === 'primary');
-    let photoUrl: string | undefined;
-    if (primaryPhoto?.url) {
-      if (primaryPhoto.url.startsWith('http')) {
-        photoUrl = primaryPhoto.url;
-      } else {
-        photoUrl = await getPublicUrl(primaryPhoto.url);
-      }
-    }
-    const name = [member.user.firstName, member.user.lastName].filter(Boolean).join(' ');
-
-    return {
-      ...member,
-      user: {
-        ...member.user,
-        name,
-        photoUrl,
-      },
-    };
-  });
-
-  const resolvedMembers = await Promise.all(memberPromises);
-
-  // Fetch UserUser relations for the current user in this group
+  // Fetch UserUser relations for the current user in this group first to determine who has been greeted.
   const userRelations = await prisma.userUser.findMany({
     where: {
       groupId: group.id,
@@ -70,18 +70,42 @@ export const getGroup = cache(async (slug: string, limit?: number) => {
     relatedUserMap.set(otherUserId, relation.updatedAt);
   });
 
-  const sunDeckMembers: GroupWithMembers['members'] = [];
-  const iceBlockMembers: GroupWithMembers['members'] = [];
-
-  const foundMember = resolvedMembers.find((member) => member.userId === currentUserId);
-  const currentUserMember = foundMember ? JSON.parse(JSON.stringify(foundMember)) : undefined;
-
-  resolvedMembers.forEach((member) => {
-    if (member.userId === currentUserId) {
-      return; // Skip the current user from normal processing
+  const memberPromises = group.members.map(async (member): Promise<MemberWithUser> => {
+    const primaryPhoto = member.user.photos.find((p) => p.type === 'primary');
+    let photoUrl: string | undefined;
+    if (primaryPhoto?.url) {
+      if (primaryPhoto.url.startsWith('http')) {
+        photoUrl = primaryPhoto.url;
+      } else {
+        photoUrl = await getPublicUrl(primaryPhoto.url);
+      }
     }
 
-    if (relatedUserMap.has(member.userId)) {
+    // Show full name only for the current user or for users they have greeted.
+    const isGreeted = relatedUserMap.has(member.userId);
+    const name = (currentUserId === member.userId || isGreeted)
+      ? [member.user.firstName, member.user.lastName].filter(Boolean).join(' ')
+      : member.user.firstName;
+
+    return {
+      ...member,
+      user: {
+        ...member.user,
+        name,
+        photoUrl,
+      },
+    };
+  });
+
+  const resolvedMembers = await Promise.all(memberPromises);
+
+  const sunDeckMembers: MemberWithUser[] = [];
+  const iceBlockMembers: MemberWithUser[] = [];
+
+  resolvedMembers.forEach((member) => {
+    // The current user is always on their own sun deck.
+    // All other users are on the sun deck if a relation exists.
+    if (member.userId === currentUserId || relatedUserMap.has(member.userId)) {
       sunDeckMembers.push({
         ...member,
         relationUpdatedAt: relatedUserMap.get(member.userId),
@@ -91,13 +115,24 @@ export const getGroup = cache(async (slug: string, limit?: number) => {
     }
   });
 
-  // Sort sunDeckMembers by the relation's updatedAt date, descending
-  sunDeckMembers.sort((a, b) => {
+  const currentUserMember = sunDeckMembers.find((member) => member.userId === currentUserId);
+
+  // Sort sunDeckMembers by the relation's updatedAt date, descending.
+  // The current user should always be last.
+  const currentUserInList = sunDeckMembers.find(m => m.userId === currentUserId);
+  const otherSunDeckMembers = sunDeckMembers.filter(m => m.userId !== currentUserId);
+
+  otherSunDeckMembers.sort((a, b) => {
     if (a.relationUpdatedAt && b.relationUpdatedAt) {
       return b.relationUpdatedAt.getTime() - a.relationUpdatedAt.getTime();
     }
     return 0;
   });
+
+  const sortedSunDeckMembers = [...otherSunDeckMembers];
+  if (currentUserInList) {
+    sortedSunDeckMembers.push(currentUserInList);
+  }
 
   // Sort iceBlockMembers by lastName, then firstName, ascending
   iceBlockMembers.sort((a, b) => {
@@ -108,13 +143,14 @@ export const getGroup = cache(async (slug: string, limit?: number) => {
     return (a.user.firstName || '').localeCompare(b.user.firstName || '');
   });
 
-  const limitedSunDeckMembers = limit ? sunDeckMembers.slice(0, limit) : sunDeckMembers;
+  const limitedSunDeckMembers = limit ? sortedSunDeckMembers.slice(0, limit) : sortedSunDeckMembers;
   const limitedIceBlockMembers = limit ? iceBlockMembers.slice(0, limit) : iceBlockMembers;
 
   return {
-    group,
+    ...group,
+    isSuperAdmin: !!superAdminMembership,
     sunDeckMembers: limitedSunDeckMembers,
     iceBlockMembers: limitedIceBlockMembers,
     currentUserMember,
   };
-});
+};
