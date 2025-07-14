@@ -13,7 +13,6 @@ export default function GroupPageClient({ groupData }: { groupData: GroupData })
 
   return (
     <div className="container mx-auto px-4 py-0">
-      <h1 className="text-2xl font-bold mb-4">{groupData.name}</h1>
       {currentUserMember?.role === 'guest' && (
         <div className="mb-4 rounded-md bg-blue-50 p-4 text-sm text-blue-700 dark:bg-blue-900 dark:text-blue-300">
           Hi {currentUserMember.user.firstName}, you're playing as a guest. If/when you want to unlock all features,{' '}

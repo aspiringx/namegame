@@ -4,7 +4,7 @@ import { auth } from '@/auth';
 import { getPublicUrl } from '@/lib/storage';
 import GroupMembers, { GroupMember } from '../group-members';
 import { PhotoType, EntityType } from '@/generated/prisma';
-import type { GroupWithMembers } from '../layout';
+import type { GroupWithMembers } from '@/types/index';
 
 const MEMBERS_PER_PAGE = 25;
 

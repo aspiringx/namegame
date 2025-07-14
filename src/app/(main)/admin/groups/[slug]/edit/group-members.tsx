@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition, ChangeEvent, useMemo } from 'react';
-import type { GroupWithMembers } from './layout';
+import type { GroupWithMembers } from '@/types/index';
 import Image from 'next/image';
 import Link from 'next/link';
 import { searchUsers, addMember, removeMember, updateMember } from './actions';

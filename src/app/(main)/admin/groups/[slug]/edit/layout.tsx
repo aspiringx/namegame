@@ -5,29 +5,9 @@ import { auth } from '@/auth';
 import { EntityType, PhotoType, Prisma } from '@/generated/prisma';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import EditGroupNav from './edit-group-nav';
+import type { GroupPayload, GroupWithMembers } from '@/types/index';
 
-const groupWithMembers = Prisma.validator<Prisma.GroupDefaultArgs>()({
-  include: {
-    photos: true,
-    members: {
-      include: {
-        user: {
-          include: {
-            photos: true,
-          },
-        },
-      },
-    },
-  },
-});
 
-export type GroupPayload = Prisma.GroupGetPayload<typeof groupWithMembers>;
-
-export type GroupWithMembers = Omit<GroupPayload, 'members'> & {
-  members: (Omit<GroupPayload['members'][number], 'user'> & {
-    user: GroupPayload['members'][number]['user'] & { photoUrl?: string };
-  })[];
-};
 
 export default async function EditGroupLayout(props: { children: React.ReactNode; params: Promise<{ slug: string }> }) {
   const { children } = props;

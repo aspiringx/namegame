@@ -1,15 +1,14 @@
 'use client';
 
 import Image from 'next/image';
-import { GroupWithMembers } from '@/types';
+import type { MemberWithUser as Member } from '@/types/index';
 import { formatDistanceToNow } from 'date-fns';
 import {
   Tooltip,
   TooltipContent,
+  TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-
-type Member = GroupWithMembers['members'][0];
 
 interface MemberCardProps {
   member: Member;

@@ -6,19 +6,17 @@ import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
 import { getPublicUrl } from '@/lib/storage';
 import { PhotoType } from '@/generated/prisma';
-import { GroupWithMembers } from '@/types';
+import type { MemberWithUser } from '@/types/index';
 
 // Number of photos to retrieve at a time for infinite scroll. If a screen is 
 // bigger, we'll retrieve more photos to fill the screen.
 const PAGE_SIZE = 5;
 
-type PaginatedMember = GroupWithMembers['members'][0];
-
 export async function getPaginatedMembers(
   slug: string,
   listType: 'sunDeck' | 'iceBlock',
   page: number
-): Promise<PaginatedMember[]> {
+): Promise<MemberWithUser[]> {
   const session = await auth();
   const currentUserId = session?.user?.id;
 
