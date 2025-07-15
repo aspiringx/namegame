@@ -136,7 +136,7 @@ export default function GroupTabs({ sunDeckMembers, iceBlockMembers, currentUser
                   </p>
                 ) : (
                   <p className="text-sm mb-2 text-gray-500 dark:text-gray-400">
-                    Greet these people to see bigger color pics and info they've shared.
+                    Greet these people to see them in color. 
                   </p>
                 )}
 
