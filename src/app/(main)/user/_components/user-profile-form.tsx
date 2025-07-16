@@ -56,6 +56,7 @@ export default function UserProfileForm({ user, photoUrl }: { user: UserWithPhot
   const [previewUrl, setPreviewUrl] = useState<string>(photoUrl);
   const [password, setPassword] = useState('');
   const formSubmitted = useRef(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const initialState: State = {
     message: null,
@@ -106,6 +107,10 @@ export default function UserProfileForm({ user, photoUrl }: { user: UserWithPhot
     }
   };
 
+  const handleUpdatePicClick = () => {
+    fileInputRef.current?.click();
+  };
+
   return (
     <form action={formAction} className="space-y-6">
 
@@ -141,7 +146,7 @@ export default function UserProfileForm({ user, photoUrl }: { user: UserWithPhot
           className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
         />
         <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-          At least 3 character. May be an email, but not required.
+          At least 3 character. 
         </p>
       </div>
 
@@ -202,10 +207,18 @@ export default function UserProfileForm({ user, photoUrl }: { user: UserWithPhot
             name="photo"
             accept="image/*"
             onChange={handleFileChange}
-            className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium leading-4 text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600 dark:focus:ring-offset-gray-800"
+            ref={fileInputRef}
+            className="hidden"
           />
+          <button
+            type="button"
+            onClick={handleUpdatePicClick}
+            className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium leading-4 text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600 dark:focus:ring-offset-gray-800"
+          >
+            Update My Pic
+          </button>
           <p className="text-xs -mt-3 text-gray-500 dark:text-gray-400">
-            Not required for guests. Add for full features.
+            Not required for guests but recommended for full features.
           </p>
         </div>
       </div>
