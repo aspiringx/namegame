@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import { useState, useEffect, Fragment } from 'react';
-import { Tab } from '@headlessui/react';
-import { useInView } from 'react-intersection-observer';
-import { GroupData, MemberWithUser } from '@/types';
-import MemberCard from '@/components/MemberCard';
-import { getPaginatedMembers } from './actions';
-import { useParams } from 'next/navigation';
-import { TooltipProvider } from '@/components/ui/tooltip';
+import { useState, useEffect, Fragment } from "react";
+import { Tab } from "@headlessui/react";
+import { useInView } from "react-intersection-observer";
+import { GroupData, MemberWithUser } from "@/types";
+import MemberCard from "@/components/MemberCard";
+import { getPaginatedMembers } from "./actions";
+import { useParams } from "next/navigation";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 interface GroupTabsProps {
   sunDeckMembers: MemberWithUser[];
@@ -16,7 +16,7 @@ interface GroupTabsProps {
 }
 
 function classNames(...classes: (string | boolean)[]) {
-  return classes.filter(Boolean).join(' ');
+  return classes.filter(Boolean).join(" ");
 }
 
 function SearchableMemberList({
@@ -27,7 +27,7 @@ function SearchableMemberList({
   searchQuery,
 }: {
   initialMembers: MemberWithUser[];
-  listType: 'sunDeck' | 'iceBlock';
+  listType: "sunDeck" | "iceBlock";
   currentUserMember?: MemberWithUser;
   slug: string;
   searchQuery: string;
@@ -53,7 +53,9 @@ function SearchableMemberList({
         if (newMembers.length > 0) {
           setMembers((prev) => {
             const existingUserIds = new Set(prev.map((m) => m.userId));
-            const uniqueNewMembers = newMembers.filter((m) => !existingUserIds.has(m.userId));
+            const uniqueNewMembers = newMembers.filter(
+              (m) => !existingUserIds.has(m.userId)
+            );
             return [...prev, ...uniqueNewMembers];
           });
           setPage((prev) => prev + 1);
@@ -68,33 +70,45 @@ function SearchableMemberList({
   return (
     <div
       className={`grid gap-4 ${
-        listType === 'iceBlock'
-          ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5'
-          : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+        listType === "iceBlock"
+          ? "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
+          : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
       }`}
     >
       {members.map((member) => (
         <MemberCard key={member.userId} member={member} listType={listType} />
       ))}
       {members.length === 0 && !hasMore && (
-        <p className="text-center text-gray-500 dark:text-gray-400 col-span-1">No members found.</p>
+        <p className="text-center text-gray-500 dark:text-gray-400 col-span-1">
+          Looks like you've greeted everyone!
+        </p>
       )}
       {hasMore && (
-        <div ref={ref} className="text-center text-gray-500 dark:text-gray-400 col-span-1 py-4">
-          {isLoading ? 'Loading...' : ''}
+        <div
+          ref={ref}
+          className="text-center text-gray-500 dark:text-gray-400 col-span-1 py-4"
+        >
+          {isLoading ? "Loading..." : ""}
         </div>
       )}
     </div>
   );
 }
 
-export default function GroupTabs({ sunDeckMembers, iceBlockMembers, currentUserMember }: GroupTabsProps) {
-  const [searchQueries, setSearchQueries] = useState({ sunDeck: '', iceBlock: '' });
+export default function GroupTabs({
+  sunDeckMembers,
+  iceBlockMembers,
+  currentUserMember,
+}: GroupTabsProps) {
+  const [searchQueries, setSearchQueries] = useState({
+    sunDeck: "",
+    iceBlock: "",
+  });
   const params = useParams();
   const slug = params.slug as string;
   const categories = {
-    'Greeted': { members: sunDeckMembers, type: 'sunDeck' as const },
-    'Not Greeted': { members: iceBlockMembers, type: 'iceBlock' as const },
+    Greeted: { members: sunDeckMembers, type: "sunDeck" as const },
+    "Not Greeted": { members: iceBlockMembers, type: "iceBlock" as const },
   };
 
   return (
@@ -103,18 +117,17 @@ export default function GroupTabs({ sunDeckMembers, iceBlockMembers, currentUser
         <Tab.Group>
           <Tab.List className="flex space-x-1 rounded-xl bg-blue-900/20 p-1">
             {Object.keys(categories).map((category) => (
-              <Tab
-                key={category}
-                as={Fragment}
-              >
+              <Tab key={category} as={Fragment}>
                 {({ selected }) => (
-                  <button className={classNames(
-                    'w-full rounded-lg py-2.5 text-sm font-medium leading-5',
-                    'ring-white/60 ring-offset-2 ring-offset-blue-400 focus:outline-none focus:ring-2',
-                    selected
-                      ? 'bg-white text-blue-700 shadow'
-                      : 'text-blue-700 hover:bg-blue-500/10 dark:text-blue-200 dark:hover:bg-white/10 dark:hover:text-white'
-                  )}>
+                  <button
+                    className={classNames(
+                      "w-full rounded-lg py-2.5 text-sm font-medium leading-5",
+                      "ring-white/60 ring-offset-2 ring-offset-blue-400 focus:outline-none focus:ring-2",
+                      selected
+                        ? "bg-white text-blue-700 shadow"
+                        : "text-blue-700 hover:bg-blue-500/10 dark:text-blue-200 dark:hover:bg-white/10 dark:hover:text-white"
+                    )}
+                  >
                     {category}
                   </button>
                 )}
@@ -126,30 +139,35 @@ export default function GroupTabs({ sunDeckMembers, iceBlockMembers, currentUser
               <Tab.Panel
                 key={idx}
                 className={classNames(
-                  'rounded-xl bg-white dark:bg-gray-800 p-3',
-                  'ring-white/60 ring-offset-2 ring-offset-blue-400 focus:outline-none focus:ring-2'
+                  "rounded-xl bg-white dark:bg-gray-800 p-3",
+                  "ring-white/60 ring-offset-2 ring-offset-blue-400 focus:outline-none focus:ring-2"
                 )}
               >
-                {type === 'sunDeck' ? (
+                {type === "sunDeck" ? (
                   <p className="text-sm mb-2 text-gray-500 dark:text-gray-400">
-                    People you've greeted and when.
+                    People and the last time you greeted.
                   </p>
                 ) : (
                   <p className="text-sm mb-2 text-gray-500 dark:text-gray-400">
-                    Greet these people to see them in color. 
+                    Greet these people to see them in color.
                   </p>
                 )}
 
                 <div className="mb-4">
                   <input
                     type="text"
-                    placeholder={`Search ${type === 'sunDeck' ? 'greeted' : 'not greeted'} members...`}
+                    placeholder={`Search ${type === "sunDeck" ? "greeted" : "not greeted"} members...`}
                     value={searchQueries[type]}
-                    onChange={(e) => setSearchQueries({ ...searchQueries, [type]: e.target.value })}
+                    onChange={(e) =>
+                      setSearchQueries({
+                        ...searchQueries,
+                        [type]: e.target.value,
+                      })
+                    }
                     className="w-full px-3 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-md dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
-                                <SearchableMemberList
+                <SearchableMemberList
                   initialMembers={members}
                   listType={type}
                   currentUserMember={currentUserMember}
