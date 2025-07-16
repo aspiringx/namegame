@@ -184,7 +184,7 @@ export default function UserProfileForm({ user, photoUrl }: { user: UserWithPhot
           </button>
         </div>
         <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-          Leave blank to keep current password. Enter a new one (6+ chars with letters and numbers) or click Generate to change it.
+          Enter or generate a new password (6+ chars with letters and numbers).
         </p>
       </div>
 
