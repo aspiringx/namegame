@@ -29,7 +29,7 @@ export default function Home() {
           </p>
           <p>
             <b>Remembering names can be tricky.</b>&nbsp;
-            Forgetting them and asking for reminders is embarrassing.
+            Forgetting and asking for reminders is embarrassing.
           </p>
           <p>
             <b>You don't have to be a social butterfly</b>&nbsp;
@@ -64,14 +64,22 @@ export default function Home() {
             <li>Add your name and pic</li>
             <li>Greet someone with a code</li>
           </ul>
-          <p className="my-4">When people scan your code, you instantly see 
-            each other's names and photos to remember each other.
+          <p className="my-4">When someone scans your code, you get each 
+            other's names and pics so you don't forget. 
+          </p>
+          <p className="my-4">New people can play as a <i>guest</i> with just 
+            their first name. 
           </p>
           <p className="my-4">
-            New people can play as a <i>guest</i> with just their first name. 
-            If/when they want, they can add their photo and last name. 
+            That's it.
+            <Image
+              src="/images/butterflies.png"
+              alt="NameGame social butterflies"
+              width={48}
+              height={48}
+              className="w-auto h-auto mx-auto"
+            />
           </p>
-          <p className="my-4">That's it.</p>
         </section>
       </div>
     </div>
