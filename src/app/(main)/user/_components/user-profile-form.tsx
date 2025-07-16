@@ -58,6 +58,8 @@ export default function UserProfileForm({ user, photoUrl }: { user: UserWithPhot
   const searchParams = useSearchParams();
   const [previewUrl, setPreviewUrl] = useState<string>(photoUrl);
   const [password, setPassword] = useState('');
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [isFadingOut, setIsFadingOut] = useState(false);
   const formSubmitted = useRef(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -75,6 +77,7 @@ export default function UserProfileForm({ user, photoUrl }: { user: UserWithPhot
     if (state.success && !formSubmitted.current) {
       formSubmitted.current = true;
       window.scrollTo(0, 0);
+      setShowSuccessMessage(true);
 
       if (state.newPhotoUrl) {
         setPreviewUrl(state.newPhotoUrl);
@@ -91,6 +94,24 @@ export default function UserProfileForm({ user, photoUrl }: { user: UserWithPhot
       });
     }
   }, [state, updateSession, router]);
+
+  useEffect(() => {
+    if (showSuccessMessage) {
+      setIsFadingOut(false);
+      const fadeOutTimer = setTimeout(() => {
+        setIsFadingOut(true);
+      }, 2500); // Start fading out after 2.5 seconds
+
+      const hideTimer = setTimeout(() => {
+        setShowSuccessMessage(false);
+      }, 3000); // Hide completely after 3 seconds
+
+      return () => {
+        clearTimeout(fadeOutTimer);
+        clearTimeout(hideTimer);
+      };
+    }
+  }, [showSuccessMessage]);
 
   const handleNewSubmission = () => {
     formSubmitted.current = false;
@@ -125,6 +146,15 @@ export default function UserProfileForm({ user, photoUrl }: { user: UserWithPhot
 
   return (
     <form action={formAction} className="space-y-6">
+      {showSuccessMessage && state?.message && (
+        <p
+          className={`text-green-500 transition-opacity duration-500 ease-in-out ${
+            isFadingOut ? 'opacity-0' : 'opacity-100'
+          }`}
+        >
+          {state.message}
+        </p>
+      )}
 
       <div>
         <label htmlFor="username" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -236,7 +266,6 @@ export default function UserProfileForm({ user, photoUrl }: { user: UserWithPhot
       </div>
 
       {!state?.success && state?.error && <p className="text-red-500">{state.error}</p>}
-      {state?.success && state?.message && <p className="text-green-500">{state.message}</p>}
 
       <SubmitButton onNewSubmission={handleNewSubmission} />
     </form>
