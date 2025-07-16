@@ -140,6 +140,9 @@ export default function UserProfileForm({ user, photoUrl }: { user: UserWithPhot
           defaultValue={user.firstName || ''}
           className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
         />
+        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+          At least 3 character. May be an email, but not required.
+        </p>
       </div>
 
       <div>
