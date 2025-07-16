@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { auth } from '@/auth';
 import AuthProvider from '@/components/AuthProvider';
-
 import { Providers } from '@/components/providers';
+
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -24,14 +24,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body className={`${inter.className} bg-background text-foreground`}>
         <Providers>
           <div className="relative flex min-h-screen flex-col">
-            <AuthProvider session={session}>
-              {children}
-            </AuthProvider>
+            <AuthProvider session={session}>{children}</AuthProvider>
           </div>
         </Providers>
       </body>
     </html>
   );
 }
-
-

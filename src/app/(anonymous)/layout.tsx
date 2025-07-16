@@ -1,6 +1,7 @@
 import Footer from '@/components/Footer';
 import Image from 'next/image';
 import Link from 'next/link';
+import { Providers } from '@/components/providers';
 
 function AnonymousHeader() {
   return (
@@ -23,12 +24,14 @@ function AnonymousHeader() {
 
 export default function AnonymousLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex flex-col min-h-screen">
-      <AnonymousHeader />
-      <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-12 bg-background">
-        {children}
-      </main>
-      <Footer />
-    </div>
+    <Providers>
+      <div className="flex flex-col min-h-screen">
+        <AnonymousHeader />
+        <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-12 bg-background">
+          {children}
+        </main>
+        <Footer />
+      </div>
+    </Providers>
   );
 }
