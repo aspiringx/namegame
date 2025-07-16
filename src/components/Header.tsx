@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import UserMenu from './UserMenu';
 import { useGroup } from './GroupProvider';
+import Image from 'next/image';
 
 export default function Header() {
   const { group } = useGroup();
@@ -18,7 +19,14 @@ export default function Header() {
             {group.name}
           </Link>
         ) : (
-          <Link href="/" className="text-xl font-bold text-gray-600 dark:text-gray-200">
+          <Link href="/" className="text-xl font-bold text-gray-600 dark:text-gray-200 flex items-center">
+            <Image
+              src="/images/butterfly.png"
+              alt="NameGame social butterfly"
+              width={32}
+              height={32}
+              className="mx-auto h-auto md:max-w-[32px]"
+            />
             NameGame
           </Link>
         )}

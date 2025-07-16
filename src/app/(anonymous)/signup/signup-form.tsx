@@ -55,7 +55,7 @@ export default function SignupForm() {
                   required
                   className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 />
-                <p className="mt-2 text-xs text-gray-500">At least three characters and unique.</p>
+                <p className="mt-2 text-xs text-gray-500">At least 3 characters and unique.</p>
                 {state.errors?.username &&
                   state.errors.username.map((error: string) => (
                     <p className="mt-2 text-sm text-red-600" key={error}>
@@ -121,7 +121,7 @@ export default function SignupForm() {
                   required
                   className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 />
-                <p className="mt-2 text-xs text-gray-500">At least six characters with both text and numbers.</p>
+                <p className="mt-2 text-xs text-gray-500">At least 6 characters with text and numbers.</p>
                 {state.errors?.password &&
                   state.errors.password.map((error: string) => (
                     <p className="mt-2 text-sm text-red-600" key={error}>

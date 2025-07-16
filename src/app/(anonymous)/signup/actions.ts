@@ -7,7 +7,7 @@ import { redirect } from 'next/navigation';
 import { EntityType, PhotoType } from '@/generated/prisma';
 
 const SignupSchema = z.object({
-  username: z.string().min(3, 'Username must be at least three characters.'),
+  username: z.string().min(3, 'Username must be at least 3 characters.'),
   firstName: z.string().min(1, 'First name is required.'),
   lastName: z.string().optional(),
   password: z
@@ -15,7 +15,7 @@ const SignupSchema = z.object({
     .min(6, 'Must be at least 6 characters.')
     .regex(
       /^(?=.*[A-Za-z])(?=.*\d).+$/,
-      'Must contain both letters and numbers.'
+      'Must contain letters and numbers.'
     ),
 });
 

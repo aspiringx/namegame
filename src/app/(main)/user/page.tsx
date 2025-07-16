@@ -64,9 +64,9 @@ export default async function UserProfilePage(props: {
         <Image
           src="/images/butterflies.png"
           alt="NameGame social butterflies"
-          width={70}
-          height={70}
-          className="float-right" style={{ marginTop: '-1rem' }}
+          width={50}
+          height={50}
+          className="float-right" style={{ marginTop: '-4px' }}
         />
         <h2 className="text-2xl font-bold mb-4">My Groups</h2>
         {user.groupMemberships.length > 0 ? (
@@ -96,9 +96,9 @@ export default async function UserProfilePage(props: {
         <Image
           src="/images/butterflies.png"
           alt="NameGame social butterflies"
-          width={70}
-          height={70}
-          className="float-right" style={{ marginTop: '-1rem' }}
+          width={50}
+          height={50}
+          className="float-right" style={{ marginTop: '-4px' }}
         />
         <h2 className="text-2xl font-bold mb-6">My Profile</h2>
         {isGuest && (
