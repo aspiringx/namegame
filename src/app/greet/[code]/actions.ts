@@ -21,6 +21,7 @@ export interface CodeData {
     id: string;
   };
   group: {
+    name: string;
     slug: string;
     id: number;
   };

@@ -145,7 +145,7 @@ export default function GroupTabs({
               >
                 {type === "sunDeck" ? (
                   <p className="text-sm mb-2 text-gray-500 dark:text-gray-400">
-                    People and the last time you greeted.
+                    People you've greeted and when.
                   </p>
                 ) : (
                   <p className="text-sm mb-2 text-gray-500 dark:text-gray-400">

@@ -12,7 +12,7 @@ export default async function GreetPage({ params }: { params: Promise<{ code: st
     where: { code },
     include: {
       user: { select: { firstName: true, id: true } },
-      group: { select: { slug: true, id: true } },
+      group: { select: { slug: true, id: true, name: true } },
     },
   });
 

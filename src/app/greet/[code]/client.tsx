@@ -3,6 +3,8 @@
 import { useState, useTransition } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { handleGuestGreeting, CodeData } from '@/app/greet/[code]/actions';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 
 export default function GreetPageClient({ codeData, isValidCode }: { codeData: CodeData | null; isValidCode: boolean }) {
   const router = useRouter();
@@ -49,66 +51,81 @@ export default function GreetPageClient({ codeData, isValidCode }: { codeData: C
     });
   };
 
-  if (!isValidCode || !codeData) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen text-center p-4">
-        <div className="max-w-md w-full">
-          <h1 className="text-4xl font-bold mb-4 text-destructive">Invalid Link</h1>
-          <p className="text-xl">
-            This greeting link is either expired or invalid. Please ask for a new one.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="flex flex-col items-center justify-center text-center p-12 mt-24">
-      <div className="max-w-md w-full">
-        <h1 className="text-4xl font-bold mb-4">Welcome!</h1>
-        <p className="text-xl mb-4">
-          You just met {codeData.user.firstName || 'a new friend'}!
-        </p>
-
-        {!showSignupForm ? (
-          <div className="space-y-4">
-            <p className="text-left mb-8">
-              If you're new here, <b>Join</b> with just your first name. Or <b>Login</b>.&nbsp;
-              You'll see {codeData.user.firstName}'s name and pic in a private 
-              group.
-            </p>
-            <div className="flex justify-center gap-4">
-              <button
-                onClick={() => setShowSignupForm(true)}
-                className="px-6 py-2 rounded-md border bg-primary text-primary-foreground"
-              >
-                Join
-              </button>
-              <button onClick={handleLogin} className="px-6 py-2 rounded-md">
-                Login
-              </button>
+    <div className="flex flex-col min-h-screen">
+      <Header />
+      <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-18 bg-background">
+        {(!isValidCode || !codeData) ? (
+          <div className="flex flex-col items-center justify-center min-h-[calc(100vh-12rem)] text-center p-4">
+            <div className="max-w-md w-full">
+              <h1 className="text-4xl font-bold mb-4 text-destructive">Invalid Link</h1>
+              <p className="text-xl">
+                This greeting link is either expired or invalid. Please ask for a new one.
+              </p>
             </div>
           </div>
         ) : (
-          <form onSubmit={handleFormSubmit} className="space-y-4">
-            <input
-              type="text"
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
-              placeholder="Enter your first name"
-              className="w-full px-4 py-2 border rounded-md dark:bg-gray-800"
-              required
-            />
-            <button
-              type="submit"
-              disabled={isPending}
-              className="w-full px-6 py-2 rounded-md bg-primary text-primary-foreground disabled:opacity-50"
-            >
-              {isPending ? 'Joining...' : 'Join the Group'}
-            </button>
-          </form>
+          <div className="flex flex-col items-center justify-center min-h-[calc(100vh-12rem)] text-center p-12 ">
+            <div className="max-w-md w-full">
+              <h1 className="text-4xl font-bold mb-4">Welcome!</h1>
+              <p className="text-left text-2xl mb-4">
+                {codeData.user.firstName} just greeted you in the <b>{codeData.group.name}</b> group!
+              </p>
+
+              {!showSignupForm ? (
+                <div className="space-y-4">
+                  <p className="text-left mb-8">
+                    If you're new, you can {' '}
+                    <button onClick={() => setShowSignupForm(true)} className="underline text-primary hover:text-primary-foreground">
+                      Join
+                    </button>{' '}
+                    with just your first name. 
+                    If you're already here, {' '}
+                    <button onClick={handleLogin} className="underline text-primary hover:text-primary-foreground">
+                      Login
+                    </button>&nbsp;
+                    to connect.
+                  </p>
+                  <div className="flex justify-center gap-4 mb-8">
+                    <button
+                      onClick={() => setShowSignupForm(true)}
+                      className="px-6 py-2 rounded-md border bg-primary text-primary-foreground"
+                    >
+                      Join
+                    </button>
+                    <button onClick={handleLogin} className="px-6 py-2 rounded-md">
+                      Login
+                    </button>
+                  </div>
+                  <p className="text-left text-gray-400">
+                    You'll see {codeData.user.firstName} and others in this 
+                    private group to remember faces and names.
+                  </p>
+                </div>
+              ) : (
+                <form onSubmit={handleFormSubmit} className="space-y-4">
+                  <input
+                    type="text"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    placeholder="Enter your first name"
+                    className="w-full px-4 py-2 border rounded-md dark:bg-gray-800"
+                    required
+                  />
+                  <button
+                    type="submit"
+                    disabled={isPending}
+                    className="w-full px-6 py-2 rounded-md bg-primary text-primary-foreground disabled:opacity-50"
+                  >
+                    {isPending ? 'Joining...' : 'Join the Group'}
+                  </button>
+                </form>
+              )}
+            </div>
+          </div>
         )}
-      </div>
+      </main>
+      <Footer />
     </div>
   );
 }

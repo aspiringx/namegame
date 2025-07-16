@@ -21,7 +21,7 @@ export default function GroupPageClient({ groupData }: { groupData: GroupData })
             Welcome {currentUserMember.user.firstName}! You're playing as a guest.
             {' '}
             <Link href="/user" className="font-bold underline hover:text-yellow-900 dark:hover:text-yellow-200">
-              Click here to change your profile.
+              Click here to update your profile.
             </Link>
           </p>
           <p>
@@ -29,18 +29,29 @@ export default function GroupPageClient({ groupData }: { groupData: GroupData })
               onClick={() => setIsExpanded(!isExpanded)} 
               className="focus:outline-none hover:underline hover:text-yellow-900 dark:hover:text-yellow-200"
               aria-expanded={isExpanded}
-            >Learn more {isExpanded ? '▼' : '▶'}
+            >Tap here to learn more {isExpanded ? '▼' : '▶'}
             </button>
           </p>
           
           {isExpanded && (
-            <div className="mt-3 pt-3 border-t border-yellow-200 dark:border-yellow-800">
+            <div className="mt-3 ml-4 pt-3 border-t border-yellow-200 dark:border-yellow-800">
               <ul className="list-disc list-outside space-y-2">
-                <li>You can continue as a guest with limited features and visibility</li>
-                <li>Your temporary username and password are: <i>{currentUserMember.user.username}</i> and <i>password123</i></li>
-                <li><Link href="/user" className="font-bold underline hover:text-yellow-900 dark:hover:text-yellow-200">Change your username and password here</Link> to something more memorable</li>
-                <li>Add your last name and a real photo if/when you want to unlock all features and be more visible</li>
+                <li><b>You're welcome to continue as a guest</b> with limited features and visibility</li>
+                <li><b>Your temporary username and password are <i>{currentUserMember.user.username}</i> and <i>password123</i></b></li>
+                <li className="ml-4">You can change them in your <Link href="/user" className="font-bold underline hover:text-yellow-900 dark:hover:text-yellow-200">profile</Link></li>
+                <li><b>Save your credentials</b> to login here or on other devices after this session expires</li>
+                <li><b>Add your last name and a pic</b> to unlock features and be more visible in this group</li>
               </ul>
+              <p className="mt-4 -ml-4"><b>Any other questions?</b> Just ask the person who greeted you last (first pic below).</p>
+              <div className="mt-4 text-center">
+                <button 
+                  onClick={() => setIsExpanded(!isExpanded)} 
+                  className="px-4 py-2 rounded-md dark:border-yellow-700 bg-yellow-100 dark:bg-yellow-900 text-yellow-900 dark:text-yellow-100 hover:bg-yellow-200 dark:hover:bg-yellow-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
+                  aria-expanded={isExpanded}
+                >
+                  Close guest tips
+                </button>
+              </div>
             </div>
           )}
         </div>
