@@ -63,7 +63,7 @@ export default function GreetPageClient({ codeData, isValidCode }: { codeData: C
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen text-center p-4">
+    <div className="flex flex-col items-center justify-center text-center p-12 mt-24">
       <div className="max-w-md w-full">
         <h1 className="text-4xl font-bold mb-4">Welcome!</h1>
         <p className="text-xl mb-4">
@@ -72,15 +72,19 @@ export default function GreetPageClient({ codeData, isValidCode }: { codeData: C
 
         {!showSignupForm ? (
           <div className="space-y-4">
-            <p className="text-left mb-8">Join (with only your first name) or Login to remember each other and see people in this private group!</p>
+            <p className="text-left mb-8">
+              If you're new here, <b>Join</b> with just your first name. Or <b>Login</b>.&nbsp;
+              You'll see {codeData.user.firstName}'s name and pic in a private 
+              group.
+            </p>
             <div className="flex justify-center gap-4">
               <button
                 onClick={() => setShowSignupForm(true)}
-                className="px-6 py-2 rounded-md border"
+                className="px-6 py-2 rounded-md border bg-primary text-primary-foreground"
               >
                 Join
               </button>
-              <button onClick={handleLogin} className="px-6 py-2 rounded-md bg-primary text-primary-foreground">
+              <button onClick={handleLogin} className="px-6 py-2 rounded-md">
                 Login
               </button>
             </div>
