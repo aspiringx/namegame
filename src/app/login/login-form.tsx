@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -14,6 +14,13 @@ export default function LoginForm() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl');
 
+  useEffect(() => {
+    const savedUsername = localStorage.getItem('username');
+    if (savedUsername) {
+      setUsername(savedUsername);
+    }
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -25,6 +32,7 @@ export default function LoginForm() {
     });
 
     if (result?.ok && !result.error) {
+      localStorage.setItem('username', username);
       if (callbackUrl) {
         router.push(callbackUrl);
       } else {
@@ -65,7 +73,7 @@ export default function LoginForm() {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
             />
-            <p className="mt-2 text-xs text-gray-500">Must be at least three characters.</p>
+            <p className="mt-2 text-xs text-gray-500">At least 3 characters.</p>
           </div>
           <div>
             <label
@@ -85,7 +93,7 @@ export default function LoginForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
-            <p className="mt-2 text-xs text-gray-500">At least six characters with both letters and numbers.</p>
+            <p className="mt-2 text-xs text-gray-500">At least 6 characters with letters and numbers.</p>
           </div>
 
           {error && <p className="text-sm text-center text-red-600">{error}</p>}
