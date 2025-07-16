@@ -71,6 +71,7 @@ export default function UserProfileForm({ user, photoUrl }: { user: UserWithPhot
   useEffect(() => {
     if (state.success && !formSubmitted.current) {
       formSubmitted.current = true;
+      window.scrollTo(0, 0);
 
       if (state.newPhotoUrl) {
         setPreviewUrl(state.newPhotoUrl);
