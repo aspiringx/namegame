@@ -3,7 +3,7 @@
 import { useActionState, useState, useRef, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useFormStatus } from 'react-dom';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import type { User } from '@/generated/prisma';
 import Image from 'next/image';
 import { updateUserProfile, type State } from '../actions';
@@ -36,13 +36,14 @@ interface UserWithPhoto extends User {
   photoUrl?: string;
 }
 
-function SubmitButton() {
+function SubmitButton({ onNewSubmission }: { onNewSubmission: () => void }) {
   const { pending } = useFormStatus();
 
   return (
     <button
       type="submit"
       disabled={pending}
+      onClick={onNewSubmission}
       className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:bg-indigo-400 dark:focus:ring-offset-gray-800 dark:disabled:bg-indigo-800"
     >
       {pending ? 'Saving...' : 'Save Changes'}
@@ -53,6 +54,8 @@ function SubmitButton() {
 export default function UserProfileForm({ user, photoUrl }: { user: UserWithPhoto; photoUrl: string }) {
   const { data: session, update: updateSession } = useSession();
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [previewUrl, setPreviewUrl] = useState<string>(photoUrl);
   const [password, setPassword] = useState('');
   const formSubmitted = useRef(false);
@@ -83,13 +86,21 @@ export default function UserProfileForm({ user, photoUrl }: { user: UserWithPhot
         if (state.redirectUrl) {
           router.push(state.redirectUrl);
         } else {
-          // Optionally, you could refresh the current page to show updated data
-          // or just rely on the success message.
-          // For now, we do nothing to let the user see the success message.
+          router.refresh();
         }
       });
     }
   }, [state, updateSession, router]);
+
+  const handleNewSubmission = () => {
+    formSubmitted.current = false;
+    const params = new URLSearchParams(searchParams);
+    if (params.has('welcome')) {
+      params.delete('welcome');
+      const queryString = params.toString();
+      router.push(`${pathname}${queryString ? `?${queryString}` : ''}`);
+    }
+  };
 
   const handleGeneratePassword = () => {
     setPassword(generateRandomPassword(6));
@@ -163,7 +174,7 @@ export default function UserProfileForm({ user, photoUrl }: { user: UserWithPhot
           className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
         />
         <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-          Not required for guests. Add for full features.
+          Not required for guests. Recommended for full features.
         </p>
       </div>
 
@@ -219,7 +230,7 @@ export default function UserProfileForm({ user, photoUrl }: { user: UserWithPhot
             Update My Pic
           </button>
           <p className="text-xs -mt-3 text-gray-500 dark:text-gray-400">
-            Not required for guests but recommended for full features.
+            Not required for guests. Recommended for full features.
           </p>
         </div>
       </div>
@@ -227,7 +238,7 @@ export default function UserProfileForm({ user, photoUrl }: { user: UserWithPhot
       {!state?.success && state?.error && <p className="text-red-500">{state.error}</p>}
       {state?.success && state?.message && <p className="text-green-500">{state.message}</p>}
 
-      <SubmitButton />
+      <SubmitButton onNewSubmission={handleNewSubmission} />
     </form>
   );
 }

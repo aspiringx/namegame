@@ -27,7 +27,7 @@ export default function AnonymousLayout({ children }: { children: React.ReactNod
     <Providers>
       <div className="flex flex-col min-h-screen">
         <AnonymousHeader />
-        <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-12 bg-background">
+        <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-18 bg-background">
           {children}
         </main>
         <Footer />
