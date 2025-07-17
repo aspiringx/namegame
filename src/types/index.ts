@@ -36,5 +36,7 @@ export type GroupData = Group & {
   isSuperAdmin: boolean;
   sunDeckMembers: MemberWithUser[];
   iceBlockMembers: MemberWithUser[];
+  sunDeckCount: number;
+  iceBlockCount: number;
   currentUserMember: MemberWithUser | undefined;
 };

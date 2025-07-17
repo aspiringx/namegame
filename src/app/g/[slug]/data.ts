@@ -151,6 +151,8 @@ export const getGroup = async (slug: string, limit?: number): Promise<GroupData 
     isSuperAdmin: !!superAdminMembership,
     sunDeckMembers: limitedSunDeckMembers,
     iceBlockMembers: limitedIceBlockMembers,
+    sunDeckCount: sortedSunDeckMembers.length,
+    iceBlockCount: iceBlockMembers.length,
     currentUserMember,
   };
 };

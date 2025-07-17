@@ -8,10 +8,13 @@ import MemberCard from "@/components/MemberCard";
 import { getPaginatedMembers } from "./actions";
 import { useParams } from "next/navigation";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { Badge } from "@/components/ui/badge";
 
 interface GroupTabsProps {
   sunDeckMembers: MemberWithUser[];
   iceBlockMembers: MemberWithUser[];
+  sunDeckCount: number;
+  iceBlockCount: number;
   currentUserMember: MemberWithUser | undefined;
 }
 
@@ -98,6 +101,8 @@ function SearchableMemberList({
 export default function GroupTabs({
   sunDeckMembers,
   iceBlockMembers,
+  sunDeckCount,
+  iceBlockCount,
   currentUserMember,
 }: GroupTabsProps) {
   const [searchQueries, setSearchQueries] = useState({
@@ -107,8 +112,8 @@ export default function GroupTabs({
   const params = useParams();
   const slug = params.slug as string;
   const categories = {
-    Greeted: { members: sunDeckMembers, type: "sunDeck" as const },
-    "Not Greeted": { members: iceBlockMembers, type: "iceBlock" as const },
+    Greeted: { members: sunDeckMembers, type: "sunDeck" as const, count: sunDeckCount },
+    "Not Greeted": { members: iceBlockMembers, type: "iceBlock" as const, count: iceBlockCount },
   };
 
   return (
@@ -116,12 +121,12 @@ export default function GroupTabs({
       <div className="w-full max-w-5xl mx-auto px-2 sm:px-0">
         <Tab.Group>
           <Tab.List className="flex space-x-1 rounded-xl bg-blue-900/20 p-1">
-            {Object.keys(categories).map((category) => (
+            {Object.entries(categories).map(([category, { count }]) => (
               <Tab key={category} as={Fragment}>
                 {({ selected }) => (
                   <button
                     className={classNames(
-                      "w-full rounded-lg py-2.5 text-sm font-medium leading-5",
+                      "w-full rounded-lg py-2.5 text-sm font-medium leading-5 flex items-center justify-center gap-2",
                       "ring-white/60 ring-offset-2 ring-offset-blue-400 focus:outline-none focus:ring-2",
                       selected
                         ? "bg-white text-blue-700 shadow"
@@ -129,6 +134,7 @@ export default function GroupTabs({
                     )}
                   >
                     {category}
+                    <Badge variant={selected ? "default" : "secondary"}>{count}</Badge>
                   </button>
                 )}
               </Tab>

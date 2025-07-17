@@ -11,7 +11,7 @@ export default function GroupPageClient({ groupData }: { groupData: GroupData })
     return <div>Group not found.</div>;
   }
 
-  const { sunDeckMembers, iceBlockMembers, currentUserMember } = groupData;
+  const { sunDeckMembers, iceBlockMembers, currentUserMember, sunDeckCount, iceBlockCount } = groupData;
 
   return (
     <div className="container mx-auto px-4 py-0">
@@ -56,7 +56,7 @@ export default function GroupPageClient({ groupData }: { groupData: GroupData })
           )}
         </div>
       )}
-      <GroupTabs sunDeckMembers={sunDeckMembers} iceBlockMembers={iceBlockMembers} currentUserMember={currentUserMember} />
+      <GroupTabs sunDeckMembers={sunDeckMembers} iceBlockMembers={iceBlockMembers} currentUserMember={currentUserMember} sunDeckCount={sunDeckCount} iceBlockCount={iceBlockCount} />
     </div>
   );
 }
