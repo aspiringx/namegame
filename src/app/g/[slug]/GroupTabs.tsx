@@ -81,11 +81,6 @@ function SearchableMemberList({
       {members.map((member) => (
         <MemberCard key={member.userId} member={member} listType={listType} />
       ))}
-      {members.length === 0 && !hasMore && (
-        <p className="text-center text-gray-500 dark:text-gray-400 col-span-1">
-          Looks like you've greeted everyone!
-        </p>
-      )}
       {hasMore && (
         <div
           ref={ref}
@@ -141,7 +136,7 @@ export default function GroupTabs({
             ))}
           </Tab.List>
           <Tab.Panels className="mt-2">
-            {Object.values(categories).map(({ members, type }, idx) => (
+            {Object.values(categories).map(({ members, type, count }, idx) => (
               <Tab.Panel
                 key={idx}
                 className={classNames(
@@ -159,6 +154,7 @@ export default function GroupTabs({
                   </p>
                 )}
 
+                {count > 3 && (
                 <div className="relative mb-4">
                   <input
                     type="text"
@@ -195,6 +191,7 @@ export default function GroupTabs({
                     </button>
                   )}
                 </div>
+                )}
                 <SearchableMemberList
                   initialMembers={members}
                   listType={type}
