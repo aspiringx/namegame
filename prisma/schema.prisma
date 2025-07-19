@@ -78,40 +78,41 @@ model User {
 }
 
 model UserUser {
-  user1Id      String
-  user2Id      String
-  groupId      Int
-  greetCount   Int                  @default(0)
-  relationType UserUserRelationType @default(acquaintance)
-  createdAt    DateTime             @default(now())
-  updatedAt    DateTime             @updatedAt
-  deletedAt    DateTime?
-  group        Group                @relation(fields: [groupId], references: [id])
-  user1        User                 @relation("User1Relation", fields: [user1Id], references: [id])
-  user2        User                 @relation("User2Relation", fields: [user2Id], references: [id])
+  user1Id        String
+  user2Id        String
+  groupId        Int
+  greetCount     Int      @default(0)
+  relationTypeId String   @default("acquaintance")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  deletedAt      DateTime?
+  group          Group    @relation(fields: [groupId], references: [id])
+  user1          User     @relation("User1Relation", fields: [user1Id], references: [id])
+  user2          User     @relation("User2Relation", fields: [user2Id], references: [id])
+  relationType   UserUserRelationType @relation(fields: [relationTypeId], references: [id])
 
   @@id([user1Id, user2Id, groupId])
   @@map("user_users")
 }
 
 model Group {
-  id            Int         @id @default(autoincrement())
-  idTree        String      @unique
+  id            Int          @id @default(autoincrement())
+  idTree        String       @unique
   name          String
-  slug          String      @unique
+  slug          String       @unique
   description   String?
   address       String?
   phone         String?
   parentId      Int?
   createdById   String?
   updatedById   String?
-  createdBy     User?       @relation("GroupCreatedBy", fields: [createdById], references: [id])
-  updatedBy     User?       @relation("GroupUpdatedBy", fields: [updatedById], references: [id])
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  createdBy     User?        @relation("GroupCreatedBy", fields: [createdById], references: [id])
+  updatedBy     User?        @relation("GroupUpdatedBy", fields: [updatedById], references: [id])
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
   deletedAt     DateTime?
-  parent        Group?      @relation("GroupToGroup", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  children      Group[]     @relation("GroupToGroup")
+  parent        Group?       @relation("GroupToGroup", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  children      Group[]      @relation("GroupToGroup")
   members       GroupUser[]
   codes         Code[]
   links         Link[]
@@ -123,15 +124,16 @@ model Group {
 }
 
 model GroupUser {
-  userId    String
-  groupId   Int
-  role        GroupUserRole @default(guest)
+  userId      String
+  groupId     Int
+  roleId      String   @default("guest")
   memberSince Int?
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
-  deletedAt DateTime?
-  group     Group         @relation(fields: [groupId], references: [id])
-  user      User          @relation(fields: [userId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+  group       Group    @relation(fields: [groupId], references: [id])
+  user        User     @relation(fields: [userId], references: [id])
+  role        GroupUserRole @relation(fields: [roleId], references: [id])
 
   @@id([userId, groupId])
   @@map("group_users")
@@ -152,19 +154,21 @@ model Code {
 }
 
 model Photo {
-  id         Int        @id @default(autoincrement())
-  userId     String?
-  groupId    Int?
-  entityType EntityType
-  entityId   String
-  url        String
-  type       PhotoType  @default(other)
-  isBlocked  Boolean    @default(false)
-  uploadedAt DateTime   @default(now())
-  createdAt  DateTime   @default(now())
-  deletedAt  DateTime?
-  group      Group?     @relation(fields: [groupId], references: [id])
-  user       User?      @relation(fields: [userId], references: [id])
+  id           Int        @id @default(autoincrement())
+  userId       String?
+  groupId      Int?
+  entityTypeId String
+  entityId     String
+  url          String
+  typeId       String     @default("other")
+  isBlocked    Boolean    @default(false)
+  uploadedAt   DateTime   @default(now())
+  createdAt    DateTime   @default(now())
+  deletedAt    DateTime?
+  group        Group?     @relation(fields: [groupId], references: [id])
+  user         User?      @relation(fields: [userId], references: [id])
+  entityType   EntityType @relation(fields: [entityTypeId], references: [id])
+  type         PhotoType  @relation(fields: [typeId], references: [id])
 
   @@map("photos")
 }
@@ -172,7 +176,7 @@ model Photo {
 model Message {
   id            Int        @id @default(autoincrement())
   userId        String
-  entityType    EntityType
+  entityTypeId  String
   entityId      Int
   message       String
   recipientType String
@@ -181,6 +185,7 @@ model Message {
   createdAt     DateTime   @default(now())
   deletedAt     DateTime?
   user          User       @relation(fields: [userId], references: [id])
+  entityType    EntityType @relation(fields: [entityTypeId], references: [id])
 
   @@map("messages")
 }
@@ -221,26 +226,33 @@ model Link {
   @@map("links")
 }
 
-enum UserUserRelationType {
-  acquaintance
-  friend
-  family
+// Code Tables
+
+model UserUserRelationType {
+  id        String     @id @unique
+  userUsers UserUser[]
+
+  @@map("user_user_relation_types")
 }
 
-enum GroupUserRole {
-  admin
-  member
-  super
-  guest
+model GroupUserRole {
+  id      String      @id @unique
+  members GroupUser[]
+
+  @@map("group_user_roles")
 }
 
-enum EntityType {
-  group
-  user
+model EntityType {
+  id       String    @id @unique
+  photos   Photo[]
+  messages Message[]
+
+  @@map("entity_types")
 }
 
-enum PhotoType {
-  logo
-  primary
-  other
+model PhotoType {
+  id     String  @id @unique
+  photos Photo[]
+
+  @@map("photo_types")
 }
