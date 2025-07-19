@@ -67,9 +67,9 @@ export default function UserMenu() {
               >
                 My Profile
               </Link>
-              <hr className="my-2 border-gray-200 dark:border-gray-700" />
               {isSuperAdmin && (
                 <>
+                  <hr className="my-2 border-gray-200 dark:border-gray-700" />
                   <Link
                     href="/admin"
                     className="block px-4 py-2 text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
