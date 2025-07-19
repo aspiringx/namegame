@@ -5,11 +5,17 @@ import type { GroupWithMembers } from '@/types/index';
 import Image from 'next/image';
 import Link from 'next/link';
 import { searchUsers, addMember, removeMember, updateMember } from './actions';
-import { GroupUserRole, GroupUser, User } from '@/generated/prisma';
+import { GroupUser, User } from '@/generated/prisma';
 
 type UserWithPhotoUrl = Awaited<ReturnType<typeof searchUsers>>[0];
 
-export type GroupMember = GroupUser & {
+type GroupUserRoleType = {
+  id: number;
+  code: string;
+};
+
+export type GroupMember = Omit<GroupUser, 'role'> & {
+  role: GroupUserRoleType;
   user: User & { photoUrl: string };
 };
 
@@ -21,9 +27,10 @@ interface GroupMembersProps {
   isGlobalAdminGroup: boolean;
   page: number;
   totalPages: number;
+  groupUserRoles: GroupUserRoleType[];
 }
 
-export default function GroupMembers({ group, members, totalMembers, isSuperAdmin, isGlobalAdminGroup, page, totalPages }: GroupMembersProps) {
+export default function GroupMembers({ group, members, totalMembers, isSuperAdmin, isGlobalAdminGroup, page, totalPages, groupUserRoles, }: GroupMembersProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<UserWithPhotoUrl[]>([]);
   const [isSearching, startSearchTransition] = useTransition();
@@ -72,6 +79,10 @@ export default function GroupMembers({ group, members, totalMembers, isSuperAdmi
           case 'name':
             aValue = `${a.user.firstName} ${a.user.lastName}`;
             bValue = `${b.user.firstName} ${b.user.lastName}`;
+            break;
+          case 'role':
+            aValue = a.role.code;
+            bValue = b.role.code;
             break;
           default:
             aValue = a[sortConfig.key];
@@ -160,25 +171,17 @@ export default function GroupMembers({ group, members, totalMembers, isSuperAdmi
                         className="block w-24 px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                       />
                       <select
-                        name="role"
-                        defaultValue={GroupUserRole.member}
+                        name="roleId"
+                        defaultValue={groupUserRoles.find(r => r.code === 'member')?.id}
                         className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                       >
-                        {(() => {
-                          const availableRoles: GroupUserRole[] = [
-                            GroupUserRole.guest,
-                            GroupUserRole.member,
-                            GroupUserRole.admin,
-                          ];
-                          if (isSuperAdmin && isGlobalAdminGroup) {
-                            availableRoles.push(GroupUserRole.super);
-                          }
-                          return availableRoles.map((role) => (
-                            <option key={role} value={role}>
-                              {role}
+                        {groupUserRoles
+                          .filter(role => (isSuperAdmin && isGlobalAdminGroup) || role.code !== 'super')
+                          .map((role) => (
+                            <option key={role.id} value={role.id}>
+                              {role.code}
                             </option>
-                          ));
-                        })()}
+                          ))}
                       </select>
                       <button
                         type="submit"
@@ -287,29 +290,21 @@ export default function GroupMembers({ group, members, totalMembers, isSuperAdmi
                         <input type="hidden" name="groupId" value={member.groupId} />
                         <input type="hidden" name="userId" value={member.userId} />
                         <select
-                          name="role"
-                          defaultValue={member.role}
+                          name="roleId"
+                          defaultValue={member.roleId}
                           className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                         >
-                          {(() => {
-                            const availableRoles: GroupUserRole[] = [
-                              GroupUserRole.guest,
-                              GroupUserRole.member,
-                              GroupUserRole.admin,
-                            ];
-                            if (isSuperAdmin && isGlobalAdminGroup) {
-                              availableRoles.push(GroupUserRole.super);
-                            }
-                            return availableRoles.map((role) => (
-                              <option key={role} value={role}>
-                                {role}
+                          {groupUserRoles
+                            .filter(role => (isSuperAdmin && isGlobalAdminGroup) || role.code !== 'super')
+                            .map((role) => (
+                              <option key={role.id} value={role.id}>
+                                {role.code}
                               </option>
-                            ));
-                          })()}
+                            ))}
                         </select>
                       </form>
                     ) : (
-                      member.role
+                      member.role.code
                     )}
                   </td>
                   <td className="px-3 py-4 text-sm text-gray-500 dark:text-gray-400">

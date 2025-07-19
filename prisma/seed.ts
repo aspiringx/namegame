@@ -1,4 +1,4 @@
-import { PrismaClient, GroupUserRole } from '../src/generated/prisma';
+import { PrismaClient } from '../src/generated/prisma';
 import bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
@@ -16,7 +16,7 @@ async function main() {
   ];
 
   for (const gt of groupTypes) {
-    const groupType = await prisma.groupType.upsert({
+    await prisma.groupType.upsert({
       where: { id: gt.id },
       update: {},
       create: {
@@ -24,7 +24,33 @@ async function main() {
         code: gt.code,
       },
     });
-    console.log(`Created group type with id: ${groupType.id}`);
+  }
+  console.log(`Seeded ${groupTypes.length} group types.`);
+  const familyGroupType = await prisma.groupType.findUnique({ where: { code: 'family' } });
+  if (!familyGroupType) {
+    throw new Error("Could not find 'family' group type after seeding.");
+  }
+
+  const groupUserRoles = [
+    { id: 1, code: 'admin' },
+    { id: 2, code: 'member' },
+    { id: 3, code: 'super' },
+  ];
+
+  for (const gur of groupUserRoles) {
+    await prisma.groupUserRole.upsert({
+      where: { id: gur.id },
+      update: {},
+      create: {
+        id: gur.id,
+        code: gur.code,
+      },
+    });
+  }
+  console.log(`Seeded ${groupUserRoles.length} group user roles.`);
+  const superUserRole = await prisma.groupUserRole.findFirst({ where: { code: 'super', groupId: null } });
+  if (!superUserRole) {
+    throw new Error("Could not find 'super' role after seeding.");
   }
 
   // Create the 'system' user if it doesn't exist
@@ -53,7 +79,7 @@ async function main() {
       idTree: 'global-admin',
       createdById: systemUser.id,
       updatedById: systemUser.id,
-      groupTypeId: 3, // Default to 'family'
+      groupTypeId: familyGroupType.id,
     },
   });
   console.log(`Created/found group '${adminGroup.name}' with id: ${adminGroup.id}`);
@@ -76,18 +102,20 @@ async function main() {
   console.log(`Created/found user '${joeUser.username}' with id: ${joeUser.id}`);
 
   // Add 'joe' to the 'Global Admin' group as a 'super' user
-  const membership = await prisma.groupUser.upsert({
+  await prisma.groupUser.upsert({
     where: {
       userId_groupId: {
         userId: joeUser.id,
         groupId: adminGroup.id,
       },
     },
-    update: {},
+    update: {
+      roleId: superUserRole.id,
+    },
     create: {
       userId: joeUser.id,
       groupId: adminGroup.id,
-      roleId: 1, // super
+      roleId: superUserRole.id,
     },
   });
   console.log(`Ensured user '${joeUser.username}' is a super user in group '${adminGroup.name}'.`);

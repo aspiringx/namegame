@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { auth } from '@/auth';
 import { getPublicUrl } from '@/lib/storage';
 import GroupMembers, { GroupMember } from '../group-members';
-import { PhotoType, EntityType } from '@/generated/prisma';
+
 import type { GroupWithMembers } from '@/types/index';
 
 const MEMBERS_PER_PAGE = 25;
@@ -20,21 +20,7 @@ export default async function ManageMembersPage({
   const page = Number(searchParams?.page) || 1;
 
   const session = await auth();
-  const currentUserId = session?.user?.id;
-
-  if (!currentUserId) {
-    notFound();
-  }
-
-  const currentUser = await prisma.user.findUnique({
-    where: { id: currentUserId },
-    include: { groupMemberships: { include: { group: true } } },
-  });
-
-  const isSuperAdmin =
-    currentUser?.groupMemberships.some(
-      (m) => m.group.slug === 'global-admin' && m.role === 'super'
-    ) ?? false;
+  const isSuperAdmin = session?.user?.isSuperAdmin;
 
   if (!isSuperAdmin) {
     notFound();
@@ -48,17 +34,18 @@ export default async function ManageMembersPage({
     notFound();
   }
 
-  const [totalMembers, members] = await prisma.$transaction([
+  const [totalMembers, members, groupUserRoles] = await prisma.$transaction([
     prisma.groupUser.count({ where: { groupId: group.id } }),
     prisma.groupUser.findMany({
       where: { groupId: group.id },
       include: {
+        role: true,
         user: {
           include: {
             photos: {
               where: {
-                entityType: EntityType.user,
-                type: PhotoType.primary,
+                entityType: { code: 'user', groupId: null },
+                type: { code: 'primary', groupId: null },
               },
               take: 1,
             },
@@ -71,6 +58,7 @@ export default async function ManageMembersPage({
         createdAt: 'desc',
       },
     }),
+    prisma.groupUserRole.findMany({ where: { groupId: null } }),
   ]);
 
   const totalPages = Math.ceil(totalMembers / MEMBERS_PER_PAGE);
@@ -101,6 +89,7 @@ export default async function ManageMembersPage({
         isGlobalAdminGroup={isGlobalAdminGroup}
         page={page}
         totalPages={totalPages}
+        groupUserRoles={groupUserRoles}
       />
     </div>
   );

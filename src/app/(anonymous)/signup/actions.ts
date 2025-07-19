@@ -4,7 +4,7 @@ import { z } from 'zod';
 import prisma from '@/lib/prisma';
 import bcrypt from 'bcrypt';
 import { redirect } from 'next/navigation';
-import { EntityType, PhotoType } from '@/generated/prisma';
+import { getCodeTable } from '@/lib/codes';
 
 const SignupSchema = z.object({
   username: z.string().min(3, 'Username must be at least 3 characters.'),
@@ -73,11 +73,16 @@ export async function signup(
       // Use the user's ID as a seed for a unique, deterministic avatar
             const avatarUrl = `https://api.dicebear.com/8.x/personas/png?seed=${newUser.id}`;
 
+      const [photoTypes, entityTypes] = await Promise.all([
+        getCodeTable('photoType'),
+        getCodeTable('entityType'),
+      ]);
+
       await tx.photo.create({
         data: {
           url: avatarUrl,
-          type: PhotoType.primary,
-          entityType: EntityType.user,
+          typeId: photoTypes.primary.id,
+          entityTypeId: entityTypes.user.id,
           entityId: newUser.id,
           userId: newUser.id,
         },

@@ -2,7 +2,8 @@ import prisma from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import { getPublicUrl } from '@/lib/storage';
 import { auth } from '@/auth';
-import { EntityType, PhotoType, Prisma } from '@/generated/prisma';
+import { Prisma } from '@/generated/prisma';
+import { getCodeTable } from '@/lib/codes';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import EditGroupNav from './edit-group-nav';
 import type { GroupPayload, GroupWithMembers } from '@/types/index';
@@ -14,6 +15,13 @@ export default async function EditGroupLayout(props: { children: React.ReactNode
   const params = await props.params;
   const { slug } = params;
   const session = await auth();
+
+  const [photoTypes, entityTypes, roleTypes] = await Promise.all([
+    getCodeTable('photoType'),
+    getCodeTable('entityType'),
+    getCodeTable('groupUserRole'),
+  ]);
+
   const group = await prisma.group.findUnique({
     where: {
       slug: slug,
@@ -21,8 +29,8 @@ export default async function EditGroupLayout(props: { children: React.ReactNode
     include: {
       photos: {
         where: {
-          entityType: EntityType.group,
-          type: PhotoType.logo,
+          entityTypeId: entityTypes.group.id,
+          typeId: photoTypes.logo.id,
         },
         take: 1,
       },
@@ -32,8 +40,8 @@ export default async function EditGroupLayout(props: { children: React.ReactNode
             include: {
               photos: {
                 where: {
-                  entityType: EntityType.user,
-                  type: PhotoType.primary,
+                  entityTypeId: entityTypes.user.id,
+                  typeId: photoTypes.primary.id,
                 },
                 take: 1,
               },
@@ -68,9 +76,6 @@ export default async function EditGroupLayout(props: { children: React.ReactNode
         },
       })
     : null;
-
-  const isSuperAdmin =
-    currentUser?.groupMemberships.some((m: { group: { slug: string }; role: string }) => m.group.slug === 'global-admin' && m.role === 'super') ?? false;
 
   const isGlobalAdminGroup = group.slug === 'global-admin';
 

@@ -4,9 +4,10 @@ import prisma from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
-import { EntityType, PhotoType } from '@/generated/prisma';
+
 import { uploadFile } from '@/lib/storage';
 import { auth } from '@/auth';
+import { getCodeTable } from '@/lib/codes';
 
 // Define the schema for form validation using Zod
 const GroupSchema = z.object({
@@ -92,12 +93,28 @@ export async function createGroup(prevState: State, formData: FormData): Promise
       };
     }
 
+    const [entityTypes, photoTypes] = await Promise.all([
+      getCodeTable('entityType'),
+      getCodeTable('photoType'),
+    ]);
+
+    const groupEntityType = entityTypes.group;
+    const logoPhotoType = photoTypes.logo;
+
+    if (!groupEntityType || !logoPhotoType) {
+      return {
+        message: 'Database Error: Could not find required code table entries.',
+        values: rawFormData,
+      };
+    }
+
     const newGroup = await prisma.group.create({
       data: {
         ...groupData,
         idTree: Math.random().toString(36).substring(2, 15), // Placeholder
         createdById: userId,
         updatedById: userId,
+        groupTypeId: 3, // Default to 'family'
       },
     });
 
@@ -115,14 +132,10 @@ export async function createGroup(prevState: State, formData: FormData): Promise
           data: {
             url: logoPath,
             entityId: newGroup.id.toString(),
-            entityType: EntityType.group,
-            type: PhotoType.logo,
-            group: {
-              connect: { id: newGroup.id },
-            },
-            user: {
-              connect: { id: userId },
-            },
+            entityTypeId: groupEntityType.id,
+            typeId: logoPhotoType.id,
+            groupId: newGroup.id,
+            userId: userId,
           },
         });
       }

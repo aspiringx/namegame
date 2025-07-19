@@ -19,7 +19,7 @@ export const getGroup = async (slug: string, limit?: number): Promise<GroupData 
     where: {
       userId: currentUserId,
       group: { slug: 'global-admin' },
-      role: 'super',
+      role: { code: 'super' },
     },
   });
 
@@ -44,7 +44,14 @@ export const getGroup = async (slug: string, limit?: number): Promise<GroupData 
         include: {
           user: {
             include: {
-              photos: true, // Correct relation is 'photos'
+              photos: {
+                orderBy: {
+                  uploadedAt: 'desc',
+                },
+                include: {
+                  type: true,
+                },
+              },
             },
           },
         },
@@ -71,7 +78,8 @@ export const getGroup = async (slug: string, limit?: number): Promise<GroupData 
   });
 
   const memberPromises = group.members.map(async (member): Promise<MemberWithUser> => {
-    const primaryPhoto = member.user.photos.find((p) => p.type === 'primary');
+    // The photos are pre-sorted by the main query, so the first primary photo is the most recent.
+    const primaryPhoto = member.user.photos.find((p) => p.type.code === 'primary');
     let photoUrl: string | undefined;
     if (primaryPhoto?.url) {
       if (primaryPhoto.url.startsWith('http')) {

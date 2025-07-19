@@ -4,9 +4,10 @@ import prisma from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
-import { EntityType, PhotoType, GroupUserRole } from '@/generated/prisma';
+
 import { uploadFile, deleteFile, getPublicUrl } from '@/lib/storage';
 import { auth } from '@/auth';
+import { getCodeTable } from '@/lib/codes';
 
 // Define the schema for form validation using Zod
 const GroupSchema = z.object({
@@ -49,16 +50,28 @@ export async function updateGroup(formData: FormData) {
       where: { id: groupId },
       data: { 
         ...groupData, 
-        updatedBy: { connect: { id: userId } } 
+        updatedById: userId
       },
     });
 
     if (logo && logo.size > 0) {
+      const [entityTypes, photoTypes] = await Promise.all([
+        getCodeTable('entityType'),
+        getCodeTable('photoType'),
+      ]);
+
+      const groupEntityType = entityTypes.group;
+      const logoPhotoType = photoTypes.logo;
+
+      if (!groupEntityType || !logoPhotoType) {
+        throw new Error('Database Error: Could not find required code table entries.');
+      }
+
       const existingLogo = await prisma.photo.findFirst({
         where: {
-          entityType: EntityType.group,
+          entityTypeId: groupEntityType.id,
           entityId: updatedGroup.id.toString(),
-          type: PhotoType.logo,
+          typeId: logoPhotoType.id,
         },
       });
 
@@ -69,7 +82,7 @@ export async function updateGroup(formData: FormData) {
           where: { id: existingLogo.id },
           data: {
             url: logoPath,
-            user: { connect: { id: userId } },
+            userId: userId,
           },
         });
         // After successfully updating the DB, delete the old image.
@@ -78,11 +91,11 @@ export async function updateGroup(formData: FormData) {
         await prisma.photo.create({
           data: {
             url: logoPath,
-            type: PhotoType.logo,
-            entityType: EntityType.group,
+            typeId: logoPhotoType.id,
+            entityTypeId: groupEntityType.id,
             entityId: updatedGroup.id.toString(),
-            group: { connect: { id: updatedGroup.id } },
-            user: { connect: { id: userId } },
+            groupId: updatedGroup.id,
+            userId: userId,
           },
         });
       }
@@ -121,7 +134,7 @@ export async function searchUsers(groupId: number, query: string) {
     include: {
       photos: {
         where: {
-          type: PhotoType.primary,
+          typeId: (await getCodeTable('photoType')).primary.id,
         },
         take: 1,
       },
@@ -148,7 +161,7 @@ export async function searchUsers(groupId: number, query: string) {
 const AddMemberSchema = z.object({
   groupId: z.coerce.number(),
   userId: z.string(),
-  role: z.nativeEnum(GroupUserRole),
+  roleId: z.coerce.number(),
   memberSince: z
     .preprocess(
       (val) => (val === '' ? null : val),
@@ -161,7 +174,7 @@ export async function addMember(formData: FormData) {
   const validatedFields = AddMemberSchema.safeParse({
     groupId: formData.get('groupId'),
     userId: formData.get('userId'),
-    role: formData.get('role'),
+    roleId: formData.get('roleId'),
     memberSince: formData.get('memberSince'),
   });
 
@@ -169,13 +182,13 @@ export async function addMember(formData: FormData) {
     throw new Error('Invalid form data.');
   }
 
-  const { groupId, userId, role, memberSince } = validatedFields.data;
+  const { groupId, userId, roleId, memberSince } = validatedFields.data;
 
   await prisma.groupUser.create({
     data: {
       groupId,
       userId,
-      role,
+      roleId,
       memberSince,
     },
   });
@@ -217,7 +230,7 @@ export async function removeMember(formData: FormData) {
 const UpdateMemberSchema = z.object({
   groupId: z.coerce.number(),
   userId: z.string(),
-  role: z.nativeEnum(GroupUserRole),
+  roleId: z.coerce.number(),
   memberSince: z.preprocess(
     (val) => (val === '' ? null : val),
     z.coerce.number().int().optional().nullable()
@@ -228,7 +241,7 @@ export async function updateMember(formData: FormData) {
   const validatedFields = UpdateMemberSchema.safeParse({
     groupId: formData.get('groupId'),
     userId: formData.get('userId'),
-    role: formData.get('role'),
+    roleId: formData.get('roleId'),
     memberSince: formData.get('memberSince'),
   });
 
@@ -237,7 +250,7 @@ export async function updateMember(formData: FormData) {
     throw new Error('Invalid form data.');
   }
 
-  const { groupId, userId, role, memberSince } = validatedFields.data;
+  const { groupId, userId, roleId, memberSince } = validatedFields.data;
 
   await prisma.groupUser.update({
     where: {
@@ -247,7 +260,7 @@ export async function updateMember(formData: FormData) {
       },
     },
     data: {
-      role,
+      roleId,
       memberSince,
     },
   });

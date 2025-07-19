@@ -5,7 +5,7 @@ import bcrypt from 'bcryptjs';
 import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
 import { revalidatePath, revalidateTag } from 'next/cache';
-import { GroupUserRole } from '@/generated/prisma';
+import { getCodeTable } from '@/lib/codes';
 import { uploadFile, deleteFile, getPublicUrl } from '@/lib/storage';
 
 export type State = {
@@ -40,7 +40,6 @@ export async function updateUserProfile(prevState: State, formData: FormData): P
   });
 
   if (!validatedFields.success) {
-    // A more detailed error message can be constructed from validatedFields.error.flatten().fieldErrors
     return { success: false, error: 'Invalid data provided. Please check the form and try again.', message: null };
   }
 
@@ -50,32 +49,41 @@ export async function updateUserProfile(prevState: State, formData: FormData): P
   let updatedUser;
 
   try {
+    const [photoTypes, entityTypes, groupUserRoles] = await Promise.all([
+      getCodeTable('photoType'),
+      getCodeTable('entityType'),
+      getCodeTable('groupUserRole'),
+    ]);
+
     // Handle photo upload first
     if (photo && photo.size > 0) {
       const existingPhoto = await prisma.photo.findFirst({
-        where: { entityId: userId, entityType: 'user', type: 'primary' },
+        where: {
+          entityTypeId: entityTypes.user.id,
+          typeId: photoTypes.primary.id,
+          entityId: userId,
+        },
       });
 
       // Upload new photo
       const photoKey = await uploadFile(photo, 'user-photos', userId);
       const publicUrl = await getPublicUrl(photoKey);
-      // Append a timestamp to bust the cache
       newPublicUrl = `${publicUrl}?t=${new Date().getTime()}`;
 
-      // Delete old photo from storage if it exists
       if (existingPhoto) {
         await deleteFile(existingPhoto.url);
         await prisma.photo.update({
           where: { id: existingPhoto.id },
-          data: { url: photoKey },
+          data: { url: photoKey, userId: userId },
         });
       } else {
         await prisma.photo.create({
           data: {
             url: photoKey,
-            type: 'primary',
-            entityType: 'user',
+            typeId: photoTypes.primary.id,
+            entityTypeId: entityTypes.user.id,
             entityId: userId,
+            userId: userId,
           },
         });
       }
@@ -96,25 +104,25 @@ export async function updateUserProfile(prevState: State, formData: FormData): P
       data: dataToUpdate,
     });
 
-    // Check for profile completeness to promote from guest to member
     const hasPrimaryPhoto = await prisma.photo.findFirst({
-      where: { entityId: userId, entityType: 'user', type: 'primary' },
+      where: {
+        entityId: userId,
+        entityTypeId: entityTypes.user.id,
+        typeId: photoTypes.primary.id,
+      },
     });
 
     if (updatedUser.lastName && hasPrimaryPhoto) {
-      // firstName is already required by the Zod schema
       await prisma.groupUser.updateMany({
         where: {
           userId: userId,
-          role: GroupUserRole.guest,
+          roleId: groupUserRoles.guest.id,
         },
         data: {
-          role: GroupUserRole.member,
+          roleId: groupUserRoles.member.id,
         },
       });
     }
-
-
   } catch (error) {
     console.error('Failed to update user profile:', error);
     if ((error as any).code === 'P2002') {
@@ -140,7 +148,6 @@ export async function updateUserProfile(prevState: State, formData: FormData): P
     redirectUrl = `/g/${userGroups[0].group.slug}`;
   }
 
-  // Append a timestamp to the URL to bust the cache. This is the key to ensuring the new image is displayed.
   const cacheBustedUrl = newPublicUrl ? `${newPublicUrl}?v=${Date.now()}` : null;
 
   return {

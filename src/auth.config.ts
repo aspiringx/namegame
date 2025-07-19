@@ -1,44 +1,27 @@
 import type { NextAuthConfig } from 'next-auth';
+import { getToken } from 'next-auth/jwt';
+import { NEXTAUTH_SECRET } from './auth.secret';
 
+// This configuration is for the middleware and is Edge-safe.
 export const authConfig = {
-  providers: [], // We will add the providers in the main auth.ts file
   pages: {
     signIn: '/login',
   },
   callbacks: {
-    authorized({ auth, request: { nextUrl } }) {
-      const isLoggedIn = !!auth?.user;
-      const isOnAdmin = nextUrl.pathname.startsWith('/admin');
+    // The `authorized` callback runs in the middleware.
+    // We can't use `getToken` here without a secret, and we can't access process.env.
+    // The main `auth` function in middleware.ts will handle the logic.
+    async authorized({ request }) {
+      const token = await getToken({ req: request, secret: NEXTAUTH_SECRET });
+      const { pathname } = request.nextUrl;
+      if (pathname.startsWith('/admin')) {
+        // The token contains the `isSuperAdmin` flag from the `jwt` callback.
+        return !!token?.isSuperAdmin;
+      }
 
-      if (isOnAdmin) {
-        if (isLoggedIn) {
-          // Check for 'super' role in the 'global-admin' group
-          const isSuperAdmin = auth.user.roles?.some(
-            (r) => r.groupSlug === 'global-admin' && r.role === 'super'
-          );
-          if (isSuperAdmin) {
-            return true; // Allow access
-          }
-          return false; // Redirect to home page for non-super-admins
-        }
-        return false; // Redirect unauthenticated users to login page
-      }
-      return true; // Allow all other pages
-    },
-    jwt({ token, user }) {
-      if (user && user.id) {
-        // On initial sign-in, populate the token
-        token.id = user.id;
-        token.firstName = user.firstName;
-        token.roles = user.roles;
-      }
-      return token;
-    },
-    session({ session, token }) {
-      session.user.id = token.id;
-      session.user.firstName = token.firstName;
-      session.user.roles = token.roles;
-      return session;
+      // Allow all other requests by default.
+      return true;
     },
   },
+  providers: [], // Add providers in the main auth.ts
 } satisfies NextAuthConfig;

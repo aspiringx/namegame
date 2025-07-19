@@ -5,9 +5,9 @@ import prisma from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { uploadFile } from '@/lib/storage';
-import { EntityType, PhotoType } from '@/generated/prisma';
-import bcrypt from 'bcryptjs';
+import { getCodeTable } from '@/lib/codes';
 import { auth } from '@/auth';
+import bcrypt from 'bcryptjs';
 
 const FormSchema = z.object({
   username: z.string().min(1, 'Username is required.'),
@@ -111,24 +111,30 @@ export async function createUser(prevState: State, formData: FormData): Promise<
       });
 
       try {
+        const [photoTypes, entityTypes] = await Promise.all([
+          getCodeTable('photoType'),
+          getCodeTable('entityType'),
+        ]);
+
         let photoUrl: string;
         if (photo && photo.size > 0) {
           console.log('Photo provided, uploading...');
           photoUrl = await uploadFile(photo, 'user-photos', newUser.id);
         } else {
           console.log('No photo provided, generating default avatar...');
-                    photoUrl = `https://api.dicebear.com/8.x/personas/png?seed=${newUser.id}`;
+          photoUrl = `https://api.dicebear.com/8.x/personas/png?seed=${newUser.id}`;
         }
 
         await tx.photo.create({
           data: {
             url: photoUrl,
-            type: PhotoType.primary,
-            entityType: EntityType.user,
             entityId: newUser.id,
-            userId: newUser.id,
+            typeId: photoTypes.primary.id,
+            entityTypeId: entityTypes.user.id,
+            userId: creatorId,
           },
         });
+
         console.log('Photo record created successfully.');
       } catch (photoError) {
         console.error('Error creating or uploading photo:', photoError);

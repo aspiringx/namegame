@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import EditUserForm from './edit-user-form';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import { getPublicUrl } from '@/lib/storage';
-import { PhotoType } from '@/generated/prisma';
+import { getCodeTable } from '@/lib/codes';
 
 export default async function EditUserPage(props: {
   params?: Promise<{ id: string }>
@@ -13,6 +13,8 @@ export default async function EditUserPage(props: {
     notFound();
   }
 
+  const photoTypes = await getCodeTable('photoType');
+
   const user = await prisma.user.findUnique({
     where: {
       id: params.id,
@@ -20,7 +22,7 @@ export default async function EditUserPage(props: {
     include: {
       photos: {
         where: {
-          type: PhotoType.primary,
+          typeId: photoTypes.primary.id,
         },
         take: 1,
       },

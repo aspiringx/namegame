@@ -1,7 +1,7 @@
+import { redirect } from 'next/navigation';
+
 import { auth } from '@/auth';
 import AuthProvider from '@/components/AuthProvider';
-import { redirect } from 'next/navigation';
-import Link from 'next/link';
 
 export default async function AdminLayout({
   children,
@@ -16,8 +16,8 @@ export default async function AdminLayout({
     redirect('/login?callbackUrl=/admin');
   }
 
-  // 2. Check if user has the 'super' role
-  const isSuperAdmin = user.roles?.some(roleInfo => roleInfo.role === 'super');
+  // 2. Check if user has the 'super' role in the 'global-admin' group
+  const isSuperAdmin = user.isSuperAdmin;
 
   if (!isSuperAdmin) {
     // Redirect to home page if not a super admin

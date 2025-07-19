@@ -96,6 +96,7 @@ export async function deleteFile(storagePath: string): Promise<void> {
 }
 
 export async function getPublicUrl(storagePath: string | null | undefined): Promise<string> {
+  console.log('storagePath', storagePath);
   if (!storagePath) {
     // Return a default placeholder image
     return '/images/default-avatar.png';

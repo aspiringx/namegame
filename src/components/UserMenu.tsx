@@ -16,9 +16,7 @@ export default function UserMenu() {
     }
   };
   const user = session?.user;
-  const isSuperAdmin = user?.roles?.some(
-    (role) => role.groupSlug === 'global-admin' && role.role === 'super'
-  );
+  const isSuperAdmin = user?.isSuperAdmin;
   const [isDropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 

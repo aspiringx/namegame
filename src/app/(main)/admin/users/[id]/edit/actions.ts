@@ -6,7 +6,7 @@ import prisma from '@/lib/prisma';
 import { revalidatePath, revalidateTag } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { uploadFile, deleteFile, getPublicUrl } from '@/lib/storage';
-import { EntityType, PhotoType } from '@/generated/prisma';
+import { getCodeTable } from '@/lib/codes';
 import { auth } from '@/auth';
 
 const FormSchema = z.object({
@@ -101,6 +101,13 @@ export async function updateUser(id: string, prevState: State, formData: FormDat
   let photoUrl: string | null = null;
 
   try {
+    const [photoTypes, entityTypes] = await Promise.all([
+      getCodeTable('photoType'),
+      getCodeTable('entityType'),
+    ]);
+    const primaryPhotoTypeId = photoTypes.primary.id;
+    const userEntityTypeId = entityTypes.user.id;
+
     const dataToUpdate: any = {
       ...userData,
       lastName: userData.lastName || null,
@@ -121,9 +128,9 @@ export async function updateUser(id: string, prevState: State, formData: FormDat
     if (removePhoto) {
       const existingPhoto = await prisma.photo.findFirst({
         where: {
-          userId: id,
-          entityType: EntityType.user,
-          type: PhotoType.primary,
+          entityId: id,
+          entityTypeId: userEntityTypeId,
+          typeId: primaryPhotoTypeId,
         },
       });
 
@@ -135,9 +142,9 @@ export async function updateUser(id: string, prevState: State, formData: FormDat
     } else if (photo && photo.size > 0) {
       const existingPhoto = await prisma.photo.findFirst({
         where: {
-          userId: id,
-          entityType: EntityType.user,
-          type: PhotoType.primary,
+          entityId: id,
+          entityTypeId: userEntityTypeId,
+          typeId: primaryPhotoTypeId,
         },
       });
 
@@ -150,20 +157,20 @@ export async function updateUser(id: string, prevState: State, formData: FormDat
           where: { id: existingPhoto.id },
           data: {
             url: newPhotoPath,
-            type: PhotoType.primary,
-            entityType: EntityType.user,
+            typeId: primaryPhotoTypeId,
+            entityTypeId: userEntityTypeId,
             entityId: id,
-            userId: id,
+            userId: updaterId,
           },
         });
       } else {
         await prisma.photo.create({
           data: {
             url: newPhotoPath,
-            type: PhotoType.primary,
-            entityType: EntityType.user,
+            typeId: primaryPhotoTypeId,
+            entityTypeId: userEntityTypeId,
             entityId: id,
-            userId: id,
+            userId: updaterId,
           },
         });
       }

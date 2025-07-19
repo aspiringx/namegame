@@ -6,7 +6,7 @@ import { createId } from '@paralleldrive/cuid2';
 import prisma from '@/lib/prisma';
 import bcrypt from 'bcrypt';
 import { signIn } from '@/auth';
-import { EntityType, PhotoType } from '@/generated/prisma';
+import { getCodeTable } from '@/lib/codes';
 
 
 // A helper type for the codeData object to avoid passing the full prisma type to the client
@@ -36,6 +36,11 @@ export async function handleAuthenticatedGreeting(codeData: CodeData, currentUse
   const user1Id = currentUserId < codeData.user.id ? currentUserId : codeData.user.id;
   const user2Id = currentUserId > codeData.user.id ? currentUserId : codeData.user.id;
 
+  const [relationTypes, roleTypes] = await Promise.all([
+    getCodeTable('userUserRelationType'),
+    getCodeTable('groupUserRole'),
+  ]);
+
   await prisma.$transaction(async (tx) => {
     // 1. Create or update the UserUser relationship
     await tx.userUser.upsert({
@@ -53,7 +58,7 @@ export async function handleAuthenticatedGreeting(codeData: CodeData, currentUse
         user1Id,
         user2Id,
         groupId: codeData.groupId,
-        relationType: 'acquaintance',
+        relationTypeId: relationTypes.acquaintance.id,
         greetCount: 1,
       },
     });
@@ -70,7 +75,7 @@ export async function handleAuthenticatedGreeting(codeData: CodeData, currentUse
       create: {
         userId: currentUserId,
         groupId: codeData.groupId,
-        role: 'guest',
+        roleId: roleTypes.guest.id,
       },
     });
   });
@@ -124,6 +129,13 @@ export async function handleGuestGreeting(firstName: string, codeData: CodeData)
   const username = `guest-${firstName.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`;
 
   try {
+    const [photoTypes, entityTypes, relationTypes, roleTypes] = await Promise.all([
+      getCodeTable('photoType'),
+      getCodeTable('entityType'),
+      getCodeTable('userUserRelationType'),
+      getCodeTable('groupUserRole'),
+    ]);
+
     await prisma.$transaction(async (tx) => {
       // 1. Create the new guest user
       const newUser = await tx.user.create({
@@ -138,16 +150,16 @@ export async function handleGuestGreeting(firstName: string, codeData: CodeData)
       const user1Id = newUser.id < codeData.user.id ? newUser.id : codeData.user.id;
       const user2Id = newUser.id > codeData.user.id ? newUser.id : codeData.user.id;
 
-            // 3. Create a default profile picture for the new user
-            const avatarUrl = `https://api.dicebear.com/8.x/personas/png?seed=${newUser.id}`;
+      // 3. Create a default profile picture for the new user
+      const avatarUrl = `https://api.dicebear.com/8.x/personas/png?seed=${newUser.id}`;
 
       await tx.photo.create({
         data: {
           userId: newUser.id,
-          entityType: EntityType.user,
+          entityTypeId: entityTypes.user.id,
           entityId: newUser.id,
           url: avatarUrl,
-          type: PhotoType.primary,
+          typeId: photoTypes.primary.id,
         },
       });
 
@@ -157,7 +169,7 @@ export async function handleGuestGreeting(firstName: string, codeData: CodeData)
           user1Id,
           user2Id,
           groupId: codeData.groupId,
-          relationType: 'acquaintance',
+          relationTypeId: relationTypes.acquaintance.id,
           greetCount: 1,
         },
       });
@@ -167,7 +179,7 @@ export async function handleGuestGreeting(firstName: string, codeData: CodeData)
         data: {
           userId: newUser.id,
           groupId: codeData.groupId,
-          role: 'guest',
+          roleId: roleTypes.guest.id,
         },
       });
     });

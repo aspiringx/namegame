@@ -5,8 +5,8 @@ import { createId } from '@paralleldrive/cuid2';
 import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
 import { getPublicUrl } from '@/lib/storage';
-import { PhotoType } from '@/generated/prisma';
 import type { MemberWithUser } from '@/types/index';
+import { getCodeTable } from '@/lib/codes';
 
 // Number of photos to retrieve at a time for infinite scroll. If a screen is 
 // bigger, we'll retrieve more photos to fill the screen.
@@ -83,6 +83,8 @@ export async function getPaginatedMembers(
     return [];
   }
 
+  const photoTypes = await getCodeTable('photoType');
+
   const members = await prisma.groupUser.findMany({
     where: {
       groupId: group.id,
@@ -91,7 +93,7 @@ export async function getPaginatedMembers(
     include: {
       user: {
         include: {
-          photos: { where: { type: PhotoType.primary }, take: 1 },
+          photos: { where: { typeId: photoTypes.primary.id }, take: 1 },
         },
       },
     },

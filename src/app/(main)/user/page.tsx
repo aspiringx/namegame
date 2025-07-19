@@ -5,24 +5,32 @@ import UserProfileForm from './_components/user-profile-form';
 import { getPublicUrl } from '@/lib/storage';
 import Link from 'next/link';
 import Image from 'next/image';
-import { GroupUserRole } from '@/generated/prisma';
-
-
+import { getCodeTable } from '@/lib/codes';
 
 export default async function UserProfilePage(props: {
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
   const searchParams = await props.searchParams;
   const session = await auth();
+
+
   if (!session?.user?.id) {
     redirect('/login?callbackUrl=/user');
   }
+
+  const [photoTypes, entityTypes] = await Promise.all([
+    getCodeTable('photoType'),
+    getCodeTable('entityType'),
+  ]);
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
     include: {
       photos: {
-        where: { type: 'primary', entityType: 'user' },
+        where: {
+          typeId: photoTypes.primary.id,
+          entityTypeId: entityTypes.user.id,
+        },
         take: 1,
       },
       groupMemberships: {
@@ -38,11 +46,15 @@ export default async function UserProfilePage(props: {
               slug: true,
             },
           },
+          role: {
+            select: {
+              code: true,
+            },
+          },
         },
       },
     },
   });
-
   if (!user) {
     // This should theoretically not happen if a session exists
     redirect('/login?callbackUrl=/user');
@@ -50,7 +62,7 @@ export default async function UserProfilePage(props: {
 
   const photoUrl = await getPublicUrl(user.photos[0]?.url);
 
-  const isGuest = user.groupMemberships.some(m => m.role === GroupUserRole.guest);
+  const isGuest = user.groupMemberships.some((m) => m.role.code === 'guest');
 
   return (
     <main className="container mx-auto px-4 py-8">

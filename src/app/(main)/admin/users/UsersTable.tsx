@@ -2,7 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import prisma from '@/lib/prisma';
 import { getPublicUrl } from '@/lib/storage';
-import { EntityType, PhotoType } from '@/generated/prisma';
+import { getCodeTable } from '@/lib/codes';
 import { DeleteUserButton } from './DeleteUserButton';
 import { UndeleteUserButton } from './UndeleteUserButton';
 
@@ -31,6 +31,11 @@ export default async function UsersTable({ query, sort, order, page }: UsersTabl
       }
     : {};
 
+  const [photoTypes, entityTypes] = await Promise.all([
+    getCodeTable('photoType'),
+    getCodeTable('entityType'),
+  ]);
+
   const [totalUsers, users] = await prisma.$transaction([
     prisma.user.count({ where }),
     prisma.user.findMany({
@@ -40,26 +45,34 @@ export default async function UsersTable({ query, sort, order, page }: UsersTabl
       },
       skip: (page - 1) * USERS_PER_PAGE,
       take: USERS_PER_PAGE,
-      include: {
-        photos: {
-          where: {
-            type: PhotoType.primary,
-            entityType: EntityType.user,
-          },
-          select: {
-            url: true,
-          },
-          take: 1,
-        },
-      },
     }),
   ]);
 
   const totalPages = Math.ceil(totalUsers / USERS_PER_PAGE);
 
+  const userIds = users.map((user) => user.id);
+  const photos = await prisma.photo.findMany({
+    where: {
+      entityId: { in: userIds },
+      entityTypeId: entityTypes.user.id,
+      typeId: photoTypes.primary.id,
+    },
+    select: {
+      entityId: true,
+      url: true,
+    },
+  });
+
+  const photoUrlMap = new Map<string, string>();
+  for (const photo of photos) {
+    if (photo.entityId) {
+      photoUrlMap.set(photo.entityId, photo.url);
+    }
+  }
+
   const usersWithPhotos = await Promise.all(
     users.map(async (user) => {
-      const rawUrl = user.photos[0]?.url;
+      const rawUrl = photoUrlMap.get(user.id);
       let photoUrl: string;
       if (rawUrl) {
         if (rawUrl.startsWith('http')) {
