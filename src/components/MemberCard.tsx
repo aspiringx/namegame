@@ -22,7 +22,8 @@ export default function MemberCard({ member, listType }: MemberCardProps) {
         <Image
           src={member.user.photoUrl || '/images/default-avatar.png'}
           alt={member.user.name || 'User avatar'}
-          fill
+          width={350}
+          height={350}
           className={`object-cover ${listType === 'iceBlock' ? 'grayscale' : ''}`}
         />
       </div>

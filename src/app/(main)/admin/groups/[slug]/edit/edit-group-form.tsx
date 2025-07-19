@@ -83,8 +83,8 @@ export default function EditGroupForm({ group, logoUrl }: { group: Group; logoUr
             <Image
               src={logoUrl}
               alt={`${group.name} logo`}
-              width={100}
-              height={100}
+              width={300}
+              height={300}
               className="rounded-md object-cover"
             />
           </div>

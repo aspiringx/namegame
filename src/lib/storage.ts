@@ -9,7 +9,7 @@ const STORAGE_PROVIDER = env.STORAGE_PROVIDER || 'local';
 const BUCKET_NAME = env.DO_SPACES_BUCKET || '';
 
 const ALLOWED_FORMATS = ['image/jpeg', 'image/png', 'image/webp'];
-const MAX_WIDTH = 400;
+const MAX_WIDTH = 1920;
 
 let s3Client: S3Client | null = null;
 
