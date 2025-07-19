@@ -53,15 +53,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       });
 
       const rawPhotoUrl = primaryPhoto?.url || null;
-      // --- START DEBUG LOGS ---
-      console.log('[AUTH_DEBUG] User object from DB:', JSON.stringify(dbUser, null, 2));
-
       const isSuperAdmin = dbUser.groupMemberships.some(
         (mem) => mem.group.slug === 'global-admin' && mem.role.code === 'super'
       );
-
-      console.log('[AUTH_DEBUG] isSuperAdmin flag:', isSuperAdmin);
-      // --- END DEBUG LOGS ---
 
       // Update token with data that is safe for the Edge runtime.
       token.id = dbUser.id;
@@ -74,6 +68,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return token;
     },
     async session({ session, token }) {
+      // --- START DEBUG LOGS ---
+      console.log('[AUTH_DEBUG] Token received in session callback:', JSON.stringify(token, null, 2));
+      // --- END DEBUG LOGS ---
+
       if (token) {
         // The session callback runs in the Node.js environment, so we can use Node APIs here.
         const publicPhotoUrl = token.picture
@@ -88,6 +86,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.memberships = token.memberships;
         session.user.isSuperAdmin = token.isSuperAdmin;
       }
+
+      // --- START DEBUG LOGS ---
+      console.log('[AUTH_DEBUG] Session object being returned:', JSON.stringify(session, null, 2));
+      // --- END DEBUG LOGS ---
+
       return session;
     },
   },
