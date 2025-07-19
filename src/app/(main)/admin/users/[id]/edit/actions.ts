@@ -1,7 +1,7 @@
 'use server';
 
 import { z } from 'zod';
-import bcrypt from 'bcryptjs';
+import bcrypt from 'bcrypt';
 import prisma from '@/lib/prisma';
 import { revalidatePath, revalidateTag } from 'next/cache';
 import { redirect } from 'next/navigation';

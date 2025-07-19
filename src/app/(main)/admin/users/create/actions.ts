@@ -7,7 +7,7 @@ import { redirect } from 'next/navigation';
 import { uploadFile } from '@/lib/storage';
 import { getCodeTable } from '@/lib/codes';
 import { auth } from '@/auth';
-import bcrypt from 'bcryptjs';
+import bcrypt from 'bcrypt';
 
 const FormSchema = z.object({
   username: z.string().min(1, 'Username is required.'),

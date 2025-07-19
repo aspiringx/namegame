@@ -23,8 +23,9 @@
     "@paralleldrive/cuid2": "^2.2.2",
     "@prisma/client": "^6.11.1",
     "@radix-ui/react-tooltip": "^1.2.7",
+    "@types/bcrypt": "^6.0.0",
     "@types/qrcode.react": "^1.0.5",
-    "bcryptjs": "^2.4.2",
+    "bcrypt": "^6.0.0",
     "browser-image-compression": "^2.0.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -45,7 +46,6 @@
   "devDependencies": {
     "@faker-js/faker": "^8.4.1",
     "@tailwindcss/postcss": "^4",
-    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20.19.7",
     "@types/react": "^19.0.0-rc.0",
     "@types/react-dom": "^19.0.0-rc.0",

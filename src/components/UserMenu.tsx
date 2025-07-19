@@ -54,6 +54,7 @@ export default function UserMenu() {
           width={40}
           height={40}
           className="w-10 h-10 rounded-full"
+          onError={handleImageError}
         />
       </button>
       {isDropdownOpen && (
