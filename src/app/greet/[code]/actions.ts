@@ -4,7 +4,7 @@ import { auth } from '@/auth';
 import { createId } from '@paralleldrive/cuid2';
 
 import prisma from '@/lib/prisma';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import { signIn } from '@/auth';
 import { getCodeTable } from '@/lib/codes';
 
