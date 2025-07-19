@@ -15,7 +15,7 @@ export default function GroupPageClient({ groupData }: { groupData: GroupData })
 
   return (
     <div className="container mx-auto px-4 py-0">
-      {currentUserMember?.role === 'guest' && (
+      {currentUserMember?.role?.code === 'guest' && (
         <div className="mb-4 rounded-md bg-yellow-50 p-4 text-sm text-yellow-800 dark:bg-yellow-950 dark:text-yellow-300">
           <p className="mb-4">
             Welcome {currentUserMember.user.firstName}! You're playing as a guest.

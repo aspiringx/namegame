@@ -91,6 +91,7 @@ export async function getPaginatedMembers(
       userId: { in: paginatedIds },
     },
     include: {
+      role: true,
       user: {
         include: {
           photos: { where: { typeId: photoTypes.primary.id }, take: 1 },

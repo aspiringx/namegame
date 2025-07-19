@@ -47,7 +47,7 @@ export default async function GroupLayout(props: { children: React.ReactNode; pa
     redirect('/');
   }
 
-  const isAuthorizedMember = currentUserMember && ['admin', 'member', 'super'].includes(currentUserMember.role);
+  const isAuthorizedMember = currentUserMember && ['admin', 'member', 'super'].includes(currentUserMember.role.code);
 
   return (
     <GroupProvider value={{ group: data, sunDeckMembers, iceBlockMembers, currentUserMember, isSuperAdmin }}>

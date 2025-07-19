@@ -41,7 +41,8 @@ export const getGroup = async (slug: string, limit?: number): Promise<GroupData 
           updatedAt: 'desc',
         },
         include: {
-          user: true, // We'll fetch photos separately
+          user: true,
+          role: true,
         },
       },
     },

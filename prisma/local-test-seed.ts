@@ -48,14 +48,22 @@ async function main() {
   }
   console.log(`Successfully created ${createdUsers.length} users.`);
 
-  // 2. Add them all to group 2 with a role of member
-  console.log(`\nAdding ${createdUsers.length} users to group ${targetGroupId}...`);
+  // 2. Add them all to the test group with a role of 'member'
+  console.log(`\nEnsuring 'member' role exists for group ${targetGroupId}...`);
+  const memberRole = await prisma.groupUserRole.upsert({
+    where: { code_groupId: { code: 'member', groupId: targetGroupId } },
+    update: {},
+    create: { code: 'member', groupId: targetGroupId },
+  });
+  console.log(`Ensured 'member' role exists with id: ${memberRole.id}`);
+
+  console.log(`\nAdding ${createdUsers.length} users to group ${targetGroupId} as members...`);
   for (const user of createdUsers) {
     await prisma.groupUser.create({
       data: {
         userId: user.id,
         groupId: targetGroupId,
-        role: GroupUserRole.member,
+        roleId: memberRole.id,
       },
     });
   }

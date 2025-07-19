@@ -1,4 +1,4 @@
-import { Prisma, Group, GroupUser, User } from '@/generated/prisma';
+import { Prisma, Group, GroupUser, User, GroupUserRole } from '@/generated/prisma';
 
 // NOTE: It's important to keep this in sync with the `groupWithMembers` query in
 // `src/app/(main)/admin/groups/[slug]/edit/layout.tsx`.
@@ -29,6 +29,7 @@ export type UserWithPhotoUrl = User & { name: string; photoUrl?: string };
 
 export type MemberWithUser = GroupUser & {
   user: UserWithPhotoUrl;
+  role: GroupUserRole;
   relationUpdatedAt?: Date;
 };
 
