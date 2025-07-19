@@ -53,9 +53,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       });
 
       const rawPhotoUrl = primaryPhoto?.url || null;
+      // --- START DEBUG LOGS ---
+      console.log('[AUTH_DEBUG] User object from DB:', JSON.stringify(dbUser, null, 2));
+
       const isSuperAdmin = dbUser.groupMemberships.some(
         (mem) => mem.group.slug === 'global-admin' && mem.role.code === 'super'
       );
+
+      console.log('[AUTH_DEBUG] isSuperAdmin flag:', isSuperAdmin);
+      // --- END DEBUG LOGS ---
 
       // Update token with data that is safe for the Edge runtime.
       token.id = dbUser.id;
