@@ -14,18 +14,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
     Credentials({
       async authorize(credentials) {
-        console.log('--- Authorize Function Start ---');
-        console.log('Received credentials:', {
-          username: credentials?.username,
-          password: credentials?.password ? '[REDACTED]' : undefined,
-        });
+        if (!credentials?.username || !credentials.password) return null;
 
-        if (!credentials?.username || !credentials.password) {
-          console.log('Authorize failed: Username or password missing.');
-          return null;
-        }
-
-        console.log(`Searching for user with username: ${credentials.username}`);
         const dbUser = await prisma.user.findUnique({
           where: { username: credentials.username as string },
           include: {
@@ -34,23 +24,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           },
         });
 
-        if (!dbUser || !dbUser.password) {
-          console.log('Authorize failed: User not found or password not set.');
-          return null;
-        }
-        console.log('Database user found:', { id: dbUser.id, username: dbUser.username });
+        if (!dbUser || !dbUser.password) return null;
 
-        console.log('Comparing passwords...');
         const passwordsMatch = await bcrypt.compare(
           credentials.password as string,
           dbUser.password
         );
 
-        if (!passwordsMatch) {
-          console.log('Authorize failed: Passwords do not match.');
-          return null;
-        }
-        console.log('Passwords match successfully.');
+        if (!passwordsMatch) return null;
 
         const isSuperAdmin = dbUser.groupMemberships.some(
           (mem) => mem.group.slug === 'global-admin' && mem.role.code === 'super'
@@ -68,7 +49,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           photoUrl = await getPublicUrl(dbUser.photos[0].url);
         }
 
-        const userPayload = {
+        return {
           id: dbUser.id,
           email: dbUser.email,
           firstName: dbUser.firstName,
@@ -76,12 +57,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           memberships,
           image: photoUrl,
         };
-
-        console.log('Authentication successful. Returning user object:', {
-          id: userPayload.id,
-          email: userPayload.email,
-        });
-        return userPayload;
       },
     }),
   ],
