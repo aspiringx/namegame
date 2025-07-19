@@ -1,10 +1,25 @@
 'use client';
 
+import { useState } from 'react';
 import { updateGroup } from './actions';
 import type { Group } from '@/generated/prisma';
 import Image from 'next/image';
 
 export default function EditGroupForm({ group, logoUrl }: { group: Group; logoUrl?: string }) {
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setPreviewUrl(null);
+    }
+  };
   return (
     <form action={updateGroup} className="space-y-6">
       <input type="hidden" name="groupId" value={group.id} />
@@ -77,22 +92,21 @@ export default function EditGroupForm({ group, logoUrl }: { group: Group; logoUr
         <label htmlFor="logo" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
           Logo
         </label>
-        {logoUrl && (
-          <div className="mt-2 mb-4">
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Current Logo:</p>
-            <Image
-              src={logoUrl}
-              alt={`${group.name} logo`}
-              width={300}
-              height={300}
-              className="rounded-md object-cover"
-            />
-          </div>
-        )}
+        <div className="mt-2 mb-4">
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Logo Preview:</p>
+          <Image
+            src={previewUrl || logoUrl || '/images/default-avatar.png'}
+            alt={`${group.name} logo`}
+            width={300}
+            height={300}
+            className="rounded-md object-cover"
+          />
+        </div>
         <input
           type="file"
           id="logo"
           name="logo"
+          onChange={handleFileChange}
           className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100 dark:text-gray-400 dark:file:bg-indigo-700 dark:file:text-indigo-200 dark:hover:file:bg-indigo-600"
         />
       </div>

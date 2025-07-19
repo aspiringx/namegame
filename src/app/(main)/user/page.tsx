@@ -26,13 +26,6 @@ export default async function UserProfilePage(props: {
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
     include: {
-      photos: {
-        where: {
-          typeId: photoTypes.primary.id,
-          entityTypeId: entityTypes.user.id,
-        },
-        take: 1,
-      },
       groupMemberships: {
         orderBy: {
           group: {
@@ -55,12 +48,21 @@ export default async function UserProfilePage(props: {
       },
     },
   });
+
   if (!user) {
     // This should theoretically not happen if a session exists
     redirect('/login?callbackUrl=/user');
   }
 
-  const photoUrl = await getPublicUrl(user.photos[0]?.url);
+  const primaryPhoto = await prisma.photo.findFirst({
+    where: {
+      entityId: user.id,
+      entityTypeId: entityTypes.user.id,
+      typeId: photoTypes.primary.id,
+    },
+  });
+
+  const photoUrl = await getPublicUrl(primaryPhoto?.url);
 
   const isGuest = user.groupMemberships.some((m) => m.role.code === 'guest');
 

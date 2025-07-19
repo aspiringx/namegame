@@ -17,22 +17,19 @@ export default async function EditGroupDetailsPage(props: { params: Promise<{ sl
     where: {
       slug: slug,
     },
-    include: {
-      photos: {
-        where: {
-          entityTypeId: entityTypes.group.id,
-          typeId: photoTypes.logo.id,
-        },
-        take: 1,
-      },
-    },
   });
 
   if (!group) {
     notFound();
   }
 
-  const logo = group?.photos[0];
+  const logo = await prisma.photo.findFirst({
+    where: {
+      entityId: group.id.toString(),
+      entityTypeId: entityTypes.group.id,
+      typeId: photoTypes.logo.id,
+    },
+  });
   const logoUrl = await getPublicUrl(logo?.url);
 
   return <EditGroupForm group={group} logoUrl={logoUrl} />;

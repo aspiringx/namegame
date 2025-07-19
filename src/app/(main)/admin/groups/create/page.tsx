@@ -4,6 +4,7 @@
 
 import { useActionState, useState, useRef } from 'react';
 import { useFormStatus } from 'react-dom';
+import Image from 'next/image';
 import imageCompression from 'browser-image-compression';
 import { createGroup, type State } from './actions';
 import Breadcrumbs from '@/components/Breadcrumbs';
@@ -153,14 +154,25 @@ export default function CreateGroupPage() {
           <label htmlFor="logo-upload" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
             Logo
           </label>
-          <input
-            type="file"
-            id="logo-upload"
-            name="logo-upload"
-            accept="image/*"
-            onChange={handleLogoChange}
-            className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100 dark:text-gray-400 dark:file:bg-indigo-700 dark:file:text-indigo-200 dark:hover:file:bg-indigo-600"
-          />
+          <div className="mt-1 flex items-center">
+            <span className="inline-block h-12 w-12 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-700">
+              <Image
+                src={logoBase64 || '/images/default-avatar.png'}
+                alt="Group logo preview"
+                width={48}
+                height={48}
+                className="h-full w-full text-gray-300"
+              />
+            </span>
+            <input
+              type="file"
+              id="logo-upload"
+              name="logo-upload"
+              accept="image/*"
+              onChange={handleLogoChange}
+              className="ml-5 bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm leading-4 font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600 dark:focus:ring-offset-gray-800"
+            />
+          </div>
           {logoError && <p className="text-red-500 text-sm mt-1">{logoError}</p>}
         </div>
 

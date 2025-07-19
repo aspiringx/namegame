@@ -13,19 +13,14 @@ export default async function EditUserPage(props: {
     notFound();
   }
 
-  const photoTypes = await getCodeTable('photoType');
+  const [photoTypes, entityTypes] = await Promise.all([
+    getCodeTable('photoType'),
+    getCodeTable('entityType'),
+  ]);
 
   const user = await prisma.user.findUnique({
     where: {
       id: params.id,
-    },
-    include: {
-      photos: {
-        where: {
-          typeId: photoTypes.primary.id,
-        },
-        take: 1,
-      },
     },
   });
 
@@ -33,8 +28,16 @@ export default async function EditUserPage(props: {
     notFound();
   }
 
-  const hasPhoto = user.photos.length > 0;
-  const photoUrl = user.photos[0]?.url;
+  const primaryPhoto = await prisma.photo.findFirst({
+    where: {
+      entityId: user.id,
+      entityTypeId: entityTypes.user.id,
+      typeId: photoTypes.primary.id,
+    },
+  });
+
+  const hasPhoto = !!primaryPhoto;
+  const photoUrl = primaryPhoto?.url;
   const publicPhotoUrl = await getPublicUrl(photoUrl);
 
   const breadcrumbs = [

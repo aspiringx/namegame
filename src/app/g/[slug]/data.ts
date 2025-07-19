@@ -34,7 +34,6 @@ export const getGroup = async (slug: string, limit?: number): Promise<GroupData 
 
   const group = await prisma.group.findFirst({
     where: whereClause,
-    
     include: {
       photos: true,
       members: {
@@ -42,18 +41,7 @@ export const getGroup = async (slug: string, limit?: number): Promise<GroupData 
           updatedAt: 'desc',
         },
         include: {
-          user: {
-            include: {
-              photos: {
-                orderBy: {
-                  uploadedAt: 'desc',
-                },
-                include: {
-                  type: true,
-                },
-              },
-            },
-          },
+          user: true, // We'll fetch photos separately
         },
       },
     },
@@ -62,6 +50,32 @@ export const getGroup = async (slug: string, limit?: number): Promise<GroupData 
   if (!group) {
     return null;
   }
+
+  // Fetch code table IDs for photo types
+  const [userEntityType, primaryPhotoType] = await Promise.all([
+    prisma.entityType.findFirst({ where: { code: 'user' } }),
+    prisma.photoType.findFirst({ where: { code: 'primary' } }),
+  ]);
+
+  const memberUserIds = group.members.map((member) => member.userId);
+  const photos = await prisma.photo.findMany({
+    where: {
+      entityId: { in: memberUserIds },
+      entityTypeId: userEntityType?.id,
+      typeId: primaryPhotoType?.id,
+    },
+    select: {
+      entityId: true,
+      url: true,
+    },
+  });
+
+  const photoUrlMap = new Map<string, string>();
+  photos.forEach((photo) => {
+    if (photo.entityId) {
+      photoUrlMap.set(photo.entityId, photo.url);
+    }
+  });
 
   // Fetch UserUser relations for the current user in this group first to determine who has been greeted.
   const userRelations = await prisma.userUser.findMany({
@@ -78,14 +92,13 @@ export const getGroup = async (slug: string, limit?: number): Promise<GroupData 
   });
 
   const memberPromises = group.members.map(async (member): Promise<MemberWithUser> => {
-    // The photos are pre-sorted by the main query, so the first primary photo is the most recent.
-    const primaryPhoto = member.user.photos.find((p) => p.type.code === 'primary');
+    const rawUrl = photoUrlMap.get(member.userId);
     let photoUrl: string | undefined;
-    if (primaryPhoto?.url) {
-      if (primaryPhoto.url.startsWith('http')) {
-        photoUrl = primaryPhoto.url;
+    if (rawUrl) {
+      if (rawUrl.startsWith('http')) {
+        photoUrl = rawUrl;
       } else {
-        photoUrl = await getPublicUrl(primaryPhoto.url);
+        photoUrl = await getPublicUrl(rawUrl);
       }
     }
 

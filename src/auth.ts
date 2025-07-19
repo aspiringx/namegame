@@ -33,20 +33,26 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               role: true,
             },
           },
-          photos: {
-            where: {
-              typeId: (await getCodeTable('photoType')).primary.id,
-              entityTypeId: (await getCodeTable('entityType')).user.id,
-            },
-            select: { url: true },
-            take: 1,
-          },
         },
       });
 
       if (!dbUser) return token;
 
-      const rawPhotoUrl = dbUser.photos[0]?.url || null;
+      const [photoTypes, entityTypes] = await Promise.all([
+        getCodeTable('photoType'),
+        getCodeTable('entityType'),
+      ]);
+
+      const primaryPhoto = await prisma.photo.findFirst({
+        where: {
+          entityId: dbUser.id,
+          entityTypeId: entityTypes.user.id,
+          typeId: photoTypes.primary.id,
+        },
+        select: { url: true },
+      });
+
+      const rawPhotoUrl = primaryPhoto?.url || null;
       const isSuperAdmin = dbUser.groupMemberships.some(
         (mem) => mem.group.slug === 'global-admin' && mem.role.code === 'super'
       );
@@ -109,14 +115,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 group: { select: { slug: true } },
               },
             },
-            photos: {
-              where: {
-                typeId: photoTypes.primary.id,
-                entityTypeId: entityTypes.user.id,
-              },
-              select: { url: true },
-              take: 1,
-            },
           },
         });
 
@@ -130,8 +128,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         );
 
         if (passwordsMatch) {
-          const photoUrl = user.photos[0]?.url
-            ? await getPublicUrl(user.photos[0].url)
+          const primaryPhoto = await prisma.photo.findFirst({
+            where: {
+              entityId: user.id,
+              entityTypeId: entityTypes.user.id,
+              typeId: photoTypes.primary.id,
+            },
+            select: { url: true },
+          });
+
+          const photoUrl = primaryPhoto?.url
+            ? await getPublicUrl(primaryPhoto.url)
             : null;
 
           const isSuperAdmin = user.groupMemberships.some(

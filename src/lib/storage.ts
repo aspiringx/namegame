@@ -9,7 +9,7 @@ const STORAGE_PROVIDER = env.STORAGE_PROVIDER || 'local';
 const BUCKET_NAME = env.DO_SPACES_BUCKET || '';
 
 const ALLOWED_FORMATS = ['image/jpeg', 'image/png', 'image/webp'];
-const MAX_WIDTH = 1920;
+const MAX_WIDTH_HEIGHT = 1920; 
 
 let s3Client: S3Client | null = null;
 
@@ -41,7 +41,7 @@ async function validateAndResizeImage(file: File): Promise<Buffer> {
   const bytes = await file.arrayBuffer();
   const buffer = Buffer.from(bytes);
 
-  return sharp(buffer).rotate().resize({ width: MAX_WIDTH }).toBuffer();
+  return sharp(buffer).rotate().resize({ width: MAX_WIDTH_HEIGHT, height: MAX_WIDTH_HEIGHT }).toBuffer();
 }
 
 export async function uploadFile(file: File, prefix: string, entityId: string | number): Promise<string> {
@@ -96,7 +96,6 @@ export async function deleteFile(storagePath: string): Promise<void> {
 }
 
 export async function getPublicUrl(storagePath: string | null | undefined): Promise<string> {
-  console.log('storagePath', storagePath);
   if (!storagePath) {
     // Return a default placeholder image
     return '/images/default-avatar.png';
