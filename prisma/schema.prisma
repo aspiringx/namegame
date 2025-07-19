@@ -82,7 +82,7 @@ model UserUser {
   user2Id        String
   groupId        Int
   greetCount     Int      @default(0)
-  relationTypeId String   @default("acquaintance")
+  relationTypeId Int      @default(1) // acquaintance
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   deletedAt      DateTime?
@@ -96,29 +96,33 @@ model UserUser {
 }
 
 model Group {
-  id            Int          @id @default(autoincrement())
-  idTree        String       @unique
-  name          String
-  slug          String       @unique
-  description   String?
-  address       String?
-  phone         String?
-  parentId      Int?
-  createdById   String?
-  updatedById   String?
-  createdBy     User?        @relation("GroupCreatedBy", fields: [createdById], references: [id])
-  updatedBy     User?        @relation("GroupUpdatedBy", fields: [updatedById], references: [id])
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-  deletedAt     DateTime?
-  parent        Group?       @relation("GroupToGroup", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  children      Group[]      @relation("GroupToGroup")
-  members       GroupUser[]
-  codes         Code[]
-  links         Link[]
-  iceBreakers   IceBreaker[]
-  photos        Photo[]
-  userRelations UserUser[]
+  id                     Int                      @id @default(autoincrement())
+  idTree                 String                   @unique
+  name                   String
+  slug                   String                   @unique
+  description            String?
+  address                String?
+  phone                  String?
+  parentId               Int?
+  createdById            String?
+  updatedById            String?
+  createdBy              User?                    @relation("GroupCreatedBy", fields: [createdById], references: [id])
+  updatedBy              User?                    @relation("GroupUpdatedBy", fields: [updatedById], references: [id])
+  createdAt              DateTime                 @default(now())
+  updatedAt              DateTime                 @updatedAt
+  deletedAt              DateTime?
+  parent                 Group?                   @relation("GroupToGroup", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  children               Group[]                  @relation("GroupToGroup")
+  members                GroupUser[]
+  codes                  Code[]
+  links                  Link[]
+  iceBreakers            IceBreaker[]
+  photos                 Photo[]
+  userRelations          UserUser[]
+  userUserRelationTypes  UserUserRelationType[]
+  groupUserRoles         GroupUserRole[]
+  entityTypes            EntityType[]
+  photoTypes             PhotoType[]
 
   @@map("groups")
 }
@@ -126,7 +130,7 @@ model Group {
 model GroupUser {
   userId      String
   groupId     Int
-  roleId      String   @default("guest")
+  roleId      Int      @default(4) // guest
   memberSince Int?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -157,10 +161,10 @@ model Photo {
   id           Int        @id @default(autoincrement())
   userId       String?
   groupId      Int?
-  entityTypeId String
+  entityTypeId Int
   entityId     String
   url          String
-  typeId       String     @default("other")
+  typeId       Int        @default(3) // other
   isBlocked    Boolean    @default(false)
   uploadedAt   DateTime   @default(now())
   createdAt    DateTime   @default(now())
@@ -176,7 +180,7 @@ model Photo {
 model Message {
   id            Int        @id @default(autoincrement())
   userId        String
-  entityTypeId  String
+  entityTypeId  Int
   entityId      Int
   message       String
   recipientType String
@@ -229,30 +233,46 @@ model Link {
 // Code Tables
 
 model UserUserRelationType {
-  id        String     @id @unique
+  id        Int        @id @default(autoincrement())
+  code      String
+  groupId   Int?
+  group     Group?     @relation(fields: [groupId], references: [id])
   userUsers UserUser[]
 
+  @@unique([code, groupId])
   @@map("user_user_relation_types")
 }
 
 model GroupUserRole {
-  id      String      @id @unique
+  id      Int         @id @default(autoincrement())
+  code    String
+  groupId Int?
+  group   Group?      @relation(fields: [groupId], references: [id])
   members GroupUser[]
 
+  @@unique([code, groupId])
   @@map("group_user_roles")
 }
 
 model EntityType {
-  id       String    @id @unique
+  id       Int       @id @default(autoincrement())
+  code     String
+  groupId  Int?
+  group    Group?    @relation(fields: [groupId], references: [id])
   photos   Photo[]
   messages Message[]
 
+  @@unique([code, groupId])
   @@map("entity_types")
 }
 
 model PhotoType {
-  id     String  @id @unique
-  photos Photo[]
+  id      Int     @id @default(autoincrement())
+  code    String
+  groupId Int?
+  group   Group?  @relation(fields: [groupId], references: [id])
+  photos  Photo[]
 
+  @@unique([code, groupId])
   @@map("photo_types")
 }
