@@ -123,6 +123,8 @@ model Group {
   groupUserRoles         GroupUserRole[]
   entityTypes            EntityType[]
   photoTypes             PhotoType[]
+  groupTypeId            Int        @default(3) // family
+  groupType              GroupType  @relation(fields: [groupTypeId], references: [id])
 
   @@map("groups")
 }
@@ -231,6 +233,14 @@ model Link {
 }
 
 // Code Tables
+
+model GroupType {
+  id     Int     @id @default(autoincrement())
+  code   String  @unique
+  groups Group[]
+
+  @@map("group_types")
+}
 
 model UserUserRelationType {
   id        Int        @id @default(autoincrement())

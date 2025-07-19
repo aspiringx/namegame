@@ -6,6 +6,27 @@ const prisma = new PrismaClient();
 async function main() {
   console.log(`Start seeding ...`);
 
+  const groupTypes = [
+    { id: 1, code: 'business' },
+    { id: 2, code: 'church' },
+    { id: 3, code: 'family' },
+    { id: 4, code: 'friends' },
+    { id: 5, code: 'neighborhood' },
+    { id: 6, code: 'school' },
+  ];
+
+  for (const gt of groupTypes) {
+    const groupType = await prisma.groupType.upsert({
+      where: { id: gt.id },
+      update: {},
+      create: {
+        id: gt.id,
+        code: gt.code,
+      },
+    });
+    console.log(`Created group type with id: ${groupType.id}`);
+  }
+
   // Create the 'system' user if it doesn't exist
   const systemUserPassword = await bcrypt.hash('password123', 10);
   const systemUser = await prisma.user.upsert({
@@ -32,6 +53,7 @@ async function main() {
       idTree: 'global-admin',
       createdById: systemUser.id,
       updatedById: systemUser.id,
+      groupTypeId: 3, // Default to 'family'
     },
   });
   console.log(`Created/found group '${adminGroup.name}' with id: ${adminGroup.id}`);
@@ -65,10 +87,10 @@ async function main() {
     create: {
       userId: joeUser.id,
       groupId: adminGroup.id,
-      role: GroupUserRole.super,
+      roleId: 1, // super
     },
   });
-  console.log(`Ensured user '${joeUser.username}' is a '${membership.role}' in group '${adminGroup.name}'.`);
+  console.log(`Ensured user '${joeUser.username}' is a super user in group '${adminGroup.name}'.`);
 
   console.log(`Seeding finished.`);
 }
