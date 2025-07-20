@@ -21,7 +21,6 @@ if (STORAGE_PROVIDER === 'do_spaces') {
   }
   s3Client = new S3Client({
     endpoint: env.DO_SPACES_ENDPOINT,
-    region: env.DO_SPACES_REGION,
     credentials: {
       accessKeyId: env.DO_SPACES_KEY,
       secretAccessKey: env.DO_SPACES_SECRET,
