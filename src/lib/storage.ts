@@ -7,7 +7,7 @@ import { writeFile, unlink, mkdir } from 'fs/promises';
 import sharp from 'sharp';
 import { env } from 'process';
 
-const STORAGE_PROVIDER = env.STORAGE_PROVIDER || 'local';
+const STORAGE_PROVIDER = process.env.NEXT_PUBLIC_STORAGE_PROVIDER || 'local';
 const BUCKET_NAME = env.DO_SPACES_BUCKET || '';
 
 const ALLOWED_FORMATS = ['image/jpeg', 'image/png', 'image/webp'];
