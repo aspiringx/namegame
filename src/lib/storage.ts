@@ -20,7 +20,9 @@ if (STORAGE_PROVIDER === 'do_spaces') {
     throw new Error('DigitalOcean Spaces environment variables are not fully configured.');
   }
   s3Client = new S3Client({
+    region: env.DO_SPACES_REGION,
     endpoint: env.DO_SPACES_ENDPOINT,
+    forcePathStyle: true, // Required for DigitalOcean Spaces
     credentials: {
       accessKeyId: env.DO_SPACES_KEY,
       secretAccessKey: env.DO_SPACES_SECRET,
@@ -70,27 +72,30 @@ export async function uploadFile(file: File, prefix: string, entityId: string | 
 }
 
 export async function getPublicUrl(storagePath: string | null | undefined): Promise<string> {
+  // 1. Handle the case where there is no image path.
   if (!storagePath) {
-    // Return a default placeholder image
     return '/images/default-avatar.png';
   }
 
-  // If the path is already a full URL, return it as is.
-  if (storagePath.startsWith('http://') || storagePath.startsWith('https://')) {
+  // 2. Handle full external URLs.
+  if (storagePath.startsWith('http')) {
     return storagePath;
   }
 
-  const BUCKET_NAME = process.env.DO_SPACES_BUCKET;
-  const STORAGE_PROVIDER = process.env.STORAGE_PROVIDER;
-
-  if (STORAGE_PROVIDER === 'do_spaces' && s3Client && BUCKET_NAME) {
-    const command = new GetObjectCommand({ Bucket: BUCKET_NAME, Key: storagePath });
-    // Generate a signed URL that expires in 1 hour (3600 seconds)
-    return getSignedUrl(s3Client, command, { expiresIn: 3600 });
-  } else {
-    // For local storage, ensure the path is a valid root-relative URL
-    return `/${storagePath.replace(/^\/+/, '')}`;
+  // 3. Handle legacy local paths (stored in the public/uploads directory).
+  // These paths are stored as 'uploads/...' and need a leading slash.
+  if (storagePath.startsWith('uploads/')) {
+    return `/${storagePath}`;
   }
+
+  // 4. Handle new DigitalOcean Spaces paths by routing them through our secure proxy.
+  // These paths are stored as 'user-photos/...' and need to be prefixed.
+  if (STORAGE_PROVIDER === 'do_spaces') {
+    return `/api/images?key=${storagePath}`;
+  }
+
+  // 5. Fallback for any other path, ensuring it's a valid root-relative URL.
+  return `/${storagePath.replace(/^\/+/,'')}`;
 }
 
 export async function deleteFile(storagePath: string): Promise<void> {
