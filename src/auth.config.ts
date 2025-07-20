@@ -8,15 +8,6 @@ export const authConfig = {
     signIn: '/login',
   },
   callbacks: {
-    authorized({ auth, request: { nextUrl } }) {
-      const isLoggedIn = !!auth?.user;
-      const isOnAdmin = nextUrl.pathname.startsWith('/admin');
-      if (isOnAdmin) {
-        if (isLoggedIn && auth.user.isSuperAdmin) return true;
-        return false; // Redirect unauthenticated users to login page
-      }
-      return true;
-    },
     async jwt({ token, user }) {
       if (user) {
         // On sign-in, enrich the token with data from the `authorize` callback

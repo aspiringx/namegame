@@ -88,16 +88,17 @@ export async function handleAuthenticatedGreeting(codeData: CodeData, currentUse
 export async function createGreetingCode(groupId: number) {
   const session = await auth();
 
-  if (!session?.user?.id) {
+  if (!session?.user) {
     throw new Error('You must be logged in to create a greeting code.');
   }
+  const user = session.user;
 
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
   const newCode = await prisma.$transaction(async (tx) => {
     await tx.code.deleteMany({
       where: {
-        userId: session.user.id,
+        userId: user.id,
         groupId: groupId,
         createdAt: {
           lt: sevenDaysAgo,
@@ -105,12 +106,13 @@ export async function createGreetingCode(groupId: number) {
       },
     });
 
+    const code = createId();
     const createdCode = await tx.code.create({
       data: {
-        userId: session.user.id,
+        userId: user.id,
         groupId: groupId,
         parentGroupId: groupId, // As per instructions
-        code: createId(),
+        code: code,
       },
     });
 

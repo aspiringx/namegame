@@ -1,11 +1,26 @@
 import NextAuth from 'next-auth';
 import { authConfig } from './auth.config';
+import { NextResponse } from 'next/server';
 
-// Initialize NextAuth.js with the Edge-safe configuration.
-// The `auth` middleware will handle authorization based on the `authorized` callback in `authConfig`.
-export default NextAuth(authConfig).auth;
+const { auth } = NextAuth(authConfig);
+
+export default auth((req) => {
+  const { nextUrl } = req;
+  const isLoggedIn = !!req.auth;
+
+  const isOnAdmin = nextUrl.pathname.startsWith('/admin');
+
+  if (isOnAdmin) {
+    if (isLoggedIn && req.auth?.user?.isSuperAdmin) {
+      return NextResponse.next();
+    }
+    return NextResponse.redirect(new URL('/', nextUrl));
+  }
+
+  return NextResponse.next();
+});
 
 export const config = {
-  // Match all routes except for static files, API routes, and image assets.
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+  // https://nextjs.org/docs/app/building-your-application/routing/middleware#matcher
+  matcher: ['/((?!api|_next/static|_next/image|.*\\.png$).*)'],
 };
