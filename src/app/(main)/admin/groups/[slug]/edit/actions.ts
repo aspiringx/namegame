@@ -75,7 +75,7 @@ export async function updateGroup(formData: FormData) {
         },
       });
 
-            const logoPath = await uploadFile(logo, 'groups', updatedGroup.id.toString());
+      const logoPath = await uploadFile(logo, 'groups', updatedGroup.id.toString());
 
       if (existingLogo) {
         await prisma.photo.update({
