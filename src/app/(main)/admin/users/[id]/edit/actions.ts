@@ -191,6 +191,7 @@ export async function updateUser(id: string, prevState: State, formData: FormDat
     };
   }
 
+  revalidatePath('/', 'layout');
   revalidatePath('/admin/users');
   revalidatePath(`/admin/users/${id}/edit`);
   revalidateTag('user-photo');

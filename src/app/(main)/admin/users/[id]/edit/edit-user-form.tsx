@@ -73,21 +73,20 @@ export default function EditUserForm({ user, photoUrl, hasPhoto }: { user: User;
 
   useEffect(() => {
     if (state.success && !formSubmitted.current) {
-      // Set the flag to prevent re-running on fast refresh/re-render.
       formSubmitted.current = true;
 
-      // Only update the session if the edited user is the currently logged-in user.
-      if (session?.user?.id === user.id) {
-        update({ user: { image: state.photoUrl } }).then(() => {
-          window.location.href = '/admin/users';
-        });
-      } else {
-        // If an admin is editing another user, just redirect.
-        // The reload will show the updated data on the user list page.
-        window.location.href = '/admin/users';
+      // If a photo was part of the successful update (either added or removed),
+      // broadcast a message so the UserMenu can update everywhere.
+      if (state.photoUrl !== undefined) { 
+        const channel = new BroadcastChannel('photo_updates');
+        channel.postMessage('photo_updated');
+        channel.close();
       }
+
+      // Redirect back to the users list after the update.
+      window.location.href = '/admin/users';
     }
-  }, [state.success, state.photoUrl, update, session, user.id]);
+  }, [state.success, state.photoUrl, user.id]);
 
   const [password, setPassword] = useState('');
 

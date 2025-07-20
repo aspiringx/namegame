@@ -71,13 +71,7 @@ function SearchableMemberList({
   }, [inView, hasMore, isLoading, slug, listType, page]);
 
   return (
-    <div
-      className={`grid gap-4 ${
-        listType === "iceBlock"
-          ? "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
-          : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
-      }`}
-    >
+    <div className={`grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3`}>
       {members.map((member) => (
         <MemberCard key={member.userId} member={member} listType={listType} />
       ))}
@@ -145,12 +139,12 @@ export default function GroupTabs({
                 )}
               >
                 {type === "sunDeck" ? (
-                  <p className="text-sm mb-2 text-gray-500 dark:text-gray-400">
-                    People you've greeted and when.
+                  <p className="text-sm mb-4 text-gray-500 dark:text-gray-400">
+                    People you've greeted.
                   </p>
                 ) : (
-                  <p className="text-sm mb-2 text-gray-500 dark:text-gray-400">
-                    Greet these people to see them in color.
+                  <p className="text-sm mb-4 text-gray-500 dark:text-gray-400">
+                    People you haven't greeted yet (Greet button).
                   </p>
                 )}
 

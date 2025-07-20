@@ -86,7 +86,7 @@ export async function updateGroup(formData: FormData) {
           },
         });
         // After successfully updating the DB, delete the old image.
-                await deleteFile(existingLogo.url);
+        await deleteFile(existingLogo.url);
       } else {
         await prisma.photo.create({
           data: {

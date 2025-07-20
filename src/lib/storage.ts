@@ -65,8 +65,32 @@ export async function uploadFile(file: File, prefix: string, entityId: string | 
     const filepath = path.join(uploadsDir, filename);
     await mkdir(uploadsDir, { recursive: true });
     await writeFile(filepath, resizedBuffer);
-    // Return a path relative to the `public` directory, without a leading slash
+    // Return a path relative to the `public`// For local storage, ensure the path is a valid root-relative URL
     return `uploads/${key}`;
+  }
+}
+
+export async function getPublicUrl(storagePath: string | null | undefined): Promise<string> {
+  if (!storagePath) {
+    // Return a default placeholder image
+    return '/images/default-avatar.png';
+  }
+
+  // If the path is already a full URL, return it as is.
+  if (storagePath.startsWith('http://') || storagePath.startsWith('https://')) {
+    return storagePath;
+  }
+
+  const BUCKET_NAME = process.env.DO_SPACES_BUCKET;
+  const STORAGE_PROVIDER = process.env.STORAGE_PROVIDER;
+
+  if (STORAGE_PROVIDER === 'do_spaces' && s3Client && BUCKET_NAME) {
+    const command = new GetObjectCommand({ Bucket: BUCKET_NAME, Key: storagePath });
+    // Generate a signed URL that expires in 1 hour (3600 seconds)
+    return getSignedUrl(s3Client, command, { expiresIn: 3600 });
+  } else {
+    // For local storage, ensure the path is a valid root-relative URL
+    return `/${storagePath.replace(/^\/+/, '')}`;
   }
 }
 
@@ -92,26 +116,5 @@ export async function deleteFile(storagePath: string): Promise<void> {
         console.error(`Failed to delete local file: ${storagePath}`, error);
       }
     }
-  }
-}
-
-export async function getPublicUrl(storagePath: string | null | undefined): Promise<string> {
-  if (!storagePath) {
-    // Return a default placeholder image
-    return '/images/default-avatar.png';
-  }
-
-  // If the path is already a full URL, return it as is.
-  if (storagePath.startsWith('http://') || storagePath.startsWith('https://')) {
-    return storagePath;
-  }
-
-  if (STORAGE_PROVIDER === 'do_spaces' && s3Client) {
-    const command = new GetObjectCommand({ Bucket: BUCKET_NAME, Key: storagePath });
-    // Generate a signed URL that expires in 1 hour (3600 seconds)
-    return getSignedUrl(s3Client, command, { expiresIn: 3600 });
-  } else {
-    // For local storage, ensure the path is a valid root-relative URL
-    return `/${storagePath.replace(/^\/+|\/$/g, '')}`;
   }
 }

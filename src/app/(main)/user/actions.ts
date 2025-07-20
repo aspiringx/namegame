@@ -45,7 +45,8 @@ export async function updateUserProfile(prevState: State, formData: FormData): P
 
   const { username, firstName, lastName, photo, password } = validatedFields.data;
   const userId = session.user.id;
-  let newPublicUrl: string | null = null;
+  
+  let newPhotoKey: string | null = null;
   let updatedUser;
 
   try {
@@ -67,8 +68,8 @@ export async function updateUserProfile(prevState: State, formData: FormData): P
 
       // Upload new photo
       const photoKey = await uploadFile(photo, 'user-photos', userId);
-      const publicUrl = await getPublicUrl(photoKey);
-      newPublicUrl = `${publicUrl}?t=${new Date().getTime()}`;
+      newPhotoKey = photoKey;
+
 
       if (existingPhoto) {
         // Note: We are now deleting based on the new key format if the URL is not a full URL.
@@ -77,12 +78,12 @@ export async function updateUserProfile(prevState: State, formData: FormData): P
         await deleteFile(keyToDelete);
         await prisma.photo.update({
           where: { id: existingPhoto.id },
-          data: { url: newPublicUrl, userId: userId }, // Save the full public URL
+          data: { url: photoKey, userId: userId },
         });
       } else {
         await prisma.photo.create({
           data: {
-            url: newPublicUrl, // Save the full public URL
+            url: photoKey,
             typeId: photoTypes.primary.id,
             entityTypeId: entityTypes.user.id,
             entityId: userId,
@@ -151,7 +152,11 @@ export async function updateUserProfile(prevState: State, formData: FormData): P
     redirectUrl = `/g/${userGroups[0].group.slug}`;
   }
 
-  const cacheBustedUrl = newPublicUrl ? `${newPublicUrl}?v=${Date.now()}` : null;
+  let cacheBustedUrl: string | null = null;
+  if (newPhotoKey) {
+    const newPhotoPublicUrl = await getPublicUrl(newPhotoKey);
+    cacheBustedUrl = `${newPhotoPublicUrl}?v=${Date.now()}`;
+  }
 
   return {
     success: true,

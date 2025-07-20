@@ -24,7 +24,7 @@ export default function MemberCard({ member, listType }: MemberCardProps) {
           alt={member.user.name || 'User avatar'}
           width={350}
           height={350}
-          className={`object-cover ${listType === 'iceBlock' ? 'grayscale' : ''}`}
+          className={`object-cover`}
         />
       </div>
       <p className="mt-2 text-sm font-medium text-gray-800 truncate dark:text-gray-200">

@@ -4,21 +4,25 @@ import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { signOut, useSession } from 'next-auth/react';
+import { getPublicUrl } from '@/lib/storage-client';
 
 export default function UserMenu() {
   const { data: session, update } = useSession();
-  const [imgError, setImgError] = useState(false);
-
-  const handleImageError = () => {
-    if (!imgError) {
-      setImgError(true);
-      update();
-    }
-  };
-  const user = session?.user;
-  const isSuperAdmin = user?.isSuperAdmin;
   const [isDropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Listen for photo updates from other tabs/windows
+  useEffect(() => {
+    const channel = new BroadcastChannel('photo_updates');
+    const handlePhotoUpdate = () => {
+      update(); // Refetch the session
+    };
+    channel.addEventListener('message', handlePhotoUpdate);
+    return () => {
+      channel.removeEventListener('message', handlePhotoUpdate);
+      channel.close();
+    };
+  }, [update]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -44,17 +48,20 @@ export default function UserMenu() {
     setDropdownOpen(false);
   };
 
+  const user = session?.user;
+  const isSuperAdmin = user?.isSuperAdmin;
+
   return (
     <div className="relative" ref={dropdownRef}>
       <button onClick={toggleDropdown} className="flex items-center p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
-        {user && <p className="mr-4 text-gray-700 dark:text-gray-300">{user.firstName}</p>}
+        {user && <p className="mr-4 text-gray-700 dark:text-gray-300 hidden sm:block">{user.firstName}</p>}
         <Image
-          src={user?.image || '/images/default-avatar.png'}
+          src={getPublicUrl(user?.image)}
           alt="User Profile"
           width={40}
           height={40}
           className="w-10 h-10 rounded-full"
-          onError={handleImageError}
+          key={user?.image} // Add key to force re-render on image change
         />
       </button>
       {isDropdownOpen && (
@@ -123,14 +130,6 @@ export default function UserMenu() {
               </Link>
             </>
           )}
-          <hr className="my-2 border-gray-200 dark:border-gray-700" />
-          <Link
-            href="/"
-            className="block px-4 py-2 text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
-            onClick={closeDropdown}
-          >
-            How to Play
-          </Link>
         </div>
       )}
     </div>
