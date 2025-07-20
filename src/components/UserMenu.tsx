@@ -49,6 +49,7 @@ export default function UserMenu() {
   };
 
   const user = session?.user;
+  const imageUrl = getPublicUrl(user?.image);
   const isSuperAdmin = user?.isSuperAdmin;
 
   return (
@@ -56,7 +57,7 @@ export default function UserMenu() {
       <button onClick={toggleDropdown} className="flex items-center p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
         {user && <p className="mr-4 text-gray-700 dark:text-gray-300 hidden sm:block">{user.firstName}</p>}
         <Image
-          src={getPublicUrl(user?.image)}
+          src={imageUrl}
           alt="User Profile"
           width={40}
           height={40}
