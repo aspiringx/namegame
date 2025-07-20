@@ -1,8 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { Nunito } from 'next/font/google';
 
-const nunito = Nunito({ subsets: ['latin'], weight: ['400', '700'] });
 
 export default function Home() {
   return (
@@ -17,7 +15,7 @@ export default function Home() {
             className="mx-auto h-auto md:max-w-[500px]"
           />
 
-          <p className={`${nunito.className} text-2xl text-gray-600 dark:text-gray-400`}>
+          <p className="text-2xl text-gray-600 dark:text-gray-400">
             Easily meet people and remember names
           </p>
         </header>

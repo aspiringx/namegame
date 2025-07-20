@@ -71,15 +71,18 @@ export async function updateUserProfile(prevState: State, formData: FormData): P
       newPublicUrl = `${publicUrl}?t=${new Date().getTime()}`;
 
       if (existingPhoto) {
-        await deleteFile(existingPhoto.url);
+        // Note: We are now deleting based on the new key format if the URL is not a full URL.
+        // This assumes old keys might be stored differently.
+        const keyToDelete = existingPhoto.url.startsWith('http') ? new URL(existingPhoto.url).pathname.substring(1) : existingPhoto.url;
+        await deleteFile(keyToDelete);
         await prisma.photo.update({
           where: { id: existingPhoto.id },
-          data: { url: photoKey, userId: userId },
+          data: { url: newPublicUrl, userId: userId }, // Save the full public URL
         });
       } else {
         await prisma.photo.create({
           data: {
-            url: photoKey,
+            url: newPublicUrl, // Save the full public URL
             typeId: photoTypes.primary.id,
             entityTypeId: entityTypes.user.id,
             entityId: userId,

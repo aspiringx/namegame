@@ -28,7 +28,7 @@ const config: Config = {
         foreground: 'var(--foreground)',
       },
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
+        sans: ['var(--font-sans)', 'sans-serif'],
         mono: ['var(--font-geist-mono)'],
       },
       backgroundImage: {
