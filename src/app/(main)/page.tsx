@@ -27,13 +27,15 @@ export default function Home() {
             fetch('/api/users')
                 .then((res) => res.json())
                 .then((users) => {
-                    const options = users
-                        .filter((user: { id: string }) => user.id !== userId) // Exclude current user from options
-                        .map((user: { id: string; firstName: string; lastName: string }) => ({
-                            value: user.id,
-                            label: `${user.firstName} ${user.lastName || ''}`.trim(),
-                        }));
-                    setUserOptions(options);
+                    if (Array.isArray(users)) {
+                        const options = users
+                            .filter((user: { id: string }) => user.id !== userId) // Exclude current user from options
+                            .map((user: { id: string; firstName: string; lastName: string }) => ({
+                                value: user.id,
+                                label: `${user.firstName} ${user.lastName || ''}`.trim(),
+                            }));
+                        setUserOptions(options);
+                    }
                 });
         }
     }, [session, userId]);
@@ -45,13 +47,15 @@ export default function Home() {
     useEffect(() => {
         if (messages.length > 0) {
             const lastMessage = messages[messages.length - 1];
-            const otherParticipants = lastMessage.participants.filter(pId => pId !== userId);
-            
-            const newTargetUsers = userOptions.filter(option => 
-                otherParticipants.includes(option.value)
-            );
+            if (lastMessage && Array.isArray(lastMessage.participants)) {
+                const otherParticipants = lastMessage.participants.filter(pId => pId !== userId);
+                
+                const newTargetUsers = userOptions.filter(option => 
+                    otherParticipants.includes(option.value)
+                );
 
-            setTargetUsers(newTargetUsers);
+                setTargetUsers(newTargetUsers);
+            }
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [messages, userId]);
