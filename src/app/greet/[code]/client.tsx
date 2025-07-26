@@ -65,42 +65,35 @@ export default function GreetPageClient({ codeData, isValidCode }: { codeData: C
             </div>
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center min-h-[calc(100vh-12rem)] text-center p-12 ">
+          <div className="flex flex-col items-center justify-center min-h-[calc(100vh-12rem)] text-center p-6 ">
             <div className="max-w-md w-full">
-              <h1 className="text-4xl font-bold mb-4">Welcome!</h1>
-              <p className="text-left text-2xl mb-4">
-                {codeData.user.firstName} just greeted you in the <b>{codeData.group.name}</b> group!
+              <h1 className="text-4xl font-bold mb-4">Welcome to {codeData.group.name}!</h1>
+              <p className="text-2xl mb-8">
+                {codeData.user.firstName} just greeted you.
               </p>
 
               {!showSignupForm ? (
                 <div className="space-y-4">
                   <p className="text-left mb-8">
-                    If you're new, you can {' '}
-                    <button onClick={() => setShowSignupForm(true)} className="underline text-primary hover:text-primary-foreground">
-                      Join
-                    </button>{' '}
-                    with just your first name. 
-                    If you're already here, {' '}
-                    <button onClick={handleLogin} className="underline text-primary hover:text-primary-foreground">
-                      Login
-                    </button>&nbsp;
-                    to connect.
+                    Enter (first-timers and guests) or Login to 
+                    see {codeData.user.firstName} and others at {codeData.group.name}. 
                   </p>
+                  <div className="text-mb-8">
+                  </div>
                   <div className="flex justify-center gap-4 mb-8">
                     <button
                       onClick={() => setShowSignupForm(true)}
                       className="px-6 py-2 rounded-md border bg-primary text-primary-foreground"
                     >
-                      Join
+                      Enter
                     </button>
-                    <button onClick={handleLogin} className="px-6 py-2 rounded-md">
+                    <button
+                      onClick={handleLogin}
+                      className="px-6 py-2 rounded-md"
+                    >
                       Login
                     </button>
                   </div>
-                  <p className="text-left text-gray-400">
-                    You'll see {codeData.user.firstName} and others in this 
-                    private group to remember faces and names.
-                  </p>
                 </div>
               ) : (
                 <form onSubmit={handleFormSubmit} className="space-y-4">
@@ -108,7 +101,7 @@ export default function GreetPageClient({ codeData, isValidCode }: { codeData: C
                     type="text"
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
-                    placeholder="Enter your first name"
+                    placeholder="Enter with just your first name"
                     className="w-full px-4 py-2 border rounded-md dark:bg-gray-800"
                     required
                   />
@@ -117,10 +110,13 @@ export default function GreetPageClient({ codeData, isValidCode }: { codeData: C
                     disabled={isPending}
                     className="w-full px-6 py-2 rounded-md bg-primary text-primary-foreground disabled:opacity-50"
                   >
-                    {isPending ? 'Joining...' : 'Join the Group'}
+                    {isPending ? 'Entering...' : 'Enter the Group'}
                   </button>
                 </form>
               )}
+              <p className="text-left mt-20 text-gray-500 dark:text-gray-400">
+                NameGame is the fun, easy way to meet and remember people in big groups.
+              </p>
             </div>
           </div>
         )}

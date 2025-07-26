@@ -143,22 +143,10 @@ export default function GroupTabs({
                   <p className="text-sm mb-4 text-gray-500 dark:text-gray-400">
                     People you've greeted.
                   </p>
-                ) : (
-                  count > 0 ? (
+                ): (
                   <p className="text-sm mb-4 text-gray-500 dark:text-gray-400">
-                    To greet the people here, just:
-                    <ol className="list-decimal list-inside mt-2 mb-8">
-                      <li>Click the Greet button below</li>
-                      <li className="ml-4 list-disc"><Link href="/user" className="font-bold underline hover:text-yellow-900 dark:hover:text-yellow-200">Update your profile</Link> if you don't see it</li>
-                      <li>If together, say hi and let them scan the code</li>
-                      <li>If apart, send a nice text with the link</li>
-                    </ol>
+                    People you've haven't greeted.
                   </p>
-                  ) : (
-                    <p className="text-sm mb-4 text-gray-500 dark:text-gray-400">
-                      You've greeted everyone here! 
-                    </p>
-                  )
                 )}
 
                 {count > 3 && (
