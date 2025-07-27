@@ -15,7 +15,6 @@ export const generatePasswordResetToken = async (email: string) => {
     });
   }
 
-  console.log('Creating password reset token for:', email, token, expires);
   const passwordResetToken = await prisma.passwordResetToken.create({
     data: {
       email,
@@ -23,9 +22,32 @@ export const generatePasswordResetToken = async (email: string) => {
       expires,
     },
   });
-  console.log('Created password reset token for:', passwordResetToken);
 
   return passwordResetToken;
+};
+
+export const getPasswordResetTokenByToken = async (token: string) => {
+  try {
+    const passwordResetToken = await prisma.passwordResetToken.findUnique({
+      where: { token },
+    });
+
+    return passwordResetToken;
+  } catch {
+    return null;
+  }
+};
+
+export const getVerificationTokenByToken = async (token: string) => {
+  try {
+    const verificationToken = await prisma.emailVerificationToken.findUnique({
+      where: { token },
+    });
+
+    return verificationToken;
+  } catch {
+    return null;
+  }
 };
 
 export const generateVerificationToken = async (email: string) => {
