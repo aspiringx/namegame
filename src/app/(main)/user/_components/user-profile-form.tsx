@@ -395,15 +395,24 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
 
       {!state?.success && state?.error && <p className="text-red-500">{state.error}</p>}
 
-      <SubmitButton
-        onNewSubmission={handleNewSubmission}
-        disabled={
-          !isDirty ||
-          !!passwordError ||
-          (validation.passwordRequired && !password) ||
-          (validation.photoRequired && !fileSelected)
-        }
-      />
+      <div className="flex items-center gap-x-4">
+        <SubmitButton
+          onNewSubmission={handleNewSubmission}
+          disabled={
+            !isDirty ||
+            !!passwordError ||
+            (validation.passwordRequired && !password) ||
+            (validation.photoRequired && !fileSelected)
+          }
+        />
+        <button
+          type="button"
+          onClick={() => router.back()}
+          className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600 dark:focus:ring-offset-gray-800"
+        >
+          Cancel
+        </button>
+      </div>
     </form>
   );
 }
