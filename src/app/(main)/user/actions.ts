@@ -89,7 +89,7 @@ export async function updateUserProfile(prevState: State, formData: FormData): P
   try {
     const currentUser = await prisma.user.findUnique({
       where: { id: userId },
-      select: { email: true, emailVerified: true },
+      select: { email: true, emailVerified: true, password: true },
     });
 
     if (!currentUser) {
@@ -151,6 +151,21 @@ export async function updateUserProfile(prevState: State, formData: FormData): P
     }
 
     if (password) {
+      if (password === 'password123') {
+        return { success: false, error: 'Please choose a more secure password.', message: null };
+      }
+
+      if (currentUser.password) {
+        const isSamePassword = await bcrypt.compare(password, currentUser.password);
+        if (isSamePassword) {
+          return {
+            success: false,
+            error: 'New password cannot be the same as your current password.',
+            message: null,
+          };
+        }
+      }
+
       dataToUpdate.password = await bcrypt.hash(password, 10);
     }
 

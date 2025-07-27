@@ -49,11 +49,13 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
   const [firstName, setFirstName] = useState(user.firstName || '');
   const [lastName, setLastName] = useState(user.lastName || '');
   const [password, setPassword] = useState('');
+  const [passwordError, setPasswordError] = useState<string | null>(null);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [isFadingOut, setIsFadingOut] = useState(false);
   const formSubmitted = useRef(false);
   const [validation, setValidation] = useState({ submitted: false, passwordRequired: false, photoRequired: false });
   const [fileSelected, setFileSelected] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const initialState: State = {
@@ -65,6 +67,16 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
   };
 
   const [state, formAction] = useActionState(updateUserProfile, initialState);
+
+  useEffect(() => {
+    // Determine if the form is dirty
+    const isFirstNameDirty = firstName !== user.firstName;
+    const isLastNameDirty = lastName !== user.lastName;
+    const isPasswordDirty = !!password;
+    const isPhotoDirty = fileSelected;
+
+    setIsDirty(isFirstNameDirty || isLastNameDirty || isPasswordDirty || isPhotoDirty);
+  }, [firstName, lastName, password, fileSelected, user.firstName, user.lastName]);
 
   useEffect(() => {
     async function fetchRequirements() {
@@ -84,9 +96,22 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
         setPreviewUrl(state.newPhotoUrl);
       }
 
+      // Clear the password field on successful submission
+      if (password) {
+        setPassword('');
+      }
+
+      if (fileSelected) {
+        setFileSelected(false);
+      }
+
       // We pass `newFirstName` as `name` to session.update to mirror the admin flow.
       // The `auth.ts` jwt callback will handle updating both `name` and `firstName` in the token.
-      updateSession({ name: state.newFirstName, image: state.newPhotoUrl }).then(() => {
+      updateSession({ name: state.newFirstName, image: state.newPhotoUrl }).then(async () => {
+        // After updating, re-fetch the requirements to see if they've changed
+        const { passwordRequired, photoRequired } = await getUserUpdateRequirements();
+        setValidation(v => ({ ...v, passwordRequired, photoRequired }));
+
         if (state.redirectUrl) {
           router.push(state.redirectUrl);
         } else {
@@ -270,11 +295,11 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
 
       <div>
         <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          New Password{validation.passwordRequired && <span className="text-red-500">*</span>}
+          New Password{validation.passwordRequired && <span className="text-red-500"> *</span>}
         </label>
         <div className="mt-1 flex rounded-md shadow-sm">
           <input
-            type="text"
+            type="password"
             id="password"
             name="password"
             required={validation.passwordRequired}
@@ -283,7 +308,19 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
             }`}
             placeholder={validation.passwordRequired ? 'New password required' : 'Leave blank to keep current password'}
             value={password}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+              const newPassword = e.target.value;
+              setPassword(newPassword);
+
+              if (newPassword && newPassword === 'password123') {
+                setPasswordError('For security, please choose a different password.');
+              } else if (newPassword && validation.passwordRequired && newPassword.length < 6) {
+                // This is a basic check, server has the final say
+                setPasswordError('Password must be at least 6 characters.');
+              } else {
+                setPasswordError(null);
+              }
+            }}
           />
           <button
             type="button"
@@ -293,11 +330,15 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
             Generate
           </button>
         </div>
-        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-          {validation.passwordRequired
-            ? 'Enter or generate a new password (6+ chars with letters and numbers).'
-            : ''}
-        </p>
+        {passwordError ? (
+          <p className="mt-1 text-xs text-red-500 dark:text-red-400">{passwordError}</p>
+        ) : (
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            {validation.passwordRequired
+              ? 'Enter or generate a new password (6+ chars with letters and numbers).'
+              : ''}
+          </p>
+        )}
       </div>
 
       <div>
@@ -354,7 +395,15 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
 
       {!state?.success && state?.error && <p className="text-red-500">{state.error}</p>}
 
-      <SubmitButton onNewSubmission={handleNewSubmission} disabled={validation.photoRequired && !fileSelected} />
+      <SubmitButton
+        onNewSubmission={handleNewSubmission}
+        disabled={
+          !isDirty ||
+          !!passwordError ||
+          (validation.passwordRequired && !password) ||
+          (validation.photoRequired && !fileSelected)
+        }
+      />
     </form>
   );
 }
