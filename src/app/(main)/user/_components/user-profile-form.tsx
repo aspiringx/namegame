@@ -288,7 +288,7 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
         </div>
         {displayEmail && !isVerifiedForDisplay && (
           <p className="mt-1 rounded-md text-xs bg-red-50 p-2 text-sm text-red-700 dark:bg-red-900 dark:text-red-300">
-            Your email is not verified. After saving, check email for a verification link.
+            Your email is not verified. After saving, check your email for a verification link.
           </p>
         )}
       </div>
@@ -383,11 +383,11 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
             Update My Pic
           </button>
           <p
-            className={`text-xs -mt-3 text-gray-500 dark:text-gray-400 ${validation.photoRequired ? 'text-red-500 dark:text-red-400' : ''
+            className={`text-xs -mt-3 text-red-500 dark:text-red-400 ${validation.photoRequired ? 'text-red-500 dark:text-red-400' : ''
               }`}
           >
-            {validation.photoRequired && previewUrl && !previewUrl.includes('dicebear.com')
-              ? 'A new profile picture is required because you are using a default avatar.'
+            {validation.photoRequired && previewUrl?.includes('dicebear.com')
+              ? 'A new profile pic is required. This is a placeholder people won\'t recognize.'
               : ''}
           </p>
         </div>
@@ -402,7 +402,7 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
             !isDirty ||
             !!passwordError ||
             (validation.passwordRequired && !password) ||
-            (validation.photoRequired && !fileSelected)
+            (validation.photoRequired && previewUrl?.includes('dicebear.com'))
           }
         />
         <button

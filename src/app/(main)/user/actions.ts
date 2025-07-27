@@ -33,12 +33,14 @@ export async function getUserUpdateRequirements(): Promise<{ passwordRequired: b
     throw new Error('User not authenticated');
   }
 
+  const photoTypes = await getCodeTable('photoType');
+
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
     select: {
       password: true,
       photos: {
-        where: { typeId: 1 }, // 1 = 'profile'
+        where: { typeId: photoTypes.primary.id },
         select: { url: true },
       },
     },
