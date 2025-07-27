@@ -32,6 +32,22 @@ export async function newPassword(
     return { error: 'Email does not exist!' };
   }
 
+  const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d).{6,}$/;
+  if (!passwordRegex.test(password)) {
+    return { error: 'Password must be at least 6 characters and include both letters and numbers.' };
+  }
+
+  if (password === 'password123') {
+    return { error: 'Please choose a more secure password.' };
+  }
+
+  if (existingUser.password) {
+    const isSamePassword = await bcrypt.compare(password, existingUser.password);
+    if (isSamePassword) {
+      return { error: 'New password cannot be the same as your current one.' };
+    }
+  }
+
   const hashedPassword = await bcrypt.hash(password, 10);
 
   await prisma.user.update({

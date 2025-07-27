@@ -12,13 +12,13 @@ import {
 } from '@/components/ui/tooltip';
 import { signup, type SignupState } from './actions';
 
-function SubmitButton() {
+function SubmitButton({ disabled }: { disabled?: boolean }) {
   const { pending } = useFormStatus();
 
   return (
     <button
       type="submit"
-      disabled={pending}
+      disabled={pending || disabled}
       className="group relative flex w-full justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50"
     >
       {pending ? 'Signing up...' : 'Sign up'}
@@ -30,6 +30,8 @@ export default function SignupForm() {
   const initialState: SignupState = { message: null, errors: {} };
   const [state, dispatch] = useActionState(signup, initialState);
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [passwordError, setPasswordError] = useState<string | null>(null);
 
   return (
     <div className="flex flex-col justify-start items-center min-h-screen pt-12 sm:pt-12">
@@ -143,10 +145,25 @@ export default function SignupForm() {
                 type="password"
                 placeholder="Password"
                 required
+                value={password}
+                onChange={e => {
+                  const newPassword = e.target.value;
+                  setPassword(newPassword);
+                  if (newPassword === 'password123') {
+                    setPasswordError('Please choose a more secure password.');
+                  } else {
+                    setPasswordError(null);
+                  }
+                }}
                 className="relative block w-full appearance-none rounded-md border border-input bg-background px-3 py-2 text-foreground placeholder-muted-foreground focus:z-10 focus:border-primary focus:outline-none focus:ring-primary sm:text-sm"
               />
-              <p className="mt-2 text-xs text-muted-foreground">At least 6 characters with text and numbers.</p>
+              {passwordError ? (
+                <p className="mt-2 text-xs text-destructive">{passwordError}</p>
+              ) : (
+                <p className="mt-2 text-xs text-muted-foreground">At least 6 characters with text and numbers.</p>
+              )}
               {state.errors?.password &&
+                !passwordError &&
                 state.errors.password.map((error: string) => (
                   <p className="mt-2 text-sm text-destructive" key={error}>
                     {error}
@@ -161,7 +178,7 @@ export default function SignupForm() {
             </div>
           )}
           <div>
-            <SubmitButton />
+            <SubmitButton disabled={!!passwordError} />
           </div>
         </form>
 

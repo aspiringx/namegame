@@ -51,6 +51,15 @@ export async function signup(
 
   const { email, firstName, lastName, password } = validatedFields.data;
 
+  if (password === 'password123') {
+    return {
+      errors: {
+        password: ['Please choose a more secure password.'],
+      },
+      message: 'Invalid form data. Please correct the errors and try again.',
+    };
+  }
+
   try {
     const existingUser = await prisma.user.findUnique({
       where: { email },

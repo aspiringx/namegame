@@ -10,6 +10,7 @@ export default function NewPasswordForm() {
   const token = searchParams.get('token');
 
   const [password, setPassword] = useState('');
+  const [passwordError, setPasswordError] = useState<string | null>(null);
   const [error, setError] = useState<string | undefined>('');
   const [success, setSuccess] = useState<string | undefined>('');
   const [isPending, setIsPending] = useState(false);
@@ -54,18 +55,41 @@ export default function NewPasswordForm() {
               className="relative block w-full appearance-none rounded-md border border-input bg-background px-3 py-2 text-foreground placeholder-muted-foreground focus:z-10 focus:border-primary focus:outline-none focus:ring-primary sm:text-sm"
               placeholder="New password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={e => {
+                const newPassword = e.target.value;
+                setPassword(newPassword);
+                if (newPassword === 'password123') {
+                  setPasswordError('Please choose a more secure password.');
+                } else {
+                  const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d).{6,}$/;
+                  if (newPassword && !passwordRegex.test(newPassword)) {
+                    setPasswordError('Must be 6+ characters with letters and numbers.');
+                  } else {
+                    setPasswordError(null);
+                  }
+                }
+              }}
               disabled={isPending || !!success}
             />
+            <p className="mt-2 text-xs text-muted-foreground">
+              At least 6 characters with text and numbers.
+            </p>
           </div>
 
-          {error && <p className="text-sm text-center text-destructive">{error}</p>}
-          {success && <p className="text-sm text-center text-green-500">{success}</p>}
+          {passwordError && (
+            <p className="text-sm text-center text-destructive">{passwordError}</p>
+          )}
+          {error && !passwordError && (
+            <p className="text-sm text-center text-destructive">{error}</p>
+          )}
+          {success && (
+            <p className="text-sm text-center text-green-500">{success}</p>
+          )}
 
           <div>
             <button
               type="submit"
-              disabled={isPending || !!success}
+              disabled={isPending || !!success || !!passwordError}
               className="group relative flex w-full justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50"
             >
               {isPending ? 'Resetting...' : 'Reset password'}
