@@ -21,7 +21,12 @@ export function getPublicUrl(storagePath: string | null | undefined): string {
     return `/${storagePath}`;
   }
 
-  // 4. Handle new DigitalOcean Spaces paths by routing them through our secure proxy.
+  // 4. Handle already-proxied DigitalOcean Spaces paths.
+  if (storagePath.startsWith('/api/images')) {
+    return storagePath;
+  }
+
+  // 5. Handle new DigitalOcean Spaces paths by routing them through our secure proxy.
   if (STORAGE_PROVIDER === 'do_spaces') {
     return `/api/images?key=${storagePath}`;
   }

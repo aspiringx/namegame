@@ -90,7 +90,12 @@ export async function getPublicUrl(storagePath: string | null | undefined): Prom
     return `/${storagePath}`;
   }
 
-  // 4. Handle new DigitalOcean Spaces paths by routing them through our secure proxy.
+  // 4. Handle already-proxied DigitalOcean Spaces paths.
+  if (storagePath.startsWith('/api/images')) {
+    return storagePath;
+  }
+
+  // 5. Handle new DigitalOcean Spaces paths by routing them through our secure proxy.
   // These paths are stored as 'user-photos/...' and need to be prefixed.
   if (STORAGE_PROVIDER === 'do_spaces') {
     return `/api/images?key=${storagePath}`;
