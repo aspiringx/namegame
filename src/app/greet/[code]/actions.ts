@@ -188,7 +188,7 @@ export async function handleGuestGreeting(firstName: string, codeData: CodeData)
 
     // 4. After the transaction is successful, sign the new user in
     await signIn('credentials', {
-      username,
+      email: username,
       password: 'password123',
       redirect: false, // We will handle redirection on the client
     });
