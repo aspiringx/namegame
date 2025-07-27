@@ -27,6 +27,39 @@ const UserProfileSchema = z.object({
   photo: z.instanceof(File).optional(),
 });
 
+export async function getUserUpdateRequirements(): Promise<{ passwordRequired: boolean; photoRequired: boolean }> {
+  const session = await auth();
+  if (!session?.user?.id) {
+    throw new Error('User not authenticated');
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: {
+      password: true,
+      photos: {
+        where: { typeId: 1 }, // 1 = 'profile'
+        select: { url: true },
+      },
+    },
+  });
+
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  let passwordRequired = false;
+  if (user.password) {
+    passwordRequired = await bcrypt.compare('password123', user.password);
+  }
+
+  const photoRequired = user.photos.some(photo => photo.url.includes('dicebear.com'));
+
+  revalidatePath('/user');
+
+  return { passwordRequired, photoRequired };
+}
+
 export async function updateUserProfile(prevState: State, formData: FormData): Promise<State> {
   const session = await auth();
   if (!session?.user?.id) {
@@ -184,7 +217,7 @@ export async function updateUserProfile(prevState: State, formData: FormData): P
     success: true,
     message: 'Profile updated successfully!',
     error: null,
-    newPhotoUrl: cacheBustedUrl,
+    newPhotoUrl: newPhotoKey ? await getPublicUrl(newPhotoKey) : null,
     newFirstName: updatedUser.firstName,
     redirectUrl,
   };

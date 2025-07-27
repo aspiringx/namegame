@@ -4,7 +4,7 @@ import { useSession } from 'next-auth/react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useActionState, useEffect, useRef, useState } from 'react';
 import { useFormStatus } from 'react-dom';
-import { updateUserProfile, State } from '../actions';
+import { updateUserProfile, State, getUserUpdateRequirements } from '../actions';
 import Image from 'next/image';
 import { ShieldAlert, ShieldCheck } from 'lucide-react';
 import {
@@ -21,18 +21,18 @@ export type UserProfile = {
   lastName: string | null;
   email: string | null;
   emailVerified: string | null; // Pass date as ISO string
-  photoUrl: string | null;
+  photos: { url: string }[];
 };
 
-function SubmitButton({ onNewSubmission }: { onNewSubmission: () => void }) {
+function SubmitButton({ onNewSubmission, disabled }: { onNewSubmission: () => void; disabled?: boolean }) {
   const { pending } = useFormStatus();
 
   return (
     <button
       type="submit"
-      disabled={pending}
+      disabled={pending || disabled}
       onClick={onNewSubmission}
-      className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:bg-indigo-400 dark:focus:ring-offset-gray-800 dark:disabled:bg-indigo-800"
+      className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:bg-indigo-400 dark:focus:ring-offset-gray-800 dark:disabled:bg-indigo-800 disabled:opacity-50 disabled:cursor-not-allowed"
     >
       {pending ? 'Saving...' : 'Save Changes'}
     </button>
@@ -45,11 +45,15 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [previewUrl, setPreviewUrl] = useState<string | null>(user.photoUrl);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(user.photos[0]?.url ?? null);
+  const [firstName, setFirstName] = useState(user.firstName || '');
+  const [lastName, setLastName] = useState(user.lastName || '');
   const [password, setPassword] = useState('');
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [isFadingOut, setIsFadingOut] = useState(false);
   const formSubmitted = useRef(false);
+  const [validation, setValidation] = useState({ submitted: false, passwordRequired: false, photoRequired: false });
+  const [fileSelected, setFileSelected] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const initialState: State = {
@@ -60,7 +64,15 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
     newPhotoUrl: null,
   };
 
-    const [state, formAction] = useActionState(updateUserProfile, initialState);
+  const [state, formAction] = useActionState(updateUserProfile, initialState);
+
+  useEffect(() => {
+    async function fetchRequirements() {
+      const { passwordRequired, photoRequired } = await getUserUpdateRequirements();
+      setValidation(v => ({ ...v, passwordRequired, photoRequired }));
+    }
+    fetchRequirements();
+  }, [user.id]);
 
   useEffect(() => {
     if (state.success && !formSubmitted.current) {
@@ -103,6 +115,7 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
   }, [showSuccessMessage]);
 
   const handleNewSubmission = () => {
+    setValidation(v => ({ ...v, submitted: true }));
     formSubmitted.current = false;
     const params = new URLSearchParams(searchParams);
     if (params.has('welcome')) {
@@ -142,10 +155,11 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreviewUrl(reader.result as string);
+        setFileSelected(true);
       };
       reader.readAsDataURL(file);
     } else {
-      setPreviewUrl(user.photoUrl);
+      setPreviewUrl(user.photos[0]?.url ?? null);
     }
   };
 
@@ -172,15 +186,19 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
       <div className="flex">
         <div className="flex-grow">
           <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            First<span className="text-red-500">*</span>
+            First <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
             id="firstName"
             name="firstName"
+            placeholder="First name"
             required
-            defaultValue={user.firstName || ''}
-            className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-l-md rounded-r-none shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
+            value={firstName}
+            onChange={e => setFirstName(e.target.value)}
+            className={`mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-l-md rounded-r-none shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 ${
+              !firstName ? 'bg-red-100 dark:bg-red-900' : ''
+            }`}
           />
         </div>
 
@@ -192,9 +210,13 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
             type="text"
             id="lastName"
             name="lastName"
+            placeholder="Last name"
             required
-            defaultValue={user.lastName || ''}
-            className="mt-1 -ml-px block w-full px-3 py-2 bg-white border border-gray-300 rounded-r-md rounded-l-none shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
+            value={lastName}
+            onChange={e => setLastName(e.target.value)}
+            className={`mt-1 -ml-px block w-full px-3 py-2 bg-white border border-gray-300 rounded-r-md rounded-l-none shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 ${
+              !lastName ? 'bg-red-100 dark:bg-red-900' : ''
+            }`}
           />
         </div>
       </div>
@@ -209,9 +231,12 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
             id="email"
             name="email"
             value={displayEmail}
+            placeholder="Email"
             required
             onChange={(e) => setDisplayEmail(e.target.value)}
-            className="block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+            className={`block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white  dark:placeholder-gray-400 ${
+              !displayEmail ? 'bg-red-100 dark:bg-red-900' : ''
+            }`}
           />
           <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
             <TooltipProvider disableHoverableContent={true}>
@@ -236,11 +261,6 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
             </TooltipProvider>
           </div>
         </div>
-        {/* {!isVerifiedForDisplay && (
-          <p className="mt-1 rounded-md text-xs bg-red-50 p-2 text-sm text-red-700 dark:bg-red-900 dark:text-red-300">
-            Email is required to unlock features and login later.
-          </p>
-        )} */}
         {displayEmail && !isVerifiedForDisplay && (
           <p className="mt-1 rounded-md text-xs bg-red-50 p-2 text-sm text-red-700 dark:bg-red-900 dark:text-red-300">
             Your email is not verified. After saving, check email for a verification link.
@@ -250,15 +270,18 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
 
       <div>
         <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          New Password
+          New Password{validation.passwordRequired && <span className="text-red-500">*</span>}
         </label>
         <div className="mt-1 flex rounded-md shadow-sm">
           <input
             type="text"
             id="password"
             name="password"
-            className="flex-1 block w-full min-w-0 rounded-none rounded-l-md px-3 py-2 bg-white border border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
-            placeholder="Leave blank to keep current password"
+            required={validation.passwordRequired}
+            className={`flex-1 block w-full min-w-0 rounded-none rounded-l-md px-3 py-2 bg-white border border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 ${
+              validation.passwordRequired && !password ? 'bg-red-100 dark:bg-red-900' : ''
+            }`}
+            placeholder={validation.passwordRequired ? 'New password required' : 'Leave blank to keep current password'}
             value={password}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
           />
@@ -271,16 +294,22 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
           </button>
         </div>
         <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-          Enter or generate a new password (6+ chars with letters and numbers).
+          {validation.passwordRequired
+            ? 'Enter or generate a new password (6+ chars with letters and numbers).'
+            : ''}
         </p>
       </div>
 
       <div>
         <label htmlFor="photo" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Profile Picture
+          Profile Picture{validation.photoRequired && <span className="text-red-500"> *</span>}
         </label>
         <div className="mt-2 flex flex-col items-start space-y-4">
-          <span className="inline-block h-64 w-64 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-700">
+          <span
+            className={`inline-block h-64 w-64 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-700 ${
+              validation.photoRequired && !previewUrl ? 'ring-2 ring-red-500 ring-offset-2 dark:ring-offset-gray-800' : ''
+            }`}
+          >
             {previewUrl ? (
               <Image
                 src={previewUrl}
@@ -300,6 +329,7 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
             id="photo"
             name="photo"
             accept="image/*"
+            required={validation.photoRequired}
             onChange={handleFileChange}
             ref={fileInputRef}
             className="hidden"
@@ -311,15 +341,20 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
           >
             Update My Pic
           </button>
-          <p className="text-xs -mt-3 text-gray-500 dark:text-gray-400">
-            Not required for guests. Recommended for full features.
+          <p
+            className={`text-xs -mt-3 text-gray-500 dark:text-gray-400 ${validation.photoRequired ? 'text-red-500 dark:text-red-400' : ''
+              }`}
+          >
+            {validation.photoRequired && previewUrl && !previewUrl.includes('dicebear.com')
+              ? 'A new profile picture is required because you are using a default avatar.'
+              : ''}
           </p>
         </div>
       </div>
 
       {!state?.success && state?.error && <p className="text-red-500">{state.error}</p>}
 
-      <SubmitButton onNewSubmission={handleNewSubmission} />
+      <SubmitButton onNewSubmission={handleNewSubmission} disabled={validation.photoRequired && !fileSelected} />
     </form>
   );
 }

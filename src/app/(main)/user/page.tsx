@@ -1,8 +1,8 @@
 import { auth } from '@/auth';
+import { getPublicUrl } from '@/lib/storage';
 import { redirect } from 'next/navigation';
 import prisma from '@/lib/prisma';
 import UserProfileForm from './_components/user-profile-form';
-import { getPublicUrl } from '@/lib/storage';
 import Link from 'next/link';
 import Image from 'next/image';
 import { getCodeTable } from '@/lib/codes';
@@ -46,25 +46,32 @@ export default async function UserProfilePage(props: {
           },
         },
       },
+      photos: {
+        orderBy: { typeId: 'asc' }, // Puts 'primary' (id 2) before 'profile' (id 1) if you use desc.
+      },
     },
   });
 
   if (!user) {
-    // This should theoretically not happen if a session exists
-    redirect('/login?callbackUrl=/user');
+    // This should theoretically not happen if a session exists, but if it does,
+    // redirecting to the home page is a safe fallback.
+    redirect('/');
   }
 
-  const primaryPhoto = await prisma.photo.findFirst({
-    where: {
-      entityId: user.id,
-      entityTypeId: entityTypes.user.id,
-      typeId: photoTypes.primary.id,
-    },
-  });
 
-  const photoUrl = await getPublicUrl(primaryPhoto?.url);
 
   const isGuest = user.groupMemberships.some((m) => m.role.code === 'guest');
+
+  const userWithPublicUrls = {
+    ...user,
+    emailVerified: user.emailVerified ? user.emailVerified.toISOString() : null,
+    photos: await Promise.all(
+      user.photos.map(async (photo) => ({
+        ...photo,
+        url: await getPublicUrl(photo.url),
+      }))
+    ),
+  };
 
   return (
     <main className="container mx-auto px-4 py-8">
@@ -88,25 +95,25 @@ export default async function UserProfilePage(props: {
             <ul className="divide-y divide-gray-200 dark:divide-gray-700">
               {user.groupMemberships.map((membership) => (
                 <li key={membership.groupId}>
-                    <Link
-                      href={`/g/${membership.group.slug}`}
-                      className="block hover:bg-gray-50 dark:hover:bg-gray-700 px-4 py-4 sm:px-6"
-                    >
-                      <p className="text-sm font-medium text-indigo-600 dark:text-indigo-400 truncate">
-                        {membership.group.name}
-                      </p>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : (
-            <p className="text-gray-500 dark:text-gray-400">You are not a member of any groups yet.</p>
-          )}
+                  <Link
+                    href={`/g/${membership.group.slug}`}
+                    className="block hover:bg-gray-50 dark:hover:bg-gray-700 px-4 py-4 sm:px-6"
+                  >
+                    <p className="text-sm font-medium text-indigo-600 dark:text-indigo-400 truncate">
+                      {membership.group.name}
+                    </p>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : (
+          <p className="text-gray-500 dark:text-gray-400">You are not a member of any groups yet.</p>
+        )}
 
-        </div>
+      </div>
 
-        <div className="mt-12 max-w-2xl mx-auto">
+      <div className="mt-12 max-w-2xl mx-auto">
         <Image
           src="/images/butterflies.png"
           alt="NameGame social butterflies"
@@ -116,13 +123,7 @@ export default async function UserProfilePage(props: {
         />
         <h2 className="text-2xl font-bold mb-6">My Profile</h2>
 
-        <UserProfileForm
-          user={{
-            ...user,
-            emailVerified: user.emailVerified?.toISOString() || null,
-            photoUrl: photoUrl,
-          }}
-        />
+        <UserProfileForm user={userWithPublicUrls} />
 
       </div>
     </main>
