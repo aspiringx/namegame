@@ -115,15 +115,6 @@ export default async function UserProfilePage(props: {
           className="float-right" style={{ marginTop: '-4px' }}
         />
         <h2 className="text-2xl font-bold mb-6">My Profile</h2>
-        {isGuest && (
-          <div className="mb-4 rounded-md bg-yellow-50 p-4 text-sm text-yellow-800 dark:bg-yellow-950 dark:text-yellow-300">
-            <p className="font-bold mb-4">You're playing as a guest with limited features.</p>
-            <ul className="list-disc list-outside space-y-2 ml-4">
-              <li><b>Tip:</b> You can change your username and password (default for new players is <i>password123</i>) and continue as a guest</li>
-              <li><b>Tip:</b> Add your last name and a profile pic to unlock all features and become more visible</li>
-            </ul>
-          </div>
-        )}
 
         <UserProfileForm
           user={{
