@@ -16,7 +16,7 @@ export async function sendPasswordResetLink(email: string): Promise<{ success?: 
   if (!existingUser) {
     // Note: To prevent email enumeration, we return a generic success message.
     // This is a common security practice.
-    return { success: 'If email exists, a reset link has been sent and will expire in 1 hour.' };
+    return { success: 'If email exists, we sent a link that will expire in 1 hour.' };
   }
 
   try {
@@ -25,7 +25,7 @@ export async function sendPasswordResetLink(email: string): Promise<{ success?: 
       passwordResetToken.email,
       passwordResetToken.token
     );
-    return { success: 'If email exists, a reset link has been sent and will expire in 1 hour.' };
+    return { success: 'If email exists, we sent a link that will expire in 1 hour.' };
   } catch (error) {
     console.error('Failed to send password reset email:', error);
     return { error: 'Something went wrong. Please try again.' };

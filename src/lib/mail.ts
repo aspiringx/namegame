@@ -1,4 +1,7 @@
 import { resend } from '@/lib/resend';
+import { VerificationEmail, getVerificationEmailText } from '@/emails/verification-email';
+import { PasswordResetEmail, getPasswordResetEmailText } from '@/emails/password-reset-email';
+import React from 'react';
 
 const domain = process.env.NEXT_PUBLIC_APP_URL;
 const from_no_reply = process.env.FROM_EMAIL_NO_REPLY || 'NameGame <onboarding@resend.dev>';
@@ -10,7 +13,8 @@ export const sendVerificationEmail = async (email: string, token: string) => {
     from: from_no_reply,
     to: email,
     subject: 'Confirm your email',
-    html: `<p>Click <a href="${confirmLink}">here</a> to confirm your email.</p>`,
+    react: React.createElement(VerificationEmail, { confirmLink }),
+    text: getVerificationEmailText(confirmLink),
   });
 };
 
@@ -21,6 +25,7 @@ export const sendPasswordResetEmail = async (email: string, token: string) => {
     from: from_no_reply,
     to: email,
     subject: 'Reset your password',
-    html: `<p>Click <a href="${resetLink}">here</a> to reset your NameGame password.</p>`,
+    react: React.createElement(PasswordResetEmail, { resetLink }),
+    text: getPasswordResetEmailText(resetLink),
   });
 };
