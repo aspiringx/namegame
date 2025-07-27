@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import Link from 'next/link';
 import { ShieldAlert } from 'lucide-react';
@@ -29,6 +29,7 @@ function SubmitButton() {
 export default function SignupForm() {
   const initialState: SignupState = { message: null, errors: {} };
   const [state, dispatch] = useActionState(signup, initialState);
+  const [email, setEmail] = useState('');
 
   return (
     <div className="flex flex-col justify-start items-center min-h-screen pt-12 sm:pt-12">
@@ -94,21 +95,30 @@ export default function SignupForm() {
                   type="email"
                   placeholder="Email"
                   required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                 />
                 <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                  <TooltipProvider>
+                  <TooltipProvider disableHoverableContent={true}>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <ShieldAlert className="h-5 w-5 text-red-500" aria-hidden="true" />
+                        <button type="button" className="pointer-events-auto focus:outline-none">
+                          <ShieldAlert className="h-5 w-5 text-red-500" aria-hidden="true" />
+                        </button>
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p>Verification will be required after signup.</p>
+                        <p>Verification will be required to complete signup.</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
                 </div>
               </div>
+              {email.includes('@') && (
+                <p className="mt-1 rounded-md text-xs bg-green-50 p-2 text-sm text-green-700 dark:bg-green-900 dark:text-green-300">
+                  After submitting, check your email for a verification link.
+                </p>
+              )}
               {state.errors?.email &&
                 state.errors.email.map((error: string) => (
                   <p className="mt-2 text-sm text-destructive" key={error}>

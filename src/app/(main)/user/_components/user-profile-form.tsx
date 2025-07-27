@@ -192,6 +192,7 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
             type="text"
             id="lastName"
             name="lastName"
+            required
             defaultValue={user.lastName || ''}
             className="mt-1 -ml-px block w-full px-3 py-2 bg-white border border-gray-300 rounded-r-md rounded-l-none shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
           />
@@ -208,6 +209,7 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
             id="email"
             name="email"
             value={displayEmail}
+            required
             onChange={(e) => setDisplayEmail(e.target.value)}
             className="block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
           />
@@ -234,15 +236,14 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
             </TooltipProvider>
           </div>
         </div>
-        {!user.email && (
+        {/* {!isVerifiedForDisplay && (
           <p className="mt-1 rounded-md text-xs bg-red-50 p-2 text-sm text-red-700 dark:bg-red-900 dark:text-red-300">
-            Your temporary username is <b>{user.username}</b>. <br />
-            Add and verify an email to keep this account.
+            Email is required to unlock features and login later.
           </p>
-        )}
+        )} */}
         {displayEmail && !isVerifiedForDisplay && (
           <p className="mt-1 rounded-md text-xs bg-red-50 p-2 text-sm text-red-700 dark:bg-red-900 dark:text-red-300">
-            Your email is not verified. After saving, check your email for a verification link.
+            Your email is not verified. After saving, check email for a verification link.
           </p>
         )}
       </div>

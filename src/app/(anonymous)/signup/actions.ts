@@ -1,5 +1,6 @@
 'use server';
 
+import { User } from '@/generated/prisma/client';
 import { z } from 'zod';
 import prisma from '@/lib/prisma';
 import bcrypt from 'bcrypt';
@@ -56,16 +57,17 @@ export async function signup(
     });
 
     if (existingUser) {
-      return { message: 'Username is already taken.' };
+      return { message: 'Email is already taken.' };
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+    let newUser: User | undefined;
 
     // When creating a new user through the /signup form (not via greeting code)
-    // we require email. Since username is also required, set it to email 
+    // we require email. Since username is also required, set it to email
     // value too so it's unique.
     await prisma.$transaction(async (tx) => {
-      const newUser = await tx.user.create({
+      newUser = await tx.user.create({
         data: {
           email,
           username: email,
@@ -74,14 +76,6 @@ export async function signup(
           password: hashedPassword,
         },
       });
-
-      if (!newUser.email) {
-        // This should theoretically never happen in the signup flow
-        // but provides a safeguard.
-        throw new Error('Email is required to send verification.');
-      }
-
-      await sendVerificationEmail(newUser.email, newUser.id);
 
       // Use the user's ID as a seed for a unique, deterministic avatar
       const avatarUrl = `https://api.dicebear.com/8.x/personas/png?seed=${newUser.id}`;
@@ -101,6 +95,10 @@ export async function signup(
         },
       });
     });
+
+    if (newUser && newUser.email) {
+      await sendVerificationEmail(newUser.email, newUser.id);
+    }
   } catch (error) {
     return {
       message: 'Database Error: Failed to create user.',

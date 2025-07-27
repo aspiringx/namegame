@@ -2,7 +2,7 @@ import { MailCheck } from 'lucide-react';
 
 export default function CheckEmailPage() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground">
+    <div className="flex flex-col items-center justify-start mt-12 min-h-screen bg-background text-foreground">
       <div className="w-full max-w-md p-8 space-y-6 text-center bg-card text-card-foreground rounded-lg shadow-md">
         <div className="flex justify-center">
           <MailCheck className="w-16 h-16 text-primary" />
