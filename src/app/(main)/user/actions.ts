@@ -7,6 +7,7 @@ import prisma from '@/lib/prisma';
 import { revalidatePath, revalidateTag } from 'next/cache';
 import { getCodeTable } from '@/lib/codes';
 import { uploadFile, deleteFile, getPublicUrl } from '@/lib/storage';
+import { sendVerificationEmail } from '@/lib/mail';
 
 export type State = {
   success: boolean;
@@ -53,6 +54,14 @@ export async function updateUserProfile(prevState: State, formData: FormData): P
   let updatedUser;
 
   try {
+    const currentUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true, emailVerified: true },
+    });
+
+    if (!currentUser) {
+      return { success: false, error: 'User not found.', message: null };
+    }
     const [photoTypes, entityTypes, groupUserRoles] = await Promise.all([
       getCodeTable('photoType'),
       getCodeTable('entityType'),
@@ -97,11 +106,16 @@ export async function updateUserProfile(prevState: State, formData: FormData): P
     }
 
     const dataToUpdate: any = {
-      // username,
       firstName,
       lastName,
-      email
     };
+
+    let emailChanged = false;
+    if (email && (email !== currentUser.email || !currentUser.emailVerified)) {
+      dataToUpdate.email = email;
+      dataToUpdate.emailVerified = null; // Mark new email as unverified
+      emailChanged = true;
+    }
 
     if (password) {
       dataToUpdate.password = await bcrypt.hash(password, 10);
@@ -111,6 +125,10 @@ export async function updateUserProfile(prevState: State, formData: FormData): P
       where: { id: userId },
       data: dataToUpdate,
     });
+
+    if (emailChanged && updatedUser.email) {
+      await sendVerificationEmail(updatedUser.email, userId);
+    }
 
     const hasPrimaryPhoto = await prisma.photo.findFirst({
       where: {

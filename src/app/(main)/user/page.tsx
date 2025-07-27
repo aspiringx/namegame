@@ -125,7 +125,13 @@ export default async function UserProfilePage(props: {
           </div>
         )}
 
-        <UserProfileForm user={user} photoUrl={photoUrl} />
+        <UserProfileForm
+          user={{
+            ...user,
+            emailVerified: user.emailVerified?.toISOString() || null,
+            photoUrl: photoUrl,
+          }}
+        />
 
       </div>
     </main>

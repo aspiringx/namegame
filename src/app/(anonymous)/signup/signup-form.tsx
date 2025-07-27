@@ -3,6 +3,13 @@
 import { useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
 import Link from 'next/link';
+import { ShieldAlert } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { signup, type SignupState } from './actions';
 
 function SubmitButton() {
@@ -80,14 +87,28 @@ export default function SignupForm() {
               Email <span className="text-destructive">*</span>
             </label>
             <div className="mt-1">
-              <input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="Email"
-                required
-                className="relative block w-full appearance-none rounded-md border border-input bg-background px-3 py-2 text-foreground placeholder-muted-foreground focus:z-10 focus:border-primary focus:outline-none focus:ring-primary sm:text-sm"
-              />
+              <div className="relative">
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  placeholder="Email"
+                  required
+                  className="block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                />
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <ShieldAlert className="h-5 w-5 text-red-500" aria-hidden="true" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Verification will be required after signup.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+              </div>
               {state.errors?.email &&
                 state.errors.email.map((error: string) => (
                   <p className="mt-2 text-sm text-destructive" key={error}>

@@ -59,6 +59,7 @@ model User {
   updatedById      String?
   accounts         Account[]
   sessions         Session[]
+  emailVerificationTokens EmailVerificationToken[]
   codes            Code[]
   greetingsSent    Greeting[]  @relation("GreetingUser1")
   greetingsRcvd    Greeting[]  @relation("GreetingUser2")
@@ -288,12 +289,14 @@ model PhotoType {
 }
 
 model EmailVerificationToken {
-  id      String   @id @default(cuid())
-  email   String
-  token   String   @unique
-  expires DateTime
+  id        String   @id @default(cuid())
+  token     String   @unique
+  expires   DateTime
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
 
-  @@unique([email, token])
+  @@index([userId])
 }
 
 model PasswordResetToken {

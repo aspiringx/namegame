@@ -1,40 +1,28 @@
 'use client';
 
-import { useActionState, useState, useRef, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useActionState, useEffect, useRef, useState } from 'react';
 import { useFormStatus } from 'react-dom';
-import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import type { User } from '@/generated/prisma';
+import { updateUserProfile, State } from '../actions';
 import Image from 'next/image';
-import { updateUserProfile, type State } from '../actions';
+import { ShieldAlert, ShieldCheck } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
-function generateRandomPassword(length: number) {
-  const letters = 'abcdefghijklmnopqrstuvwxyz';
-  const numbers = '123456789';
-  const allChars = letters + numbers;
-  let result = '';
-
-  // Generate a random string of the given length
-  for (let i = 0; i < length; i++) {
-    result += allChars.charAt(Math.floor(Math.random() * allChars.length));
-  }
-
-  // Check if it has at least one number
-  const hasNumber = numbers.split('').some(num => result.includes(num));
-
-  // If not, replace a random character with a random number
-  if (!hasNumber) {
-    const randomIndex = Math.floor(Math.random() * length);
-    const randomNumber = numbers.charAt(Math.floor(Math.random() * numbers.length));
-    result = result.substring(0, randomIndex) + randomNumber + result.substring(randomIndex + 1);
-  }
-
-  return result;
-}
-
-interface UserWithPhoto extends User {
-  photoUrl?: string;
-}
+export type UserProfile = {
+  id: string;
+  username: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  email: string | null;
+  emailVerified: string | null; // Pass date as ISO string
+  photoUrl: string | null;
+};
 
 function SubmitButton({ onNewSubmission }: { onNewSubmission: () => void }) {
   const { pending } = useFormStatus();
@@ -51,12 +39,13 @@ function SubmitButton({ onNewSubmission }: { onNewSubmission: () => void }) {
   );
 }
 
-export default function UserProfileForm({ user, photoUrl }: { user: UserWithPhoto; photoUrl: string }) {
+export default function UserProfileForm({ user }: { user: UserProfile }) {
+  const [displayEmail, setDisplayEmail] = useState(user.email || '');
   const { data: session, update: updateSession } = useSession();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [previewUrl, setPreviewUrl] = useState<string>(photoUrl);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(user.photoUrl);
   const [password, setPassword] = useState('');
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [isFadingOut, setIsFadingOut] = useState(false);
@@ -71,7 +60,7 @@ export default function UserProfileForm({ user, photoUrl }: { user: UserWithPhot
     newPhotoUrl: null,
   };
 
-  const [state, formAction] = useActionState(updateUserProfile, initialState);
+    const [state, formAction] = useActionState(updateUserProfile, initialState);
 
   useEffect(() => {
     if (state.success && !formSubmitted.current) {
@@ -124,7 +113,27 @@ export default function UserProfileForm({ user, photoUrl }: { user: UserWithPhot
   };
 
   const handleGeneratePassword = () => {
-    setPassword(generateRandomPassword(6));
+    const letters = 'abcdefghijklmnopqrstuvwxyz';
+    const numbers = '123456789';
+    const allChars = letters + numbers;
+    let result = '';
+
+    // Generate a random string of the given length
+    for (let i = 0; i < 6; i++) {
+      result += allChars.charAt(Math.floor(Math.random() * allChars.length));
+    }
+
+    // Check if it has at least one number
+    const hasNumber = numbers.split('').some(num => result.includes(num));
+
+    // If not, replace a random character with a random number
+    if (!hasNumber) {
+      const randomIndex = Math.floor(Math.random() * 6);
+      const randomNumber = numbers.charAt(Math.floor(Math.random() * numbers.length));
+      result = result.substring(0, randomIndex) + randomNumber + result.substring(randomIndex + 1);
+    }
+
+    setPassword(result);
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -136,13 +145,17 @@ export default function UserProfileForm({ user, photoUrl }: { user: UserWithPhot
       };
       reader.readAsDataURL(file);
     } else {
-      setPreviewUrl(photoUrl);
+      setPreviewUrl(user.photoUrl);
     }
   };
 
-  const handleUpdatePicClick = () => {
+  const handleChoosePhoto = () => {
     fileInputRef.current?.click();
   };
+
+  // The email is considered verified for display purposes only if the original email
+  // was verified AND the email in the input hasn't been changed.
+    const isVerifiedForDisplay = !!user.emailVerified && displayEmail === user.email;
 
   return (
     <form action={formAction} className="space-y-6">
@@ -189,18 +202,47 @@ export default function UserProfileForm({ user, photoUrl }: { user: UserWithPhot
         <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
           Email <span className="text-red-500">*</span>
         </label>
-        <input
-          type="email"
-          id="email"
-          name="email"
-          // required
-          defaultValue={user.email || ''}
-          className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
-        />
+        <div className="relative mt-1">
+          <input
+            type="email"
+            id="email"
+            name="email"
+            value={displayEmail}
+            onChange={(e) => setDisplayEmail(e.target.value)}
+            className="block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+          />
+          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+            <TooltipProvider disableHoverableContent={true}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button type="button" className="pointer-events-auto focus:outline-none">
+                    {isVerifiedForDisplay ? (
+                      <ShieldCheck className="h-5 w-5 text-green-500" aria-hidden="true" />
+                    ) : (
+                      <ShieldAlert className="h-5 w-5 text-red-500" aria-hidden="true" />
+                    )}
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {isVerifiedForDisplay ? (
+                    <p>Email verified on {new Date(user.emailVerified!).toLocaleDateString()}</p>
+                  ) : (
+                    <p>Email not verified</p>
+                  )}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        </div>
         {!user.email && (
           <p className="mt-1 rounded-md text-xs bg-red-50 p-2 text-sm text-red-700 dark:bg-red-900 dark:text-red-300">
             Your temporary username is <b>{user.username}</b>. <br />
             Add and verify an email to keep this account.
+          </p>
+        )}
+        {displayEmail && !isVerifiedForDisplay && (
+          <p className="mt-1 rounded-md text-xs bg-red-50 p-2 text-sm text-red-700 dark:bg-red-900 dark:text-red-300">
+            Your email is not verified. After saving, check your email for a verification link.
           </p>
         )}
       </div>
@@ -217,7 +259,7 @@ export default function UserProfileForm({ user, photoUrl }: { user: UserWithPhot
             className="flex-1 block w-full min-w-0 rounded-none rounded-l-md px-3 py-2 bg-white border border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
             placeholder="Leave blank to keep current password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
           />
           <button
             type="button"
@@ -238,7 +280,19 @@ export default function UserProfileForm({ user, photoUrl }: { user: UserWithPhot
         </label>
         <div className="mt-2 flex flex-col items-start space-y-4">
           <span className="inline-block h-64 w-64 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-700">
-            <Image src={previewUrl} alt="Profile photo preview" width={256} height={256} className="h-full w-full object-cover text-gray-300" />
+            {previewUrl ? (
+              <Image
+                src={previewUrl}
+                alt="Profile photo preview"
+                width={256}
+                height={256}
+                className="h-full w-full object-cover text-gray-300"
+              />
+            ) : (
+              <svg className="h-full w-full text-gray-300 dark:text-gray-500" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+            )}
           </span>
           <input
             type="file"
@@ -251,7 +305,7 @@ export default function UserProfileForm({ user, photoUrl }: { user: UserWithPhot
           />
           <button
             type="button"
-            onClick={handleUpdatePicClick}
+            onClick={handleChoosePhoto}
             className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium leading-4 text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600 dark:focus:ring-offset-gray-800"
           >
             Update My Pic

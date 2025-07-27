@@ -5,6 +5,7 @@ import prisma from '@/lib/prisma';
 import bcrypt from 'bcrypt';
 import { redirect } from 'next/navigation';
 import { getCodeTable } from '@/lib/codes';
+import { sendVerificationEmail } from '@/lib/mail';
 
 const SignupSchema = z.object({
   email: z.string().email('Invalid email address.'),
@@ -74,6 +75,14 @@ export async function signup(
         },
       });
 
+      if (!newUser.email) {
+        // This should theoretically never happen in the signup flow
+        // but provides a safeguard.
+        throw new Error('Email is required to send verification.');
+      }
+
+      await sendVerificationEmail(newUser.email, newUser.id);
+
       // Use the user's ID as a seed for a unique, deterministic avatar
       const avatarUrl = `https://api.dicebear.com/8.x/personas/png?seed=${newUser.id}`;
 
@@ -98,5 +107,5 @@ export async function signup(
     };
   }
 
-  redirect('/login');
+  redirect('/check-email');
 }

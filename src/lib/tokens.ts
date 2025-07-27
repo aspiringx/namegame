@@ -38,7 +38,7 @@ export const getPasswordResetTokenByToken = async (token: string) => {
   }
 };
 
-export const getVerificationTokenByToken = async (token: string) => {
+export const getEmailVerificationTokenByToken = async (token: string) => {
   try {
     const verificationToken = await prisma.emailVerificationToken.findUnique({
       where: { token },
@@ -50,12 +50,12 @@ export const getVerificationTokenByToken = async (token: string) => {
   }
 };
 
-export const generateVerificationToken = async (email: string) => {
+export const generateEmailVerificationToken = async (userId: string) => {
   const token = uuidv4();
   const expires = new Date(new Date().getTime() + 3600 * 1000); // 1 hour
 
   const existingToken = await prisma.emailVerificationToken.findFirst({
-    where: { email },
+    where: { userId },
   });
 
   if (existingToken) {
@@ -66,7 +66,7 @@ export const generateVerificationToken = async (email: string) => {
 
   const verificationToken = await prisma.emailVerificationToken.create({
     data: {
-      email,
+      userId,
       token,
       expires,
     },
