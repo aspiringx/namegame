@@ -156,56 +156,53 @@ export default function UserProfileForm({ user, photoUrl }: { user: UserWithPhot
         </p>
       )}
 
+      <div className="flex">
+        <div className="flex-grow">
+          <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            First<span className="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            id="firstName"
+            name="firstName"
+            required
+            defaultValue={user.firstName || ''}
+            className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-l-md rounded-r-none shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
+          />
+        </div>
+
+        <div className="flex-grow">
+          <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            Last <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            id="lastName"
+            name="lastName"
+            defaultValue={user.lastName || ''}
+            className="mt-1 -ml-px block w-full px-3 py-2 bg-white border border-gray-300 rounded-r-md rounded-l-none shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
+          />
+        </div>
+      </div>
+
       <div>
-        <label htmlFor="username" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Username <span className="text-red-500">*</span>
+        <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          Email <span className="text-red-500">*</span>
         </label>
         <input
-          type="text"
-          id="username"
-          name="username"
-          required
-          defaultValue={user.username}
+          type="email"
+          id="email"
+          name="email"
+          // required
+          defaultValue={user.email || ''}
           className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
         />
-        {user.username.startsWith('guest-') && (
+        {!user.email && (
           <p className="mt-1 rounded-md text-xs bg-red-50 p-2 text-sm text-red-700 dark:bg-red-900 dark:text-red-300">
-            This is a random guest username. You should update it.
+            Your temporary username is <b>{user.username}</b>. <br />
+            Add and verify an email to keep this account.
           </p>
-         )}
-      </div>
-
-      <div>
-        <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          First Name <span className="text-red-500">*</span>
-        </label>
-        <input
-          type="text"
-          id="firstName"
-          name="firstName"
-          required
-          defaultValue={user.firstName || ''}
-          className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
-        />
-        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-          At least 3 character. 
-        </p>
-      </div>
-
-      <div>
-        <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Last Name
-        </label>
-        <input
-          type="text"
-          id="lastName"
-          name="lastName"
-          defaultValue={user.lastName || ''}
-          className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
-        />
-        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-          Not required for guests. Recommended for full features.
-        </p>
+        )}
       </div>
 
       <div>

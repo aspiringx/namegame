@@ -7,7 +7,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { getLoginRedirectPath } from './actions';
 
 export default function LoginForm() {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const router = useRouter();
@@ -17,22 +17,18 @@ export default function LoginForm() {
     e.preventDefault();
     setError('');
 
-    if (username.length < 3) {
-      setError('Username must be at least 3 characters long.');
-      return;
-    }
+
 
     const callbackUrl = searchParams.get('callbackUrl') || undefined;
 
     const result = await signIn('credentials', {
       redirect: false,
-      username,
+      email,
       password,
       callbackUrl,
     });
 
     if (result?.ok && !result.error) {
-      localStorage.setItem('username', username);
       if (callbackUrl) {
         router.push(callbackUrl);
       } else {
@@ -40,44 +36,30 @@ export default function LoginForm() {
         router.push(redirectPath);
       }
     } else {
-      setError('Invalid username or password.');
+      setError('Invalid email/username or password.');
     }
   };
-
-  useEffect(() => {
-    const savedUsername = localStorage.getItem('username');
-    if (savedUsername) {
-      setUsername(savedUsername);
-    }
-  }, []);
 
   return (
     <div className="flex flex-col justify-start items-center min-h-screen pt-12 sm:pt-12">
       <div className="w-full max-w-md p-8 space-y-6 bg-card text-card-foreground rounded-lg shadow-md">
         <h1 className="text-2xl font-bold text-center">Login</h1>
-        <p className="mt-2 text-center text-sm text-muted-foreground">
-          Or{' '}
-          <Link href="/signup" className="font-medium text-primary hover:text-primary/80">
-            Sign up
-          </Link>
-        </p>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="username" className="sr-only">
-              Username
+            <label htmlFor="email" className="sr-only">
+              Email or username
             </label>
             <input
-              id="username"
-              name="username"
+              id="email"
+              name="email"
               type="text"
-              autoComplete="username"
+              autoComplete="email"
               required
               className="relative block w-full appearance-none rounded-md border border-input bg-background px-3 py-2 text-foreground placeholder-muted-foreground focus:z-10 focus:border-primary focus:outline-none focus:ring-primary sm:text-sm"
-              placeholder="Username"
-              value={username}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUsername(e.target.value)}
+              placeholder="Email or username"
+              value={email}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
             />
-            <p className="mt-2 text-xs text-muted-foreground">At least 3 characters.</p>
           </div>
           <div>
             <label htmlFor="password" className="sr-only">
@@ -107,6 +89,19 @@ export default function LoginForm() {
             </button>
           </div>
         </form>
+
+        <p className="mt-4 mb-2 text-center text-sm text-muted-foreground">
+          No account? {' '}
+          <Link href="/signup" className="font-medium text-primary hover:text-primary/80">
+            Sign up
+          </Link>
+        </p>
+        <p className="mt-0 text-center text-sm text-muted-foreground">
+          Forgot password?{' '}
+          <Link href="/reset" className="font-medium text-primary hover:text-primary/80">
+            Reset
+          </Link>
+        </p>
       </div>
     </div>
   );

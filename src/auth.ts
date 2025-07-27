@@ -14,10 +14,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
     Credentials({
       async authorize(credentials) {
-        if (!credentials?.username || !credentials.password) return null;
+        const { email, password } = credentials;
+
+        if (!email || !password) return null;
+
+        const isEmail = (email as string).includes('@');
 
         const dbUser = await prisma.user.findUnique({
-          where: { username: credentials.username as string },
+          where: isEmail
+            ? { email: email as string }
+            : { username: email as string },
           include: {
             groupMemberships: { include: { group: true, role: true } },
             photos: true, // We'll filter photos manually after getting code tables

@@ -19,9 +19,10 @@ export type State = {
 
 const UserProfileSchema = z.object({
   password: z.string().min(6, 'Password must be at least 6 characters.').optional().or(z.literal('')),
-  username: z.string().min(3, 'Username must be at least 3 characters long.'),
+  // username: z.string().min(3, 'Username must be at least 3 characters long.'),
   firstName: z.string().min(1, 'First name is required'),
   lastName: z.string().optional(),
+  email: z.string().email('Invalid email address.').optional().or(z.literal('')),
   photo: z.instanceof(File).optional(),
 });
 
@@ -32,9 +33,10 @@ export async function updateUserProfile(prevState: State, formData: FormData): P
   }
 
   const validatedFields = UserProfileSchema.safeParse({
-    username: formData.get('username'),
+    // username: formData.get('username'),
     firstName: formData.get('firstName'),
     lastName: formData.get('lastName'),
+    email: formData.get('email'),
     photo: formData.get('photo'),
     password: formData.get('password'),
   });
@@ -43,7 +45,8 @@ export async function updateUserProfile(prevState: State, formData: FormData): P
     return { success: false, error: 'Invalid data provided. Please check the form and try again.', message: null };
   }
 
-  const { username, firstName, lastName, photo, password } = validatedFields.data;
+  // const { username, firstName, lastName, photo, password } = validatedFields.data;
+  const { firstName, lastName, email, photo, password } = validatedFields.data;
   const userId = session.user.id;
   
   let newPhotoKey: string | null = null;
@@ -94,9 +97,10 @@ export async function updateUserProfile(prevState: State, formData: FormData): P
     }
 
     const dataToUpdate: any = {
-      username,
+      // username,
       firstName,
       lastName,
+      email
     };
 
     if (password) {
@@ -148,9 +152,9 @@ export async function updateUserProfile(prevState: State, formData: FormData): P
   });
 
   let redirectUrl: string | null = null;
-  if (userGroups.length === 1 && userGroups[0].group.slug) {
-    redirectUrl = `/g/${userGroups[0].group.slug}`;
-  }
+  // if (userGroups.length === 1 && userGroups[0].group.slug) {
+  //   redirectUrl = `/g/${userGroups[0].group.slug}`;
+  // }
 
   let cacheBustedUrl: string | null = null;
   if (newPhotoKey) {

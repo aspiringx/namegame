@@ -7,12 +7,12 @@ import { redirect } from 'next/navigation';
 import { getCodeTable } from '@/lib/codes';
 
 const SignupSchema = z.object({
-  username: z.string().min(3, 'Username must be at least 3 characters.'),
+  email: z.string().email('Invalid email address.'),
   firstName: z.string().min(1, 'First name is required.'),
-  lastName: z.string().optional(),
+  lastName: z.string().min(1, 'Last name is required.'),
   password: z
     .string()
-    .min(6, 'Must be at least 6 characters.')
+    .min(6, 'At least 6 characters with text and numbers.')
     .regex(
       /^(?=.*[A-Za-z])(?=.*\d).+$/,
       'Must contain letters and numbers.'
@@ -21,7 +21,7 @@ const SignupSchema = z.object({
 
 export type SignupState = {
   errors?: {
-    username?: string[];
+    email?: string[];
     firstName?: string[];
     lastName?: string[];
     password?: string[];
@@ -34,7 +34,7 @@ export async function signup(
   formData: FormData
 ): Promise<SignupState> {
   const validatedFields = SignupSchema.safeParse({
-    username: formData.get('username'),
+    email: formData.get('email'),
     firstName: formData.get('firstName'),
     lastName: formData.get('lastName'),
     password: formData.get('password'),
@@ -47,11 +47,11 @@ export async function signup(
     };
   }
 
-  const { username, firstName, lastName, password } = validatedFields.data;
+  const { email, firstName, lastName, password } = validatedFields.data;
 
   try {
     const existingUser = await prisma.user.findUnique({
-      where: { username },
+      where: { email },
     });
 
     if (existingUser) {
@@ -60,18 +60,22 @@ export async function signup(
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // When creating a new user through the /signup form (not via greeting code)
+    // we require email. Since username is also required, set it to email 
+    // value too so it's unique.
     await prisma.$transaction(async (tx) => {
       const newUser = await tx.user.create({
         data: {
-          username,
+          email,
+          username: email,
           firstName,
-          lastName: lastName || null,
+          lastName,
           password: hashedPassword,
         },
       });
 
       // Use the user's ID as a seed for a unique, deterministic avatar
-            const avatarUrl = `https://api.dicebear.com/8.x/personas/png?seed=${newUser.id}`;
+      const avatarUrl = `https://api.dicebear.com/8.x/personas/png?seed=${newUser.id}`;
 
       const [photoTypes, entityTypes] = await Promise.all([
         getCodeTable('photoType'),

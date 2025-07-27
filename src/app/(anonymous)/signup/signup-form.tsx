@@ -29,54 +29,22 @@ export default function SignupForm() {
         <h2 className="text-2xl font-bold text-center">
           Sign up to play!
         </h2>
-        <p className="mt-2 text-center text-sm text-muted-foreground">
-          Or{' '}
-          <Link href="/login" className="font-medium text-primary hover:text-primary/80">
-            Login
-          </Link>
-        </p>
         <form action={dispatch} className="space-y-6">
-          <div>
-            <label
-              htmlFor="username"
-              className="block text-sm font-medium text-foreground"
-            >
-              Username <span className="text-destructive">*</span>
-            </label>
-            <div className="mt-1">
-              <input
-                id="username"
-                name="username"
-                type="text"
-                placeholder="Username"
-                required
-                className="relative block w-full appearance-none rounded-md border border-input bg-background px-3 py-2 text-foreground placeholder-muted-foreground focus:z-10 focus:border-primary focus:outline-none focus:ring-primary sm:text-sm"
-              />
-              <p className="mt-2 text-xs text-muted-foreground">At least 3 characters and unique.</p>
-              {state.errors?.username &&
-                state.errors.username.map((error: string) => (
-                  <p className="mt-2 text-sm text-destructive" key={error}>
-                    {error}
-                  </p>
-                ))}
-            </div>
-          </div>
-
-          <div>
-            <label
-              htmlFor="firstName"
-              className="block text-sm font-medium text-foreground"
-            >
-              First Name <span className="text-destructive">*</span>
-            </label>
-            <div className="mt-1">
+          <div className="flex">
+            <div className="flex-grow">
+              <label
+                htmlFor="firstName"
+                className="block text-sm font-medium text-foreground"
+              >
+                First <span className="text-destructive">*</span>
+              </label>
               <input
                 id="firstName"
                 name="firstName"
                 type="text"
-                placeholder="First Name"
+                placeholder="First name"
                 required
-                className="relative block w-full appearance-none rounded-md border border-input bg-background px-3 py-2 text-foreground placeholder-muted-foreground focus:z-10 focus:border-primary focus:outline-none focus:ring-primary sm:text-sm"
+                className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-l-md rounded-r-none shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
               />
               {state.errors?.firstName &&
                 state.errors.firstName.map((error: string) => (
@@ -85,25 +53,50 @@ export default function SignupForm() {
                   </p>
                 ))}
             </div>
-          </div>
 
-          <div>
-            <label
-              htmlFor="lastName"
-              className="block text-sm font-medium text-foreground"
-            >
-              Last Name
-            </label>
-            <div className="mt-1">
+            <div className="flex-grow">
+              <label
+                htmlFor="lastName"
+                className="block text-sm font-medium text-foreground"
+              >
+                Last <span className="text-destructive">*</span>
+              </label>
               <input
                 id="lastName"
                 name="lastName"
                 type="text"
-                placeholder="Last Name"
-                className="relative block w-full appearance-none rounded-md border border-input bg-background px-3 py-2 text-foreground placeholder-muted-foreground focus:z-10 focus:border-primary focus:outline-none focus:ring-primary sm:text-sm"
+                placeholder="Last name"
+                required
+                className="mt-1 -ml-px block w-full px-3 py-2 bg-white border border-gray-300 rounded-r-md rounded-l-none shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
               />
             </div>
           </div>
+
+          <div>
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium text-foreground"
+            >
+              Email <span className="text-destructive">*</span>
+            </label>
+            <div className="mt-1">
+              <input
+                id="email"
+                name="email"
+                type="email"
+                placeholder="Email"
+                required
+                className="relative block w-full appearance-none rounded-md border border-input bg-background px-3 py-2 text-foreground placeholder-muted-foreground focus:z-10 focus:border-primary focus:outline-none focus:ring-primary sm:text-sm"
+              />
+              {state.errors?.email &&
+                state.errors.email.map((error: string) => (
+                  <p className="mt-2 text-sm text-destructive" key={error}>
+                    {error}
+                  </p>
+                ))}
+            </div>
+          </div>
+
 
           <div>
             <label
@@ -140,6 +133,13 @@ export default function SignupForm() {
             <SubmitButton />
           </div>
         </form>
+
+        <p className="mt-2 text-center text-sm text-muted-foreground">
+          Have an account?{' '}
+          <Link href="/login" className="font-medium text-primary hover:text-primary/80">
+            Login
+          </Link>
+        </p>
       </div>
     </div>
   );
