@@ -6,7 +6,7 @@ import { useActionState, useEffect, useRef, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { updateUserProfile, State, getUserUpdateRequirements } from '../actions';
 import Image from 'next/image';
-import { ShieldAlert, ShieldCheck } from 'lucide-react';
+import { Eye, EyeOff, RefreshCw, ShieldAlert, ShieldCheck } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -48,7 +48,8 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(user.photos[0]?.url ?? null);
   const [firstName, setFirstName] = useState(user.firstName || '');
   const [lastName, setLastName] = useState(user.lastName || '');
-  const [password, setPassword] = useState('');
+    const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [isFadingOut, setIsFadingOut] = useState(false);
@@ -56,7 +57,18 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
   const [validation, setValidation] = useState({ submitted: false, passwordRequired: false, photoRequired: false });
   const [fileSelected, setFileSelected] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const validatePassword = (password: string) => {
+    if (password && password === 'password123') {
+      setPasswordError('For security, please choose a different password.');
+    } else if (password && validation.passwordRequired && (password.length < 6 || !/(?=.*\d)(?=.*[a-zA-Z])/.test(password))) {
+      // This is a basic check, server has the final say
+      setPasswordError('6+ characters with letters and numbers.');
+    } else {
+      setPasswordError(null);
+    }
+  };
 
   const initialState: State = {
     message: null,
@@ -299,36 +311,45 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
         </label>
         <div className="mt-1 flex rounded-md shadow-sm">
           <input
-            type="password"
             id="password"
             name="password"
+            type={showPassword ? 'text' : 'password'}
+            autoComplete="new-password"
+            value={password}
             required={validation.passwordRequired}
             className={`flex-1 block w-full min-w-0 rounded-none rounded-l-md px-3 py-2 bg-white border border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 ${
               validation.passwordRequired && !password ? 'bg-red-100 dark:bg-red-900' : ''
             }`}
             placeholder={validation.passwordRequired ? 'New password required' : 'Leave blank to keep current password'}
-            value={password}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+            onChange={e => {
               const newPassword = e.target.value;
               setPassword(newPassword);
-
-              if (newPassword && newPassword === 'password123') {
-                setPasswordError('For security, please choose a different password.');
-              } else if (newPassword && validation.passwordRequired && (newPassword.length < 6 || !/(?=.*\d)(?=.*[a-zA-Z])/.test(newPassword))) {
-                // This is a basic check, server has the final say
-                setPasswordError('6+ characters with letters and numbers.');
-              } else {
-                setPasswordError(null);
-              }
+              validatePassword(newPassword);
             }}
           />
           <button
             type="button"
-            onClick={handleGeneratePassword}
-            className="inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-300 bg-gray-50 text-gray-500 text-sm hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600"
+            onClick={() => setShowPassword(!showPassword)}
+            className="inline-flex items-center px-3 border border-l-0 border-gray-300 bg-gray-50 text-gray-500 text-sm hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600"
           >
-            Generate
+            {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
           </button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={handleGeneratePassword}
+                  className="inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-300 bg-gray-50 text-gray-500 text-sm hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600"
+                >
+                  <RefreshCw className="h-5 w-5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Generate Password</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
         {passwordError ? (
           <p className="mt-1 text-xs text-red-500 dark:text-red-400">{passwordError}</p>
