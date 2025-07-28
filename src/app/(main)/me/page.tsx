@@ -99,7 +99,7 @@ export default async function UserProfilePage(props: {
           alt="NameGame social butterflies"
           width={32}
           height={32}
-          className="float-right opacity-70"
+          className="float-right opacity-70 mt-8"
         />
         <h2 className="mt-8 text-xl font-bold mb-4">My Groups</h2>
         {user.groupMemberships.length > 0 ? (
