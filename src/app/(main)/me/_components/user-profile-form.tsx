@@ -6,7 +6,7 @@ import { useActionState, useEffect, useRef, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { updateUserProfile, State, getUserUpdateRequirements } from '../actions';
 import Image from 'next/image';
-import { Eye, EyeOff, RefreshCw, ShieldAlert, ShieldCheck } from 'lucide-react';
+import { Eye, EyeOff, RefreshCw, ShieldAlert, ShieldCheck, Copy, Check } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -57,7 +57,8 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
   const [validation, setValidation] = useState({ submitted: false, passwordRequired: false, photoRequired: false });
   const [fileSelected, setFileSelected] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
-    const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showCopySuccess, setShowCopySuccess] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const validatePassword = (password: string) => {
     if (password && password === 'password123') {
@@ -204,6 +205,17 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
     fileInputRef.current?.click();
   };
 
+  const handleCopyPassword = () => {
+    if (password) {
+      navigator.clipboard.writeText(password).then(() => {
+        setShowCopySuccess(true);
+        setTimeout(() => {
+          setShowCopySuccess(false);
+        }, 2000); // Hide after 2 seconds
+      });
+    }
+  };
+
   // The email is considered verified for display purposes only if the original email
   // was verified AND the email in the input hasn't been changed.
     const isVerifiedForDisplay = !!user.emailVerified && displayEmail === user.email;
@@ -337,19 +349,38 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  onClick={handleGeneratePassword}
-                  className="inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-300 bg-gray-50 text-gray-500 text-sm hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600"
-                >
-                  <RefreshCw className="h-5 w-5" />
-                </button>
+                {password && !passwordError ? (
+                  <button
+                    type="button"
+                    onClick={handleCopyPassword}
+                    className="inline-flex rounded-r-md items-center px-3 border border-l-0 border-gray-300 bg-gray-50 text-gray-500 text-sm hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600"
+                    aria-label="Copy password to clipboard"
+                  >
+                    {showCopySuccess ? <Check className="h-5 w-5 text-green-500" /> : <Copy className="h-5 w-5" />}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleGeneratePassword}
+                    className="inline-flex rounded-r-md items-center px-3 border border-l-0 border-gray-300 bg-gray-50 text-gray-500 text-sm hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600"
+                    aria-label="Generate a new password"
+                  >
+                    <RefreshCw className="h-5 w-5" />
+                  </button>
+                )}
               </TooltipTrigger>
               <TooltipContent>
-                <p>Generate Password</p>
+                <p>
+                  {password && !passwordError
+                    ? showCopySuccess
+                      ? 'Copied!'
+                      : 'Copy Password'
+                    : 'Generate Password'}
+                </p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
+
         </div>
         {passwordError ? (
           <p className="mt-1 text-xs text-red-500 dark:text-red-400">{passwordError}</p>
