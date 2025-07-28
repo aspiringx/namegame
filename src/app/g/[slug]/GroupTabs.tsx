@@ -12,7 +12,7 @@ import { GuestMessage } from '@/components/GuestMessage';
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowUp, ArrowDown } from "lucide-react";
+import { ArrowUp, ArrowDown, LayoutGrid, List } from "lucide-react";
 
 interface GroupTabsProps {
   sunDeckMembers: MemberWithUser[];
@@ -32,12 +32,14 @@ function SearchableMemberList({
   currentUserMember,
   slug,
   searchQuery,
+  viewMode,
 }: {
   initialMembers: MemberWithUser[];
   listType: "sunDeck" | "iceBlock";
   currentUserMember?: MemberWithUser;
   slug: string;
   searchQuery: string;
+  viewMode: 'grid' | 'list';
 }) {
   const [members, setMembers] = useState(initialMembers);
   const [page, setPage] = useState(1);
@@ -74,10 +76,12 @@ function SearchableMemberList({
     }
   }, [inView, hasMore, isLoading, slug, listType, page]);
 
+  const isListView = listType === 'sunDeck' && viewMode === 'list';
+
   return (
-    <div className={`grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3`}>
+    <div className={isListView ? 'divide-y divide-gray-200 dark:divide-gray-700' : `grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3`}>
       {members.map((member) => (
-        <MemberCard key={member.userId} member={member} listType={listType} />
+        <MemberCard key={member.userId} member={member} listType={listType} viewMode={viewMode} />
       ))}
       {hasMore && (
         <div
@@ -105,6 +109,7 @@ export default function GroupTabs({
     key: 'greeted', 
     direction: 'desc' 
   });
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const { isAuthorizedMember } = useGroup();
   const [searchQueries, setSearchQueries] = useState({
     sunDeck: '',
@@ -192,7 +197,8 @@ export default function GroupTabs({
                 )}
               >
                 {type === "sunDeck" ? (
-                  <div className="flex items-center space-x-2 mb-4">
+                  <div className="flex items-center mb-4">
+                    <div className="flex items-center gap-2">
                     {(['greeted', 'firstName', 'lastName'] as const).map(key => {
                       const isActive = sortConfig.key === key;
                       const SortIcon = sortConfig.direction === 'asc' ? ArrowUp : ArrowDown;
@@ -209,6 +215,15 @@ export default function GroupTabs({
                         </Button>
                       );
                     })}
+                    </div>
+                    <div className="flex items-center gap-2 ml-auto">
+                      <Button variant={viewMode === 'grid' ? 'secondary' : 'ghost'} size="sm" onClick={() => setViewMode('grid')}>
+                        <LayoutGrid className="h-4 w-4" />
+                      </Button>
+                      <Button variant={viewMode === 'list' ? 'secondary' : 'ghost'} size="sm" onClick={() => setViewMode('list')}>
+                        <List className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 ) : (
                   <p className="text-sm mb-4 text-gray-500 dark:text-gray-400">
@@ -260,6 +275,7 @@ export default function GroupTabs({
                   currentUserMember={currentUserMember}
                   slug={slug}
                   searchQuery={searchQueries[type]}
+                  viewMode={viewMode}
                 />
               </Tab.Panel>
             ))}
