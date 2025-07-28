@@ -6,7 +6,7 @@ import { useActionState, useEffect, useRef, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { updateUserProfile, State, getUserUpdateRequirements } from '../actions';
 import Image from 'next/image';
-import { Eye, EyeOff, RefreshCw, ShieldAlert, ShieldCheck, Copy, Check } from 'lucide-react';
+import { Eye, EyeOff, RefreshCw, ShieldAlert, ShieldCheck, Copy, Check, Upload } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -48,7 +48,7 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(user.photos[0]?.url ?? null);
   const [firstName, setFirstName] = useState(user.firstName || '');
   const [lastName, setLastName] = useState(user.lastName || '');
-    const [password, setPassword] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
@@ -190,14 +190,16 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      setFileSelected(true);
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreviewUrl(reader.result as string);
-        setFileSelected(true);
       };
       reader.readAsDataURL(file);
     } else {
+      // If the user cancels file selection, revert to the original photo if it exists
       setPreviewUrl(user.photos[0]?.url ?? null);
+      setFileSelected(false);
     }
   };
 
@@ -218,7 +220,7 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
 
   // The email is considered verified for display purposes only if the original email
   // was verified AND the email in the input hasn't been changed.
-    const isVerifiedForDisplay = !!user.emailVerified && displayEmail === user.email;
+  const isVerifiedForDisplay = !!user.emailVerified && displayEmail === user.email;
 
   return (
     <form action={formAction} className="space-y-6">
@@ -394,29 +396,38 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
       </div>
 
       <div>
-        <label htmlFor="photo" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
           Profile Picture{validation.photoRequired && <span className="text-red-500"> *</span>}
         </label>
-        <div className="mt-2 flex flex-col items-start space-y-4">
-          <span
-            className={`inline-block h-32 w-32 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-700 ${
-              validation.photoRequired && !previewUrl ? 'ring-2 ring-red-500 ring-offset-2 dark:ring-offset-gray-800' : ''
-            }`}
+        <div className="mt-2 flex items-start flex-col space-y-4">
+          <label
+            htmlFor="photo"
+            className="group relative inline-block h-32 w-32 cursor-pointer rounded-full overflow-hidden bg-gray-100 dark:bg-gray-700"
           >
-            {previewUrl ? (
-              <Image
-                src={previewUrl}
-                alt="Profile photo preview"
-                width={64}
-                height={64}
-                className="h-full w-full object-cover text-gray-300"
-              />
-            ) : (
-              <svg className="h-full w-full text-gray-300 dark:text-gray-500" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" />
-              </svg>
-            )}
-          </span>
+            <div
+              className={`h-full w-full ${
+                validation.photoRequired && !previewUrl ? 'ring-2 ring-red-500 ring-offset-2 dark:ring-offset-gray-800' : ''
+              } rounded-full`}
+            >
+              {previewUrl ? (
+                <Image
+                  src={previewUrl}
+                  alt="Profile photo preview"
+                  width={128}
+                  height={128}
+                  className="h-full w-full object-cover text-gray-300"
+                />
+              ) : (
+                <svg className="h-full w-full text-gray-300 dark:text-gray-500" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+              )}
+            </div>
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <Upload className="h-8 w-8 text-white" />
+              <span className="mt-1 text-xs font-semibold text-white">Change</span>
+            </div>
+          </label>
           <input
             type="file"
             id="photo"
@@ -435,8 +446,9 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
             Change Photo
           </button>
           <p
-            className={`text-xs -mt-3 text-red-500 dark:text-red-400 ${validation.photoRequired ? 'text-red-500 dark:text-red-400' : ''
-              }`}
+            className={`text-xs -mt-3 text-red-500 dark:text-red-400 ${
+              validation.photoRequired ? 'text-red-500 dark:text-red-400' : ''
+            }`}
           >
             {validation.photoRequired && previewUrl?.includes('dicebear.com')
               ? 'Add a real profile pic so people recognize you.'
