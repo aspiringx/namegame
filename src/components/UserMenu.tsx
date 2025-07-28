@@ -54,7 +54,7 @@ export default function UserMenu() {
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <button onClick={toggleDropdown} className="flex items-center p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
+      <button onClick={toggleDropdown} className="flex items-center py-2 px-4 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
         {user && <p className="mr-4 text-gray-700 dark:text-gray-300 hidden sm:block">{user.firstName}</p>}
         <Image
           src={imageUrl}
