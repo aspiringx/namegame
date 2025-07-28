@@ -16,7 +16,7 @@ export default async function UserProfilePage(props: {
 
 
   if (!session?.user?.id) {
-    redirect('/login?callbackUrl=/user');
+    redirect('/login?callbackUrl=/me');
   }
 
   const user = await prisma.user.findUnique({
@@ -82,15 +82,26 @@ export default async function UserProfilePage(props: {
           </div>
         ) : null}
 
+      <div className="max-w-2xl mx-auto">
         <Image
           src="/images/butterflies.png"
           alt="NameGame social butterflies"
-          width={50}
-          height={50}
-          className="float-right"
-          style={{ marginTop: '-4px' }}
+          width={32}
+          height={32}
+          className="float-right opacity-70"
         />
-        <h2 className="text-2xl font-bold mb-4">My Groups</h2>
+        <h2 className="text-xl font-bold mb-6">Me</h2>
+
+        <UserProfileForm user={userWithPublicUrls} />
+
+        <Image
+          src="/images/butterflies.png"
+          alt="NameGame social butterflies"
+          width={32}
+          height={32}
+          className="float-right opacity-70"
+        />
+        <h2 className="mt-8 text-xl font-bold mb-4">My Groups</h2>
         {user.groupMemberships.length > 0 ? (
           <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-md">
             <ul className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -113,18 +124,6 @@ export default async function UserProfilePage(props: {
         )}
       </div>
 
-      <div className="mt-12 max-w-2xl mx-auto">
-        <Image
-          src="/images/butterflies.png"
-          alt="NameGame social butterflies"
-          width={50}
-          height={50}
-          className="float-right"
-          style={{ marginTop: '-4px' }}
-        />
-        <h2 className="text-2xl font-bold mb-6">My Profile</h2>
-
-        <UserProfileForm user={userWithPublicUrls} />
       </div>
     </main>
   );

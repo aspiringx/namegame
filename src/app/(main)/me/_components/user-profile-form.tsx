@@ -347,7 +347,7 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
         </label>
         <div className="mt-2 flex flex-col items-start space-y-4">
           <span
-            className={`inline-block h-64 w-64 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-700 ${
+            className={`inline-block h-32 w-32 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-700 ${
               validation.photoRequired && !previewUrl ? 'ring-2 ring-red-500 ring-offset-2 dark:ring-offset-gray-800' : ''
             }`}
           >
@@ -355,8 +355,8 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
               <Image
                 src={previewUrl}
                 alt="Profile photo preview"
-                width={256}
-                height={256}
+                width={64}
+                height={64}
                 className="h-full w-full object-cover text-gray-300"
               />
             ) : (
@@ -380,7 +380,7 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
             onClick={handleChoosePhoto}
             className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium leading-4 text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600 dark:focus:ring-offset-gray-800"
           >
-            Update My Pic
+            Update Photo
           </button>
           <p
             className={`text-xs -mt-3 text-red-500 dark:text-red-400 ${validation.photoRequired ? 'text-red-500 dark:text-red-400' : ''

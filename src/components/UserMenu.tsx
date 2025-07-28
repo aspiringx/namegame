@@ -70,11 +70,11 @@ export default function UserMenu() {
           {user ? (
             <>
               <Link
-                href={`/user`}
+                href={`/me`}
                 className="block px-4 py-2 text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
                 onClick={closeDropdown}
               >
-                My Profile
+                Me
               </Link>
               {isSuperAdmin && (
                 <>

@@ -57,7 +57,7 @@ export async function getUserUpdateRequirements(): Promise<{ passwordRequired: b
 
   const photoRequired = user.photos.some(photo => photo.url.includes('dicebear.com'));
 
-  revalidatePath('/user');
+  revalidatePath('/me');
 
   return { passwordRequired, photoRequired };
 }
@@ -222,7 +222,7 @@ export async function updateUserProfile(prevState: State, formData: FormData): P
     return { success: false, error: 'An unexpected error occurred. Please try again.', message: null };
   }
 
-  revalidatePath('/user');
+  revalidatePath('/me');
   revalidatePath('/', 'layout'); // Revalidate header
   revalidateTag('user-photo');
 

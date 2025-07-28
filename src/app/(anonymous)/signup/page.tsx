@@ -6,7 +6,7 @@ export default async function SignupPage() {
   const session = await auth();
 
   if (session) {
-    redirect('/');
+    redirect('/me');
   }
 
   return <SignupForm />;
