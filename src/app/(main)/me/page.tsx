@@ -73,7 +73,7 @@ export default async function UserProfilePage(props: {
     (userWithPublicUrls.image?.includes('dicebear.com') ?? true);
 
   return (
-    <main className="container mx-auto px-4 py-8">
+    <main className="container mx-auto px-4 pt-4 pb-8">
       <div className="max-w-2xl mx-auto">
         <GuestMessage isGuest={isGuest} />
         {searchParams?.welcome === 'true' && user && user.groupMemberships.length > 0 ? (
@@ -101,7 +101,7 @@ export default async function UserProfilePage(props: {
           height={32}
           className="float-right opacity-70 mt-8"
         />
-        <h2 className="mt-8 text-xl font-bold mb-4">My Groups</h2>
+        <h2 className="mt-12 text-xl font-bold mb-4">My Groups</h2>
         {user.groupMemberships.length > 0 ? (
           <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-md">
             <ul className="divide-y divide-gray-200 dark:divide-gray-700">
