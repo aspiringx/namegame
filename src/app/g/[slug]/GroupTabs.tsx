@@ -193,7 +193,6 @@ export default function GroupTabs({
               >
                 {type === "sunDeck" ? (
                   <div className="flex items-center space-x-2 mb-4">
-                    {/* <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Sort:</span> */}
                     {(['greeted', 'firstName', 'lastName'] as const).map(key => {
                       const isActive = sortConfig.key === key;
                       const SortIcon = sortConfig.direction === 'asc' ? ArrowUp : ArrowDown;
@@ -205,7 +204,6 @@ export default function GroupTabs({
                           onClick={() => handleSort(key)}
                           className="capitalize flex items-center gap-1"
                         >
-                          {/* {key.replace('Name', ' Name')} */}
                           {key.replace('Name', '')}
                           {isActive && <SortIcon className="h-4 w-4" />}
                         </Button>
