@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect, Fragment } from "react";
+import { useState, useEffect, Fragment, useMemo } from "react";
 import { Tab } from "@headlessui/react";
 import { useInView } from "react-intersection-observer";
-import { GroupData, MemberWithUser } from "@/types";
+import { MemberWithUser } from "@/types";
 import MemberCard from "@/components/MemberCard";
 import { getPaginatedMembers } from "./actions";
 import { useParams } from "next/navigation";
@@ -11,7 +11,8 @@ import { useGroup } from '@/components/GroupProvider';
 import { GuestMessage } from '@/components/GuestMessage';
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
-import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { ArrowUp, ArrowDown } from "lucide-react";
 
 interface GroupTabsProps {
   sunDeckMembers: MemberWithUser[];
@@ -97,15 +98,62 @@ export default function GroupTabs({
   iceBlockCount,
   currentUserMember,
 }: GroupTabsProps) {
+  type SortKey = "greeted" | "firstName" | "lastName";
+  type SortDirection = "asc" | "desc";
+
+  const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: SortDirection }>({ 
+    key: 'greeted', 
+    direction: 'desc' 
+  });
   const { isAuthorizedMember } = useGroup();
   const [searchQueries, setSearchQueries] = useState({
     sunDeck: '',
     iceBlock: '',
   });
+
+  const handleSort = (key: SortKey) => {
+    setSortConfig(current => {
+      if (current.key === key) {
+        return { ...current, direction: current.direction === 'asc' ? 'desc' : 'asc' };
+      }
+      return { key, direction: key === 'greeted' ? 'desc' : 'asc' };
+    });
+  };
+
+  const sortedSunDeckMembers = useMemo(() => {
+    const sortable = [...sunDeckMembers];
+    const { key, direction } = sortConfig;
+
+    if (key === 'greeted') {
+      // The default order is descending, so we only reverse for ascending.
+      return direction === 'asc' ? sortable.reverse() : sortable;
+    }
+
+    sortable.sort((a, b) => {
+      const dir = direction === 'asc' ? 1 : -1;
+      const aName = a.user.name || '';
+      const bName = b.user.name || '';
+      const aFirstName = aName.split(' ')[0];
+      const bFirstName = bName.split(' ')[0];
+      const aLastName = aName.split(' ').slice(1).join(' ');
+      const bLastName = bName.split(' ').slice(1).join(' ');
+
+      if (key === 'firstName') {
+        return aFirstName.localeCompare(bFirstName) * dir;
+      }
+      if (key === 'lastName') {
+        return aLastName.localeCompare(bLastName) * dir;
+      }
+      return 0;
+    });
+
+    return sortable;
+  }, [sunDeckMembers, sortConfig]);
+
   const params = useParams();
   const slug = params.slug as string;
   const categories = {
-    Greeted: { members: sunDeckMembers, type: 'sunDeck' as const, count: sunDeckCount },
+    Greeted: { members: sortedSunDeckMembers, type: 'sunDeck' as const, count: sunDeckCount },
     'Not Greeted': { members: iceBlockMembers, type: 'iceBlock' as const, count: iceBlockCount },
   };
 
@@ -134,7 +182,7 @@ export default function GroupTabs({
               </Tab>
             ))}
           </Tab.List>
-          <Tab.Panels className="mt-2">
+          <Tab.Panels>
             {Object.values(categories).map(({ members, type, count }, idx) => (
               <Tab.Panel
                 key={idx}
@@ -144,12 +192,29 @@ export default function GroupTabs({
                 )}
               >
                 {type === "sunDeck" ? (
+                  <div className="flex items-center space-x-2 mb-4">
+                    {/* <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Sort:</span> */}
+                    {(['greeted', 'firstName', 'lastName'] as const).map(key => {
+                      const isActive = sortConfig.key === key;
+                      const SortIcon = sortConfig.direction === 'asc' ? ArrowUp : ArrowDown;
+                      return (
+                        <Button 
+                          key={key} 
+                          variant={isActive ? "secondary" : "ghost"} 
+                          size="sm"
+                          onClick={() => handleSort(key)}
+                          className="capitalize flex items-center gap-1"
+                        >
+                          {/* {key.replace('Name', ' Name')} */}
+                          {key.replace('Name', '')}
+                          {isActive && <SortIcon className="h-4 w-4" />}
+                        </Button>
+                      );
+                    })}
+                  </div>
+                ) : (
                   <p className="text-sm mb-4 text-gray-500 dark:text-gray-400">
-                    People you've greeted.
-                  </p>
-                ): (
-                  <p className="text-sm mb-4 text-gray-500 dark:text-gray-400">
-                    People you've haven't greeted.
+                    People you haven't greeted.
                   </p>
                 )}
 
