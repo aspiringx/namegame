@@ -7,6 +7,8 @@ import { GroupData, MemberWithUser } from "@/types";
 import MemberCard from "@/components/MemberCard";
 import { getPaginatedMembers } from "./actions";
 import { useParams } from "next/navigation";
+import { useGroup } from '@/components/GroupProvider';
+import { GuestMessage } from '@/components/GuestMessage';
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
@@ -95,20 +97,22 @@ export default function GroupTabs({
   iceBlockCount,
   currentUserMember,
 }: GroupTabsProps) {
+  const { isAuthorizedMember } = useGroup();
   const [searchQueries, setSearchQueries] = useState({
-    sunDeck: "",
-    iceBlock: "",
+    sunDeck: '',
+    iceBlock: '',
   });
   const params = useParams();
   const slug = params.slug as string;
   const categories = {
-    Greeted: { members: sunDeckMembers, type: "sunDeck" as const, count: sunDeckCount },
-    "Not Greeted": { members: iceBlockMembers, type: "iceBlock" as const, count: iceBlockCount },
+    Greeted: { members: sunDeckMembers, type: 'sunDeck' as const, count: sunDeckCount },
+    'Not Greeted': { members: iceBlockMembers, type: 'iceBlock' as const, count: iceBlockCount },
   };
 
   return (
     <TooltipProvider>
       <div className="w-full max-w-5xl mx-auto px-2 sm:px-0">
+        <GuestMessage isGuest={!isAuthorizedMember} />
         <Tab.Group>
           <Tab.List className="flex space-x-1 rounded-xl bg-blue-900/20 p-1">
             {Object.entries(categories).map(([category, { count }]) => (

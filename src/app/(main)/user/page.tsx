@@ -6,6 +6,7 @@ import UserProfileForm from './_components/user-profile-form';
 import Link from 'next/link';
 import Image from 'next/image';
 import { getCodeTable } from '@/lib/codes';
+import { GuestMessage } from '@/components/GuestMessage';
 
 export default async function UserProfilePage(props: {
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>
@@ -17,11 +18,6 @@ export default async function UserProfilePage(props: {
   if (!session?.user?.id) {
     redirect('/login?callbackUrl=/user');
   }
-
-  const [photoTypes, entityTypes] = await Promise.all([
-    getCodeTable('photoType'),
-    getCodeTable('entityType'),
-  ]);
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
@@ -58,12 +54,9 @@ export default async function UserProfilePage(props: {
     redirect('/');
   }
 
-
-
-  const isGuest = user.groupMemberships.some((m) => m.role.code === 'guest');
-
   const userWithPublicUrls = {
     ...user,
+    image: user.photos[0] ? await getPublicUrl(user.photos[0].url) : null,
     emailVerified: user.emailVerified ? user.emailVerified.toISOString() : null,
     photos: await Promise.all(
       user.photos.map(async (photo) => ({
@@ -73,21 +66,29 @@ export default async function UserProfilePage(props: {
     ),
   };
 
+  const isGuest =
+    !user.firstName ||
+    !user.lastName ||
+    !user.emailVerified ||
+    (userWithPublicUrls.image?.includes('dicebear.com') ?? true);
+
   return (
     <main className="container mx-auto px-4 py-8">
       <div className="max-w-2xl mx-auto">
+        <GuestMessage isGuest={isGuest} />
         {searchParams?.welcome === 'true' && user && user.groupMemberships.length > 0 ? (
           <div className="mb-4 rounded-md bg-green-50 p-4 text-sm text-green-700 dark:bg-green-900 dark:text-green-300">
             Welcome, {user.firstName}! Click a group to start playing or update your profile below.
           </div>
-        ) : null }
+        ) : null}
 
         <Image
           src="/images/butterflies.png"
           alt="NameGame social butterflies"
           width={50}
           height={50}
-          className="float-right" style={{ marginTop: '-4px' }}
+          className="float-right"
+          style={{ marginTop: '-4px' }}
         />
         <h2 className="text-2xl font-bold mb-4">My Groups</h2>
         {user.groupMemberships.length > 0 ? (
@@ -110,7 +111,6 @@ export default async function UserProfilePage(props: {
         ) : (
           <p className="text-gray-500 dark:text-gray-400">You are not a member of any groups yet.</p>
         )}
-
       </div>
 
       <div className="mt-12 max-w-2xl mx-auto">
@@ -119,12 +119,12 @@ export default async function UserProfilePage(props: {
           alt="NameGame social butterflies"
           width={50}
           height={50}
-          className="float-right" style={{ marginTop: '-4px' }}
+          className="float-right"
+          style={{ marginTop: '-4px' }}
         />
         <h2 className="text-2xl font-bold mb-6">My Profile</h2>
 
         <UserProfileForm user={userWithPublicUrls} />
-
       </div>
     </main>
   );

@@ -47,10 +47,12 @@ export default async function GroupLayout(props: { children: React.ReactNode; pa
     redirect('/');
   }
 
-  const isAuthorizedMember = currentUserMember && ['admin', 'member', 'super'].includes(currentUserMember.role.code);
+  const isAuthorizedMember = !!(currentUserMember && ['admin', 'member', 'super'].includes(currentUserMember.role.code));
 
   return (
-    <GroupProvider value={{ group: data, sunDeckMembers, iceBlockMembers, currentUserMember, isSuperAdmin }}>
+    <GroupProvider
+      value={{ group: data, sunDeckMembers, iceBlockMembers, currentUserMember, isSuperAdmin, isAuthorizedMember }}
+    >
       <div className="flex flex-col min-h-screen">
         <Header />
         <main className="flex-grow pt-20 pb-24">

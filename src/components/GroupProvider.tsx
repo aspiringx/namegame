@@ -9,6 +9,7 @@ export interface GroupPageData {
   iceBlockMembers: MemberWithUser[];
   currentUserMember: MemberWithUser | undefined;
   isSuperAdmin: boolean;
+  isAuthorizedMember: boolean;
 }
 
 const GroupContext = createContext<GroupPageData>({
@@ -17,6 +18,7 @@ const GroupContext = createContext<GroupPageData>({
   iceBlockMembers: [],
   currentUserMember: undefined,
   isSuperAdmin: false,
+  isAuthorizedMember: false,
 });
 
 export function GroupProvider({ children, value }: { children: React.ReactNode; value: GroupPageData }) {

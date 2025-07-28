@@ -88,6 +88,10 @@ export async function updateUserProfile(prevState: State, formData: FormData): P
   let newPhotoKey: string | null = null;
   let updatedUser;
 
+  // This needs to happen before the try to be available in the try and after. 
+  // Unlike the other getCodeTable calls below. 
+  const groupUserRoles = await getCodeTable('groupUserRole');
+
   try {
     const currentUser = await prisma.user.findUnique({
       where: { id: userId },
@@ -97,10 +101,9 @@ export async function updateUserProfile(prevState: State, formData: FormData): P
     if (!currentUser) {
       return { success: false, error: 'User not found.', message: null };
     }
-    const [photoTypes, entityTypes, groupUserRoles] = await Promise.all([
+    const [photoTypes, entityTypes] = await Promise.all([
       getCodeTable('photoType'),
       getCodeTable('entityType'),
-      getCodeTable('groupUserRole'),
     ]);
 
     // Handle photo upload first
@@ -152,6 +155,7 @@ export async function updateUserProfile(prevState: State, formData: FormData): P
       emailChanged = true;
     }
 
+    let passwordIsBeingSetToReal = false;
     if (password) {
       if (password === 'password123') {
         return { success: false, error: 'Please choose a more secure password.', message: null };
@@ -169,6 +173,7 @@ export async function updateUserProfile(prevState: State, formData: FormData): P
       }
 
       dataToUpdate.password = await bcrypt.hash(password, 10);
+      passwordIsBeingSetToReal = true;
     }
 
     updatedUser = await prisma.user.update({
@@ -188,7 +193,14 @@ export async function updateUserProfile(prevState: State, formData: FormData): P
       },
     });
 
-    if (updatedUser.lastName && hasPrimaryPhoto) {
+    const isProfileComplete = 
+      updatedUser.firstName &&
+      updatedUser.lastName &&
+      updatedUser.emailVerified &&
+      hasPrimaryPhoto &&
+      !hasPrimaryPhoto.url.includes('dicebear.com');
+
+    if (isProfileComplete) {
       await prisma.groupUser.updateMany({
         where: {
           userId: userId,
@@ -215,9 +227,17 @@ export async function updateUserProfile(prevState: State, formData: FormData): P
   revalidateTag('user-photo');
 
   const userGroups = await prisma.groupUser.findMany({
-    where: { userId: userId },
+    where: { userId: userId, roleId: groupUserRoles.member.id },
     select: { group: { select: { slug: true } } },
   });
+
+  // Revalidate the layout for each group the user is in.
+  // This is crucial for the GuestMessage to disappear immediately after role upgrade.
+  for (const userGroup of userGroups) {
+    if (userGroup.group.slug) {
+      revalidatePath(`/g/${userGroup.group.slug}`, 'layout');
+    }
+  }
 
   let redirectUrl: string | null = null;
   // if (userGroups.length === 1 && userGroups[0].group.slug) {

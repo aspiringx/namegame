@@ -287,8 +287,8 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
           </div>
         </div>
         {displayEmail && !isVerifiedForDisplay && (
-          <p className="mt-1 rounded-md text-xs bg-red-50 p-2 text-sm text-red-700 dark:bg-red-900 dark:text-red-300">
-            Your email is not verified. After saving, check your email for a verification link.
+          <p className="mt-1 rounded-md text-xs bg-green-50 p-2 text-sm text-green-700 dark:bg-green-900 dark:text-green-300">
+            Your email is not verified. After saving, check your email for a link to complete this.
           </p>
         )}
       </div>
@@ -314,9 +314,9 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
 
               if (newPassword && newPassword === 'password123') {
                 setPasswordError('For security, please choose a different password.');
-              } else if (newPassword && validation.passwordRequired && newPassword.length < 6) {
+              } else if (newPassword && validation.passwordRequired && (newPassword.length < 6 || !/(?=.*\d)(?=.*[a-zA-Z])/.test(newPassword))) {
                 // This is a basic check, server has the final say
-                setPasswordError('Password must be at least 6 characters.');
+                setPasswordError('6+ characters with letters and numbers.');
               } else {
                 setPasswordError(null);
               }
@@ -335,7 +335,7 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
         ) : (
           <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
             {validation.passwordRequired
-              ? 'Enter or generate a new password (6+ chars with letters and numbers).'
+              ? 'Enter or generate a new password.'
               : ''}
           </p>
         )}
@@ -387,7 +387,7 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
               }`}
           >
             {validation.photoRequired && previewUrl?.includes('dicebear.com')
-              ? 'A new profile pic is required. This is a placeholder people won\'t recognize.'
+              ? 'Add a real profile pic so people recognize you.'
               : ''}
           </p>
         </div>
