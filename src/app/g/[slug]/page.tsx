@@ -1,19 +1,21 @@
-import { getGroup } from './data';
-import GroupPageClient from './GroupPageClient';
+import { getGroupTypeBySlug as getGroup } from './data';
 import { notFound } from 'next/navigation';
+import dynamic from 'next/dynamic';
 
-interface PageProps {
-  params: Promise<{ slug: string }>;
-}
+const FamilyPage = dynamic(() => import('./family/page'));
+const AllOtherGroupsPage = dynamic(() => import('./all/page'));
 
-export default async function Page({ params }: PageProps) {
-  // In newer Next.js versions, params for dynamic routes must be awaited.
-  const { slug } = await params;
-  const groupData = await getGroup(slug);
+export default async function GroupPage({ params: paramsPromise }: { params: Promise<{ slug: string }> }) {
+  const params = await paramsPromise;
+  const group = await getGroup(params.slug);
 
-  if (!groupData) {
+  if (!group) {
     notFound();
   }
 
-  return <GroupPageClient groupData={groupData} />;
+  if (group.groupType?.code === 'family') {
+    return <FamilyPage params={params} />;
+  }
+
+  return <AllOtherGroupsPage params={params} />;
 }

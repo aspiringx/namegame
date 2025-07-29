@@ -2,7 +2,25 @@ import { auth } from '@/auth';
 import GreetButton from '@/components/GreetButton';
 import Header from '@/components/Header';
 import { GroupProvider } from '@/components/GroupProvider';
-import { getGroup } from './data';
+import { getGroupTypeBySlug } from './data';
+import { getGroup as getAllGroup } from './all/data';
+import { getGroup as getFamilyGroup } from './family/data';
+import { GroupData, FamilyGroupData } from '@/types';
+
+// Helper to fetch the correct group data based on type
+const getGroupForLayout = async (slug: string, limit?: number): Promise<GroupData | FamilyGroupData | null> => {
+  const groupTypeData = await getGroupTypeBySlug(slug);
+  if (!groupTypeData) {
+    return null;
+  }
+
+  if (groupTypeData.groupType.code === 'family') {
+    return getFamilyGroup(slug, limit);
+  }
+
+  return getAllGroup(slug, limit);
+};
+
 import { headers } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
 import type { Metadata } from 'next';
@@ -10,7 +28,7 @@ import type { Metadata } from 'next';
 export async function generateMetadata(props: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const params = await props.params;
   const { slug } = params;
-  const data = await getGroup(slug, 5);
+  const data = await getGroupForLayout(slug, 5);
 
   if (!data) {
     return {
@@ -34,13 +52,26 @@ export default async function GroupLayout(props: { children: React.ReactNode; pa
 
   const { slug } = params;
   const session = await auth();
-  const data = await getGroup(slug, 5);
+  const data = await getGroupForLayout(slug, 5);
 
   if (!data) {
     notFound();
   }
 
-  const { sunDeckMembers, iceBlockMembers, currentUserMember, isSuperAdmin } = data;
+  // Adapt data for GroupProvider based on group type
+  const isFamilyGroup = 'members' in data;
+
+  const groupForProvider: GroupData = isFamilyGroup
+    ? {
+        ...(data as FamilyGroupData),
+        sunDeckMembers: [],
+        iceBlockMembers: (data as FamilyGroupData).members,
+        sunDeckCount: 0,
+        iceBlockCount: (data as FamilyGroupData).memberCount,
+      }
+    : (data as GroupData);
+
+  const { sunDeckMembers, iceBlockMembers, currentUserMember, isSuperAdmin } = groupForProvider;
 
   // The /greet page is public and should not be protected by this authorization.
   if (!pathname.includes('/greet') && !currentUserMember && !isSuperAdmin) {
@@ -51,7 +82,14 @@ export default async function GroupLayout(props: { children: React.ReactNode; pa
 
   return (
     <GroupProvider
-      value={{ group: data, sunDeckMembers, iceBlockMembers, currentUserMember, isSuperAdmin, isAuthorizedMember }}
+      value={{ 
+        group: groupForProvider, 
+        sunDeckMembers, 
+        iceBlockMembers, 
+        currentUserMember, 
+        isSuperAdmin, 
+        isAuthorizedMember 
+      }}
     >
       <div className="flex flex-col min-h-screen">
         <Header />
