@@ -32,9 +32,10 @@ export const getGroup = async (slug: string, limit?: number): Promise<GroupData 
     };
   }
 
-  const group = await prisma.group.findFirst({
-    where: whereClause,
+  const group = await prisma.group.findUnique({
+    where: { slug },
     include: {
+      groupType: true,
       photos: true,
       members: {
         orderBy: {

@@ -5,7 +5,7 @@ import { createId } from '@paralleldrive/cuid2';
 import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
 import { getPublicUrl } from '@/lib/storage';
-import type { MemberWithUser } from '@/types/index';
+import type { MemberWithUser, FullRelationship } from '@/types';
 import { getCodeTable } from '@/lib/codes';
 
 // Number of photos to retrieve at a time for infinite scroll. If a screen is 
@@ -129,4 +129,33 @@ export async function getPaginatedMembers(
   });
 
   return Promise.all(memberPromises);
+}
+
+export async function getFamilyRelationships(
+  groupSlug: string,
+): Promise<FullRelationship[]> {
+  const group = await prisma.group.findUnique({
+    where: { slug: groupSlug },
+    select: { id: true },
+  });
+
+  if (!group) {
+    return [];
+  }
+
+  const relationships = await prisma.userUser.findMany({
+    where: {
+      groupId: group.id,
+      relationType: {
+        category: 'family',
+      },
+    },
+    include: {
+      relationType: true,
+    },
+  });
+
+  // The type assertion is needed because the generated client doesn't know
+  // that `relationType` is non-null when the query filters on it.
+  return relationships as FullRelationship[];
 }

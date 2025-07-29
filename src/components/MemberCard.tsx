@@ -14,9 +14,10 @@ interface MemberCardProps {
   member: Member;
   listType: 'sunDeck' | 'iceBlock';
   viewMode: 'grid' | 'list';
+  relationship?: string;
 }
 
-export default function MemberCard({ member, listType, viewMode }: MemberCardProps) {
+export default function MemberCard({ member, listType, viewMode, relationship }: MemberCardProps) {
   if (listType === 'sunDeck' && viewMode === 'list') {
     return (
       <div className="flex items-center space-x-4 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
@@ -32,6 +33,11 @@ export default function MemberCard({ member, listType, viewMode }: MemberCardPro
           <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
             {member.user.name}
           </p>
+          {relationship && (
+            <p className="text-xs text-blue-500 dark:text-blue-400 truncate">
+              {relationship}
+            </p>
+          )}
           {member.relationUpdatedAt ? (
             <Tooltip>
               <TooltipTrigger>
@@ -62,6 +68,11 @@ export default function MemberCard({ member, listType, viewMode }: MemberCardPro
       <p className="mt-2 text-sm font-medium text-gray-800 truncate dark:text-gray-200">
         {member.user.name}
       </p>
+      {relationship && (
+        <p className="text-xs text-blue-500 dark:text-blue-400 truncate">
+          {relationship}
+        </p>
+      )}
       {listType === 'sunDeck' && (
         <>
           {member.relationUpdatedAt ? (
