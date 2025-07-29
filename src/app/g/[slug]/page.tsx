@@ -14,8 +14,8 @@ export default async function GroupPage({ params: paramsPromise }: { params: Pro
   }
 
   if (group.groupType?.code === 'family') {
-    return <FamilyPage params={params} />;
+    return <FamilyPage params={paramsPromise} />;
   }
 
-  return <AllOtherGroupsPage params={params} />;
+  return <AllOtherGroupsPage params={paramsPromise} />;
 }

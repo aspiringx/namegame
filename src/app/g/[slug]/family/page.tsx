@@ -4,8 +4,9 @@ import { notFound } from 'next/navigation';
 
 // This will be the custom page for family groups.
 // For now, it's a simple placeholder.
-export default async function FamilyGroupPage({ params }: { params: { slug: string } }) {
-  const group = await getGroup(params.slug);
+export default async function FamilyGroupPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const group = await getGroup(slug);
 
   if (!group) {
     notFound();
@@ -14,7 +15,7 @@ export default async function FamilyGroupPage({ params }: { params: { slug: stri
   return (
     <FamilyGroupClient
       initialMembers={group.members}
-      groupSlug={params.slug}
+      groupSlug={slug}
       initialMemberCount={group.memberCount}
     />
   );
