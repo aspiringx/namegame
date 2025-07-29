@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect, Fragment, useMemo } from "react";
+import { useRouter } from 'next/navigation';
 import { Tab } from "@headlessui/react";
 import { useInView } from "react-intersection-observer";
 import { MemberWithUser, FullRelationship } from "@/types";
 import MemberCard from "@/components/MemberCard";
-import { getPaginatedMembers, getFamilyRelationships } from "./actions";
+import { getPaginatedMembers } from "./actions";
 import { getRelationship } from '@/lib/family-tree';
 import { useGroup } from '@/components/GroupProvider';
 import { GuestMessage } from '@/components/GuestMessage';
@@ -13,6 +14,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowUp, ArrowDown, LayoutGrid, List } from "lucide-react";
+import router from "next/router";
 
 interface GroupTabsProps {
   sunDeckMembers: MemberWithUser[];
@@ -32,14 +34,12 @@ function SearchableMemberList({
   slug,
   searchQuery,
   viewMode,
-  relationshipMap,
 }: {
   initialMembers: MemberWithUser[];
   listType: "sunDeck" | "iceBlock";
   slug: string;
   searchQuery: string;
   viewMode: 'grid' | 'list';
-  relationshipMap: Map<string, string>;
 }) {
   const [members, setMembers] = useState(initialMembers);
   const [page, setPage] = useState(1);
@@ -86,7 +86,6 @@ function SearchableMemberList({
           member={member}
           listType={listType}
           viewMode={viewMode}
-          relationship={relationshipMap.get(member.userId)}
         />
       ))}
       {hasMore && (
@@ -126,28 +125,6 @@ export default function GroupTabs({
   });
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const { group, isAuthorizedMember, currentUserMember: ego } = useGroup();
-  const [relationshipMap, setRelationshipMap] = useState<Map<string, string>>(new Map());
-
-  useEffect(() => {
-    async function fetchAndSetRelationships() {
-      if (group?.groupType.code === 'family' && group.slug && ego) {
-        const relationships = await getFamilyRelationships(group.slug);
-        const newMap = new Map<string, string>();
-        const allMembers = [...sunDeckMembers, ...iceBlockMembers];
-
-        for (const alter of allMembers) {
-          if (alter.userId === ego.userId) continue;
-          const result = getRelationship(ego.userId, alter.userId, relationships);
-          if (result) {
-            newMap.set(alter.userId, result.relationship);
-          }
-        }
-        setRelationshipMap(newMap);
-      }
-    }
-
-    fetchAndSetRelationships();
-  }, [group, sunDeckMembers, iceBlockMembers, ego]);
 
   const [searchQueries, setSearchQueries] = useState({
     sunDeck: '',
@@ -201,9 +178,13 @@ export default function GroupTabs({
 
   const tabs = [sunDeckTab, iceBlockTab];
 
-  if (!isAuthorizedMember) {
-    return <GuestMessage />;
-  }
+  useEffect(() => {
+    // Using `isAuthorizedMember === false` to prevent redirecting on the initial `undefined` state.
+    if (isAuthorizedMember === false) {
+      router.push('/');
+    }
+  }, [isAuthorizedMember, router]);
+
 
   return (
     <TooltipProvider>
@@ -329,7 +310,6 @@ export default function GroupTabs({
                   slug={group?.slug || ''}
                   searchQuery={searchQueries[tab.type]}
                   viewMode={viewMode}
-                  relationshipMap={relationshipMap}
                 />
               </Tab.Panel>
             ))}

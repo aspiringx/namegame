@@ -39,7 +39,7 @@ export default function QRCodeModal({ isOpen, url, onClose }: QRCodeModalProps) 
         </button> 
         <h2 className="text-2xl font-bold mb-4">Greeting Code</h2>
         <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
-          Let someone scan this code or share the URL to greet.
+          Share this code or URL to greet or welcome people here.
           Valid 7 days.
         </p>
         <div className="p-4 bg-white inline-block rounded-md">

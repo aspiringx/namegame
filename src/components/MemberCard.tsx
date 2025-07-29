@@ -21,7 +21,7 @@ export default function MemberCard({ member, listType, viewMode, relationship }:
   if (listType === 'sunDeck' && viewMode === 'list') {
     return (
       <div className="flex items-center space-x-4 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-        <div className="relative w-24 h-24 rounded-full overflow-hidden flex-shrink-0">
+        <div className="relative w-24 h-24 rounded overflow-hidden flex-shrink-0">
           <Image
             src={member.user.photoUrl || '/images/default-avatar.png'}
             alt={member.user.name || 'User avatar'}

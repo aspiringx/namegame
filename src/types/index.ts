@@ -55,3 +55,11 @@ export type GroupData = Group & {
 export type FullRelationship = UserUser & {
   relationType: UserUserRelationType;
 };
+
+export type FamilyGroupData = Group & {
+  groupType: GroupType;
+  isSuperAdmin: boolean;
+  members: MemberWithUser[];
+  memberCount: number;
+  currentUserMember: MemberWithUser | undefined;
+};

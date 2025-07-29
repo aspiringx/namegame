@@ -5,8 +5,12 @@ import { useInView } from 'react-intersection-observer';
 import { MemberWithUser } from '@/types';
 import { getPaginatedMembers } from './actions';
 import FamilyMemberCard from '@/components/FamilyMemberCard';
+import { getFamilyRelationships } from './actions';
+import { getRelationship } from '@/lib/family-tree';
 import { Button } from '@/components/ui/button';
 import { ArrowUp, ArrowDown, LayoutGrid, List } from 'lucide-react';
+import { useGroup } from '@/components/GroupProvider';
+import { GuestMessage } from '@/components/GuestMessage';
 
 type SortKey = 'firstName' | 'lastName';
 type SortDirection = 'asc' | 'desc';
@@ -17,18 +21,45 @@ interface FamilyGroupClientProps {
   initialMemberCount: number;
 }
 
-export function FamilyGroupClient({ initialMembers, groupSlug, initialMemberCount }: FamilyGroupClientProps) {
+export function FamilyGroupClient({
+  initialMembers,
+  groupSlug,
+  initialMemberCount,
+}: FamilyGroupClientProps) {
   const [members, setMembers] = useState(initialMembers);
   const [page, setPage] = useState(2);
   const [hasMore, setHasMore] = useState(initialMembers.length < initialMemberCount);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: SortDirection }>({ key: 'firstName', direction: 'asc' });
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const { group, isAuthorizedMember, currentUserMember } = useGroup();
+  const [relationshipMap, setRelationshipMap] = useState<Map<string, string>>(new Map());
   const { ref, inView } = useInView();
 
   useEffect(() => {
-    if (inView && hasMore) {
-      const loadMoreMembers = async () => {
+    async function fetchAndSetRelationships() {
+      if (group?.slug && currentUserMember) {
+        const relationships = await getFamilyRelationships(group.slug);
+        const newMap = new Map<string, string>();
+
+        for (const alter of members) {
+          if (alter.userId === currentUserMember.userId) continue;
+          const result = getRelationship(currentUserMember.userId, alter.userId, relationships);
+          if (result) {
+            newMap.set(alter.userId, result.relationship || '');
+          }
+        }
+        setRelationshipMap(newMap);
+      }
+    }
+
+    fetchAndSetRelationships();
+  }, [group, members, currentUserMember]);
+
+  useEffect(() => {
+    const loadMoreMembers = async () => {
+      if (inView && hasMore) {
+        if (!groupSlug) return;
         const newMembers = await getPaginatedMembers(groupSlug, page);
         if (newMembers.length > 0) {
           setMembers((prevMembers) => [...prevMembers, ...newMembers]);
@@ -36,10 +67,10 @@ export function FamilyGroupClient({ initialMembers, groupSlug, initialMemberCoun
         } else {
           setHasMore(false);
         }
-      };
+      }
+    };
 
-      loadMoreMembers();
-    }
+    loadMoreMembers();
   }, [inView, hasMore, page, groupSlug]);
 
   const handleSort = (key: SortKey) => {
@@ -78,7 +109,7 @@ export function FamilyGroupClient({ initialMembers, groupSlug, initialMemberCoun
   }, [members, searchQuery, sortConfig]);
 
   return (
-    <div className="my-0 mx-4">
+    <div className="container mx-auto px-4 py-0">
       <div className="flex items-center mb-4">
         <div className="flex items-center gap-2">
           {(['firstName', 'lastName'] as const).map(key => {
@@ -134,7 +165,12 @@ export function FamilyGroupClient({ initialMembers, groupSlug, initialMemberCoun
         }
       >
         {filteredAndSortedMembers.map((member) => (
-          <FamilyMemberCard key={member.userId} member={member} viewMode={viewMode} />
+          <FamilyMemberCard
+            key={member.userId}
+            member={member}
+            viewMode={viewMode}
+            relationship={relationshipMap.get(member.userId)}
+          />
         ))}
       </div>
 

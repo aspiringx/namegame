@@ -1,5 +1,5 @@
 import { auth } from '@/auth';
-import GreetButton from '@/components/GreetButton';
+import Footer from '@/components/Footer';
 import Header from '@/components/Header';
 import { GroupProvider } from '@/components/GroupProvider';
 import { getGroupTypeBySlug } from './data';
@@ -96,13 +96,7 @@ export default async function GroupLayout(props: { children: React.ReactNode; pa
         <main className="flex-grow pt-20 pb-24">
           {children}
         </main>
-        <footer className="fixed bottom-0 left-0 w-full h-16 bg-white dark:bg-gray-900 flex justify-center items-center shadow-[0_-2px_4px_rgba(0,0,0,0.1)] dark:shadow-[0_-2px_4px_rgba(255,255,255,0.1)]">
-          {isAuthorizedMember ? (
-            <GreetButton />
-          ) : (
-            <p className="text-gray-600 dark:text-gray-400">&copy; 2025 NameGame</p>
-          )}
-        </footer>
+        <Footer />
       </div>
     </GroupProvider>
   );
