@@ -44,7 +44,7 @@ export default function Footer() {
   };
 
   const isFamilyGroup = group.groupType?.code === 'family';
-  const buttonText = isFamilyGroup ? 'Invite Family Here' : 'Greet';
+  const buttonText = isFamilyGroup ? 'Invite' : 'Greet';
 
   return (
     <>
@@ -54,7 +54,7 @@ export default function Footer() {
           {isLoading ? 'Generating...' : buttonText}
         </Button>
       </footer>
-      <QRCodeModal isOpen={isModalOpen} url={greetingUrl} onClose={handleCloseModal} />
+      <QRCodeModal isOpen={isModalOpen} url={greetingUrl} onClose={handleCloseModal} isFamilyGroup={isFamilyGroup} />
     </>
   );
 }
