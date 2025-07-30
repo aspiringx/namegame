@@ -30,6 +30,13 @@ const greatGrandparent = { id: '22', name: 'Great Grandparent' };
 const greatUncle = { id: '23', name: 'Great Uncle' };
 const parentCousin = { id: '24', name: 'Parent Cousin' };
 
+// --- Spouse's Family Mock Data ---
+const spouseGrandparent = { id: '25', name: 'Spouse Grandparent' };
+const spousePibling = { id: '26', name: 'Spouse Pibling' }; // Sibling of parent-in-law
+const spouseCousin = { id: '27', name: 'Spouse Cousin' }; // Child of spouse's pibling
+const spouseFirstCousinOnceRemoved = { id: '28', name: 'Spouse First Cousin Once Removed' }; // Child of spouse's cousin
+const egoChild = { id: '29', name: 'Ego Child' };
+
 const mockRelationships: FullRelationship[] = [
   // Gen 1
   { user1Id: greatGrandpa.id, user2Id: grandpa.id, relationType: { code: 'parent' } },
@@ -66,6 +73,13 @@ const mockRelationships: FullRelationship[] = [
   { user1Id: greatGrandparent.id, user2Id: grandpa.id, relationType: { code: 'parent' } },
   { user1Id: greatGrandparent.id, user2Id: greatUncle.id, relationType: { code: 'parent' } },
   { user1Id: greatUncle.id, user2Id: parentCousin.id, relationType: { code: 'parent' } },
+
+  // Relationships for Spouse's Family
+  { user1Id: spouseGrandparent.id, user2Id: parentInLaw.id, relationType: { code: 'parent' } },
+  { user1Id: spouseGrandparent.id, user2Id: spousePibling.id, relationType: { code: 'parent' } },
+  { user1Id: spousePibling.id, user2Id: spouseCousin.id, relationType: { code: 'parent' } },
+  { user1Id: spouseCousin.id, user2Id: spouseFirstCousinOnceRemoved.id, relationType: { code: 'parent' } },
+  { user1Id: ego.id, user2Id: egoChild.id, relationType: { code: 'parent' } },
 ].map(r => ({ ...r, groupId: 1, greetCount: 0, relationTypeId: 0, createdAt: new Date(), updatedAt: new Date(), deletedAt: null, relationType: { ...r.relationType, id: 0, category: 'family', groupId: null } }));
 
 
@@ -170,5 +184,45 @@ describe('getRelationship', () => {
   it("should identify a parent's cousin as a first cousin once removed", () => {
     const result = getRelationship(ego.id, parentCousin.id, mockRelationships);
     expect(result?.relationship).toBe('First cousin once removed');
+  });
+
+  it("should identify a spouse's grandparent as a grandparent-in-law", () => {
+    const result = getRelationship(ego.id, spouseGrandparent.id, mockRelationships);
+    expect(result?.relationship).toBe('Grandparent-in-law');
+  });
+
+  it("should identify a spouse's pibling as a pibling-in-law", () => {
+    const result = getRelationship(ego.id, spousePibling.id, mockRelationships);
+    expect(result?.relationship).toBe('Pibling-in-law');
+  });
+
+  it("should identify a spouse's cousin as a cousin-in-law", () => {
+    const result = getRelationship(ego.id, spouseCousin.id, mockRelationships);
+    expect(result?.relationship).toBe('Cousin-in-law');
+  });
+
+  it("should identify a spouse's first cousin once removed as a first cousin once removed in-law", () => {
+    const result = getRelationship(ego.id, spouseFirstCousinOnceRemoved.id, mockRelationships);
+    expect(result?.relationship).toBe('First cousin once removed in-law');
+  });
+
+  it("should identify ego's cousin's spouse as a cousin-in-law for the spouse", () => {
+    const result = getRelationship(egoSpouse.id, cousinSpouse.id, mockRelationships);
+    expect(result?.relationship).toBe('Cousin-in-law');
+  });
+
+  it('should identify a great-grandparent', () => {
+    const result = getRelationship(ego.id, greatGrandpa.id, mockRelationships);
+    expect(result?.relationship).toBe('Great-grandparent');
+  });
+
+  it('should identify a great-pibling (great-aunt/uncle)', () => {
+    const result = getRelationship(ego.id, greatUncle.id, mockRelationships);
+    expect(result?.relationship).toBe('Great-pibling (aunt/uncle)');
+  });
+
+  it('should identify a second cousin', () => {
+    const result = getRelationship(egoChild.id, cousinChild.id, mockRelationships);
+    expect(result?.relationship).toBe('Second cousin');
   });
 });

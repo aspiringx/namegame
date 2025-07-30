@@ -189,6 +189,16 @@ function translatePathToRelationship(path: BfsQueueItem['path']): string | null 
     if (rel1 === 'parent' && rel2 === 'child' && rel3 === 'spouse') {
       return 'Sibling-in-law';
     }
+
+    // Path to spouse's grandparent: Ego -> Spouse -> Parent-in-law -> Grandparent-in-law
+    if (rel1 === 'spouse' && rel2 === 'parent' && rel3 === 'parent') {
+      return 'Grandparent-in-law';
+    }
+
+    // Path to great-grandparent: Ego -> Parent -> Grandparent -> Great-grandparent
+    if (rel1 === 'parent' && rel2 === 'parent' && rel3 === 'parent') {
+      return 'Great-grandparent';
+    }
   }
 
   // Path length 5: Cousin, Pibling-in-law, Nibling-in-law
@@ -208,6 +218,16 @@ function translatePathToRelationship(path: BfsQueueItem['path']): string | null 
     // Path to Spouse's Nibling: Ego -> Spouse -> Parent-in-law -> Sibling-in-law -> Nibling
     if (rel1 === 'spouse' && rel2 === 'parent' && rel3 === 'child' && rel4 === 'child') {
       return 'Nibling'; // Per request, spouse's Nibling is a Nibling
+    }
+
+    // Path to Spouse's Pibling: Ego -> Spouse -> Parent-in-law -> Grandparent-in-law -> Pibling-in-law
+    if (rel1 === 'spouse' && rel2 === 'parent' && rel3 === 'parent' && rel4 === 'child') {
+      return 'Pibling-in-law';
+    }
+
+    // Path to great-pibling: Ego -> Parent -> Grandparent -> Great-Grandparent -> Great-Pibling
+    if (rel1 === 'parent' && rel2 === 'parent' && rel3 === 'parent' && rel4 === 'child') {
+      return 'Great-pibling (aunt/uncle)';
     }
   }
 
@@ -246,6 +266,58 @@ function translatePathToRelationship(path: BfsQueueItem['path']): string | null 
       rel5 === 'child'
     ) {
       return 'First cousin once removed';
+    }
+
+    // Path to spouse's cousin: Ego -> Spouse -> Parent-in-law -> Grandparent-in-law -> Pibling-in-law -> Cousin-in-law
+    if (
+      rel1 === 'spouse' &&
+      rel2 === 'parent' &&
+      rel3 === 'parent' &&
+      rel4 === 'child' &&
+      rel5 === 'child'
+    ) {
+      return 'Cousin-in-law';
+    }
+  }
+
+  // Path length 7: First cousin once removed in-law and spouse's cousin-in-law
+  if (pathLength === 7) {
+    const [rel1, rel2, rel3, rel4, rel5, rel6] = relationships;
+
+    // Path to spouse's first cousin once removed: Ego -> Spouse -> ... -> First cousin once removed in-law
+    if (
+      rel1 === 'spouse' &&
+      rel2 === 'parent' &&
+      rel3 === 'parent' &&
+      rel4 === 'child' &&
+      rel5 === 'child' &&
+      rel6 === 'child'
+    ) {
+      return 'First cousin once removed in-law';
+    }
+
+    // Path from spouse to ego's cousin's spouse: Spouse -> Ego -> Parent -> Grandparent -> Pibling -> Cousin -> Spouse
+    if (
+      rel1 === 'spouse' &&
+      rel2 === 'parent' &&
+      rel3 === 'parent' &&
+      rel4 === 'child' &&
+      rel5 === 'child' &&
+      rel6 === 'spouse'
+    ) {
+      return 'Cousin-in-law';
+    }
+
+    // Path to second cousin: Ego's Child -> Ego -> Parent -> Grandparent -> Pibling -> Cousin -> Cousin's Child (Second Cousin)
+    if (
+      rel1 === 'parent' &&
+      rel2 === 'parent' &&
+      rel3 === 'parent' &&
+      rel4 === 'child' &&
+      rel5 === 'child' &&
+      rel6 === 'child'
+    ) {
+      return 'Second cousin';
     }
   }
 
