@@ -7,9 +7,10 @@ interface QRCodeModalProps {
   isOpen: boolean;
   url: string;
   onClose: () => void;
+  isFamilyGroup?: boolean;
 }
 
-export default function QRCodeModal({ isOpen, url, onClose }: QRCodeModalProps) {
+export default function QRCodeModal({ isOpen, url, onClose, isFamilyGroup }: QRCodeModalProps) {
   const [isCopied, setIsCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -37,10 +38,14 @@ export default function QRCodeModal({ isOpen, url, onClose }: QRCodeModalProps) 
         >
           <span className="mb-1">&times;</span>
         </button> 
-        <h2 className="text-2xl font-bold mb-4">Greeting Code</h2>
-        <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
-          Let someone scan this code or share the URL to greet.
-          Valid 7 days.
+        <h2 className="text-2xl font-bold mb-4">{isFamilyGroup ? 'Invite Code' : 'Greeting Code'}</h2>
+        <p className="text-left text-sm text-gray-600 dark:text-gray-300 mb-4">
+          {isFamilyGroup ? (
+            'Share code or link to invite family here.'
+          ) : (
+            'Share code or link to greet or welcome people here.'
+          )} {' '}
+          <i>Expires in seven days.</i>
         </p>
         <div className="p-4 bg-white inline-block rounded-md">
           <QRCode value={url} size={200} />

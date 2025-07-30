@@ -1,5 +1,5 @@
 // prisma/scripts/prod-migration-step1-seed-codes.ts
-import { PrismaClient } from '../../src/generated/prisma';
+import { PrismaClient, UserUserRelationCategory } from '../../src/generated/prisma';
 
 const prisma = new PrismaClient();
 
@@ -22,9 +22,9 @@ async function main() {
 
   // Seed UserUserRelationType
   const relationTypes = [
-    { id: 1, code: 'acquaintance' },
-    { id: 2, code: 'friend' },
-    { id: 3, code: 'family' },
+    { id: 1, code: 'acquaintance', category: UserUserRelationCategory.other },
+    { id: 2, code: 'friend', category: UserUserRelationCategory.other },
+    { id: 3, code: 'family', category: UserUserRelationCategory.family },
   ];
   for (const rt of relationTypes) {
     await prisma.userUserRelationType.upsert({ where: { id: rt.id }, update: {}, create: rt });

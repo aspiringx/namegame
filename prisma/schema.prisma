@@ -233,6 +233,11 @@ model Link {
   @@map("links")
 }
 
+enum UserUserRelationCategory {
+  family
+  other
+}
+
 // Code Tables
 
 model GroupType {
@@ -246,6 +251,7 @@ model GroupType {
 model UserUserRelationType {
   id        Int        @id @default(autoincrement())
   code      String
+  category  UserUserRelationCategory
   groupId   Int?
   group     Group?     @relation(fields: [groupId], references: [id])
   userUsers UserUser[]
