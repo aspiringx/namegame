@@ -88,7 +88,35 @@ export function getRelationship(
     if (!current) continue;
 
     if (current.userId === alterUserId) {
-      // Found the path! Now translate it.
+      // Found the path! Now check for special cases like half-siblings.
+      const pathString = current.path
+        .slice(1)
+        .map((p) => p.relationshipType)
+        .join(' -> ');
+
+      if (pathString === 'parent -> child') {
+        const getParents = (userId: string): string[] => {
+          const neighbors = adjacencyList.get(userId) || [];
+          return neighbors
+            .filter((n) => n.type === 'parent')
+            .map((n) => n.relatedUserId);
+        };
+
+        const egoParents = new Set(getParents(egoUserId));
+        const alterParents = getParents(alterUserId);
+
+        const commonParentsCount = alterParents.filter((p) =>
+          egoParents.has(p),
+        ).length;
+
+        if (commonParentsCount === 1) {
+          return { relationship: 'Half Sibling', path: current.path };
+        } else {
+          return { relationship: 'Sibling', path: current.path };
+        }
+      }
+
+      // If not a special case, translate the path normally.
       const relationship = translatePathToRelationship(current.path);
       return {
         relationship,
@@ -129,7 +157,6 @@ function translatePathToRelationship(path: BfsQueueItem['path']): string | null 
   if (pathString === 'child') return 'Child';
   if (pathString === 'spouse') return 'Spouse';
   if (pathString === 'parent -> parent') return 'Grandparent';
-  if (pathString === 'parent -> child') return 'Sibling';
   if (pathString === 'parent -> parent -> child') return 'Pibling (aunt/uncle)';
   if (pathString === 'parent -> parent -> parent') return 'Great-grandparent';
   if (pathString === 'parent -> parent -> parent -> child') return 'Great Pibling (aunt/uncle)';
@@ -141,6 +168,7 @@ function translatePathToRelationship(path: BfsQueueItem['path']): string | null 
   // Step-relatives
   if (pathString === 'parent -> spouse') return 'Step Parent';
   if (pathString === 'spouse -> child') return 'Step Child';
+  if (pathString === 'parent -> spouse -> child') return 'Step Sibling';
 
   // In-laws (relatives of spouse)
   if (pathString === 'spouse -> parent') return 'Parent-in-law';

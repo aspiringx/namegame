@@ -54,6 +54,7 @@ async function main() {
     { id: '27', name: 'Spouse Cousin' },
     { id: '28', name: 'Spouse First Cousin Once Removed' },
     { id: '29', name: 'Ego Child' },
+    { id: '30', name: 'Half Sibling' },
   ];
 
   // 3. Delete existing users and relationships to ensure a clean slate
@@ -194,6 +195,8 @@ async function main() {
     { user1Id: '13', user2Id: '15', typeId: parentRelationType.id },// Ego Spouse -> Step Child
     { user1Id: '8', user2Id: '12', typeId: parentRelationType.id }, // Sibling -> Nibling
     { user1Id: '11', user2Id: '21', typeId: parentRelationType.id }, // Cousin -> Cousin Child
+    { user1Id: '7', user2Id: '30', typeId: parentRelationType.id },  // Ego -> Half Sibling
+    { user1Id: '13', user2Id: '30', typeId: parentRelationType.id }, // Ego Spouse -> Half Sibling
   ];
 
   for (const rel of relationships) {
