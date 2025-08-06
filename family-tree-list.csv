@@ -1,4 +1,4 @@
-﻿Labels,Path,Order,Steps
+Labels,Path,Order,Steps
 Child,child,1,1
 Parent,parent,1,1
 Spouse,spouse,1,1
@@ -27,6 +27,7 @@ Great-grandparent-in-law,spouse > parent > parent > parent,2,4
 Nibling-in-law,spouse > parent > child > child,2,4
 Pibling-in-law,parent > parent > child > spouse,2,4
 Pibling-in-law,spouse > parent > parent > child,2,4
+Nibling-in-law,parent > child > child > partner,2,4
 Cousin-in-law,spouse > parent > parent > child > child,2,5
 Great-great-grandparent-in-law,spouse > parent > parent > parent > parent,2,5
 Great-nibling-in-law,spouse > parent > child > child > child,2,5
@@ -39,7 +40,7 @@ Great-great-nibling-in-law,spouse > parent > child > child > child > child,2,6
 Great-great-pibling-in-law,parent > parent > parent > parent > child > spouse,2,6
 1st cousin-once-removed-in-law,spouse > parent > parent > parent > child > child > spouse,2,7
 2nd cousin-in-law,spouse > parent > parent > parent > child > child > child,2,7
-Half sibling,1 parent > child,3,2
+Half sibling,parent > child,3,2
 Step-child,spouse > child,4,2
 Step-parent,parent > spouse,4,2
 Step-grandchild,spouse > child > child,4,3

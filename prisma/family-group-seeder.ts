@@ -1,6 +1,7 @@
 import { PrismaClient, User, UserUserRelationCategory } from '../src/generated/prisma';
 import * as fs from 'fs';
 import * as path from 'path';
+import bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
@@ -175,7 +176,7 @@ async function main() {
     const newUser = await prisma.user.create({
       data: {
         username: email,
-        password: 'password', // Add a dummy password
+        password: await bcrypt.hash('password', 10),
         firstName: path,
         email: email,
         groupMemberships: {

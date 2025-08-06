@@ -222,7 +222,11 @@ function translatePathToRelationship(path: BfsQueueItem['path']): string | null 
       path: 'spouse > parent > parent',
       order: 2,
     },
-    { label: 'Sibling-in-law', path: 'spouse > parent > child', order: 2 },
+    { 
+      label: 'Sibling-in-law', path: 'spouse > parent > child', order: 2 },
+    { 
+      label: 'Sibling-in-law', path: 'parent > child > spouse', order: 2 
+    },
     {
       label: 'Great-grandparent-in-law',
       path: 'spouse > parent > parent > parent',
@@ -236,6 +240,11 @@ function translatePathToRelationship(path: BfsQueueItem['path']): string | null 
     {
       label: 'Pibling-in-law',
       path: 'parent > parent > child > spouse',
+      order: 2,
+    },
+    {
+      label: 'Nibling-in-law',
+      path: 'parent > child > child > partner',
       order: 2,
     },
     {
@@ -409,6 +418,7 @@ function translatePathToRelationship(path: BfsQueueItem['path']): string | null 
     },
     { label: 'Co-sibling', path: 'parent > partner > child', order: 5 },
     { label: 'Co-sibling', path: 'partner > parent > child', order: 5 },
+    { label: 'Co-sibling', path: 'parent > child > partner', order: 5 },
     {
       label: 'Co-great-grandchild',
       path: 'partner > child > child > child',
@@ -447,6 +457,11 @@ function translatePathToRelationship(path: BfsQueueItem['path']): string | null 
     {
       label: 'Co-cousin',
       path: 'partner > parent > parent > child > child',
+      order: 5,
+    },
+    {
+      label: 'Co-cousin',
+      path: 'parent > parent > child > child > partner',
       order: 5,
     },
     {
