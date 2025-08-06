@@ -160,6 +160,11 @@ describe('getRelationship with seeded data', () => {
       path: 'parent > spouse > parent > parent > child',
     },
     {
+      label: 'Step-cousin',
+      path: 'parent > spouse > parent > child > child',
+    },
+
+    {
       label: 'Step-1st cousin-once-removed',
       path: 'parent > spouse > parent > child > child > child',
     },
@@ -171,7 +176,7 @@ describe('getRelationship with seeded data', () => {
       label: 'Step-1st cousin-once-removed',
       path: 'parent > parent > parent > child > spouse > child',
     },
-    { label: 'Step-1st cousin-once-removed', path: 'parent > spouse > parent > parent > child > child' },
+
     {
       label: 'Step-great-great-nibling',
       path: 'parent > child > spouse > child > child > child',

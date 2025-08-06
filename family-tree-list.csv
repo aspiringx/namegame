@@ -1,4 +1,4 @@
-﻿Label,Path,Order,Steps
+﻿Labels,Path,Order,Steps
 Child,child,1,1
 Parent,parent,1,1
 Spouse,spouse,1,1
@@ -56,7 +56,7 @@ Step-great-pibling,parent > spouse > parent > parent > child,4,5
 Step-1st cousin-once-removed,parent > spouse > parent > child > child > child,4,6
 Step-1st cousin-once-removed,parent > spouse > parent > parent > child > child,4,6
 Step-1st cousin-once-removed,parent > parent > parent > child > spouse > child,4,6
-Step-cousin,parent > spouse > parent > parent > child > child,4,6
+Step-cousin,parent > spouse > parent > child > child,4,6
 Step-great-great-nibling,parent > child > spouse > child > child > child,4,6
 Step-great-great-pibling,parent > spouse > parent > parent > parent > child,4,6
 Step-2nd cousin,parent > spouse > parent > parent > child > child > child,4,7
