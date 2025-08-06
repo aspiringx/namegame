@@ -149,21 +149,26 @@ function translatePathToRelationship(path: BfsQueueItem['path']): string | null 
   const relationships = path.slice(1).map((p) => p.relationshipType);
   const pathString = relationships.join(' -> ');
   console.log('pathString', pathString);
-  if (pathString === 'parent -> parent -> parent -> child') {
-    return 'Great Pibling (aunt/uncle)';
-  }
   // Ego's direct relatives
   if (pathString === 'parent') return 'Parent';
   if (pathString === 'child') return 'Child';
   if (pathString === 'spouse') return 'Spouse';
   if (pathString === 'parent -> parent') return 'Grandparent';
-  if (pathString === 'parent -> parent -> child') return 'Pibling (aunt/uncle)';
+  if (pathString === 'parent -> parent -> child') return 'Pibling';
   if (pathString === 'parent -> parent -> parent') return 'Great-grandparent';
-  if (pathString === 'parent -> parent -> parent -> child') return 'Great Pibling (aunt/uncle)';
+  if (pathString === 'parent -> parent -> parent -> child') return 'Great-pibling';
   if (pathString === 'parent -> parent -> child -> child') return 'Cousin';
-  if (pathString === 'parent -> parent -> parent -> child -> child') return 'First cousin once removed';
-  if (pathString === 'parent -> parent -> child -> child -> child') return 'First cousin once removed';
-  if (pathString === 'parent -> child -> child') return 'Nibling (niece/nephew)';
+  if (pathString === 'parent -> parent -> parent -> child -> child')
+    return 'First cousin once removed';
+  if (pathString === 'parent -> parent -> child -> child -> child')
+    return 'First cousin once removed';
+  if (pathString === 'parent -> child -> child') return 'Nibling';
+  if (pathString === 'parent -> child -> child -> spouse') return 'Nibling-in-law';
+  if (pathString === 'parent -> child -> child -> child') return 'Great-nibling';
+  if (pathString === 'parent -> child -> child -> spouse -> child') return 'Step great-nibling';
+  if (pathString === 'child -> child') return 'Grandchild';
+  if (pathString === 'parent -> parent -> parent -> child -> child -> child')
+    return 'Second cousin';
 
   // Step-relatives
   if (pathString === 'parent -> spouse') return 'Step Parent';
@@ -176,12 +181,20 @@ function translatePathToRelationship(path: BfsQueueItem['path']): string | null 
   if (pathString === 'spouse -> parent -> parent') return 'Grandparent-in-law';
   if (pathString === 'spouse -> parent -> parent -> child') return 'Pibling-in-law';
   if (pathString === 'spouse -> parent -> child -> child') return 'Nibling-in-law';
-  if (pathString === 'spouse -> parent -> parent -> child -> child') return 'Cousin-in-law';
+  if (pathString === 'spouse -> parent -> parent -> child -> child')
+    return 'Cousin-in-law';
+  if (pathString === 'spouse -> parent -> parent -> child -> child -> child')
+    return 'First cousin once removed in-law';
 
   // Spouses of relatives
+  if (pathString === 'child -> spouse') return 'Child-in-law';
+  if (pathString === 'child -> child -> spouse') return 'Grandchild-in-law';
   if (pathString === 'parent -> child -> spouse') return 'Sibling-in-law';
   if (pathString === 'parent -> parent -> child -> spouse') return 'Pibling-in-law';
-  if (pathString === 'parent -> parent -> child -> child -> spouse') return 'Cousin-in-law';
+  if (pathString === 'parent -> parent -> child -> child -> spouse')
+    return 'Cousin-in-law';
+  if (pathString === 'spouse -> parent -> parent -> child -> child -> spouse')
+    return 'Cousin-in-law';
 
   return 'Relative';
 }

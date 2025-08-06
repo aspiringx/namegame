@@ -119,9 +119,9 @@ describe('getRelationship', () => {
     expect(result?.relationship).toBe('Grandchild');
   });
 
-  it('should identify a pibling (aunt/uncle)', () => {
+  it('should identify a pibling', () => {
     const result = getRelationship(ego.id, uncle.id, mockRelationships);
-    expect(result?.relationship).toBe('Pibling (aunt/uncle)');
+    expect(result?.relationship).toBe('Pibling');
   });
 
   it('should identify a cousin', () => {
@@ -129,9 +129,9 @@ describe('getRelationship', () => {
     expect(result?.relationship).toBe('Cousin');
   });
 
-  it('should identify a nibling (niece/nephew)', () => {
+  it('should identify a nibling', () => {
     const result = getRelationship(ego.id, nibling.id, mockRelationships);
-    expect(result?.relationship).toBe('Nibling (niece/nephew)');
+    expect(result?.relationship).toBe('Nibling');
   });
 
   // --- In-Law and Step-Family Tests ---
@@ -151,14 +151,14 @@ describe('getRelationship', () => {
     expect(result?.relationship).toBe('Step Parent');
   });
 
-  it("should identify a pibling's spouse as a pibling", () => {
+  it("should identify a pibling's spouse as a pibling-in-law", () => {
     const result = getRelationship(ego.id, piblingSpouse.id, mockRelationships);
-    expect(result?.relationship).toBe('Pibling');
+    expect(result?.relationship).toBe('Pibling-in-law');
   });
 
-  it("should identify a spouse's nibling as a nibling", () => {
+  it("should identify a spouse's nibling as a nibling-in-law", () => {
     const result = getRelationship(ego.id, spouseNibling.id, mockRelationships);
-    expect(result?.relationship).toBe('Nibling');
+    expect(result?.relationship).toBe('Nibling-in-law');
   });
 
   it("should identify a spouse's sibling as a sibling-in-law", () => {
@@ -216,13 +216,18 @@ describe('getRelationship', () => {
     expect(result?.relationship).toBe('Great-grandparent');
   });
 
-  it('should identify a great-pibling (great-aunt/uncle)', () => {
+  it('should identify a great-pibling', () => {
     const result = getRelationship(ego.id, greatUncle.id, mockRelationships);
-    expect(result?.relationship).toBe('Great-pibling (aunt/uncle)');
+    expect(result?.relationship).toBe('Great-pibling');
   });
 
   it('should identify a second cousin', () => {
     const result = getRelationship(egoChild.id, cousinChild.id, mockRelationships);
     expect(result?.relationship).toBe('Second cousin');
+  });
+
+  it("should identify a child's spouse as a child-in-law from the uncle's perspective", () => {
+    const result = getRelationship(uncle.id, cousinSpouse.id, mockRelationships);
+    expect(result?.relationship).toBe('Child-in-law');
   });
 });
