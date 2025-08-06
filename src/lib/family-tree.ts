@@ -1,4 +1,5 @@
-import type { User, UserUser, UserUserRelationType } from '../generated/prisma';
+import type { User } from '../generated/prisma';
+import type { FullRelationship } from '@/types';
 
 /**
  * Represents the graph of family relationships as an adjacency list.
@@ -32,7 +33,7 @@ export type RelationshipResult = {
  * @param allRelationships - An array of all UserUser relationships for the group.
  * @returns An object containing the relationship string and the path, or null if no relationship is found.
  */
-type FullRelationship = UserUser & { relationType: UserUserRelationType };
+
 
 function buildAdjacencyList(relationships: FullRelationship[]): AdjacencyList {
   const list: AdjacencyList = new Map();
@@ -460,7 +461,7 @@ function translatePathToRelationship(path: BfsQueueItem['path']): string | null 
     },
     {
       label: 'Co-great-nibling',
-      path: 'partner > parent  > child > child > child',
+      path: 'partner > parent > child > child > child',
       order: 5,
     },
     {

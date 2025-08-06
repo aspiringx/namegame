@@ -14,7 +14,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowUp, ArrowDown, LayoutGrid, List } from "lucide-react";
-import router from "next/router";
+
 
 interface GroupTabsProps {
   sunDeckMembers: MemberWithUser[];
@@ -117,6 +117,7 @@ export default function GroupTabs({
   iceBlockCount,
   currentUserMember,
 }: GroupTabsProps) {
+  const router = useRouter();
 
 
   const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: SortDirection }>({ 
