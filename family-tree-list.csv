@@ -1,93 +1,91 @@
-﻿Family Relationships Ordered List,,,
-,,,
-Labels,Path,Order,Steps
-Parent,parent,1,1
-Grandparent,parent -> parent,1,2
-Great-grandparent,parent -> parent -> parent,1,3
-Great-great-grandparent,parent -> parent -> parent -> parent,1,4
-Sibling,parent -> child,1,2
-Spouse,spouse,1,1
+﻿Label,Path,Order,Steps
 Child,child,1,1
-Grandchild,child -> child,1,2
-Great-grandchild,child -> child -> child,1,3
-Great-great-grandchild,child -> child -> child -> child,1,4
-Cousin,parent -> parent -> child -> child,1,4
-1st cousin-once-removed,parent -> parent -> child -> child -> child,1,5
-1st cousin-once-removed,parent -> parent -> parent -> child -> child,1,5
-2nd cousin,parent -> parent -> parent -> child -> child -> child,1,6
-Pibling,parent -> parent -> child,1,3
-Great-pibling,parent -> parent -> parent -> child,1,4
-Great-great-pibling,parent -> parent -> parent -> parent -> child,1,5
-Nibling,parent -> child -> child,1,3
-Great-nibling,parent -> child -> child -> child,1,4
-Great-great-nibling,parent -> child -> child -> child -> child,1,5
-Parent-in-law,spouse -> parent,2,2
-Grandparent-in-law,spouse -> parent -> parent,2,3
-Great-grandparent-in-law,spouse -> parent -> parent -> parent,2,4
-Great-great-grandparent-in-law,spouse -> parent -> parent -> parent -> parent,2,5
-Sibling-in-law,spouse -> parent -> child,2,3
-Child-in-law,child -> spouse,2,2
-Cousin-in-law,spouse -> parent -> parent -> child -> child,2,5
-1st cousin-once-removed-in-law,spouse -> parent -> parent -> child -> child -> child,2,6
-1st cousin-once-removed-in-law,spouse -> parent -> parent -> parent -> child -> child,2,6
-1st cousin-once-removed-in-law,spouse -> parent -> parent -> parent -> child -> child -> spouse,2,7
-1st cousin-once-removed-in-law,parent -> parent -> parent -> child -> child -> spouse,2,6
-2nd cousin-in-law,spouse -> parent -> parent -> parent -> child -> child -> child,2,7
-Pibling-in-law,parent -> parent -> child -> spouse,2,4
-Pibling-in-law,spouse -> parent -> parent -> child,2,4
-Pibling-in-law,spouse -> parent -> parent -> child -> spouse,2,5
-Great-pibling-in-law,parent -> parent -> parent -> child -> spouse,2,5
-Great-great-pibling-in-law,parent -> parent -> parent -> parent -> child -> spouse,2,6
-Nibling-in-law,spouse -> parent -> child -> child,2,4
-Great-nibling-in-law,spouse -> parent -> child-> child -> child,2,5
-Great-great-nibling-in-law,spouse -> parent -> child -> child -> child -> child,2,6
-Half sibling,1 parent -> child,3,2
-Step-parent,parent -> spouse,4,2
-Step-grandparent,parent -> spouse -> parent,4,3
-Step-great-grandparent,parent -> spouse -> parent -> parent,4,4
-Step-great-great-grandparent,parent -> spouse -> parent -> parent -> parent,4,5
-Step-sibling,parent -> spouse -> child,4,3
-Step-child,spouse -> child,4,2
-Step-grandchild,spouse -> child -> child,4,3
-Step-great-grandchild,spouse -> child -> child -> child,4,4
-Step-great-great-grandchild,spouse -> child -> child -> child -> child,4,5
-Step-cousin,parent -> spouse -> parent -> parent -> child -> child,4,6
-Step-1st cousin-once-removed,parent -> spouse -> parent -> child -> child -> child,4,6
-Step-1st cousin-once-removed,parent -> spouse -> parent -> parent -> child -> child,4,6
-Step-1st cousin-once-removed,parent -> parent -> parent -> child -> spouse -> child,4,6
-Step-2nd cousin,parent -> spouse -> parent -> parent -> child -> child -> child,4,7
-Step-2nd cousin,parent -> parent -> parent -> child -> child -> spouse -> child,4,7
-Step-pibling,parent -> spouse -> parent -> child,4,4
-Step-great-pibling,parent -> spouse -> parent -> parent -> child,4,5
-Step-great-great-pibling,parent -> spouse -> parent -> parent -> parent -> child,4,6
-Step-nibling,parent -> child -> spouse -> child,4,4
-Step-great-nibling,parent -> child -> spouse -> child -> child,4,5
-Step-great-great-nibling,parent -> child -> spouse -> child -> child -> child,4,6
-Co-parent,parent -> partner,5,2
-Co-parent,partner -> parent,5,2
-Co-grandparent,parent -> partner -> parent,5,3
-Co-grandparent,partner -> parent -> parent,5,3
-Co-great-grandparent,parent -> partner -> parent -> parent,5,4
-Co-great-grandparent,partner -> parent -> parent -> parent,5,4
-Co-sibling,parent -> partner -> child,5,3
-Co-sibling,partner -> parent -> child,5,3
+Parent,parent,1,1
+Spouse,spouse,1,1
+Grandchild,child > child,1,2
+Grandparent,parent > parent,1,2
+Sibling,parent > child,1,2
+Great-grandchild,child > child > child,1,3
+Great-grandparent,parent > parent > parent,1,3
+Nibling,parent > child > child,1,3
+Pibling,parent > parent > child,1,3
+Cousin,parent > parent > child > child,1,4
+Great-great-grandchild,child > child > child > child,1,4
+Great-great-grandparent,parent > parent > parent > parent,1,4
+Great-nibling,parent > child > child > child,1,4
+Great-pibling,parent > parent > parent > child,1,4
+1st cousin-once-removed,parent > parent > child > child > child,1,5
+1st cousin-once-removed,parent > parent > parent > child > child,1,5
+Great-great-nibling,parent > child > child > child > child,1,5
+Great-great-pibling,parent > parent > parent > parent > child,1,5
+2nd cousin,parent > parent > parent > child > child > child,1,6
+Child-in-law,child > spouse,2,2
+Parent-in-law,spouse > parent,2,2
+Grandparent-in-law,spouse > parent > parent,2,3
+Sibling-in-law,spouse > parent > child,2,3
+Great-grandparent-in-law,spouse > parent > parent > parent,2,4
+Nibling-in-law,spouse > parent > child > child,2,4
+Pibling-in-law,parent > parent > child > spouse,2,4
+Pibling-in-law,spouse > parent > parent > child,2,4
+Cousin-in-law,spouse > parent > parent > child > child,2,5
+Great-great-grandparent-in-law,spouse > parent > parent > parent > parent,2,5
+Great-nibling-in-law,spouse > parent > child > child > child,2,5
+Great-pibling-in-law,parent > parent > parent > child > spouse,2,5
+Pibling-in-law,spouse > parent > parent > child > spouse,2,5
+1st cousin-once-removed-in-law,spouse > parent > parent > child > child > child,2,6
+1st cousin-once-removed-in-law,spouse > parent > parent > parent > child > child,2,6
+1st cousin-once-removed-in-law,parent > parent > parent > child > child > spouse,2,6
+Great-great-nibling-in-law,spouse > parent > child > child > child > child,2,6
+Great-great-pibling-in-law,parent > parent > parent > parent > child > spouse,2,6
+1st cousin-once-removed-in-law,spouse > parent > parent > parent > child > child > spouse,2,7
+2nd cousin-in-law,spouse > parent > parent > parent > child > child > child,2,7
+Half sibling,1 parent > child,3,2
+Step-child,spouse > child,4,2
+Step-parent,parent > spouse,4,2
+Step-grandchild,spouse > child > child,4,3
+Step-grandparent,parent > spouse > parent,4,3
+Step-sibling,parent > spouse > child,4,3
+Step-great-grandchild,spouse > child > child > child,4,4
+Step-great-grandparent,parent > spouse > parent > parent,4,4
+Step-nibling,parent > child > spouse > child,4,4
+Step-pibling,parent > spouse > parent > child,4,4
+Step-great-great-grandchild,spouse > child > child > child > child,4,5
+Step-great-great-grandparent,parent > spouse > parent > parent > parent,4,5
+Step-great-nibling,parent > child > spouse > child > child,4,5
+Step-great-pibling,parent > spouse > parent > parent > child,4,5
+Step-1st cousin-once-removed,parent > spouse > parent > child > child > child,4,6
+Step-1st cousin-once-removed,parent > spouse > parent > parent > child > child,4,6
+Step-1st cousin-once-removed,parent > parent > parent > child > spouse > child,4,6
+Step-cousin,parent > spouse > parent > parent > child > child,4,6
+Step-great-great-nibling,parent > child > spouse > child > child > child,4,6
+Step-great-great-pibling,parent > spouse > parent > parent > parent > child,4,6
+Step-2nd cousin,parent > spouse > parent > parent > child > child > child,4,7
+Step-2nd cousin,parent > parent > parent > child > child > spouse > child,4,7
 Partner,partner,5,1
-Co-child,partner -> child,5,2
-Co-grandchild,partner -> child -> child,5,3
-Co-great-grandchild,partner -> child -> child -> child,5,4
-Co-great-great-grandchild,partner -> child -> child -> child -> child,5,5
-Co-cousin,partner -> parent -> parent -> child -> child,5,5
-Co-1st cousin-once-removed,partner -> parent -> parent -> child -> child -> child,5,6
-Co-1st cousin-once-removed,partner -> parent -> parent -> parent -> child -> child,5,6
-Co-1st cousin-once-removed,parent -> parent -> parent -> child -> child -> partner,5,6
-Co-1st cousin-once-removed,parent -> parent -> child -> child -> partner -> child,5,6
-Co-2nd cousin,partner -> parent -> parent -> parent -> child -> child -> child,5,7
-Co-2nd cousin,parent -> parent -> parent -> child -> child -> child -> partner,5,7
-Co-pibling,parent -> partner -> parent -> child,5,4
-Co-pibling,partner -> parent -> parent -> child,5,4
-Co-great-pibling,parent -> partner -> parent -> parent -> child,5,5
-Co-great-pibling,partner -> parent -> parent -> parent -> child,5,5
-Co-nibling,partner -> parent -> child -> child,5,4
-Co-nibling,parent -> child -> partner -> child,5,4
-Co-great-nibling,partner -> parent  -> child -> child -> child,5,5
-Co-great-nibling,parent -> child -> child -> partner -> child,5,5
+Co-child,partner > child,5,2
+Co-parent,parent > partner,5,2
+Co-parent,partner > parent,5,2
+Co-grandchild,partner > child > child,5,3
+Co-grandparent,parent > partner > parent,5,3
+Co-grandparent,partner > parent > parent,5,3
+Co-sibling,parent > partner > child,5,3
+Co-sibling,partner > parent > child,5,3
+Co-great-grandchild,partner > child > child > child,5,4
+Co-great-grandparent,parent > partner > parent > parent,5,4
+Co-great-grandparent,partner > parent > parent > parent,5,4
+Co-nibling,partner > parent > child > child,5,4
+Co-nibling,parent > child > partner > child,5,4
+Co-pibling,parent > partner > parent > child,5,4
+Co-pibling,partner > parent > parent > child,5,4
+Co-cousin,partner > parent > parent > child > child,5,5
+Co-great-great-grandchild,partner > child > child > child > child,5,5
+Co-great-nibling,partner > parent  > child > child > child,5,5
+Co-great-nibling,parent > child > child > partner > child,5,5
+Co-great-pibling,parent > partner > parent > parent > child,5,5
+Co-great-pibling,partner > parent > parent > parent > child,5,5
+Co-1st cousin-once-removed,partner > parent > parent > child > child > child,5,6
+Co-1st cousin-once-removed,partner > parent > parent > parent > child > child,5,6
+Co-1st cousin-once-removed,parent > parent > parent > child > child > partner,5,6
+Co-1st cousin-once-removed,parent > parent > child > child > partner > child,5,6
+Co-2nd cousin,partner > parent > parent > parent > child > child > child,5,7
+Co-2nd cousin,parent > parent > parent > child > child > child > partner,5,7
