@@ -1,4 +1,5 @@
-import type { User, UserUser, UserUserRelationType } from '../generated/prisma';
+import type { User } from '../generated/prisma';
+import type { FullRelationship } from '@/types';
 
 /**
  * Represents the graph of family relationships as an adjacency list.
@@ -32,7 +33,7 @@ export type RelationshipResult = {
  * @param allRelationships - An array of all UserUser relationships for the group.
  * @returns An object containing the relationship string and the path, or null if no relationship is found.
  */
-type FullRelationship = UserUser & { relationType: UserUserRelationType };
+
 
 function buildAdjacencyList(relationships: FullRelationship[]): AdjacencyList {
   const list: AdjacencyList = new Map();
@@ -55,6 +56,10 @@ function buildAdjacencyList(relationships: FullRelationship[]): AdjacencyList {
       // Spouse relationships are bi-directional
       addEdge(rel.user1Id, rel.user2Id, 'spouse');
       addEdge(rel.user2Id, rel.user1Id, 'spouse');
+    } else if (rel.relationType.code === 'partner') {
+      // Partner relationships are bi-directional
+      addEdge(rel.user1Id, rel.user2Id, 'partner');
+      addEdge(rel.user2Id, rel.user1Id, 'partner');
     }
   }
 
@@ -88,12 +93,40 @@ export function getRelationship(
     if (!current) continue;
 
     if (current.userId === alterUserId) {
-      // Found the path! Now translate it.
-      const relationship = translatePathToRelationship(current.path);
-      return {
-        relationship,
-        path: current.path,
-      };
+      // Found the path! Now check for special cases like half-siblings.
+      const pathString = current.path
+        .slice(1)
+        .map((p) => p.relationshipType)
+        .join(' -> ');
+
+      if (pathString === 'parent -> child') {
+        const getParents = (userId: string): string[] => {
+          const neighbors = adjacencyList.get(userId) || [];
+          return neighbors
+            .filter((n) => n.type === 'parent')
+            .map((n) => n.relatedUserId);
+        };
+
+        const egoParents = new Set(getParents(egoUserId));
+        const alterParents = getParents(alterUserId);
+
+        const commonParentsCount = alterParents.filter((p) =>
+          egoParents.has(p),
+        ).length;
+
+        if (commonParentsCount === 1) {
+          return { relationship: 'Half Sibling', path: current.path };
+        } else {
+          return { relationship: 'Sibling', path: current.path };
+        }
+      } else {
+        // If not a special case, translate the path normally.
+        const relationship = translatePathToRelationship(current.path);
+        return {
+          relationship,
+          path: current.path,
+        };
+      }
     }
 
     const neighbors = adjacencyList.get(current.userId) || [];
@@ -116,210 +149,388 @@ export function getRelationship(
 
 function translatePathToRelationship(path: BfsQueueItem['path']): string | null {
   const pathLength = path.length;
+  if (pathLength <= 1) return null;
+
   const relationships = path.slice(1).map((p) => p.relationshipType);
+  const pathString = relationships.join(' > ');
 
-  // Path starts with Ego, so length is always number of relationships + 1.
-  // A path of length 1 is just the Ego.
-  if (pathLength <= 1) {
-    return null;
+  const relationshipRules = [
+    { label: 'Child', path: 'child', order: 1 },
+    { label: 'Parent', path: 'parent', order: 1 },
+    { label: 'Spouse', path: 'spouse', order: 1 },
+    { label: 'Grandchild', path: 'child > child', order: 1 },
+    { label: 'Grandparent', path: 'parent > parent', order: 1 },
+
+    { label: 'Great-grandchild', path: 'child > child > child', order: 1 },
+    {
+      label: 'Great-grandparent',
+      path: 'parent > parent > parent',
+      order: 1,
+    },
+    { label: 'Nibling', path: 'parent > child > child', order: 1 },
+    { label: 'Pibling', path: 'parent > parent > child', order: 1 },
+    { label: 'Cousin', path: 'parent > parent > child > child', order: 1 },
+    {
+      label: 'Great-great-grandchild',
+      path: 'child > child > child > child',
+      order: 1,
+    },
+    {
+      label: 'Great-great-grandparent',
+      path: 'parent > parent > parent > parent',
+      order: 1,
+    },
+    {
+      label: 'Great-nibling',
+      path: 'parent > child > child > child',
+      order: 1,
+    },
+    {
+      label: 'Great-pibling',
+      path: 'parent > parent > parent > child',
+      order: 1,
+    },
+    {
+      label: '1st cousin-once-removed',
+      path: 'parent > parent > child > child > child',
+      order: 1,
+    },
+    {
+      label: '1st cousin-once-removed',
+      path: 'parent > parent > parent > child > child',
+      order: 1,
+    },
+    {
+      label: 'Great-great-nibling',
+      path: 'parent > child > child > child > child',
+      order: 1,
+    },
+    {
+      label: 'Great-great-pibling',
+      path: 'parent > parent > parent > parent > child',
+      order: 1,
+    },
+    {
+      label: '2nd cousin',
+      path: 'parent > parent > parent > child > child > child',
+      order: 1,
+    },
+    { label: 'Child-in-law', path: 'child > spouse', order: 2 },
+    { label: 'Parent-in-law', path: 'spouse > parent', order: 2 },
+    {
+      label: 'Grandparent-in-law',
+      path: 'spouse > parent > parent',
+      order: 2,
+    },
+    { 
+      label: 'Sibling-in-law', path: 'spouse > parent > child', order: 2 },
+    { 
+      label: 'Sibling-in-law', path: 'parent > child > spouse', order: 2 
+    },
+    {
+      label: 'Great-grandparent-in-law',
+      path: 'spouse > parent > parent > parent',
+      order: 2,
+    },
+    {
+      label: 'Nibling-in-law',
+      path: 'spouse > parent > child > child',
+      order: 2,
+    },
+    {
+      label: 'Pibling-in-law',
+      path: 'parent > parent > child > spouse',
+      order: 2,
+    },
+    {
+      label: 'Nibling-in-law',
+      path: 'parent > child > child > partner',
+      order: 2,
+    },
+    {
+      label: 'Pibling-in-law',
+      path: 'spouse > parent > parent > child',
+      order: 2,
+    },
+    {
+      label: 'Cousin-in-law',
+      path: 'spouse > parent > parent > child > child',
+      order: 2,
+    },
+    {
+      label: 'Great-great-grandparent-in-law',
+      path: 'spouse > parent > parent > parent > parent',
+      order: 2,
+    },
+    {
+      label: 'Great-nibling-in-law',
+      path: 'spouse > parent > child > child > child',
+      order: 2,
+    },
+    {
+      label: 'Great-pibling-in-law',
+      path: 'parent > parent > parent > child > spouse',
+      order: 2,
+    },
+    {
+      label: 'Pibling-in-law',
+      path: 'spouse > parent > parent > child > spouse',
+      order: 2,
+    },
+    {
+      label: '1st cousin-once-removed-in-law',
+      path: 'spouse > parent > parent > child > child > child',
+      order: 2,
+    },
+    {
+      label: '1st cousin-once-removed-in-law',
+      path: 'spouse > parent > parent > parent > child > child',
+      order: 2,
+    },
+    {
+      label: '1st cousin-once-removed-in-law',
+      path: 'parent > parent > parent > child > child > spouse',
+      order: 2,
+    },
+    {
+      label: 'Great-great-nibling-in-law',
+      path: 'spouse > parent > child > child > child > child',
+      order: 2,
+    },
+    {
+      label: 'Great-great-pibling-in-law',
+      path: 'parent > parent > parent > parent > child > spouse',
+      order: 2,
+    },
+    {
+      label: '1st cousin-once-removed-in-law',
+      path: 'spouse > parent > parent > parent > child > child > spouse',
+      order: 2,
+    },
+    {
+      label: '2nd cousin-in-law',
+      path: 'spouse > parent > parent > parent > child > child > child',
+      order: 2,
+    },
+    { label: 'Step-child', path: 'spouse > child', order: 4 },
+    { label: 'Step-parent', path: 'parent > spouse', order: 4 },
+    { label: 'Step-grandchild', path: 'spouse > child > child', order: 4 },
+    {
+      label: 'Step-grandparent',
+      path: 'parent > spouse > parent',
+      order: 4,
+    },
+    { label: 'Step-sibling', path: 'parent > spouse > child', order: 4 },
+    {
+      label: 'Step-great-grandchild',
+      path: 'spouse > child > child > child',
+      order: 4,
+    },
+    {
+      label: 'Step-great-grandparent',
+      path: 'parent > spouse > parent > parent',
+      order: 4,
+    },
+    {
+      label: 'Step-nibling',
+      path: 'parent > child > spouse > child',
+      order: 4,
+    },
+    {
+      label: 'Step-pibling',
+      path: 'parent > spouse > parent > child',
+      order: 4,
+    },
+    {
+      label: 'Step-great-great-grandchild',
+      path: 'spouse > child > child > child > child',
+      order: 4,
+    },
+    {
+      label: 'Step-great-great-grandparent',
+      path: 'parent > spouse > parent > parent > parent',
+      order: 4,
+    },
+    {
+      label: 'Step-great-nibling',
+      path: 'parent > child > spouse > child > child',
+      order: 4,
+    },
+    {
+      label: 'Step-great-pibling',
+      path: 'parent > spouse > parent > parent > child',
+      order: 4,
+    },
+    {
+      label: 'Step-1st cousin-once-removed',
+      path: 'parent > spouse > parent > child > child > child',
+      order: 4,
+    },
+    {
+      label: 'Step-1st cousin-once-removed',
+      path: 'parent > spouse > parent > parent > child > child',
+      order: 4,
+    },
+    {
+      label: 'Step-1st cousin-once-removed',
+      path: 'parent > parent > parent > child > spouse > child',
+      order: 4,
+    },
+    {
+      label: 'Step-cousin',
+      path: 'parent > spouse > parent > child > child',
+      order: 4,
+    },
+    {
+      label: 'Step-great-great-nibling',
+      path: 'parent > child > spouse > child > child > child',
+      order: 4,
+    },
+    {
+      label: 'Step-great-great-pibling',
+      path: 'parent > spouse > parent > parent > parent > child',
+      order: 4,
+    },
+    {
+      label: 'Step-2nd cousin',
+      path: 'parent > spouse > parent > parent > child > child > child',
+      order: 4,
+    },
+    {
+      label: 'Step-2nd cousin',
+      path: 'parent > parent > parent > child > child > spouse > child',
+      order: 4,
+    },
+    { label: 'Partner', path: 'partner', order: 5 },
+    { label: 'Co-child', path: 'partner > child', order: 5 },
+    { label: 'Co-parent', path: 'parent > partner', order: 5 },
+    { label: 'Co-parent', path: 'partner > parent', order: 5 },
+    { label: 'Co-grandchild', path: 'partner > child > child', order: 5 },
+    {
+      label: 'Co-grandparent',
+      path: 'parent > partner > parent',
+      order: 5,
+    },
+    {
+      label: 'Co-grandparent',
+      path: 'partner > parent > parent',
+      order: 5,
+    },
+    { label: 'Co-sibling', path: 'parent > partner > child', order: 5 },
+    { label: 'Co-sibling', path: 'partner > parent > child', order: 5 },
+    { label: 'Co-sibling', path: 'parent > child > partner', order: 5 },
+    {
+      label: 'Co-great-grandchild',
+      path: 'partner > child > child > child',
+      order: 5,
+    },
+    {
+      label: 'Co-great-grandparent',
+      path: 'parent > partner > parent > parent',
+      order: 5,
+    },
+    {
+      label: 'Co-great-grandparent',
+      path: 'partner > parent > parent > parent',
+      order: 5,
+    },
+    {
+      label: 'Co-nibling',
+      path: 'partner > parent > child > child',
+      order: 5,
+    },
+    {
+      label: 'Co-nibling',
+      path: 'parent > child > partner > child',
+      order: 5,
+    },
+    {
+      label: 'Co-pibling',
+      path: 'parent > partner > parent > child',
+      order: 5,
+    },
+    {
+      label: 'Co-pibling',
+      path: 'partner > parent > parent > child',
+      order: 5,
+    },
+    {
+      label: 'Co-cousin',
+      path: 'partner > parent > parent > child > child',
+      order: 5,
+    },
+    {
+      label: 'Co-cousin',
+      path: 'parent > parent > child > child > partner',
+      order: 5,
+    },
+    {
+      label: 'Co-great-great-grandchild',
+      path: 'partner > child > child > child > child',
+      order: 5,
+    },
+    {
+      label: 'Co-great-nibling',
+      path: 'partner > parent > child > child > child',
+      order: 5,
+    },
+    {
+      label: 'Co-great-nibling',
+      path: 'partner > parent > child > child > child',
+      order: 5,
+    },
+    {
+      label: 'Co-great-nibling',
+      path: 'parent > child > child > partner > child',
+      order: 5,
+    },
+    {
+      label: 'Co-great-pibling',
+      path: 'parent > partner > parent > parent > child',
+      order: 5,
+    },
+    {
+      label: 'Co-great-pibling',
+      path: 'partner > parent > parent > parent > child',
+      order: 5,
+    },
+    {
+      label: 'Co-1st cousin-once-removed',
+      path: 'partner > parent > parent > child > child > child',
+      order: 5,
+    },
+    {
+      label: 'Co-1st cousin-once-removed',
+      path: 'partner > parent > parent > parent > child > child',
+      order: 5,
+    },
+    {
+      label: 'Co-1st cousin-once-removed',
+      path: 'parent > parent > parent > child > child > partner',
+      order: 5,
+    },
+    {
+      label: 'Co-1st cousin-once-removed',
+      path: 'parent > parent > child > child > partner > child',
+      order: 5,
+    },
+    {
+      label: 'Co-2nd cousin',
+      path: 'partner > parent > parent > parent > child > child > child',
+      order: 5,
+    },
+    {
+      label: 'Co-2nd cousin',
+      path: 'parent > parent > parent > child > child > child > partner',
+      order: 5,
+    },
+  ].sort((a, b) => a.order - b.order);
+
+  for (const rule of relationshipRules) {
+    if (rule.path === pathString) {
+      return rule.label;
+    }
   }
 
-  // Direct relationships (path length 2)
-  if (pathLength === 2) {
-    const [rel] = relationships;
-    if (rel === 'parent') return 'Parent';
-    if (rel === 'child') return 'Child';
-    if (rel === 'spouse') return 'Spouse';
-  }
-
-  // Grandparents, Siblings, and in-laws (path length 3)
-  if (pathLength === 3) {
-    const [rel1, rel2] = relationships;
-
-    if (rel1 === 'parent' && rel2 === 'parent') return 'Grandparent';
-    if (rel1 === 'child' && rel2 === 'child') return 'Grandchild';
-
-    // Path up to a parent, then down to another child is a sibling
-    if (rel1 === 'parent' && rel2 === 'child') {
-      // Ensure it's not the ego user themselves
-      if (path[0].userId !== path[2].userId) {
-        return 'Sibling';
-      }
-    }
-
-    // Path from child up to their parent, then to that parent's spouse.
-    if (rel1 === 'parent' && rel2 === 'spouse') {
-      return 'Step Parent';
-    }
-
-    // Path from ego to spouse, then to spouse's parent.
-    if (rel1 === 'spouse' && rel2 === 'parent') {
-      return 'Parent-in-law';
-    }
-
-    // Path from ego to spouse, then to spouse's child.
-    // This is a Step-Child ONLY if a direct child relationship doesn't exist.
-    // Since BFS finds the shortest path, a 2-step 'child' path would be found
-    // before this 3-step path, so we can be sure this is a step-child.
-    if (rel1 === 'spouse' && rel2 === 'child') {
-      return 'Step Child';
-    }
-  }
-
-  // Path length 4: Pibling, Nibling, Sibling-in-law
-  if (pathLength === 4) {
-    const [rel1, rel2, rel3] = relationships;
-
-    // Path up to a grandparent, then down to their child (a pibling)
-    if (rel1 === 'parent' && rel2 === 'parent' && rel3 === 'child') {
-      return 'Pibling (aunt/uncle)';
-    }
-
-    // Path up to a parent, over to a sibling, then down to their child (a nibling)
-    if (rel1 === 'parent' && rel2 === 'child' && rel3 === 'child') {
-      return 'Nibling (niece/nephew)';
-    }
-
-    // Path to spouse's sibling: Ego -> Spouse -> Parent-in-law -> Sibling-in-law
-    if (rel1 === 'spouse' && rel2 === 'parent' && rel3 === 'child') {
-      return 'Sibling-in-law';
-    }
-
-    // Path to sibling's spouse: Ego -> Parent -> Sibling -> Spouse
-    if (rel1 === 'parent' && rel2 === 'child' && rel3 === 'spouse') {
-      return 'Sibling-in-law';
-    }
-
-    // Path to spouse's grandparent: Ego -> Spouse -> Parent-in-law -> Grandparent-in-law
-    if (rel1 === 'spouse' && rel2 === 'parent' && rel3 === 'parent') {
-      return 'Grandparent-in-law';
-    }
-
-    // Path to great-grandparent: Ego -> Parent -> Grandparent -> Great-grandparent
-    if (rel1 === 'parent' && rel2 === 'parent' && rel3 === 'parent') {
-      return 'Great-grandparent';
-    }
-  }
-
-  // Path length 5: Cousin, Pibling-in-law, Nibling-in-law
-  if (pathLength === 5) {
-    const [rel1, rel2, rel3, rel4] = relationships;
-
-    // Path up to a grandparent, down to an aunt/uncle, then down to their child (a cousin)
-    if (rel1 === 'parent' && rel2 === 'parent' && rel3 === 'child' && rel4 === 'child') {
-      return 'Cousin';
-    }
-
-    // Path to Pibling's spouse: Ego -> Parent -> Grandparent -> Pibling -> Spouse
-    if (rel1 === 'parent' && rel2 === 'parent' && rel3 === 'child' && rel4 === 'spouse') {
-      return 'Pibling'; // Per request, spouse of Pibling is a Pibling
-    }
-
-    // Path to Spouse's Nibling: Ego -> Spouse -> Parent-in-law -> Sibling-in-law -> Nibling
-    if (rel1 === 'spouse' && rel2 === 'parent' && rel3 === 'child' && rel4 === 'child') {
-      return 'Nibling'; // Per request, spouse's Nibling is a Nibling
-    }
-
-    // Path to Spouse's Pibling: Ego -> Spouse -> Parent-in-law -> Grandparent-in-law -> Pibling-in-law
-    if (rel1 === 'spouse' && rel2 === 'parent' && rel3 === 'parent' && rel4 === 'child') {
-      return 'Pibling-in-law';
-    }
-
-    // Path to great-pibling: Ego -> Parent -> Grandparent -> Great-Grandparent -> Great-Pibling
-    if (rel1 === 'parent' && rel2 === 'parent' && rel3 === 'parent' && rel4 === 'child') {
-      return 'Great-pibling (aunt/uncle)';
-    }
-  }
-
-  // Path length 6: Cousin-in-law and First cousin once removed
-  if (pathLength === 6) {
-    const [rel1, rel2, rel3, rel4, rel5] = relationships;
-
-    // Path to cousin's spouse: Ego -> Parent -> Grandparent -> Pibling -> Cousin -> Spouse
-    if (
-      rel1 === 'parent' &&
-      rel2 === 'parent' &&
-      rel3 === 'child' &&
-      rel4 === 'child' &&
-      rel5 === 'spouse'
-    ) {
-      return 'Cousin-in-law';
-    }
-
-    // Path to cousin's child: Ego -> Parent -> Grandparent -> Pibling -> Cousin -> Child
-    if (
-      rel1 === 'parent' &&
-      rel2 === 'parent' &&
-      rel3 === 'child' &&
-      rel4 === 'child' &&
-      rel5 === 'child'
-    ) {
-      return 'First cousin once removed';
-    }
-
-    // Path to parent's cousin: Ego -> Parent -> Grandparent -> Great-Grandparent -> Great-Aunt/Uncle -> Parent's Cousin
-    if (
-      rel1 === 'parent' &&
-      rel2 === 'parent' &&
-      rel3 === 'parent' &&
-      rel4 === 'child' &&
-      rel5 === 'child'
-    ) {
-      return 'First cousin once removed';
-    }
-
-    // Path to spouse's cousin: Ego -> Spouse -> Parent-in-law -> Grandparent-in-law -> Pibling-in-law -> Cousin-in-law
-    if (
-      rel1 === 'spouse' &&
-      rel2 === 'parent' &&
-      rel3 === 'parent' &&
-      rel4 === 'child' &&
-      rel5 === 'child'
-    ) {
-      return 'Cousin-in-law';
-    }
-  }
-
-  // Path length 7: First cousin once removed in-law and spouse's cousin-in-law
-  if (pathLength === 7) {
-    const [rel1, rel2, rel3, rel4, rel5, rel6] = relationships;
-
-    // Path to spouse's first cousin once removed: Ego -> Spouse -> ... -> First cousin once removed in-law
-    if (
-      rel1 === 'spouse' &&
-      rel2 === 'parent' &&
-      rel3 === 'parent' &&
-      rel4 === 'child' &&
-      rel5 === 'child' &&
-      rel6 === 'child'
-    ) {
-      return 'First cousin once removed in-law';
-    }
-
-    // Path from spouse to ego's cousin's spouse: Spouse -> Ego -> Parent -> Grandparent -> Pibling -> Cousin -> Spouse
-    if (
-      rel1 === 'spouse' &&
-      rel2 === 'parent' &&
-      rel3 === 'parent' &&
-      rel4 === 'child' &&
-      rel5 === 'child' &&
-      rel6 === 'spouse'
-    ) {
-      return 'Cousin-in-law';
-    }
-
-    // Path to second cousin: Ego's Child -> Ego -> Parent -> Grandparent -> Pibling -> Cousin -> Cousin's Child (Second Cousin)
-    if (
-      rel1 === 'parent' &&
-      rel2 === 'parent' &&
-      rel3 === 'parent' &&
-      rel4 === 'child' &&
-      rel5 === 'child' &&
-      rel6 === 'child'
-    ) {
-      return 'Second cousin';
-    }
-  }
-
-  return 'Relative'; // Generic fallback for now
+  return 'Relative';
 }
