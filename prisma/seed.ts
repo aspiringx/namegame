@@ -1,9 +1,24 @@
-import { PrismaClient } from '../src/generated/prisma';
+import { PrismaClient, UserUserRelationCategory } from '../src/generated/prisma';
 import bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
 async function main() {
+  // Check for a specific seeder argument
+  const seederArg = process.argv.find(arg => arg.startsWith('--seeder='));
+
+  if (seederArg) {
+    const seederFileName = seederArg.split('=')[1];
+    console.log(`Running specific seeder: ${seederFileName}`);
+    try {
+      await import(`./${seederFileName}`);
+    } catch (error) {
+      console.error(`Error running seeder ${seederFileName}:`, error);
+      process.exit(1);
+    }
+    return; // Exit after running the specific seeder
+  }
+
   console.log(`Start seeding ...`);
 
   const groupTypes = [
@@ -48,6 +63,27 @@ async function main() {
     });
   }
   console.log(`Seeded ${groupUserRoles.length} group user roles.`);
+
+  const relationTypes = [
+    { code: 'parent', category: UserUserRelationCategory.family },
+    { code: 'spouse', category: UserUserRelationCategory.family },
+    { code: 'acquaintance', category: UserUserRelationCategory.other },
+  ];
+
+  for (const rt of relationTypes) {
+    const existingRt = await prisma.userUserRelationType.findFirst({
+      where: { code: rt.code, groupId: null },
+    });
+    if (!existingRt) {
+      await prisma.userUserRelationType.create({
+        data: {
+          code: rt.code,
+          category: rt.category,
+        },
+      });
+    }
+  }
+  console.log(`Seeded ${relationTypes.length} user user relation types.`);
   const superUserRole = await prisma.groupUserRole.findFirst({ where: { code: 'super', groupId: null } });
   if (!superUserRole) {
     throw new Error("Could not find 'super' role after seeding.");

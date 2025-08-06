@@ -1,4 +1,13 @@
-import { Prisma, Group, GroupUser, User, GroupUserRole } from '@/generated/prisma';
+import {
+  Prisma,
+  Group,
+  GroupUser,
+  User,
+  GroupUserRole,
+  UserUser,
+  UserUserRelationType,
+  GroupType,
+} from '@/generated/prisma';
 
 // NOTE: It's important to keep this in sync with the `groupWithMembers` query in
 // `src/app/(main)/admin/groups/[slug]/edit/layout.tsx`.
@@ -34,10 +43,23 @@ export type MemberWithUser = GroupUser & {
 };
 
 export type GroupData = Group & {
+  groupType: GroupType;
   isSuperAdmin: boolean;
   sunDeckMembers: MemberWithUser[];
   iceBlockMembers: MemberWithUser[];
   sunDeckCount: number;
   iceBlockCount: number;
+  currentUserMember: MemberWithUser | undefined;
+};
+
+export type FullRelationship = UserUser & {
+  relationType: UserUserRelationType;
+};
+
+export type FamilyGroupData = Group & {
+  groupType: GroupType;
+  isSuperAdmin: boolean;
+  members: MemberWithUser[];
+  memberCount: number;
   currentUserMember: MemberWithUser | undefined;
 };
