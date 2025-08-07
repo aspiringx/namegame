@@ -8,11 +8,16 @@ import FamilyMemberCard from '@/components/FamilyMemberCard'
 import { getFamilyRelationships } from './actions'
 import { getRelationship } from '@/lib/family-tree'
 import { Button } from '@/components/ui/button'
-import { ArrowUp, ArrowDown, LayoutGrid, List } from 'lucide-react'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
+import { ArrowUp, ArrowDown, LayoutGrid, List, Shuffle } from 'lucide-react'
 import { useGroup } from '@/components/GroupProvider'
-import { GuestMessage } from '@/components/GuestMessage'
 
-type SortKey = 'firstName' | 'lastName'
+type SortKey = 'firstName' | 'lastName' | 'random'
 type SortDirection = 'asc' | 'desc'
 
 interface FamilyGroupClientProps {
@@ -85,6 +90,10 @@ export function FamilyGroupClient({
   }, [inView, hasMore, page, groupSlug])
 
   const handleSort = (key: SortKey) => {
+    if (key === 'random') {
+      setSortConfig({ key, direction: 'asc' }) // direction doesn't matter for random
+      return
+    }
     setSortConfig((prev) => {
       if (prev.key === key) {
         return { key, direction: prev.direction === 'asc' ? 'desc' : 'asc' }
@@ -94,6 +103,14 @@ export function FamilyGroupClient({
   }
 
   const filteredAndSortedMembers = useMemo(() => {
+    const filtered = members.filter((member) =>
+      member.user.name?.toLowerCase().includes(searchQuery.toLowerCase()),
+    )
+
+    if (sortConfig.key === 'random') {
+      return filtered.sort(() => Math.random() - 0.5)
+    }
+
     const sortFunction = (a: MemberWithUser, b: MemberWithUser) => {
       const aName = a.user.name || ''
       const bName = b.user.name || ''
@@ -115,11 +132,7 @@ export function FamilyGroupClient({
       return 0
     }
 
-    return members
-      .filter((member) =>
-        member.user.name?.toLowerCase().includes(searchQuery.toLowerCase()),
-      )
-      .sort(sortFunction)
+    return filtered.sort(sortFunction)
   }, [members, searchQuery, sortConfig])
 
   return (
@@ -145,6 +158,26 @@ export function FamilyGroupClient({
                   </Button>
                 )
               })}
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      key="random"
+                      variant={
+                        sortConfig.key === 'random' ? 'secondary' : 'ghost'
+                      }
+                      size="sm"
+                      onClick={() => handleSort('random')}
+                      className="flex items-center gap-1 capitalize"
+                    >
+                      <Shuffle className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Shuffle randomly</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
             <div className="ml-auto flex items-center gap-2">
               <Button

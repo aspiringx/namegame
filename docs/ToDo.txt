@@ -1,6 +1,6 @@
 NEXT:
 * Add family relationships yourself.
-* Sort randomly
+* DONE - Sort randomly
 * Filter generations to see most direct family. 
 * Managed users, then delete them from .env.
 
