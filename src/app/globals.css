@@ -1,8 +1,10 @@
-@import "tailwindcss";
-@import "tw-animate-css";
+@import 'tailwindcss';
+@import 'tw-animate-css';
 
 @media print {
-  header, footer, nav {
+  header,
+  footer,
+  nav {
     display: none;
   }
 
@@ -24,7 +26,12 @@
     page-break-inside: avoid;
   }
 
-  p, li, h1, h2, h3, h4 {
+  p,
+  li,
+  h1,
+  h2,
+  h3,
+  h4 {
     orphans: 3;
     widows: 3;
   }
@@ -39,15 +46,20 @@
     page-break-inside: avoid;
   }
 
-  .shadow-lg, .shadow-xl {
+  .shadow-lg,
+  .shadow-xl {
     box-shadow: none !important;
   }
 
-  .bg-gray-50, .bg-white {
+  .bg-gray-50,
+  .bg-white {
     background-color: transparent !important;
   }
 
-  .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900 {
+  .text-gray-600,
+  .text-gray-700,
+  .text-gray-800,
+  .text-gray-900 {
     color: #000 !important;
   }
 

@@ -91,9 +91,9 @@ export default async function GroupLayout(props: { children: React.ReactNode; pa
         isAuthorizedMember 
       }}
     >
-      <div className="flex flex-col min-h-screen">
+      <div className="relative flex min-h-screen flex-col">
         <Header />
-        <main className="flex-grow pt-20 pb-24">
+        <main className="main-container flex-grow pb-24">
           {children}
         </main>
         <Footer />

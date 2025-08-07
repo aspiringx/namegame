@@ -25,9 +25,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} font-sans bg-background text-foreground`}>
+      <body className={`${inter.variable} font-sans bg-background text-foreground overflow-visible`}>
         <Providers>
-          <div className="relative flex min-h-screen flex-col">
+          <div className="relative min-h-screen">
             <AuthProvider session={session}>{children}</AuthProvider>
           </div>
         </Providers>

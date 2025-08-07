@@ -9,7 +9,7 @@ export default function Header() {
   const { group } = useGroup();
 
   return (
-    <header className="bg-background border-b border-border fixed top-0 left-0 w-full z-50">
+    <header className="bg-background border-b border-border sticky top-0 left-0 w-full z-50">
       <div className="container mx-auto flex justify-between items-center px-5 py-1 h-full">
         {group ? (
           <Link
