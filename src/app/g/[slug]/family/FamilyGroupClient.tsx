@@ -175,7 +175,9 @@ export function FamilyGroupClient({
         </div>
       </div>
 
-      <div className="container mx-auto mt-4 px-4">
+      <div
+        className={`container mx-auto px-4 ${viewMode === 'grid' ? 'mt-4' : ''}`}
+      >
         <div
           className={
             viewMode === 'list'
