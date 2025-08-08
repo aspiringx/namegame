@@ -88,9 +88,16 @@ export async function getFamilyRelationships(
     return [];
   }
 
+  const groupMembers = await prisma.groupUser.findMany({
+    where: { groupId: group.id },
+    select: { userId: true },
+  });
+  const memberIds = groupMembers.map((member) => member.userId);
+
   const relationships = await prisma.userUser.findMany({
     where: {
-      groupId: group.id,
+      user1Id: { in: memberIds },
+      user2Id: { in: memberIds },
       relationType: {
         category: 'family',
       },

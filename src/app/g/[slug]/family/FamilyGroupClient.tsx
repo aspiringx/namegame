@@ -103,9 +103,15 @@ export function FamilyGroupClient({
   }
 
   const filteredAndSortedMembers = useMemo(() => {
-    const filtered = members.filter((member) =>
-      member.user.name?.toLowerCase().includes(searchQuery.toLowerCase()),
-    )
+    const lowercasedQuery = searchQuery.toLowerCase()
+    const filtered = members.filter((member) => {
+      const nameMatch = member.user.name
+        ?.toLowerCase()
+        .includes(lowercasedQuery)
+      const relationship = relationshipMap.get(member.userId) || ''
+      const relationshipMatch = relationship.toLowerCase().includes(lowercasedQuery)
+      return nameMatch || relationshipMatch
+    })
 
     if (sortConfig.key === 'random') {
       return filtered.sort(() => Math.random() - 0.5)
@@ -133,7 +139,7 @@ export function FamilyGroupClient({
     }
 
     return filtered.sort(sortFunction)
-  }, [members, searchQuery, sortConfig])
+  }, [members, searchQuery, sortConfig, relationshipMap])
 
   return (
     <>
