@@ -118,18 +118,26 @@ async function main() {
   const ego = await getOrCreateUser('Ego', memberRole.id)
 
   // --- Create a dedicated half-sibling for testing ---
-  const p1 = await getOrCreateUser('Ego > parent 1', memberRole.id)
-  const p2 = await getOrCreateUser('Ego > parent 2', memberRole.id)
-  const alter = await getOrCreateUser('Alter', memberRole.id)
-  await createParentChild(p1, ego)
-  await createParentChild(p2, ego)
-  await createParentChild(p1, alter)
-  await createParentChild(p2, alter)
+  const commonParent = await getOrCreateUser('Common Parent', memberRole.id)
+  const egoOtherParent = await getOrCreateUser('Ego Other Parent', memberRole.id)
+  const alterOtherParent = await getOrCreateUser(
+    'Alter Other Parent',
+    memberRole.id,
+  )
+  const halfSibling = await getOrCreateUser('Half Sibling', memberRole.id)
+
+  // Ego's parents
+  await createParentChild(commonParent, ego)
+  await createParentChild(egoOtherParent, ego)
+
+  // Half Sibling's parents (shares one parent with Ego)
+  await createParentChild(commonParent, halfSibling)
+  await createParentChild(alterOtherParent, halfSibling)
   // --- End of half-sibling creation ---
 
   for (const { path } of relationshipPaths) {
-    // Skip the conceptual half-sibling path from the CSV
-    if (path.includes('1 parent')) {
+    // Skip the sibling path from the CSV to avoid creating a second one
+    if (path === 'parent > child') {
       continue
     }
 
