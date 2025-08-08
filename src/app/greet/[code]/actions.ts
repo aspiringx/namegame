@@ -45,9 +45,10 @@ export async function handleAuthenticatedGreeting(codeData: CodeData, currentUse
     // 1. Create or update the UserUser relationship
     await tx.userUser.upsert({
       where: {
-        user1Id_user2Id_groupId: {
+        user_relation_type_group_unique: {
           user1Id,
           user2Id,
+          relationTypeId: relationTypes.acquaintance.id,
           groupId: codeData.groupId,
         },
       },
@@ -165,9 +166,20 @@ export async function handleGuestGreeting(firstName: string, codeData: CodeData)
         },
       });
 
-      // 4. Create the UserUser relationship
-      await tx.userUser.create({
-        data: {
+      // 4. Create or update the UserUser relationship
+      await tx.userUser.upsert({
+        where: {
+          user_relation_type_group_unique: {
+            user1Id,
+            user2Id,
+            relationTypeId: relationTypes.acquaintance.id,
+            groupId: codeData.groupId,
+          },
+        },
+        update: {
+          greetCount: { increment: 1 },
+        },
+        create: {
           user1Id,
           user2Id,
           groupId: codeData.groupId,
