@@ -79,20 +79,21 @@ model User {
 }
 
 model UserUser {
+  id             Int      @id @default(autoincrement())
   user1Id        String
   user2Id        String
-  groupId        Int
+  groupId        Int?
   greetCount     Int      @default(0)
   relationTypeId Int      @default(1) // acquaintance
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   deletedAt      DateTime?
-  group          Group    @relation(fields: [groupId], references: [id])
+  group          Group?   @relation(fields: [groupId], references: [id])
   user1          User     @relation("User1Relation", fields: [user1Id], references: [id])
   user2          User     @relation("User2Relation", fields: [user2Id], references: [id])
   relationType   UserUserRelationType @relation(fields: [relationTypeId], references: [id])
 
-  @@id([user1Id, user2Id, groupId])
+  @@unique([user1Id, user2Id, relationTypeId, groupId], name: "user_relation_type_group_unique")
   @@map("user_users")
 }
 
