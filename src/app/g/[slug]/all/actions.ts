@@ -33,21 +33,21 @@ export async function getPaginatedMembers(
     return []
   }
 
-  const allMemberIds = await prisma.groupUser.findMany({
+  const allGroupMembers = await prisma.groupUser.findMany({
     where: {
       groupId: group.id,
-      userId: { not: currentUserId },
     },
     select: { userId: true },
-  })
+  });
+  const allMemberIdsInGroup = allGroupMembers.map((m) => m.userId);
 
   const userRelations = await prisma.userUser.findMany({
     where: {
-      groupId: group.id,
-      OR: [{ user1Id: currentUserId }, { user2Id: currentUserId }],
+      user1Id: { in: allMemberIdsInGroup },
+      user2Id: { in: allMemberIdsInGroup },
     },
     select: { user1Id: true, user2Id: true, updatedAt: true },
-  })
+  });
 
   const relatedUserMap = new Map<string, Date>()
   userRelations.forEach((relation) => {
@@ -59,16 +59,20 @@ export async function getPaginatedMembers(
   let sortedUserIds: string[]
 
   if (listType === 'sunDeck') {
-    const sunDeckUsers = allMemberIds
-      .filter(({ userId }) => relatedUserMap.has(userId))
-      .map(({ userId }) => ({ userId, metAt: relatedUserMap.get(userId)! }))
+    const allOtherMemberIds = allMemberIdsInGroup.filter((id) => id !== currentUserId);
+
+    const sunDeckUsers = allOtherMemberIds
+      .filter((userId) => relatedUserMap.has(userId))
+      .map((userId) => ({ userId, metAt: relatedUserMap.get(userId)! }));
 
     sunDeckUsers.sort((a, b) => b.metAt.getTime() - a.metAt.getTime())
     sortedUserIds = sunDeckUsers.map((u) => u.userId)
   } else {
-    const iceBlockUserIds = allMemberIds
-      .filter(({ userId }) => !relatedUserMap.has(userId))
-      .map(({ userId }) => userId)
+    const allOtherMemberIds = allMemberIdsInGroup.filter((id) => id !== currentUserId);
+
+    const iceBlockUserIds = allOtherMemberIds.filter(
+      (userId) => !relatedUserMap.has(userId),
+    );
 
     const users = await prisma.user.findMany({
       where: { id: { in: iceBlockUserIds } },
