@@ -4,12 +4,13 @@ import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { signOut, useSession } from 'next-auth/react';
-import { getPublicUrl } from '@/lib/storage-client';
+import { getSecureImageUrl } from '@/lib/actions';
 
 export default function UserMenu() {
   const { data: session, update } = useSession();
   const [isDropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [imageUrl, setImageUrl] = useState('/images/default-avatar.png');
 
   // Listen for photo updates from other tabs/windows
   useEffect(() => {
@@ -40,6 +41,14 @@ export default function UserMenu() {
     };
   }, []);
 
+  useEffect(() => {
+    if (session?.user?.image) {
+      getSecureImageUrl(session.user.image).then(setImageUrl);
+    } else {
+      setImageUrl('/images/default-avatar.png');
+    }
+  }, [session?.user?.image]);
+
   const toggleDropdown = () => {
     setDropdownOpen(!isDropdownOpen);
   };
@@ -49,7 +58,6 @@ export default function UserMenu() {
   };
 
   const user = session?.user;
-  const imageUrl = getPublicUrl(user?.image);
   const isSuperAdmin = user?.isSuperAdmin;
 
   return (

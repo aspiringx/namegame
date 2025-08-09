@@ -56,7 +56,9 @@ export default function MembersTable({
                           <Image
                             className="h-10 w-10 rounded-full"
                             src={groupUser.user.photoUrl}
-                            alt=""
+                            alt={`${[groupUser.user.firstName, groupUser.user.lastName]
+                              .filter(Boolean)
+                              .join(' ')}'s photo`}
                             width={40}
                             height={40}
                           />
