@@ -5,6 +5,7 @@ import { GroupData } from '@/types'
 import { getGroupAdmins } from '@/app/g/[slug]/admin/actions'
 import { User } from '@/generated/prisma'
 import { X } from 'lucide-react'
+import Image from 'next/image'
 
 interface GroupInfoModalProps {
   group: GroupData
@@ -50,11 +51,21 @@ export default function GroupInfoModal({
           <X size={24} />
         </button>
         <div className="p-6">
-          <h2 className="mb-4 text-2xl font-bold text-gray-800 dark:text-gray-100">
+          {group.logo && (
+            <div className="mb-4 flex justify-center">
+              <Image
+                src={group.logo}
+                alt={`${group.name} logo`}
+                width={128}
+                height={128}
+              />
+            </div>
+          )}
+          <h2 className="mb-4 text-center text-2xl font-bold text-gray-800 dark:text-gray-100">
             {group.name}
           </h2>
           {group.description && (
-            <p className="mb-4 text-gray-600 dark:text-gray-300">
+            <p className="mb-4 max-h-24 overflow-y-auto whitespace-pre-wrap text-gray-600 dark:text-gray-300">
               {group.description}
             </p>
           )}

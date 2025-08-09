@@ -1,16 +1,16 @@
-import prisma from '@/lib/prisma';
-import { notFound } from 'next/navigation';
-import { Search } from './Search';
-import MembersTable from './members-table';
-import { getPublicUrl } from '@/lib/storage';
+import prisma from '@/lib/prisma'
+import { notFound } from 'next/navigation'
+import { Search } from './Search'
+import MembersTable from './members-table'
+import { getPublicUrl } from '@/lib/storage'
 
 export default async function GroupMembersPage(props: {
-  params: Promise<{ slug: string }>;
-  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
+  params: Promise<{ slug: string }>
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
-  const { slug } = await props.params;
-  const searchParams = await props.searchParams;
-  const searchTerm = (searchParams?.query as string) || '';
+  const { slug } = await props.params
+  const searchParams = await props.searchParams
+  const searchTerm = (searchParams?.query as string) || ''
 
   const group = await prisma.group.findUnique({
     where: { slug },
@@ -57,9 +57,9 @@ export default async function GroupMembersPage(props: {
     notFound()
   }
 
-  const groupUsers = group.members;
+  const groupUsers = group.members
 
-  const userIds = groupUsers.map(gu => gu.userId);
+  const userIds = groupUsers.map((gu) => gu.userId)
   const photos = await prisma.photo.findMany({
     where: {
       entityId: { in: userIds },
@@ -70,28 +70,28 @@ export default async function GroupMembersPage(props: {
       entityId: true,
       url: true,
     },
-  });
+  })
 
-  const photoUrlMap = new Map<string, string>();
+  const photoUrlMap = new Map<string, string>()
   for (const photo of photos) {
     if (photo.entityId) {
-      photoUrlMap.set(photo.entityId, photo.url);
+      photoUrlMap.set(photo.entityId, photo.url)
     }
   }
 
   const membersWithPhoto = await Promise.all(
-    groupUsers.map(async member => {
-      const rawUrl = photoUrlMap.get(member.userId);
-      let photoUrl: string;
+    groupUsers.map(async (member) => {
+      const rawUrl = photoUrlMap.get(member.userId)
+      let photoUrl: string
       if (rawUrl) {
         if (rawUrl.startsWith('http')) {
-          photoUrl = rawUrl;
+          photoUrl = rawUrl
         } else {
-          photoUrl = await getPublicUrl(rawUrl);
+          photoUrl = await getPublicUrl(rawUrl)
         }
       } else {
-        // Fallback to a default avatar service
-        photoUrl = `https://api.dicebear.com/8.x/personas/png?seed=${member.user.id}`;
+        // Fallback to the default avatar
+        photoUrl = '/images/default-avatar.png'
       }
       return {
         ...member,
@@ -99,10 +99,9 @@ export default async function GroupMembersPage(props: {
           ...member.user,
           photoUrl,
         },
-      };
+      }
     }),
-  );
-
+  )
 
   return (
     <div className="p-8">
@@ -114,5 +113,5 @@ export default async function GroupMembersPage(props: {
         <MembersTable groupUsers={membersWithPhoto} />
       </div>
     </div>
-  );
+  )
 }

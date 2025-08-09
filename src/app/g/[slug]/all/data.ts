@@ -63,14 +63,14 @@ export const getGroup = async (
     prisma.photoType.findFirst({ where: { code: 'logo' } }),
   ]);
 
-  const logo = await prisma.photo.findFirst({
+  const logoPhoto = await prisma.photo.findFirst({
     where: {
       entityId: group.id.toString(),
       entityTypeId: groupEntityType?.id,
       typeId: logoPhotoType?.id,
     },
   });
-  const logoUrl = logo?.url ? await getPublicUrl(logo.url) : undefined;
+  const logo = logoPhoto?.url ? await getPublicUrl(logoPhoto.url) : undefined;
 
   const memberUserIds = group.members.map((member) => member.userId)
   const photos = await prisma.photo.findMany({
@@ -202,7 +202,7 @@ export const getGroup = async (
 
   return {
     ...group,
-    logoUrl,
+    logo,
     isSuperAdmin: !!superAdminMembership,
     sunDeckMembers: limitedSunDeckMembers,
     iceBlockMembers: limitedIceBlockMembers,

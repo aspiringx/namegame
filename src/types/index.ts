@@ -43,7 +43,7 @@ export type MemberWithUser = GroupUser & {
 };
 
 export type GroupData = Group & {
-  logoUrl?: string;
+  logo?: string;
   groupType: GroupType;
   isSuperAdmin: boolean;
   sunDeckMembers: MemberWithUser[];
@@ -58,7 +58,7 @@ export type FullRelationship = UserUser & {
 };
 
 export type FamilyGroupData = Group & {
-  logoUrl?: string;
+  logo?: string;
   groupType: GroupType;
   isSuperAdmin: boolean;
   members: MemberWithUser[];

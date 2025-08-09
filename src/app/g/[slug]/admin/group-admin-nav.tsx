@@ -26,7 +26,9 @@ export default function GroupAdminNav({ slug }: GroupAdminNavProps) {
           <Link
             key={tab.name}
             href={tab.href}
-            className={`${tabBaseClasses} ${pathname === tab.href ? activeTabClasses : inactiveTabClasses}`}
+            className={`${tabBaseClasses} ${
+              pathname === tab.href ? activeTabClasses : inactiveTabClasses
+            }`}
           >
             {tab.name}
           </Link>

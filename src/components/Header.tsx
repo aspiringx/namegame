@@ -27,9 +27,9 @@ export default function Header({
         <div className="container mx-auto flex h-full items-center justify-between px-5 py-1">
           {group ? (
             <button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2 text-left">
-            {group.logoUrl && (
+            {group.logo && (
               <Image
-                src={group.logoUrl}
+                src={group.logo}
                 alt={`${group.name} logo`}
                 width={32}
                 height={32}

@@ -13,6 +13,7 @@ export default function EditGroupForm({
   logoUrl?: string
 }) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [slugValue, setSlugValue] = useState(group.slug)
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -57,13 +58,16 @@ export default function EditGroupForm({
           id="slug"
           name="slug"
           defaultValue={group.slug}
+          onChange={(e) => setSlugValue(e.target.value)}
           required
           className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
         />
-        <p className="mt-2 text-sm text-red-500 dark:text-red-400">
-          Warning: Changing the slug will break your current group URL and any
-          bookmarks to it that members may have.
-        </p>
+        {slugValue !== group.slug && (
+          <p className="mt-2 text-sm text-red-500 dark:text-red-400">
+            Warning: Changing the slug will break your current group URL and any
+            bookmarks to it that members may have.
+          </p>
+        )}
       </div>
       <div>
         <label

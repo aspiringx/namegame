@@ -40,9 +40,9 @@ export default async function GroupAdminLayout({
   }
 
   return (
-    <div>
+    <div className="mx-auto mt-6 max-w-4xl px-4 sm:px-6 lg:px-8">
       <GroupAdminNav slug={slug} />
-      <div className="mx-auto mt-6 max-w-4xl">{children}</div>
+      {children}
     </div>
   )
 }
