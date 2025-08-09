@@ -117,3 +117,26 @@ export async function updateGroup(formData: FormData) {
   revalidatePath(`/g/${groupData.slug}/admin`);
   redirect(`/g/${groupData.slug}/admin`);
 }
+
+export async function getGroupAdmins(groupId: number) {
+  const adminRole = await prisma.groupUserRole.findFirst({
+    where: { code: 'admin' },
+    select: { id: true },
+  });
+
+  if (!adminRole) {
+    return [];
+  }
+
+  const admins = await prisma.groupUser.findMany({
+    where: {
+      groupId: groupId,
+      roleId: adminRole.id,
+    },
+    include: {
+      user: true,
+    },
+  });
+
+  return admins.map((admin) => admin.user);
+}

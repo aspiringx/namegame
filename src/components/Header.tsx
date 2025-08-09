@@ -1,10 +1,12 @@
 'use client'
 
+import { useState } from 'react';
 import Link from 'next/link'
 import UserMenu from './UserMenu'
 import Image from 'next/image'
 import { GroupData } from '@/types'
 import { Settings } from 'lucide-react'
+import GroupInfoModal from './GroupInfoModal';
 
 interface HeaderProps {
   group?: GroupData | null
@@ -17,11 +19,14 @@ export default function Header({
   isGroupAdmin,
   groupSlug,
 }: HeaderProps) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   return (
-    <header className="bg-background border-border sticky top-0 left-0 z-50 w-full border-b">
-      <div className="container mx-auto flex h-full items-center justify-between px-5 py-1">
-        {group ? (
-          <Link href={`/g/${group.slug}`} className="flex items-center gap-2">
+    <>
+      <header className="bg-background border-border sticky top-0 left-0 z-50 w-full border-b">
+        <div className="container mx-auto flex h-full items-center justify-between px-5 py-1">
+          {group ? (
+            <button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2 text-left">
             {group.logoUrl && (
               <Image
                 src={group.logoUrl}
@@ -34,7 +39,7 @@ export default function Header({
             <span className="block max-w-[200px] truncate text-xl font-bold text-gray-600 sm:max-w-none dark:text-gray-200">
               {group.name}
             </span>
-          </Link>
+          </button>
         ) : (
           <Link
             href="/"
@@ -63,5 +68,13 @@ export default function Header({
         </div>
       </div>
     </header>
+    {group && (
+      <GroupInfoModal 
+        group={group} 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+      />
+    )}
+    </>
   )
 }
