@@ -1,28 +1,29 @@
-'use client';
+'use client'
 
-import { useState, useRef, useEffect } from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
-import { signOut, useSession } from 'next-auth/react';
-import { getPublicUrl } from '@/lib/storage-client';
+import { useState, useRef, useEffect } from 'react'
+import Image from 'next/image'
+import Link from 'next/link'
+import { signOut, useSession } from 'next-auth/react'
+import { getSecureImageUrl } from '@/lib/actions'
 
 export default function UserMenu() {
-  const { data: session, update } = useSession();
-  const [isDropdownOpen, setDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const { data: session, update } = useSession()
+  const [isDropdownOpen, setDropdownOpen] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+  const [imageUrl, setImageUrl] = useState('/images/default-avatar.png')
 
   // Listen for photo updates from other tabs/windows
   useEffect(() => {
-    const channel = new BroadcastChannel('photo_updates');
+    const channel = new BroadcastChannel('photo_updates')
     const handlePhotoUpdate = () => {
-      update(); // Refetch the session
-    };
-    channel.addEventListener('message', handlePhotoUpdate);
+      update() // Refetch the session
+    }
+    channel.addEventListener('message', handlePhotoUpdate)
     return () => {
-      channel.removeEventListener('message', handlePhotoUpdate);
-      channel.close();
-    };
-  }, [update]);
+      channel.removeEventListener('message', handlePhotoUpdate)
+      channel.close()
+    }
+  }, [update])
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -30,43 +31,57 @@ export default function UserMenu() {
         dropdownRef.current &&
         !dropdownRef.current.contains(event.target as Node)
       ) {
-        setDropdownOpen(false);
+        setDropdownOpen(false)
       }
-    };
+    }
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside)
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (session?.user?.image) {
+      getSecureImageUrl(session.user.image).then(setImageUrl)
+    } else {
+      setImageUrl('/images/default-avatar.png')
+    }
+  }, [session?.user?.image])
 
   const toggleDropdown = () => {
-    setDropdownOpen(!isDropdownOpen);
-  };
+    setDropdownOpen(!isDropdownOpen)
+  }
 
   const closeDropdown = () => {
-    setDropdownOpen(false);
-  };
+    setDropdownOpen(false)
+  }
 
-  const user = session?.user;
-  const imageUrl = getPublicUrl(user?.image);
-  const isSuperAdmin = user?.isSuperAdmin;
+  const user = session?.user
+  const isSuperAdmin = user?.isSuperAdmin
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <button onClick={toggleDropdown} className="flex items-center py-2 px-4 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
-        {user && <p className="mr-4 text-gray-700 dark:text-gray-300 hidden sm:block">{user.firstName}</p>}
+      <button
+        onClick={toggleDropdown}
+        className="flex items-center rounded-lg py-2 pl-4 hover:bg-gray-100 dark:hover:bg-gray-800"
+      >
+        {user && (
+          <p className="mr-4 hidden text-gray-700 sm:block dark:text-gray-300">
+            {user.firstName}
+          </p>
+        )}
         <Image
           src={imageUrl}
           alt="User Profile"
           width={40}
           height={40}
-          className="w-10 h-10 rounded-full"
+          className="h-10 w-10 rounded-full"
           key={user?.image} // Add key to force re-render on image change
         />
       </button>
       {isDropdownOpen && (
-        <div className="absolute top-full mt-2 right-0 bg-white rounded-md shadow-lg py-2 z-50 w-48 dark:bg-gray-800">
+        <div className="absolute top-full right-0 z-50 mt-2 w-48 rounded-md bg-white py-2 shadow-lg dark:bg-gray-800">
           {user ? (
             <>
               <Link
@@ -88,14 +103,14 @@ export default function UserMenu() {
                   </Link>
                   <Link
                     href="/admin/groups"
-                    className="block pl-8 pr-4 py-2 text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
+                    className="block py-2 pr-4 pl-8 text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
                     onClick={closeDropdown}
                   >
                     Groups
                   </Link>
                   <Link
                     href="/admin/users"
-                    className="block pl-8 pr-4 py-2 text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
+                    className="block py-2 pr-4 pl-8 text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
                     onClick={closeDropdown}
                   >
                     Users
@@ -105,10 +120,10 @@ export default function UserMenu() {
               <hr className="my-2 border-gray-200 dark:border-gray-700" />
               <button
                 onClick={() => {
-                  signOut({ callbackUrl: '/' });
-                  closeDropdown();
+                  signOut({ callbackUrl: '/' })
+                  closeDropdown()
                 }}
-                className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
+                className="block w-full px-4 py-2 text-left text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
               >
                 Logout
               </button>
@@ -134,5 +149,5 @@ export default function UserMenu() {
         </div>
       )}
     </div>
-  );
+  )
 }

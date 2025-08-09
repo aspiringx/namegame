@@ -1,5 +1,3 @@
-'use client'
-
 import Image from 'next/image'
 import type { MemberWithUser as Member } from '@/types/index'
 import { formatDistanceToNow } from 'date-fns'
@@ -22,6 +20,7 @@ export default function FamilyMemberCard({
   relationship,
 }: FamilyMemberCardProps) {
   const isListView = viewMode === 'list'
+  const imageUrl = member.user.photoUrl || '/images/default-avatar.png'
 
   return (
     <div
@@ -34,14 +33,19 @@ export default function FamilyMemberCard({
       <div
         className={
           isListView
-            ? 'relative h-24 w-24 flex-shrink-0'
+            ? 'relative h-36 w-36 flex-shrink-0'
             : 'border-border relative aspect-square w-full overflow-hidden rounded-md border shadow-lg dark:shadow-lg dark:shadow-white/10'
         }
       >
         <Image
-          src={member.user.photoUrl || '/images/default-avatar.png'}
+          src={imageUrl}
           alt={member.user.name || 'User avatar'}
           fill
+          sizes={
+            isListView
+              ? '96px'
+              : '(max-width: 767px) 100vw, (max-width: 1023px) 50vw, 33vw'
+          }
           className="rounded object-cover p-4"
         />
       </div>

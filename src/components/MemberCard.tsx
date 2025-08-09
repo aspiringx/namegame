@@ -1,5 +1,3 @@
-'use client';
-
 import Image from 'next/image';
 import type { MemberWithUser as Member } from '@/types/index';
 import { formatDistanceToNow } from 'date-fns';
@@ -9,6 +7,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { getPublicUrl } from '@/lib/storage';
 
 interface MemberCardProps {
   member: Member;
@@ -17,15 +16,17 @@ interface MemberCardProps {
   relationship?: string;
 }
 
-export default function MemberCard({ member, listType, viewMode, relationship }: MemberCardProps) {
+export default async function MemberCard({ member, listType, viewMode, relationship }: MemberCardProps) {
+  const imageUrl = await getPublicUrl(member.user.photoUrl);
   if (listType === 'sunDeck' && viewMode === 'list') {
     return (
       <div className="flex items-center space-x-4 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
         <div className="relative w-24 h-24 rounded overflow-hidden flex-shrink-0">
           <Image
-            src={member.user.photoUrl || '/images/default-avatar.png'}
+            src={imageUrl}
             alt={member.user.name || 'User avatar'}
             fill
+            sizes="96px"
             className="object-cover"
           />
         </div>
@@ -59,9 +60,10 @@ export default function MemberCard({ member, listType, viewMode, relationship }:
     <div className="text-center transition-transform duration-300 ease-in-out">
       <div className="relative w-full aspect-square rounded-lg overflow-hidden shadow-lg">
                 <Image
-          src={member.user.photoUrl || '/images/default-avatar.png'}
+          src={imageUrl}
           alt={member.user.name || 'User avatar'}
           fill
+          sizes="(max-width: 767px) 100vw, (max-width: 1023px) 50vw, 33vw"
           className={`object-cover`}
         />
       </div>
