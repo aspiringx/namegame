@@ -23,19 +23,19 @@ export default function MembersTable({
     <div>
       <div className="mt-8 flow-root">
         <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-          <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+          <div className="inline-block min-w-full py-2 align-middle sm:px-4 lg:px-8">
             <table className="min-w-full table-fixed divide-y divide-gray-300 dark:divide-gray-700">
               <thead>
                 <tr>
                   <th
                     scope="col"
-                    className="w-1/2 px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white"
+                    className="w-1/2 px-2 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white"
                   >
                     Name
                   </th>
                   <th
                     scope="col"
-                    className="w-1/4 px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white"
+                    className="w-1/4 px-2 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white"
                   >
                     Roles
                   </th>
@@ -50,13 +50,16 @@ export default function MembersTable({
               <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
                 {groupUsers.map((groupUser) => (
                   <tr key={groupUser.userId}>
-                    <td className="py-4 pr-3 pl-4 text-sm break-all sm:pl-0">
+                    <td className="px-2 py-4 text-sm break-all sm:pl-0">
                       <div className="flex items-center">
                         <div className="h-10 w-10 flex-shrink-0">
                           <Image
                             className="h-10 w-10 rounded-full"
                             src={groupUser.user.photoUrl}
-                            alt={`${[groupUser.user.firstName, groupUser.user.lastName]
+                            alt={`${[
+                              groupUser.user.firstName,
+                              groupUser.user.lastName,
+                            ]
                               .filter(Boolean)
                               .join(' ')}'s photo`}
                             width={40}
@@ -75,7 +78,7 @@ export default function MembersTable({
                         </div>
                       </div>
                     </td>
-                    <td className="px-3 py-4 text-sm text-gray-500">
+                    <td className="px-2 py-4 text-sm text-gray-500">
                       {groupUser.role.code}
                     </td>
                     <td className="relative py-4 pr-4 pl-3 text-right text-sm font-medium sm:pr-0">
