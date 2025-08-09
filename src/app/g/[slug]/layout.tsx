@@ -92,7 +92,11 @@ export default async function GroupLayout(props: { children: React.ReactNode; pa
       }}
     >
       <div className="relative flex min-h-screen flex-col">
-        <Header />
+        <Header 
+          group={groupForProvider}
+          isGroupAdmin={currentUserMember?.role.code === 'admin'}
+          groupSlug={slug}
+        />
         <main className="main-container flex-grow pb-24">
           {children}
         </main>

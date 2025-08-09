@@ -2,12 +2,17 @@
 
 import Link from 'next/link';
 import UserMenu from './UserMenu';
-import { useGroup } from './GroupProvider';
 import Image from 'next/image';
+import { GroupData } from '@/types';
+import { Settings } from 'lucide-react';
 
-export default function Header() {
-  const { group } = useGroup();
+interface HeaderProps {
+  group?: GroupData | null;
+  isGroupAdmin?: boolean;
+  groupSlug?: string;
+}
 
+export default function Header({ group, isGroupAdmin, groupSlug }: HeaderProps) {
   return (
     <header className="bg-background border-b border-border sticky top-0 left-0 w-full z-50">
       <div className="container mx-auto flex justify-between items-center px-5 py-1 h-full">
@@ -30,7 +35,14 @@ export default function Header() {
             NameGame
           </Link>
         )}
-        <UserMenu />
+        <div className="flex items-center gap-4">
+          {isGroupAdmin && groupSlug && (
+            <Link href={`/g/${groupSlug}/admin`} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white">
+              <Settings size={24} />
+            </Link>
+          )}
+          <UserMenu />
+        </div>
       </div>
     </header>
   );
