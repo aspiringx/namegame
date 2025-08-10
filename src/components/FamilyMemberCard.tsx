@@ -1,6 +1,8 @@
 import Image from 'next/image'
 import type { MemberWithUser as Member } from '@/types/index'
 import { formatDistanceToNow } from 'date-fns'
+import { MoreVertical } from 'lucide-react'
+import { Dropdown, DropdownItem } from './ui/dropdown'
 import {
   Tooltip,
   TooltipContent,
@@ -49,15 +51,29 @@ export default function FamilyMemberCard({
           className="rounded object-cover p-4"
         />
       </div>
-      <div className={isListView ? 'text-left' : 'mt-2'}>
-        <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
-          {member.user.name}
-        </p>
-        {relationship && (
-          <p className="text-xs text-blue-500 dark:text-blue-400">
-            {relationship}
+      <div
+        className={isListView ? 'flex w-full items-center justify-between' : 'relative mt-2'}
+      >
+        <div className={isListView ? 'text-left' : 'text-center'}>
+          <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
+            {member.user.name}
           </p>
-        )}
+          {relationship && (
+            <p className="text-xs text-blue-500 dark:text-blue-400">
+              {relationship}
+            </p>
+          )}
+        </div>
+        <div className={isListView ? 'relative' : 'absolute right-0 top-0'}>
+          <Dropdown
+            trigger={<MoreVertical size={16} />}
+            triggerClassName="rounded-full p-1 hover:bg-gray-200 dark:hover:bg-gray-700"
+          >
+            <DropdownItem onClick={() => console.log('Relate clicked')}>
+              Relate
+            </DropdownItem>
+          </Dropdown>
+        </div>
       </div>
     </div>
   )
