@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import useLocalStorage from '@/hooks/useLocalStorage'
 import { useInView } from 'react-intersection-observer'
 import { MemberWithUser, FullRelationship } from '@/types'
@@ -42,7 +42,7 @@ export function FamilyGroupClient({
   groupSlug,
   initialMemberCount,
   initialRelationships,
-}: FamilyGroupClientProps) {
+}: FamilyGroupClientProps): React.JSX.Element | null {
   const [members, setMembers] = useState(initialMembers)
   const [page, setPage] = useState(2)
   const [hasMore, setHasMore] = useState(
@@ -66,6 +66,11 @@ export function FamilyGroupClient({
   const [memberRelations, setMemberRelations] = useState<Awaited<ReturnType<typeof getMemberRelations>>>([])
   const [allGroupMembers, setAllGroupMembers] = useState<MemberWithUser[]>([])
 
+  const [isMounted, setIsMounted] = useState(false)
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
+
   useEffect(() => {
     if (groupSlug) {
       getGroupMembersForRelate(groupSlug).then((members) =>
@@ -73,8 +78,6 @@ export function FamilyGroupClient({
       )
     }
   }, [groupSlug])
-
-
 
   const handleOpenRelateModal = useCallback(async (member: MemberWithUser) => {
     if (!groupSlug) {
@@ -146,8 +149,7 @@ export function FamilyGroupClient({
       ...prev,
       sortConfig: {
         key,
-        direction:
-          prev.sortConfig.key === key && prev.sortConfig.direction === 'asc' ? 'desc' : 'asc',
+        direction: prev.sortConfig.key === key && prev.sortConfig.direction === 'asc' ? 'desc' : 'asc',
       },
     }))
   }
@@ -155,14 +157,10 @@ export function FamilyGroupClient({
   const filteredAndSortedMembers = useMemo(() => {
     let filtered = members
     if (settings.searchQuery) {
-      filtered = members.filter(
-        (member) =>
-          member.user.firstName
-            ?.toLowerCase()
-            .includes(settings.searchQuery.toLowerCase()) ||
-          member.user.lastName
-            ?.toLowerCase()
-            .includes(settings.searchQuery.toLowerCase()),
+      filtered = members.filter((member) =>
+        `${member.user.firstName} ${member.user.lastName}`
+          .toLowerCase()
+          .includes(settings.searchQuery.toLowerCase()),
       )
     }
 
@@ -170,35 +168,26 @@ export function FamilyGroupClient({
       return [...filtered].sort(() => Math.random() - 0.5)
     }
 
-    const sortFunction = (a: MemberWithUser, b: MemberWithUser) => {
-      const aName = a.user.name || ''
-      const bName = b.user.name || ''
-      let aValue: string, bValue: string
+    return [...filtered].sort((a, b) => {
+      const { key, direction } = settings.sortConfig
+      const aValue = a.user[key === 'firstName' ? 'firstName' : 'lastName'] || ''
+      const bValue = b.user[key === 'firstName' ? 'firstName' : 'lastName'] || ''
 
-      if (settings.sortConfig.key === 'lastName') {
-        aValue = aName.split(' ').pop() || ''
-        bValue = bName.split(' ').pop() || ''
-      } else {
-        // firstName
-        aValue = aName.split(' ')[0] || ''
-        bValue = bName.split(' ')[0] || ''
-      }
-
-      if (aValue.toLowerCase() < bValue.toLowerCase())
-        return settings.sortConfig.direction === 'asc' ? -1 : 1
-      if (aValue.toLowerCase() > bValue.toLowerCase())
-        return settings.sortConfig.direction === 'asc' ? 1 : -1
+      if (aValue < bValue) return direction === 'asc' ? -1 : 1
+      if (aValue > bValue) return direction === 'asc' ? 1 : -1
       return 0
-    }
+    })
+  }, [members, settings.searchQuery, settings.sortConfig])
 
-    return [...filtered].sort(sortFunction)
-  }, [members, settings.searchQuery, settings.sortConfig, relationshipMap])
+  if (!isMounted) {
+    return null // Or a loading spinner
+  }
 
   return (
     <>
-      <div className="bg-background border-border sticky top-16 z-10 border-b py-4">
-        <div className="container mx-auto px-4">
-          <div className="mb-4 flex items-center">
+      <div className="bg-background text-foreground">
+        <div className="container mx-auto px-4 py-4">
+          <div className="mb-4 flex items-center gap-2">
             <div className="flex items-center gap-2">
               {(['firstName', 'lastName'] as const).map((key) => {
                 const isActive = settings.sortConfig.key === key

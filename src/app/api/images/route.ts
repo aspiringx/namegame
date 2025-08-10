@@ -23,12 +23,7 @@ export async function GET(request: Request) {
   }
 
   const { searchParams } = new URL(request.url)
-  // The 'key' parameter might contain other query params if the original URL had them.
-  // We only want the pathname part of the key.
-  const keyParam = searchParams.get('key')
-  const key = keyParam
-    ? new URL(keyParam, 'http://localhost').pathname.replace(/^\//, '')
-    : null
+  const key = searchParams.get('key')
 
   if (!key) {
     return new NextResponse('Missing image key', { status: 400 })
