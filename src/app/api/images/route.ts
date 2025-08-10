@@ -16,11 +16,7 @@ const s3Client = new S3Client({
 })
 
 export async function GET(request: Request) {
-  const session = await auth()
-  if (!session?.user) {
-    // If not authenticated, return a 401 Unauthorized response
-    return new NextResponse('Unauthorized', { status: 401 })
-  }
+
 
   const { searchParams } = new URL(request.url)
   const key = searchParams.get('key')
