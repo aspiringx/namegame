@@ -20,6 +20,7 @@ interface RelateModalProps {
   member: Member | null
   groupMembers: Member[]
   groupSlug: string
+  initialRelations: RelationWithUser[]
 }
 
 export default function RelateModal({
@@ -28,21 +29,30 @@ export default function RelateModal({
   member,
   groupMembers,
   groupSlug,
+  initialRelations,
 }: RelateModalProps) {
   const [isPending, startTransition] = useTransition()
   const formRef = useRef<HTMLFormElement>(null)
   const [selectedMemberId, setSelectedMemberId] = useState('')
   const [selectedRelationTypeId, setSelectedRelationTypeId] = useState('')
-  const [relations, setRelations] = useState<RelationWithUser[]>([])
+  const [relations, setRelations] = useState(initialRelations)
   const [relationTypes, setRelationTypes] = useState<UserUserRelationType[]>([])
   const [showDetails, setShowDetails] = useState(false)
 
   useEffect(() => {
-    if (isOpen && member) {
-      getMemberRelations(member.userId, groupSlug).then(setRelations)
+    setRelations(initialRelations)
+  }, [initialRelations])
+
+  useEffect(() => {
+    if (isOpen) {
       getFamilyRelationTypes().then(setRelationTypes)
+    } else {
+      // Reset form when modal closes
+      formRef.current?.reset()
+      setSelectedMemberId('')
+      setSelectedRelationTypeId('')
     }
-  }, [isOpen, member, groupSlug])
+  }, [isOpen])
 
   if (!member) return null
 
@@ -177,6 +187,7 @@ export default function RelateModal({
           <h4 className="font-medium text-gray-800 dark:text-gray-200">
             Existing Relationships
           </h4>
+          {console.log('relations', relations)}
           {relations.length > 0 ? (
             <ul className="mt-2 divide-y divide-gray-200 dark:divide-gray-700">
               {relations.map((r) => (

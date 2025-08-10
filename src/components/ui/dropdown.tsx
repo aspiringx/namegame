@@ -31,16 +31,19 @@ export function Dropdown({ trigger, children, triggerClassName }: { trigger: Rea
 }
 
 export function DropdownItem({ children, onClick }: { children: React.ReactNode, onClick?: () => void }) {
-    return (
-        <Menu.Item>
-            {({ active }) => (
-            <button
-                onClick={onClick}
-                className={`${active ? 'bg-violet-500 text-white' : 'text-gray-900'}
-                group flex w-full items-center rounded-md px-2 py-2 text-sm`}>
-                {children}
-            </button>
-            )}
-        </Menu.Item>
-    )
+  return (
+    <Menu.Item>
+      {({ active }) => (
+        <button
+          type="button"
+          onClick={onClick}
+          className={`${
+            active ? 'bg-indigo-500 text-white' : 'text-gray-900'
+          } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
+        >
+          {children}
+        </button>
+      )}
+    </Menu.Item>
+  )
 }

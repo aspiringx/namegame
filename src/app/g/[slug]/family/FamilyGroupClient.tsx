@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useInView } from 'react-intersection-observer'
 import { MemberWithUser, FullRelationship } from '@/types'
-import { getPaginatedMembers, getGroupMembersForRelate } from './actions'
+import { getPaginatedMembers, getGroupMembersForRelate, getMemberRelations } from './actions'
 import FamilyMemberCard from '@/components/FamilyMemberCard'
 import RelateModal from '@/components/RelateModal'
 import { getRelationship } from '@/lib/family-tree'
@@ -44,11 +44,13 @@ export function FamilyGroupClient({
     direction: SortDirection
   }>({ key: 'firstName', direction: 'asc' })
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
-  const { group, isAuthorizedMember, currentUserMember } = useGroup()
+  const { isAuthorizedMember, currentUserMember } = useGroup()
   const { ref, inView } = useInView()
 
   const [isRelateModalOpen, setIsRelateModalOpen] = useState(false)
+  const [isLoadingRelations, setIsLoadingRelations] = useState(false)
   const [selectedMember, setSelectedMember] = useState<MemberWithUser | null>(null)
+  const [memberRelations, setMemberRelations] = useState<Awaited<ReturnType<typeof getMemberRelations>>>([])
   const [allGroupMembers, setAllGroupMembers] = useState<MemberWithUser[]>([])
 
   useEffect(() => {
@@ -59,10 +61,28 @@ export function FamilyGroupClient({
     }
   }, [groupSlug])
 
-  const handleOpenRelateModal = (member: MemberWithUser) => {
+
+
+  const handleOpenRelateModal = useCallback(async (member: MemberWithUser) => {
+    if (!groupSlug) {
+      console.error('groupSlug is not available. Cannot fetch relations.')
+      // Optionally, show a toast to the user
+      return
+    }
+
     setSelectedMember(member)
-    setIsRelateModalOpen(true)
-  }
+    setIsLoadingRelations(true)
+    try {
+      const relations = await getMemberRelations(member.userId, groupSlug)
+      setMemberRelations(relations)
+      setIsRelateModalOpen(true)
+    } catch (error) {
+      console.error('Failed to get member relations:', error)
+      // Optionally, show a toast notification here
+    } finally {
+      setIsLoadingRelations(false)
+    }
+  }, [groupSlug])
 
   const handleCloseRelateModal = () => {
     setIsRelateModalOpen(false)
@@ -265,6 +285,7 @@ export function FamilyGroupClient({
         member={selectedMember}
         groupMembers={allGroupMembers}
         groupSlug={groupSlug}
+        initialRelations={memberRelations}
       />
     </>
   )

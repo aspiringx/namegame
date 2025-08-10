@@ -136,11 +136,13 @@ export async function getGroupMembersForRelate(groupSlug: string) {
     return []
   }
 
-  return group.members.map(member => ({
+  return group.members.map((member) => ({
     ...member,
     user: {
       ...member.user,
-      name: [member.user.firstName, member.user.lastName].filter(Boolean).join(' '),
+      name: [member.user.firstName, member.user.lastName]
+        .filter(Boolean)
+        .join(' '),
     },
   }))
 }
@@ -161,15 +163,27 @@ export async function getMemberRelations(userId: string, groupSlug: string) {
     throw new Error('Group not found')
   }
 
+  const groupMembers = await prisma.groupUser.findMany({
+    where: { groupId: group.id },
+    select: { userId: true },
+  })
+  const memberIds = groupMembers.map((m) => m.userId)
+
   const relations = await prisma.userUser.findMany({
     where: {
-      groupId: group.id,
-      OR: [{ user1Id: userId }, { user2Id: userId }],
       relationType: {
-        is: {
-          category: 'family',
-        },
+        category: 'family',
       },
+      OR: [
+        {
+          user1Id: userId,
+          user2Id: { in: memberIds },
+        },
+        {
+          user2Id: userId,
+          user1Id: { in: memberIds },
+        },
+      ],
     },
     include: {
       relationType: true,
@@ -177,14 +191,16 @@ export async function getMemberRelations(userId: string, groupSlug: string) {
       user2: true,
     },
   })
-
-  return relations.map(r => ({
+  console.log('relations', relations)
+  return relations.map((r) => ({
     ...r,
     relatedUser: r.user1Id === userId ? r.user2 : r.user1,
   }))
 }
 
-export async function addUserRelation(formData: FormData): Promise<{ success: boolean; message: string }> {
+export async function addUserRelation(
+  formData: FormData,
+): Promise<{ success: boolean; message: string }> {
   try {
     const user1Id = formData.get('user1Id') as string
     const user2Id = formData.get('user2Id') as string
