@@ -201,53 +201,138 @@ export async function addUserRelation(
   formData: FormData,
 ): Promise<{ success: boolean; message: string }> {
   try {
+    // The user FOR which we're creating a relationship (card selected in ui).
     const user1Id = formData.get('user1Id') as string
+    // The user TO which we're creating a relationship.
+    // If bi-directional (not parent), the order of user1Id and user2Id doesn't matter.
+    // If uni-directional (parent), user1Id is the parent and user2Id is the child.
     const user2Id = formData.get('user2Id') as string
-    const relationTypeIdStr = formData.get('relationTypeId') as string
-    const groupSlug = formData.get('groupSlug') as string
+    let relationTypeIdStr = formData.get('relationTypeId') as string
 
-    if (!user1Id || !user2Id || !relationTypeIdStr || !groupSlug) {
+    if (!user1Id || !user2Id || !relationTypeIdStr) {
       return { success: false, message: 'Missing required fields.' }
     }
 
-    const relationTypeId = Number(relationTypeIdStr)
+    // Order here only matters for parent/child relationships. Will change
+    // below if needed.
+    let u1 = user1Id
+    let u2 = user2Id
 
-    const group = await prisma.group.findUnique({
-      where: { slug: groupSlug },
-      select: { id: true },
-    })
-
-    if (!group) {
-      return { success: false, message: 'Group not found.' }
+    if (relationTypeIdStr === 'child') {
+      // Change it to parent where user2Id is the child of user1Id.
+      relationTypeIdStr = 'parent'
+    } else if (relationTypeIdStr === 'parent') {
+      // Here', if user1Id is the child creating a 'parent' relation, we swap
+      // the userIds so user2Id becomes user1Id and vice versa since order
+      // matters.
+      u1 = user2Id
+      u2 = user1Id
     }
 
-    const [u1, u2] = [user1Id, user2Id].sort()
+    // Now we that we've removed the inverse child relation type, we can
+    // validate the chosen type on the server.
+    const relationType = await prisma.userUserRelationType.findFirst({
+      where: { code: relationTypeIdStr },
+    })
+    if (!relationType) {
+      return { success: false, message: 'Relation type not found.' }
+    }
 
-    const existingRelation = await prisma.userUser.findFirst({
-      where: {
+    let whereClause
+    if (relationType.code === 'spouse' || relationType.code === 'partner') {
+      // Bidirectional spouse/partner check. Either can be user1Id or user2Id.
+      whereClause = {
+        relationTypeId: relationType.id,
+        OR: [{ user1Id: u1, user2Id: u1 }],
+      }
+    } else {
+      // Directional check for other types (e.g., parent). From swapping above,
+      // u1 should always be the parent if the relation exists.
+      whereClause = {
         user1Id: u1,
         user2Id: u2,
-        relationTypeId: relationTypeId,
-        groupId: group.id,
-      },
+        relationTypeId: relationType.id,
+      }
+    }
+
+    const existingRelation = await prisma.userUser.findFirst({
+      where: whereClause,
     })
 
     if (existingRelation) {
-      return { success: false, message: 'This relationship already exists.' }
+      if (existingRelation.groupId) {
+        // Relationship exists but is tied to a group, so make it global
+        await prisma.userUser.update({
+          where: { id: existingRelation.id },
+          data: { groupId: null },
+        })
+        return {
+          success: true,
+          message: 'Relationship updated successfully.',
+        }
+      }
+      // Relationship already exists and is global, so do nothing
+      return { success: true, message: 'This relationship already exists.' }
     }
 
+    // Create a new global relationship
     await prisma.userUser.create({
       data: {
         user1Id: u1,
         user2Id: u2,
-        relationTypeId,
-        groupId: group.id,
+        relationTypeId: relationType.id,
+        groupId: null, // Explicitly set groupId to null
       },
     })
-
     return { success: true, message: 'Relationship added successfully.' }
   } catch (error) {
     console.error('Error adding user relation:', error)
     return { success: false, message: 'Failed to add relationship.' }
+  }
+}
+
+export async function deleteUserRelation(
+  userUserId: number,
+  groupSlug: string,
+): Promise<{ success: boolean; message: string }> {
+  try {
+    const session = await auth()
+    const userId = session?.user?.id
+    if (!userId) {
+      return { success: false, message: 'Not authenticated.' }
+    }
+
+    const groupUserRoles = await getCodeTable('groupUserRole')
+
+    const membership = await prisma.groupUser.findFirst({
+      where: {
+        group: {
+          slug: groupSlug,
+        },
+        userId: userId,
+        roleId: groupUserRoles.admin.id,
+      },
+    })
+
+    if (!membership) {
+      return { success: false, message: 'Not authorized.' }
+    }
+
+    const relation = await prisma.userUser.findUnique({
+      where: { id: userUserId },
+    })
+
+    if (!relation) {
+      return { success: false, message: 'Relationship not found.' }
+    }
+
+    await prisma.userUser.delete({
+      where: { id: userUserId },
+    })
+
+    return { success: true, message: 'Relationship deleted.' }
+  } catch (error) {
+    console.error('Error deleting user relation:', error)
+    return { success: false, message: 'Failed to delete relationship.' }
   }
 }
