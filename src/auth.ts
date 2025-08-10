@@ -74,22 +74,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
   callbacks: {
     async jwt({ token, user, trigger, session }) {
-      // The `trigger === 'update'` block is used to handle session updates.
-      // This is essential for reflecting changes made on the client (e.g., updating a profile picture)
-      // in the session token without requiring the user to log out and back in.
-      if (trigger === 'update' && session) {
-        // When the session is updated, the `session` object contains the updated data.
-        // We need to update the token with this new data.
-        if (session.name) {
-          token.firstName = session.name;
-        }
-        if (session.image) {
-          token.image = session.image;
-        }
-      }
-
-      // The `if (user)` block is only triggered on initial sign-in.
-      // It populates the token with the user's data from the database.
+      // On initial sign-in, populate the token with user data
       if (user) {
         token.id = user.id;
         token.firstName = user.firstName;
@@ -97,6 +82,32 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.memberships = user.memberships;
         token.image = user.image;
       }
+
+      // When the session is updated (e.g., profile picture change),
+      // re-fetch the user data from the database to ensure the token is fresh.
+      if (trigger === 'update' && session) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          include: {
+            photos: true,
+          },
+        });
+
+        if (dbUser) {
+          const [photoTypes, entityTypes] = await Promise.all([
+            getCodeTable('photoType'),
+            getCodeTable('entityType'),
+          ]);
+
+          const primaryPhoto = dbUser.photos.find(
+            (p) => p.typeId === photoTypes.primary.id && p.entityTypeId === entityTypes.user.id
+          );
+
+          const photoUrl = primaryPhoto?.url || null;
+          token.image = photoUrl;
+        }
+      }
+
       return token;
     },
     async session({ session, token }) {
