@@ -51,7 +51,9 @@ async function validateAndResizeImage(file: File): Promise<Buffer> {
   }
 
   if (!ALLOWED_FORMATS.includes(file.type)) {
-    throw new Error('Invalid file format. Only JPG, PNG, WebP, and GIF are allowed.')
+    throw new Error(
+      'Invalid file format. Only JPG, PNG, WebP, and GIF are allowed.',
+    )
   }
 
   const bytes = await file.arrayBuffer()
@@ -59,7 +61,12 @@ async function validateAndResizeImage(file: File): Promise<Buffer> {
 
   return sharp(buffer)
     .rotate()
-    .resize({ width: MAX_WIDTH_HEIGHT, height: MAX_WIDTH_HEIGHT, fit: 'inside', withoutEnlargement: true })
+    .resize({
+      width: MAX_WIDTH_HEIGHT,
+      height: MAX_WIDTH_HEIGHT,
+      fit: 'inside',
+      withoutEnlargement: true,
+    })
     .toBuffer()
 }
 

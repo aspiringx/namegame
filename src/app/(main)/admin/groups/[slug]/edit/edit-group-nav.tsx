@@ -1,24 +1,29 @@
-'use client';
+'use client'
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import type { Group } from '@/generated/prisma';
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import type { Group } from '@/generated/prisma'
 
 interface EditGroupNavProps {
-  group: Group;
+  group: Group
 }
 
 export default function EditGroupNav({ group }: EditGroupNavProps) {
-  const pathname = usePathname();
+  const pathname = usePathname()
 
   const tabs = [
     { name: 'Edit Details', href: `/admin/groups/${group.slug}/edit` },
-    { name: 'Manage Members', href: `/admin/groups/${group.slug}/edit/members` },
-  ];
+    {
+      name: 'Manage Members',
+      href: `/admin/groups/${group.slug}/edit/members`,
+    },
+  ]
 
-  const tabBaseClasses = 'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm';
-  const activeTabClasses = 'border-indigo-500 text-indigo-600';
-  const inactiveTabClasses = 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300';
+  const tabBaseClasses =
+    'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm'
+  const activeTabClasses = 'border-indigo-500 text-indigo-600'
+  const inactiveTabClasses =
+    'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
 
   return (
     <div className="border-b border-gray-200 dark:border-gray-700">
@@ -34,5 +39,5 @@ export default function EditGroupNav({ group }: EditGroupNavProps) {
         ))}
       </nav>
     </div>
-  );
+  )
 }

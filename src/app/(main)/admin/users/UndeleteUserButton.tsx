@@ -1,19 +1,19 @@
-'use client';
+'use client'
 
-import { useTransition } from 'react';
-import { undeleteUser } from './actions';
+import { useTransition } from 'react'
+import { undeleteUser } from './actions'
 
 export function UndeleteUserButton({ userId }: { userId: string }) {
-  const [isPending, startTransition] = useTransition();
+  const [isPending, startTransition] = useTransition()
 
   const handleClick = () => {
     startTransition(async () => {
-      const result = await undeleteUser(userId);
+      const result = await undeleteUser(userId)
       if (result?.message) {
-        alert(result.message);
+        alert(result.message)
       }
-    });
-  };
+    })
+  }
 
   return (
     <button
@@ -24,5 +24,5 @@ export function UndeleteUserButton({ userId }: { userId: string }) {
     >
       {isPending ? 'Restoring...' : 'Undelete'}
     </button>
-  );
+  )
 }

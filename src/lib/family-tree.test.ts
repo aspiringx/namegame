@@ -1,15 +1,20 @@
-import { describe, it, expect, beforeAll } from 'vitest';
-import { PrismaClient, User, UserUser, UserUserRelationType } from '../generated/prisma';
-import { getRelationship } from './family-tree';
+import { describe, it, expect, beforeAll } from 'vitest'
+import {
+  PrismaClient,
+  User,
+  UserUser,
+  UserUserRelationType,
+} from '../generated/prisma'
+import { getRelationship } from './family-tree'
 
-type FullRelationship = UserUser & { relationType: UserUserRelationType };
+type FullRelationship = UserUser & { relationType: UserUserRelationType }
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient()
 
 describe('getRelationship with seeded data', () => {
-  let allUsers: User[];
-  let allRelationships: FullRelationship[];
-  let egoUser: User;
+  let allUsers: User[]
+  let allRelationships: FullRelationship[]
+  let egoUser: User
 
   beforeAll(async () => {
     // 1. Fetch all data from the test database
@@ -27,20 +32,20 @@ describe('getRelationship with seeded data', () => {
           },
         },
       },
-    });
+    })
 
     if (!group) {
-      throw new Error('Test data not found. Make sure to run the seeder first.');
+      throw new Error('Test data not found. Make sure to run the seeder first.')
     }
 
-    allUsers = group.members.map((m) => m.user);
-    allRelationships = group.userRelations as FullRelationship[];
+    allUsers = group.members.map((m) => m.user)
+    allRelationships = group.userRelations as FullRelationship[]
 
-    egoUser = allUsers.find((u) => u.firstName === 'Ego')!;
+    egoUser = allUsers.find((u) => u.firstName === 'Ego')!
     if (!egoUser) {
-      throw new Error('Ego user not found in the seeded data.');
+      throw new Error('Ego user not found in the seeded data.')
     }
-  });
+  })
 
   const relationshipPaths = [
     { label: 'Child', path: 'child' },
@@ -92,7 +97,10 @@ describe('getRelationship with seeded data', () => {
     { label: 'Nibling-in-law', path: 'spouse > parent > child > child' },
     { label: 'Pibling-in-law', path: 'parent > parent > child > spouse' },
     { label: 'Pibling-in-law', path: 'spouse > parent > parent > child' },
-    { label: 'Cousin-in-law', path: 'spouse > parent > parent > child > child' },
+    {
+      label: 'Cousin-in-law',
+      path: 'spouse > parent > parent > child > child',
+    },
     {
       label: 'Great-great-grandparent-in-law',
       path: 'spouse > parent > parent > parent > parent',
@@ -105,7 +113,10 @@ describe('getRelationship with seeded data', () => {
       label: 'Great-pibling-in-law',
       path: 'parent > parent > parent > child > spouse',
     },
-    { label: 'Pibling-in-law', path: 'spouse > parent > parent > child > spouse' },
+    {
+      label: 'Pibling-in-law',
+      path: 'spouse > parent > parent > child > spouse',
+    },
     {
       label: '1st cousin-once-removed-in-law',
       path: 'spouse > parent > parent > child > child > child',
@@ -154,7 +165,10 @@ describe('getRelationship with seeded data', () => {
       label: 'Step-great-great-grandparent',
       path: 'parent > spouse > parent > parent > parent',
     },
-    { label: 'Step-great-nibling', path: 'parent > child > spouse > child > child' },
+    {
+      label: 'Step-great-nibling',
+      path: 'parent > child > spouse > child > child',
+    },
     {
       label: 'Step-great-pibling',
       path: 'parent > spouse > parent > parent > child',
@@ -203,8 +217,14 @@ describe('getRelationship with seeded data', () => {
     { label: 'Co-sibling', path: 'parent > partner > child' },
     { label: 'Co-sibling', path: 'partner > parent > child' },
     { label: 'Co-great-grandchild', path: 'partner > child > child > child' },
-    { label: 'Co-great-grandparent', path: 'parent > partner > parent > parent' },
-    { label: 'Co-great-grandparent', path: 'partner > parent > parent > parent' },
+    {
+      label: 'Co-great-grandparent',
+      path: 'parent > partner > parent > parent',
+    },
+    {
+      label: 'Co-great-grandparent',
+      path: 'partner > parent > parent > parent',
+    },
     { label: 'Co-nibling', path: 'partner > parent > child > child' },
     { label: 'Co-nibling', path: 'parent > child > partner > child' },
     { label: 'Co-pibling', path: 'parent > partner > parent > child' },
@@ -214,12 +234,18 @@ describe('getRelationship with seeded data', () => {
       label: 'Co-great-great-grandchild',
       path: 'partner > child > child > child > child',
     },
-    { label: 'Co-great-nibling', path: 'partner > parent > child > child > child' },
+    {
+      label: 'Co-great-nibling',
+      path: 'partner > parent > child > child > child',
+    },
     {
       label: 'Co-great-nibling',
       path: 'parent > child > child > partner > child',
     },
-    { label: 'Co-great-pibling', path: 'parent > partner > parent > parent > child' },
+    {
+      label: 'Co-great-pibling',
+      path: 'parent > partner > parent > parent > child',
+    },
     {
       label: 'Co-great-pibling',
       path: 'partner > parent > parent > parent > child',
@@ -248,23 +274,39 @@ describe('getRelationship with seeded data', () => {
       label: 'Co-2nd cousin',
       path: 'parent > parent > parent > child > child > child > partner',
     },
-  ];
+  ]
 
   // Using .each to create a test for every path
-  it.each(relationshipPaths)('should correctly identify: $label ($path)', ({ label, path }) => {
-    const normalizedPath = path.trim().replace(/\s+/g, ' ').replace(/\s*>\s*/g, ' > ');
-    const normalizedLabel = label.replace(/\s+/g, ' ').trim();
+  it.each(relationshipPaths)(
+    'should correctly identify: $label ($path)',
+    ({ label, path }) => {
+      const normalizedPath = path
+        .trim()
+        .replace(/\s+/g, ' ')
+        .replace(/\s*>\s*/g, ' > ')
+      const normalizedLabel = label.replace(/\s+/g, ' ').trim()
 
-    // For half-sibling, the alter user is just 'Alter'
-    const alterName =
-      normalizedLabel === 'Half Sibling' ? 'Alter' : `Ego > ${normalizedPath}`;
-    const alterUser = allUsers.find((u) => u.firstName === alterName);
+      // For half-sibling, the alter user is just 'Alter'
+      const alterName =
+        normalizedLabel === 'Half Sibling' ? 'Alter' : `Ego > ${normalizedPath}`
+      const alterUser = allUsers.find((u) => u.firstName === alterName)
 
-    expect(alterUser, `User with name '${alterName}' not found. Check the seeder.`).toBeDefined();
+      expect(
+        alterUser,
+        `User with name '${alterName}' not found. Check the seeder.`,
+      ).toBeDefined()
 
-    const result = getRelationship(egoUser.id, alterUser!.id, allRelationships);
+      const result = getRelationship(
+        egoUser.id,
+        alterUser!.id,
+        allRelationships,
+      )
 
-    expect(result, `No relationship path found for ${label} (${path})`).not.toBeNull();
-    expect(result?.relationship).toBe(label);
-  });
-});
+      expect(
+        result,
+        `No relationship path found for ${label} (${path})`,
+      ).not.toBeNull()
+      expect(result?.relationship).toBe(label)
+    },
+  )
+})

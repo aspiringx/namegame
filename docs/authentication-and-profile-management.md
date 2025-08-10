@@ -19,6 +19,7 @@ A complete, self-service **password reset flow** has been implemented to improve
 ### 3. Email Verification Framework
 
 The foundation for **email verification** has also been built, though it is not yet fully exposed in the UI. The backend is ready with:
+
 - **Token Generation:** A `generateVerificationToken` function in `src/lib/tokens.ts`.
 - **Database Model:** An `EmailVerificationToken` model in the Prisma schema.
 - **Email Sending:** A `sendVerificationEmail` function in `src/lib/mail.ts`.

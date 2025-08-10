@@ -1,13 +1,13 @@
-'use server';
+'use server'
 
-import prisma from '@/lib/prisma';
-import { revalidatePath } from 'next/cache';
-import { redirect } from 'next/navigation';
-import { z } from 'zod';
+import prisma from '@/lib/prisma'
+import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation'
+import { z } from 'zod'
 
-import { uploadFile } from '@/lib/storage';
-import { auth } from '@/auth';
-import { getCodeTable } from '@/lib/codes';
+import { uploadFile } from '@/lib/storage'
+import { auth } from '@/auth'
+import { getCodeTable } from '@/lib/codes'
 
 // Define the schema for form validation using Zod
 const GroupSchema = z.object({
@@ -17,35 +17,38 @@ const GroupSchema = z.object({
   address: z.string().optional(),
   phone: z.string().optional(),
   logo: z.string().optional().nullable(), // Logo is a base64 string
-});
+})
 
 export type State = {
   errors?: {
-    name?: string[];
-    slug?: string[];
-    description?: string[];
-    address?: string[];
-    phone?: string[];
-    logo?: string[];
-  };
-  message?: string | null;
+    name?: string[]
+    slug?: string[]
+    description?: string[]
+    address?: string[]
+    phone?: string[]
+    logo?: string[]
+  }
+  message?: string | null
   values?: {
-    name: string;
-    slug: string;
-    description: string;
-    address: string;
-    phone: string;
-  };
-};
+    name: string
+    slug: string
+    description: string
+    address: string
+    phone: string
+  }
+}
 
-export async function createGroup(prevState: State, formData: FormData): Promise<State> {
-  const session = await auth();
+export async function createGroup(
+  prevState: State,
+  formData: FormData,
+): Promise<State> {
+  const session = await auth()
   if (!session?.user?.id) {
     return {
       message: 'You must be logged in to create a group.',
-    };
+    }
   }
-  const userId = session.user.id;
+  const userId = session.user.id
 
   const validatedFields = GroupSchema.safeParse({
     name: formData.get('name'),
@@ -54,7 +57,7 @@ export async function createGroup(prevState: State, formData: FormData): Promise
     address: formData.get('address'),
     phone: formData.get('phone'),
     logo: formData.get('logo'),
-  });
+  })
 
   const rawFormData = {
     name: formData.get('name') as string,
@@ -62,50 +65,50 @@ export async function createGroup(prevState: State, formData: FormData): Promise
     description: formData.get('description') as string,
     address: formData.get('address') as string,
     phone: formData.get('phone') as string,
-  };
+  }
 
   if (!validatedFields.success) {
-    const fieldErrors = validatedFields.error.flatten().fieldErrors;
+    const fieldErrors = validatedFields.error.flatten().fieldErrors
     const errorFields = Object.keys(fieldErrors)
       .map((field) => field.charAt(0).toUpperCase() + field.slice(1))
-      .join(', ');
+      .join(', ')
 
     return {
       errors: fieldErrors,
       message: `Please correct the invalid fields: ${errorFields}.`,
       values: rawFormData,
-    };
+    }
   }
 
-  const { logo: initialLogo, ...groupData } = validatedFields.data;
-  const logo = initialLogo === '' ? null : initialLogo;
+  const { logo: initialLogo, ...groupData } = validatedFields.data
+  const logo = initialLogo === '' ? null : initialLogo
 
   try {
     const existingGroup = await prisma.group.findUnique({
       where: { slug: groupData.slug },
-    });
+    })
 
     if (existingGroup) {
       return {
         errors: { slug: ['This slug is already in use.'] },
         message: 'Slug is already in use.',
         values: rawFormData,
-      };
+      }
     }
 
     const [entityTypes, photoTypes] = await Promise.all([
       getCodeTable('entityType'),
       getCodeTable('photoType'),
-    ]);
+    ])
 
-    const groupEntityType = entityTypes.group;
-    const logoPhotoType = photoTypes.logo;
+    const groupEntityType = entityTypes.group
+    const logoPhotoType = photoTypes.logo
 
     if (!groupEntityType || !logoPhotoType) {
       return {
         message: 'Database Error: Could not find required code table entries.',
         values: rawFormData,
-      };
+      }
     }
 
     const newGroup = await prisma.group.create({
@@ -116,17 +119,21 @@ export async function createGroup(prevState: State, formData: FormData): Promise
         updatedById: userId,
         groupTypeId: 3, // Default to 'family'
       },
-    });
+    })
 
     if (logo) {
-      const matches = logo.match(/^data:(.+);base64,(.+)$/);
+      const matches = logo.match(/^data:(.+);base64,(.+)$/)
       if (matches && matches.length === 3) {
-        const mimeType = matches[1];
-        const base64Data = matches[2];
-        const buffer = Buffer.from(base64Data, 'base64');
-        const file = new File([buffer], 'logo.jpg', { type: mimeType });
+        const mimeType = matches[1]
+        const base64Data = matches[2]
+        const buffer = Buffer.from(base64Data, 'base64')
+        const file = new File([buffer], 'logo.jpg', { type: mimeType })
 
-        const logoPath = await uploadFile(file, 'groups', newGroup.id.toString());
+        const logoPath = await uploadFile(
+          file,
+          'groups',
+          newGroup.id.toString(),
+        )
 
         await prisma.photo.create({
           data: {
@@ -137,17 +144,18 @@ export async function createGroup(prevState: State, formData: FormData): Promise
             groupId: newGroup.id,
             userId: userId,
           },
-        });
+        })
       }
     }
   } catch (e) {
-    const message = e instanceof Error ? e.message : 'An unknown error occurred.';
+    const message =
+      e instanceof Error ? e.message : 'An unknown error occurred.'
     return {
       message: `Database Error: ${message}`,
       values: rawFormData,
-    };
+    }
   }
 
-  revalidatePath('/admin/groups');
-  redirect('/admin/groups');
+  revalidatePath('/admin/groups')
+  redirect('/admin/groups')
 }

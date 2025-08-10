@@ -14,10 +14,10 @@ Our successful architecture now correctly separates the NextAuth.js configuratio
 ### 2. `src/auth.ts` (Main Server-Side Config)
 
 - This is the heart of our authentication logic. It imports the base `authConfig` and merges it with server-only features, like the `Credentials` provider which needs Prisma and bcrypt to check passwords against the database.
-- It initializes `NextAuth` *once* and exports everything the app needs:
-    -   `handlers`: An object containing the `GET` and `POST` functions for the API routes.
-    -   `auth`: The function used to get the session in Server Components (like in `layout.tsx`).
-    -   `signIn` and `signOut`: Functions for programmatic sign-in and sign-out.
+- It initializes `NextAuth` _once_ and exports everything the app needs:
+  - `handlers`: An object containing the `GET` and `POST` functions for the API routes.
+  - `auth`: The function used to get the session in Server Components (like in `layout.tsx`).
+  - `signIn` and `signOut`: Functions for programmatic sign-in and sign-out.
 
 ### 3. `src/middleware.ts` (Edge Middleware)
 
@@ -34,7 +34,7 @@ Our journey was a painful loop of fixing one error only to create another. The c
 
 ### 1. The Root of All Evil: `TypeError: Function.prototype.apply was called on #<Object>`
 
-- This was our main antagonist. It happened because the API route at `[...auth]/route.ts` was exporting an *object* instead of the *functions* (`GET`, `POST`) that the Next.js router expects. Incorrect attempts to initialize `NextAuth` in the wrong place or export the handlers improperly were the direct cause.
+- This was our main antagonist. It happened because the API route at `[...auth]/route.ts` was exporting an _object_ instead of the _functions_ (`GET`, `POST`) that the Next.js router expects. Incorrect attempts to initialize `NextAuth` in the wrong place or export the handlers improperly were the direct cause.
 
 ### 2. The Edge vs. Node.js Conflict
 
@@ -48,9 +48,9 @@ Our journey was a painful loop of fixing one error only to create another. The c
 
 The current setup works because it adheres to the official, battle-tested NextAuth.js v5 pattern, which elegantly solves the runtime separation problem:
 
--   **Single Source of Truth:** `auth.ts` is the single, definitive place where `NextAuth` is initialized.
--   **Correct Exports for Correct Consumers:**
-    -   The API route gets the `handlers` object it needs.
-    -   Server Components get the `auth` function they need.
-    -   The middleware gets the `auth` function, and tree-shaking automatically makes it Edge-safe.
--   **No More Ambiguity:** There is no longer any confusion about where initialization happens or what each part of the app should import. Everything is clean, explicit, and follows the intended framework design.
+- **Single Source of Truth:** `auth.ts` is the single, definitive place where `NextAuth` is initialized.
+- **Correct Exports for Correct Consumers:**
+  - The API route gets the `handlers` object it needs.
+  - Server Components get the `auth` function they need.
+  - The middleware gets the `auth` function, and tree-shaking automatically makes it Edge-safe.
+- **No More Ambiguity:** There is no longer any confusion about where initialization happens or what each part of the app should import. Everything is clean, explicit, and follows the intended framework design.

@@ -40,8 +40,6 @@ export default function UserMenu() {
     }
   }, [])
 
-
-
   const toggleDropdown = () => {
     setDropdownOpen(!isDropdownOpen)
   }

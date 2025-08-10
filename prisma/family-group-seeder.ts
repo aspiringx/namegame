@@ -119,7 +119,10 @@ async function main() {
 
   // --- Create a dedicated half-sibling for testing ---
   const commonParent = await getOrCreateUser('Common Parent', memberRole.id)
-  const egoOtherParent = await getOrCreateUser('Ego Other Parent', memberRole.id)
+  const egoOtherParent = await getOrCreateUser(
+    'Ego Other Parent',
+    memberRole.id,
+  )
   const alterOtherParent = await getOrCreateUser(
     'Alter Other Parent',
     memberRole.id,

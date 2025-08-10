@@ -1,25 +1,25 @@
-import { PrismaClient, UserUserRelationCategory } from '../src/generated/prisma';
-import bcrypt from 'bcrypt';
+import { PrismaClient, UserUserRelationCategory } from '../src/generated/prisma'
+import bcrypt from 'bcrypt'
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient()
 
 async function main() {
   // Check for a specific seeder argument
-  const seederArg = process.argv.find(arg => arg.startsWith('--seeder='));
+  const seederArg = process.argv.find((arg) => arg.startsWith('--seeder='))
 
   if (seederArg) {
-    const seederFileName = seederArg.split('=')[1];
-    console.log(`Running specific seeder: ${seederFileName}`);
+    const seederFileName = seederArg.split('=')[1]
+    console.log(`Running specific seeder: ${seederFileName}`)
     try {
-      await import(`./${seederFileName}`);
+      await import(`./${seederFileName}`)
     } catch (error) {
-      console.error(`Error running seeder ${seederFileName}:`, error);
-      process.exit(1);
+      console.error(`Error running seeder ${seederFileName}:`, error)
+      process.exit(1)
     }
-    return; // Exit after running the specific seeder
+    return // Exit after running the specific seeder
   }
 
-  console.log(`Start seeding ...`);
+  console.log(`Start seeding ...`)
 
   const groupTypes = [
     { id: 1, code: 'business' },
@@ -28,7 +28,7 @@ async function main() {
     { id: 4, code: 'friends' },
     { id: 5, code: 'neighborhood' },
     { id: 6, code: 'school' },
-  ];
+  ]
 
   for (const gt of groupTypes) {
     await prisma.groupType.upsert({
@@ -38,19 +38,21 @@ async function main() {
         id: gt.id,
         code: gt.code,
       },
-    });
+    })
   }
-  console.log(`Seeded ${groupTypes.length} group types.`);
-  const familyGroupType = await prisma.groupType.findUnique({ where: { code: 'family' } });
+  console.log(`Seeded ${groupTypes.length} group types.`)
+  const familyGroupType = await prisma.groupType.findUnique({
+    where: { code: 'family' },
+  })
   if (!familyGroupType) {
-    throw new Error("Could not find 'family' group type after seeding.");
+    throw new Error("Could not find 'family' group type after seeding.")
   }
 
   const groupUserRoles = [
     { id: 1, code: 'admin' },
     { id: 2, code: 'member' },
     { id: 3, code: 'super' },
-  ];
+  ]
 
   for (const gur of groupUserRoles) {
     await prisma.groupUserRole.upsert({
@@ -60,37 +62,39 @@ async function main() {
         id: gur.id,
         code: gur.code,
       },
-    });
+    })
   }
-  console.log(`Seeded ${groupUserRoles.length} group user roles.`);
+  console.log(`Seeded ${groupUserRoles.length} group user roles.`)
 
   const relationTypes = [
     { code: 'parent', category: UserUserRelationCategory.family },
     { code: 'spouse', category: UserUserRelationCategory.family },
     { code: 'acquaintance', category: UserUserRelationCategory.other },
-  ];
+  ]
 
   for (const rt of relationTypes) {
     const existingRt = await prisma.userUserRelationType.findFirst({
       where: { code: rt.code, groupId: null },
-    });
+    })
     if (!existingRt) {
       await prisma.userUserRelationType.create({
         data: {
           code: rt.code,
           category: rt.category,
         },
-      });
+      })
     }
   }
-  console.log(`Seeded ${relationTypes.length} user user relation types.`);
-  const superUserRole = await prisma.groupUserRole.findFirst({ where: { code: 'super', groupId: null } });
+  console.log(`Seeded ${relationTypes.length} user user relation types.`)
+  const superUserRole = await prisma.groupUserRole.findFirst({
+    where: { code: 'super', groupId: null },
+  })
   if (!superUserRole) {
-    throw new Error("Could not find 'super' role after seeding.");
+    throw new Error("Could not find 'super' role after seeding.")
   }
 
   // Create the 'system' user if it doesn't exist
-  const systemUserPassword = await bcrypt.hash('password123', 10);
+  const systemUserPassword = await bcrypt.hash('password123', 10)
   const systemUser = await prisma.user.upsert({
     where: { username: 'system' },
     update: {},
@@ -99,8 +103,8 @@ async function main() {
       firstName: 'System',
       password: systemUserPassword,
     },
-  });
-  console.log(`Created/found 'system' user with id: ${systemUser.id}`);
+  })
+  console.log(`Created/found 'system' user with id: ${systemUser.id}`)
 
   // Create the Global Admin group if it doesn't exist
   const adminGroup = await prisma.group.upsert({
@@ -117,11 +121,13 @@ async function main() {
       updatedById: systemUser.id,
       groupTypeId: familyGroupType.id,
     },
-  });
-  console.log(`Created/found group '${adminGroup.name}' with id: ${adminGroup.id}`);
+  })
+  console.log(
+    `Created/found group '${adminGroup.name}' with id: ${adminGroup.id}`,
+  )
 
   // Create the 'joe' user if he doesn't exist
-  const hashedPassword = await bcrypt.hash('password123', 10);
+  const hashedPassword = await bcrypt.hash('password123', 10)
   const joeUser = await prisma.user.upsert({
     where: { username: 'joe' },
     update: {
@@ -134,8 +140,8 @@ async function main() {
       createdById: systemUser.id,
       updatedById: systemUser.id,
     },
-  });
-  console.log(`Created/found user '${joeUser.username}' with id: ${joeUser.id}`);
+  })
+  console.log(`Created/found user '${joeUser.username}' with id: ${joeUser.id}`)
 
   // Add 'joe' to the 'Global Admin' group as a 'super' user
   await prisma.groupUser.upsert({
@@ -153,17 +159,19 @@ async function main() {
       groupId: adminGroup.id,
       roleId: superUserRole.id,
     },
-  });
-  console.log(`Ensured user '${joeUser.username}' is a super user in group '${adminGroup.name}'.`);
+  })
+  console.log(
+    `Ensured user '${joeUser.username}' is a super user in group '${adminGroup.name}'.`,
+  )
 
-  console.log(`Seeding finished.`);
+  console.log(`Seeding finished.`)
 }
 
 main()
   .catch((e) => {
-    console.error(e);
-    process.exit(1);
+    console.error(e)
+    process.exit(1)
   })
   .finally(async () => {
-    await prisma.$disconnect();
-  });
+    await prisma.$disconnect()
+  })

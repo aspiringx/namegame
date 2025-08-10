@@ -1,26 +1,27 @@
-import prisma from '@/lib/prisma';
-import { notFound } from 'next/navigation';
-import { getPublicUrl } from '@/lib/storage';
-import { auth } from '@/auth';
-import { Prisma } from '@/generated/prisma';
-import { getCodeTable } from '@/lib/codes';
-import Breadcrumbs from '@/components/Breadcrumbs';
-import EditGroupNav from './edit-group-nav';
-import type { GroupPayload, GroupWithMembers } from '@/types/index';
+import prisma from '@/lib/prisma'
+import { notFound } from 'next/navigation'
+import { getPublicUrl } from '@/lib/storage'
+import { auth } from '@/auth'
+import { Prisma } from '@/generated/prisma'
+import { getCodeTable } from '@/lib/codes'
+import Breadcrumbs from '@/components/Breadcrumbs'
+import EditGroupNav from './edit-group-nav'
+import type { GroupPayload, GroupWithMembers } from '@/types/index'
 
-
-
-export default async function EditGroupLayout(props: { children: React.ReactNode; params: Promise<{ slug: string }> }) {
-  const { children } = props;
-  const params = await props.params;
-  const { slug } = params;
-  const session = await auth();
+export default async function EditGroupLayout(props: {
+  children: React.ReactNode
+  params: Promise<{ slug: string }>
+}) {
+  const { children } = props
+  const params = await props.params
+  const { slug } = params
+  const session = await auth()
 
   const [photoTypes, entityTypes, roleTypes] = await Promise.all([
     getCodeTable('photoType'),
     getCodeTable('entityType'),
     getCodeTable('groupUserRole'),
-  ]);
+  ])
 
   const group = await prisma.group.findUnique({
     where: {
@@ -55,14 +56,14 @@ export default async function EditGroupLayout(props: { children: React.ReactNode
         },
       },
     },
-  });
+  })
 
   if (!group) {
-    notFound();
+    notFound()
   }
 
-  const logo = group?.photos[0];
-  const logoUrl = await getPublicUrl(logo?.url);
+  const logo = group?.photos[0]
+  const logoUrl = await getPublicUrl(logo?.url)
 
   const currentUser = session?.user?.id
     ? await prisma.user.findUnique({
@@ -75,9 +76,9 @@ export default async function EditGroupLayout(props: { children: React.ReactNode
           },
         },
       })
-    : null;
+    : null
 
-  const isGlobalAdminGroup = group.slug === 'global-admin';
+  const isGlobalAdminGroup = group.slug === 'global-admin'
 
   const groupWithMemberPhotos = {
     ...group,
@@ -87,26 +88,28 @@ export default async function EditGroupLayout(props: { children: React.ReactNode
         user: {
           ...member.user,
           photoUrl: await (async () => {
-            const rawUrl = member.user.photos?.[0]?.url;
+            const rawUrl = member.user.photos?.[0]?.url
             if (rawUrl) {
               if (rawUrl.startsWith('http')) {
-                return rawUrl;
+                return rawUrl
               }
-              return getPublicUrl(rawUrl);
+              return getPublicUrl(rawUrl)
             }
-            return '/images/default-avatar.png';
+            return '/images/default-avatar.png'
           })(),
         },
-      }))
+      })),
     ),
-  };
+  }
 
   return (
-    <div className="max-w-4xl mx-auto p-8 dark:bg-gray-900">
+    <div className="mx-auto max-w-4xl p-8 dark:bg-gray-900">
       <Breadcrumbs />
-      <h1 className="text-2xl font-bold mb-6 dark:text-white">Edit Group: {group.name}</h1>
+      <h1 className="mb-6 text-2xl font-bold dark:text-white">
+        Edit Group: {group.name}
+      </h1>
       <EditGroupNav group={group} />
       <div className="mt-6">{children}</div>
     </div>
-  );
+  )
 }

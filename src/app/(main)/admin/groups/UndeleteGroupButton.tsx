@@ -1,19 +1,19 @@
-'use client';
+'use client'
 
-import { useTransition } from 'react';
-import { undeleteGroup } from './actions';
+import { useTransition } from 'react'
+import { undeleteGroup } from './actions'
 
 export function UndeleteGroupButton({ groupId }: { groupId: number }) {
-  const [isPending, startTransition] = useTransition();
+  const [isPending, startTransition] = useTransition()
 
   const handleClick = () => {
     startTransition(async () => {
-      const result = await undeleteGroup(groupId);
+      const result = await undeleteGroup(groupId)
       if (result?.message) {
-        alert(result.message);
+        alert(result.message)
       }
-    });
-  };
+    })
+  }
 
   return (
     <button
@@ -24,5 +24,5 @@ export function UndeleteGroupButton({ groupId }: { groupId: number }) {
     >
       {isPending ? 'Undeleting...' : 'Undelete'}
     </button>
-  );
+  )
 }

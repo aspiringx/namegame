@@ -1,8 +1,8 @@
-import 'server-only';
+import 'server-only'
 
-import { cache } from 'react';
+import { cache } from 'react'
 
-import prisma from './prisma';
+import prisma from './prisma'
 
 /**
  * Fetches all records from a given code table (e.g., 'photoType', 'entityType')
@@ -15,21 +15,25 @@ import prisma from './prisma';
  */
 export const getCodeTable = cache(
   async (
-    tableName: 'photoType' | 'entityType' | 'groupUserRole' | 'userUserRelationType'
+    tableName:
+      | 'photoType'
+      | 'entityType'
+      | 'groupUserRole'
+      | 'userUserRelationType',
   ): Promise<Record<string, { id: number; code: string }>> => {
     const results = await (prisma as any)[tableName].findMany({
       select: { id: true, code: true },
-    });
+    })
 
     return results.reduce(
       (
         acc: Record<string, { id: number; code: string }>,
-        item: { id: number; code: string }
+        item: { id: number; code: string },
       ) => {
-        acc[item.code] = item;
-        return acc;
+        acc[item.code] = item
+        return acc
       },
-      {}
-    );
-  }
-);
+      {},
+    )
+  },
+)

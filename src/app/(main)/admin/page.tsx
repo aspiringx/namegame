@@ -1,25 +1,27 @@
-import Link from 'next/link';
-import Breadcrumbs from '@/components/Breadcrumbs';
+import Link from 'next/link'
+import Breadcrumbs from '@/components/Breadcrumbs'
 
 export default function AdminPage() {
   return (
-    <div className="max-w-4xl mx-auto p-8">
+    <div className="mx-auto max-w-4xl p-8">
       <Breadcrumbs />
-      <h1 className="text-3xl font-bold mb-8 text-center dark:text-white">Admin Dashboard</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <h1 className="mb-8 text-center text-3xl font-bold dark:text-white">
+        Admin Dashboard
+      </h1>
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
         <Link
           href="/admin/groups"
-          className="bg-indigo-600 text-white font-bold py-8 px-6 rounded-lg text-center text-2xl hover:bg-indigo-700 transition-colors shadow-lg flex items-center justify-center"
+          className="flex items-center justify-center rounded-lg bg-indigo-600 px-6 py-8 text-center text-2xl font-bold text-white shadow-lg transition-colors hover:bg-indigo-700"
         >
           Groups
         </Link>
         <Link
           href="/admin/users"
-          className="bg-green-600 text-white font-bold py-8 px-6 rounded-lg text-center text-2xl hover:bg-green-700 transition-colors shadow-lg flex items-center justify-center"
+          className="flex items-center justify-center rounded-lg bg-green-600 px-6 py-8 text-center text-2xl font-bold text-white shadow-lg transition-colors hover:bg-green-700"
         >
           Users
         </Link>
       </div>
     </div>
-  );
+  )
 }

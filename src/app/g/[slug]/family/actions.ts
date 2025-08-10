@@ -1,31 +1,31 @@
-'use server';
+'use server'
 
-import { auth } from '@/auth';
-import prisma from '@/lib/prisma';
-import { getPublicUrl } from '@/lib/storage';
-import type { MemberWithUser, FullRelationship } from '@/types';
-import { getCodeTable } from '@/lib/codes';
+import { auth } from '@/auth'
+import prisma from '@/lib/prisma'
+import { getPublicUrl } from '@/lib/storage'
+import type { MemberWithUser, FullRelationship } from '@/types'
+import { getCodeTable } from '@/lib/codes'
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 10
 
 export async function getPaginatedMembers(
   slug: string,
-  page: number
+  page: number,
 ): Promise<MemberWithUser[]> {
-  const session = await auth();
-  const currentUserId = session?.user?.id;
+  const session = await auth()
+  const currentUserId = session?.user?.id
 
   if (!currentUserId) {
-    return [];
+    return []
   }
 
   const group = await prisma.group.findUnique({
     where: { slug },
     select: { id: true },
-  });
+  })
 
   if (!group) {
-    return [];
+    return []
   }
 
   const totalMembers = await prisma.groupUser.count({
@@ -33,7 +33,7 @@ export async function getPaginatedMembers(
       groupId: group.id,
       userId: { not: currentUserId },
     },
-  });
+  })
 
   const members = await prisma.groupUser.findMany({
     where: {
@@ -55,13 +55,17 @@ export async function getPaginatedMembers(
     },
     skip: (page - 1) * PAGE_SIZE,
     take: PAGE_SIZE,
-  });
+  })
 
   const memberPromises = members.map(async (member) => {
-    const primaryPhoto = member.user.photos[0];
-    const photoUrl = primaryPhoto ? await getPublicUrl(primaryPhoto.url) : '/images/default-avatar.png';
+    const primaryPhoto = member.user.photos[0]
+    const photoUrl = primaryPhoto
+      ? await getPublicUrl(primaryPhoto.url)
+      : '/images/default-avatar.png'
 
-    const name = [member.user.firstName, member.user.lastName].filter(Boolean).join(' ');
+    const name = [member.user.firstName, member.user.lastName]
+      .filter(Boolean)
+      .join(' ')
 
     return {
       ...member,
@@ -70,10 +74,10 @@ export async function getPaginatedMembers(
         name,
         photoUrl,
       },
-    };
-  });
+    }
+  })
 
-  return Promise.all(memberPromises);
+  return Promise.all(memberPromises)
 }
 
 export async function getFamilyRelationships(
@@ -82,17 +86,17 @@ export async function getFamilyRelationships(
   const group = await prisma.group.findUnique({
     where: { slug: groupSlug },
     select: { id: true },
-  });
+  })
 
   if (!group) {
-    return [];
+    return []
   }
 
   const groupMembers = await prisma.groupUser.findMany({
     where: { groupId: group.id },
     select: { userId: true },
-  });
-  const memberIds = groupMembers.map((member) => member.userId);
+  })
+  const memberIds = groupMembers.map((member) => member.userId)
 
   const relationships = await prisma.userUser.findMany({
     where: {
@@ -105,9 +109,9 @@ export async function getFamilyRelationships(
     include: {
       relationType: true,
     },
-  });
+  })
 
   // The type assertion is needed because the generated client doesn't know
   // that `relationType` is non-null when the query filters on it.
-  return relationships as FullRelationship[];
+  return relationships as FullRelationship[]
 }
