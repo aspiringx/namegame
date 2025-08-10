@@ -1,10 +1,15 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import useLocalStorage from '@/hooks/useLocalStorage'
 import { useInView } from 'react-intersection-observer'
 import { MemberWithUser, FullRelationship } from '@/types'
-import { getPaginatedMembers, getGroupMembersForRelate, getMemberRelations } from './actions'
+import {
+  getPaginatedMembers,
+  getGroupMembersForRelate,
+  getMemberRelations,
+} from './actions'
 import FamilyMemberCard from '@/components/FamilyMemberCard'
 import RelateModal from '@/components/RelateModal'
 import { getRelationship } from '@/lib/family-tree'
@@ -15,10 +20,10 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { ArrowUp, ArrowDown, LayoutGrid, List, Shuffle } from 'lucide-react'
+import { ArrowUp, ArrowDown, LayoutGrid, List } from 'lucide-react'
 import { useGroup } from '@/components/GroupProvider'
 
-type SortKey = 'firstName' | 'lastName' | 'random'
+type SortKey = 'closest' | 'firstName' | 'lastName'
 type SortDirection = 'asc' | 'desc'
 
 interface FamilyPageSettings {
@@ -53,23 +58,32 @@ export function FamilyGroupClient({
     `family-group-settings-${groupSlug}`,
     {
       searchQuery: '',
-      sortConfig: { key: 'firstName', direction: 'asc' },
+      sortConfig: { key: 'closest', direction: 'asc' },
       viewMode: 'grid',
     },
   )
   const { isGroupAdmin, currentUserMember } = useGroup()
   const { ref, inView } = useInView()
+  const router = useRouter()
 
   const [isRelateModalOpen, setIsRelateModalOpen] = useState(false)
   const [isLoadingRelations, setIsLoadingRelations] = useState(false)
-  const [selectedMember, setSelectedMember] = useState<MemberWithUser | null>(null)
-  const [memberRelations, setMemberRelations] = useState<Awaited<ReturnType<typeof getMemberRelations>>>([])
+  const [selectedMember, setSelectedMember] = useState<MemberWithUser | null>(
+    null,
+  )
+  const [memberRelations, setMemberRelations] = useState<
+    Awaited<ReturnType<typeof getMemberRelations>>
+  >([])
   const [allGroupMembers, setAllGroupMembers] = useState<MemberWithUser[]>([])
 
   const [isMounted, setIsMounted] = useState(false)
   useEffect(() => {
     setIsMounted(true)
   }, [])
+
+  useEffect(() => {
+    setMembers(initialMembers)
+  }, [initialMembers])
 
   useEffect(() => {
     if (groupSlug) {
@@ -79,36 +93,44 @@ export function FamilyGroupClient({
     }
   }, [groupSlug])
 
-  const handleOpenRelateModal = useCallback(async (member: MemberWithUser) => {
-    if (!groupSlug) {
-      console.error('groupSlug is not available. Cannot fetch relations.')
-      // Optionally, show a toast to the user
-      return
-    }
+  const handleOpenRelateModal = useCallback(
+    async (member: MemberWithUser) => {
+      if (!groupSlug) {
+        console.error('groupSlug is not available. Cannot fetch relations.')
+        // Optionally, show a toast to the user
+        return
+      }
 
-    setSelectedMember(member)
-    setIsLoadingRelations(true)
-    try {
-      const relations = await getMemberRelations(member.userId, groupSlug)
-      setMemberRelations(relations)
-      setIsRelateModalOpen(true)
-    } catch (error) {
-      console.error('Failed to get member relations:', error)
-      // Optionally, show a toast notification here
-    } finally {
-      setIsLoadingRelations(false)
-    }
-  }, [groupSlug])
+      setSelectedMember(member)
+      setIsLoadingRelations(true)
+      try {
+        const relations = await getMemberRelations(member.userId, groupSlug)
+        setMemberRelations(relations)
+        setIsRelateModalOpen(true)
+      } catch (error) {
+        console.error('Failed to get member relations:', error)
+        // Optionally, show a toast notification here
+      } finally {
+        setIsLoadingRelations(false)
+      }
+    },
+    [groupSlug],
+  )
 
   const handleCloseRelateModal = () => {
     setIsRelateModalOpen(false)
     setSelectedMember(null)
   }
 
-  const relationshipMap = useMemo(() => {
-    if (!currentUserMember) return new Map<string, string>()
+  const handleRelationshipChange = () => {
+    router.refresh()
+  }
 
-    const newMap = new Map<string, string>()
+  const relationshipMap = useMemo(() => {
+    if (!currentUserMember)
+      return new Map<string, { label: string; steps: number }>()
+
+    const newMap = new Map<string, { label: string; steps: number }>()
     for (const alter of initialMembers) {
       if (alter.userId === currentUserMember.userId) continue
       const result = getRelationship(
@@ -117,7 +139,10 @@ export function FamilyGroupClient({
         initialRelationships,
       )
       if (result) {
-        newMap.set(alter.userId, result.relationship || '')
+        newMap.set(alter.userId, {
+          label: result.relationship || '',
+          steps: result.steps,
+        })
       }
     }
     return newMap
@@ -141,15 +166,14 @@ export function FamilyGroupClient({
   }, [inView, hasMore, page, groupSlug])
 
   const handleSort = (key: SortKey) => {
-    if (key === 'random') {
-      setSettings((prev) => ({ ...prev, sortConfig: { key: 'random', direction: 'asc' } }))
-      return
-    }
     setSettings((prev) => ({
       ...prev,
       sortConfig: {
         key,
-        direction: prev.sortConfig.key === key && prev.sortConfig.direction === 'asc' ? 'desc' : 'asc',
+        direction:
+          prev.sortConfig.key === key && prev.sortConfig.direction === 'asc'
+            ? 'desc'
+            : 'asc',
       },
     }))
   }
@@ -164,14 +188,32 @@ export function FamilyGroupClient({
       )
     }
 
-    if (settings.sortConfig.key === 'random') {
-      return [...filtered].sort(() => Math.random() - 0.5)
+    if (settings.sortConfig.key === 'closest') {
+      return [...filtered].sort((a, b) => {
+        const aRel = relationshipMap.get(a.userId)
+        const bRel = relationshipMap.get(b.userId)
+        const aSteps = aRel ? aRel.steps : Infinity
+        const bSteps = bRel ? bRel.steps : Infinity
+
+        if (aSteps !== bSteps) {
+          return settings.sortConfig.direction === 'asc'
+            ? aSteps - bSteps
+            : bSteps - aSteps
+        }
+
+        // Secondary sort by first name
+        const aName = a.user.firstName || ''
+        const bName = b.user.firstName || ''
+        return aName.localeCompare(bName)
+      })
     }
 
     return [...filtered].sort((a, b) => {
       const { key, direction } = settings.sortConfig
-      const aValue = a.user[key === 'firstName' ? 'firstName' : 'lastName'] || ''
-      const bValue = b.user[key === 'firstName' ? 'firstName' : 'lastName'] || ''
+      const aValue =
+        a.user[key === 'firstName' ? 'firstName' : 'lastName'] || ''
+      const bValue =
+        b.user[key === 'firstName' ? 'firstName' : 'lastName'] || ''
 
       if (aValue < bValue) return direction === 'asc' ? -1 : 1
       if (aValue > bValue) return direction === 'asc' ? 1 : -1
@@ -189,7 +231,7 @@ export function FamilyGroupClient({
         <div className="container mx-auto px-4 py-4">
           <div className="mb-4 flex items-center gap-2">
             <div className="flex items-center gap-2">
-              {(['firstName', 'lastName'] as const).map((key) => {
+              {(['closest', 'firstName', 'lastName'] as const).map((key) => {
                 const isActive = settings.sortConfig.key === key
                 const SortIcon =
                   settings.sortConfig.direction === 'asc' ? ArrowUp : ArrowDown
@@ -206,39 +248,23 @@ export function FamilyGroupClient({
                   </Button>
                 )
               })}
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      key="random"
-                      variant={
-                        settings.sortConfig.key === 'random' ? 'secondary' : 'ghost'
-                      }
-                      size="sm"
-                      onClick={() => handleSort('random')}
-                      className="flex items-center gap-1 capitalize"
-                    >
-                      <Shuffle className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Shuffle randomly</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
             </div>
             <div className="ml-auto flex items-center gap-2">
               <Button
                 variant={settings.viewMode === 'grid' ? 'secondary' : 'ghost'}
                 size="sm"
-                onClick={() => setSettings((prev) => ({ ...prev, viewMode: 'grid' }))}
+                onClick={() =>
+                  setSettings((prev) => ({ ...prev, viewMode: 'grid' }))
+                }
               >
                 <LayoutGrid className="h-4 w-4" />
               </Button>
               <Button
                 variant={settings.viewMode === 'list' ? 'secondary' : 'ghost'}
                 size="sm"
-                onClick={() => setSettings((prev) => ({ ...prev, viewMode: 'list' }))}
+                onClick={() =>
+                  setSettings((prev) => ({ ...prev, viewMode: 'list' }))
+                }
               >
                 <List className="h-4 w-4" />
               </Button>
@@ -250,7 +276,10 @@ export function FamilyGroupClient({
               placeholder="Search members..."
               value={settings.searchQuery}
               onChange={(e) =>
-                setSettings((prev) => ({ ...prev, searchQuery: e.target.value }))
+                setSettings((prev) => ({
+                  ...prev,
+                  searchQuery: e.target.value,
+                }))
               }
               className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 pr-10 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
             />
@@ -273,7 +302,7 @@ export function FamilyGroupClient({
               key={member.userId}
               member={member}
               viewMode={settings.viewMode}
-              relationship={relationshipMap.get(member.userId)}
+              relationship={relationshipMap.get(member.userId)?.label}
               onRelate={handleOpenRelateModal}
               currentUserId={currentUserMember?.userId}
               isGroupAdmin={isGroupAdmin}
@@ -295,6 +324,7 @@ export function FamilyGroupClient({
         groupMembers={allGroupMembers}
         groupSlug={groupSlug}
         initialRelations={memberRelations}
+        onRelationshipAdded={handleRelationshipChange}
       />
     </>
   )

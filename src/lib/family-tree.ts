@@ -26,6 +26,7 @@ type BfsQueueItem = {
 export type RelationshipResult = {
   relationship: string | null
   path: BfsQueueItem['path'] | null
+  steps: number
 }
 
 /**
@@ -120,9 +121,9 @@ export function getRelationship(
         ).length
 
         if (commonParentsCount === 1) {
-          return { relationship: 'Half Sibling', path: current.path }
+          return { relationship: 'Half Sibling', path: current.path, steps: current.path.length - 1 }
         } else {
-          return { relationship: 'Sibling', path: current.path }
+          return { relationship: 'Sibling', path: current.path, steps: current.path.length - 1 }
         }
       } else {
         // If not a special case, translate the path normally.
@@ -130,6 +131,7 @@ export function getRelationship(
         return {
           relationship,
           path: current.path,
+          steps: current.path.length - 1,
         }
       }
     }

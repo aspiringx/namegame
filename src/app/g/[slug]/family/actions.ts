@@ -1,6 +1,7 @@
 'use server'
 
 import { auth } from '@/auth'
+import { revalidatePath } from 'next/cache'
 import prisma from '@/lib/prisma'
 import { getPublicUrl } from '@/lib/storage'
 import type {
@@ -321,6 +322,8 @@ export async function addUserRelation(
         groupId: null, // Explicitly set groupId to null
       },
     })
+
+    revalidatePath(`/g/${groupSlug}/family`)
     return { success: true, message: 'Relationship added successfully.' }
   } catch (error) {
     console.error('Error adding user relation:', error)
@@ -375,6 +378,7 @@ export async function deleteUserRelation(
       where: { id: userUserId },
     })
 
+    revalidatePath(`/g/${groupSlug}/family`)
     return { success: true, message: 'Relationship deleted.' }
   } catch (error) {
     console.error('Error deleting user relation:', error)
