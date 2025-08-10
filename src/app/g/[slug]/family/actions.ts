@@ -3,7 +3,11 @@
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
 import { getPublicUrl } from '@/lib/storage'
-import type { MemberWithUser, FullRelationship } from '@/types'
+import type {
+  MemberWithUser,
+  FullRelationship,
+  UserUserRelationType,
+} from '@/types'
 import { getCodeTable } from '@/lib/codes'
 
 const PAGE_SIZE = 10
@@ -223,43 +227,52 @@ export async function addUserRelation(
     // If bi-directional (not parent), the order of user1Id and user2Id doesn't matter.
     // If uni-directional (parent), user1Id is the parent and user2Id is the child.
     const user2Id = formData.get('user2Id') as string
-    let relationTypeIdStr = formData.get('relationTypeId') as string
+    const relationTypeIdValue = formData.get('relationTypeId')
 
-    if (!user1Id || !user2Id || !relationTypeIdStr) {
+    if (!user1Id || !user2Id || !relationTypeIdValue) {
       return { success: false, message: 'Missing required fields.' }
     }
 
-    // Order here only matters for parent/child relationships. Will change
-    // below if needed.
     let u1 = user1Id
     let u2 = user2Id
+    let relationType: UserUserRelationType | null = null
 
-    if (relationTypeIdStr === 'child') {
-      // Change it to parent where user2Id is the child of user1Id.
-      relationTypeIdStr = 'parent'
-    } else if (relationTypeIdStr === 'parent') {
-      // Here', if user1Id is the child creating a 'parent' relation, we swap
-      // the userIds so user2Id becomes user1Id and vice versa since order
-      // matters.
+    if (relationTypeIdValue === 'child') {
+      // This is the special case where the client sends 'child'.
+      // We treat it as user1 (the logged-in user) creating a 'parent' relationship
+      // where user2 is the parent. So we swap them.
       u1 = user2Id
       u2 = user1Id
+      // Now, we find the 'parent' relation type in the DB to proceed.
+      relationType = await prisma.userUserRelationType.findFirst({
+        where: { code: 'parent' },
+      })
+    } else {
+      // For all other cases, the value is the numeric ID.
+      const relationTypeId = parseInt(relationTypeIdValue as string, 10)
+      if (isNaN(relationTypeId)) {
+        return { success: false, message: 'Invalid relation type ID.' }
+      }
+      relationType = await prisma.userUserRelationType.findUnique({
+        where: { id: relationTypeId },
+      })
     }
-
-    // Now we that we've removed the inverse child relation type, we can
-    // validate the chosen type on the server.
-    const relationType = await prisma.userUserRelationType.findFirst({
-      where: { code: relationTypeIdStr },
-    })
     if (!relationType) {
       return { success: false, message: 'Relation type not found.' }
     }
+
+    // The logic to swap users for 'parent' relationships is now handled above
+    // for both the 'child' and 'parent' cases from the client.
 
     let whereClause
     if (relationType.code === 'spouse' || relationType.code === 'partner') {
       // Bidirectional spouse/partner check. Either can be user1Id or user2Id.
       whereClause = {
         relationTypeId: relationType.id,
-        OR: [{ user1Id: u1, user2Id: u1 }],
+        OR: [
+          { user1Id: u1, user2Id: u2 },
+          { user1Id: u2, user2Id: u1 },
+        ],
       }
     } else {
       // Directional check for other types (e.g., parent). From swapping above,
