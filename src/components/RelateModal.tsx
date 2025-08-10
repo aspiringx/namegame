@@ -22,6 +22,7 @@ interface RelateModalProps {
   groupMembers: Member[]
   groupSlug: string
   initialRelations: RelationWithUser[]
+  onRelationshipAdded: () => void
 }
 
 export default function RelateModal({
@@ -31,6 +32,7 @@ export default function RelateModal({
   groupMembers,
   groupSlug,
   initialRelations,
+  onRelationshipAdded,
 }: RelateModalProps) {
   const [isPending, startTransition] = useTransition()
   const [isDeleting, startDeletingTransition] = useTransition()
@@ -89,6 +91,7 @@ export default function RelateModal({
           formRef.current?.reset()
           setSelectedMemberId('')
           setSelectedRelationTypeId('')
+          onRelationshipAdded()
         } else {
           toast.error(result.message)
         }
@@ -112,6 +115,7 @@ export default function RelateModal({
           )
           setRelations(updatedRelations)
           setRelationToDelete(null)
+          onRelationshipAdded()
         } else {
           toast.error(result.message)
         }
