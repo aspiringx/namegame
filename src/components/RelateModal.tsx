@@ -129,6 +129,7 @@ export default function RelateModal({
           action={handleSubmit}
           className="rounded-md border border-gray-200 p-4 dark:border-gray-700"
         >
+          <input type="hidden" name="user1Id" value={member.userId} />
           <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
             <p>
               Add or change relationships here.{' '}
@@ -176,7 +177,7 @@ export default function RelateModal({
               htmlFor="relationTypeId"
               className="block text-sm font-medium text-gray-700 dark:text-gray-300"
             >
-              Relationship
+              {member.user.name}'s
             </label>
             <Combobox
               name="relationTypeId"
@@ -193,13 +194,12 @@ export default function RelateModal({
               zIndex="z-10"
             />
           </div>
-
           <div className="mt-4">
             <label
               htmlFor="user2Id"
               className="block text-sm font-medium text-gray-700 dark:text-gray-300"
             >
-              Who's it with?
+              Is this person
             </label>
             <Combobox
               name="user2Id"

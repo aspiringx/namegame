@@ -207,16 +207,21 @@ export async function addUserRelation(
 ): Promise<{ success: boolean; message: string }> {
   try {
     const session = await auth()
-    const user1Id = session?.user?.id
+    const loggedInUserId = session?.user?.id
+    const user1Id = formData.get('user1Id') as string
+
+    if (!loggedInUserId) {
+      return { success: false, message: 'Not authenticated.' }
+    }
 
     if (!user1Id) {
-      return { success: false, message: 'Not authenticated.' }
+      return { success: false, message: 'User to relate not specified.' }
     }
 
     const membership = await prisma.groupUser.findFirst({
       where: {
         group: { slug: groupSlug },
-        userId: user1Id,
+        userId: loggedInUserId,
       },
     })
 
@@ -238,12 +243,6 @@ export async function addUserRelation(
     let relationType: UserUserRelationType | null = null
 
     if (relationTypeIdValue === 'child') {
-      // This is the special case where the client sends 'child'.
-      // We treat it as user1 (the logged-in user) creating a 'parent' relationship
-      // where user2 is the parent. So we swap them.
-      u1 = user2Id
-      u2 = user1Id
-      // Now, we find the 'parent' relation type in the DB to proceed.
       relationType = await prisma.userUserRelationType.findFirst({
         where: { code: 'parent' },
       })
@@ -261,8 +260,17 @@ export async function addUserRelation(
       return { success: false, message: 'Relation type not found.' }
     }
 
-    // The logic to swap users for 'parent' relationships is now handled above
-    // for both the 'child' and 'parent' cases from the client.
+    // If it's a parent relation, it's inverse and we need to swap the user IDs.
+    // e.g.
+    // Joe's parent is Larry. Joe is user1Id, but Larry should be user1.
+    // Larry's child is Joe. Larry is userId1 with parent relation type, not
+    // child type chosen in UI.
+    //
+    // And I'm my own grandpa! :) Yes, a little confusing.
+    if (relationTypeIdValue !== 'child' && relationType.code === 'parent') {
+      u1 = user2Id
+      u2 = user1Id
+    }
 
     let whereClause
     if (relationType.code === 'spouse' || relationType.code === 'partner') {
@@ -342,7 +350,8 @@ export async function deleteUserRelation(
     }
 
     // User must be an admin or one of the users in the relation to delete it.
-    const isUserInRelation = relation.user1Id === userId || relation.user2Id === userId
+    const isUserInRelation =
+      relation.user1Id === userId || relation.user2Id === userId
 
     if (isUserInRelation) {
       // This is sufficient for deletion, no further checks needed.
@@ -361,8 +370,6 @@ export async function deleteUserRelation(
         return { success: false, message: 'Not authorized.' }
       }
     }
-
-
 
     await prisma.userUser.delete({
       where: { id: userUserId },
