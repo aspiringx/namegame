@@ -65,7 +65,7 @@ export default function GroupInfoModal({
             {group.name}
           </h2>
           {group.description && (
-            <p className="mb-4 max-h-24 overflow-y-auto whitespace-pre-wrap text-gray-600 dark:text-gray-300">
+            <p className="mb-4 max-h-24 overflow-y-scroll whitespace-pre-wrap rounded-md bg-gray-100 p-2 shadow-inner dark:bg-gray-700 text-gray-600 dark:text-gray-300">
               {group.description}
             </p>
           )}

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, Fragment, useMemo } from 'react'
+import useLocalStorage from '@/hooks/useLocalStorage'
 import { useRouter } from 'next/navigation'
 import { Tab } from '@headlessui/react'
 import { useInView } from 'react-intersection-observer'
@@ -106,6 +107,13 @@ function SearchableMemberList({
 type SortKey = 'greeted' | 'firstName' | 'lastName'
 type SortDirection = 'asc' | 'desc'
 
+interface GroupPageSettings {
+  sortConfig: { key: SortKey; direction: SortDirection }
+  viewMode: 'grid' | 'list'
+  searchQueries: { greeted: string; notGreeted: string }
+  selectedTabIndex: number
+}
+
 type TabInfo = {
   name: string
   count: number
@@ -121,75 +129,77 @@ export default function GroupTabs({
   currentUserMember,
 }: GroupTabsProps) {
   const router = useRouter()
-
-  const [sortConfig, setSortConfig] = useState<{
-    key: SortKey
-    direction: SortDirection
-  }>({
-    key: 'greeted',
-    direction: 'desc',
-  })
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const { group, isAuthorizedMember, currentUserMember: ego } = useGroup()
 
-  const [searchQueries, setSearchQueries] = useState({
-    greeted: '',
-    notGreeted: '',
-  })
+  const [settings, setSettings] = useLocalStorage<GroupPageSettings>(
+    `group-settings-${group?.slug || ''}`,
+    {
+      sortConfig: { key: 'greeted', direction: 'desc' },
+      viewMode: 'grid',
+      searchQueries: { greeted: '', notGreeted: '' },
+      selectedTabIndex: 0,
+    },
+  )
 
   const handleSort = (key: SortKey) => {
-    setSortConfig((current) => {
-      if (current.key === key) {
-        return {
-          ...current,
-          direction: current.direction === 'asc' ? 'desc' : 'asc',
-        }
+    setSettings((prev) => ({
+      ...prev,
+      sortConfig: {
+        key,
+        direction:
+          prev.sortConfig.key === key && prev.sortConfig.direction === 'asc'
+            ? 'desc'
+            : 'asc',
+      },
+    }))
+  }
+
+  const sortFunction = useMemo(
+    () => (a: MemberWithUser, b: MemberWithUser) => {
+      if (settings.sortConfig.key === 'greeted') {
+        const aGreeted = a.relationUpdatedAt ? new Date(a.relationUpdatedAt).getTime() : 0
+        const bGreeted = b.relationUpdatedAt ? new Date(b.relationUpdatedAt).getTime() : 0
+        return settings.sortConfig.direction === 'desc'
+          ? bGreeted - aGreeted
+          : aGreeted - bGreeted
       }
-      return { key, direction: key === 'greeted' ? 'desc' : 'asc' }
-    })
-  }
 
-  const sortedMembers = useMemo(() => {
-    const sortablegreeted = [...greetedMembers]
-    const sortablenotGreeted = [...notGreetedMembers]
+      const aKey = a.user[settings.sortConfig.key as 'firstName' | 'lastName']
+      const bKey = b.user[settings.sortConfig.key as 'firstName' | 'lastName']
 
-    const sortFunction = (a: MemberWithUser, b: MemberWithUser) => {
-      if (sortConfig.key === 'greeted') {
-        const aDate = a.relationUpdatedAt
-          ? new Date(a.relationUpdatedAt).getTime()
-          : 0
-        const bDate = b.relationUpdatedAt
-          ? new Date(b.relationUpdatedAt).getTime()
-          : 0
-        return sortConfig.direction === 'asc' ? aDate - bDate : bDate - aDate
+      if (!aKey || !bKey) return 0
+
+      if (aKey < bKey) {
+        return settings.sortConfig.direction === 'asc' ? -1 : 1
+      } else if (aKey > bKey) {
+        return settings.sortConfig.direction === 'asc' ? 1 : -1
+      } else {
+        return 0
       }
-      const aVal = a.user[sortConfig.key] || ''
-      const bVal = b.user[sortConfig.key] || ''
-      if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1
-      if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1
-      return 0
-    }
+    },
+    [settings.sortConfig],
+  )
 
-    sortablegreeted.sort(sortFunction)
-    sortablenotGreeted.sort(sortFunction)
+  const tabs: TabInfo[] = useMemo(() => {
+    const { searchQueries } = settings
+    const sortablegreeted = [...greetedMembers].sort(sortFunction)
+    const sortablenotGreeted = [...notGreetedMembers].sort(sortFunction)
 
-    return { greeted: sortablegreeted, notGreeted: sortablenotGreeted }
-  }, [greetedMembers, notGreetedMembers, sortConfig])
-
-  const greetedTab = {
-    name: 'Greeted',
-    type: 'greeted' as const,
-    members: sortedMembers.greeted,
-    count: greetedCount,
-  }
-  const notGreetedTab = {
-    name: 'Not Greeted',
-    type: 'notGreeted' as const,
-    members: sortedMembers.notGreeted,
-    count: notGreetedCount,
-  }
-
-  const tabs = [greetedTab, notGreetedTab]
+    return [
+      {
+        name: 'Greeted',
+        type: 'greeted' as const,
+        members: sortablegreeted,
+        count: greetedCount,
+      },
+      {
+        name: 'Not Greeted',
+        type: 'notGreeted' as const,
+        members: sortablenotGreeted,
+        count: notGreetedCount,
+      },
+    ]
+  }, [greetedMembers, notGreetedMembers, settings.searchQueries, sortFunction])
 
   useEffect(() => {
     // Using `isAuthorizedMember === false` to prevent redirecting on the initial `undefined` state.
@@ -201,7 +211,12 @@ export default function GroupTabs({
   return (
     <TooltipProvider>
       <div className="w-full px-2 sm:px-0">
-        <Tab.Group>
+        <Tab.Group
+          selectedIndex={settings.selectedTabIndex}
+          onChange={(index) =>
+            setSettings((prev) => ({ ...prev, selectedTabIndex: index }))
+          }
+        >
           <Tab.List className="flex space-x-1 rounded-xl bg-blue-900/20 p-1">
             {tabs.map((tab) => (
               <Tab
@@ -248,9 +263,11 @@ export default function GroupTabs({
                     <div className="flex items-center gap-2">
                       {(['greeted', 'firstName', 'lastName'] as const).map(
                         (key) => {
-                          const isActive = sortConfig.key === key
+                          const isActive = settings.sortConfig.key === key
                           const SortIcon =
-                            sortConfig.direction === 'asc' ? ArrowUp : ArrowDown
+                            settings.sortConfig.direction === 'asc'
+                              ? ArrowUp
+                              : ArrowDown
                           return (
                             <Button
                               key={key}
@@ -268,16 +285,20 @@ export default function GroupTabs({
                     </div>
                     <div className="ml-auto flex items-center gap-2">
                       <Button
-                        variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
+                        variant={settings.viewMode === 'grid' ? 'secondary' : 'ghost'}
                         size="sm"
-                        onClick={() => setViewMode('grid')}
+                        onClick={() =>
+                          setSettings((prev) => ({ ...prev, viewMode: 'grid' }))
+                        }
                       >
                         <LayoutGrid className="h-4 w-4" />
                       </Button>
                       <Button
-                        variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+                        variant={settings.viewMode === 'list' ? 'secondary' : 'ghost'}
                         size="sm"
-                        onClick={() => setViewMode('list')}
+                        onClick={() =>
+                          setSettings((prev) => ({ ...prev, viewMode: 'list' }))
+                        }
                       >
                         <List className="h-4 w-4" />
                       </Button>
@@ -294,19 +315,25 @@ export default function GroupTabs({
                     <input
                       type="text"
                       placeholder={`Search ${tab.type === 'greeted' ? 'greeted' : 'not greeted'} members...`}
-                      value={searchQueries[tab.type]}
+                      value={settings.searchQueries[tab.type]}
                       onChange={(e) =>
-                        setSearchQueries({
-                          ...searchQueries,
-                          [tab.type]: e.target.value,
-                        })
+                        setSettings((prev) => ({
+                          ...prev,
+                          searchQueries: {
+                            ...prev.searchQueries,
+                            [tab.type]: e.target.value,
+                          },
+                        }))
                       }
                       className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 pr-10 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
                     />
-                    {searchQueries[tab.type] && (
+                    {settings.searchQueries[tab.type] && (
                       <button
                         onClick={() =>
-                          setSearchQueries({ ...searchQueries, [tab.type]: '' })
+                          setSettings((prev) => ({
+                            ...prev,
+                            searchQueries: { ...prev.searchQueries, [tab.type]: '' },
+                          }))
                         }
                         className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                         aria-label="Clear search"
@@ -331,8 +358,8 @@ export default function GroupTabs({
                   initialMembers={tab.members}
                   listType={tab.type}
                   slug={group?.slug || ''}
-                  searchQuery={searchQueries[tab.type]}
-                  viewMode={viewMode}
+                  searchQuery={settings.searchQueries[tab.type]}
+                  viewMode={settings.viewMode}
                 />
               </Tab.Panel>
             ))}

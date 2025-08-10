@@ -9,6 +9,7 @@ export interface GroupPageData {
   notGreetedMembers: MemberWithUser[]
   currentUserMember: MemberWithUser | undefined
   isSuperAdmin: boolean
+  isGroupAdmin: boolean
   isAuthorizedMember: boolean
 }
 
@@ -18,6 +19,7 @@ const GroupContext = createContext<GroupPageData>({
   notGreetedMembers: [],
   currentUserMember: undefined,
   isSuperAdmin: false,
+  isGroupAdmin: false,
   isAuthorizedMember: false,
 })
 

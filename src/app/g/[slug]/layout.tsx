@@ -50,17 +50,25 @@ export default async function GroupLayout(props: {
   children: React.ReactNode
   params: Promise<{ slug: string }>
 }) {
-  const headersList = await headers()
-  const pathname = headersList.get('next-url') || ''
   const params = await props.params
-
-  const { children } = props
-
-  const { slug } = params
   const session = await auth()
+  const headersList = await headers()
+  const headerPath = headersList.get('x-invoke-path') || ''
+
+  // The /greet page is public and should not be protected by this authorization.
+  if (!headerPath.includes('/greet') && !session?.user) {
+    // Reconstruct the path from slug as a fallback
+    const pathname = headerPath || `/g/${params.slug}`
+    return redirect(`/login?callbackUrl=${encodeURIComponent(pathname)}`)
+  }
+  const { children } = props
+  const { slug } = params
+
   const data = await getGroupForLayout(slug, 5)
 
   if (!data) {
+    // This can happen if the group doesn't exist, or if the user is not a member
+    // of a private group. In either case, we show a 404.
     notFound()
   }
 
@@ -80,15 +88,12 @@ export default async function GroupLayout(props: {
   const { greetedMembers, notGreetedMembers, currentUserMember, isSuperAdmin } =
     groupForProvider
 
-  // The /greet page is public and should not be protected by this authorization.
-  if (!pathname.includes('/greet') && !currentUserMember && !isSuperAdmin) {
-    redirect('/')
-  }
-
   const isAuthorizedMember = !!(
     currentUserMember &&
     ['admin', 'member', 'super'].includes(currentUserMember.role.code)
   )
+
+  const isGroupAdmin = currentUserMember?.role.code === 'admin'
 
   return (
     <GroupProvider
@@ -98,6 +103,7 @@ export default async function GroupLayout(props: {
         notGreetedMembers,
         currentUserMember,
         isSuperAdmin,
+        isGroupAdmin,
         isAuthorizedMember,
       }}
     >
