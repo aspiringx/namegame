@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
+import useLocalStorage from '@/hooks/useLocalStorage'
 import { useInView } from 'react-intersection-observer'
 import { MemberWithUser, FullRelationship } from '@/types'
 import { getPaginatedMembers, getGroupMembersForRelate, getMemberRelations } from './actions'
@@ -20,6 +21,15 @@ import { useGroup } from '@/components/GroupProvider'
 type SortKey = 'firstName' | 'lastName' | 'random'
 type SortDirection = 'asc' | 'desc'
 
+interface FamilyPageSettings {
+  searchQuery: string
+  sortConfig: {
+    key: SortKey
+    direction: SortDirection
+  }
+  viewMode: 'grid' | 'list'
+}
+
 interface FamilyGroupClientProps {
   initialMembers: MemberWithUser[]
   groupSlug: string
@@ -38,12 +48,15 @@ export function FamilyGroupClient({
   const [hasMore, setHasMore] = useState(
     initialMembers.length < initialMemberCount,
   )
-  const [searchQuery, setSearchQuery] = useState('')
-  const [sortConfig, setSortConfig] = useState<{
-    key: SortKey
-    direction: SortDirection
-  }>({ key: 'firstName', direction: 'asc' })
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+
+  const [settings, setSettings] = useLocalStorage<FamilyPageSettings>(
+    `family-group-settings-${groupSlug}`,
+    {
+      searchQuery: '',
+      sortConfig: { key: 'firstName', direction: 'asc' },
+      viewMode: 'grid',
+    },
+  )
   const { isGroupAdmin, currentUserMember } = useGroup()
   const { ref, inView } = useInView()
 
@@ -126,32 +139,35 @@ export function FamilyGroupClient({
 
   const handleSort = (key: SortKey) => {
     if (key === 'random') {
-      setSortConfig({ key, direction: 'asc' }) // direction doesn't matter for random
+      setSettings((prev) => ({ ...prev, sortConfig: { key: 'random', direction: 'asc' } }))
       return
     }
-    setSortConfig((prev) => {
-      if (prev.key === key) {
-        return { key, direction: prev.direction === 'asc' ? 'desc' : 'asc' }
-      }
-      return { key, direction: 'asc' }
-    })
+    setSettings((prev) => ({
+      ...prev,
+      sortConfig: {
+        key,
+        direction:
+          prev.sortConfig.key === key && prev.sortConfig.direction === 'asc' ? 'desc' : 'asc',
+      },
+    }))
   }
 
   const filteredAndSortedMembers = useMemo(() => {
-    const lowercasedQuery = searchQuery.toLowerCase()
-    const filtered = members.filter((member) => {
-      const nameMatch = member.user.name
-        ?.toLowerCase()
-        .includes(lowercasedQuery)
-      const relationship = relationshipMap.get(member.userId) || ''
-      const relationshipMatch = relationship
-        .toLowerCase()
-        .includes(lowercasedQuery)
-      return nameMatch || relationshipMatch
-    })
+    let filtered = members
+    if (settings.searchQuery) {
+      filtered = members.filter(
+        (member) =>
+          member.user.firstName
+            ?.toLowerCase()
+            .includes(settings.searchQuery.toLowerCase()) ||
+          member.user.lastName
+            ?.toLowerCase()
+            .includes(settings.searchQuery.toLowerCase()),
+      )
+    }
 
-    if (sortConfig.key === 'random') {
-      return filtered.sort(() => Math.random() - 0.5)
+    if (settings.sortConfig.key === 'random') {
+      return [...filtered].sort(() => Math.random() - 0.5)
     }
 
     const sortFunction = (a: MemberWithUser, b: MemberWithUser) => {
@@ -159,7 +175,7 @@ export function FamilyGroupClient({
       const bName = b.user.name || ''
       let aValue: string, bValue: string
 
-      if (sortConfig.key === 'lastName') {
+      if (settings.sortConfig.key === 'lastName') {
         aValue = aName.split(' ').pop() || ''
         bValue = bName.split(' ').pop() || ''
       } else {
@@ -169,14 +185,14 @@ export function FamilyGroupClient({
       }
 
       if (aValue.toLowerCase() < bValue.toLowerCase())
-        return sortConfig.direction === 'asc' ? -1 : 1
+        return settings.sortConfig.direction === 'asc' ? -1 : 1
       if (aValue.toLowerCase() > bValue.toLowerCase())
-        return sortConfig.direction === 'asc' ? 1 : -1
+        return settings.sortConfig.direction === 'asc' ? 1 : -1
       return 0
     }
 
-    return filtered.sort(sortFunction)
-  }, [members, searchQuery, sortConfig, relationshipMap])
+    return [...filtered].sort(sortFunction)
+  }, [members, settings.searchQuery, settings.sortConfig, relationshipMap])
 
   return (
     <>
@@ -185,9 +201,9 @@ export function FamilyGroupClient({
           <div className="mb-4 flex items-center">
             <div className="flex items-center gap-2">
               {(['firstName', 'lastName'] as const).map((key) => {
-                const isActive = sortConfig.key === key
+                const isActive = settings.sortConfig.key === key
                 const SortIcon =
-                  sortConfig.direction === 'asc' ? ArrowUp : ArrowDown
+                  settings.sortConfig.direction === 'asc' ? ArrowUp : ArrowDown
                 return (
                   <Button
                     key={key}
@@ -207,7 +223,7 @@ export function FamilyGroupClient({
                     <Button
                       key="random"
                       variant={
-                        sortConfig.key === 'random' ? 'secondary' : 'ghost'
+                        settings.sortConfig.key === 'random' ? 'secondary' : 'ghost'
                       }
                       size="sm"
                       onClick={() => handleSort('random')}
@@ -224,16 +240,16 @@ export function FamilyGroupClient({
             </div>
             <div className="ml-auto flex items-center gap-2">
               <Button
-                variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
+                variant={settings.viewMode === 'grid' ? 'secondary' : 'ghost'}
                 size="sm"
-                onClick={() => setViewMode('grid')}
+                onClick={() => setSettings((prev) => ({ ...prev, viewMode: 'grid' }))}
               >
                 <LayoutGrid className="h-4 w-4" />
               </Button>
               <Button
-                variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+                variant={settings.viewMode === 'list' ? 'secondary' : 'ghost'}
                 size="sm"
-                onClick={() => setViewMode('list')}
+                onClick={() => setSettings((prev) => ({ ...prev, viewMode: 'list' }))}
               >
                 <List className="h-4 w-4" />
               </Button>
@@ -243,8 +259,10 @@ export function FamilyGroupClient({
             <input
               type="text"
               placeholder="Search members..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              value={settings.searchQuery}
+              onChange={(e) =>
+                setSettings((prev) => ({ ...prev, searchQuery: e.target.value }))
+              }
               className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 pr-10 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
             />
           </div>
@@ -252,11 +270,11 @@ export function FamilyGroupClient({
       </div>
 
       <div
-        className={`container mx-auto px-4 ${viewMode === 'grid' ? 'mt-4' : ''}`}
+        className={`container mx-auto px-4 ${settings.viewMode === 'grid' ? 'mt-4' : ''}`}
       >
         <div
           className={
-            viewMode === 'list'
+            settings.viewMode === 'list'
               ? 'grid grid-cols-1 gap-2'
               : 'grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'
           }
@@ -265,7 +283,7 @@ export function FamilyGroupClient({
             <FamilyMemberCard
               key={member.userId}
               member={member}
-              viewMode={viewMode}
+              viewMode={settings.viewMode}
               relationship={relationshipMap.get(member.userId)}
               onRelate={handleOpenRelateModal}
               currentUserId={currentUserMember?.userId}
