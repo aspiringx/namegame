@@ -28,12 +28,16 @@ export async function getPaginatedMembers(
     return []
   }
 
-  const totalMembers = await prisma.groupUser.count({
-    where: {
-      groupId: group.id,
-      userId: { not: currentUserId },
-    },
-  })
+  const [totalMembers, photoTypes, entityTypes] = await Promise.all([
+    prisma.groupUser.count({
+      where: {
+        groupId: group.id,
+        userId: { not: currentUserId },
+      },
+    }),
+    getCodeTable('photoType'),
+    getCodeTable('entityType'),
+  ])
 
   const members = await prisma.groupUser.findMany({
     where: {
@@ -44,7 +48,13 @@ export async function getPaginatedMembers(
       role: true,
       user: {
         include: {
-          photos: { where: { type: { code: 'primary' } }, take: 1 },
+          photos: {
+            where: {
+              typeId: photoTypes.primary.id,
+              entityTypeId: entityTypes.user.id,
+            },
+            take: 1,
+          },
         },
       },
     },

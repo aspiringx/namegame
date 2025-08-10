@@ -10,31 +10,43 @@ import { auth } from '@/auth'
 import { getCodeTable } from '@/lib/codes'
 
 // Define the schema for form validation using Zod
-const GroupSchema = z.object({
-  name: z.string().min(1, 'Name is required.'),
-  slug: z.string().min(1, 'Slug is required.'),
+const CreateGroupSchema = z.object({
+  name: z.string().min(3, 'Name must be at least 3 characters long.'),
+  slug: z
+    .string()
+    .min(3, 'Slug must be at least 3 characters long.')
+    .regex(
+      /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
+      'Slug can only contain lowercase letters, numbers, and hyphens.',
+    ),
   description: z.string().optional(),
   address: z.string().optional(),
   phone: z.string().optional(),
-  logo: z.string().optional().nullable(), // Logo is a base64 string
+  logo: z.string().optional(),
+  groupTypeId: z.coerce.number({
+    required_error: 'Group type is required.',
+    invalid_type_error: 'Group type is required.',
+  }),
 })
 
-export type State = {
-  errors?: {
+export interface State {
+  message: string | null
+  errors: {
     name?: string[]
     slug?: string[]
     description?: string[]
     address?: string[]
     phone?: string[]
     logo?: string[]
+    groupTypeId?: string[]
   }
-  message?: string | null
-  values?: {
+  values: {
     name: string
     slug: string
     description: string
     address: string
     phone: string
+    groupTypeId: number
   }
 }
 
@@ -46,25 +58,37 @@ export async function createGroup(
   if (!session?.user?.id) {
     return {
       message: 'You must be logged in to create a group.',
+      errors: {},
+      values: {
+        name: '',
+        slug: '',
+        description: '',
+        address: '',
+        phone: '',
+        groupTypeId: 0,
+      },
     }
   }
   const userId = session.user.id
 
-  const validatedFields = GroupSchema.safeParse({
+  const validatedFields = CreateGroupSchema.safeParse({
     name: formData.get('name'),
     slug: formData.get('slug'),
     description: formData.get('description'),
     address: formData.get('address'),
     phone: formData.get('phone'),
     logo: formData.get('logo'),
+    groupTypeId: formData.get('groupTypeId'),
   })
 
+  // This is for repopulating the form on error
   const rawFormData = {
-    name: formData.get('name') as string,
-    slug: formData.get('slug') as string,
-    description: formData.get('description') as string,
-    address: formData.get('address') as string,
-    phone: formData.get('phone') as string,
+    name: (formData.get('name') as string) || '',
+    slug: (formData.get('slug') as string) || '',
+    description: (formData.get('description') as string) || '',
+    address: (formData.get('address') as string) || '',
+    phone: (formData.get('phone') as string) || '',
+    groupTypeId: parseInt((formData.get('groupTypeId') as string) || '0', 10),
   }
 
   if (!validatedFields.success) {
@@ -80,7 +104,8 @@ export async function createGroup(
     }
   }
 
-  const { logo: initialLogo, ...groupData } = validatedFields.data
+  // validatedFields.data can't be null here because of the success check
+  const { logo: initialLogo, ...groupData } = validatedFields.data!
   const logo = initialLogo === '' ? null : initialLogo
 
   try {
@@ -106,6 +131,7 @@ export async function createGroup(
 
     if (!groupEntityType || !logoPhotoType) {
       return {
+        errors: {},
         message: 'Database Error: Could not find required code table entries.',
         values: rawFormData,
       }
@@ -117,7 +143,6 @@ export async function createGroup(
         idTree: Math.random().toString(36).substring(2, 15), // Placeholder
         createdById: userId,
         updatedById: userId,
-        groupTypeId: 3, // Default to 'family'
       },
     })
 
@@ -151,6 +176,7 @@ export async function createGroup(
     const message =
       e instanceof Error ? e.message : 'An unknown error occurred.'
     return {
+      errors: {},
       message: `Database Error: ${message}`,
       values: rawFormData,
     }

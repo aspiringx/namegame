@@ -45,7 +45,7 @@ export default async function UserProfilePage(props: {
       },
       photos: {
         where: { entityTypeId: userEntityType.id },
-        orderBy: { typeId: 'asc' }, // Puts 'primary' (id 2) before 'profile' (id 1) if you use desc.
+        orderBy: { type: { code: 'asc' } },
       },
     },
   })

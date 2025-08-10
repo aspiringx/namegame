@@ -7,6 +7,16 @@ const prisma = new PrismaClient()
 async function main() {
   console.log(`Start seeding for local testing...`)
 
+  const churchGroupType = await prisma.groupType.findUnique({
+    where: { code: 'church' },
+  })
+
+  if (!churchGroupType) {
+    throw new Error(
+      "Group type 'church' not found. Please run the base seeder first.",
+    )
+  }
+
   // Ensure the test group exists before we do anything else
   const testGroup = await prisma.group.upsert({
     where: { slug: 'local-test-group' },
@@ -16,6 +26,7 @@ async function main() {
       slug: 'local-test-group',
       description: 'Group for local testing',
       idTree: 'local-test-group',
+      groupTypeId: churchGroupType.id,
     },
   })
   console.log(
