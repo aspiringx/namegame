@@ -4,15 +4,14 @@ import { useState, useRef, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { signOut, useSession } from 'next-auth/react'
-import { getSecureImageUrl } from '@/lib/actions'
+import { useUserSession } from '@/context/UserSessionContext'
 
 export default function UserMenu() {
   const { data: session, update } = useSession()
+  const { imageUrl } = useUserSession()
   const [isDropdownOpen, setDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
-  const [imageUrl, setImageUrl] = useState('/images/default-avatar.png')
 
-  // Listen for photo updates from other tabs/windows
   useEffect(() => {
     const channel = new BroadcastChannel('photo_updates')
     const handlePhotoUpdate = () => {
@@ -41,13 +40,7 @@ export default function UserMenu() {
     }
   }, [])
 
-  useEffect(() => {
-    if (session?.user?.image) {
-      getSecureImageUrl(session.user.image).then(setImageUrl)
-    } else {
-      setImageUrl('/images/default-avatar.png')
-    }
-  }, [session?.user?.image])
+
 
   const toggleDropdown = () => {
     setDropdownOpen(!isDropdownOpen)
@@ -64,21 +57,26 @@ export default function UserMenu() {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={toggleDropdown}
-        className="flex items-center rounded-lg py-2 pl-4 hover:bg-gray-100 dark:hover:bg-gray-800"
+        className="flex items-center rounded-lg px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800"
       >
         {user && (
           <p className="mr-4 hidden text-gray-700 sm:block dark:text-gray-300">
             {user.firstName}
           </p>
         )}
-        <Image
-          src={imageUrl}
-          alt="User Profile"
-          width={40}
-          height={40}
-          className="h-10 w-10 rounded-full"
-          key={user?.image} // Add key to force re-render on image change
-        />
+        {imageUrl ? (
+          <Image
+            src={imageUrl}
+            alt="User Profile"
+            width={40}
+            height={40}
+            className="h-10 w-10 rounded-full"
+            key={imageUrl} // Force re-render on image change
+          />
+        ) : (
+          // This placeholder is shown during initial load, before context is ready.
+          <div className="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-700" />
+        )}
       </button>
       {isDropdownOpen && (
         <div className="absolute top-full right-0 z-50 mt-2 w-48 rounded-md bg-white py-2 shadow-lg dark:bg-gray-800">
