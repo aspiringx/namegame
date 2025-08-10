@@ -4,6 +4,7 @@ import localFont from 'next/font/local'
 import { auth } from '@/auth'
 import AuthProvider from '@/components/AuthProvider'
 import { Providers } from '@/components/providers'
+import { Toaster } from '@/components/ui/toaster'
 import { UserSessionProvider } from '@/context/UserSessionContext'
 
 import './globals.css'
@@ -39,6 +40,7 @@ export default async function RootLayout({
               <UserSessionProvider>{children}</UserSessionProvider>
             </AuthProvider>
           </div>
+          <Toaster />
         </Providers>
       </body>
     </html>

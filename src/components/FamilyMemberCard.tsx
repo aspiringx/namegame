@@ -14,12 +14,14 @@ interface FamilyMemberCardProps {
   member: Member
   viewMode: 'grid' | 'list'
   relationship?: string
+  onRelate?: (member: Member) => void
 }
 
 export default function FamilyMemberCard({
   member,
   viewMode,
   relationship,
+  onRelate,
 }: FamilyMemberCardProps) {
   const isListView = viewMode === 'list'
   const imageUrl = member.user.photoUrl || '/images/default-avatar.png'
@@ -69,7 +71,7 @@ export default function FamilyMemberCard({
             trigger={<MoreVertical size={16} />}
             triggerClassName="rounded-full p-1 hover:bg-gray-200 dark:hover:bg-gray-700"
           >
-            <DropdownItem onClick={() => console.log('Relate clicked')}>
+            <DropdownItem onClick={() => onRelate && onRelate(member)}>
               Relate
             </DropdownItem>
           </Dropdown>

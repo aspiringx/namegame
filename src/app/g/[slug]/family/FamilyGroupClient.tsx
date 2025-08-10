@@ -3,8 +3,9 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useInView } from 'react-intersection-observer'
 import { MemberWithUser, FullRelationship } from '@/types'
-import { getPaginatedMembers } from './actions'
+import { getPaginatedMembers, getGroupMembersForRelate } from './actions'
 import FamilyMemberCard from '@/components/FamilyMemberCard'
+import RelateModal from '@/components/RelateModal'
 import { getRelationship } from '@/lib/family-tree'
 import { Button } from '@/components/ui/button'
 import {
@@ -45,6 +46,28 @@ export function FamilyGroupClient({
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const { group, isAuthorizedMember, currentUserMember } = useGroup()
   const { ref, inView } = useInView()
+
+  const [isRelateModalOpen, setIsRelateModalOpen] = useState(false)
+  const [selectedMember, setSelectedMember] = useState<MemberWithUser | null>(null)
+  const [allGroupMembers, setAllGroupMembers] = useState<MemberWithUser[]>([])
+
+  useEffect(() => {
+    if (groupSlug) {
+      getGroupMembersForRelate(groupSlug).then((members) =>
+        setAllGroupMembers(members as MemberWithUser[]),
+      )
+    }
+  }, [groupSlug])
+
+  const handleOpenRelateModal = (member: MemberWithUser) => {
+    setSelectedMember(member)
+    setIsRelateModalOpen(true)
+  }
+
+  const handleCloseRelateModal = () => {
+    setIsRelateModalOpen(false)
+    setSelectedMember(null)
+  }
 
   const relationshipMap = useMemo(() => {
     if (!currentUserMember) return new Map<string, string>()
@@ -224,6 +247,7 @@ export function FamilyGroupClient({
               member={member}
               viewMode={viewMode}
               relationship={relationshipMap.get(member.userId)}
+              onRelate={handleOpenRelateModal}
             />
           ))}
         </div>
@@ -234,6 +258,14 @@ export function FamilyGroupClient({
           </div>
         )}
       </div>
+
+      <RelateModal
+        isOpen={isRelateModalOpen}
+        onClose={handleCloseRelateModal}
+        member={selectedMember}
+        groupMembers={allGroupMembers}
+        groupSlug={groupSlug}
+      />
     </>
   )
 }
