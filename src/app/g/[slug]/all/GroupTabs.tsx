@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, Fragment, useMemo } from 'react'
+import React, { useState, useEffect, Fragment, useMemo } from 'react'
 import useLocalStorage from '@/hooks/useLocalStorage'
 import { useRouter } from 'next/navigation'
 import { Tab } from '@headlessui/react'
@@ -127,9 +127,14 @@ export default function GroupTabs({
   greetedCount,
   notGreetedCount,
   currentUserMember,
-}: GroupTabsProps) {
+}: GroupTabsProps): React.JSX.Element | null {
   const router = useRouter()
   const { group, isAuthorizedMember, currentUserMember: ego } = useGroup()
+
+  const [isMounted, setIsMounted] = useState(false)
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   const [settings, setSettings] = useLocalStorage<GroupPageSettings>(
     `group-settings-${group?.slug || ''}`,
@@ -140,6 +145,10 @@ export default function GroupTabs({
       selectedTabIndex: 0,
     },
   )
+
+  if (!isMounted) {
+    return null
+  }
 
   const handleSort = (key: SortKey) => {
     setSettings((prev) => ({
