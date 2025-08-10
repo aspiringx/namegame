@@ -30,16 +30,29 @@ export function Dropdown({ trigger, children, triggerClassName }: { trigger: Rea
   )
 }
 
-export function DropdownItem({ children, onClick }: { children: React.ReactNode, onClick?: () => void }) {
+export function DropdownItem({
+  children,
+  onClick,
+  disabled,
+}: {
+  children: React.ReactNode
+  onClick?: () => void
+  disabled?: boolean
+}) {
   return (
-    <Menu.Item>
+    <Menu.Item disabled={disabled}>
       {({ active }) => (
         <button
           type="button"
           onClick={onClick}
-          className={`${
-            active ? 'bg-indigo-500 text-white' : 'text-gray-900'
-          } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
+          disabled={disabled}
+          className={`group flex w-full items-center rounded-md px-2 py-2 text-sm ${
+            active && !disabled
+              ? 'bg-indigo-500 text-white'
+              : 'text-gray-900'
+          } ${
+            disabled ? 'cursor-not-allowed opacity-50' : ''
+          }`}
         >
           {children}
         </button>

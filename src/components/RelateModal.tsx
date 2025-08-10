@@ -78,7 +78,7 @@ export default function RelateModal({
   const handleSubmit = (formData: FormData) => {
     startTransition(async () => {
       try {
-        const result = await addUserRelation(formData)
+        const result = await addUserRelation(formData, groupSlug)
         if (result.success) {
           toast.success(result.message)
           const updatedRelations = await getMemberRelations(
@@ -129,12 +129,9 @@ export default function RelateModal({
           action={handleSubmit}
           className="rounded-md border border-gray-200 p-4 dark:border-gray-700"
         >
-          <h4 className="font-medium text-gray-800 dark:text-gray-200">
-            New Direct Relationship
-          </h4>
           <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
             <p>
-              NOTICE: Add or change direct relationships here.{' '}
+              Add or change relationships here.{' '}
               <button
                 type="button"
                 onClick={() => setShowDetails(!showDetails)}
@@ -145,14 +142,21 @@ export default function RelateModal({
             </p>
             {showDetails && (
               <div id="details" className="mt-2 space-y-2 p-2">
+                <p>
+                  You don't need to add relationships with everyone, just the
+                  direct ones shown here. The rest (siblings, cousins,
+                  aunts/uncles, grandparents, nephews/nieces, in-laws, step,
+                  etc.) will be calculated and shown based on these.
+                </p>
                 <ul className="list-inside list-disc space-y-1">
                   <li>Spouse or partner</li>
                   <li>Parent (birth or adoptive)</li>
                   <li>Child (birth or adoptive)</li>
                 </ul>
                 <p>
-                  All other family relationships (grand, in-law, step, etc.) are
-                  calculated through these direct relationships.
+                  Group admins can manage relationships for anyone in the group.
+                  Click your group name in the header to see who the admins are
+                  if you want help.
                 </p>
                 <button
                   type="button"
@@ -166,26 +170,6 @@ export default function RelateModal({
           </div>
           <input type="hidden" name="user1Id" value={member.userId} />
           <input type="hidden" name="groupSlug" value={groupSlug} />
-
-          <div className="mt-4">
-            <label
-              htmlFor="user2Id"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
-              Member
-            </label>
-            <Combobox
-              name="user2Id"
-              options={availableMembers.map((m) => ({
-                value: m.userId,
-                label: m.user.name || '',
-              }))}
-              selectedValue={selectedMemberId}
-              onSelectValue={setSelectedMemberId}
-              placeholder="Select a member"
-              zIndex="z-20"
-            />
-          </div>
 
           <div className="mt-4">
             <label
@@ -207,6 +191,26 @@ export default function RelateModal({
               onSelectValue={setSelectedRelationTypeId}
               placeholder="Select a relationship"
               zIndex="z-10"
+            />
+          </div>
+
+          <div className="mt-4">
+            <label
+              htmlFor="user2Id"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
+              Who's it with?
+            </label>
+            <Combobox
+              name="user2Id"
+              options={availableMembers.map((m) => ({
+                value: m.userId,
+                label: m.user.name || '',
+              }))}
+              selectedValue={selectedMemberId}
+              onSelectValue={setSelectedMemberId}
+              placeholder="Select a member"
+              zIndex="z-20"
             />
           </div>
 

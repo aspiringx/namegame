@@ -44,7 +44,7 @@ export function FamilyGroupClient({
     direction: SortDirection
   }>({ key: 'firstName', direction: 'asc' })
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
-  const { isAuthorizedMember, currentUserMember } = useGroup()
+  const { isGroupAdmin, currentUserMember } = useGroup()
   const { ref, inView } = useInView()
 
   const [isRelateModalOpen, setIsRelateModalOpen] = useState(false)
@@ -268,6 +268,8 @@ export function FamilyGroupClient({
               viewMode={viewMode}
               relationship={relationshipMap.get(member.userId)}
               onRelate={handleOpenRelateModal}
+              currentUserId={currentUserMember?.userId}
+              isGroupAdmin={isGroupAdmin}
             />
           ))}
         </div>

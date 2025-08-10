@@ -90,6 +90,8 @@ export default async function GroupLayout(props: {
     ['admin', 'member', 'super'].includes(currentUserMember.role.code)
   )
 
+  const isGroupAdmin = currentUserMember?.role.code === 'admin'
+
   return (
     <GroupProvider
       value={{
@@ -98,6 +100,7 @@ export default async function GroupLayout(props: {
         notGreetedMembers,
         currentUserMember,
         isSuperAdmin,
+        isGroupAdmin,
         isAuthorizedMember,
       }}
     >

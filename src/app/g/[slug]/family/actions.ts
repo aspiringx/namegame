@@ -199,10 +199,26 @@ export async function getMemberRelations(userId: string, groupSlug: string) {
 
 export async function addUserRelation(
   formData: FormData,
+  groupSlug: string,
 ): Promise<{ success: boolean; message: string }> {
   try {
-    // The user FOR which we're creating a relationship (card selected in ui).
-    const user1Id = formData.get('user1Id') as string
+    const session = await auth()
+    const user1Id = session?.user?.id
+
+    if (!user1Id) {
+      return { success: false, message: 'Not authenticated.' }
+    }
+
+    const membership = await prisma.groupUser.findFirst({
+      where: {
+        group: { slug: groupSlug },
+        userId: user1Id,
+      },
+    })
+
+    if (!membership) {
+      return { success: false, message: 'Not authorized.' }
+    }
     // The user TO which we're creating a relationship.
     // If bi-directional (not parent), the order of user1Id and user2Id doesn't matter.
     // If uni-directional (parent), user1Id is the parent and user2Id is the child.
@@ -304,20 +320,6 @@ export async function deleteUserRelation(
 
     const groupUserRoles = await getCodeTable('groupUserRole')
 
-    const membership = await prisma.groupUser.findFirst({
-      where: {
-        group: {
-          slug: groupSlug,
-        },
-        userId: userId,
-        roleId: groupUserRoles.admin.id,
-      },
-    })
-
-    if (!membership) {
-      return { success: false, message: 'Not authorized.' }
-    }
-
     const relation = await prisma.userUser.findUnique({
       where: { id: userUserId },
     })
@@ -325,6 +327,29 @@ export async function deleteUserRelation(
     if (!relation) {
       return { success: false, message: 'Relationship not found.' }
     }
+
+    // User must be an admin or one of the users in the relation to delete it.
+    const isUserInRelation = relation.user1Id === userId || relation.user2Id === userId
+
+    if (isUserInRelation) {
+      // This is sufficient for deletion, no further checks needed.
+    } else {
+      // If not in the relation, check for admin privileges.
+      const groupUserRoles = await getCodeTable('groupUserRole')
+      const membership = await prisma.groupUser.findFirst({
+        where: {
+          group: { slug: groupSlug },
+          userId: userId,
+          roleId: groupUserRoles.admin.id,
+        },
+      })
+
+      if (!membership) {
+        return { success: false, message: 'Not authorized.' }
+      }
+    }
+
+
 
     await prisma.userUser.delete({
       where: { id: userUserId },
