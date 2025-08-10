@@ -7,7 +7,7 @@ import {
   UserUser,
   UserUserRelationType,
   GroupType,
-} from '@/generated/prisma';
+} from '@/generated/prisma'
 
 // NOTE: It's important to keep this in sync with the `groupWithMembers` query in
 // `src/app/(main)/admin/groups/[slug]/edit/layout.tsx`.
@@ -24,44 +24,44 @@ const groupWithMembers = Prisma.validator<Prisma.GroupDefaultArgs>()({
       },
     },
   },
-});
+})
 
-export type GroupPayload = Prisma.GroupGetPayload<typeof groupWithMembers>;
+export type GroupPayload = Prisma.GroupGetPayload<typeof groupWithMembers>
 
 export type GroupWithMembers = Omit<GroupPayload, 'members'> & {
   members: (Omit<GroupPayload['members'][number], 'user'> & {
-    user: GroupPayload['members'][number]['user'] & { photoUrl?: string };
-  })[];
-};
+    user: GroupPayload['members'][number]['user'] & { photoUrl?: string }
+  })[]
+}
 
-export type UserWithPhotoUrl = User & { name: string; photoUrl?: string };
+export type UserWithPhotoUrl = User & { name: string; photoUrl?: string }
 
 export type MemberWithUser = GroupUser & {
-  user: UserWithPhotoUrl;
-  role: GroupUserRole;
-  relationUpdatedAt?: Date;
-};
+  user: UserWithPhotoUrl
+  role: GroupUserRole
+  relationUpdatedAt?: Date
+}
 
 export type GroupData = Group & {
-  logo?: string;
-  groupType: GroupType;
-  isSuperAdmin: boolean;
-  sunDeckMembers: MemberWithUser[];
-  iceBlockMembers: MemberWithUser[];
-  sunDeckCount: number;
-  iceBlockCount: number;
-  currentUserMember: MemberWithUser | undefined;
-};
+  logo?: string
+  groupType: GroupType
+  isSuperAdmin: boolean
+  greetedMembers: MemberWithUser[]
+  notGreetedMembers: MemberWithUser[]
+  greetedCount: number
+  notGreetedCount: number
+  currentUserMember: MemberWithUser | undefined
+}
 
 export type FullRelationship = UserUser & {
-  relationType: UserUserRelationType;
-};
+  relationType: UserUserRelationType
+}
 
 export type FamilyGroupData = Group & {
-  logo?: string;
-  groupType: GroupType;
-  isSuperAdmin: boolean;
-  members: MemberWithUser[];
-  memberCount: number;
-  currentUserMember: MemberWithUser | undefined;
-};
+  logo?: string
+  groupType: GroupType
+  isSuperAdmin: boolean
+  members: MemberWithUser[]
+  memberCount: number
+  currentUserMember: MemberWithUser | undefined
+}

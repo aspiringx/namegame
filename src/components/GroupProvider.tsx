@@ -1,34 +1,40 @@
-'use client';
+'use client'
 
-import { createContext, useContext } from 'react';
-import { GroupData, MemberWithUser } from '@/types';
+import { createContext, useContext } from 'react'
+import { GroupData, MemberWithUser } from '@/types'
 
 export interface GroupPageData {
-  group: GroupData | null;
-  sunDeckMembers: MemberWithUser[];
-  iceBlockMembers: MemberWithUser[];
-  currentUserMember: MemberWithUser | undefined;
-  isSuperAdmin: boolean;
-  isAuthorizedMember: boolean;
+  group: GroupData | null
+  greetedMembers: MemberWithUser[]
+  notGreetedMembers: MemberWithUser[]
+  currentUserMember: MemberWithUser | undefined
+  isSuperAdmin: boolean
+  isAuthorizedMember: boolean
 }
 
 const GroupContext = createContext<GroupPageData>({
   group: null,
-  sunDeckMembers: [],
-  iceBlockMembers: [],
+  greetedMembers: [],
+  notGreetedMembers: [],
   currentUserMember: undefined,
   isSuperAdmin: false,
   isAuthorizedMember: false,
-});
+})
 
-export function GroupProvider({ children, value }: { children: React.ReactNode; value: GroupPageData }) {
-  return <GroupContext.Provider value={value}>{children}</GroupContext.Provider>;
+export function GroupProvider({
+  children,
+  value,
+}: {
+  children: React.ReactNode
+  value: GroupPageData
+}) {
+  return <GroupContext.Provider value={value}>{children}</GroupContext.Provider>
 }
 
 export function useGroup() {
-  const context = useContext(GroupContext);
+  const context = useContext(GroupContext)
   if (context === undefined) {
-    throw new Error('useGroup must be used within a GroupProvider');
+    throw new Error('useGroup must be used within a GroupProvider')
   }
-  return context;
+  return context
 }

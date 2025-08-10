@@ -1,5 +1,4 @@
 import 'server-only'
-import { cache } from 'react'
 import prisma from '@/lib/prisma'
 import { getPublicUrl } from '@/lib/storage'
 import { GroupData, MemberWithUser } from '@/types'
@@ -56,12 +55,13 @@ export const getGroup = async (
   }
 
   // Fetch code table IDs for photo types
-  const [userEntityType, primaryPhotoType, groupEntityType, logoPhotoType] = await Promise.all([
-    prisma.entityType.findFirst({ where: { code: 'user' } }),
-    prisma.photoType.findFirst({ where: { code: 'primary' } }),
-    prisma.entityType.findFirst({ where: { code: 'group' } }),
-    prisma.photoType.findFirst({ where: { code: 'logo' } }),
-  ]);
+  const [userEntityType, primaryPhotoType, groupEntityType, logoPhotoType] =
+    await Promise.all([
+      prisma.entityType.findFirst({ where: { code: 'user' } }),
+      prisma.photoType.findFirst({ where: { code: 'primary' } }),
+      prisma.entityType.findFirst({ where: { code: 'group' } }),
+      prisma.photoType.findFirst({ where: { code: 'logo' } }),
+    ])
 
   const logoPhoto = await prisma.photo.findFirst({
     where: {
@@ -69,8 +69,8 @@ export const getGroup = async (
       entityTypeId: groupEntityType?.id,
       typeId: logoPhotoType?.id,
     },
-  });
-  const logo = logoPhoto?.url ? await getPublicUrl(logoPhoto.url) : undefined;
+  })
+  const logo = logoPhoto?.url ? await getPublicUrl(logoPhoto.url) : undefined
 
   const memberUserIds = group.members.map((member) => member.userId)
   const photos = await prisma.photo.findMany({
@@ -92,7 +92,8 @@ export const getGroup = async (
     }
   })
 
-  // Fetch UserUser relations for the current user in this group first to determine who has been greeted.
+  // Fetch UserUser relations for the current user in this group first to
+  // determine who has been greeted.
   const userRelations = await prisma.userUser.findMany({
     where: {
       user1Id: { in: memberUserIds },
@@ -102,9 +103,15 @@ export const getGroup = async (
 
   const relatedUserMap = new Map<string, Date>()
   userRelations.forEach((relation) => {
-    const otherUserId =
-      relation.user1Id === currentUserId ? relation.user2Id : relation.user1Id
-    relatedUserMap.set(otherUserId, relation.updatedAt)
+    // Current user must be userId1 or userId2 to prove userUser relation.
+    if (
+      currentUserId === relation.user1Id ||
+      currentUserId === relation.user2Id
+    ) {
+      const otherUserId =
+        relation.user1Id === currentUserId ? relation.user2Id : relation.user1Id
+      relatedUserMap.set(otherUserId, relation.updatedAt)
+    }
   })
 
   const memberPromises = group.members.map(
@@ -133,7 +140,7 @@ export const getGroup = async (
         user: {
           ...member.user,
           name,
-          photoUrl,
+          photoUrl: photoUrl || '/images/default-avatar.png',
         },
       }
     },
@@ -141,49 +148,49 @@ export const getGroup = async (
 
   const resolvedMembers = await Promise.all(memberPromises)
 
-  const sunDeckMembers: MemberWithUser[] = []
-  const iceBlockMembers: MemberWithUser[] = []
+  const greetedMembers: MemberWithUser[] = []
+  const notGreetedMembers: MemberWithUser[] = []
 
   resolvedMembers.forEach((member) => {
-    // The current user is always on their own sun deck.
-    // All other users are on the sun deck if a relation exists.
+    // The current user is always on their own greeted tab.
+    // All other users are on the greeted tab if a relation exists.
     if (member.userId === currentUserId || relatedUserMap.has(member.userId)) {
-      sunDeckMembers.push({
+      greetedMembers.push({
         ...member,
         relationUpdatedAt: relatedUserMap.get(member.userId),
       })
     } else {
-      iceBlockMembers.push(member)
+      notGreetedMembers.push(member)
     }
   })
 
-  const currentUserMember = sunDeckMembers.find(
+  const currentUserMember = greetedMembers.find(
     (member) => member.userId === currentUserId,
   )
 
-  // Sort sunDeckMembers by the relation's updatedAt date, descending.
+  // Sort greetedMembers by the relation's updatedAt date, descending.
   // The current user should always be last.
-  const currentUserInList = sunDeckMembers.find(
+  const currentUserInList = greetedMembers.find(
     (m) => m.userId === currentUserId,
   )
-  const otherSunDeckMembers = sunDeckMembers.filter(
+  const othergreetedMembers = greetedMembers.filter(
     (m) => m.userId !== currentUserId,
   )
 
-  otherSunDeckMembers.sort((a, b) => {
+  othergreetedMembers.sort((a, b) => {
     if (a.relationUpdatedAt && b.relationUpdatedAt) {
       return b.relationUpdatedAt.getTime() - a.relationUpdatedAt.getTime()
     }
     return 0
   })
 
-  const sortedSunDeckMembers = [...otherSunDeckMembers]
+  const sortedgreetedMembers = [...othergreetedMembers]
   if (currentUserInList) {
-    sortedSunDeckMembers.push(currentUserInList)
+    sortedgreetedMembers.push(currentUserInList)
   }
 
-  // Sort iceBlockMembers by lastName, then firstName, ascending
-  iceBlockMembers.sort((a, b) => {
+  // Sort notGreetedMembers by lastName, then firstName, ascending
+  notGreetedMembers.sort((a, b) => {
     const lastNameComparison = (a.user.lastName || '').localeCompare(
       b.user.lastName || '',
     )
@@ -193,21 +200,21 @@ export const getGroup = async (
     return (a.user.firstName || '').localeCompare(b.user.firstName || '')
   })
 
-  const limitedSunDeckMembers = limit
-    ? sortedSunDeckMembers.slice(0, limit)
-    : sortedSunDeckMembers
-  const limitedIceBlockMembers = limit
-    ? iceBlockMembers.slice(0, limit)
-    : iceBlockMembers
+  const limitedgreetedMembers = limit
+    ? sortedgreetedMembers.slice(0, limit)
+    : sortedgreetedMembers
+  const limitednotGreetedMembers = limit
+    ? notGreetedMembers.slice(0, limit)
+    : notGreetedMembers
 
   return {
     ...group,
     logo,
     isSuperAdmin: !!superAdminMembership,
-    sunDeckMembers: limitedSunDeckMembers,
-    iceBlockMembers: limitedIceBlockMembers,
-    sunDeckCount: sortedSunDeckMembers.length,
-    iceBlockCount: iceBlockMembers.length,
+    greetedMembers: limitedgreetedMembers,
+    notGreetedMembers: limitednotGreetedMembers,
+    greetedCount: sortedgreetedMembers.length,
+    notGreetedCount: notGreetedMembers.length,
     currentUserMember,
   }
 }
