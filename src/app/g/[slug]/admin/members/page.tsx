@@ -104,9 +104,8 @@ export default async function GroupMembersPage(props: {
   )
 
   return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold">Members</h1>
-      <div className="mt-4">
+    <div className="p-4">
+      <div className="-mx-4 mt-4">
         <Search placeholder="Search members..." />
       </div>
       <div className="mt-8">

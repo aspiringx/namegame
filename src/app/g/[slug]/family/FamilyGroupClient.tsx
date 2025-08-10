@@ -2,10 +2,9 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { useInView } from 'react-intersection-observer'
-import { MemberWithUser } from '@/types'
+import { MemberWithUser, FullRelationship } from '@/types'
 import { getPaginatedMembers } from './actions'
 import FamilyMemberCard from '@/components/FamilyMemberCard'
-import { getFamilyRelationships } from './actions'
 import { getRelationship } from '@/lib/family-tree'
 import { Button } from '@/components/ui/button'
 import {
@@ -24,12 +23,14 @@ interface FamilyGroupClientProps {
   initialMembers: MemberWithUser[]
   groupSlug: string
   initialMemberCount: number
+  initialRelationships: FullRelationship[]
 }
 
 export function FamilyGroupClient({
   initialMembers,
   groupSlug,
   initialMemberCount,
+  initialRelationships,
 }: FamilyGroupClientProps) {
   const [members, setMembers] = useState(initialMembers)
   const [page, setPage] = useState(2)
@@ -43,34 +44,25 @@ export function FamilyGroupClient({
   }>({ key: 'firstName', direction: 'asc' })
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const { group, isAuthorizedMember, currentUserMember } = useGroup()
-  const [relationshipMap, setRelationshipMap] = useState<Map<string, string>>(
-    new Map(),
-  )
   const { ref, inView } = useInView()
 
-  useEffect(() => {
-    async function fetchAndSetRelationships() {
-      if (group?.slug && currentUserMember) {
-        const relationships = await getFamilyRelationships(group.slug)
-        const newMap = new Map<string, string>()
+  const relationshipMap = useMemo(() => {
+    if (!currentUserMember) return new Map<string, string>()
 
-        for (const alter of members) {
-          if (alter.userId === currentUserMember.userId) continue
-          const result = getRelationship(
-            currentUserMember.userId,
-            alter.userId,
-            relationships,
-          )
-          if (result) {
-            newMap.set(alter.userId, result.relationship || '')
-          }
-        }
-        setRelationshipMap(newMap)
+    const newMap = new Map<string, string>()
+    for (const alter of initialMembers) {
+      if (alter.userId === currentUserMember.userId) continue
+      const result = getRelationship(
+        currentUserMember.userId,
+        alter.userId,
+        initialRelationships,
+      )
+      if (result) {
+        newMap.set(alter.userId, result.relationship || '')
       }
     }
-
-    fetchAndSetRelationships()
-  }, [group, members, currentUserMember])
+    return newMap
+  }, [currentUserMember, initialMembers, initialRelationships])
 
   useEffect(() => {
     const loadMoreMembers = async () => {
@@ -109,7 +101,9 @@ export function FamilyGroupClient({
         ?.toLowerCase()
         .includes(lowercasedQuery)
       const relationship = relationshipMap.get(member.userId) || ''
-      const relationshipMatch = relationship.toLowerCase().includes(lowercasedQuery)
+      const relationshipMatch = relationship
+        .toLowerCase()
+        .includes(lowercasedQuery)
       return nameMatch || relationshipMatch
     })
 

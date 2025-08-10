@@ -19,6 +19,8 @@ export default async function UserProfilePage(props: {
     redirect('/login?callbackUrl=/me');
   }
 
+  const { user: userEntityType } = await getCodeTable('entityType');
+
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
     include: {
@@ -43,6 +45,7 @@ export default async function UserProfilePage(props: {
         },
       },
       photos: {
+        where: { entityTypeId: userEntityType.id },
         orderBy: { typeId: 'asc' }, // Puts 'primary' (id 2) before 'profile' (id 1) if you use desc.
       },
     },

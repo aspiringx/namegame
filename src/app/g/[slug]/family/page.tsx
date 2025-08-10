@@ -2,6 +2,7 @@ import { getGroup } from './data';
 import { FamilyGroupClient } from './FamilyGroupClient';
 import { notFound } from 'next/navigation';
 import { getPublicUrl } from '@/lib/storage';
+import { getFamilyRelationships } from './actions';
 
 // This will be the custom page for family groups.
 // For now, it's a simple placeholder.
@@ -27,11 +28,14 @@ export default async function FamilyGroupPage({ params }: { params: Promise<{ sl
     }),
   );
 
+  const relationships = await getFamilyRelationships(slug);
+
   return (
     <FamilyGroupClient
       initialMembers={membersWithPhotoUrls}
       groupSlug={slug}
       initialMemberCount={group.memberCount}
+      initialRelationships={relationships}
     />
   );
 }
