@@ -4,6 +4,7 @@ import localFont from 'next/font/local';
 import { auth } from '@/auth';
 import AuthProvider from '@/components/AuthProvider';
 import { Providers } from '@/components/providers';
+import { UserSessionProvider } from '@/context/UserSessionContext';
 
 import './globals.css';
 
@@ -28,7 +29,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body className={`${inter.variable} font-sans bg-background text-foreground overflow-visible`}>
         <Providers>
           <div className="relative min-h-screen">
-            <AuthProvider session={session}>{children}</AuthProvider>
+            <AuthProvider session={session}>
+              <UserSessionProvider>{children}</UserSessionProvider>
+            </AuthProvider>
           </div>
         </Providers>
       </body>
