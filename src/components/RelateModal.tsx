@@ -60,6 +60,16 @@ export default function RelateModal({
 
   if (!member) return null
 
+  const getRelationLabel = (relation: RelationWithUser) => {
+    if (relation.relationType.code === 'parent') {
+      // In the DB, for 'parent' relations, user1 is the parent, user2 is the child.
+      // We are viewing the modal for 'member'.
+      // If member is user1, the relatedUser is user2 (the child).
+      return relation.user1Id === member.userId ? 'child' : 'parent'
+    }
+    return relation.relationType.code
+  }
+
   const relatedUserIds = new Set(relations.map((r) => r.relatedUser.id))
   const availableMembers = groupMembers.filter(
     (m) => m.userId !== member.userId && !relatedUserIds.has(m.userId),
@@ -229,7 +239,7 @@ export default function RelateModal({
                       {r.relatedUser.firstName} {r.relatedUser.lastName}
                     </span>
                     <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">
-                      ({r.relationType.code})
+                      ({getRelationLabel(r)})
                     </span>
                   </div>
                   <button
