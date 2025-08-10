@@ -84,7 +84,7 @@ model UserUser {
   user2Id        String
   groupId        Int?
   greetCount     Int      @default(0)
-  relationTypeId Int      @default(1) // acquaintance
+  relationTypeId Int
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   deletedAt      DateTime?
@@ -125,7 +125,7 @@ model Group {
   groupUserRoles         GroupUserRole[]
   entityTypes            EntityType[]
   photoTypes             PhotoType[]
-  groupTypeId            Int        @default(3) // family
+  groupTypeId            Int
   groupType              GroupType  @relation(fields: [groupTypeId], references: [id])
 
   @@map("groups")
@@ -134,7 +134,7 @@ model Group {
 model GroupUser {
   userId      String
   groupId     Int
-  roleId      Int      @default(4) // guest
+  roleId      Int
   memberSince Int?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -168,7 +168,7 @@ model Photo {
   entityTypeId Int
   entityId     String
   url          String
-  typeId       Int        @default(3) // other
+  typeId       Int
   isBlocked    Boolean    @default(false)
   uploadedAt   DateTime   @default(now())
   createdAt    DateTime   @default(now())

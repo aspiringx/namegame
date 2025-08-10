@@ -141,6 +141,7 @@ export async function searchUsers(groupId: number, query: string) {
       photos: {
         where: {
           typeId: (await getCodeTable('photoType')).primary.id,
+          entityTypeId: (await getCodeTable('entityType')).user.id,
         },
         take: 1,
       },

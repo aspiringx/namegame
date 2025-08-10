@@ -101,7 +101,10 @@ export async function getPaginatedMembers(
     return []
   }
 
-  const photoTypes = await getCodeTable('photoType')
+  const [photoTypes, entityTypes] = await Promise.all([
+    getCodeTable('photoType'),
+    getCodeTable('entityType'),
+  ])
 
   const members = await prisma.groupUser.findMany({
     where: {
@@ -112,7 +115,13 @@ export async function getPaginatedMembers(
       role: true,
       user: {
         include: {
-          photos: { where: { typeId: photoTypes.primary.id }, take: 1 },
+          photos: {
+            where: {
+              typeId: photoTypes.primary.id,
+              entityTypeId: entityTypes.user.id,
+            },
+            take: 1,
+          },
         },
       },
     },

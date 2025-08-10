@@ -12,6 +12,7 @@ export interface FormState {
     name?: string[]
     slug?: string[]
     description?: string[]
+    groupTypeId?: string[]
   }
 }
 
@@ -25,6 +26,10 @@ const GroupSchema = z.object({
       'Slug can only contain lowercase letters, numbers, and hyphens.',
     ),
   description: z.string().optional(),
+  groupTypeId: z.coerce.number({
+    required_error: 'Group type is required.',
+    invalid_type_error: 'Group type is required.',
+  }),
 })
 
 export async function createGroup(
@@ -42,6 +47,7 @@ export async function createGroup(
     name: formData.get('name'),
     slug: formData.get('slug'),
     description: formData.get('description'),
+    groupTypeId: formData.get('groupTypeId'),
   })
 
   if (!validatedFields.success) {
@@ -57,9 +63,10 @@ export async function createGroup(
           name: validatedFields.data.name,
           slug: validatedFields.data.slug,
           description: validatedFields.data.description,
+          groupTypeId: validatedFields.data.groupTypeId,
           idTree: validatedFields.data.slug + '-' + Date.now(), // Temporary unique value
-          createdBy: { connect: { id: userId } },
-          updatedBy: { connect: { id: userId } },
+          createdById: userId,
+          updatedById: userId,
         },
       })
 
