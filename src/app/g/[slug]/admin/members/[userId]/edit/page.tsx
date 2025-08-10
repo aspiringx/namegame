@@ -57,8 +57,7 @@ export default async function EditMemberPage({
   })
 
   return (
-    <div>
-      <h1 className="mb-4 text-2xl font-bold">Edit Member</h1>
+    <div className="mt-8">
       <EditMemberForm
         member={member}
         allRoles={allRoles}
