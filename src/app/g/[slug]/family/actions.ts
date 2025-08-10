@@ -191,7 +191,6 @@ export async function getMemberRelations(userId: string, groupSlug: string) {
       user2: true,
     },
   })
-  console.log('relations', relations)
   return relations.map((r) => ({
     ...r,
     relatedUser: r.user1Id === userId ? r.user2 : r.user1,

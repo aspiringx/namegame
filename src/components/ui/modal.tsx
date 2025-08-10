@@ -28,7 +28,7 @@ export default function Modal({
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div className="fixed inset-0 bg-black bg-opacity-25" />
+          <div className="fixed inset-0 bg-black/60" />
         </Transition.Child>
 
         <div className="fixed inset-0 overflow-y-auto">
@@ -46,7 +46,7 @@ export default function Modal({
                 {title && (
                   <Dialog.Title
                     as="h3"
-                    className="text-lg font-medium leading-6 text-gray-900 dark:text-gray-100"
+                    className="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100"
                   >
                     {title}
                   </Dialog.Title>

@@ -187,7 +187,6 @@ export default function RelateModal({
           <h4 className="font-medium text-gray-800 dark:text-gray-200">
             Existing Relationships
           </h4>
-          {console.log('relations', relations)}
           {relations.length > 0 ? (
             <ul className="mt-2 divide-y divide-gray-200 dark:divide-gray-700">
               {relations.map((r) => (
