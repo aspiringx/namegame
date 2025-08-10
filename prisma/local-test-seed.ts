@@ -98,14 +98,21 @@ async function main() {
   }
 
   if (createdUsers.length < 2) {
-    console.log('Not enough users were created, skipping relationship creation.');
+    console.log(
+      'Not enough users were created, skipping relationship creation.',
+    )
   } else {
-    const targetUserForRelations = createdUsers[0];
-    const usersForRelation = createdUsers.slice(1, numberOfRelationsToCreate + 1);
+    const targetUserForRelations = createdUsers[0]
+    const usersForRelation = createdUsers.slice(
+      1,
+      numberOfRelationsToCreate + 1,
+    )
 
-    console.log(`\nCreating ${usersForRelation.length} relationships with user ${targetUserForRelations.username}...`);
+    console.log(
+      `\nCreating ${usersForRelation.length} relationships with user ${targetUserForRelations.username}...`,
+    )
     for (const user of usersForRelation) {
-      if (user.id === targetUserForRelations.id) continue; // Avoid self-relation
+      if (user.id === targetUserForRelations.id) continue // Avoid self-relation
       await prisma.userUser.create({
         data: {
           user1Id: targetUserForRelations.id,
@@ -113,9 +120,11 @@ async function main() {
           groupId: targetGroupId,
           relationTypeId: acquaintanceRelation.id,
         },
-      });
+      })
     }
-    console.log(`Successfully created ${usersForRelation.length} relationships.`);
+    console.log(
+      `Successfully created ${usersForRelation.length} relationships.`,
+    )
   }
 
   console.log(`\nSeeding finished.`)

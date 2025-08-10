@@ -9,13 +9,13 @@ export default async function GroupAdminLayout({
   children,
   params: paramsPromise,
 }: {
-  children: React.ReactNode;
-  params: Promise<{ slug: string }>;
+  children: React.ReactNode
+  params: Promise<{ slug: string }>
 }) {
-  const params = await paramsPromise;
-  const { slug } = params;
-  const session = await auth();
-  const user = session?.user;
+  const params = await paramsPromise
+  const { slug } = params
+  const session = await auth()
+  const user = session?.user
 
   // 1. Check if user is logged in
   if (!user) {

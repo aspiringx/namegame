@@ -1,18 +1,18 @@
-**Notice: As of July 2025, this is the official NameGame codebase. The AspiringX 
-org has various other namegame repos that people were using for learning/trying 
-different languages and features, etc. When this goes live, we'll retire those 
+**Notice: As of July 2025, this is the official NameGame codebase. The AspiringX
+org has various other namegame repos that people were using for learning/trying
+different languages and features, etc. When this goes live, we'll retire those
 to avoid confusion.**
 
 # NameGame
 
 **The relationship game that starts with a name.**
 
-NameGame makes it fun for people in a group to meet, remember names, 
-and get acquainted. Groups can play for a fee at 
+NameGame makes it fun for people in a group to meet, remember names,
+and get acquainted. Groups can play for a fee at
 [namegame.app](https://namegame.app) or host it themselves.
 
 NameGame is an open source [AspiringX project](https://github.com/aspiringx/.github).
-If you're in software (engineer, UX, product management, etc.) and want to 
+If you're in software (engineer, UX, product management, etc.) and want to
 contribute, mentor, and/or learn by being part of this project, contact me
 (Joe Tippetts) on <a href="https://www.linkedin.com/in/jtippetts/" target="_blank">LinkedIn</a>.
 
@@ -21,7 +21,7 @@ contribute, mentor, and/or learn by being part of this project, contact me
 - Add instructions for running this locally:
   - On host machine
   - In docker
-- Add instructions for deploying this app for groups that want to host it themselves. 
+- Add instructions for deploying this app for groups that want to host it themselves.
   - On the same platform we use for namegame.app (Digital Ocean)
     - Cheap and simple for small deployments
   - Possibly elsewhere (AWS, Google Cloud, etc.) if we can vibe code (use AI) to easily generate it and have people willing to do the leg work to test and maintain it.
@@ -34,11 +34,10 @@ contribute, mentor, and/or learn by being part of this project, contact me
 
 - Let group admins generate a PDF of photo boards they can print and share.
   - Include people without phones or who are blind.
-- Use something like [jellyfn](https://jellyfin.org) to let people upload intro videos others in the game can 
+- Use something like [jellyfn](https://jellyfin.org) to let people upload intro videos others in the game can
   watch or listen to (blind).
-  - Consider cost and limits of hosting and streaming videos. 
+  - Consider cost and limits of hosting and streaming videos.
   - Simpler and free first step might just be support for embedding videos from YouTube, etc.
-
 
 ## Default README content from next.js
 

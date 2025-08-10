@@ -1,5 +1,5 @@
-import type { User } from '../generated/prisma';
-import type { FullRelationship } from '@/types';
+import type { User } from '../generated/prisma'
+import type { FullRelationship } from '@/types'
 
 /**
  * Represents the graph of family relationships as an adjacency list.
@@ -7,23 +7,26 @@ import type { FullRelationship } from '@/types';
  * The value is an array of objects, each representing a directed edge to another user
  * and the type of relationship (e.g., 'parent', 'spouse').
  */
-export type AdjacencyList = Map<string, { relatedUserId: string; type: string }[]>;
+export type AdjacencyList = Map<
+  string,
+  { relatedUserId: string; type: string }[]
+>
 
 /**
  * Represents an item in the queue for the Breadth-First Search (BFS) algorithm.
  */
 type BfsQueueItem = {
-  userId: string;
-  path: { userId: string; relationshipType: string | null }[];
-};
+  userId: string
+  path: { userId: string; relationshipType: string | null }[]
+}
 
 /**
  * The main result object.
  */
 export type RelationshipResult = {
-  relationship: string | null;
-  path: BfsQueueItem['path'] | null;
-};
+  relationship: string | null
+  path: BfsQueueItem['path'] | null
+}
 
 /**
  * Finds the relationship between two users within a given group.
@@ -34,36 +37,35 @@ export type RelationshipResult = {
  * @returns An object containing the relationship string and the path, or null if no relationship is found.
  */
 
-
 function buildAdjacencyList(relationships: FullRelationship[]): AdjacencyList {
-  const list: AdjacencyList = new Map();
+  const list: AdjacencyList = new Map()
 
   const addEdge = (from: string, to: string, type: string) => {
     if (!list.has(from)) {
-      list.set(from, []);
+      list.set(from, [])
     }
-    list.get(from)!.push({ relatedUserId: to, type });
-  };
+    list.get(from)!.push({ relatedUserId: to, type })
+  }
 
   for (const rel of relationships) {
     // Per our convention: user1 is the parent, user2 is the child.
     if (rel.relationType.code === 'parent') {
       // Parent -> Child relationship
-      addEdge(rel.user1Id, rel.user2Id, 'child');
+      addEdge(rel.user1Id, rel.user2Id, 'child')
       // Child -> Parent relationship
-      addEdge(rel.user2Id, rel.user1Id, 'parent');
+      addEdge(rel.user2Id, rel.user1Id, 'parent')
     } else if (rel.relationType.code === 'spouse') {
       // Spouse relationships are bi-directional
-      addEdge(rel.user1Id, rel.user2Id, 'spouse');
-      addEdge(rel.user2Id, rel.user1Id, 'spouse');
+      addEdge(rel.user1Id, rel.user2Id, 'spouse')
+      addEdge(rel.user2Id, rel.user1Id, 'spouse')
     } else if (rel.relationType.code === 'partner') {
       // Partner relationships are bi-directional
-      addEdge(rel.user1Id, rel.user2Id, 'partner');
-      addEdge(rel.user2Id, rel.user1Id, 'partner');
+      addEdge(rel.user1Id, rel.user2Id, 'partner')
+      addEdge(rel.user2Id, rel.user1Id, 'partner')
     }
   }
 
-  return list;
+  return list
 }
 
 /**
@@ -80,79 +82,84 @@ export function getRelationship(
   allRelationships: FullRelationship[],
 ): RelationshipResult | null {
   // 1. Build the adjacency list from allRelationships
-  const adjacencyList = buildAdjacencyList(allRelationships);
+  const adjacencyList = buildAdjacencyList(allRelationships)
 
   // 2. Perform BFS to find the shortest path from ego to alter
   const queue: BfsQueueItem[] = [
-    { userId: egoUserId, path: [{ userId: egoUserId, relationshipType: null }] },
-  ];
-  const visited = new Set<string>([egoUserId]);
+    {
+      userId: egoUserId,
+      path: [{ userId: egoUserId, relationshipType: null }],
+    },
+  ]
+  const visited = new Set<string>([egoUserId])
 
   while (queue.length > 0) {
-    const current = queue.shift();
-    if (!current) continue;
+    const current = queue.shift()
+    if (!current) continue
 
     if (current.userId === alterUserId) {
       // Found the path! Now check for special cases like half-siblings.
       const pathString = current.path
         .slice(1)
         .map((p) => p.relationshipType)
-        .join(' -> ');
+        .join(' -> ')
 
       if (pathString === 'parent -> child') {
         const getParents = (userId: string): string[] => {
-          const neighbors = adjacencyList.get(userId) || [];
+          const neighbors = adjacencyList.get(userId) || []
           return neighbors
             .filter((n) => n.type === 'parent')
-            .map((n) => n.relatedUserId);
-        };
+            .map((n) => n.relatedUserId)
+        }
 
-        const egoParents = new Set(getParents(egoUserId));
-        const alterParents = getParents(alterUserId);
+        const egoParents = new Set(getParents(egoUserId))
+        const alterParents = getParents(alterUserId)
 
         const commonParentsCount = alterParents.filter((p) =>
           egoParents.has(p),
-        ).length;
+        ).length
 
         if (commonParentsCount === 1) {
-          return { relationship: 'Half Sibling', path: current.path };
+          return { relationship: 'Half Sibling', path: current.path }
         } else {
-          return { relationship: 'Sibling', path: current.path };
+          return { relationship: 'Sibling', path: current.path }
         }
       } else {
         // If not a special case, translate the path normally.
-        const relationship = translatePathToRelationship(current.path);
+        const relationship = translatePathToRelationship(current.path)
         return {
           relationship,
           path: current.path,
-        };
+        }
       }
     }
 
-    const neighbors = adjacencyList.get(current.userId) || [];
+    const neighbors = adjacencyList.get(current.userId) || []
     for (const neighbor of neighbors) {
       if (!visited.has(neighbor.relatedUserId)) {
-        visited.add(neighbor.relatedUserId);
+        visited.add(neighbor.relatedUserId)
         const newPath = [
           ...current.path,
           { userId: neighbor.relatedUserId, relationshipType: neighbor.type },
-        ];
-        queue.push({ userId: neighbor.relatedUserId, path: newPath });
+        ]
+        queue.push({ userId: neighbor.relatedUserId, path: newPath })
       }
     }
   }
 
   // 3. Translate the path into a human-readable relationship string
 
-  return null; // No path found
+  return null // No path found
 }
 
-function translatePathToRelationship(path: BfsQueueItem['path']): string | null {
-  const pathLength = path.length;
-  if (pathLength <= 1) return null;
+function translatePathToRelationship(
+  path: BfsQueueItem['path'],
+): string | null {
+  const pathLength = path.length
+  if (pathLength <= 1) return null
 
-  const relationships = path.slice(1).map((p) => p.relationshipType);
-  const pathString = relationships.join(' > ');
+  const relationships = path.slice(1).map((p) => p.relationshipType)
+  const pathString = relationships.join(' > ')
 
   const relationshipRules = [
     { label: 'Child', path: 'child', order: 1 },
@@ -222,10 +229,15 @@ function translatePathToRelationship(path: BfsQueueItem['path']): string | null 
       path: 'spouse > parent > parent',
       order: 2,
     },
-    { 
-      label: 'Sibling-in-law', path: 'spouse > parent > child', order: 2 },
-    { 
-      label: 'Sibling-in-law', path: 'parent > child > spouse', order: 2 
+    {
+      label: 'Sibling-in-law',
+      path: 'spouse > parent > child',
+      order: 2,
+    },
+    {
+      label: 'Sibling-in-law',
+      path: 'parent > child > spouse',
+      order: 2,
     },
     {
       label: 'Great-grandparent-in-law',
@@ -524,13 +536,13 @@ function translatePathToRelationship(path: BfsQueueItem['path']): string | null 
       path: 'parent > parent > parent > child > child > child > partner',
       order: 5,
     },
-  ].sort((a, b) => a.order - b.order);
+  ].sort((a, b) => a.order - b.order)
 
   for (const rule of relationshipRules) {
     if (rule.path === pathString) {
-      return rule.label;
+      return rule.label
     }
   }
 
-  return 'Relative';
+  return 'Relative'
 }

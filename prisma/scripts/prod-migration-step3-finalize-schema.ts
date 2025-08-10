@@ -1,11 +1,13 @@
 // prisma/scripts/prod-migration-step3-finalize-schema.ts
-import { PrismaClient } from '../../src/generated/prisma';
+import { PrismaClient } from '../../src/generated/prisma'
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient()
 
 async function main() {
-  console.log('Starting Step 3: Finalizing schema...');
-  console.log('WARNING: This is a destructive action. It will drop old columns and types. Ensure you have a backup.');
+  console.log('Starting Step 3: Finalizing schema...')
+  console.log(
+    'WARNING: This is a destructive action. It will drop old columns and types. Ensure you have a backup.',
+  )
 
   // Use a transaction to ensure all steps succeed or none do.
   await prisma.$transaction([
@@ -36,19 +38,21 @@ async function main() {
     prisma.$executeRaw`DROP TYPE "UserUserRelationType";`,
     prisma.$executeRaw`DROP TYPE "GroupUserRole";`,
     prisma.$executeRaw`DROP TYPE "EntityType";`,
-    prisma.$executeRaw`DROP TYPE "PhotoType";`
-  ]);
+    prisma.$executeRaw`DROP TYPE "PhotoType";`,
+  ])
 
-  console.log('Step 3 finished successfully.');
-  console.log('Production migration is complete.');
+  console.log('Step 3 finished successfully.')
+  console.log('Production migration is complete.')
 }
 
 main()
   .catch((e) => {
-    console.error('An error occurred during the transaction. No changes were made.');
-    console.error(e);
-    process.exit(1);
+    console.error(
+      'An error occurred during the transaction. No changes were made.',
+    )
+    console.error(e)
+    process.exit(1)
   })
   .finally(async () => {
-    await prisma.$disconnect();
-  });
+    await prisma.$disconnect()
+  })

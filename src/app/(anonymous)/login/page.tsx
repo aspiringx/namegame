@@ -1,14 +1,13 @@
-import { auth } from '@/auth';
-import { redirect } from 'next/navigation';
-import LoginForm from './login-form';
+import { auth } from '@/auth'
+import { redirect } from 'next/navigation'
+import LoginForm from './login-form'
 
 export default async function LoginPage() {
-  const session = await auth();
+  const session = await auth()
 
   if (session) {
-    redirect('/me');
+    redirect('/me')
   }
 
-  return <LoginForm />;
+  return <LoginForm />
 }
-

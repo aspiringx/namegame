@@ -1,6 +1,12 @@
 'use client'
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from 'react'
 import { useSession } from 'next-auth/react'
 import { getSecureImageUrl } from '@/lib/actions'
 
@@ -9,7 +15,7 @@ interface UserSessionContextType {
 }
 
 const UserSessionContext = createContext<UserSessionContextType | undefined>(
-  undefined
+  undefined,
 )
 
 export function UserSessionProvider({ children }: { children: ReactNode }) {

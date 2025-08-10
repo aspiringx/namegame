@@ -1,7 +1,7 @@
-'use server';
+'use server'
 
-import prisma from '@/lib/prisma';
-import { cache } from 'react';
+import prisma from '@/lib/prisma'
+import { cache } from 'react'
 
 /**
  * Fetches a group by its slug, including only the groupType.
@@ -22,6 +22,6 @@ export const getGroupTypeBySlug = cache(async (slug: string) => {
         },
       },
     },
-  });
-  return group;
-});
+  })
+  return group
+})

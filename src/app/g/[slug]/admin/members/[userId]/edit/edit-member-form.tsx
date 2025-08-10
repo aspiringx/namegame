@@ -1,27 +1,31 @@
-'use client';
+'use client'
 
-import { useTransition } from 'react';
-import type { GroupUser, GroupUserRole, User } from '@/generated/prisma';
-import { updateMemberRole } from './actions';
+import { useTransition } from 'react'
+import type { GroupUser, GroupUserRole, User } from '@/generated/prisma'
+import { updateMemberRole } from './actions'
 
 // The member prop is a GroupUser object with the user and role relations included.
 interface EditMemberFormProps {
-  member: GroupUser & { user: User; role: GroupUserRole };
-  allRoles: GroupUserRole[];
-  groupSlug: string;
+  member: GroupUser & { user: User; role: GroupUserRole }
+  allRoles: GroupUserRole[]
+  groupSlug: string
 }
 
-export default function EditMemberForm({ member, allRoles, groupSlug }: EditMemberFormProps) {
-  const [isPending, startTransition] = useTransition();
+export default function EditMemberForm({
+  member,
+  allRoles,
+  groupSlug,
+}: EditMemberFormProps) {
+  const [isPending, startTransition] = useTransition()
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    const roleId = parseInt(formData.get('roleId') as string, 10);
+    event.preventDefault()
+    const formData = new FormData(event.currentTarget)
+    const roleId = parseInt(formData.get('roleId') as string, 10)
 
     if (isNaN(roleId)) {
-      alert('Please select a valid role.');
-      return;
+      alert('Please select a valid role.')
+      return
     }
 
     startTransition(async () => {
@@ -32,15 +36,15 @@ export default function EditMemberForm({ member, allRoles, groupSlug }: EditMemb
             groupId: member.groupId,
             roleId: roleId,
           },
-          groupSlug
-        );
-        alert('Role updated successfully!');
+          groupSlug,
+        )
+        alert('Role updated successfully!')
       } catch (error) {
-        console.error('Failed to update role:', error);
-        alert('An error occurred while updating the role.');
+        console.error('Failed to update role:', error)
+        alert('An error occurred while updating the role.')
       }
-    });
-  };
+    })
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
@@ -50,16 +54,19 @@ export default function EditMemberForm({ member, allRoles, groupSlug }: EditMemb
       </div>
 
       <div>
-        <label htmlFor="role" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+        <label
+          htmlFor="role"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+        >
           Role
         </label>
         <select
           id="role"
           name="roleId"
           defaultValue={member.roleId}
-          className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+          className="mt-1 block w-full rounded-md border-gray-300 py-2 pr-10 pl-3 text-base focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
         >
-          {allRoles.map(role => (
+          {allRoles.map((role) => (
             <option key={role.id} value={role.id}>
               {role.code}
             </option>
@@ -70,10 +77,10 @@ export default function EditMemberForm({ member, allRoles, groupSlug }: EditMemb
       <button
         type="submit"
         disabled={isPending}
-        className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+        className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
       >
         {isPending ? 'Saving...' : 'Save Changes'}
       </button>
     </form>
-  );
+  )
 }

@@ -1,33 +1,39 @@
-'use server';
+'use server'
 
-import prisma from '@/lib/prisma';
-import { sendPasswordResetEmail } from '@/lib/mail';
-import { generatePasswordResetToken } from '@/lib/tokens';
+import prisma from '@/lib/prisma'
+import { sendPasswordResetEmail } from '@/lib/mail'
+import { generatePasswordResetToken } from '@/lib/tokens'
 
-export async function sendPasswordResetLink(email: string): Promise<{ success?: string; error?: string }> {
+export async function sendPasswordResetLink(
+  email: string,
+): Promise<{ success?: string; error?: string }> {
   if (!email) {
-    return { error: 'Email is required.' };
+    return { error: 'Email is required.' }
   }
 
   const existingUser = await prisma.user.findUnique({
     where: { email },
-  });
+  })
 
   if (!existingUser) {
     // Note: To prevent email enumeration, we return a generic success message.
     // This is a common security practice.
-    return { success: 'If email exists, we sent a link that will expire in 1 hour.' };
+    return {
+      success: 'If email exists, we sent a link that will expire in 1 hour.',
+    }
   }
 
   try {
-    const passwordResetToken = await generatePasswordResetToken(email);
+    const passwordResetToken = await generatePasswordResetToken(email)
     await sendPasswordResetEmail(
       passwordResetToken.email,
-      passwordResetToken.token
-    );
-    return { success: 'If email exists, we sent a link that will expire in 1 hour.' };
+      passwordResetToken.token,
+    )
+    return {
+      success: 'If email exists, we sent a link that will expire in 1 hour.',
+    }
   } catch (error) {
-    console.error('Failed to send password reset email:', error);
-    return { error: 'Something went wrong. Please try again.' };
+    console.error('Failed to send password reset email:', error)
+    return { error: 'Something went wrong. Please try again.' }
   }
 }

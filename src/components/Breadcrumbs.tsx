@@ -1,38 +1,42 @@
-'use client';
+'use client'
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 
 type BreadcrumbItem = {
-  label: string;
-  href: string;
-  active?: boolean;
-};
+  label: string
+  href: string
+  active?: boolean
+}
 
-const Breadcrumbs = ({ breadcrumbs: propBreadcrumbs }: { breadcrumbs?: BreadcrumbItem[] }) => {
-  const pathname = usePathname();
+const Breadcrumbs = ({
+  breadcrumbs: propBreadcrumbs,
+}: {
+  breadcrumbs?: BreadcrumbItem[]
+}) => {
+  const pathname = usePathname()
 
   const breadcrumbs = propBreadcrumbs
     ? propBreadcrumbs.map((b) => ({ ...b, isLast: b.active }))
     : (() => {
-        const pathSegments = pathname.split('/').filter((segment) => segment);
+        const pathSegments = pathname.split('/').filter((segment) => segment)
 
         return pathSegments.map((segment, index) => {
-          const href = '/' + pathSegments.slice(0, index + 1).join('/');
-          const isLast = index === pathSegments.length - 1;
-          const label = segment.charAt(0).toUpperCase() + segment.slice(1);
+          const href = '/' + pathSegments.slice(0, index + 1).join('/')
+          const isLast = index === pathSegments.length - 1
+          const label = segment.charAt(0).toUpperCase() + segment.slice(1)
 
           return {
             href,
             label,
             isLast,
-          };
-        });
-      })();
+          }
+        })
+      })()
 
   return (
     <nav aria-label="Breadcrumb" className="mb-4 text-sm text-gray-500">
-      <ol className="list-none p-0 inline-flex">
+      <ol className="inline-flex list-none p-0">
         <li className="flex items-center">
           <Link href="/" className="hover:text-blue-500">
             Home
@@ -52,7 +56,7 @@ const Breadcrumbs = ({ breadcrumbs: propBreadcrumbs }: { breadcrumbs?: Breadcrum
         ))}
       </ol>
     </nav>
-  );
-};
+  )
+}
 
-export default Breadcrumbs;
+export default Breadcrumbs

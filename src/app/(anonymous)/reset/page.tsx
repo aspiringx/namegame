@@ -1,5 +1,5 @@
-import ResetForm from './reset-form';
+import ResetForm from './reset-form'
 
 export default function ResetPage() {
-  return <ResetForm />;
+  return <ResetForm />
 }

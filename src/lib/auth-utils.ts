@@ -1,4 +1,4 @@
-import prisma from './prisma';
+import prisma from './prisma'
 
 /**
  * Checks if a user has the 'admin' role for a specific group.
@@ -6,9 +6,12 @@ import prisma from './prisma';
  * @param groupId The ID of the group.
  * @returns A boolean indicating whether the user is an admin for the group.
  */
-export async function isAdmin(userId: string, groupId: number): Promise<boolean> {
+export async function isAdmin(
+  userId: string,
+  groupId: number,
+): Promise<boolean> {
   if (!userId || !groupId) {
-    return false;
+    return false
   }
 
   const groupUser = await prisma.groupUser.findUnique({
@@ -21,11 +24,11 @@ export async function isAdmin(userId: string, groupId: number): Promise<boolean>
     include: {
       role: true, // Include the role information
     },
-  });
+  })
 
   if (!groupUser || !groupUser.role) {
-    return false;
+    return false
   }
 
-  return groupUser.role.code === 'admin';
+  return groupUser.role.code === 'admin'
 }

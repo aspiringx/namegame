@@ -1,26 +1,29 @@
-'use server';
+'use server'
 
-import { auth } from '@/auth';
-import prisma from '@/lib/prisma';
-import { Prisma } from '@prisma/client';
-import { isAdmin } from '@/lib/auth-utils';
-import { revalidatePath } from 'next/cache';
+import { auth } from '@/auth'
+import prisma from '@/lib/prisma'
+import { Prisma } from '@prisma/client'
+import { isAdmin } from '@/lib/auth-utils'
+import { revalidatePath } from 'next/cache'
 
 interface UpdateMemberPayload {
-  userId: string;
-  groupId: number;
-  roleId: number;
+  userId: string
+  groupId: number
+  roleId: number
 }
 
-export async function updateMemberRole({ userId, groupId, roleId }: UpdateMemberPayload, groupSlug: string) {
-  const session = await auth();
+export async function updateMemberRole(
+  { userId, groupId, roleId }: UpdateMemberPayload,
+  groupSlug: string,
+) {
+  const session = await auth()
   if (!session?.user) {
-    throw new Error('Authentication required');
+    throw new Error('Authentication required')
   }
 
   // Authorize: check if the current user is an admin of the group
   if (!(await isAdmin(session.user.id, groupId))) {
-    throw new Error('You do not have permission to edit members in this group.');
+    throw new Error('You do not have permission to edit members in this group.')
   }
 
   try {
@@ -35,12 +38,12 @@ export async function updateMemberRole({ userId, groupId, roleId }: UpdateMember
       data: {
         roleId: roleId,
       },
-    });
+    })
   } catch (error) {
-    console.error('Database Error:', error);
-    throw new Error('Failed to update member roles.');
+    console.error('Database Error:', error)
+    throw new Error('Failed to update member roles.')
   }
 
-  revalidatePath(`/g/${groupSlug}/admin/members`);
-  revalidatePath(`/g/${groupSlug}/admin/members/${userId}/edit`);
+  revalidatePath(`/g/${groupSlug}/admin/members`)
+  revalidatePath(`/g/${groupSlug}/admin/members/${userId}/edit`)
 }

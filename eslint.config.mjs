@@ -1,7 +1,5 @@
-import next from 'eslint-config-next';
+import next from 'eslint-config-next'
 
-const eslintConfig = [
-  next,
-];
+const eslintConfig = [next]
 
-export default eslintConfig;
+export default eslintConfig
