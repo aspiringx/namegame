@@ -121,9 +121,17 @@ export function getRelationship(
         ).length
 
         if (commonParentsCount === 1) {
-          return { relationship: 'Half Sibling', path: current.path, steps: current.path.length - 1 }
+          return {
+            relationship: 'Half Sibling',
+            path: current.path,
+            steps: current.path.length - 1,
+          }
         } else {
-          return { relationship: 'Sibling', path: current.path, steps: current.path.length - 1 }
+          return {
+            relationship: 'Sibling',
+            path: current.path,
+            steps: current.path.length - 1,
+          }
         }
       } else {
         // If not a special case, translate the path normally.
@@ -269,6 +277,11 @@ function translatePathToRelationship(
     {
       label: 'Cousin-in-law',
       path: 'spouse > parent > parent > child > child',
+      order: 2,
+    },
+    {
+      label: 'Cousin-in-law',
+      path: 'parent > parent > child > child > spouse',
       order: 2,
     },
     {
