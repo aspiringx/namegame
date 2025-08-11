@@ -111,7 +111,7 @@ export async function getFamilyRelationships(
     where: { groupId: group.id },
     select: { userId: true },
   })
-  const memberIds = groupMembers.map((member) => member.userId)
+  const memberIds = groupMembers.map((member: { userId: string }) => member.userId)
 
   const relationships = await prisma.userUser.findMany({
     where: {
@@ -172,7 +172,7 @@ export async function getMemberRelations(userId: string, groupSlug: string) {
     where: { groupId: group.id },
     select: { userId: true },
   })
-  const memberIds = groupMembers.map((m) => m.userId)
+  const memberIds = groupMembers.map((m: { userId: string }) => m.userId)
 
   const relations = await prisma.userUser.findMany({
     where: {

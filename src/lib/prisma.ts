@@ -7,20 +7,9 @@ declare global {
   var prisma: PrismaClient | undefined
 }
 
-const prismaClientSingleton = () => {
-  return new PrismaClient().$extends(withAccelerate())
-}
+const client = global.prisma || new PrismaClient()
+if (process.env.NODE_ENV !== 'production') global.prisma = client
 
-const globalForPrisma = globalThis as unknown as {
-  prisma: ReturnType<typeof prismaClientSingleton> | undefined
-}
+export default client.$extends(withAccelerate()) as unknown as PrismaClient
 
-const prisma = globalForPrisma.prisma ?? prismaClientSingleton()
-
-export default prisma
-
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
-
-// Extended client for Next.js data caching features.
-export const prismaWithCaching = prisma.$extends({})
 
