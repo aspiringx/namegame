@@ -121,6 +121,11 @@ export async function searchUsers(groupId: number, query: string) {
     return []
   }
 
+  const [photoTypes, entityTypes] = await Promise.all([
+    getCodeTable('photoType'),
+    getCodeTable('entityType'),
+  ])
+
   const users = await prisma.user.findMany({
     where: {
       deletedAt: null,
@@ -140,8 +145,8 @@ export async function searchUsers(groupId: number, query: string) {
     include: {
       photos: {
         where: {
-          typeId: (await getCodeTable('photoType')).primary.id,
-          entityTypeId: (await getCodeTable('entityType')).user.id,
+          typeId: photoTypes.primary.id,
+          entityTypeId: entityTypes.user.id,
         },
         take: 1,
       },
