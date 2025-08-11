@@ -1,4 +1,5 @@
 import { PrismaClient } from '@/generated/prisma'
+import { withAccelerate } from '@prisma/extension-accelerate'
 
 declare global {
   // allow global `var` declarations
@@ -6,25 +7,20 @@ declare global {
   var prisma: PrismaClient | undefined
 }
 
-let prisma: PrismaClient
-
-if (process.env.NODE_ENV === 'production') {
-  // In production, use a global variable to preserve the client across module reloads.
-  if (!global.prisma) {
-    global.prisma = new PrismaClient()
-  }
-  prisma = global.prisma
-} else {
-  // In development, use a global variable to prevent creating multiple instances
-  // during hot-reloading.
-  if (!global.prisma) {
-    global.prisma = new PrismaClient()
-  }
-  prisma = global.prisma
+const prismaClientSingleton = () => {
+  return new PrismaClient().$extends(withAccelerate())
 }
 
-// Standard client for general use and for the Auth.js adapter
+const globalForPrisma = globalThis as unknown as {
+  prisma: ReturnType<typeof prismaClientSingleton> | undefined
+}
+
+const prisma = globalForPrisma.prisma ?? prismaClientSingleton()
+
 export default prisma
+
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
 
 // Extended client for Next.js data caching features.
 export const prismaWithCaching = prisma.$extends({})
+
