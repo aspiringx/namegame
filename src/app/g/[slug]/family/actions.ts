@@ -111,7 +111,9 @@ export async function getFamilyRelationships(
     where: { groupId: group.id },
     select: { userId: true },
   })
-  const memberIds = groupMembers.map((member: { userId: string }) => member.userId)
+  const memberIds = groupMembers.map(
+    (member: { userId: string }) => member.userId,
+  )
 
   const relationships = await prisma.userUser.findMany({
     where: {
@@ -209,122 +211,125 @@ export async function addUserRelation(
   try {
     const session = await auth()
     const loggedInUserId = session?.user?.id
-    const user1Id = formData.get('user1Id') as string
 
     if (!loggedInUserId) {
       return { success: false, message: 'Not authenticated.' }
     }
 
-    if (!user1Id) {
-      return { success: false, message: 'User to relate not specified.' }
-    }
+    return await prisma.$transaction(async (tx) => {
+      const user1Id = formData.get('user1Id') as string
 
-    const membership = await prisma.groupUser.findFirst({
-      where: {
-        group: { slug: groupSlug },
-        userId: loggedInUserId,
-      },
-    })
+      if (!user1Id) {
+        return { success: false, message: 'User to relate not specified.' }
+      }
 
-    if (!membership) {
-      return { success: false, message: 'Not authorized.' }
-    }
-    // The user TO which we're creating a relationship.
-    // If bi-directional (not parent), the order of user1Id and user2Id doesn't matter.
-    // If uni-directional (parent), user1Id is the parent and user2Id is the child.
-    const user2Id = formData.get('user2Id') as string
-    const relationTypeIdValue = formData.get('relationTypeId')
-
-    if (!user1Id || !user2Id || !relationTypeIdValue) {
-      return { success: false, message: 'Missing required fields.' }
-    }
-
-    let u1 = user1Id
-    let u2 = user2Id
-    let relationType: UserUserRelationType | null = null
-
-    if (relationTypeIdValue === 'child') {
-      relationType = await prisma.userUserRelationType.findFirst({
-        where: { code: 'parent' },
+      const membership = await tx.groupUser.findFirst({
+        where: {
+          group: { slug: groupSlug },
+          userId: loggedInUserId,
+        },
       })
-    } else {
-      // For all other cases, the value is the numeric ID.
-      const relationTypeId = parseInt(relationTypeIdValue as string, 10)
-      if (isNaN(relationTypeId)) {
-        return { success: false, message: 'Invalid relation type ID.' }
+
+      if (!membership) {
+        return { success: false, message: 'Not authorized.' }
       }
-      relationType = await prisma.userUserRelationType.findUnique({
-        where: { id: relationTypeId },
-      })
-    }
-    if (!relationType) {
-      return { success: false, message: 'Relation type not found.' }
-    }
+      // The user TO which we're creating a relationship.
+      // If bi-directional (not parent), the order of user1Id and user2Id doesn't matter.
+      // If uni-directional (parent), user1Id is the parent and user2Id is the child.
+      const user2Id = formData.get('user2Id') as string
+      const relationTypeIdValue = formData.get('relationTypeId')
 
-    // If it's a parent relation, it's inverse and we need to swap the user IDs.
-    // e.g.
-    // Joe's parent is Larry. Joe is user1Id, but Larry should be user1.
-    // Larry's child is Joe. Larry is userId1 with parent relation type, not
-    // child type chosen in UI.
-    //
-    // And I'm my own grandpa! :) Yes, a little confusing.
-    if (relationTypeIdValue !== 'child' && relationType.code === 'parent') {
-      u1 = user2Id
-      u2 = user1Id
-    }
-
-    let whereClause
-    if (relationType.code === 'spouse' || relationType.code === 'partner') {
-      // Bidirectional spouse/partner check. Either can be user1Id or user2Id.
-      whereClause = {
-        relationTypeId: relationType.id,
-        OR: [
-          { user1Id: u1, user2Id: u2 },
-          { user1Id: u2, user2Id: u1 },
-        ],
+      if (!user1Id || !user2Id || !relationTypeIdValue) {
+        return { success: false, message: 'Missing required fields.' }
       }
-    } else {
-      // Directional check for other types (e.g., parent). From swapping above,
-      // u1 should always be the parent if the relation exists.
-      whereClause = {
-        user1Id: u1,
-        user2Id: u2,
-        relationTypeId: relationType.id,
-      }
-    }
 
-    const existingRelation = await prisma.userUser.findFirst({
-      where: whereClause,
-    })
+      let u1 = user1Id
+      let u2 = user2Id
+      let relationType: UserUserRelationType | null = null
 
-    if (existingRelation) {
-      if (existingRelation.groupId) {
-        // Relationship exists but is tied to a group, so make it global
-        await prisma.userUser.update({
-          where: { id: existingRelation.id },
-          data: { groupId: null },
+      if (relationTypeIdValue === 'child') {
+        relationType = await tx.userUserRelationType.findFirst({
+          where: { code: 'parent' },
         })
-        return {
-          success: true,
-          message: 'Relationship updated successfully.',
+      } else {
+        // For all other cases, the value is the numeric ID.
+        const relationTypeId = parseInt(relationTypeIdValue as string, 10)
+        if (isNaN(relationTypeId)) {
+          return { success: false, message: 'Invalid relation type ID.' }
+        }
+        relationType = await tx.userUserRelationType.findUnique({
+          where: { id: relationTypeId },
+        })
+      }
+      if (!relationType) {
+        return { success: false, message: 'Relation type not found.' }
+      }
+
+      // If it's a parent relation, it's inverse and we need to swap the user IDs.
+      // e.g.
+      // Joe's parent is Larry. Joe is user1Id, but Larry should be user1.
+      // Larry's child is Joe. Larry is userId1 with parent relation type, not
+      // child type chosen in UI.
+      //
+      // And I'm my own grandpa! :) Yes, a little confusing.
+      if (relationTypeIdValue !== 'child' && relationType.code === 'parent') {
+        u1 = user2Id
+        u2 = user1Id
+      }
+
+      let whereClause
+      if (relationType.code === 'spouse' || relationType.code === 'partner') {
+        // Bidirectional spouse/partner check. Either can be user1Id or user2Id.
+        whereClause = {
+          relationTypeId: relationType.id,
+          OR: [
+            { user1Id: u1, user2Id: u2 },
+            { user1Id: u2, user2Id: u1 },
+          ],
+        }
+      } else {
+        // Directional check for other types (e.g., parent). From swapping above,
+        // u1 should always be the parent if the relation exists.
+        whereClause = {
+          user1Id: u1,
+          user2Id: u2,
+          relationTypeId: relationType.id,
         }
       }
-      // Relationship already exists and is global, so do nothing
-      return { success: true, message: 'This relationship already exists.' }
-    }
 
-    // Create a new global relationship
-    await prisma.userUser.create({
-      data: {
-        user1Id: u1,
-        user2Id: u2,
-        relationTypeId: relationType.id,
-        groupId: null, // Explicitly set groupId to null
-      },
+      const existingRelation = await tx.userUser.findFirst({
+        where: whereClause,
+      })
+
+      if (existingRelation) {
+        if (existingRelation.groupId) {
+          // Relationship exists but is tied to a group, so make it global
+          await tx.userUser.update({
+            where: { id: existingRelation.id },
+            data: { groupId: null },
+          })
+          return {
+            success: true,
+            message: 'Relationship updated successfully.',
+          }
+        }
+        // Relationship already exists and is global, so do nothing
+        return { success: true, message: 'This relationship already exists.' }
+      }
+
+      // Create a new global relationship
+      await tx.userUser.create({
+        data: {
+          user1Id: u1,
+          user2Id: u2,
+          relationTypeId: relationType.id,
+          groupId: null, // Explicitly set groupId to null
+        },
+      })
+
+      revalidatePath(`/g/${groupSlug}/family`)
+      return { success: true, message: 'Relationship added successfully.' }
     })
-
-    revalidatePath(`/g/${groupSlug}/family`)
-    return { success: true, message: 'Relationship added successfully.' }
   } catch (error) {
     console.error('Error adding user relation:', error)
     return { success: false, message: 'Failed to add relationship.' }
