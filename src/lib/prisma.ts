@@ -7,8 +7,11 @@ declare global {
 }
 
 const client = global.prisma || new PrismaClient()
-if (process.env.NODE_ENV !== 'production') global.prisma = client
+
+// In development, this prevents hot-reloading from creating new clients.
+// In production, this ensures a single client is used across serverless function invocations.
+if (process.env.NODE_ENV === 'development') {
+  global.prisma = client
+}
 
 export default client
-
-
