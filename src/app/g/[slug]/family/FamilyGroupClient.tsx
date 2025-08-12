@@ -227,9 +227,9 @@ export function FamilyGroupClient({
 
   return (
     <>
-      <div className="bg-background text-foreground">
-        <div className="container mx-auto px-4 py-4">
-          <div className="mb-4 flex items-center gap-2">
+      <div className="bg-background border-border sticky top-16 z-10 border-b py-4">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center gap-2">
             <div className="flex items-center gap-2">
               {(['closest', 'firstName', 'lastName'] as const).map((key) => {
                 const isActive = settings.sortConfig.key === key
