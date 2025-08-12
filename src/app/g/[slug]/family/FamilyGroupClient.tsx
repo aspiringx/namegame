@@ -140,9 +140,11 @@ export function FamilyGroupClient({
       )
       if (result) {
         newMap.set(alter.userId, {
-          label: result.relationship || '',
+          label: result.relationship || 'Relative',
           steps: result.steps,
         })
+      } else {
+        newMap.set(alter.userId, { label: 'Relative', steps: Infinity })
       }
     }
     return newMap
@@ -181,11 +183,16 @@ export function FamilyGroupClient({
   const filteredAndSortedMembers = useMemo(() => {
     let filtered = members
     if (settings.searchQuery) {
-      filtered = members.filter((member) =>
-        `${member.user.firstName} ${member.user.lastName}`
-          .toLowerCase()
-          .includes(settings.searchQuery.toLowerCase()),
-      )
+      filtered = members.filter((member) => {
+        const relationship = relationshipMap.get(member.userId)?.label || ''
+        const name = `${member.user.firstName} ${member.user.lastName}`
+        const searchTerm = settings.searchQuery.toLowerCase()
+
+        return (
+          name.toLowerCase().includes(searchTerm) ||
+          relationship.toLowerCase().includes(searchTerm)
+        )
+      })
     }
 
     if (settings.sortConfig.key === 'closest') {
@@ -338,6 +345,7 @@ export function FamilyGroupClient({
         groupSlug={groupSlug}
         initialRelations={memberRelations}
         onRelationshipAdded={handleRelationshipChange}
+        isReadOnly={!isGroupAdmin && selectedMember?.userId !== currentUserMember?.userId}
       />
     </>
   )

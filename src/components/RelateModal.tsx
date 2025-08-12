@@ -23,6 +23,7 @@ interface RelateModalProps {
   groupSlug: string
   initialRelations: RelationWithUser[]
   onRelationshipAdded: () => void
+  isReadOnly?: boolean
 }
 
 export default function RelateModal({
@@ -33,6 +34,7 @@ export default function RelateModal({
   groupSlug,
   initialRelations,
   onRelationshipAdded,
+  isReadOnly = false,
 }: RelateModalProps) {
   const [isPending, startTransition] = useTransition()
   const [isDeleting, startDeletingTransition] = useTransition()
@@ -128,8 +130,9 @@ export default function RelateModal({
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={`${member.user.name}`}>
       <div className="mt-4">
-        <form
-          ref={formRef}
+        {!isReadOnly && (
+          <form
+            ref={formRef}
           action={handleSubmit}
           className="rounded-md border border-gray-200 p-4 dark:border-gray-700"
         >
@@ -230,6 +233,7 @@ export default function RelateModal({
             </button>
           </div>
         </form>
+        )}
 
         <div className="mt-6">
           <h4 className="font-medium text-gray-800 dark:text-gray-200">
@@ -250,9 +254,10 @@ export default function RelateModal({
                       ({getRelationLabel(r)})
                     </span>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setRelationToDelete(r)}
+                  {!isReadOnly && (
+                    <button
+                      type="button"
+                      onClick={() => setRelationToDelete(r)}
                     className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-500"
                     aria-label={`Delete relationship with ${r.relatedUser.firstName} ${r.relatedUser.lastName}`}
                   >
@@ -271,6 +276,7 @@ export default function RelateModal({
                       />
                     </svg>
                   </button>
+                  )}
                 </li>
               ))}
             </ul>
