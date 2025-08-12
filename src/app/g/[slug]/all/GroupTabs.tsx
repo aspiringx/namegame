@@ -12,7 +12,7 @@ import { useGroup } from '@/components/GroupProvider'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { ArrowUp, ArrowDown, LayoutGrid, List } from 'lucide-react'
+import { ArrowUp, ArrowDown, LayoutGrid, List, X } from 'lucide-react'
 
 interface GroupTabsProps {
   greetedMembers: MemberWithUser[]
@@ -146,10 +146,6 @@ export default function GroupTabs({
     },
   )
 
-  if (!isMounted) {
-    return null
-  }
-
   const handleSort = (key: SortKey) => {
     setSettings((prev) => ({
       ...prev,
@@ -163,11 +159,15 @@ export default function GroupTabs({
     }))
   }
 
-  const sortFunction = useMemo(
-    () => (a: MemberWithUser, b: MemberWithUser) => {
+  const tabs: TabInfo[] = useMemo(() => {
+    const sortFunction = (a: MemberWithUser, b: MemberWithUser) => {
       if (settings.sortConfig.key === 'greeted') {
-        const aGreeted = a.relationUpdatedAt ? new Date(a.relationUpdatedAt).getTime() : 0
-        const bGreeted = b.relationUpdatedAt ? new Date(b.relationUpdatedAt).getTime() : 0
+        const aGreeted = a.relationUpdatedAt
+          ? new Date(a.relationUpdatedAt).getTime()
+          : 0
+        const bGreeted = b.relationUpdatedAt
+          ? new Date(b.relationUpdatedAt).getTime()
+          : 0
         return settings.sortConfig.direction === 'desc'
           ? bGreeted - aGreeted
           : aGreeted - bGreeted
@@ -185,37 +185,42 @@ export default function GroupTabs({
       } else {
         return 0
       }
-    },
-    [settings.sortConfig],
-  )
+    }
 
-  const tabs: TabInfo[] = useMemo(() => {
-    const { searchQueries } = settings
-    const sortablegreeted = [...greetedMembers].sort(sortFunction)
-    const sortablenotGreeted = [...notGreetedMembers].sort(sortFunction)
+    const sortableGreeted = [...greetedMembers].sort(sortFunction)
+    const sortableNotGreeted = [...notGreetedMembers].sort(sortFunction)
 
     return [
       {
         name: 'Greeted',
         type: 'greeted' as const,
-        members: sortablegreeted,
+        members: sortableGreeted,
         count: greetedCount,
       },
       {
         name: 'Not Greeted',
         type: 'notGreeted' as const,
-        members: sortablenotGreeted,
+        members: sortableNotGreeted,
         count: notGreetedCount,
       },
     ]
-  }, [greetedMembers, notGreetedMembers, settings.searchQueries, sortFunction])
+  }, [
+    greetedMembers,
+    notGreetedMembers,
+    greetedCount,
+    notGreetedCount,
+    settings.sortConfig,
+  ])
 
   useEffect(() => {
-    // Using `isAuthorizedMember === false` to prevent redirecting on the initial `undefined` state.
-    if (isAuthorizedMember === false) {
+    if (isMounted && isAuthorizedMember === false) {
       router.push('/')
     }
-  }, [isAuthorizedMember, router])
+  }, [isMounted, isAuthorizedMember, router])
+
+  if (!isMounted || !group || group.groupType?.code === 'family') {
+    return null
+  }
 
   return (
     <TooltipProvider>
@@ -344,21 +349,9 @@ export default function GroupTabs({
                             searchQueries: { ...prev.searchQueries, [tab.type]: '' },
                           }))
                         }
-                        className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                        aria-label="Clear search"
+                        className="absolute inset-y-0 right-0 flex items-center pr-3"
                       >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-5 w-5"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
+                        <X className="h-4 w-4 text-gray-400" />
                       </button>
                     )}
                   </div>
