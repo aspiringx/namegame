@@ -65,9 +65,12 @@ export default function FamilyMemberCard({
             {member.user.name}
           </p>
           {relationship && (
-            <p className="text-xs text-blue-500 dark:text-blue-400">
+            <button
+              onClick={() => onRelate && onRelate(member)}
+              className="text-left text-xs text-blue-500 hover:underline focus:outline-none dark:text-blue-400"
+            >
               {relationship}
-            </p>
+            </button>
           )}
         </div>
         <div className={isListView ? 'relative' : 'absolute right-0 top-0'}>
@@ -75,17 +78,9 @@ export default function FamilyMemberCard({
             trigger={<MoreVertical size={16} />}
             triggerClassName="rounded-full p-1 hover:bg-gray-200 dark:hover:bg-gray-700"
           >
-            {isGroupAdmin || member.userId === currentUserId ? (
-              <DropdownItem onClick={() => onRelate && onRelate(member)}>
-                Relate
-              </DropdownItem>
-            ) : (
-              <DropdownItem disabled>
-                <span className="w-full px-2 py-2 text-left text-sm text-gray-500">
-                  Cool options coming!
-                </span>
-              </DropdownItem>
-            )}
+            <DropdownItem onClick={() => onRelate && onRelate(member)}>
+              Relate
+            </DropdownItem>
           </Dropdown>
         </div>
       </div>

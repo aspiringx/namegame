@@ -345,6 +345,7 @@ export function FamilyGroupClient({
         groupSlug={groupSlug}
         initialRelations={memberRelations}
         onRelationshipAdded={handleRelationshipChange}
+        isReadOnly={!isGroupAdmin && selectedMember?.userId !== currentUserMember?.userId}
       />
     </>
   )
