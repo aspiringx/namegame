@@ -20,7 +20,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { ArrowUp, ArrowDown, LayoutGrid, List } from 'lucide-react'
+import { ArrowUp, ArrowDown, LayoutGrid, List, X } from 'lucide-react'
 import { useGroup } from '@/components/GroupProvider'
 
 type SortKey = 'closest' | 'firstName' | 'lastName'
@@ -283,6 +283,19 @@ export function FamilyGroupClient({
               }
               className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 pr-10 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
             />
+            {settings.searchQuery && (
+              <button
+                onClick={() =>
+                  setSettings((prev) => ({
+                    ...prev,
+                    searchQuery: '',
+                  }))
+                }
+                className="absolute inset-y-0 right-0 flex items-center pr-3"
+              >
+                <X className="h-4 w-4 text-gray-400" />
+              </button>
+            )}
           </div>
         </div>
       </div>
