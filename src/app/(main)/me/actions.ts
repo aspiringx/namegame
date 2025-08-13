@@ -33,6 +33,7 @@ const UserProfileSchema = z.object({
     .optional()
     .or(z.literal('')),
   photo: z.instanceof(File).optional(),
+  gender: z.enum(['male', 'female', 'non_binary']).optional().nullable(),
 })
 
 export async function getUserUpdateRequirements(): Promise<{
@@ -102,6 +103,7 @@ export async function updateUserProfile(
     email: formData.get('email'),
     photo: formData.get('photo'),
     password: formData.get('password'),
+    gender: formData.get('gender'),
   })
 
   if (!validatedFields.success) {
@@ -113,7 +115,7 @@ export async function updateUserProfile(
   }
 
   // const { username, firstName, lastName, photo, password } = validatedFields.data;
-  const { firstName, lastName, email, photo, password } = validatedFields.data
+  const { firstName, lastName, email, photo, password, gender } = validatedFields.data
   const userId = session.user.id
 
   let newPhotoKey: string | null = null
@@ -178,6 +180,7 @@ export async function updateUserProfile(
     const dataToUpdate: any = {
       firstName,
       lastName,
+      gender,
     }
 
     let emailChanged = false

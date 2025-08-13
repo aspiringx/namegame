@@ -90,8 +90,7 @@ export default function Home() {
           </p>
           <p className="my-4">
             You can create a Family or Community group. Both make it fun to
-            meet, remember names, and build relationships based on the nature of
-            the group.
+            meet, remember names, and build relationships in their own ways.
           </p>
           <p className="my-4">
             <Image
