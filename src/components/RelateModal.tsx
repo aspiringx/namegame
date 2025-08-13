@@ -27,7 +27,7 @@ interface RelateModalProps {
   isReadOnly?: boolean
 }
 
-export default function RelateModal({
+function RelateModalContent({
   isOpen,
   onClose,
   member,
@@ -37,53 +37,56 @@ export default function RelateModal({
   onRelationshipAdded,
   isReadOnly = false,
 }: RelateModalProps) {
+  if (!member) return null
   const [isPending, startTransition] = useTransition()
   const [isDeleting, startDeletingTransition] = useTransition()
   const formRef = useRef<HTMLFormElement>(null)
-  const [selectedMemberId, setSelectedMemberId] = useState('')
-  const [selectedRelationTypeId, setSelectedRelationTypeId] = useState('')
+
+  // State for the modal's primary subject
   const [relations, setRelations] = useState(initialRelations)
-  const [relationTypes, setRelationTypes] = useState<UserUserRelationType[]>([])
-  const [showDetails, setShowDetails] = useState(false)
-  const [relationToDelete, setRelationToDelete] =
-    useState<RelationWithUser | null>(null)
-  const [selectedGender, setSelectedGender] = useState<string>('')
   const [memberGender, setMemberGender] = useState<Gender | null>(
     member?.user.gender || null,
   )
+
+  // State for the relationship form
+  const [relationTypes, setRelationTypes] = useState<UserUserRelationType[]>([])
+  const [selectedMemberId, setSelectedMemberId] = useState('')
+  const [selectedRelationTypeId, setSelectedRelationTypeId] = useState('')
+  const [selectedGender, setSelectedGender] = useState<Gender | null>(null)
+
+  // UI control state
+  const [showDetails, setShowDetails] = useState(false)
+  const [relationToDelete, setRelationToDelete] =
+    useState<RelationWithUser | null>(null)
   const [showMemberGenderEditor, setShowMemberGenderEditor] = useState(false)
 
-  const selectedUserForRelation = groupMembers.find(
-    (m) => m.userId === selectedMemberId,
-  )
-
+  // Reset state when the user (member) or initial relations change
   useEffect(() => {
     setRelations(initialRelations)
-  }, [initialRelations])
+    setMemberGender(member?.user.gender || null)
+    setSelectedMemberId('')
+    setSelectedRelationTypeId('')
+    setSelectedGender(null)
+    setShowDetails(false)
+    setRelationToDelete(null)
+    formRef.current?.reset()
+  }, [member, initialRelations])
 
+  // Fetch relation types only when the modal opens
   useEffect(() => {
     if (isOpen) {
       getFamilyRelationTypes().then(setRelationTypes)
-    } else {
-      // Reset form when modal closes
-      formRef.current?.reset()
-      setSelectedMemberId('')
-      setSelectedRelationTypeId('')
-      setSelectedGender('')
     }
   }, [isOpen])
 
+  // Decide whether to show the gender editor based on the current member
   useEffect(() => {
     if (member && !isReadOnly && !member.user.gender) {
       setShowMemberGenderEditor(true)
     } else {
       setShowMemberGenderEditor(false)
     }
-    // We only want this to run when the member changes, not on every render.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [member])
-
-  if (!member) return null
+  }, [member, isReadOnly])
 
   const handleMemberGenderChange = async (newGender: Gender | null) => {
     if (!member) return
@@ -100,8 +103,7 @@ export default function RelateModal({
       )
       if (result.success) {
         toast.success(`${member.user.firstName}'s gender updated.`)
-        // Refresh relations to ensure data is up-to-date everywhere
-        onRelationshipAdded()
+        onRelationshipAdded() // Refresh data
       } else {
         toast.error(result.error || 'Failed to update gender.')
         // Revert on failure
@@ -117,29 +119,22 @@ export default function RelateModal({
     return relation.relationType.code
   }
 
-  const relatedUserIds = new Set(relations.map((r) => r.relatedUser.id))
-  const availableMembers = groupMembers.filter(
-    (m) => m.userId !== member.userId && !relatedUserIds.has(m.userId),
-  )
-
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const formData = new FormData(event.currentTarget)
 
     startTransition(async () => {
       try {
         const user2Id = formData.get('user2Id') as string
-        if (selectedMemberId && selectedGender) {
-          const genderUpdateResult = await updateUserGender(
-            selectedMemberId,
-            selectedGender as Gender,
+        const selectedGenderValue = selectedGender
+
+        if (user2Id && selectedGenderValue) {
+          await updateUserGender(
+            user2Id,
+            selectedGenderValue,
             groupSlug,
-            member.userId, // updatingUserId
+            member.userId,
           )
-          if (!genderUpdateResult.success) {
-            toast.error(genderUpdateResult.error || 'Failed to update gender.')
-            return
-          }
         }
 
         const result = await addUserRelation(formData, groupSlug)
@@ -150,10 +145,7 @@ export default function RelateModal({
             groupSlug,
           )
           setRelations(updatedRelations)
-          formRef.current?.reset()
-          setSelectedMemberId('')
-          setSelectedRelationTypeId('')
-          setSelectedGender('')
+          // Reset form state via the main useEffect hook by closing and re-triggering
           onRelationshipAdded()
         } else {
           toast.error(result.message)
@@ -171,7 +163,7 @@ export default function RelateModal({
       try {
         const result = await deleteUserRelation(relationToDelete.id, groupSlug)
         if (result.success) {
-          toast.success(result.message)
+          toast.success('Relationship deleted.')
           const updatedRelations = await getMemberRelations(
             member.userId,
             groupSlug,
@@ -203,10 +195,12 @@ export default function RelateModal({
             <button
               key={value}
               type="button"
-              onClick={() =>
-                handleMemberGenderChange(memberGender === value ? null : value)
-              }
-              className={`rounded-md px-2 py-1 text-xs font-semibold transition-colors ${memberGender === value ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'}`}
+              onClick={() => handleMemberGenderChange(value)}
+              className={`rounded-md px-2 py-1 text-xs font-medium transition-colors ${
+                memberGender === value
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-white text-gray-700 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:ring-gray-600 dark:hover:bg-gray-600'
+              }`}
             >
               {label}
             </button>
@@ -214,6 +208,11 @@ export default function RelateModal({
         </div>
       )}
     </div>
+  )
+
+  const relatedUserIds = new Set(relations.map((r) => r.relatedUser.id))
+  const availableMembers = groupMembers.filter(
+    (m) => m.userId !== member.userId && !relatedUserIds.has(m.userId),
   )
 
   return (
@@ -229,35 +228,53 @@ export default function RelateModal({
             <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
               <p>
                 Add or change relationships here.{' '}
-                <button
-                  type="button"
-                  onClick={() => setShowDetails(!showDetails)}
-                  className="font-medium text-indigo-600 hover:underline dark:text-indigo-400"
-                >
-                  Details
-                </button>
+                {!showDetails && (
+                  <button
+                    type="button"
+                    onClick={() => setShowDetails(true)}
+                    className="font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+                  >
+                    Show Details
+                  </button>
+                )}
               </p>
               {showDetails && (
-                <div id="details" className="mt-2 space-y-2 p-2">
-                <p>
-                  You don't need to add relationships with everyone, just the
-                  direct ones shown here. The rest will be calculated.
-                </p>
-                <ul className="list-inside list-disc space-y-1">
-                  <li>Spouse or partner</li>
-                  <li>Parent (birth or adoptive)</li>
-                  <li>Child (birth or adoptive)</li>
-                </ul>
-                <button
-                  type="button"
-                  onClick={() => setShowDetails(false)}
-                  className="font-medium text-indigo-600 hover:underline dark:text-indigo-400"
-                >
-                  Close Details
-                </button>
-              </div>
+                <div>
+                  <p className="mt-2">
+                    This tool is for creating direct relationships (parent, child,
+                    spouse). The system will automatically infer other relationships
+                    (sibling, grandparent, etc.).
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setShowDetails(false)}
+                    className="font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+                  >
+                    Close Details
+                  </button>
+                </div>
               )}
             </div>
+            <div className="mt-4">
+              <label
+                htmlFor="user2Id"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                Related Person
+              </label>
+              <Combobox
+                name="user2Id"
+                options={availableMembers.map((m) => ({
+                  value: m.userId,
+                  label: `${m.user.firstName} ${m.user.lastName}`,
+                }))}
+                selectedValue={selectedMemberId}
+                onSelectValue={setSelectedMemberId}
+                placeholder="Select a person"
+                zIndex="z-30"
+              />
+            </div>
+
             <input type="hidden" name="groupSlug" value={groupSlug} />
 
             <div className="mt-4">
@@ -265,17 +282,14 @@ export default function RelateModal({
                 htmlFor="relationTypeId"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300"
               >
-                {member.user.name}'s
+                Relationship to {member.user.firstName}
               </label>
               <Combobox
                 name="relationTypeId"
-                options={[
-                  ...relationTypes.map((rt) => ({
-                    value: rt.id.toString(),
-                    label: rt.code,
-                  })),
-                  { value: 'child', label: 'child' },
-                ]}
+                options={relationTypes.map((rt) => ({
+                  value: rt.id.toString(),
+                  label: rt.code,
+                }))}
                 selectedValue={selectedRelationTypeId}
                 onSelectValue={setSelectedRelationTypeId}
                 placeholder="Select a relationship"
@@ -283,30 +297,12 @@ export default function RelateModal({
               />
             </div>
 
-            <div className="mt-4">
-              <label
-                htmlFor="user2Id"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-              >
-                Is this person
-              </label>
-              <Combobox
-                name="user2Id"
-                options={availableMembers.map((m) => ({
-                  value: m.userId,
-                  label: m.user.name || '',
-                }))}
-                selectedValue={selectedMemberId}
-                onSelectValue={setSelectedMemberId}
-                placeholder="Select a member"
-                zIndex="z-10"
-              />
-            </div>
-
-            {selectedUserForRelation && !selectedUserForRelation.user.gender && (
+            {selectedMemberId && (
               <div className="mt-4">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {selectedUserForRelation.user.firstName}'s Gender
+                  {groupMembers.find((m) => m.userId === selectedMemberId)?.user
+                    .firstName}
+                  's Gender
                 </label>
                 <div className="mt-2 flex items-center space-x-2">
                   {genderOptions.map(({ label, value }) => (
@@ -314,9 +310,15 @@ export default function RelateModal({
                       key={value}
                       type="button"
                       onClick={() =>
-                        setSelectedGender(selectedGender === value ? '' : value)
+                        setSelectedGender(
+                          selectedGender === value ? null : value,
+                        )
                       }
-                      className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${selectedGender === value ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:ring-gray-600 dark:hover:bg-gray-600'}`}
+                      className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                        selectedGender === value
+                          ? 'bg-indigo-600 text-white'
+                          : 'bg-white text-gray-700 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:ring-gray-600 dark:hover:bg-gray-600'
+                      }`}
                     >
                       {label}
                     </button>
@@ -325,24 +327,22 @@ export default function RelateModal({
               </div>
             )}
 
-            <div className="mt-6">
+            <div className="mt-6 flex justify-end">
               <button
                 type="submit"
-                disabled={
-                  isPending || !selectedMemberId || !selectedRelationTypeId
-                }
-                className="w-full rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={isPending || !selectedMemberId || !selectedRelationTypeId}
+                className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {isPending ? 'Adding...' : 'Add Relationship'}
+                {isPending ? 'Saving...' : 'Save Relationship'}
               </button>
             </div>
           </form>
         )}
 
-        <div className="mt-8">
-          <h4 className="text-lg font-medium leading-6 text-gray-900 dark:text-white">
+        <div className="mt-6">
+          <h3 className="text-lg font-medium leading-6 text-gray-900 dark:text-white">
             Existing Relationships
-          </h4>
+          </h3>
           {relations.length > 0 ? (
             <ul className="mt-2 divide-y divide-gray-200 dark:divide-gray-700">
               {relations.map((r) => (
@@ -438,4 +438,10 @@ export default function RelateModal({
       )}
     </Modal>
   )
+}
+
+export default function RelateModal(props: RelateModalProps) {
+  if (!props.member) return null
+
+  return <RelateModalContent key={props.member.userId} {...props} />
 }
