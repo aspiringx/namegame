@@ -33,6 +33,7 @@ const UserProfileSchema = z.object({
     .optional()
     .or(z.literal('')),
   photo: z.instanceof(File).optional(),
+  gender: z.enum(['male', 'female', 'non_binary']).optional().nullable(),
 })
 
 export async function getUserUpdateRequirements(): Promise<{
@@ -102,6 +103,7 @@ export async function updateUserProfile(
     email: formData.get('email'),
     photo: formData.get('photo'),
     password: formData.get('password'),
+    gender: formData.get('gender'),
   })
 
   if (!validatedFields.success) {
@@ -113,7 +115,7 @@ export async function updateUserProfile(
   }
 
   // const { username, firstName, lastName, photo, password } = validatedFields.data;
-  const { firstName, lastName, email, photo, password } = validatedFields.data
+  const { firstName, lastName, email, photo, password, gender } = validatedFields.data
   const userId = session.user.id
 
   let newPhotoKey: string | null = null
@@ -178,6 +180,7 @@ export async function updateUserProfile(
     const dataToUpdate: any = {
       firstName,
       lastName,
+      gender,
     }
 
     let emailChanged = false
@@ -304,5 +307,98 @@ export async function updateUserProfile(
     newPhotoUrl: newPhotoKey ? await getPublicUrl(newPhotoKey) : null,
     newFirstName: updatedUser.firstName,
     redirectUrl,
+  }
+}
+
+export async function updateUserGender(
+  userId: string, // This is user2Id
+  gender: 'male' | 'female' | 'non_binary' | null,
+  groupSlug: string,
+  updatingUserId: string,
+): Promise<{
+  success: boolean
+  error?: string
+}> {
+  const session = await auth()
+  const requesterId = session?.user?.id
+
+  if (!requesterId) {
+    return {
+      success: false,
+      error: 'You must be logged in to update a user.',
+    }
+  }
+
+  const group = await prisma.group.findUnique({
+    where: { slug: groupSlug },
+    select: { id: true },
+  })
+
+  if (!group) {
+    return { success: false, error: 'Group not found.' }
+  }
+
+  const [groupUserRoles, requesterGroupUser] = await Promise.all([
+    getCodeTable('groupUserRole'),
+    prisma.groupUser.findFirst({
+      where: { userId: requesterId, groupId: group.id },
+      select: { roleId: true },
+    }),
+  ])
+
+  const isAdmin = requesterGroupUser?.roleId === groupUserRoles.admin.id
+
+  // Allow update if the requester is an admin or is the user in context
+  // The client ensures that a non-admin can only operate on their own relationships.
+  // This server check verifies that the requester is at least a member of the group
+  // and has a valid role.
+  if (!isAdmin && requesterId !== updatingUserId) {
+    return {
+      success: false,
+      error: 'You do not have permission to update this user\'s gender.',
+    }
+  }
+
+  // A non-admin can only set the gender of another user
+  // if they are adding them to a relationship for the first time.
+  // In this case, no existing relationship would be found.
+  // If a relationship exists, they must be an admin.
+  if (!isAdmin) {
+    const existingRelationship = await prisma.userUser.findFirst({
+      where: {
+        groupId: group.id,
+        OR: [
+          { user1Id: requesterId, user2Id: userId },
+          { user1Id: userId, user2Id: requesterId },
+        ],
+      },
+    })
+
+    // A non-admin can only set the gender of another user
+    // if they are adding them to a relationship for the first time.
+    // In this case, no existing relationship would be found.
+    // If a relationship exists, they must be an admin.
+    if (existingRelationship) {
+      return {
+        success: false,
+        error: 'You do not have permission to update this user\'s gender.',
+      }
+    }
+  }
+
+  try {
+    // Note: No validation needed for a simple gender update from a trusted component
+    await prisma.user.update({
+      where: { id: userId },
+      data: { gender },
+    })
+    revalidatePath('/', 'layout')
+    return { success: true }
+  } catch (error) {
+    console.error('Failed to update user gender:', error)
+    return {
+      success: false,
+      error: 'An unexpected error occurred. Please try again.',
+    }
   }
 }

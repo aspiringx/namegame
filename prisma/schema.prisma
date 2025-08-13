@@ -53,6 +53,7 @@ model User {
   emailVerified    DateTime?
   phone            String?     @unique
   phoneVerified    DateTime?
+  gender           Gender?
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
   deletedAt        DateTime?
@@ -238,6 +239,12 @@ model Link {
 enum UserUserRelationCategory {
   family
   other
+}
+
+enum Gender {
+  male
+  female
+  non_binary
 }
 
 // Code Tables

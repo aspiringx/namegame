@@ -15,23 +15,38 @@ export default function Home() {
           />
 
           <p className="text-2xl text-gray-600 dark:text-gray-400">
-            Easily meet people and remember names
+            Relationships start with a name
           </p>
         </header>
 
         <section className="space-y-6 text-lg leading-relaxed">
           <p>
-            <b>You're in groups...</b> extended families, schools, jobs,
-            neighborhoods, churches, teams, etc.
+            <b>You're in social groups...</b> families, friends, jobs, schools,
+            churches, neighborhoods, etc.
           </p>
           <p>
-            <b>Remembering names can be tricky.</b>&nbsp; Forgetting and asking
-            for reminders is embarrassing.
+            <b>Some groups feel warm</b>. People know and trust each other
+            through many shared experiences.
           </p>
           <p>
-            <b>You don't have to be a social butterfly</b>&nbsp; to meet people
-            and remember their names.
+            <b>Some groups feel cold</b>. New or less outgoing people may feel
+            unknown, unvalued, or unsure whether they belong.
           </p>
+          <p>
+            <b>
+              We call this discomfort <i>the ice</i>
+            </b>
+            . Anxiety or fear of awkward social situations.
+          </p>
+          <p>
+            <b>NameGame</b> is the easy, fun way to break the ice and build warm
+            relationships.
+          </p>
+          <p>
+            Within minutes, your group can have a private, secure album so
+            everyone can remember faces and names.
+          </p>
+          <p>And that's just the start.</p>
         </section>
 
         <section className="mt-4 space-y-6 text-lg leading-relaxed">
@@ -46,6 +61,9 @@ export default function Home() {
 
         <section className="mt-8 text-lg">
           <h2 className="mb-6 text-center text-3xl font-bold">How to Play</h2>
+          <p className="mb-4">
+            You don't need to be a social butterfly to break the ice. Just:
+          </p>
           <ul className="list-inside list-disc space-y-2">
             <li>
               <Link
@@ -64,17 +82,17 @@ export default function Home() {
             </li>
             <li>Create a private group</li>
             <li>Add your name and pic</li>
-            <li>Greet someone with a code</li>
+            <li>Share your greeting code</li>
           </ul>
           <p className="my-4">
-            When someone scans your code, you get each other's names and pics so
-            you don't forget.
+            When others scan your code, they instantly see you and others in
+            your group.
           </p>
           <p className="my-4">
-            New people can play as a <i>guest</i> with just their first name.
+            You can create a Family or Community group. Both make it fun to
+            meet, remember names, and build relationships in their own ways.
           </p>
           <p className="my-4">
-            That's it.
             <Image
               src="/images/butterflies.png"
               alt="NameGame social butterflies"

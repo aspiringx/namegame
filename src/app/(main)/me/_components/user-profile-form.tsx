@@ -31,6 +31,7 @@ export type UserProfile = {
   email: string | null
   emailVerified: string | null // Pass date as ISO string
   photos: { url: string }[]
+  gender: 'male' | 'female' | 'non_binary' | null
 }
 
 function SubmitButton({
@@ -65,6 +66,7 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
   )
   const [firstName, setFirstName] = useState(user.firstName || '')
   const [lastName, setLastName] = useState(user.lastName || '')
+  const [gender, setGender] = useState(user.gender || null)
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [passwordError, setPasswordError] = useState<string | null>(null)
@@ -112,17 +114,24 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
     const isLastNameDirty = lastName !== user.lastName
     const isPasswordDirty = !!password
     const isPhotoDirty = fileSelected
+    const isGenderDirty = gender !== user.gender
 
     setIsDirty(
-      isFirstNameDirty || isLastNameDirty || isPasswordDirty || isPhotoDirty,
+      isFirstNameDirty ||
+        isLastNameDirty ||
+        isPasswordDirty ||
+        isPhotoDirty ||
+        isGenderDirty,
     )
   }, [
     firstName,
     lastName,
     password,
     fileSelected,
+    gender,
     user.firstName,
     user.lastName,
+    user.gender,
   ])
 
   useEffect(() => {
@@ -384,6 +393,68 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
             link to complete this.
           </p>
         )}
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          Gender
+        </label>
+        <fieldset className="mt-2">
+          <legend className="sr-only">Gender</legend>
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center">
+              <input
+                id="male"
+                name="gender"
+                type="radio"
+                value="male"
+                checked={gender === 'male'}
+                onChange={() => setGender('male')}
+                className="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-indigo-600"
+              />
+              <label
+                htmlFor="male"
+                className="ml-2 block text-sm text-gray-900 dark:text-gray-100"
+              >
+                Male
+              </label>
+            </div>
+            <div className="flex items-center">
+              <input
+                id="female"
+                name="gender"
+                type="radio"
+                value="female"
+                checked={gender === 'female'}
+                onChange={() => setGender('female')}
+                className="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-indigo-600"
+              />
+              <label
+                htmlFor="female"
+                className="ml-2 block text-sm text-gray-900 dark:text-gray-100"
+              >
+                Female
+              </label>
+            </div>
+            <div className="flex items-center">
+              <input
+                id="non_binary"
+                name="gender"
+                type="radio"
+                value="non_binary"
+                checked={gender === 'non_binary'}
+                onChange={() => setGender('non_binary')}
+                className="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-indigo-600"
+              />
+              <label
+                htmlFor="non_binary"
+                className="ml-2 block text-sm text-gray-900 dark:text-gray-100"
+              >
+                Non-binary
+              </label>
+            </div>
+          </div>
+        </fieldset>
       </div>
 
       <div>

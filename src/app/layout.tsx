@@ -16,7 +16,8 @@ const inter = localFont({
 
 export const metadata: Metadata = {
   title: 'NameGame',
-  description: 'Easily meet people and remember names',
+  // description: 'Easily meet people and remember names',
+  description: 'Relationships start with a name',
   icons: {
     icon: '/icon.png',
   },

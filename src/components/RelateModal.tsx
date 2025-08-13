@@ -10,8 +10,9 @@ import {
   getFamilyRelationTypes,
   getMemberRelations,
 } from '@/app/g/[slug]/family/actions'
-import type { MemberWithUser as Member, FullRelationship } from '@/types/index'
-import type { UserUserRelationType } from '@/generated/prisma'
+import { updateUserGender } from '@/app/(main)/me/actions'
+import type { MemberWithUser as Member } from '@/types/index'
+import type { UserUserRelationType, Gender } from '@/generated/prisma'
 
 type RelationWithUser = Awaited<ReturnType<typeof getMemberRelations>>[0]
 
@@ -46,6 +47,15 @@ export default function RelateModal({
   const [showDetails, setShowDetails] = useState(false)
   const [relationToDelete, setRelationToDelete] =
     useState<RelationWithUser | null>(null)
+  const [selectedGender, setSelectedGender] = useState<string>('')
+  const [memberGender, setMemberGender] = useState<Gender | null>(
+    member?.user.gender || null,
+  )
+  const [showMemberGenderEditor, setShowMemberGenderEditor] = useState(false)
+
+  const selectedUserForRelation = groupMembers.find(
+    (m) => m.userId === selectedMemberId,
+  )
 
   useEffect(() => {
     setRelations(initialRelations)
@@ -59,16 +69,49 @@ export default function RelateModal({
       formRef.current?.reset()
       setSelectedMemberId('')
       setSelectedRelationTypeId('')
+      setSelectedGender('')
     }
   }, [isOpen])
 
+  useEffect(() => {
+    if (member && !isReadOnly && !member.user.gender) {
+      setShowMemberGenderEditor(true)
+    } else {
+      setShowMemberGenderEditor(false)
+    }
+    // We only want this to run when the member changes, not on every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [member])
+
   if (!member) return null
+
+  const handleMemberGenderChange = async (newGender: Gender | null) => {
+    if (!member) return
+
+    // Optimistically update the UI
+    setMemberGender(newGender)
+
+    startTransition(async () => {
+      const result = await updateUserGender(
+        member.userId,
+        newGender,
+        groupSlug,
+        member.userId, // updatingUserId
+      )
+      if (result.success) {
+        toast.success(`${member.user.firstName}'s gender updated.`)
+        // Refresh relations to ensure data is up-to-date everywhere
+        onRelationshipAdded()
+      } else {
+        toast.error(result.error || 'Failed to update gender.')
+        // Revert on failure
+        setMemberGender(member.user.gender || null)
+      }
+    })
+  }
 
   const getRelationLabel = (relation: RelationWithUser) => {
     if (relation.relationType.code === 'parent') {
-      // In the DB, for 'parent' relations, user1 is the parent, user2 is the child.
-      // We are viewing the modal for 'member'.
-      // If member is user1, the relatedUser is user2 (the child).
       return relation.user1Id === member.userId ? 'child' : 'parent'
     }
     return relation.relationType.code
@@ -79,9 +122,26 @@ export default function RelateModal({
     (m) => m.userId !== member.userId && !relatedUserIds.has(m.userId),
   )
 
-  const handleSubmit = (formData: FormData) => {
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const formData = new FormData(event.currentTarget)
+
     startTransition(async () => {
       try {
+        const user2Id = formData.get('user2Id') as string
+        if (selectedMemberId && selectedGender) {
+          const genderUpdateResult = await updateUserGender(
+            selectedMemberId,
+            selectedGender as Gender,
+            groupSlug,
+            member.userId, // updatingUserId
+          )
+          if (!genderUpdateResult.success) {
+            toast.error(genderUpdateResult.error || 'Failed to update gender.')
+            return
+          }
+        }
+
         const result = await addUserRelation(formData, groupSlug)
         if (result.success) {
           toast.success(result.message)
@@ -93,6 +153,7 @@ export default function RelateModal({
           formRef.current?.reset()
           setSelectedMemberId('')
           setSelectedRelationTypeId('')
+          setSelectedGender('')
           onRelationshipAdded()
         } else {
           toast.error(result.message)
@@ -127,45 +188,66 @@ export default function RelateModal({
     })
   }
 
+  const genderOptions: { label: string; value: Gender }[] = [
+    { label: 'He', value: 'male' },
+    { label: 'She', value: 'female' },
+    { label: 'They', value: 'non_binary' },
+  ]
+
+  const modalTitle = (
+    <div className="flex items-center justify-between">
+      <span>{member.user.name}</span>
+      {showMemberGenderEditor && (
+        <div className="flex items-center space-x-1">
+          {genderOptions.map(({ label, value }) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() =>
+                handleMemberGenderChange(memberGender === value ? null : value)
+              }
+              className={`rounded-md px-2 py-1 text-xs font-semibold transition-colors ${memberGender === value ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'}`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={`${member.user.name}`}>
+    <Modal isOpen={isOpen} onClose={onClose} title={modalTitle}>
       <div className="mt-4">
         {!isReadOnly && (
           <form
             ref={formRef}
-          action={handleSubmit}
-          className="rounded-md border border-gray-200 p-4 dark:border-gray-700"
-        >
-          <input type="hidden" name="user1Id" value={member.userId} />
-          <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-            <p>
-              Add or change relationships here.{' '}
-              <button
-                type="button"
-                onClick={() => setShowDetails(!showDetails)}
-                className="font-medium text-indigo-600 hover:underline dark:text-indigo-400"
-              >
-                Details
-              </button>
-            </p>
-            {showDetails && (
-              <div id="details" className="mt-2 space-y-2 p-2">
+            onSubmit={handleSubmit}
+            className="rounded-md border border-gray-200 p-4 dark:border-gray-700"
+          >
+            <input type="hidden" name="user1Id" value={member.userId} />
+            <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+              <p>
+                Add or change relationships here.{' '}
+                <button
+                  type="button"
+                  onClick={() => setShowDetails(!showDetails)}
+                  className="font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+                >
+                  Details
+                </button>
+              </p>
+              {showDetails && (
+                <div id="details" className="mt-2 space-y-2 p-2">
                 <p>
                   You don't need to add relationships with everyone, just the
-                  direct ones shown here. The rest (siblings, cousins,
-                  aunts/uncles, grandparents, nephews/nieces, in-laws, step,
-                  etc.) will be calculated and shown based on these.
+                  direct ones shown here. The rest will be calculated.
                 </p>
                 <ul className="list-inside list-disc space-y-1">
                   <li>Spouse or partner</li>
                   <li>Parent (birth or adoptive)</li>
                   <li>Child (birth or adoptive)</li>
                 </ul>
-                <p>
-                  Group admins can manage relationships for anyone in the group.
-                  Click your group name in the header to see who the admins are
-                  if you want help.
-                </p>
                 <button
                   type="button"
                   onClick={() => setShowDetails(false)}
@@ -174,69 +256,91 @@ export default function RelateModal({
                   Close Details
                 </button>
               </div>
+              )}
+            </div>
+            <input type="hidden" name="groupSlug" value={groupSlug} />
+
+            <div className="mt-4">
+              <label
+                htmlFor="relationTypeId"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                {member.user.name}'s
+              </label>
+              <Combobox
+                name="relationTypeId"
+                options={[
+                  ...relationTypes.map((rt) => ({
+                    value: rt.id.toString(),
+                    label: rt.code,
+                  })),
+                  { value: 'child', label: 'child' },
+                ]}
+                selectedValue={selectedRelationTypeId}
+                onSelectValue={setSelectedRelationTypeId}
+                placeholder="Select a relationship"
+                zIndex="z-20"
+              />
+            </div>
+
+            <div className="mt-4">
+              <label
+                htmlFor="user2Id"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                Is this person
+              </label>
+              <Combobox
+                name="user2Id"
+                options={availableMembers.map((m) => ({
+                  value: m.userId,
+                  label: m.user.name || '',
+                }))}
+                selectedValue={selectedMemberId}
+                onSelectValue={setSelectedMemberId}
+                placeholder="Select a member"
+                zIndex="z-10"
+              />
+            </div>
+
+            {selectedUserForRelation && !selectedUserForRelation.user.gender && (
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  {selectedUserForRelation.user.firstName}'s Gender
+                </label>
+                <div className="mt-2 flex items-center space-x-2">
+                  {genderOptions.map(({ label, value }) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() =>
+                        setSelectedGender(selectedGender === value ? '' : value)
+                      }
+                      className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${selectedGender === value ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:ring-gray-600 dark:hover:bg-gray-600'}`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
             )}
-          </div>
-          <input type="hidden" name="user1Id" value={member.userId} />
-          <input type="hidden" name="groupSlug" value={groupSlug} />
 
-          <div className="mt-4">
-            <label
-              htmlFor="relationTypeId"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
-              {member.user.name}'s
-            </label>
-            <Combobox
-              name="relationTypeId"
-              options={[
-                ...relationTypes.map((rt) => ({
-                  value: rt.id.toString(),
-                  label: rt.code,
-                })),
-                { value: 'child', label: 'child' },
-              ]}
-              selectedValue={selectedRelationTypeId}
-              onSelectValue={setSelectedRelationTypeId}
-              placeholder="Select a relationship"
-              zIndex="z-10"
-            />
-          </div>
-          <div className="mt-4">
-            <label
-              htmlFor="user2Id"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
-              Is this person
-            </label>
-            <Combobox
-              name="user2Id"
-              options={availableMembers.map((m) => ({
-                value: m.userId,
-                label: m.user.name || '',
-              }))}
-              selectedValue={selectedMemberId}
-              onSelectValue={setSelectedMemberId}
-              placeholder="Select a member"
-              zIndex="z-20"
-            />
-          </div>
-
-          <div className="mt-4 flex justify-end">
-            <button
-              type="submit"
-              disabled={
-                isPending || !selectedMemberId || !selectedRelationTypeId
-              }
-              className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:bg-indigo-500 dark:hover:bg-indigo-600"
-            >
-              {isPending ? 'Adding...' : 'Add Relationship'}
-            </button>
-          </div>
-        </form>
+            <div className="mt-6">
+              <button
+                type="submit"
+                disabled={
+                  isPending || !selectedMemberId || !selectedRelationTypeId
+                }
+                className="w-full rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {isPending ? 'Adding...' : 'Add Relationship'}
+              </button>
+            </div>
+          </form>
         )}
 
-        <div className="mt-6">
-          <h4 className="font-medium text-gray-800 dark:text-gray-200">
+        <div className="mt-8">
+          <h4 className="text-lg font-medium leading-6 text-gray-900 dark:text-white">
             Existing Relationships
           </h4>
           {relations.length > 0 ? (
@@ -258,24 +362,24 @@ export default function RelateModal({
                     <button
                       type="button"
                       onClick={() => setRelationToDelete(r)}
-                    className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-500"
-                    aria-label={`Delete relationship with ${r.relatedUser.firstName} ${r.relatedUser.lastName}`}
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-4 w-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
+                      className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-500"
+                      aria-label={`Delete relationship with ${r.relatedUser.firstName} ${r.relatedUser.lastName}`}
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
-                  </button>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </button>
                   )}
                 </li>
               ))}
