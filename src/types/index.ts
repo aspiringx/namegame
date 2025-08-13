@@ -1,4 +1,4 @@
-export type { UserUserRelationType } from '@/generated/prisma'
+export type { User, UserUserRelationType } from '@/generated/prisma'
 import {
   Prisma,
   Group,

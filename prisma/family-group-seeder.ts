@@ -117,25 +117,42 @@ async function main() {
   // Ensure Ego exists
   const ego = await getOrCreateUser('Ego', memberRole.id)
 
-  // --- Create a dedicated half-sibling for testing ---
+  // --- Create dedicated half-siblings for testing ---
   const commonParent = await getOrCreateUser('Common Parent', memberRole.id)
   const egoOtherParent = await getOrCreateUser(
     'Ego Other Parent',
     memberRole.id,
   )
-  const alterOtherParent = await getOrCreateUser(
-    'Alter Other Parent',
-    memberRole.id,
-  )
-  const halfSibling = await getOrCreateUser('Half Sibling', memberRole.id)
 
   // Ego's parents
   await createParentChild(commonParent, ego)
   await createParentChild(egoOtherParent, ego)
 
-  // Half Sibling's parents (shares one parent with Ego)
-  await createParentChild(commonParent, halfSibling)
-  await createParentChild(alterOtherParent, halfSibling)
+  // Create Half Brother
+  const halfBrotherOtherParent = await getOrCreateUser(
+    'Half Brother Other Parent',
+    memberRole.id,
+  )
+  const halfBrother = await getOrCreateUser(
+    'Half Brother',
+    memberRole.id,
+    'male',
+  )
+  await createParentChild(commonParent, halfBrother)
+  await createParentChild(halfBrotherOtherParent, halfBrother)
+
+  // Create Half Sister
+  const halfSisterOtherParent = await getOrCreateUser(
+    'Half Sister Other Parent',
+    memberRole.id,
+  )
+  const halfSister = await getOrCreateUser(
+    'Half Sister',
+    memberRole.id,
+    'female',
+  )
+  await createParentChild(commonParent, halfSister)
+  await createParentChild(halfSisterOtherParent, halfSister)
   // --- End of half-sibling creation ---
 
   for (const { path } of relationshipPaths) {
@@ -191,6 +208,7 @@ async function main() {
   async function getOrCreateUser(
     path: string,
     memberRoleId: number,
+    gender: 'male' | 'female' | null = null,
   ): Promise<User> {
     if (users.has(path)) {
       return users.get(path)!
@@ -209,6 +227,7 @@ async function main() {
         password: await bcrypt.hash('password', 10),
         firstName: path,
         email: email,
+        gender,
         groupMemberships: {
           create: {
             groupId: familyGroup.id,

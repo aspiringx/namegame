@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import useLocalStorage from '@/hooks/useLocalStorage'
 import { useInView } from 'react-intersection-observer'
-import { MemberWithUser, FullRelationship } from '@/types'
+import { MemberWithUser, FullRelationship, User } from '@/types'
 import {
   getPaginatedMembers,
   getGroupMembersForRelate,
@@ -127,8 +127,14 @@ export function FamilyGroupClient({
   }
 
   const relationshipMap = useMemo(() => {
-    if (!currentUserMember)
+    if (!currentUserMember) {
       return new Map<string, { label: string; steps: number }>()
+    }
+
+    const usersMap = new Map<string, User>()
+    initialMembers.forEach((member) => {
+      usersMap.set(member.user.id, member.user)
+    })
 
     const newMap = new Map<string, { label: string; steps: number }>()
     for (const alter of initialMembers) {
@@ -137,14 +143,13 @@ export function FamilyGroupClient({
         currentUserMember.userId,
         alter.userId,
         initialRelationships,
+        usersMap,
       )
-      if (result) {
+      if (result && result.relationship) {
         newMap.set(alter.userId, {
-          label: result.relationship || 'Relative',
+          label: result.relationship,
           steps: result.steps,
         })
-      } else {
-        newMap.set(alter.userId, { label: 'Relative', steps: Infinity })
       }
     }
     return newMap

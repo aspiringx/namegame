@@ -15,6 +15,7 @@ describe('getRelationship with seeded data', () => {
   let allUsers: User[]
   let allRelationships: FullRelationship[]
   let egoUser: User
+  let usersMap: Map<string, User>
 
   beforeAll(async () => {
     // 1. Fetch all data from the test database
@@ -41,6 +42,9 @@ describe('getRelationship with seeded data', () => {
     allUsers = group.members.map((m) => m.user)
     allRelationships = group.userRelations as FullRelationship[]
 
+    usersMap = new Map<string, User>()
+    allUsers.forEach((user) => usersMap.set(user.id, user))
+
     egoUser = allUsers.find((u) => u.firstName === 'Ego')!
     if (!egoUser) {
       throw new Error('Ego user not found in the seeded data.')
@@ -54,6 +58,8 @@ describe('getRelationship with seeded data', () => {
     { label: 'Grandchild', path: 'child > child' },
     { label: 'Grandparent', path: 'parent > parent' },
     { label: 'Sibling', path: 'parent > child' },
+    { label: 'Half Brother', path: 'parent > child' },
+    { label: 'Half Sister', path: 'parent > child' },
     { label: 'Great-grandchild', path: 'child > child > child' },
     { label: 'Great-grandparent', path: 'parent > parent > parent' },
     { label: 'Nibling', path: 'parent > child > child' },
@@ -286,9 +292,11 @@ describe('getRelationship with seeded data', () => {
         .replace(/\s*>\s*/g, ' > ')
       const normalizedLabel = label.replace(/\s+/g, ' ').trim()
 
-      // For half-sibling, the alter user is just 'Alter'
+      // For half-siblings, the alter user is named directly
       const alterName =
-        normalizedLabel === 'Half Sibling' ? 'Alter' : `Ego > ${normalizedPath}`
+        normalizedLabel === 'Half Brother' || normalizedLabel === 'Half Sister'
+          ? normalizedLabel
+          : `Ego > ${normalizedPath}`
       const alterUser = allUsers.find((u) => u.firstName === alterName)
 
       expect(
@@ -300,6 +308,7 @@ describe('getRelationship with seeded data', () => {
         egoUser.id,
         alterUser!.id,
         allRelationships,
+        usersMap,
       )
 
       expect(
