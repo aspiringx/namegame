@@ -92,7 +92,12 @@ export default function RelateModal({
     setMemberGender(newGender)
 
     startTransition(async () => {
-      const result = await updateUserGender(member.userId, newGender)
+      const result = await updateUserGender(
+        member.userId,
+        newGender,
+        groupSlug,
+        member.userId, // updatingUserId
+      )
       if (result.success) {
         toast.success(`${member.user.firstName}'s gender updated.`)
         // Refresh relations to ensure data is up-to-date everywhere
@@ -124,10 +129,13 @@ export default function RelateModal({
     startTransition(async () => {
       try {
         const user2Id = formData.get('user2Id') as string
-        const gender = formData.get('gender') as Gender | null
-
-        if (user2Id && gender) {
-          const genderUpdateResult = await updateUserGender(user2Id, gender)
+        if (selectedMemberId && selectedGender) {
+          const genderUpdateResult = await updateUserGender(
+            selectedMemberId,
+            selectedGender as Gender,
+            groupSlug,
+            member.userId, // updatingUserId
+          )
           if (!genderUpdateResult.success) {
             toast.error(genderUpdateResult.error || 'Failed to update gender.')
             return

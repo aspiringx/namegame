@@ -311,17 +311,78 @@ export async function updateUserProfile(
 }
 
 export async function updateUserGender(
-  userId: string,
+  userId: string, // This is user2Id
   gender: 'male' | 'female' | 'non_binary' | null,
+  groupSlug: string,
+  updatingUserId: string,
 ): Promise<{
   success: boolean
   error?: string
 }> {
   const session = await auth()
-  if (!session?.user?.id) {
+  const requesterId = session?.user?.id
+
+  if (!requesterId) {
     return {
       success: false,
       error: 'You must be logged in to update a user.',
+    }
+  }
+
+  const group = await prisma.group.findUnique({
+    where: { slug: groupSlug },
+    select: { id: true },
+  })
+
+  if (!group) {
+    return { success: false, error: 'Group not found.' }
+  }
+
+  const [groupUserRoles, requesterGroupUser] = await Promise.all([
+    getCodeTable('groupUserRole'),
+    prisma.groupUser.findFirst({
+      where: { userId: requesterId, groupId: group.id },
+      select: { roleId: true },
+    }),
+  ])
+
+  const isAdmin = requesterGroupUser?.roleId === groupUserRoles.admin.id
+
+  // Allow update if the requester is an admin or is the user in context
+  // The client ensures that a non-admin can only operate on their own relationships.
+  // This server check verifies that the requester is at least a member of the group
+  // and has a valid role.
+  if (!isAdmin && requesterId !== updatingUserId) {
+    return {
+      success: false,
+      error: 'You do not have permission to update this user\'s gender.',
+    }
+  }
+
+  // A non-admin can only set the gender of another user
+  // if they are adding them to a relationship for the first time.
+  // In this case, no existing relationship would be found.
+  // If a relationship exists, they must be an admin.
+  if (!isAdmin) {
+    const existingRelationship = await prisma.userUser.findFirst({
+      where: {
+        groupId: group.id,
+        OR: [
+          { user1Id: requesterId, user2Id: userId },
+          { user1Id: userId, user2Id: requesterId },
+        ],
+      },
+    })
+
+    // A non-admin can only set the gender of another user
+    // if they are adding them to a relationship for the first time.
+    // In this case, no existing relationship would be found.
+    // If a relationship exists, they must be an admin.
+    if (existingRelationship) {
+      return {
+        success: false,
+        error: 'You do not have permission to update this user\'s gender.',
+      }
     }
   }
 
