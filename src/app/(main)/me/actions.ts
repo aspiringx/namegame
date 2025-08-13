@@ -309,3 +309,35 @@ export async function updateUserProfile(
     redirectUrl,
   }
 }
+
+export async function updateUserGender(
+  userId: string,
+  gender: 'male' | 'female' | 'non_binary' | null,
+): Promise<{
+  success: boolean
+  error?: string
+}> {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return {
+      success: false,
+      error: 'You must be logged in to update a user.',
+    }
+  }
+
+  try {
+    // Note: No validation needed for a simple gender update from a trusted component
+    await prisma.user.update({
+      where: { id: userId },
+      data: { gender },
+    })
+    revalidatePath('/', 'layout')
+    return { success: true }
+  } catch (error) {
+    console.error('Failed to update user gender:', error)
+    return {
+      success: false,
+      error: 'An unexpected error occurred. Please try again.',
+    }
+  }
+}
