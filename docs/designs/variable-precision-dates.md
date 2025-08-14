@@ -47,3 +47,4 @@ We will use a single `DateTime` column to store a canonical, sortable date, acco
 
 - The application layer is responsible for parsing user input and calculating the correct `event_date`.
 - The display logic must use the `date_precision`, `season`, and `hemisphere` columns to format the date correctly for the user (e.g., showing "Summer 1969" instead of "August 1, 1969").
+- The application layer should handle aliases for seasons. For example, user input of "Fall" should be mapped to the canonical `AUTUMN` enum value before being stored in the database.
