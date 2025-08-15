@@ -60,6 +60,7 @@ export default async function UserProfilePage(props: {
     ...user,
     image: user.photos[0] ? await getPublicUrl(user.photos[0].url) : null,
     emailVerified: user.emailVerified ? user.emailVerified.toISOString() : null,
+    birthDate: user.birthDate ? user.birthDate.toISOString() : null,
     photos: await Promise.all(
       user.photos.map(async (photo) => ({
         ...photo,
