@@ -10,6 +10,7 @@ import { revalidatePath, revalidateTag } from 'next/cache'
 import { getCodeTable } from '@/lib/codes'
 import { uploadFile, deleteFile, getPublicUrl } from '@/lib/storage'
 import { sendVerificationEmail } from '@/lib/mail'
+import { disposableEmailDomains } from '@/lib/disposable-email-domains'
 
 export type State = {
   success: boolean
@@ -110,20 +111,23 @@ function parseDateAndDeterminePrecision(dateString: string): {
 const UserProfileSchema = z.object({
   password: z
     .string()
-    .min(6, 'Password must be at least 6 characters.')
     .optional()
-    .or(z.literal('')),
+    .nullable()
+    .refine((password) => {
+      if (!password) return true // Allow empty password
+      return (
+        password.length >= 6 &&
+        /[a-zA-Z]/.test(password) &&
+        /\d/.test(password)
+      )
+    }, 'Password must be at least 6 characters and include both letters and numbers.'),
   // username: z.string().min(3, 'Username must be at least 3 characters long.'),
   firstName: z.string().min(1, 'First name is required'),
-  lastName: z.string().optional(),
-  email: z
-    .string()
-    .email('Invalid email address.')
-    .optional()
-    .or(z.literal('')),
+  lastName: z.string().optional().nullable(),
+  email: z.string().email('Invalid email address.').optional().nullable(),
   photo: z.instanceof(File).optional(),
   gender: z.enum(['male', 'female', 'non_binary']).optional().nullable(),
-  birthDate: z.string().optional(),
+  birthDate: z.string().optional().nullable(),
 })
 
 export async function getUserUpdateRequirements(): Promise<{
@@ -177,6 +181,25 @@ export async function updateUserProfile(
   prevState: State,
   formData: FormData,
 ): Promise<State> {
+  const emailFromForm = formData.get('email') as string | null
+
+  // Check for disposable email domain
+  if (emailFromForm) {
+    const domain = emailFromForm.split('@')[1]
+    if (domain && disposableEmailDomains.has(domain.toLowerCase())) {
+      return {
+        success: false,
+        message: null,
+        error:
+          'Please use a permanent email address. Disposable emails are not allowed.',
+        errors: {
+          email: [
+            'Please use a permanent email address. Disposable emails are not allowed.',
+          ],
+        },
+      }
+    }
+  }
   const session = await auth()
   if (!session?.user?.id) {
     return {
@@ -190,7 +213,7 @@ export async function updateUserProfile(
     // username: formData.get('username'),
     firstName: formData.get('firstName'),
     lastName: formData.get('lastName'),
-    email: formData.get('email'),
+    email: emailFromForm,
     photo: formData.get('photo'),
     password: formData.get('password'),
     gender: formData.get('gender'),
