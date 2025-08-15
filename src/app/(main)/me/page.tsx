@@ -23,26 +23,6 @@ export default async function UserProfilePage(props: {
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
     include: {
-      groupMemberships: {
-        orderBy: {
-          group: {
-            name: 'asc',
-          },
-        },
-        include: {
-          group: {
-            select: {
-              name: true,
-              slug: true,
-            },
-          },
-          role: {
-            select: {
-              code: true,
-            },
-          },
-        },
-      },
       photos: {
         where: { entityTypeId: userEntityType.id },
         orderBy: { type: { code: 'asc' } },
@@ -76,55 +56,15 @@ export default async function UserProfilePage(props: {
     (userWithPublicUrls.image?.includes('dicebear.com') ?? true)
 
   return (
-    <main className="container mx-auto px-4 pt-4 pb-8">
-      <div className="mx-auto max-w-2xl">
-        <GuestMessage isGuest={isGuest} />
-        {searchParams?.welcome === 'true' &&
-        user &&
-        user.groupMemberships.length > 0 ? (
-          <div className="mb-4 rounded-md bg-green-50 p-4 text-sm text-green-700 dark:bg-green-900 dark:text-green-300">
-            Welcome, {user.firstName}! Click a group below to start playing or
-            update your profile.
-          </div>
-        ) : null}
-
-        <div className="mx-auto max-w-2xl">
-          <h2 className="mb-6 text-xl font-bold">Me</h2>
-
-          <UserProfileForm user={userWithPublicUrls} />
-
-          <Image
-            src="/images/butterflies.png"
-            alt="NameGame social butterflies"
-            width={32}
-            height={32}
-            className="float-right mt-8 opacity-70"
-          />
-          <h2 className="mt-12 mb-4 text-xl font-bold">My Groups</h2>
-          {user.groupMemberships.length > 0 ? (
-            <div className="overflow-hidden bg-white shadow sm:rounded-md dark:bg-gray-800">
-              <ul className="divide-y divide-gray-200 dark:divide-gray-700">
-                {user.groupMemberships.map((membership) => (
-                  <li key={membership.groupId}>
-                    <Link
-                      href={`/g/${membership.group.slug}`}
-                      className="block px-4 py-4 hover:bg-gray-50 sm:px-6 dark:hover:bg-gray-700"
-                    >
-                      <p className="truncate text-sm font-medium text-indigo-600 dark:text-indigo-400">
-                        {membership.group.name}
-                      </p>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : (
-            <p className="text-gray-500 dark:text-gray-400">
-              You are not a member of any groups yet.
-            </p>
-          )}
+    <>
+      <GuestMessage isGuest={isGuest} />
+      {searchParams?.welcome === 'true' ? (
+        <div className="mb-4 rounded-md bg-green-50 p-4 text-sm text-green-700 dark:bg-green-900 dark:text-green-300">
+          Welcome, {user.firstName}! You can update your profile information below.
         </div>
-      </div>
-    </main>
+      ) : null}
+
+      <UserProfileForm user={userWithPublicUrls} />
+    </>
   )
 }

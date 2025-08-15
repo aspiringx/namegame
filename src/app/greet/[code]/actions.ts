@@ -40,10 +40,38 @@ export async function handleAuthenticatedGreeting(
   const user2Id =
     currentUserId > codeData.user.id ? currentUserId : codeData.user.id
 
-  const [relationTypes, roleTypes] = await Promise.all([
+  const [relationTypes, roleTypes, photoTypes, entityTypes] = await Promise.all([
     getCodeTable('userUserRelationType'),
     getCodeTable('groupUserRole'),
+    getCodeTable('photoType'),
+    getCodeTable('entityType'),
   ])
+
+  const currentUser = await prisma.user.findUnique({
+    where: { id: currentUserId },
+    include: { photos: true },
+  })
+
+  if (!currentUser) {
+    // This should not happen for an authenticated user, but as a safeguard:
+    throw new Error('Current user not found during authenticated greeting.')
+  }
+
+  const primaryPhoto = currentUser.photos.find(
+    (p) =>
+      p.typeId === photoTypes.primary.id &&
+      p.entityTypeId === entityTypes.user.id &&
+      p.entityId === currentUser.id,
+  )
+
+  const isGuest =
+    !currentUser.firstName ||
+    !currentUser.lastName ||
+    !currentUser.emailVerified ||
+    !primaryPhoto ||
+    primaryPhoto.url.includes('dicebear.com')
+
+  const roleId = isGuest ? roleTypes.guest.id : roleTypes.member.id
 
   await prisma.$transaction(async (tx) => {
     // 1. Create or update the UserUser relationship
@@ -80,7 +108,7 @@ export async function handleAuthenticatedGreeting(
       create: {
         userId: currentUserId,
         groupId: codeData.groupId,
-        roleId: roleTypes.guest.id,
+        roleId: roleId, // Dynamically assign role
       },
     })
   })
