@@ -50,7 +50,9 @@ function RelateModalContent({
   )
 
   // State for the relationship form
-  const [relationTypes, setRelationTypes] = useState<UserUserRelationType[]>([])
+  const [relationTypes, setRelationTypes] = useState<
+    (UserUserRelationType | { id: string; code: string; name: string })[]
+  >([])
   const [selectedMemberId, setSelectedMemberId] = useState('')
   const [selectedRelationTypeId, setSelectedRelationTypeId] = useState('')
   const [selectedGender, setSelectedGender] = useState<Gender | null>(null)
@@ -75,10 +77,21 @@ function RelateModalContent({
     formRef.current?.reset()
   }, [member, initialRelations])
 
-  // Fetch relation types only when the modal opens
+  // Fetch relation types and add the 'Child' convenience option
   useEffect(() => {
     if (isOpen) {
-      getFamilyRelationTypes().then(setRelationTypes)
+      getFamilyRelationTypes().then((types) => {
+        // 'child' is the inverse of 'parent', not a real type in the DB.
+        // We add it here for user convenience in the dropdown.
+        const childOption = {
+          id: 'child',
+          code: 'child',
+          name: 'Child',
+          description: 'The person is their child',
+          isFamilyRelation: true,
+        }
+        setRelationTypes([...types, childOption])
+      })
     }
   }, [isOpen])
 
@@ -172,13 +185,14 @@ function RelateModalContent({
 
     startDeletingTransition(async () => {
       try {
-                const result = await deleteUserRelation(
-          relationToDelete.id,
-          groupSlug,
-        )
+        const result = await deleteUserRelation(relationToDelete.id, groupSlug)
         if (result.success) {
+          // Optimistically remove the relation from the list
+          setRelations((prev) =>
+            prev.filter((r) => r.id !== relationToDelete.id),
+          )
           toast.success('Relationship deleted.')
-          onRelationshipAdded()
+          onRelationshipAdded() // This should trigger a refresh
           setRelationToDelete(null)
         } else {
           toast.error(result.message || 'Failed to delete relationship.')
@@ -201,11 +215,11 @@ function RelateModalContent({
   const selectedMember = groupMembers.find((m) => m.userId === selectedMemberId)
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Relate Members">
+    <Modal isOpen={isOpen} onClose={onClose} title="">
       <div className="mt-2">
         <div className="mt-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-medium leading-6 text-gray-900 dark:text-gray-100">
+            <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100">
               {member.user.firstName} {member.user.lastName}
             </h3>
             {isReadOnly && (
@@ -214,46 +228,47 @@ function RelateModalContent({
               </span>
             )}
           </div>
-          {(!isReadOnly && (showMemberGenderEditor || !member.user.birthDate)) && (
-            <div className="mt-4 flex flex-col space-y-3">
-              {showMemberGenderEditor && (
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">
-                    Gender:
-                  </span>
-                  {genderOptions.map(({ value, label }) => (
-                    <button
-                      key={value}
-                      type="button"
-                      onClick={() => handleMemberGenderChange(value)}
-                      className={`rounded-md px-3 py-1 text-sm font-medium transition-colors ${
-                        memberGender === value
-                          ? 'border-transparent bg-indigo-600 text-white shadow-sm hover:bg-indigo-700'
-                          : 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              )}
-              {!member.user.birthDate && (
-                <div>
-                  <label className="text-sm text-gray-600 dark:text-gray-400">
-                    Birth Date:
-                  </label>
-                  <input
-                    type="text"
-                    name="memberBirthDate"
-                    value={memberBirthDate}
-                    onChange={(e) => setMemberBirthDate(e.target.value)}
-                    placeholder="Birth year or date"
-                    className="mt-1 block w-full max-w-xs rounded-md border-gray-300 bg-white px-3 py-1 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
-                  />
-                </div>
-              )}
-            </div>
-          )}
+          {!isReadOnly &&
+            (showMemberGenderEditor || !member.user.birthDate) && (
+              <div className="mt-4 flex flex-col space-y-3">
+                {showMemberGenderEditor && (
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      Gender:
+                    </span>
+                    {genderOptions.map(({ value, label }) => (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => handleMemberGenderChange(value)}
+                        className={`rounded-md px-3 py-1 text-sm font-medium transition-colors ${
+                          memberGender === value
+                            ? 'border-transparent bg-indigo-600 text-white shadow-sm hover:bg-indigo-700'
+                            : 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {!member.user.birthDate && (
+                  <div>
+                    <label className="text-sm text-gray-600 dark:text-gray-400">
+                      Birth Date:
+                    </label>
+                    <input
+                      type="text"
+                      name="memberBirthDate"
+                      value={memberBirthDate}
+                      onChange={(e) => setMemberBirthDate(e.target.value)}
+                      placeholder="Birth year or date"
+                      className="mt-1 block w-full max-w-xs rounded-md border-gray-300 bg-white px-3 py-1 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
+                    />
+                  </div>
+                )}
+              </div>
+            )}
         </div>
 
         {!isReadOnly && (
@@ -261,12 +276,32 @@ function RelateModalContent({
             <input type="hidden" name="user1Id" value={member.userId} />
             <input type="hidden" name="groupSlug" value={groupSlug} />
 
-            <div>
+            <div className="mt-4">
+              <label
+                htmlFor="relationTypeId"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                {member.user.firstName}'s
+              </label>
+              <Combobox
+                name="relationTypeId"
+                options={relationTypes.map((rt) => ({
+                  value: rt.id.toString(),
+                  label: rt.code.charAt(0).toUpperCase() + rt.code.slice(1),
+                }))}
+                selectedValue={selectedRelationTypeId}
+                onSelectValue={setSelectedRelationTypeId}
+                placeholder="Select a relationship"
+                zIndex="z-30"
+              />
+            </div>
+
+            <div className="mt-4">
               <label
                 htmlFor="user2Id"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300"
               >
-                Relate to
+                Is this person
               </label>
               <Combobox
                 name="user2Id"
@@ -274,31 +309,13 @@ function RelateModalContent({
                   .filter((m) => m.userId !== member.userId)
                   .map((m) => ({
                     value: m.userId,
-                    label: `${m.user.firstName} ${m.user.lastName}`,
+                    label: [m.user.firstName, m.user.lastName]
+                      .filter(Boolean)
+                      .join(' '),
                   }))}
                 selectedValue={selectedMemberId}
                 onSelectValue={setSelectedMemberId}
                 placeholder="Select a person"
-                zIndex="z-30"
-              />
-            </div>
-
-            <div className="mt-4">
-              <label
-                htmlFor="relationTypeId"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-              >
-                As their
-              </label>
-              <Combobox
-                name="relationTypeId"
-                options={relationTypes.map((rt) => ({
-                  value: rt.id.toString(),
-                  label: rt.code,
-                }))}
-                selectedValue={selectedRelationTypeId}
-                onSelectValue={setSelectedRelationTypeId}
-                placeholder="Select a relationship"
                 zIndex="z-20"
               />
             </div>
