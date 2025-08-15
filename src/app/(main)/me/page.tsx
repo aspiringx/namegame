@@ -89,13 +89,6 @@ export default async function UserProfilePage(props: {
         ) : null}
 
         <div className="mx-auto max-w-2xl">
-          <Image
-            src="/images/butterflies.png"
-            alt="NameGame social butterflies"
-            width={32}
-            height={32}
-            className="float-right opacity-70"
-          />
           <h2 className="mb-6 text-xl font-bold">Me</h2>
 
           <UserProfileForm user={userWithPublicUrls} />
