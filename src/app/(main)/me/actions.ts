@@ -10,11 +10,21 @@ import { revalidatePath, revalidateTag } from 'next/cache'
 import { getCodeTable } from '@/lib/codes'
 import { uploadFile, deleteFile, getPublicUrl } from '@/lib/storage'
 import { sendVerificationEmail } from '@/lib/mail'
+import { disposableEmailDomains } from '@/lib/disposable-email-domains'
 
 export type State = {
   success: boolean
-  error: string | null
   message: string | null
+  error?: string | null
+  errors?: {
+    firstName?: string[]
+    lastName?: string[]
+    email?: string[]
+    password?: string[]
+    photo?: string[]
+    gender?: string[]
+    birthDate?: string[]
+  } | null
   newPhotoUrl?: string | null
   newFirstName?: string | null
   redirectUrl?: string | null
@@ -57,7 +67,11 @@ function parseDateAndDeterminePrecision(dateString: string): {
       year = currentCentury + year
     }
 
-    const parsedDate = new Date(year, parseInt(month, 10) - 1, parseInt(day, 10))
+    const parsedDate = new Date(
+      year,
+      parseInt(month, 10) - 1,
+      parseInt(day, 10),
+    )
     if (!isNaN(parsedDate.getTime())) {
       return { date: parsedDate, precision: DatePrecision.DAY }
     }
@@ -101,20 +115,21 @@ function parseDateAndDeterminePrecision(dateString: string): {
 const UserProfileSchema = z.object({
   password: z
     .string()
-    .min(6, 'Password must be at least 6 characters.')
     .optional()
-    .or(z.literal('')),
+    .nullable()
+    .refine((password) => {
+      if (!password) return true // Allow empty password
+      return (
+        password.length >= 6 && /[a-zA-Z]/.test(password) && /\d/.test(password)
+      )
+    }, 'Password must be at least 6 characters and include both letters and numbers.'),
   // username: z.string().min(3, 'Username must be at least 3 characters long.'),
   firstName: z.string().min(1, 'First name is required'),
-  lastName: z.string().optional(),
-  email: z
-    .string()
-    .email('Invalid email address.')
-    .optional()
-    .or(z.literal('')),
+  lastName: z.string().optional().nullable(),
+  email: z.string().email('Invalid email address.').optional().nullable(),
   photo: z.instanceof(File).optional(),
   gender: z.enum(['male', 'female', 'non_binary']).optional().nullable(),
-  birthDate: z.string().optional(),
+  birthDate: z.string().optional().nullable(),
 })
 
 export async function getUserUpdateRequirements(): Promise<{
@@ -168,6 +183,25 @@ export async function updateUserProfile(
   prevState: State,
   formData: FormData,
 ): Promise<State> {
+  const emailFromForm = formData.get('email') as string | null
+
+  // Check for disposable email domain
+  if (emailFromForm) {
+    const domain = emailFromForm.split('@')[1]
+    if (domain && disposableEmailDomains.has(domain.toLowerCase())) {
+      return {
+        success: false,
+        message: null,
+        error:
+          'Please use a permanent email address. Disposable emails are not allowed.',
+        errors: {
+          email: [
+            'Please use a permanent email address. Disposable emails are not allowed.',
+          ],
+        },
+      }
+    }
+  }
   const session = await auth()
   if (!session?.user?.id) {
     return {
@@ -181,7 +215,7 @@ export async function updateUserProfile(
     // username: formData.get('username'),
     firstName: formData.get('firstName'),
     lastName: formData.get('lastName'),
-    email: formData.get('email'),
+    email: emailFromForm,
     photo: formData.get('photo'),
     password: formData.get('password'),
     gender: formData.get('gender'),
@@ -189,9 +223,15 @@ export async function updateUserProfile(
   })
 
   if (!validatedFields.success) {
+    const errorPayload = {
+      ...validatedFields.error.flatten().fieldErrors,
+    }
+
+    // The server action returns a generic error message, but the client can use the detailed errors.
     return {
       success: false,
       error: 'Invalid data provided. Please check the form and try again.',
+      errors: errorPayload,
       message: null,
     }
   }
@@ -209,55 +249,20 @@ export async function updateUserProfile(
   const groupUserRoles = await getCodeTable('groupUserRole')
 
   try {
-    const currentUser = await prisma.user.findUnique({
+    const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { email: true, emailVerified: true, password: true },
+      include: { photos: true, groupMemberships: true },
     })
 
-    if (!currentUser) {
+    if (!user) {
       return { success: false, error: 'User not found.', message: null }
     }
-    const [photoTypes, entityTypes] = await Promise.all([
-      getCodeTable('photoType'),
-      getCodeTable('entityType'),
-    ])
 
     // Handle photo upload first
-    if (photo && photo.size > 0) {
-      const existingPhoto = await prisma.photo.findFirst({
-        where: {
-          entityTypeId: entityTypes.user.id,
-          typeId: photoTypes.primary.id,
-          entityId: userId,
-        },
-      })
+    let photoUrlForCheck: string | null = null
 
-      // Upload new photo
-      const photoKey = await uploadFile(photo, 'user-photos', userId)
-      newPhotoKey = photoKey
-
-      if (existingPhoto) {
-        // Note: We are now deleting based on the new key format if the URL is not a full URL.
-        // This assumes old keys might be stored differently.
-        const keyToDelete = existingPhoto.url.startsWith('http')
-          ? new URL(existingPhoto.url).pathname.substring(1)
-          : existingPhoto.url
-        await deleteFile(keyToDelete)
-        await prisma.photo.update({
-          where: { id: existingPhoto.id },
-          data: { url: photoKey, userId: userId },
-        })
-      } else {
-        await prisma.photo.create({
-          data: {
-            url: photoKey,
-            typeId: photoTypes.primary.id,
-            entityTypeId: entityTypes.user.id,
-            entityId: userId,
-            userId: userId,
-          },
-        })
-      }
+    if (photo) {
+      newPhotoKey = await uploadFile(photo, 'user-profile-photos', userId)
     }
 
     let birthDateObj: Date | undefined
@@ -277,7 +282,8 @@ export async function updateUserProfile(
       } else {
         return {
           success: false,
-          error: 'Invalid birth date format. Please use a recognized date format.',
+          error:
+            'Invalid birth date format. Please use a recognized date format.',
           message: null,
         }
       }
@@ -287,13 +293,12 @@ export async function updateUserProfile(
     }
 
     let emailChanged = false
-    if (email && (email !== currentUser.email || !currentUser.emailVerified)) {
+    if (email && (email !== user.email || !user.emailVerified)) {
       dataToUpdate.email = email
       dataToUpdate.emailVerified = null // Mark new email as unverified
       emailChanged = true
     }
 
-    let passwordIsBeingSetToReal = false
     if (password) {
       if (password === 'password123') {
         return {
@@ -303,11 +308,8 @@ export async function updateUserProfile(
         }
       }
 
-      if (currentUser.password) {
-        const isSamePassword = await bcrypt.compare(
-          password,
-          currentUser.password,
-        )
+      if (user.password) {
+        const isSamePassword = await bcrypt.compare(password, user.password)
         if (isSamePassword) {
           return {
             success: false,
@@ -318,43 +320,83 @@ export async function updateUserProfile(
       }
 
       dataToUpdate.password = await bcrypt.hash(password, 10)
-      passwordIsBeingSetToReal = true
     }
+
+    const {
+      firstName: formFirstName,
+      lastName: formLastName,
+      email: formEmail,
+    } = validatedFields.data
+
+    const profileIsNowComplete = Boolean(
+      formFirstName &&
+        formLastName &&
+        (user.emailVerified || formEmail) && // if they are setting an email for the first time, we can consider it complete for now
+        (newPhotoKey || user.photos.length > 0),
+    )
 
     updatedUser = await prisma.user.update({
       where: { id: userId },
       data: dataToUpdate,
     })
 
+    // Now handle photo update in the database after user is updated
+    if (newPhotoKey) {
+      const photoTypes = await getCodeTable('photoType')
+      const primaryPhotoTypeId = photoTypes.primary.id
+
+      if (primaryPhotoTypeId) {
+        const entityTypes = await getCodeTable('entityType')
+        const userEntityTypeId = entityTypes.user.id
+
+        if (userEntityTypeId) {
+          const existingPhoto = await prisma.photo.findFirst({
+            where: {
+              entityId: user.id,
+              entityTypeId: userEntityTypeId,
+              typeId: primaryPhotoTypeId,
+            },
+          })
+
+          if (existingPhoto) {
+            await prisma.photo.update({
+              where: { id: existingPhoto.id },
+              data: { url: newPhotoKey },
+            })
+            if (existingPhoto.url) {
+              await deleteFile(existingPhoto.url)
+            }
+          } else {
+            await prisma.photo.create({
+              data: {
+                url: newPhotoKey,
+                entityId: user.id,
+                entityTypeId: userEntityTypeId,
+                typeId: primaryPhotoTypeId,
+              },
+            })
+          }
+        }
+      }
+    }
+
     if (emailChanged && updatedUser.email) {
       await sendVerificationEmail(updatedUser.email, userId)
     }
 
-    const hasPrimaryPhoto = await prisma.photo.findFirst({
-      where: {
-        entityId: userId,
-        entityTypeId: entityTypes.user.id,
-        typeId: photoTypes.primary.id,
-      },
-    })
-
-    const isProfileComplete =
-      updatedUser.firstName &&
-      updatedUser.lastName &&
-      updatedUser.emailVerified &&
-      hasPrimaryPhoto &&
-      !hasPrimaryPhoto.url.includes('dicebear.com')
-
-    if (isProfileComplete) {
-      await prisma.groupUser.updateMany({
-        where: {
-          userId: userId,
-          roleId: groupUserRoles.guest.id,
-        },
-        data: {
-          roleId: groupUserRoles.member.id,
-        },
-      })
+    if (profileIsNowComplete) {
+      const memberRoleId = groupUserRoles.member?.id
+      if (memberRoleId) {
+        await prisma.groupUser.update({
+          where: {
+            userId_groupId: {
+              userId: user.id,
+              groupId: user.groupMemberships[0].groupId,
+            },
+          },
+          data: { roleId: memberRoleId },
+        })
+      }
     }
   } catch (error) {
     console.error('Failed to update user profile:', error)
@@ -458,7 +500,7 @@ export async function updateUserGender(
   if (!isAdmin && requesterId !== updatingUserId) {
     return {
       success: false,
-      error: 'You do not have permission to update this user\'s gender.',
+      error: "You do not have permission to update this user's gender.",
     }
   }
 
@@ -484,7 +526,7 @@ export async function updateUserGender(
     if (existingRelationship) {
       return {
         success: false,
-        error: 'You do not have permission to update this user\'s gender.',
+        error: "You do not have permission to update this user's gender.",
       }
     }
   }
