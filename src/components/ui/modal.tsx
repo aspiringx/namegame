@@ -51,7 +51,7 @@ export default function Modal({
                     {title}
                   </Dialog.Title>
                 )}
-                <div className="mt-4">{children}</div>
+                <div>{children}</div>
               </Dialog.Panel>
             </Transition.Child>
           </div>

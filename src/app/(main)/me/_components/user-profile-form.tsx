@@ -331,44 +331,46 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
         </p>
       )}
 
-      <div>
-        <label
-          htmlFor="firstName"
-          className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-        >
-          First Name
-        </label>
-        <div className="mt-2">
+      <div className="flex">
+        <div className="flex-grow">
+          <label
+            htmlFor="firstName"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            First <span className="text-red-500">*</span>
+          </label>
           <input
             type="text"
-            name="firstName"
             id="firstName"
+            name="firstName"
+            placeholder="First name"
+            required
             value={firstName}
-            onChange={(e) => {
-              setFirstName(e.target.value)
-            }}
-            className="block w-full rounded-md border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+            onChange={(e) => setFirstName(e.target.value)}
+            className={`mt-1 block w-full rounded-l-md rounded-r-none border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 ${
+              !firstName ? 'bg-red-100 dark:bg-red-900' : ''
+            }`}
           />
         </div>
-      </div>
 
-      <div>
-        <label
-          htmlFor="lastName"
-          className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-        >
-          Last Name
-        </label>
-        <div className="mt-2">
+        <div className="flex-grow">
+          <label
+            htmlFor="lastName"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            Last <span className="text-red-500">*</span>
+          </label>
           <input
             type="text"
-            name="lastName"
             id="lastName"
+            name="lastName"
+            placeholder="Last name"
+            required
             value={lastName}
-            onChange={(e) => {
-              setLastName(e.target.value)
-            }}
-            className="block w-full rounded-md border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+            onChange={(e) => setLastName(e.target.value)}
+            className={`mt-1 -ml-px block w-full rounded-l-none rounded-r-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 ${
+              !lastName ? 'bg-red-100 dark:bg-red-900' : ''
+            }`}
           />
         </div>
       </div>
@@ -378,20 +380,62 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
           htmlFor="email"
           className="block text-sm font-medium text-gray-700 dark:text-gray-300"
         >
-          Email
+          Email <span className="text-red-500">*</span>
         </label>
-        <div className="mt-2">
+        <div className="relative mt-1">
           <input
             type="email"
-            name="email"
             id="email"
+            name="email"
             value={displayEmail}
-            onChange={(e) => {
-              setDisplayEmail(e.target.value)
-            }}
-            className="block w-full rounded-md border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:disabled:bg-gray-800 dark:disabled:text-gray-400"
+            placeholder="Email"
+            required
+            onChange={(e) => setDisplayEmail(e.target.value)}
+            className={`block w-full rounded-md border-gray-300 py-2 pr-10 pl-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 ${
+              !displayEmail ? 'bg-red-100 dark:bg-red-900' : ''
+            }`}
           />
+          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+            <TooltipProvider disableHoverableContent={true}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    className="pointer-events-auto focus:outline-none"
+                  >
+                    {isVerifiedForDisplay ? (
+                      <ShieldCheck
+                        className="h-5 w-5 text-green-500"
+                        aria-hidden="true"
+                      />
+                    ) : (
+                      <ShieldAlert
+                        className="h-5 w-5 text-red-500"
+                        aria-hidden="true"
+                      />
+                    )}
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {isVerifiedForDisplay ? (
+                    <p>
+                      Email verified on{' '}
+                      {new Date(user.emailVerified!).toLocaleDateString()}
+                    </p>
+                  ) : (
+                    <p>Email not verified</p>
+                  )}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
         </div>
+        {displayEmail && !isVerifiedForDisplay && (
+          <p className="mt-1 rounded-md bg-green-50 p-2 text-sm text-xs text-green-700 dark:bg-green-900 dark:text-green-300">
+            Your email is not verified. After saving, check your email for a
+            link to complete this.
+          </p>
+        )}
       </div>
 
       <div>
@@ -399,115 +443,167 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
           htmlFor="password"
           className="block text-sm font-medium text-gray-700 dark:text-gray-300"
         >
-          Password
+          New Password
           {validation.passwordRequired && (
             <span className="text-red-500"> *</span>
           )}
         </label>
-        <div className="relative mt-2 rounded-md shadow-sm">
+        <div className="mt-1 flex rounded-md shadow-sm">
           <input
-            type={showPassword ? 'text' : 'password'}
-            name="password"
             id="password"
+            name="password"
+            type={showPassword ? 'text' : 'password'}
+            autoComplete="new-password"
             value={password}
-            onChange={(e) => {
-              setPassword(e.target.value)
-              validatePassword(e.target.value)
-            }}
-            className={`block w-full rounded-md border-gray-300 px-3 py-2 pr-24 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 ${
-              passwordError
-                ? 'border-red-500 text-red-900 placeholder-red-300 focus:border-red-500 focus:ring-red-500'
+            required={validation.passwordRequired}
+            className={`block w-full min-w-0 flex-1 rounded-none rounded-l-md border border-gray-300 bg-white px-3 py-2 focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 ${
+              validation.passwordRequired && !password
+                ? 'bg-red-100 dark:bg-red-900'
                 : ''
             }`}
+            placeholder={
+              validation.passwordRequired
+                ? 'New password required'
+                : 'Leave blank to keep current password'
+            }
+            onChange={(e) => {
+              const newPassword = e.target.value
+              setPassword(newPassword)
+              validatePassword(newPassword)
+            }}
           />
-          <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="text-gray-400 hover:text-gray-500 focus:outline-none"
-            >
-              {showPassword ? (
-                <EyeOff className="h-5 w-5" />
-              ) : (
-                <Eye className="h-5 w-5" />
-              )}
-            </button>
-            <button
-              type="button"
-              onClick={handleGeneratePassword}
-              className="ml-3 text-gray-400 hover:text-gray-500 focus:outline-none"
-            >
-              <RefreshCw className="h-5 w-5" />
-            </button>
-            {password && (
-              <button
-                type="button"
-                onClick={handleCopyPassword}
-                className="ml-3 text-gray-400 hover:text-gray-500 focus:outline-none"
-              >
-                {showCopySuccess ? (
-                  <Check className="h-5 w-5 text-green-500" />
-                ) : (
-                  <Copy className="h-5 w-5" />
-                )}
-              </button>
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="inline-flex items-center border border-l-0 border-gray-300 bg-gray-50 px-3 text-sm text-gray-500 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+          >
+            {showPassword ? (
+              <EyeOff className="h-5 w-5" />
+            ) : (
+              <Eye className="h-5 w-5" />
             )}
-          </div>
+          </button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                {password && !passwordError ? (
+                  <button
+                    type="button"
+                    onClick={handleCopyPassword}
+                    className="inline-flex items-center rounded-r-md border border-l-0 border-gray-300 bg-gray-50 px-3 text-sm text-gray-500 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                    aria-label="Copy password to clipboard"
+                  >
+                    {showCopySuccess ? (
+                      <Check className="h-5 w-5 text-green-500" />
+                    ) : (
+                      <Copy className="h-5 w-5" />
+                    )}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleGeneratePassword}
+                    className="inline-flex items-center rounded-r-md border border-l-0 border-gray-300 bg-gray-50 px-3 text-sm text-gray-500 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                    aria-label="Generate a new password"
+                  >
+                    <RefreshCw className="h-5 w-5" />
+                  </button>
+                )}
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>
+                  {password && !passwordError
+                    ? showCopySuccess
+                      ? 'Copied!'
+                      : 'Copy Password'
+                    : 'Generate Password'}
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
-        {passwordError && (
-          <p className="mt-2 text-sm text-red-600">{passwordError}</p>
-        )}
-        {validation.passwordRequired && !password && validation.submitted && (
-          <p className="mt-2 text-sm text-red-600">Password is required.</p>
+        {passwordError ? (
+          <p className="mt-1 text-xs text-red-500 dark:text-red-400">
+            {passwordError}
+          </p>
+        ) : (
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            {validation.passwordRequired
+              ? 'Enter or generate a new password.'
+              : ''}
+          </p>
         )}
       </div>
 
       <div>
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
           Profile Picture
+          {validation.photoRequired && <span className="text-red-500"> *</span>}
         </label>
-        <div className="mt-2 flex items-center">
-          <span className="inline-block h-12 w-12 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700">
-            {previewUrl ? (
-              <Image
-                src={previewUrl}
-                alt="Profile preview"
-                width={48}
-                height={48}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <svg
-                className="h-full w-full text-gray-300 dark:text-gray-500"
-                fill="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" />
-              </svg>
-            )}
-          </span>
+        <div className="mt-2 flex flex-col items-start space-y-4">
+          <label
+            htmlFor="photo"
+            className="group relative inline-block h-32 w-32 cursor-pointer overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700"
+          >
+            <div
+              className={`h-full w-full ${
+                validation.photoRequired && !previewUrl
+                  ? 'ring-2 ring-red-500 ring-offset-2 dark:ring-offset-gray-800'
+                  : ''
+              } rounded-full`}
+            >
+              {previewUrl ? (
+                <Image
+                  src={previewUrl}
+                  alt="Profile photo preview"
+                  width={128}
+                  height={128}
+                  className="h-full w-full object-cover text-gray-300"
+                />
+              ) : (
+                <svg
+                  className="h-full w-full text-gray-300 dark:text-gray-500"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+              )}
+            </div>
+            <div className="bg-opacity-50 absolute inset-0 flex flex-col items-center justify-center bg-black opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+              <Upload className="h-8 w-8 text-white" />
+              <span className="mt-1 text-xs font-semibold text-white">
+                Change
+              </span>
+            </div>
+          </label>
           <input
-            ref={fileInputRef}
             type="file"
-            name="photo"
             id="photo"
-            className="hidden"
+            name="photo"
+            accept="image/*"
+            required={validation.photoRequired}
             onChange={handleFileChange}
-            accept="image/jpeg,image/png,image/gif"
+            ref={fileInputRef}
+            className="hidden"
           />
           <button
             type="button"
             onClick={handleChoosePhoto}
-            className="ml-5 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm leading-4 font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 dark:focus:ring-offset-gray-800"
+            className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm leading-4 font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 dark:focus:ring-offset-gray-800"
           >
             Change Photo
           </button>
-        </div>
-        {validation.photoRequired && !previewUrl && validation.submitted && (
-          <p className="mt-2 text-sm text-red-600">
-            Profile picture is required.
+          <p
+            className={`-mt-3 text-xs text-red-500 dark:text-red-400 ${
+              validation.photoRequired ? 'text-red-500 dark:text-red-400' : ''
+            }`}
+          >
+            {validation.photoRequired && previewUrl?.includes('dicebear.com')
+              ? 'Add a real profile pic so people recognize you.'
+              : ''}
           </p>
-        )}
+        </div>
       </div>
 
       <div className="border-t border-gray-200 py-6 dark:border-gray-700">
@@ -620,18 +716,27 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
         )}
       </div>
 
-      <div className="flex justify-end space-x-2">
+      {!state?.success && state?.error && (
+        <p className="text-red-500">{state.error}</p>
+      )}
+
+      <div className="flex items-center gap-x-4">
+        <SubmitButton
+          onNewSubmission={handleNewSubmission}
+          disabled={
+            !isDirty ||
+            !!passwordError ||
+            (validation.passwordRequired && !password) ||
+            (validation.photoRequired && previewUrl?.includes('dicebear.com'))
+          }
+        />
         <button
           type="button"
           onClick={() => router.back()}
-          className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 dark:focus:ring-offset-gray-800"
+          className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 dark:focus:ring-offset-gray-800"
         >
           Cancel
         </button>
-        <SubmitButton
-          onNewSubmission={handleNewSubmission}
-          disabled={!isDirty || !!passwordError}
-        />
       </div>
     </form>
   )
