@@ -395,6 +395,11 @@ function translatePathToRelationship(
       genderedOn: 3,
     },
     {
+      path: 'spouse > parent > child > spouse',
+      label: 'Sibling-in-law',
+      genderedOn: 3,
+    },
+    {
       path: 'spouse > parent > parent > parent',
       label: 'Great-grandparent-in-law',
       genderedOn: 4,
