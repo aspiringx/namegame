@@ -115,22 +115,29 @@ export function getRelationship(
         }
 
         const egoParents = new Set(getParents(egoUserId))
-        const alterParents = getParents(alterUserId)
+        const alterParents = new Set(getParents(alterUserId))
 
-        const commonParentsCount = alterParents.filter((p) =>
-          egoParents.has(p),
-        ).length
+        if (egoParents.size === 0 || alterParents.size === 0) {
+          // Not enough information to determine, proceed to default
+        } else if (egoParents.size === alterParents.size) {
+          const parentsMatch = [...alterParents].every((p) => egoParents.has(p))
+          if (parentsMatch) {
+            const alterUser = usersMap.get(alterUserId)
+            return {
+              relationship: getGenderedLabel('Sibling', alterUser?.gender),
+              path: current.path,
+              steps: current.path.length - 1,
+            }
+          }
+        }
 
-        const alterUser = usersMap.get(alterUserId)
-        if (commonParentsCount === 1) {
+        // Fallback to half-sibling if parents don't perfectly match but share at least one
+        const commonParents = [...alterParents].filter((p) => egoParents.has(p))
+
+        if (commonParents.length > 0) {
+          const alterUser = usersMap.get(alterUserId)
           return {
             relationship: getGenderedLabel('Half-sibling', alterUser?.gender),
-            path: current.path,
-            steps: current.path.length - 1,
-          }
-        } else {
-          return {
-            relationship: getGenderedLabel('Sibling', alterUser?.gender),
             path: current.path,
             steps: current.path.length - 1,
           }
