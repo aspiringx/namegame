@@ -261,7 +261,7 @@ export async function updateUserProfile(
     // Handle photo upload first
     let photoUrlForCheck: string | null = null
 
-    if (photo) {
+    if (photo && photo.size > 0) {
       newPhotoKey = await uploadFile(photo, 'user-profile-photos', userId)
     }
 
@@ -580,6 +580,48 @@ export async function updateUserBirthDate(
     return { success: true }
   } catch (error) {
     console.error('Failed to update user birth date:', error)
+    return {
+      success: false,
+      error: 'An unexpected error occurred. Please try again.',
+    }
+  }
+}
+
+export async function leaveGroup(groupId: string): Promise<{
+  success: boolean
+  error?: string
+}> {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return {
+      success: false,
+      error: 'You must be logged in to leave a group.',
+    }
+  }
+
+  const numericGroupId = parseInt(groupId, 10)
+  if (isNaN(numericGroupId)) {
+    return {
+      success: false,
+      error: 'Invalid group ID.',
+    }
+  }
+
+  try {
+    await prisma.groupUser.delete({
+      where: {
+        userId_groupId: {
+          userId: session.user.id,
+          groupId: numericGroupId,
+        },
+      },
+    })
+
+    revalidatePath('/me/groups')
+
+    return { success: true }
+  } catch (error) {
+    console.error('Failed to leave group:', error)
     return {
       success: false,
       error: 'An unexpected error occurred. Please try again.',

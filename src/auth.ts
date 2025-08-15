@@ -89,31 +89,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.image = user.image
       }
 
-      // When the session is updated (e.g., profile picture change),
-      // re-fetch the user data from the database to ensure the token is fresh.
+      // When the session is updated (e.g., profile name or picture change),
+      // we can update the token directly with the data passed in the session object.
       if (trigger === 'update' && session) {
-        const dbUser = await prisma.user.findUnique({
-          where: { id: token.id as string },
-          include: {
-            photos: true,
-          },
-        })
-
-        if (dbUser) {
-          const [photoTypes, entityTypes] = await Promise.all([
-            getCodeTable('photoType'),
-            getCodeTable('entityType'),
-          ])
-
-          const primaryPhoto = dbUser.photos.find(
-            (p) =>
-              p.typeId === photoTypes.primary.id &&
-              p.entityTypeId === entityTypes.user.id &&
-              p.entityId === dbUser.id,
-          )
-
-          const photoUrl = primaryPhoto?.url || null
-          token.image = photoUrl
+        if (session.name) {
+          token.name = session.name
+          token.firstName = session.name // Also update our custom firstName property
+        }
+        // Only update the image in the token if a new image URL is provided.
+        // A `null` value for `session.image` means no new photo was uploaded.
+        if (session.image) {
+          token.image = session.image
         }
       }
 
