@@ -17,6 +17,7 @@ import {
   Check,
   Upload,
   ChevronDown,
+  XCircle as XCircleIcon,
 } from 'lucide-react'
 import {
   Tooltip,
@@ -115,6 +116,9 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
   const [showCopySuccess, setShowCopySuccess] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isOptionalOpen, setIsOptionalOpen] = useState(false)
+  const [isEmailValid, setIsEmailValid] = useState(
+    !!user.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(user.email),
+  )
 
   const validatePassword = (password: string) => {
     if (password && password === 'password123') {
@@ -134,6 +138,7 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
   const initialState: State = {
     message: null,
     error: null,
+    errors: null,
     success: false,
     newFirstName: null,
     newPhotoUrl: null,
@@ -330,14 +335,39 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
           {state.message}
         </p>
       )}
-
+      {state?.errors && (
+        <div className="rounded-md bg-red-50 p-4 dark:bg-red-900/30">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <XCircleIcon
+                className="h-5 w-5 text-red-400"
+                aria-hidden="true"
+              />
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800 dark:text-red-300">
+                Please correct the following issues:
+              </h3>
+              <div className="mt-2 text-sm text-red-700 dark:text-red-200">
+                <ul role="list" className="list-disc space-y-1 pl-5">
+                  {Object.entries(state.errors).flatMap(([field, messages]) =>
+                    messages.map((message, index) => (
+                      <li key={`${field}-${index}`}>{message}</li>
+                    )),
+                  )}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="flex">
         <div className="flex-grow">
           <label
             htmlFor="firstName"
             className="block text-sm font-medium text-gray-700 dark:text-gray-300"
           >
-            First <span className="text-red-500">*</span>
+            First
           </label>
           <input
             type="text"
@@ -348,9 +378,16 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
             value={firstName}
             onChange={(e) => setFirstName(e.target.value)}
             className={`mt-1 block w-full rounded-l-md rounded-r-none border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 ${
-              !firstName ? 'bg-red-100 dark:bg-red-900' : ''
+              !firstName || state?.errors?.firstName
+                ? 'bg-red-100 dark:bg-red-900'
+                : ''
             }`}
           />
+          {state?.errors?.firstName && (
+            <p className="mt-1 text-xs text-red-500 dark:text-red-400">
+              {state.errors.firstName[0]}
+            </p>
+          )}
         </div>
 
         <div className="flex-grow">
@@ -358,7 +395,7 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
             htmlFor="lastName"
             className="block text-sm font-medium text-gray-700 dark:text-gray-300"
           >
-            Last <span className="text-red-500">*</span>
+            Last
           </label>
           <input
             type="text"
@@ -369,9 +406,16 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
             value={lastName}
             onChange={(e) => setLastName(e.target.value)}
             className={`mt-1 -ml-px block w-full rounded-l-none rounded-r-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 ${
-              !lastName ? 'bg-red-100 dark:bg-red-900' : ''
+              !lastName || state?.errors?.lastName
+                ? 'bg-red-100 dark:bg-red-900'
+                : ''
             }`}
           />
+          {state?.errors?.lastName && (
+            <p className="mt-1 text-xs text-red-500 dark:text-red-400">
+              {state.errors.lastName[0]}
+            </p>
+          )}
         </div>
       </div>
 
@@ -380,7 +424,7 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
           htmlFor="email"
           className="block text-sm font-medium text-gray-700 dark:text-gray-300"
         >
-          Email <span className="text-red-500">*</span>
+          Email
         </label>
         <div className="relative mt-1">
           <input
@@ -390,9 +434,16 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
             value={displayEmail}
             placeholder="Email"
             required
-            onChange={(e) => setDisplayEmail(e.target.value)}
+            onChange={(e) => {
+              const newEmail = e.target.value
+              setDisplayEmail(newEmail)
+              const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+              setIsEmailValid(emailRegex.test(newEmail))
+            }}
             className={`block w-full rounded-md border-gray-300 py-2 pr-10 pl-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 ${
-              !displayEmail ? 'bg-red-100 dark:bg-red-900' : ''
+              !isEmailValid || (state?.errors?.email && !isDirty)
+                ? 'bg-red-100 dark:bg-red-900'
+                : ''
             }`}
           />
           <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
@@ -430,11 +481,18 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
             </TooltipProvider>
           </div>
         </div>
-        {displayEmail && !isVerifiedForDisplay && (
-          <p className="mt-1 rounded-md bg-green-50 p-2 text-sm text-xs text-green-700 dark:bg-green-900 dark:text-green-300">
-            Your email is not verified. After saving, check your email for a
-            link to complete this.
+        {state?.errors?.email ? (
+          <p className="mt-1 text-xs text-red-500 dark:text-red-400">
+            {state.errors.email[0]}
           </p>
+        ) : (
+          displayEmail &&
+          !isVerifiedForDisplay && (
+            <p className="mt-1 rounded-md bg-green-50 p-2 text-sm text-xs text-green-700 dark:bg-green-900 dark:text-green-300">
+              Your email is not verified. After saving, check your email for a
+              link to complete this.
+            </p>
+          )
         )}
       </div>
 
@@ -443,10 +501,7 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
           htmlFor="password"
           className="block text-sm font-medium text-gray-700 dark:text-gray-300"
         >
-          New Password
-          {validation.passwordRequired && (
-            <span className="text-red-500"> *</span>
-          )}
+          Password
         </label>
         <div className="mt-1 flex rounded-md shadow-sm">
           <input
@@ -457,7 +512,8 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
             value={password}
             required={validation.passwordRequired}
             className={`block w-full min-w-0 flex-1 rounded-none rounded-l-md border border-gray-300 bg-white px-3 py-2 focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 ${
-              validation.passwordRequired && !password
+              (validation.passwordRequired && !password) ||
+              state?.errors?.password
                 ? 'bg-red-100 dark:bg-red-900'
                 : ''
             }`}
@@ -522,6 +578,11 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
             </Tooltip>
           </TooltipProvider>
         </div>
+        {state?.errors?.password && (
+          <p className="mt-1 text-xs text-red-500 dark:text-red-400">
+            {state.errors.password[0]}
+          </p>
+        )}
         {passwordError ? (
           <p className="mt-1 text-xs text-red-500 dark:text-red-400">
             {passwordError}
@@ -538,7 +599,6 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
       <div>
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
           Profile Picture
-          {validation.photoRequired && <span className="text-red-500"> *</span>}
         </label>
         <div className="mt-2 flex flex-col items-start space-y-4">
           <label
@@ -726,6 +786,7 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
           disabled={
             !isDirty ||
             !!passwordError ||
+            !isEmailValid ||
             (validation.passwordRequired && !password) ||
             (validation.photoRequired && previewUrl?.includes('dicebear.com'))
           }

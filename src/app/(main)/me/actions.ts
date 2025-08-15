@@ -13,8 +13,17 @@ import { sendVerificationEmail } from '@/lib/mail'
 
 export type State = {
   success: boolean
-  error: string | null
   message: string | null
+  error?: string | null
+  errors?: {
+    firstName?: string[]
+    lastName?: string[]
+    email?: string[]
+    password?: string[]
+    photo?: string[]
+    gender?: string[]
+    birthDate?: string[]
+  } | null
   newPhotoUrl?: string | null
   newFirstName?: string | null
   redirectUrl?: string | null
@@ -189,9 +198,15 @@ export async function updateUserProfile(
   })
 
   if (!validatedFields.success) {
+    const errorPayload = {
+      ...validatedFields.error.flatten().fieldErrors,
+    }
+
+    // The server action returns a generic error message, but the client can use the detailed errors.
     return {
       success: false,
       error: 'Invalid data provided. Please check the form and try again.',
+      errors: errorPayload,
       message: null,
     }
   }
