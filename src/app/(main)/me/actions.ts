@@ -1,9 +1,11 @@
 'use server'
 
 import { z } from 'zod'
+import { parse, isValid } from 'date-fns'
 import bcrypt from 'bcrypt'
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
+import { DatePrecision } from '@/generated/prisma/client'
 import { revalidatePath, revalidateTag } from 'next/cache'
 import { getCodeTable } from '@/lib/codes'
 import { uploadFile, deleteFile, getPublicUrl } from '@/lib/storage'
@@ -16,6 +18,84 @@ export type State = {
   newPhotoUrl?: string | null
   newFirstName?: string | null
   redirectUrl?: string | null
+}
+
+function parseDateAndDeterminePrecision(dateString: string): {
+  date: Date
+  precision: DatePrecision
+} | null {
+  // Special handling for two-digit years to avoid date-fns ambiguity
+  if (/^\d{2}$/.test(dateString)) {
+    const inputYear = parseInt(dateString, 10)
+    const currentYear = new Date().getFullYear()
+    const currentCentury = Math.floor(currentYear / 100) * 100
+    const lastTwoDigitsOfCurrentYear = currentYear % 100
+
+    const fullYear =
+      inputYear > lastTwoDigitsOfCurrentYear
+        ? currentCentury - 100 + inputYear // e.g., in 2025, '77' becomes 1977
+        : currentCentury + inputYear // e.g., in 2025, '15' becomes 2015
+
+    return {
+      date: new Date(fullYear, 0, 1), // Create date for Jan 1st of the correct year
+      precision: DatePrecision.YEAR,
+    }
+  }
+
+  // Special handling for MM/dd/yy or M/d/yy formats
+  const twoDigitYearMatch = dateString.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2})$/)
+  if (twoDigitYearMatch) {
+    const [, month, day, yearStr] = twoDigitYearMatch
+    let year = parseInt(yearStr, 10)
+    const currentYear = new Date().getFullYear()
+    const currentCentury = Math.floor(currentYear / 100) * 100
+    const currentTwoDigitYear = currentYear % 100
+
+    if (year > currentTwoDigitYear) {
+      year = currentCentury - 100 + year
+    } else {
+      year = currentCentury + year
+    }
+
+    const parsedDate = new Date(year, parseInt(month, 10) - 1, parseInt(day, 10))
+    if (!isNaN(parsedDate.getTime())) {
+      return { date: parsedDate, precision: DatePrecision.DAY }
+    }
+  }
+
+  const dateParsingConfig = [
+    // Order matters: more specific formats first
+
+    // Time precision
+    { format: "MMMM d, yyyy 'at' HH:mm", precision: DatePrecision.TIME },
+    { format: "MMM d yyyy 'at' HH:mm", precision: DatePrecision.TIME },
+    { format: "MMM d yyyy 'at' h:mm a", precision: DatePrecision.TIME },
+    { format: 'M/d/yyyy HH:mm', precision: DatePrecision.TIME },
+    { format: 'M/d/yyyy h:mm a', precision: DatePrecision.TIME },
+    { format: 'yyyy-MM-dd HH:mm', precision: DatePrecision.TIME },
+
+    // Day precision
+    { format: 'M/d/yyyy', precision: DatePrecision.DAY },
+    { format: 'MMM d yyyy', precision: DatePrecision.DAY },
+    { format: 'MMMM d, yyyy', precision: DatePrecision.DAY },
+    { format: 'yyyy-MM-dd', precision: DatePrecision.DAY },
+
+    // Month precision
+    { format: 'MMMM yyyy', precision: DatePrecision.MONTH },
+    { format: 'MMM yyyy', precision: DatePrecision.MONTH },
+    { format: 'yyyy-MM', precision: DatePrecision.MONTH },
+
+    // Year precision
+    { format: 'yyyy', precision: DatePrecision.YEAR },
+  ]
+  for (const { format, precision } of dateParsingConfig) {
+    const parsedDate = parse(dateString, format, new Date())
+
+    if (isValid(parsedDate)) {
+      return { date: parsedDate, precision }
+    }
+  }
+  return null
 }
 
 const UserProfileSchema = z.object({
@@ -34,6 +114,7 @@ const UserProfileSchema = z.object({
     .or(z.literal('')),
   photo: z.instanceof(File).optional(),
   gender: z.enum(['male', 'female', 'non_binary']).optional().nullable(),
+  birthDate: z.string().optional(),
 })
 
 export async function getUserUpdateRequirements(): Promise<{
@@ -104,6 +185,7 @@ export async function updateUserProfile(
     photo: formData.get('photo'),
     password: formData.get('password'),
     gender: formData.get('gender'),
+    birthDate: formData.get('birthDate'),
   })
 
   if (!validatedFields.success) {
@@ -115,7 +197,8 @@ export async function updateUserProfile(
   }
 
   // const { username, firstName, lastName, photo, password } = validatedFields.data;
-  const { firstName, lastName, email, photo, password, gender } = validatedFields.data
+  const { firstName, lastName, email, photo, password, gender, birthDate } =
+    validatedFields.data
   const userId = session.user.id
 
   let newPhotoKey: string | null = null
@@ -177,10 +260,30 @@ export async function updateUserProfile(
       }
     }
 
+    let birthDateObj: Date | undefined
+    let birthDatePrecision: DatePrecision | undefined
+
     const dataToUpdate: any = {
       firstName,
       lastName,
       gender,
+    }
+
+    if (birthDate) {
+      const parsed = parseDateAndDeterminePrecision(birthDate)
+      if (parsed) {
+        dataToUpdate.birthDate = parsed.date
+        dataToUpdate.birthDatePrecision = parsed.precision
+      } else {
+        return {
+          success: false,
+          error: 'Invalid birth date format. Please use a recognized date format.',
+          message: null,
+        }
+      }
+    } else {
+      dataToUpdate.birthDate = null
+      dataToUpdate.birthDatePrecision = null
     }
 
     let emailChanged = false
@@ -396,6 +499,45 @@ export async function updateUserGender(
     return { success: true }
   } catch (error) {
     console.error('Failed to update user gender:', error)
+    return {
+      success: false,
+      error: 'An unexpected error occurred. Please try again.',
+    }
+  }
+}
+
+export async function updateUserBirthDate(
+  userId: string,
+  birthDate: string,
+  groupSlug: string,
+): Promise<{ success: boolean; error?: string }> {
+  const session = await auth()
+  const requesterId = session?.user?.id
+
+  if (!requesterId) {
+    return {
+      success: false,
+      error: 'You must be logged in to update a user.',
+    }
+  }
+
+  const parsed = parseDateAndDeterminePrecision(birthDate)
+  if (!parsed) {
+    return { success: false, error: 'Invalid date format.' }
+  }
+
+  try {
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        birthDate: parsed.date,
+        birthDatePrecision: parsed.precision,
+      },
+    })
+    revalidatePath(`/g/${groupSlug}/family`)
+    return { success: true }
+  } catch (error) {
+    console.error('Failed to update user birth date:', error)
     return {
       success: false,
       error: 'An unexpected error occurred. Please try again.',

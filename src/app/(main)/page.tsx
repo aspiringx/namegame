@@ -139,10 +139,16 @@ export default function Home() {
             genders, etc. NameGame shows in-laws, step-relations, pronouns, etc.
           </p>
           <p>
-            With <i>Managed Users</i> you can securely include minor children,
-            people who have passed (e.g. grandparents), and people (with their
-            permission) unable to play due to disability, no computer or phone,
-            technology aversion, etc.
+            With <i>Managed Users</i> you can include people who can't,
+            shouldn't, or don't want to manage their own account. This might
+            include minor children, people who have passed, with disabilities,
+            no access to a computer or phone, or technology averse.
+          </p>
+          <p>
+            Be sure you have permission to create a non-anonymous Managed
+            Account for anyone who is alive (using their name, photo, etc.). Or
+            use an anonymous Managed Account if needed to connect the family
+            through someone who doesn't want to be visible.
           </p>
           <p>That's it!</p>
           <p>

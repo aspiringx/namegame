@@ -10,7 +10,8 @@ import {
   getFamilyRelationTypes,
   getMemberRelations,
 } from '@/app/g/[slug]/family/actions'
-import { updateUserGender } from '@/app/(main)/me/actions'
+import { updateUserGender, updateUserBirthDate } from '@/app/(main)/me/actions'
+
 import type { MemberWithUser as Member } from '@/types/index'
 import type { UserUserRelationType, Gender } from '@/generated/prisma'
 
@@ -53,9 +54,10 @@ function RelateModalContent({
   const [selectedMemberId, setSelectedMemberId] = useState('')
   const [selectedRelationTypeId, setSelectedRelationTypeId] = useState('')
   const [selectedGender, setSelectedGender] = useState<Gender | null>(null)
+  const [memberBirthDate, setMemberBirthDate] = useState('')
+  const [relatedPersonBirthDate, setRelatedPersonBirthDate] = useState('')
 
   // UI control state
-  const [showDetails, setShowDetails] = useState(false)
   const [relationToDelete, setRelationToDelete] =
     useState<RelationWithUser | null>(null)
   const [showMemberGenderEditor, setShowMemberGenderEditor] = useState(false)
@@ -67,7 +69,8 @@ function RelateModalContent({
     setSelectedMemberId('')
     setSelectedRelationTypeId('')
     setSelectedGender(null)
-    setShowDetails(false)
+    setMemberBirthDate('')
+    setRelatedPersonBirthDate('')
     setRelationToDelete(null)
     formRef.current?.reset()
   }, [member, initialRelations])
@@ -125,57 +128,66 @@ function RelateModalContent({
 
     startTransition(async () => {
       try {
-        const user2Id = formData.get('user2Id') as string
-        const selectedGenderValue = selectedGender
+        // Handle birth date updates first
+        if (memberBirthDate) {
+          await updateUserBirthDate(member.userId, memberBirthDate, groupSlug)
+        }
 
+        const user2Id = formData.get('user2Id') as string
+        if (user2Id && relatedPersonBirthDate) {
+          await updateUserBirthDate(user2Id, relatedPersonBirthDate, groupSlug)
+        }
+
+        // Handle gender update for related person
+        const selectedGenderValue = selectedGender
         if (user2Id && selectedGenderValue) {
           await updateUserGender(
             user2Id,
             selectedGenderValue,
             groupSlug,
-            member.userId,
+            member.userId, // updatingUserId
           )
         }
 
+        // Finally, add the relationship
         const result = await addUserRelation(formData, groupSlug)
         if (result.success) {
-          toast.success(result.message)
-          const updatedRelations = await getMemberRelations(
-            member.userId,
-            groupSlug,
-          )
-          setRelations(updatedRelations)
-          // Reset form state via the main useEffect hook by closing and re-triggering
+          toast.success('Relationship added!')
           onRelationshipAdded()
+          onClose()
         } else {
-          toast.error(result.message)
+          toast.error(result.message || 'Failed to add relationship.')
         }
       } catch (error) {
-        toast.error('An unexpected error occurred.')
+        console.error(error)
+        toast.error(
+          error instanceof Error ? error.message : 'An error occurred.',
+        )
       }
     })
   }
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!relationToDelete) return
 
     startDeletingTransition(async () => {
       try {
-        const result = await deleteUserRelation(relationToDelete.id, groupSlug)
+                const result = await deleteUserRelation(
+          relationToDelete.id,
+          groupSlug,
+        )
         if (result.success) {
           toast.success('Relationship deleted.')
-          const updatedRelations = await getMemberRelations(
-            member.userId,
-            groupSlug,
-          )
-          setRelations(updatedRelations)
-          setRelationToDelete(null)
           onRelationshipAdded()
+          setRelationToDelete(null)
         } else {
-          toast.error(result.message)
+          toast.error(result.message || 'Failed to delete relationship.')
         }
       } catch (error) {
-        toast.error('An unexpected error occurred.')
+        console.error(error)
+        toast.error(
+          error instanceof Error ? error.message : 'An error occurred.',
+        )
       }
     })
   }
@@ -186,88 +198,84 @@ function RelateModalContent({
     { label: 'They', value: 'non_binary' },
   ]
 
-  const modalTitle = (
-    <div className="flex items-center justify-between">
-      <span>{member.user.name}</span>
-      {showMemberGenderEditor && (
-        <div className="flex items-center space-x-1">
-          {genderOptions.map(({ label, value }) => (
-            <button
-              key={value}
-              type="button"
-              onClick={() => handleMemberGenderChange(value)}
-              className={`rounded-md px-2 py-1 text-xs font-medium transition-colors ${
-                memberGender === value
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-white text-gray-700 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:ring-gray-600 dark:hover:bg-gray-600'
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-
-  const relatedUserIds = new Set(relations.map((r) => r.relatedUser.id))
-  const availableMembers = groupMembers.filter(
-    (m) => m.userId !== member.userId && !relatedUserIds.has(m.userId),
-  )
+  const selectedMember = groupMembers.find((m) => m.userId === selectedMemberId)
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={modalTitle}>
-      <div className="mt-4">
-        {!isReadOnly && (
-          <form
-            ref={formRef}
-            onSubmit={handleSubmit}
-            className="rounded-md border border-gray-200 p-4 dark:border-gray-700"
-          >
-            <input type="hidden" name="user1Id" value={member.userId} />
-            <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-              <p>
-                Add or change relationships here.{' '}
-                {!showDetails && (
-                  <button
-                    type="button"
-                    onClick={() => setShowDetails(true)}
-                    className="font-medium text-indigo-600 hover:underline dark:text-indigo-400"
-                  >
-                    Show Details
-                  </button>
-                )}
-              </p>
-              {showDetails && (
+    <Modal isOpen={isOpen} onClose={onClose} title="Relate Members">
+      <div className="mt-2">
+        <div className="mt-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-medium leading-6 text-gray-900 dark:text-gray-100">
+              {member.user.firstName} {member.user.lastName}
+            </h3>
+            {isReadOnly && (
+              <span className="rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300">
+                Read-only
+              </span>
+            )}
+          </div>
+          {(!isReadOnly && (showMemberGenderEditor || !member.user.birthDate)) && (
+            <div className="mt-4 flex flex-col space-y-3">
+              {showMemberGenderEditor && (
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                    Gender:
+                  </span>
+                  {genderOptions.map(({ value, label }) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => handleMemberGenderChange(value)}
+                      className={`rounded-md px-3 py-1 text-sm font-medium transition-colors ${
+                        memberGender === value
+                          ? 'border-transparent bg-indigo-600 text-white shadow-sm hover:bg-indigo-700'
+                          : 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {!member.user.birthDate && (
                 <div>
-                  <p className="mt-2">
-                    This tool is for creating direct relationships (parent, child,
-                    spouse). The system will automatically infer other relationships
-                    (sibling, grandparent, etc.).
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => setShowDetails(false)}
-                    className="font-medium text-indigo-600 hover:underline dark:text-indigo-400"
-                  >
-                    Close Details
-                  </button>
+                  <label className="text-sm text-gray-600 dark:text-gray-400">
+                    Birth Date:
+                  </label>
+                  <input
+                    type="text"
+                    name="memberBirthDate"
+                    value={memberBirthDate}
+                    onChange={(e) => setMemberBirthDate(e.target.value)}
+                    placeholder="Birth year or date"
+                    className="mt-1 block w-full max-w-xs rounded-md border-gray-300 bg-white px-3 py-1 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
+                  />
                 </div>
               )}
             </div>
-            <div className="mt-4">
+          )}
+        </div>
+
+        {!isReadOnly && (
+          <form ref={formRef} onSubmit={handleSubmit} className="mt-6">
+            <input type="hidden" name="user1Id" value={member.userId} />
+            <input type="hidden" name="groupSlug" value={groupSlug} />
+
+            <div>
               <label
                 htmlFor="user2Id"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300"
               >
-                Related Person
+                Relate to
               </label>
               <Combobox
                 name="user2Id"
-                options={availableMembers.map((m) => ({
-                  value: m.userId,
-                  label: `${m.user.firstName} ${m.user.lastName}`,
-                }))}
+                options={groupMembers
+                  .filter((m) => m.userId !== member.userId)
+                  .map((m) => ({
+                    value: m.userId,
+                    label: `${m.user.firstName} ${m.user.lastName}`,
+                  }))}
                 selectedValue={selectedMemberId}
                 onSelectValue={setSelectedMemberId}
                 placeholder="Select a person"
@@ -275,14 +283,12 @@ function RelateModalContent({
               />
             </div>
 
-            <input type="hidden" name="groupSlug" value={groupSlug} />
-
             <div className="mt-4">
               <label
                 htmlFor="relationTypeId"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300"
               >
-                Relationship to {member.user.firstName}
+                As their
               </label>
               <Combobox
                 name="relationTypeId"
@@ -298,51 +304,79 @@ function RelateModalContent({
             </div>
 
             {selectedMemberId && (
-              <div className="mt-4">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {groupMembers.find((m) => m.userId === selectedMemberId)?.user
-                    .firstName}
-                  's Gender
-                </label>
-                <div className="mt-2 flex items-center space-x-2">
-                  {genderOptions.map(({ label, value }) => (
-                    <button
-                      key={value}
-                      type="button"
-                      onClick={() =>
-                        setSelectedGender(
-                          selectedGender === value ? null : value,
-                        )
-                      }
-                      className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                        selectedGender === value
-                          ? 'bg-indigo-600 text-white'
-                          : 'bg-white text-gray-700 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:ring-gray-600 dark:hover:bg-gray-600'
-                      }`}
+              <>
+                {!selectedMember?.user.gender && (
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-400">
+                      Their Gender
+                    </label>
+                    <div className="mt-2 flex items-center space-x-2">
+                      {genderOptions.map(({ label, value }) => (
+                        <button
+                          key={value}
+                          type="button"
+                          onClick={() =>
+                            setSelectedGender(
+                              selectedGender === value ? null : value,
+                            )
+                          }
+                          className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                            selectedGender === value
+                              ? 'bg-indigo-600 text-white'
+                              : 'bg-white text-gray-700 ring-1 ring-gray-300 ring-inset hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:ring-gray-600 dark:hover:bg-gray-600'
+                          }`}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {!selectedMember?.user.birthDate && (
+                  <div className="mt-4">
+                    <label
+                      htmlFor="relatedPersonBirthDate"
+                      className="block text-sm font-medium text-gray-700 dark:text-gray-400"
                     >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              </div>
+                      Their Birth Date
+                    </label>
+                    <div className="mt-2">
+                      <input
+                        type="text"
+                        id="relatedPersonBirthDate"
+                        name="relatedPersonBirthDate"
+                        value={relatedPersonBirthDate}
+                        onChange={(e) =>
+                          setRelatedPersonBirthDate(e.target.value)
+                        }
+                        placeholder="Birth year or date"
+                        className="block w-full rounded-md border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
+                      />
+                    </div>
+                  </div>
+                )}
+              </>
             )}
 
             <div className="mt-6 flex justify-end">
               <button
                 type="submit"
-                disabled={isPending || !selectedMemberId || !selectedRelationTypeId}
-                className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={
+                  isPending || !selectedMemberId || !selectedRelationTypeId
+                }
+                className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {isPending ? 'Saving...' : 'Save Relationship'}
+                {isPending ? 'Adding...' : 'Add Relationship'}
               </button>
             </div>
           </form>
         )}
 
-        <div className="mt-6">
-          <h3 className="text-lg font-medium leading-6 text-gray-900 dark:text-white">
+        <div className="mt-6 border-t border-gray-200 pt-6 dark:border-gray-700">
+          <h4 className="text-md font-medium text-gray-900 dark:text-gray-100">
             Existing Relationships
-          </h3>
+          </h4>
           {relations.length > 0 ? (
             <ul className="mt-2 divide-y divide-gray-200 dark:divide-gray-700">
               {relations.map((r) => (

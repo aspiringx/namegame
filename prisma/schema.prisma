@@ -253,7 +253,7 @@ enum DatePrecision {
   YEAR
   MONTH
   DAY
-  TIMESTAMP
+  TIME
 }
 
 // Code Tables
