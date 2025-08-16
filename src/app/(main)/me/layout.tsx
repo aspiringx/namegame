@@ -12,7 +12,7 @@ export default function MeLayout({ children }: { children: React.ReactNode }) {
   ]
 
   return (
-    <main className="container mx-auto px-4 pb-8">
+    <main className="container mx-auto mb-12 px-4 pb-8">
       <div className="mx-auto max-w-2xl">
         <div className="mb-6 border-b border-gray-200 dark:border-gray-700">
           <nav className="-mb-px flex space-x-8" aria-label="Tabs">
