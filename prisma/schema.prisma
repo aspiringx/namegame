@@ -54,8 +54,12 @@ model User {
   phone            String?     @unique
   phoneVerified    DateTime?
   gender               Gender?
-  birthDate            DateTime?
-  birthDatePrecision   DatePrecision?
+  birthDate          DateTime?
+  birthPlace         String?
+  birthDatePrecision DatePrecision?
+  deathDate          DateTime?
+  deathDatePrecision DatePrecision?
+  deathPlace         String?
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
   deletedAt        DateTime?
@@ -78,6 +82,9 @@ model User {
   createdUsers     User[]      @relation("UserCreatedBy")
   updatedBy        User?       @relation("UserUpdatedBy", fields: [updatedById], references: [id])
   updatedUsers     User[]      @relation("UserUpdatedBy")
+  managed          ManagedStatus?
+  managing         ManagedUser[] @relation("ManagingUsers")
+  managedBy        ManagedUser[] @relation("ManagedUsers")
 
   @@map("users")
 }
@@ -86,19 +93,29 @@ model UserUser {
   id             Int      @id @default(autoincrement())
   user1Id        String
   user2Id        String
-  groupId        Int?
-  greetCount     Int      @default(0)
+  greetCount     Int                  @default(0)
   relationTypeId Int
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
   deletedAt      DateTime?
-  group          Group?   @relation(fields: [groupId], references: [id])
-  user1          User     @relation("User1Relation", fields: [user1Id], references: [id])
-  user2          User     @relation("User2Relation", fields: [user2Id], references: [id])
+  user1          User                 @relation("User1Relation", fields: [user1Id], references: [id])
+  user2          User                 @relation("User2Relation", fields: [user2Id], references: [id])
   relationType   UserUserRelationType @relation(fields: [relationTypeId], references: [id])
 
-  @@unique([user1Id, user2Id, relationTypeId, groupId], name: "user_relation_type_group_unique")
+  @@unique([user1Id, user2Id, relationTypeId])
   @@map("user_users")
+}
+
+model ManagedUser {
+  managerId  String
+  managedId  String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  manager    User     @relation("ManagingUsers", fields: [managerId], references: [id], onDelete: Cascade)
+  managed    User     @relation("ManagedUsers", fields: [managedId], references: [id], onDelete: Cascade)
+
+  @@id([managerId, managedId])
+  @@map("managed_users")
 }
 
 model Group {
@@ -124,11 +141,6 @@ model Group {
   links                  Link[]
   iceBreakers            IceBreaker[]
   photos                 Photo[]
-  userRelations          UserUser[]
-  userUserRelationTypes  UserUserRelationType[]
-  groupUserRoles         GroupUserRole[]
-  entityTypes            EntityType[]
-  photoTypes             PhotoType[]
   groupTypeId            Int
   groupType              GroupType  @relation(fields: [groupTypeId], references: [id])
 
@@ -254,6 +266,12 @@ enum DatePrecision {
   MONTH
   DAY
   TIME
+  TIMESTAMP
+}
+
+enum ManagedStatus {
+  full
+  partial
 }
 
 // Code Tables
@@ -270,45 +288,34 @@ model UserUserRelationType {
   id        Int        @id @default(autoincrement())
   code      String
   category  UserUserRelationCategory
-  groupId   Int?
-  group     Group?     @relation(fields: [groupId], references: [id])
   userUsers UserUser[]
 
-  @@unique([code, groupId])
+  @@unique([code, category])
   @@map("user_user_relation_types")
 }
 
 model GroupUserRole {
   id      Int         @id @default(autoincrement())
-  code    String
-  groupId Int?
-  group   Group?      @relation(fields: [groupId], references: [id])
+  code    String      @unique
   members GroupUser[]
 
-  @@unique([code, groupId])
   @@map("group_user_roles")
 }
 
 model EntityType {
   id       Int       @id @default(autoincrement())
-  code     String
-  groupId  Int?
-  group    Group?    @relation(fields: [groupId], references: [id])
+  code     String    @unique
   photos   Photo[]
   messages Message[]
 
-  @@unique([code, groupId])
   @@map("entity_types")
 }
 
 model PhotoType {
-  id      Int     @id @default(autoincrement())
-  code    String
-  groupId Int?
-  group   Group?  @relation(fields: [groupId], references: [id])
-  photos  Photo[]
+  id     Int     @id @default(autoincrement())
+  code   String  @unique
+  photos Photo[]
 
-  @@unique([code, groupId])
   @@map("photo_types")
 }
 

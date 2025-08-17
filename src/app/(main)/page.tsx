@@ -28,22 +28,23 @@ export default function Home() {
 
         <section className="space-y-4 text-lg leading-relaxed">
           <p>
-            Some groups feel familiar and comfortable. Others feel stressful,
-            especially if you're not a social butterfly.
+            Some social situations are familiar and comfortable. Others feel
+            stressful or awkward.
           </p>
           <p>
-            We call this social stress{' '}
+            We call this stress{' '}
             <span className="text-blue-600 italic dark:text-blue-400">
               the ice
             </span>
-            . Meeting new people, remembering names, making conversation, etc.
+            . Meeting new people, remembering names, getting acquainted, etc.
           </p>
           <p>
             NameGame makes{' '}
             <span className="text-blue-600 dark:text-blue-400">
               breaking the ice
             </span>{' '}
-            fun and easy. It starts with a name, but doesn't stop there!
+            easy! A fun excuse to greet and learn each other's names. And that's
+            just the start.
           </p>
         </section>
 
@@ -80,19 +81,45 @@ export default function Home() {
             <li>Share a greeting code</li>
           </ul>
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            * Creating groups is currently in private beta.{' '}
+            * Creating groups is currently by request only.{' '}
             <Link
               href="/signup"
               className="text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
             >
               Sign up
             </Link>{' '}
-            and verify your email to make a request.
+            to request access.
           </p>
           <p>
-            When someone opens your greeting, they get access to your private
-            group with names, photos, group info, etc.
+            People who open your greetings get instant access to your private
+            group with names, photos, etc.
           </p>
+          <div className="space-y-4 rounded-md border border-blue-200 p-4">
+            <p className="mb-4 text-center font-bold text-orange-600 dark:text-orange-400">
+              The Ultimate Icebreaker
+            </p>
+            <p className="text-blue-600 dark:text-blue-400">
+              Knowing a name is the ultimate icebreaker!
+            </p>
+            <p className="text-gray-600 dark:text-gray-400">
+              When you confidently remember someone's name, noticing and
+              greeting them feels comfortable so you naturally interact more.
+            </p>
+            <p className="text-gray-600 dark:text-gray-400">
+              When you don't remember a name, you feel the awkward ice.
+            </p>
+            <p className="text-gray-600 italic dark:text-gray-400">
+              Do you avoid, pretend to not see them, or greet without their
+              name, hoping they don't notice? Do you ask them to remind you...
+              again?
+            </p>
+            <p className="text-blue-600 dark:text-blue-400">
+              Don't underestimate the ice-breaking power of names!
+            </p>
+            <p className="text-gray-600 dark:text-gray-400">
+              NameGame makes it easy.
+            </p>
+          </div>
           <Image
             src="/images/butterflies.png"
             alt="NameGame social butterflies"
@@ -136,13 +163,13 @@ export default function Home() {
                   interests, welcoming others into new ways to connect.
                 </p>
                 <p>
-                  NameGame makes it easy for a community group to be inclusive
-                  without awkward initiatives that make people uncomfortable.
-                </p>
-                <p>
                   You can communicate with groups, circles, or individuals to
                   share events and announcements. Assign roles and titles to
                   reflect ways people participate over time.
+                </p>
+                <p>
+                  Being inclusive doesn't have to be hard. Just play NameGame
+                  and everyone will get involved... naturally.
                 </p>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   Group admins can moderate, limit, or remove access to maintain
