@@ -49,10 +49,7 @@ export default async function EditMemberPage({
 
   const allRoles = await prisma.groupUserRole.findMany({
     where: {
-      AND: [
-        { OR: [{ groupId: group.id }, { groupId: null }] },
-        { code: { in: ['admin', 'member'] } },
-      ],
+      code: { in: ['admin', 'member'] },
     },
   })
 

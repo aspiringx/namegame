@@ -132,7 +132,6 @@ export async function hardDeleteGroup(groupId: number) {
       await tx.link.deleteMany({ where: { groupId } })
       await tx.iceBreaker.deleteMany({ where: { groupId } })
       await tx.photo.deleteMany({ where: { groupId } })
-      await tx.userUser.deleteMany({ where: { groupId } })
       await tx.groupUser.deleteMany({ where: { groupId } })
       await tx.group.delete({ where: { id: groupId } })
     })

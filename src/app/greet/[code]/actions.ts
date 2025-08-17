@@ -77,11 +77,10 @@ export async function handleAuthenticatedGreeting(
     // 1. Create or update the UserUser relationship
     await tx.userUser.upsert({
       where: {
-        user_relation_type_group_unique: {
+        user1Id_user2Id_relationTypeId: {
           user1Id,
           user2Id,
           relationTypeId: relationTypes.acquaintance.id,
-          groupId: codeData.groupId,
         },
       },
       update: {
@@ -90,7 +89,6 @@ export async function handleAuthenticatedGreeting(
       create: {
         user1Id,
         user2Id,
-        groupId: codeData.groupId,
         relationTypeId: relationTypes.acquaintance.id,
         greetCount: 1,
       },
@@ -207,11 +205,10 @@ export async function handleGuestGreeting(
       // 4. Create or update the UserUser relationship
       await tx.userUser.upsert({
         where: {
-          user_relation_type_group_unique: {
+          user1Id_user2Id_relationTypeId: {
             user1Id,
             user2Id,
             relationTypeId: relationTypes.acquaintance.id,
-            groupId: codeData.groupId,
           },
         },
         update: {
@@ -220,7 +217,6 @@ export async function handleGuestGreeting(
         create: {
           user1Id,
           user2Id,
-          groupId: codeData.groupId,
           relationTypeId: relationTypes.acquaintance.id,
           greetCount: 1,
         },

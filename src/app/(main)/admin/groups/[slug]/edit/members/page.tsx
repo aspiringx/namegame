@@ -49,9 +49,9 @@ export default async function ManageMembersPage({
           createdAt: 'desc',
         },
       }),
-      prisma.groupUserRole.findMany({ where: { groupId: null } }),
-      prisma.entityType.findMany({ where: { groupId: null } }),
-      prisma.photoType.findMany({ where: { groupId: null } }),
+      prisma.groupUserRole.findMany(),
+      prisma.entityType.findMany(),
+      prisma.photoType.findMany(),
     ])
 
   const userEntityType = entityTypes.find((et) => et.code === 'user')
