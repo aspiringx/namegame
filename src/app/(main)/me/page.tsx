@@ -18,13 +18,21 @@ export default async function UserProfilePage(props: {
     redirect('/login?callbackUrl=/me')
   }
 
-  const { user: userEntityType } = await getCodeTable('entityType')
+  const [photoTypes, entityTypes] = await Promise.all([
+    getCodeTable('photoType'),
+    getCodeTable('entityType'),
+  ])
 
+  // Get the primary photo for the current user.
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
     include: {
       photos: {
-        where: { entityTypeId: userEntityType.id },
+        where: {
+          entityTypeId: entityTypes.user.id,
+          entityId: session.user.id,
+          typeId: photoTypes.primary.id,
+        },
         orderBy: { type: { code: 'asc' } },
       },
     },
@@ -60,7 +68,7 @@ export default async function UserProfilePage(props: {
       <GuestMessage isGuest={isGuest} />
       {searchParams?.welcome === 'true' ? (
         <div className="mb-4 rounded-md bg-green-50 p-4 text-sm text-green-700 dark:bg-green-900 dark:text-green-300">
-          Welcome, {user.firstName}! You can update your profile information below.
+          Welcome, {user.firstName}!
         </div>
       ) : null}
 

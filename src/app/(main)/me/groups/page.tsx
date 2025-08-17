@@ -39,7 +39,7 @@ export default async function MyGroupsPage() {
   return (
     <div>
       <p className="mb-6 text-sm font-medium text-gray-700 dark:text-gray-300">
-        My groups.
+        Visit or leave groups.
       </p>
       {user.groupMemberships.length > 0 ? (
         <div className="overflow-hidden bg-white shadow sm:rounded-md dark:bg-gray-800">
