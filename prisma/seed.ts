@@ -11,7 +11,7 @@ async function main() {
     const seederFileName = seederArg.split('=')[1]
     console.log(`Running specific seeder: ${seederFileName}`)
     try {
-      await import(`./${seederFileName}`)
+      await import(`./seeds/${seederFileName}`)
     } catch (error) {
       console.error(`Error running seeder ${seederFileName}:`, error)
       process.exit(1)
@@ -21,148 +21,121 @@ async function main() {
 
   console.log(`Start seeding ...`)
 
-  const groupTypes = [
-    { id: 1, code: 'business' },
-    { id: 2, code: 'church' },
-    { id: 3, code: 'family' },
-    { id: 4, code: 'friends' },
-    { id: 5, code: 'neighborhood' },
-    { id: 6, code: 'school' },
-  ]
+  // --- Seed Code Tables ---
+  console.log('Seeding code tables...')
 
+  // Reset sequences to prevent primary key conflicts on subsequent runs
+  console.log('  - Resetting code table sequences...')
+  await prisma.$executeRaw`SELECT setval(pg_get_serial_sequence('entity_types', 'id'), coalesce(max(id), 1)) FROM entity_types;`
+  await prisma.$executeRaw`SELECT setval(pg_get_serial_sequence('group_types', 'id'), coalesce(max(id), 1)) FROM group_types;`
+  await prisma.$executeRaw`SELECT setval(pg_get_serial_sequence('group_user_roles', 'id'), coalesce(max(id), 1)) FROM group_user_roles;`
+  await prisma.$executeRaw`SELECT setval(pg_get_serial_sequence('photo_types', 'id'), coalesce(max(id), 1)) FROM photo_types;`
+  await prisma.$executeRaw`SELECT setval(pg_get_serial_sequence('user_user_relation_types', 'id'), coalesce(max(id), 1)) FROM user_user_relation_types;`
+
+  const entityTypes = [{ code: 'group' }, { code: 'user' }]
+  for (const et of entityTypes) {
+    await prisma.$executeRaw`INSERT INTO entity_types (code, "groupId") VALUES (${et.code}, NULL) ON CONFLICT (code, "groupId") DO NOTHING;`
+  }
+  console.log(`  - Seeded ${entityTypes.length} entity types.`)
+
+  const groupTypes = [{ code: 'community' }, { code: 'family' }]
   for (const gt of groupTypes) {
-    await prisma.groupType.upsert({
-      where: { id: gt.id },
-      update: {},
-      create: {
-        id: gt.id,
-        code: gt.code,
-      },
-    })
+    await prisma.groupType.upsert({ where: { code: gt.code }, update: {}, create: gt })
   }
-  console.log(`Seeded ${groupTypes.length} group types.`)
-  const familyGroupType = await prisma.groupType.findUnique({
-    where: { code: 'family' },
-  })
-  if (!familyGroupType) {
-    throw new Error("Could not find 'family' group type after seeding.")
-  }
+  console.log(`  - Seeded ${groupTypes.length} group types.`)
 
-  const groupUserRoles = [
-    { id: 1, code: 'admin' },
-    { id: 2, code: 'member' },
-    { id: 3, code: 'super' },
-  ]
-
+  const groupUserRoles = [{ code: 'admin' }, { code: 'member' }, { code: 'super' }, { code: 'guest' }]
   for (const gur of groupUserRoles) {
-    await prisma.groupUserRole.upsert({
-      where: { id: gur.id },
-      update: {},
-      create: {
-        id: gur.id,
-        code: gur.code,
-      },
-    })
+    await prisma.$executeRaw`INSERT INTO group_user_roles (code, "groupId") VALUES (${gur.code}, NULL) ON CONFLICT (code, "groupId") DO NOTHING;`
   }
-  console.log(`Seeded ${groupUserRoles.length} group user roles.`)
+  console.log(`  - Seeded ${groupUserRoles.length} group user roles.`)
+
+  const photoTypes = [{ code: 'logo' }, { code: 'primary' }, { code: 'other' }]
+  for (const pt of photoTypes) {
+    await prisma.$executeRaw`INSERT INTO photo_types (code, "groupId") VALUES (${pt.code}, NULL) ON CONFLICT (code, "groupId") DO NOTHING;`
+  }
+  console.log(`  - Seeded ${photoTypes.length} photo types.`)
 
   const relationTypes = [
-    { code: 'parent', category: UserUserRelationCategory.family },
-    { code: 'spouse', category: UserUserRelationCategory.family },
-    { code: 'acquaintance', category: UserUserRelationCategory.other },
+    { code: 'acquaintance', category: 'other' },
+    { code: 'friend', category: 'other' },
+    { code: 'family', category: 'other' },
+    { code: 'parent', category: 'family' },
+    { code: 'spouse', category: 'family' },
+    { code: 'partner', category: 'family' },
   ]
-
   for (const rt of relationTypes) {
-    const existingRt = await prisma.userUserRelationType.findFirst({
-      where: { code: rt.code, groupId: null },
-    })
-    if (!existingRt) {
-      await prisma.userUserRelationType.create({
-        data: {
-          code: rt.code,
-          category: rt.category,
-        },
-      })
-    }
+    await prisma.$executeRaw`INSERT INTO user_user_relation_types (code, category, "groupId") VALUES (${rt.code}, ${rt.category}::"UserUserRelationCategory", NULL) ON CONFLICT (code, category, "groupId") DO UPDATE SET category = ${rt.category}::"UserUserRelationCategory";`
   }
-  console.log(`Seeded ${relationTypes.length} user user relation types.`)
-  const superUserRole = await prisma.groupUserRole.findFirst({
-    where: { code: 'super', groupId: null },
-  })
-  if (!superUserRole) {
-    throw new Error("Could not find 'super' role after seeding.")
-  }
+  console.log(`  - Seeded ${relationTypes.length} user user relation types.`)
 
-  // Create the 'system' user if it doesn't exist
-  const systemUserPassword = await bcrypt.hash('password123', 10)
-  const systemUser = await prisma.user.upsert({
-    where: { username: 'system' },
+  // --- Seed Users and Groups ---
+  console.log('Seeding users and groups...')
+
+  const hashedPassword = await bcrypt.hash('password123', 10)
+
+  const gadminUser = await prisma.user.upsert({
+    where: { username: 'gadmin' },
     update: {},
     create: {
-      username: 'system',
-      firstName: 'System',
-      password: systemUserPassword,
+      username: 'gadmin',
+      firstName: 'Global',
+      lastName: 'Admin',
+      password: hashedPassword,
     },
   })
-  console.log(`Created/found 'system' user with id: ${systemUser.id}`)
+  console.log(`  - Upserted 'gadmin' user.`)
 
-  // Create the Global Admin group if it doesn't exist
-  const adminGroup = await prisma.group.upsert({
-    where: { slug: 'global-admin' },
-    update: {
-      updatedById: systemUser.id,
-    },
-    create: {
-      name: 'Global Admin',
-      slug: 'global-admin',
-      description: 'Group for super administrators of the entire application.',
-      idTree: 'global-admin',
-      createdById: systemUser.id,
-      updatedById: systemUser.id,
-      groupTypeId: familyGroupType.id,
-    },
-  })
-  console.log(
-    `Created/found group '${adminGroup.name}' with id: ${adminGroup.id}`,
-  )
-
-  // Create the 'joe' user if he doesn't exist
-  const hashedPassword = await bcrypt.hash('password123', 10)
   const joeUser = await prisma.user.upsert({
     where: { username: 'joe' },
-    update: {
-      updatedById: systemUser.id,
-    },
+    update: {},
     create: {
       username: 'joe',
       firstName: 'Joe',
+      lastName: 'Tippetts',
       password: hashedPassword,
-      createdById: systemUser.id,
-      updatedById: systemUser.id,
+      createdById: gadminUser.id,
+      updatedById: gadminUser.id,
     },
   })
-  console.log(`Created/found user '${joeUser.username}' with id: ${joeUser.id}`)
+  console.log(`  - Upserted 'joe' user.`)
 
-  // Add 'joe' to the 'Global Admin' group as a 'super' user
+  const familyGroupType = await prisma.groupType.findUnique({ where: { code: 'family' } })
+  if (!familyGroupType) throw new Error('Family group type not found')
+
+  const adminGroup = await prisma.group.upsert({
+    where: { slug: 'global-admin' },
+    update: {},
+    create: {
+      name: 'Global Admin',
+      slug: 'global-admin',
+      idTree: 'global-admin',
+      description: 'Group for super administrators of the entire application.',
+      groupTypeId: familyGroupType.id,
+      createdById: gadminUser.id,
+      updatedById: gadminUser.id,
+    },
+  })
+  console.log(`  - Upserted 'global-admin' group.`)
+
+  const superUserRole = await prisma.groupUserRole.findFirst({ where: { code: 'super' } })
+  if (!superUserRole) throw new Error('Super user role not found')
+
   await prisma.groupUser.upsert({
     where: {
       userId_groupId: {
-        userId: joeUser.id,
+        userId: gadminUser.id,
         groupId: adminGroup.id,
       },
     },
-    update: {
-      roleId: superUserRole.id,
-    },
+    update: { roleId: superUserRole.id },
     create: {
-      userId: joeUser.id,
+      userId: gadminUser.id,
       groupId: adminGroup.id,
       roleId: superUserRole.id,
     },
   })
-  console.log(
-    `Ensured user '${joeUser.username}' is a super user in group '${adminGroup.name}'.`,
-  )
+  console.log(`  - Ensured 'gadmin' is a super user in 'global-admin' group.`)
 
   console.log(`Seeding finished.`)
 }
