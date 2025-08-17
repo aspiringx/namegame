@@ -5,6 +5,7 @@ to avoid confusion.**
 
 # NameGame
 
+**Break the ice**
 **The relationship game that starts with a name.**
 
 NameGame makes it fun for people in a group to meet, remember names,

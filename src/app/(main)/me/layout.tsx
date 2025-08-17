@@ -9,6 +9,7 @@ export default function MeLayout({ children }: { children: React.ReactNode }) {
   const tabs = [
     { name: 'Me', href: '/me' },
     { name: 'Groups', href: '/me/groups' },
+    { name: 'Users', href: '/me/users' },
   ]
 
   return (
