@@ -302,17 +302,6 @@ export async function addUserRelation(
       })
 
       if (existingRelation) {
-        if (existingRelation.groupId) {
-          // Relationship exists but is tied to a group, so make it global
-          await tx.userUser.update({
-            where: { id: existingRelation.id },
-            data: { groupId: null },
-          })
-          return {
-            success: true,
-            message: 'Relationship updated successfully.',
-          }
-        }
         // Relationship already exists and is global, so do nothing
         return { success: true, message: 'This relationship already exists.' }
       }
@@ -323,7 +312,6 @@ export async function addUserRelation(
           user1Id: u1,
           user2Id: u2,
           relationTypeId: relationType.id,
-          groupId: null, // Explicitly set groupId to null
         },
       })
 

@@ -63,7 +63,7 @@ async function main() {
 
   // 2. Add them all to the test group with a role of 'member'
   const memberRole = await prisma.groupUserRole.findFirst({
-    where: { code: 'member', groupId: null }, // Find the global 'member' role
+    where: { code: 'member' }, // Find the global 'member' role
   })
 
   if (!memberRole) {
@@ -86,7 +86,7 @@ async function main() {
 
   // 3. Add relationships between them
   const acquaintanceRelation = await prisma.userUserRelationType.findFirst({
-    where: { code: 'acquaintance', groupId: null },
+    where: { code: 'acquaintance' },
   })
 
   if (!acquaintanceRelation) {
@@ -102,11 +102,10 @@ async function main() {
       if (user.id === targetUserForRelations.id) continue
       await prisma.userUser.upsert({
         where: {
-          user_relation_type_group_unique: {
+          user1Id_user2Id_relationTypeId: {
             user1Id: targetUserForRelations.id,
             user2Id: user.id,
             relationTypeId: acquaintanceRelation.id,
-            groupId: targetGroupId,
           },
         },
         update: {},
@@ -114,7 +113,6 @@ async function main() {
           user1Id: targetUserForRelations.id,
           user2Id: user.id,
           relationTypeId: acquaintanceRelation.id,
-          groupId: targetGroupId,
         },
       })
     }
