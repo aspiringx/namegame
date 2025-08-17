@@ -1,16 +1,17 @@
 'use server'
 
 import { z } from 'zod'
-import { parse, isValid } from 'date-fns'
 import bcrypt from 'bcrypt'
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
 import { DatePrecision } from '@/generated/prisma/client'
 import { revalidatePath, revalidateTag } from 'next/cache'
 import { getCodeTable } from '@/lib/codes'
+import { parseDateAndDeterminePrecision } from '@/lib/utils'
 import { uploadFile, deleteFile, getPublicUrl } from '@/lib/storage'
 import { sendVerificationEmail } from '@/lib/mail'
 import { disposableEmailDomains } from '@/lib/disposable-email-domains'
+
 
 export type State = {
   success: boolean
@@ -30,87 +31,6 @@ export type State = {
   redirectUrl?: string | null
 }
 
-function parseDateAndDeterminePrecision(dateString: string): {
-  date: Date
-  precision: DatePrecision
-} | null {
-  // Special handling for two-digit years to avoid date-fns ambiguity
-  if (/^\d{2}$/.test(dateString)) {
-    const inputYear = parseInt(dateString, 10)
-    const currentYear = new Date().getFullYear()
-    const currentCentury = Math.floor(currentYear / 100) * 100
-    const lastTwoDigitsOfCurrentYear = currentYear % 100
-
-    const fullYear =
-      inputYear > lastTwoDigitsOfCurrentYear
-        ? currentCentury - 100 + inputYear // e.g., in 2025, '77' becomes 1977
-        : currentCentury + inputYear // e.g., in 2025, '15' becomes 2015
-
-    return {
-      date: new Date(fullYear, 0, 1), // Create date for Jan 1st of the correct year
-      precision: DatePrecision.YEAR,
-    }
-  }
-
-  // Special handling for MM/dd/yy or M/d/yy formats
-  const twoDigitYearMatch = dateString.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2})$/)
-  if (twoDigitYearMatch) {
-    const [, month, day, yearStr] = twoDigitYearMatch
-    let year = parseInt(yearStr, 10)
-    const currentYear = new Date().getFullYear()
-    const currentCentury = Math.floor(currentYear / 100) * 100
-    const currentTwoDigitYear = currentYear % 100
-
-    if (year > currentTwoDigitYear) {
-      year = currentCentury - 100 + year
-    } else {
-      year = currentCentury + year
-    }
-
-    const parsedDate = new Date(
-      year,
-      parseInt(month, 10) - 1,
-      parseInt(day, 10),
-    )
-    if (!isNaN(parsedDate.getTime())) {
-      return { date: parsedDate, precision: DatePrecision.DAY }
-    }
-  }
-
-  const dateParsingConfig = [
-    // Order matters: more specific formats first
-
-    // Time precision
-    { format: "MMMM d, yyyy 'at' HH:mm", precision: DatePrecision.TIME },
-    { format: "MMM d yyyy 'at' HH:mm", precision: DatePrecision.TIME },
-    { format: "MMM d yyyy 'at' h:mm a", precision: DatePrecision.TIME },
-    { format: 'M/d/yyyy HH:mm', precision: DatePrecision.TIME },
-    { format: 'M/d/yyyy h:mm a', precision: DatePrecision.TIME },
-    { format: 'yyyy-MM-dd HH:mm', precision: DatePrecision.TIME },
-
-    // Day precision
-    { format: 'M/d/yyyy', precision: DatePrecision.DAY },
-    { format: 'MMM d yyyy', precision: DatePrecision.DAY },
-    { format: 'MMMM d, yyyy', precision: DatePrecision.DAY },
-    { format: 'yyyy-MM-dd', precision: DatePrecision.DAY },
-
-    // Month precision
-    { format: 'MMMM yyyy', precision: DatePrecision.MONTH },
-    { format: 'MMM yyyy', precision: DatePrecision.MONTH },
-    { format: 'yyyy-MM', precision: DatePrecision.MONTH },
-
-    // Year precision
-    { format: 'yyyy', precision: DatePrecision.YEAR },
-  ]
-  for (const { format, precision } of dateParsingConfig) {
-    const parsedDate = parse(dateString, format, new Date())
-
-    if (isValid(parsedDate)) {
-      return { date: parsedDate, precision }
-    }
-  }
-  return null
-}
 
 const UserProfileSchema = z.object({
   password: z
@@ -370,9 +290,10 @@ export async function updateUserProfile(
             await prisma.photo.create({
               data: {
                 url: newPhotoKey,
+                entityTypeId: entityTypes.user.id,
                 entityId: user.id,
-                entityTypeId: userEntityTypeId,
-                typeId: primaryPhotoTypeId,
+                typeId: photoTypes.primary.id,
+                userId: user.id,
               },
             })
           }
@@ -386,7 +307,7 @@ export async function updateUserProfile(
 
     if (profileIsNowComplete) {
       const memberRoleId = groupUserRoles.member?.id
-      if (memberRoleId) {
+      if (memberRoleId && user.groupMemberships.length > 0) {
         await prisma.groupUser.update({
           where: {
             userId_groupId: {
@@ -474,22 +395,12 @@ export async function updateUserGender(
     }
   }
 
-  const group = await prisma.group.findUnique({
-    where: { slug: groupSlug },
-    select: { id: true },
+  const groupUserRoles = await getCodeTable('groupUserRole')
+
+  const requesterGroupUser = await prisma.groupUser.findFirst({
+    where: { user: { id: requesterId }, group: { slug: groupSlug } },
+    select: { roleId: true },
   })
-
-  if (!group) {
-    return { success: false, error: 'Group not found.' }
-  }
-
-  const [groupUserRoles, requesterGroupUser] = await Promise.all([
-    getCodeTable('groupUserRole'),
-    prisma.groupUser.findFirst({
-      where: { userId: requesterId, groupId: group.id },
-      select: { roleId: true },
-    }),
-  ])
 
   const isAdmin = requesterGroupUser?.roleId === groupUserRoles.admin.id
 
@@ -511,7 +422,6 @@ export async function updateUserGender(
   if (!isAdmin) {
     const existingRelationship = await prisma.userUser.findFirst({
       where: {
-        groupId: group.id,
         OR: [
           { user1Id: requesterId, user2Id: userId },
           { user1Id: userId, user2Id: requesterId },

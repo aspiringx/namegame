@@ -39,9 +39,9 @@ export default async function UserProfilePage(props: {
   })
 
   if (!user) {
-    // This should theoretically not happen if a session exists, but if it does,
-    // redirecting to the home page is a safe fallback.
-    redirect('/')
+    // This can happen if the user is deleted from the DB but the session is still active.
+    // In this case, we should sign them out and redirect to login via an API route.
+    redirect('/api/auth/signout-and-redirect')
   }
 
   const userWithPublicUrls = {

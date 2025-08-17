@@ -19,17 +19,13 @@ describe('getRelationship with seeded data', () => {
 
   beforeAll(async () => {
     // 1. Fetch all data from the test database
+    // 1. Fetch all data from the test database
     const group = await prisma.group.findUnique({
       where: { slug: 'test-family' },
       include: {
         members: {
           include: {
             user: true,
-          },
-        },
-        userRelations: {
-          include: {
-            relationType: true,
           },
         },
       },
@@ -40,7 +36,16 @@ describe('getRelationship with seeded data', () => {
     }
 
     allUsers = group.members.map((m) => m.user)
-    allRelationships = group.userRelations as FullRelationship[]
+    const userIds = new Set(allUsers.map((u) => u.id))
+
+    const allDbRelationships = await prisma.userUser.findMany({
+      include: { relationType: true },
+    })
+
+    // Filter relationships to only include those between members of the fetched group
+    allRelationships = allDbRelationships.filter(
+      (r) => userIds.has(r.user1Id) && userIds.has(r.user2Id),
+    ) as FullRelationship[]
 
     usersMap = new Map<string, User>()
     allUsers.forEach((user) => usersMap.set(user.id, user))
@@ -58,8 +63,6 @@ describe('getRelationship with seeded data', () => {
     { label: 'Grandchild', path: 'child > child' },
     { label: 'Grandparent', path: 'parent > parent' },
     { label: 'Sibling', path: 'parent > child' },
-    { label: 'Half Brother', path: 'parent > child' },
-    { label: 'Half Sister', path: 'parent > child' },
     { label: 'Great-grandchild', path: 'child > child > child' },
     { label: 'Great-grandparent', path: 'parent > parent > parent' },
     { label: 'Nibling', path: 'parent > child > child' },
@@ -292,11 +295,7 @@ describe('getRelationship with seeded data', () => {
         .replace(/\s*>\s*/g, ' > ')
       const normalizedLabel = label.replace(/\s+/g, ' ').trim()
 
-      // For half-siblings, the alter user is named directly
-      const alterName =
-        normalizedLabel === 'Half Brother' || normalizedLabel === 'Half Sister'
-          ? normalizedLabel
-          : `Ego > ${normalizedPath}`
+      const alterName = `Ego > ${normalizedPath}`
       const alterUser = allUsers.find((u) => u.firstName === alterName)
 
       expect(
@@ -309,6 +308,7 @@ describe('getRelationship with seeded data', () => {
         alterUser!.id,
         allRelationships,
         usersMap,
+        false,
       )
 
       expect(

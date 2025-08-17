@@ -34,7 +34,7 @@ async function main() {
 
   const entityTypes = [{ code: 'group' }, { code: 'user' }]
   for (const et of entityTypes) {
-    await prisma.$executeRaw`INSERT INTO entity_types (code, "groupId") VALUES (${et.code}, NULL) ON CONFLICT (code, "groupId") DO NOTHING;`
+    await prisma.$executeRaw`INSERT INTO entity_types (code) VALUES (${et.code}) ON CONFLICT (code) DO NOTHING;`
   }
   console.log(`  - Seeded ${entityTypes.length} entity types.`)
 
@@ -46,13 +46,13 @@ async function main() {
 
   const groupUserRoles = [{ code: 'admin' }, { code: 'member' }, { code: 'super' }, { code: 'guest' }]
   for (const gur of groupUserRoles) {
-    await prisma.$executeRaw`INSERT INTO group_user_roles (code, "groupId") VALUES (${gur.code}, NULL) ON CONFLICT (code, "groupId") DO NOTHING;`
+    await prisma.$executeRaw`INSERT INTO group_user_roles (code) VALUES (${gur.code}) ON CONFLICT (code) DO NOTHING;`
   }
   console.log(`  - Seeded ${groupUserRoles.length} group user roles.`)
 
   const photoTypes = [{ code: 'logo' }, { code: 'primary' }, { code: 'other' }]
   for (const pt of photoTypes) {
-    await prisma.$executeRaw`INSERT INTO photo_types (code, "groupId") VALUES (${pt.code}, NULL) ON CONFLICT (code, "groupId") DO NOTHING;`
+    await prisma.$executeRaw`INSERT INTO photo_types (code) VALUES (${pt.code}) ON CONFLICT (code) DO NOTHING;`
   }
   console.log(`  - Seeded ${photoTypes.length} photo types.`)
 
@@ -65,7 +65,7 @@ async function main() {
     { code: 'partner', category: 'family' },
   ]
   for (const rt of relationTypes) {
-    await prisma.$executeRaw`INSERT INTO user_user_relation_types (code, category, "groupId") VALUES (${rt.code}, ${rt.category}::"UserUserRelationCategory", NULL) ON CONFLICT (code, category, "groupId") DO UPDATE SET category = ${rt.category}::"UserUserRelationCategory";`
+    await prisma.$executeRaw`INSERT INTO user_user_relation_types (code, category) VALUES (${rt.code}, ${rt.category}::"UserUserRelationCategory") ON CONFLICT (code, category) DO UPDATE SET category = ${rt.category}::"UserUserRelationCategory";`
   }
   console.log(`  - Seeded ${relationTypes.length} user user relation types.`)
 
