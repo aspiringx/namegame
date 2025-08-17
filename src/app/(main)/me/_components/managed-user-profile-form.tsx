@@ -56,8 +56,8 @@ function SubmitButton({ isEditMode }: { isEditMode: boolean }) {
           ? 'Updating...'
           : 'Creating...'
         : isEditMode
-          ? 'Update User'
-          : 'Create User'}
+          ? 'Update'
+          : 'Create'}
     </button>
   )
 }
@@ -473,7 +473,7 @@ export default function ManagedUserProfileForm({
             className={`h-5 w-5 transform transition-transform ${isOptionalOpen ? 'rotate-180' : ''}`}
           />
         </button>
-        {isOptionalOpen && (
+        <div hidden={!isOptionalOpen}>
           <div className="mt-4 space-y-6">
             <p className="text-sm text-gray-600 dark:text-gray-400">
               Optional profile info.
@@ -512,7 +512,7 @@ export default function ManagedUserProfileForm({
                       setBirthDate,
                       setBirthDatePrecision,
                     )}
-                    className="block w-full rounded-md border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white sm:text-sm"
+                    className="block w-full rounded-md border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                     placeholder="YYYY, YYYY-MM, or YYYY-MM-DD"
                   />
                   <input
@@ -536,7 +536,7 @@ export default function ManagedUserProfileForm({
                     name="birthPlace"
                     value={birthPlace}
                     onChange={(e) => setBirthPlace(e.target.value)}
-                    className="block w-full rounded-md border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white sm:text-sm"
+                    className="block w-full rounded-md border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                   />
                 </div>
               </div>
@@ -560,7 +560,7 @@ export default function ManagedUserProfileForm({
                       setDeathDate,
                       setDeathDatePrecision,
                     )}
-                    className="block w-full rounded-md border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white sm:text-sm"
+                    className="block w-full rounded-md border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                     placeholder="YYYY, YYYY-MM, or YYYY-MM-DD"
                   />
                   <input
@@ -584,7 +584,7 @@ export default function ManagedUserProfileForm({
                     name="deathPlace"
                     value={deathPlace}
                     onChange={(e) => setDeathPlace(e.target.value)}
-                    className="block w-full rounded-md border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white sm:text-sm"
+                    className="block w-full rounded-md border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                   />
                 </div>
               </div>
@@ -667,7 +667,7 @@ export default function ManagedUserProfileForm({
               )}
             </div>
           </div>
-        )}
+        </div>
       </div>
 
       {isEditMode && user && authdUserGroups && (
@@ -683,6 +683,28 @@ export default function ManagedUserProfileForm({
         >
           Cancel
         </button>
+        {state.errors?._form && (
+          <div
+            id="form-error-message"
+            aria-live="polite"
+            aria-atomic="true"
+            className="text-destructive mt-4 text-sm font-medium"
+          >
+            {state.errors._form.map((error: string) => (
+              <p key={error}>{error}</p>
+            ))}
+          </div>
+        )}
+        {state.error && (
+          <div
+            id="form-error-message"
+            aria-live="polite"
+            aria-atomic="true"
+            className="text-destructive mt-4 text-sm font-medium"
+          >
+            <p>{state.error}</p>
+          </div>
+        )}
       </div>
     </form>
   )

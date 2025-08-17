@@ -28,7 +28,7 @@ function SubmitButton() {
       disabled={pending}
       className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none disabled:bg-indigo-400 dark:focus:ring-offset-gray-800 dark:disabled:bg-indigo-800"
     >
-      {pending ? 'Creating...' : 'Create User'}
+      {pending ? 'Creating...' : 'Create'}
     </button>
   )
 }

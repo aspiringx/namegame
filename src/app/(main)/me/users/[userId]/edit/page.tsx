@@ -2,10 +2,11 @@ import { getGroupDataForEditPage } from '@/app/(main)/me/users/groups/queries'
 import ManagedUserProfileForm from '@/app/(main)/me/_components/managed-user-profile-form'
 import { notFound } from 'next/navigation'
 
-export default async function EditManagedUserPage({ params }: { params: { userId: string } }) {
-  const { managedUser, authdUserGroups } = await getGroupDataForEditPage(
-    params.userId,
-  )
+export default async function EditManagedUserPage(props: {
+  params: { userId: string }
+}) {
+  const { userId } = (await props.params) as { userId: string }
+  const { managedUser, authdUserGroups } = await getGroupDataForEditPage(userId)
 
   if (!managedUser) {
     notFound()

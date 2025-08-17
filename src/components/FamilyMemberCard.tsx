@@ -1,22 +1,18 @@
 import Image from 'next/image'
 import type { MemberWithUser as Member } from '@/types/index'
-import { formatDistanceToNow } from 'date-fns'
 import { MoreVertical } from 'lucide-react'
 import { Dropdown, DropdownItem } from './ui/dropdown'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
+import { useState } from 'react'
+import ManageUserModal from './ManageUserModal'
 
 interface FamilyMemberCardProps {
   member: Member
   viewMode: 'grid' | 'list'
-  relationship?: string
-  onRelate?: (member: Member) => void
+  relationship?: string | null
+  onRelate: (member: Member) => void
   currentUserId?: string
   isGroupAdmin?: boolean
+  groupMembers: Member[]
 }
 
 export default function FamilyMemberCard({
@@ -26,12 +22,15 @@ export default function FamilyMemberCard({
   onRelate,
   currentUserId,
   isGroupAdmin,
+  groupMembers,
 }: FamilyMemberCardProps) {
+  const [isManageModalOpen, setIsManageModalOpen] = useState(false)
   const isListView = viewMode === 'list'
   const imageUrl = member.user.photoUrl || '/images/default-avatar.png'
 
   return (
-    <div
+    <>
+      <div
       className={
         isListView
           ? 'flex items-center gap-4 border-b py-0'
@@ -81,9 +80,21 @@ export default function FamilyMemberCard({
             <DropdownItem onClick={() => onRelate && onRelate(member)}>
               Relate
             </DropdownItem>
+            <DropdownItem onClick={() => setIsManageModalOpen(true)}>
+              Manage
+            </DropdownItem>
           </Dropdown>
         </div>
       </div>
     </div>
+      {isManageModalOpen && (
+        <ManageUserModal
+          isOpen={isManageModalOpen}
+          onClose={() => setIsManageModalOpen(false)}
+          managedUser={member.user}
+          groupMembers={groupMembers}
+        />
+      )}
+    </>
   )
 }
