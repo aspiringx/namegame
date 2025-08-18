@@ -157,6 +157,7 @@ export async function getGroupMembersForRelate(groupSlug: string) {
 export async function getFamilyRelationTypes() {
   return prisma.userUserRelationType.findMany({
     where: { category: 'family' },
+    select: { id: true, code: true, category: true },
   })
 }
 
@@ -207,7 +208,11 @@ export async function getMemberRelations(userId: string, groupSlug: string) {
 export async function addUserRelation(
   formData: FormData,
   groupSlug: string,
-): Promise<{ success: boolean; message: string }> {
+): Promise<{
+  success: boolean
+  message: string
+  relation?: FullRelationship
+}> {
   try {
     const session = await auth()
     const loggedInUserId = session?.user?.id
@@ -272,7 +277,7 @@ export async function addUserRelation(
       // child type chosen in UI.
       //
       // And I'm my own grandpa! :) Yes, a little confusing.
-      if (relationTypeIdValue !== 'child' && relationType.code === 'parent') {
+      if (relationType.code === 'parent') {
         u1 = user2Id
         u2 = user1Id
       }
@@ -303,11 +308,15 @@ export async function addUserRelation(
 
       if (existingRelation) {
         // Relationship already exists and is global, so do nothing
-        return { success: true, message: 'This relationship already exists.' }
+        return {
+          success: true,
+          message: 'This relationship already exists.',
+          relation: existingRelation as FullRelationship,
+        }
       }
 
       // Create a new global relationship
-      await tx.userUser.create({
+      const newRelation = await tx.userUser.create({
         data: {
           user1Id: u1,
           user2Id: u2,
@@ -316,7 +325,11 @@ export async function addUserRelation(
       })
 
       revalidatePath(`/g/${groupSlug}/family`)
-      return { success: true, message: 'Relationship added successfully.' }
+      return {
+        success: true,
+        message: 'Relationship added successfully.',
+        relation: newRelation as FullRelationship,
+      }
     })
   } catch (error) {
     console.error('Error adding user relation:', error)

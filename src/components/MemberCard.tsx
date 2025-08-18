@@ -20,6 +20,7 @@ interface MemberCardProps {
   isGroupAdmin?: boolean
   groupMembers: Member[]
   onRelate: (member: Member) => void
+  currentUserId?: string
 }
 
 export default function MemberCard({
@@ -30,10 +31,11 @@ export default function MemberCard({
   isGroupAdmin,
   groupMembers,
   onRelate,
+  currentUserId,
 }: MemberCardProps) {
   const [isManageModalOpen, setIsManageModalOpen] = useState(false)
   const imageUrl = member.user.photoUrl || '/images/default-avatar.png'
-
+  
   if (listType === 'greeted' && viewMode === 'list') {
     return (
       <>
@@ -73,21 +75,19 @@ export default function MemberCard({
               </TooltipProvider>
             ) : null}
           </div>
-          {isGroupAdmin && (
-            <div className="relative">
-              <Dropdown
-                trigger={<MoreVertical size={16} />}
-                triggerClassName="rounded-full p-1 hover:bg-gray-200 dark:hover:bg-gray-700"
-              >
-                <DropdownItem onClick={() => onRelate(member)}>
-                  Relate
-                </DropdownItem>
+          <div className="relative">
+            <Dropdown
+              trigger={<MoreVertical size={16} />}
+              triggerClassName="rounded-full p-1 hover:bg-gray-200 dark:hover:bg-gray-700"
+            >
+              <DropdownItem onClick={() => onRelate(member)}>Relate</DropdownItem>
+              {isGroupAdmin && (
                 <DropdownItem onClick={() => setIsManageModalOpen(true)}>
                   Manage
                 </DropdownItem>
-              </Dropdown>
-            </div>
-          )}
+              )}
+            </Dropdown>
+          </div>
         </div>
         {isManageModalOpen && (
           <ManageUserModal
@@ -151,21 +151,19 @@ export default function MemberCard({
               </>
             )}
           </div>
-          {isGroupAdmin && (
-            <div className="absolute right-0 top-0">
-              <Dropdown
-                trigger={<MoreVertical size={16} />}
-                triggerClassName="rounded-full p-1 hover:bg-gray-200 dark:hover:bg-gray-700"
-              >
-                <DropdownItem onClick={() => onRelate(member)}>
-                  Relate
-                </DropdownItem>
+          <div className="absolute right-0 top-0">
+            <Dropdown
+              trigger={<MoreVertical size={16} />}
+              triggerClassName="rounded-full p-1 hover:bg-gray-200 dark:hover:bg-gray-700"
+            >
+              <DropdownItem onClick={() => onRelate(member)}>Relate</DropdownItem>
+              {isGroupAdmin && (
                 <DropdownItem onClick={() => setIsManageModalOpen(true)}>
                   Manage
                 </DropdownItem>
-              </Dropdown>
-            </div>
-          )}
+              )}
+            </Dropdown>
+          </div>
         </div>
       </div>
       {isManageModalOpen && (

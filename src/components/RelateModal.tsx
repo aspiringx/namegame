@@ -1,42 +1,67 @@
 'use client'
 
-import { useState, useEffect, useTransition, useRef } from 'react'
+import { useState, useEffect, useTransition, useRef, useMemo } from 'react'
 import Modal from './ui/modal'
-import { Combobox } from './ui/combobox'
+import {
+  Combobox,
+  type ComboboxOption,
+  type DividerOption as ComboboxOptionDivider,
+} from './ui/combobox'
 import { toast } from 'sonner'
 import {
   addUserRelation,
   deleteUserRelation,
   getFamilyRelationTypes,
-  getMemberRelations,
 } from '@/app/g/[slug]/family/actions'
+import { getRelationTypes } from '@/app/g/[slug]/all/actions'
+import { getMemberRelations } from '@/app/g/[slug]/all/actions'
 import { updateUserGender, updateUserBirthDate } from '@/app/(main)/me/actions'
 
-import type { MemberWithUser as Member } from '@/types/index'
-import type { UserUserRelationType, Gender } from '@/generated/prisma'
+import type { MemberWithUser as Member, FullRelationship } from '@/types/index'
+import type {
+  GroupType,
+  Gender,
+  User,
+  UserUser,
+  UserUserRelationType,
+} from '@/generated/prisma'
 
-type RelationWithUser = Awaited<ReturnType<typeof getMemberRelations>>[0]
+// A type that represents a relation that includes the other user in the relation.
+// This is not a database model.
+export type RelationWithUser = UserUser & {
+  relatedUser: User
+  relationType: UserUserRelationType
+}
+
+// Local type for the options in the relation type dropdown
+type RelationTypeOption = {
+  id: string | number
+  code: string
+  category: UserUserRelationType['category']
+}
 
 interface RelateModalProps {
   isOpen: boolean
   onClose: () => void
-  member: Member | null
+  member: Member
+  groupType: GroupType
   groupMembers: Member[]
   groupSlug: string
   initialRelations: RelationWithUser[]
-  onRelationshipAdded: () => void
-  isReadOnly?: boolean
+  onRelationshipAdded: (relation?: FullRelationship) => void
+  isReadOnly: boolean
 }
 
 function RelateModalContent({
   isOpen,
   onClose,
   member,
+  groupType,
   groupMembers,
   groupSlug,
   initialRelations,
   onRelationshipAdded,
-  isReadOnly = false,
+  isReadOnly,
 }: RelateModalProps) {
   if (!member) return null
   const [isPending, startTransition] = useTransition()
@@ -50,9 +75,7 @@ function RelateModalContent({
   )
 
   // State for the relationship form
-  const [relationTypes, setRelationTypes] = useState<
-    (UserUserRelationType | { id: string; code: string; name: string })[]
-  >([])
+  const [relationTypes, setRelationTypes] = useState<RelationTypeOption[]>([])
   const [selectedMemberId, setSelectedMemberId] = useState('')
   const [selectedRelationTypeId, setSelectedRelationTypeId] = useState('')
   const [selectedGender, setSelectedGender] = useState<Gender | null>(null)
@@ -77,23 +100,33 @@ function RelateModalContent({
     formRef.current?.reset()
   }, [member, initialRelations])
 
-  // Fetch relation types and add the 'Child' convenience option
+  // Fetch relation types
   useEffect(() => {
-    if (isOpen) {
-      getFamilyRelationTypes().then((types) => {
-        // 'child' is the inverse of 'parent', not a real type in the DB.
-        // We add it here for user convenience in the dropdown.
-        const childOption = {
-          id: 'child',
-          code: 'child',
-          name: 'Child',
-          description: 'The person is their child',
-          isFamilyRelation: true,
-        }
-        setRelationTypes([...types, childOption])
-      })
+    const fetchRelationTypes = async () => {
+      let types: RelationTypeOption[] = []
+      if (groupType.code === 'family') {
+        types = await getFamilyRelationTypes()
+      } else {
+        types = await getRelationTypes()
+      }
+
+      // Manually add "Child" as an option for convenience
+      const childOption: RelationTypeOption = {
+        id: 'child',
+        code: 'Child',
+        category: 'family', // Child is a family relationship
+      }
+
+      // check if child is already present to avoid duplicates if it's ever added to the db
+      const childExists = types.some((t) => t.code.toLowerCase() === 'child')
+      if (childExists) {
+        setRelationTypes(types)
+      } else {
+        setRelationTypes([childOption, ...types])
+      }
     }
-  }, [isOpen])
+    fetchRelationTypes()
+  }, [groupType.code])
 
   // Decide whether to show the gender editor based on the current member
   useEffect(() => {
@@ -119,7 +152,7 @@ function RelateModalContent({
       )
       if (result.success) {
         toast.success(`${member.user.firstName}'s gender updated.`)
-        onRelationshipAdded() // Refresh data
+        onRelationshipAdded()
       } else {
         toast.error(result.error || 'Failed to update gender.')
         // Revert on failure
@@ -166,7 +199,7 @@ function RelateModalContent({
         const result = await addUserRelation(formData, groupSlug)
         if (result.success) {
           toast.success('Relationship added!')
-          onRelationshipAdded()
+          onRelationshipAdded(result.relation)
           onClose()
         } else {
           toast.error(result.message || 'Failed to add relationship.')
@@ -192,7 +225,7 @@ function RelateModalContent({
             prev.filter((r) => r.id !== relationToDelete.id),
           )
           toast.success('Relationship deleted.')
-          onRelationshipAdded() // This should trigger a refresh
+          onRelationshipAdded()
           setRelationToDelete(null)
         } else {
           toast.error(result.message || 'Failed to delete relationship.')
@@ -285,10 +318,51 @@ function RelateModalContent({
               </label>
               <Combobox
                 name="relationTypeId"
-                options={relationTypes.map((rt) => ({
-                  value: rt.id.toString(),
-                  label: rt.code.charAt(0).toUpperCase() + rt.code.slice(1),
-                }))}
+                options={useMemo(() => {
+                  const capitalize = (s: string) =>
+                    s.charAt(0).toUpperCase() + s.slice(1)
+
+                  if (groupType.code === 'community') {
+                    const sortedTypes = [...relationTypes].sort((a, b) => {
+                      if (a.category === 'other' && b.category !== 'other')
+                        return -1
+                      if (a.category !== 'other' && b.category === 'other') return 1
+                      return a.code.localeCompare(b.code)
+                    })
+
+                    const otherTypes = sortedTypes.filter(
+                      (rt) => rt.category === 'other',
+                    )
+                    const familyTypes = sortedTypes.filter(
+                      (rt) => rt.category === 'family',
+                    )
+
+                    if (otherTypes.length > 0 && familyTypes.length > 0) {
+                      const options: (ComboboxOption | ComboboxOptionDivider)[] =
+                        []
+                      otherTypes.forEach((rt) => {
+                        options.push({
+                          value: rt.id.toString(),
+                          label: capitalize(rt.code),
+                        })
+                      })
+                      options.push({ isDivider: true })
+                      familyTypes.forEach((rt) => {
+                        options.push({
+                          value: rt.id.toString(),
+                          label: capitalize(rt.code),
+                        })
+                      })
+                      return options
+                    }
+                  }
+
+                  // Fallback for family groups or if no divider is needed
+                  return relationTypes.map((rt) => ({
+                    value: rt.id.toString(),
+                    label: capitalize(rt.code),
+                  }))
+                }, [relationTypes, groupType.code])}
                 selectedValue={selectedRelationTypeId}
                 onSelectValue={setSelectedRelationTypeId}
                 placeholder="Select a relationship"

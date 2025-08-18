@@ -56,6 +56,9 @@ export type GroupData = Group & {
 
 export type FullRelationship = UserUser & {
   relationType: UserUserRelationType
+  relatedUser: User
+  user1: User
+  user2: User
 }
 
 export type FamilyGroupData = Group & {

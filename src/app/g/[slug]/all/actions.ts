@@ -225,3 +225,10 @@ export async function getMemberRelations(userId: string, groupSlug: string) {
     relatedUser: r.user1Id === userId ? r.user2 : r.user1,
   }))
 }
+
+export async function getRelationTypes() {
+  return prisma.userUserRelationType.findMany({
+    select: { id: true, code: true, category: true },
+  })
+}
+

@@ -4,6 +4,7 @@ import React, { useState, useEffect, Fragment, useMemo, useCallback } from 'reac
 import useLocalStorage from '@/hooks/useLocalStorage'
 import { useRouter } from 'next/navigation'
 import { Tab } from '@headlessui/react'
+import clsx from 'clsx'
 import { useInView } from 'react-intersection-observer'
 import type { MemberWithUser, FullRelationship } from '@/types'
 import MemberCard from '@/components/MemberCard'
@@ -50,6 +51,7 @@ interface SearchableMemberListProps {
   isGroupAdmin?: boolean
   groupMembers: MemberWithUser[]
   onRelate: (member: MemberWithUser) => void
+  currentUserId?: string
 }
 
 const SearchableMemberList: React.FC<SearchableMemberListProps> = ({
@@ -61,6 +63,7 @@ const SearchableMemberList: React.FC<SearchableMemberListProps> = ({
   isGroupAdmin,
   groupMembers,
   onRelate,
+  currentUserId,
 }) => {
   const [members, setMembers] = useState(initialMembers)
   const [page, setPage] = useState(1)
@@ -116,6 +119,7 @@ const SearchableMemberList: React.FC<SearchableMemberListProps> = ({
           isGroupAdmin={isGroupAdmin}
           groupMembers={groupMembers}
           onRelate={onRelate}
+          currentUserId={currentUserId}
         />
       ))}
       {hasMore && (
@@ -293,7 +297,7 @@ const GroupTabs: React.FC<GroupTabsProps> = ({
                 <Tab
                   key={tab.name}
                   className={({ selected }) =>
-                    classNames(
+                    clsx(
                       'w-full rounded-lg py-2.5 text-sm leading-5 font-medium',
                       'ring-opacity-60 ring-white ring-offset-2 ring-offset-blue-400 focus:ring-2 focus:outline-none',
                       selected
@@ -306,7 +310,7 @@ const GroupTabs: React.FC<GroupTabsProps> = ({
                     <div className="flex items-center justify-center gap-2">
                       <span>{tab.name}</span>
                       <Badge
-                        className={classNames(
+                        className={clsx(
                           'rounded-full px-2 py-0.5 text-xs font-medium',
                           selected
                             ? 'bg-blue-100 text-blue-700'
@@ -324,7 +328,7 @@ const GroupTabs: React.FC<GroupTabsProps> = ({
               {tabs.map((tab: TabInfo) => (
                 <Tab.Panel
                   key={tab.name}
-                  className={classNames(
+                  className={clsx(
                     'rounded-xl bg-white p-3 dark:bg-gray-800',
                     'ring-white/60 ring-offset-2 ring-offset-blue-400 focus:ring-2 focus:outline-none',
                   )}
@@ -422,6 +426,7 @@ const GroupTabs: React.FC<GroupTabsProps> = ({
                     isGroupAdmin={isGroupAdmin}
                     groupMembers={allMembers}
                     onRelate={handleOpenRelateModal}
+                    currentUserId={ego?.userId}
                   />
                 </Tab.Panel>
               ))}
@@ -429,11 +434,12 @@ const GroupTabs: React.FC<GroupTabsProps> = ({
           </Tab.Group>
         </div>
       </TooltipProvider>
-      {isRelateModalOpen && (
+      {isRelateModalOpen && selectedMember && group?.groupType && (
         <RelateModal
           isOpen={isRelateModalOpen}
           onClose={handleCloseRelateModal}
           member={selectedMember}
+          groupType={group.groupType}
           groupMembers={allGroupMembers}
           groupSlug={group?.slug || ''}
           initialRelations={memberRelations}
