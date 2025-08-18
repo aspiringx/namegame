@@ -39,6 +39,7 @@ export type UserProfile = {
   gender: 'male' | 'female' | 'non_binary' | null
   birthDate: string | null
   birthDatePrecision: DatePrecision | null
+  birthPlace: string | null
 }
 
 function SubmitButton({
@@ -100,6 +101,7 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
       user.birthDatePrecision ?? null,
     ),
   )
+  const [birthPlace, setBirthPlace] = useState(user.birthPlace || '')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [passwordError, setPasswordError] = useState<string | null>(null)
@@ -158,6 +160,7 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
       user.birthDatePrecision ?? null,
     )
     const isBirthDateDirty = birthDate !== originalBirthDate
+    const isBirthPlaceDirty = birthPlace !== (user.birthPlace || '')
 
     setIsDirty(
       isFirstNameDirty ||
@@ -165,7 +168,8 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
         isPasswordDirty ||
         isPhotoDirty ||
         isGenderDirty ||
-        isBirthDateDirty,
+        isBirthDateDirty ||
+        isBirthPlaceDirty,
     )
   }, [
     firstName,
@@ -179,6 +183,8 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
     user.gender,
     user.birthDate,
     user.birthDatePrecision,
+    birthPlace,
+    user.birthPlace,
   ])
 
   useEffect(() => {
@@ -739,6 +745,26 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
                   }}
                   className="block w-full rounded-md border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
                   placeholder="July 9, 1969, 7/9/69, 1969, etc."
+                />
+              </div>
+            </div>
+
+            <div>
+              <label
+                htmlFor="birthPlace"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                Birth Place
+              </label>
+              <div className="mt-2">
+                <input
+                  type="text"
+                  name="birthPlace"
+                  id="birthPlace"
+                  value={birthPlace}
+                  onChange={(e) => setBirthPlace(e.target.value)}
+                  className="block w-full rounded-md border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+                  placeholder="City, State, Country"
                 />
               </div>
             </div>

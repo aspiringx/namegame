@@ -62,7 +62,7 @@ export function FamilyGroupClient({
       viewMode: 'grid',
     },
   )
-  const { isGroupAdmin, currentUserMember } = useGroup()
+  const { group, isGroupAdmin, currentUserMember } = useGroup()
   const { ref, inView } = useInView()
   const router = useRouter()
 
@@ -343,16 +343,19 @@ export function FamilyGroupClient({
         )}
       </div>
 
-      <RelateModal
+      {selectedMember && group?.groupType && (
+        <RelateModal
         isOpen={isRelateModalOpen}
         onClose={handleCloseRelateModal}
         member={selectedMember}
+        groupType={group.groupType}
         groupMembers={allGroupMembers}
         groupSlug={groupSlug}
         initialRelations={memberRelations}
         onRelationshipAdded={handleRelationshipChange}
         isReadOnly={!isGroupAdmin && selectedMember?.userId !== currentUserMember?.userId}
-      />
+        />
+      )}
     </>
   )
 }
