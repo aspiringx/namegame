@@ -11,7 +11,7 @@ export function GuestMessage({ isGuest }: { isGuest: boolean }) {
   }
 
   const updateProfileContentUserPage = (
-    <span className="">Update your profile below</span>
+    <span className="">Add required fields</span>
   )
   const updateProfileContentGroupPage = (
     <span className="">Update your profile</span>

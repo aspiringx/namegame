@@ -55,17 +55,16 @@ export default function UsersList({
 
   return (
     <div>
-      <div className="mb-6 flex flex-col items-end gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <p className="w-full flex-grow text-sm font-medium text-gray-700 dark:text-gray-300">
-          Create managed users to include those who can't participate for
-          themselves.
+      <div className="mb-6 flex items-center justify-between">
+        <div className="flex items-center">
+          <h3>Managed Users</h3>
           <button
             onClick={() => setShowInfo(!showInfo)}
             className="-my-2 ml-2 inline-flex items-center rounded-full p-2 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
           >
             <Info className="h-6 w-6 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" />
           </button>
-        </p>
+        </div>
         <Button asChild className="flex-shrink-0">
           <Link href="/me/users/create">Create</Link>
         </Button>
@@ -99,7 +98,42 @@ export default function UsersList({
           </div>
         </div>
       )}
-
+      {showInfo && (
+        <div
+          id="managed-user-info"
+          className="mb-6 rounded-md border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800"
+        >
+          <p className="mb-4 text-sm font-medium text-gray-700 dark:text-gray-300">
+            Managed users are accounts you can manage, either because you
+            created their account or someone else gave you access to manage it
+            with them (e.g. two parents managing a child account).
+          </p>
+          <p className="mb-4 text-sm font-medium text-gray-700 dark:text-gray-300">
+            Create and manage accounts for minor children, deceased relatives,
+            those who are disabled, lack internet access, or even pets!
+          </p>
+          <p className="mb-4 text-sm font-medium text-gray-700 dark:text-gray-300">
+            You can add managed users to any group you belong to.
+          </p>
+          <p className="mb-4 text-sm font-medium text-red-700 dark:text-red-400">
+            DISCLAIMER: You must have permission to manage an account for a
+            living person. If the person is deceased, you must be a direct
+            descendent or have permission from one.
+            <br />
+            <br />
+            If an authorized user (the person or one of their managers) makes
+            you a manager, this is considered permission.
+          </p>
+          <button
+            type="button"
+            onClick={() => setShowInfo(false)}
+            className="mx-auto flex items-center pt-2 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+          >
+            <ChevronUp className="mr-1 h-4 w-4" />
+            Close
+          </button>
+        </div>
+      )}
       {managedUsers.length > 0 && (
         <div className="mt-8 flow-root">
           <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
@@ -159,45 +193,6 @@ export default function UsersList({
         </div>
       )}
 
-      {showInfo && (
-        <div
-          id="managed-user-info"
-          className="mb-6 rounded-md border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800"
-        >
-          <p className="mb-4 text-sm font-medium text-gray-700 dark:text-gray-300">
-            Perfect for including minor children, deceased relatives (in a
-            family group), people with disabilities, or people without internet
-            access.
-          </p>
-          <p className="mb-4 text-sm font-medium text-gray-700 dark:text-gray-300">
-            Managed users:
-            <ul className="mt-4 list-inside list-disc space-y-2">
-              <li>Don't require separate logins or emails</li>
-              <li>
-                Multiple people can manage the same users (two parents of a
-                child, adult children of a deceased parent, etc.)
-              </li>
-              <li>
-                Parents can give control of the account to children, either
-                partially or fully
-              </li>
-              <li>
-                Birth dates are required to determine age. Birth locations,
-                death dates, and death locations are optional, but nice in
-                family groups.
-              </li>
-            </ul>
-          </p>
-          <button
-            type="button"
-            onClick={() => setShowInfo(false)}
-            className="mx-auto flex items-center pt-2 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-          >
-            <ChevronUp className="mr-1 h-4 w-4" />
-            Close
-          </button>
-        </div>
-      )}
       <AlertDialog
         open={!!userToDelete}
         onOpenChange={() => setUserToDelete(null)}

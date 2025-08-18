@@ -1,11 +1,9 @@
 import { auth } from '@/auth'
 import { redirect } from 'next/navigation'
 import prisma from '@/lib/prisma'
-import { GuestMessage } from '@/components/GuestMessage'
-import MeTabs from './_components/me-tabs'
 import { getPublicUrl } from '@/lib/storage'
 
-export default async function MeLayout({
+export default async function MeUsersLayout({
   children,
 }: {
   children: React.ReactNode
@@ -13,7 +11,7 @@ export default async function MeLayout({
   const session = await auth()
 
   if (!session?.user?.id) {
-    redirect('/login?callbackUrl=/me')
+    redirect('/login?callbackUrl=/me/users')
   }
 
   const user = await prisma.user.findUnique({
@@ -42,13 +40,9 @@ export default async function MeLayout({
     !user.emailVerified ||
     (userImage?.includes('dicebear.com') ?? true)
 
-  return (
-    <main className="container mx-auto mb-12 px-4 pb-8">
-      <div className="mx-auto max-w-2xl">
-        <GuestMessage isGuest={isGuest} />
-        <MeTabs isGuest={isGuest} />
-        {children}
-      </div>
-    </main>
-  )
+  if (isGuest) {
+    redirect('/me')
+  }
+
+  return <>{children}</>
 }

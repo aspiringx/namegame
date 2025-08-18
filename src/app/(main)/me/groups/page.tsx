@@ -38,6 +38,7 @@ export default async function MyGroupsPage() {
 
   return (
     <div>
+      <h3 className="mb-6">My Groups</h3>
       <p className="mb-6 text-sm font-medium text-gray-700 dark:text-gray-300">
         Visit or leave groups.
       </p>
