@@ -1,11 +1,29 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useEffect } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import Cookies from 'js-cookie'
 import { handleGuestGreeting, CodeData } from '@/app/greet/[code]/actions'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
+
+function UnsupportedBrowser({ onCopy }: { onCopy: () => void }) {
+  return (
+    <div className="flex flex-col items-center justify-center text-center">
+      <h2 className="text-2xl font-bold">Unsupported Browser Detected</h2>
+      <p className="text-muted-foreground mt-2">
+        For the best experience, please copy this link and open it in your
+        phone's main browser (like Safari or Chrome).
+      </p>
+      <button
+        onClick={onCopy}
+        className="bg-primary text-primary-foreground hover:bg-primary/90 ring-offset-background focus-visible:ring-ring mt-4 inline-flex h-10 items-center justify-center rounded-md px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
+      >
+        Copy Link
+      </button>
+    </div>
+  )
+}
 
 export default function GreetPageClient({
   codeData,
@@ -20,6 +38,24 @@ export default function GreetPageClient({
   const [showSignupForm, setShowSignupForm] = useState(false)
   const [firstName, setFirstName] = useState('')
   const [signInFailed, setSignInFailed] = useState(false)
+  const [isUnsupportedBrowser, setIsUnsupportedBrowser] = useState(false)
+  const [showCopied, setShowCopied] = useState(false)
+
+  useEffect(() => {
+    const userAgent = navigator.userAgent
+    // Crude check for in-app browsers / webviews for Facebook, Instagram, etc.
+    const unsupportedPatterns = [/FBAN/, /FBAV/, /Instagram/, /WebView/, /wv\)/]
+    if (unsupportedPatterns.some((pattern) => pattern.test(userAgent))) {
+      setIsUnsupportedBrowser(true)
+    }
+  }, [])
+
+  const handleCopyToClipboard = () => {
+    navigator.clipboard.writeText(window.location.href).then(() => {
+      setShowCopied(true)
+      setTimeout(() => setShowCopied(false), 2000) // Hide message after 2s
+    })
+  }
 
   const handleLogin = () => {
     if (codeData?.group?.slug) {
@@ -47,9 +83,13 @@ export default function GreetPageClient({
 
         if (result.success && result.signInFailed && result.credentials) {
           // Account created, but auto sign-in failed. Set cookies for retry.
-          Cookies.set('temp_user_credentials', JSON.stringify(result.credentials), {
-            expires: 1, // Expires in 1 day
-          })
+          Cookies.set(
+            'temp_user_credentials',
+            JSON.stringify(result.credentials),
+            {
+              expires: 1, // Expires in 1 day
+            },
+          )
           Cookies.set('post_login_redirect', `/g/${codeData.group.slug}`, {
             expires: 1,
           })
@@ -67,6 +107,15 @@ export default function GreetPageClient({
     })
   }
 
+  if (isUnsupportedBrowser) {
+    return (
+      <div className="flex flex-col items-center justify-center text-center">
+        <UnsupportedBrowser onCopy={handleCopyToClipboard} />
+        {showCopied && <p className="mt-4">Link copied to clipboard!</p>}
+      </div>
+    )
+  }
+
   return (
     <div className="flex min-h-screen flex-col">
       <Header />
@@ -78,8 +127,8 @@ export default function GreetPageClient({
                 Invalid Link
               </h1>
               <p className="text-xl">
-                This greeting link is either expired or invalid. Please ask for a
-                new one.
+                This greeting link is either expired or invalid. Please ask for
+                a new one.
               </p>
             </div>
           </div>
@@ -97,10 +146,10 @@ export default function GreetPageClient({
                 <div className="space-y-4 rounded-md border border-yellow-300 bg-yellow-50 p-6 text-yellow-800">
                   <h2 className="text-2xl font-bold">Connection Issue</h2>
                   <p className="text-left">
-                    It looks like your internet connection is slow or sporadic. We've
-                    created your account and will attempt to proceed when this
-                    improves. If you have access to WiFi, consider enabling it and
-                    tap Refresh.
+                    It looks like your internet connection is slow or sporadic.
+                    We've created your account and will attempt to proceed when
+                    this improves. If you have access to WiFi, consider enabling
+                    it and tap Refresh.
                   </p>
                   <button
                     onClick={() => window.location.reload()}
