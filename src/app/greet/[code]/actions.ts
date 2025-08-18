@@ -40,12 +40,14 @@ export async function handleAuthenticatedGreeting(
   const user2Id =
     currentUserId > codeData.user.id ? currentUserId : codeData.user.id
 
-  const [relationTypes, roleTypes, photoTypes, entityTypes] = await Promise.all([
-    getCodeTable('userUserRelationType'),
-    getCodeTable('groupUserRole'),
-    getCodeTable('photoType'),
-    getCodeTable('entityType'),
-  ])
+  const [relationTypes, roleTypes, photoTypes, entityTypes] = await Promise.all(
+    [
+      getCodeTable('userUserRelationType'),
+      getCodeTable('groupUserRole'),
+      getCodeTable('photoType'),
+      getCodeTable('entityType'),
+    ],
+  )
 
   const currentUser = await prisma.user.findUnique({
     where: { id: currentUserId },
@@ -155,7 +157,8 @@ export async function createGreetingCode(groupId: number) {
 
 /**
  * Handles the greeting and sign-up logic for a new, unauthenticated user.
- * It creates a new user, establishes the relationship, and adds them to the group.
+ * It creates a new user, adds the user-user relationship, and adds them to the
+ * group from which the greeting code was generated.
  */
 export async function handleGuestGreeting(
   firstName: string,
@@ -173,6 +176,7 @@ export async function handleGuestGreeting(
         getCodeTable('groupUserRole'),
       ])
 
+    // The transaction block. All database operations inside will succeed or fail together.
     await prisma.$transaction(async (tx) => {
       // 1. Create the new guest user
       const newUser = await tx.user.create({
@@ -183,15 +187,8 @@ export async function handleGuestGreeting(
         },
       })
 
-      // 2. Create the UserUser relationship
-      const user1Id =
-        newUser.id < codeData.user.id ? newUser.id : codeData.user.id
-      const user2Id =
-        newUser.id > codeData.user.id ? newUser.id : codeData.user.id
-
-      // 3. Create a default profile picture for the new user
+      // 2. Create a default profile picture for the new user
       const avatarUrl = `https://api.dicebear.com/8.x/personas/png?seed=${newUser.id}`
-
       await tx.photo.create({
         data: {
           userId: newUser.id,
@@ -202,7 +199,10 @@ export async function handleGuestGreeting(
         },
       })
 
-      // 4. Create or update the UserUser relationship
+      // 3. Create the UserUser relationship
+      const user1Id = codeData.user.id // The user who shared the code
+      const user2Id = newUser.id // The new user who scanned the code
+
       await tx.userUser.upsert({
         where: {
           user1Id_user2Id_relationTypeId: {
@@ -222,7 +222,7 @@ export async function handleGuestGreeting(
         },
       })
 
-      // 3. Add the new user to the group as a guest
+      // 4. Add the new user to the group as a guest
       await tx.groupUser.create({
         data: {
           userId: newUser.id,
@@ -232,12 +232,19 @@ export async function handleGuestGreeting(
       })
     })
 
-    // 4. After the transaction is successful, sign the new user in
-    await signIn('credentials', {
-      email: username,
-      password: 'password123',
-      redirect: false, // We will handle redirection on the client
-    })
+    // 5. AFTER the transaction is successful, attempt to sign the new user in.
+    // This is now outside the transaction and cannot interfere with it.
+    try {
+      await signIn('credentials', {
+        email: username,
+        password: 'password123',
+        redirect: false, // We will handle redirection on the client
+      })
+    } catch (signInError) {
+      console.error('Sign-in after guest greeting failed:', signInError)
+      // This is a non-fatal error. The account is fully created.
+      // The client can prompt the user to log in manually.
+    }
 
     return { success: true }
   } catch (error) {
