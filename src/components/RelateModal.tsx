@@ -11,10 +11,10 @@ import { toast } from 'sonner'
 import {
   addUserRelation,
   deleteUserRelation,
-  getFamilyRelationTypes,
-} from '@/app/g/[slug]/family/actions'
-import { getRelationTypes } from '@/app/g/[slug]/all/actions'
-import { getMemberRelations } from '@/app/g/[slug]/all/actions'
+  updateUserRelation,
+  getRelationTypes,
+  getMemberRelations,
+} from '@/lib/actions'
 import { updateUserGender, updateUserBirthDate } from '@/app/(main)/me/actions'
 
 import type { MemberWithUser as Member, FullRelationship } from '@/types/index'
@@ -25,6 +25,31 @@ import type {
   UserUser,
   UserUserRelationType,
 } from '@/generated/prisma'
+
+// Determines the correct display label (e.g., 'child' vs 'parent').
+function getRelationLabel(relation: RelationWithUser, mainUserId: string): string {
+  if (relation.relationType.code === 'parent') {
+    return relation.user1Id === mainUserId ? 'child' : 'parent'
+  }
+  return relation.relationType.code
+}
+
+// Determines the value for the dropdown selector.
+function getRelationValue(
+  relation: RelationWithUser,
+  mainUserId: string,
+  relationTypes: RelationTypeOption[],
+): string | number {
+  if (relation.relationType.code === 'parent') {
+    if (relation.user1Id === mainUserId) {
+      return 'child'
+    }
+    // Find the 'parent' relation type to get its ID
+    const parentType = relationTypes.find((rt) => rt.code === 'parent')
+    return parentType ? parentType.id : relation.relationTypeId
+  }
+  return relation.relationTypeId
+}
 
 // A type that represents a relation that includes the other user in the relation.
 // This is not a database model.
@@ -50,6 +75,76 @@ interface RelateModalProps {
   initialRelations: RelationWithUser[]
   onRelationshipAdded: (relation?: FullRelationship) => void
   isReadOnly: boolean
+  loggedInUserId: string
+}
+
+// A new component to handle the display and editing of a single relationship.
+function RelationshipEditor({
+  relation,
+  isReadOnly,
+  relationTypes,
+  groupSlug,
+  onUpdate,
+  loggedInUserId,
+  mainUserId,
+}: {
+  relation: RelationWithUser
+  isReadOnly: boolean
+  relationTypes: RelationTypeOption[]
+  groupSlug: string
+  onUpdate: () => void
+  loggedInUserId: string
+  mainUserId: string
+}) {
+  const [isUpdating, startUpdateTransition] = useTransition()
+
+  const currentLabel = getRelationLabel(relation, mainUserId)
+  const currentValue = getRelationValue(relation, mainUserId, relationTypes)
+
+  if (isReadOnly) {
+    return (
+      <span className="text-sm text-gray-500 dark:text-gray-400 capitalize">
+        {currentLabel}
+      </span>
+    )
+  }
+
+  const handleRelationChange = (
+    event: React.ChangeEvent<HTMLSelectElement>,
+  ) => {
+    const newRelationTypeId = event.target.value
+    startUpdateTransition(async () => {
+      const result = await updateUserRelation(
+        relation.id,
+        newRelationTypeId,
+        groupSlug,
+        mainUserId,
+      )
+      if (result.success) {
+        toast.success('Relationship updated.')
+      } else {
+        toast.error(result.message || 'Failed to update relationship.')
+      }
+      onUpdate() // This will trigger a re-fetch of relations in the parent
+    })
+  }
+
+
+  return (
+    <select
+      value={currentValue}
+      onChange={handleRelationChange}
+      disabled={isUpdating}
+      className="rounded-md border-gray-300 bg-white px-2 py-1 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 disabled:cursor-not-allowed disabled:opacity-50"
+      aria-label={`Edit relationship with ${relation.relatedUser.firstName}`}
+    >
+      {relationTypes.map((rt) => (
+        <option key={rt.id} value={rt.id}>
+          {rt.code.charAt(0).toUpperCase() + rt.code.slice(1)}
+        </option>
+      ))}
+    </select>
+  )
 }
 
 function RelateModalContent({
@@ -62,6 +157,7 @@ function RelateModalContent({
   initialRelations,
   onRelationshipAdded,
   isReadOnly,
+  loggedInUserId,
 }: RelateModalProps) {
   if (!member) return null
   const [isPending, startTransition] = useTransition()
@@ -87,6 +183,15 @@ function RelateModalContent({
     useState<RelationWithUser | null>(null)
   const [showMemberGenderEditor, setShowMemberGenderEditor] = useState(false)
 
+  const refreshRelations = async () => {
+    if (!member) return
+    const updatedRelations = await getMemberRelations(member.userId, groupSlug)
+    setRelations(updatedRelations)
+
+    // Propagate the update to the parent component
+    onRelationshipAdded()
+  }
+
   // Reset state when the user (member) or initial relations change
   useEffect(() => {
     setRelations(initialRelations)
@@ -103,28 +208,24 @@ function RelateModalContent({
   // Fetch relation types
   useEffect(() => {
     const fetchRelationTypes = async () => {
-      let types: RelationTypeOption[] = []
+      let fetchedTypes: RelationTypeOption[] = []
+      const allTypes = await getRelationTypes()
+
       if (groupType.code === 'family') {
-        types = await getFamilyRelationTypes()
+        fetchedTypes = allTypes.filter(
+          (t: RelationTypeOption) => t.category === 'family',
+        )
       } else {
-        types = await getRelationTypes()
+        fetchedTypes = allTypes // For community, use all types
       }
 
-      // Manually add "Child" as an option for convenience
-      const childOption: RelationTypeOption = {
-        id: 'child',
-        code: 'Child',
-        category: 'family', // Child is a family relationship
+      // Add virtual child relation. This is not in the DB.
+      if (!fetchedTypes.some((t) => t.id === 'child')) {
+        fetchedTypes.push({ id: 'child', code: 'child', category: 'family' })
       }
-
-      // check if child is already present to avoid duplicates if it's ever added to the db
-      const childExists = types.some((t) => t.code.toLowerCase() === 'child')
-      if (childExists) {
-        setRelationTypes(types)
-      } else {
-        setRelationTypes([childOption, ...types])
-      }
+      setRelationTypes(fetchedTypes)
     }
+
     fetchRelationTypes()
   }, [groupType.code])
 
@@ -161,11 +262,13 @@ function RelateModalContent({
     })
   }
 
-  const getRelationLabel = (relation: RelationWithUser) => {
-    if (relation.relationType.code === 'parent') {
-      return relation.user1Id === member.userId ? 'child' : 'parent'
-    }
-    return relation.relationType.code
+  const resetForm = () => {
+    formRef.current?.reset()
+    setSelectedMemberId('')
+    setSelectedRelationTypeId('')
+    setSelectedGender(null)
+    setRelatedPersonBirthDate('')
+    setMemberBirthDate('')
   }
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -197,10 +300,24 @@ function RelateModalContent({
 
         // Finally, add the relationship
         const result = await addUserRelation(formData, groupSlug)
-        if (result.success) {
+        if (result.success && result.relation) {
           toast.success('Relationship added!')
+          // The server action now returns the full relationship object, including the relationType and both users.
+          // We determine which user is the 'relatedUser' from the perspective of the current member.
+          const relatedUser = member.userId === result.relation.user1Id ? result.relation.user2 : result.relation.user1;
+
+          const newRelation: RelationWithUser = {
+            ...result.relation,
+            relatedUser: relatedUser,
+          };
+
+          setRelations((prev) => [...prev, newRelation])
+
+          // Notify the parent component that an update happened.
           onRelationshipAdded(result.relation)
-          onClose()
+
+          // Reset form for potentially adding another relationship.
+          resetForm()
         } else {
           toast.error(result.message || 'Failed to add relationship.')
         }
@@ -475,37 +592,43 @@ function RelateModalContent({
                   key={r.id}
                   className="flex items-center justify-between py-2"
                 >
-                  <div>
-                    <span>
-                      {r.relatedUser.firstName} {r.relatedUser.lastName}
-                    </span>
-                    <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">
-                      ({getRelationLabel(r)})
-                    </span>
-                  </div>
-                  {!isReadOnly && (
-                    <button
-                      type="button"
-                      onClick={() => setRelationToDelete(r)}
-                      className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-500"
-                      aria-label={`Delete relationship with ${r.relatedUser.firstName} ${r.relatedUser.lastName}`}
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-4 w-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
+                  <span>
+                    {r.relatedUser.firstName} {r.relatedUser.lastName}
+                  </span>
+                  <div className="flex items-center gap-4">
+                    <RelationshipEditor
+                      relation={r}
+                      isReadOnly={isReadOnly}
+                      relationTypes={relationTypes}
+                      groupSlug={groupSlug}
+                      onUpdate={refreshRelations}
+                      loggedInUserId={loggedInUserId}
+                      mainUserId={member.userId}
+                    />
+                    {!isReadOnly && (
+                      <button
+                        type="button"
+                        onClick={() => setRelationToDelete(r)}
+                        className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-500"
+                        aria-label={`Delete relationship with ${r.relatedUser.firstName} ${r.relatedUser.lastName}`}
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
-                    </button>
-                  )}
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-4 w-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M6 18L18 6M6 6l12 12"
+                          />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
                 </li>
               ))}
             </ul>

@@ -6,6 +6,7 @@ import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
 import { getPublicUrl } from '@/lib/storage'
 import type { MemberWithUser, FullRelationship } from '@/types'
+
 import { getCodeTable } from '@/lib/codes'
 
 // Number of photos to retrieve at a time for infinite scroll. If a screen is
@@ -183,52 +184,5 @@ export async function getGroupMembersForRelate(groupSlug: string) {
         .join(' '),
     },
   }))
-}
-
-export async function getMemberRelations(userId: string, groupSlug: string) {
-  const group = await prisma.group.findUnique({
-    where: { slug: groupSlug },
-    select: { id: true },
-  })
-
-  if (!group) {
-    throw new Error('Group not found')
-  }
-
-  const groupMembers = await prisma.groupUser.findMany({
-    where: { groupId: group.id },
-    select: { userId: true },
-  })
-  const memberIds = groupMembers.map((m: { userId: string }) => m.userId)
-
-  const relations = await prisma.userUser.findMany({
-    where: {
-      OR: [
-        {
-          user1Id: userId,
-          user2Id: { in: memberIds },
-        },
-        {
-          user2Id: userId,
-          user1Id: { in: memberIds },
-        },
-      ],
-    },
-    include: {
-      relationType: true,
-      user1: true,
-      user2: true,
-    },
-  })
-  return relations.map((r) => ({
-    ...r,
-    relatedUser: r.user1Id === userId ? r.user2 : r.user1,
-  }))
-}
-
-export async function getRelationTypes() {
-  return prisma.userUserRelationType.findMany({
-    select: { id: true, code: true, category: true },
-  })
 }
 

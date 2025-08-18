@@ -8,8 +8,8 @@ import { MemberWithUser, FullRelationship, User } from '@/types'
 import {
   getPaginatedMembers,
   getGroupMembersForRelate,
-  getMemberRelations,
 } from './actions'
+import { getMemberRelations } from '@/lib/actions'
 import FamilyMemberCard from '@/components/FamilyMemberCard'
 import RelateModal from '@/components/RelateModal'
 import { getRelationship } from '@/lib/family-tree'
@@ -343,7 +343,7 @@ export function FamilyGroupClient({
         )}
       </div>
 
-      {selectedMember && group?.groupType && (
+      {selectedMember && group?.groupType && currentUserMember && (
         <RelateModal
         isOpen={isRelateModalOpen}
         onClose={handleCloseRelateModal}
@@ -354,6 +354,7 @@ export function FamilyGroupClient({
         initialRelations={memberRelations}
         onRelationshipAdded={handleRelationshipChange}
         isReadOnly={!isGroupAdmin && selectedMember?.userId !== currentUserMember?.userId}
+        loggedInUserId={currentUserMember.userId}
         />
       )}
     </>
