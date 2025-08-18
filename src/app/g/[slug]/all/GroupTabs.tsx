@@ -11,8 +11,8 @@ import MemberCard from '@/components/MemberCard'
 import {
   getPaginatedMembers,
   getGroupMembersForRelate,
-  getMemberRelations,
 } from './actions'
+import { getMemberRelations } from '@/lib/actions'
 import RelateModal from '@/components/RelateModal'
 import { useGroup } from '@/components/GroupProvider'
 import { TooltipProvider } from '@/components/ui/tooltip'
@@ -434,7 +434,7 @@ const GroupTabs: React.FC<GroupTabsProps> = ({
           </Tab.Group>
         </div>
       </TooltipProvider>
-      {isRelateModalOpen && selectedMember && group?.groupType && (
+      {isRelateModalOpen && selectedMember && group?.groupType && ego && (
         <RelateModal
           isOpen={isRelateModalOpen}
           onClose={handleCloseRelateModal}
@@ -445,6 +445,7 @@ const GroupTabs: React.FC<GroupTabsProps> = ({
           initialRelations={memberRelations}
           onRelationshipAdded={handleRelationshipChange}
           isReadOnly={!isGroupAdmin && selectedMember?.userId !== ego?.userId}
+          loggedInUserId={ego.userId}
         />
       )}
     </>
