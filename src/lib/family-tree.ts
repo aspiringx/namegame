@@ -125,7 +125,11 @@ export function getRelationship(
           if (parentsMatch) {
             const alterUser = usersMap.get(alterUserId)
             return {
-              relationship: getGenderedLabel('Sibling', alterUser?.gender, applyGender),
+              relationship: getGenderedLabel(
+                'Sibling',
+                alterUser?.gender,
+                applyGender,
+              ),
               path: current.path,
               steps: current.path.length - 1,
             }
@@ -138,14 +142,22 @@ export function getRelationship(
         if (commonParents.length > 0) {
           const alterUser = usersMap.get(alterUserId)
           return {
-            relationship: getGenderedLabel('Half-sibling', alterUser?.gender, applyGender),
+            relationship: getGenderedLabel(
+              'Half-sibling',
+              alterUser?.gender,
+              applyGender,
+            ),
             path: current.path,
             steps: current.path.length - 1,
           }
         }
       } else {
         // If not a special case, translate the path normally.
-        const relationship = translatePathToRelationship(current.path, usersMap, applyGender)
+        const relationship = translatePathToRelationship(
+          current.path,
+          usersMap,
+          applyGender,
+        )
         return {
           relationship,
           path: current.path,
@@ -396,6 +408,7 @@ export function translatePathToRelationship(
     {
       path: 'parent > spouse > parent > parent > parent > child',
       label: 'Step-great-great-pibling',
+      genderedOn: 6,
     },
     {
       path: 'parent > spouse > parent > child > child',
@@ -408,6 +421,7 @@ export function translatePathToRelationship(
     {
       path: 'parent > child > spouse > child > child > child',
       label: 'Step-great-great-nibling',
+      genderedOn: 6,
     },
     {
       path: 'parent > parent > parent > child > child > spouse > child',
@@ -433,7 +447,7 @@ export function translatePathToRelationship(
     {
       path: 'spouse > parent > child > spouse',
       label: 'Sibling-in-law',
-      genderedOn: 3,
+      genderedOn: 4,
     },
     {
       path: 'spouse > parent > parent > parent',
@@ -674,12 +688,10 @@ export function translatePathToRelationship(
     {
       path: 'parent > parent > parent > child > child > child',
       label: '2nd cousin',
-      genderedOn: 5,
     },
     {
       path: 'parent > spouse > parent > parent > child > child > child',
       label: 'Step-2nd cousin',
-      genderedOn: 6,
     },
     {
       path: 'parent > parent > child > child > partner > child',
@@ -700,7 +712,11 @@ export function translatePathToRelationship(
   if (matchedRule) {
     if (applyGender && matchedRule.genderedOn) {
       const genderedUser = usersMap.get(path[matchedRule.genderedOn].userId)
-      return getGenderedLabel(matchedRule.label, genderedUser?.gender, applyGender)
+      return getGenderedLabel(
+        matchedRule.label,
+        genderedUser?.gender,
+        applyGender,
+      )
     }
     return matchedRule.label
   }
