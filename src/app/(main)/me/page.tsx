@@ -3,10 +3,7 @@ import { getPublicUrl } from '@/lib/storage'
 import { redirect } from 'next/navigation'
 import prisma from '@/lib/prisma'
 import UserProfileForm from './_components/user-profile-form'
-import Link from 'next/link'
-import Image from 'next/image'
 import { getCodeTable } from '@/lib/codes'
-import { GuestMessage } from '@/components/GuestMessage'
 
 export default async function UserProfilePage(props: {
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>
@@ -15,6 +12,8 @@ export default async function UserProfilePage(props: {
   const session = await auth()
 
   if (!session?.user?.id) {
+    // This is technically unreachable because the layout would have redirected.
+    // We add it to satisfy TypeScript's null checks.
     redirect('/login?callbackUrl=/me')
   }
 
@@ -39,8 +38,7 @@ export default async function UserProfilePage(props: {
   })
 
   if (!user) {
-    // This can happen if the user is deleted from the DB but the session is still active.
-    // In this case, we should sign them out and redirect to login via an API route.
+    // This is also unreachable, but required for type safety.
     redirect('/api/auth/signout-and-redirect')
   }
 
@@ -57,15 +55,8 @@ export default async function UserProfilePage(props: {
     ),
   }
 
-  const isGuest =
-    !user.firstName ||
-    !user.lastName ||
-    !user.emailVerified ||
-    (userWithPublicUrls.image?.includes('dicebear.com') ?? true)
-
   return (
     <>
-      <GuestMessage isGuest={isGuest} />
       {searchParams?.welcome === 'true' ? (
         <div className="mb-4 rounded-md bg-green-50 p-4 text-sm text-green-700 dark:bg-green-900 dark:text-green-300">
           Welcome, {user.firstName}!
