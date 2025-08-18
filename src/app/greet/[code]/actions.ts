@@ -233,20 +233,23 @@ export async function handleGuestGreeting(
     })
 
     // 5. AFTER the transaction is successful, attempt to sign the new user in.
-    // This is now outside the transaction and cannot interfere with it.
     try {
       await signIn('credentials', {
         email: username,
         password: 'password123',
         redirect: false, // We will handle redirection on the client
       })
+      // On successful sign-in, we still return the credentials in case the client needs them.
+      return { success: true, credentials: { username, password: 'password123' } }
     } catch (signInError) {
       console.error('Sign-in after guest greeting failed:', signInError)
-      // This is a non-fatal error. The account is fully created.
-      // The client can prompt the user to log in manually.
+      // The account is created, but sign-in failed. Return credentials for retry.
+      return {
+        success: true, // The account creation was successful.
+        signInFailed: true, // Signal that the auto-login failed.
+        credentials: { username, password: 'password123' },
+      }
     }
-
-    return { success: true }
   } catch (error) {
     console.error('Guest greeting failed:', error)
     // Check for unique constraint violation on username, though it's highly unlikely

@@ -4,14 +4,48 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import Cookies from 'js-cookie'
 import { getLoginRedirectPath } from './actions'
 
 export default function LoginForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [autoLoginStatus, setAutoLoginStatus] = useState<string | null>(null)
   const router = useRouter()
   const searchParams = useSearchParams()
+
+  useEffect(() => {
+    const attemptAutoLogin = async () => {
+      const tempCredentialsCookie = Cookies.get('temp_user_credentials')
+      const redirectUrl = Cookies.get('post_login_redirect')
+
+      if (tempCredentialsCookie && redirectUrl) {
+        setAutoLoginStatus('Attempting to log you in automatically...')
+        const credentials = JSON.parse(tempCredentialsCookie)
+
+        const result = await signIn('credentials', {
+          redirect: false,
+          email: credentials.username,
+          password: credentials.password,
+        })
+
+        if (result?.ok) {
+          // On success, clean up the cookies and redirect.
+          Cookies.remove('temp_user_credentials')
+          Cookies.remove('post_login_redirect')
+          window.location.href = redirectUrl
+        } else {
+          // On failure, keep the cookies and inform the user so they can retry.
+          setAutoLoginStatus(
+            'Automatic login failed. Please try again or enter your credentials manually.',
+          )
+        }
+      }
+    }
+
+    attemptAutoLogin()
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -80,6 +114,11 @@ export default function LoginForm() {
             />
           </div>
 
+          {autoLoginStatus && (
+            <p className="text-muted-foreground text-center text-sm">
+              {autoLoginStatus}
+            </p>
+          )}
           {error && (
             <p className="text-destructive text-center text-sm">{error}</p>
           )}
