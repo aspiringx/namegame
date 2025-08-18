@@ -86,7 +86,7 @@ export default function ManageUserModal({
                     name="managerId"
                     options={groupMembers
                       .filter(gm => !managers.some(m => m.id === gm.user.id) && gm.user.id !== managedUser.id)
-                      .map(gm => ({ value: gm.user.id, label: `${gm.user.firstName} ${gm.user.lastName}` }))}
+                      .map(gm => ({ value: gm.user.id, label: [gm.user.firstName, gm.user.lastName].filter(Boolean).join(' ') }))}
                     selectedValue={selectedMemberId}
                     onSelectValue={setSelectedMemberId}
                     placeholder="Select a group member"
@@ -120,7 +120,7 @@ export default function ManageUserModal({
                           className="rounded-full object-cover"
                         />
                       </div>
-                      <span>{manager.firstName} {manager.lastName}</span>
+                      <span>{[manager.firstName, manager.lastName].filter(Boolean).join(' ')}</span>
                     </div>
                     {isCurrentUserMananger && session?.user?.id !== manager.id && (
                       <button
@@ -165,7 +165,7 @@ export default function ManageUserModal({
             <p className="text-sm text-gray-600 dark:text-gray-400">
               Are you sure you want to remove {' '}
               <strong>
-                {managerToDelete.firstName} {managerToDelete.lastName}
+                {[managerToDelete.firstName, managerToDelete.lastName].filter(Boolean).join(' ')}
               </strong>{' '}
               as a manager?
             </p>
