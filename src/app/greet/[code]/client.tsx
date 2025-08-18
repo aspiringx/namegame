@@ -199,10 +199,6 @@ export default function GreetPageClient({
                   </button>
                 </form>
               )}
-              <p className="mt-20 text-left text-gray-500 dark:text-gray-400">
-                NameGame is the fun, easy way to meet and remember people in big
-                groups.
-              </p>
             </div>
           </div>
         )}
