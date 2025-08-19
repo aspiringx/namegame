@@ -4,6 +4,7 @@ import { useSession } from 'next-auth/react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useActionState, useEffect, useRef, useState } from 'react'
 import { useFormStatus } from 'react-dom'
+import { Badge } from '@/components/ui/badge'
 import { updateUserProfile, State, getUserUpdateRequirements } from '../actions'
 import { Info } from 'lucide-react'
 import Image from 'next/image'
@@ -124,6 +125,12 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
   const [isEmailTooltipOpen, setIsEmailTooltipOpen] = useState(false)
   const [isPasswordTooltipOpen, setIsPasswordTooltipOpen] = useState(false)
   const [isBirthDateTooltipOpen, setIsBirthDateTooltipOpen] = useState(false)
+
+  const optionalFields = [birthDate, birthPlace, gender]
+  const completedOptionalFields = optionalFields.filter(
+    (field) => field !== null && field !== '',
+  ).length
+  const totalOptionalFields = optionalFields.length
 
   const validatePassword = (password: string) => {
     if (password && password === 'password123') {
@@ -695,7 +702,12 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
             onClick={() => setIsOptionalOpen(!isOptionalOpen)}
             className="flex w-full items-center justify-between text-left text-lg font-medium text-gray-900 dark:text-gray-100"
           >
-            <span>Optional Fields</span>
+            <div className="flex items-center gap-x-2">
+              <span>Optional Fields</span>
+              <Badge variant="secondary">
+                {completedOptionalFields} of {totalOptionalFields}
+              </Badge>
+            </div>
             <ChevronDown
               className={`h-5 w-5 transform transition-transform ${
                 isOptionalOpen ? 'rotate-180' : ''
