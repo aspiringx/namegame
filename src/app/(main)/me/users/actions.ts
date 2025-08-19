@@ -401,31 +401,50 @@ export async function updateManagedUser(
       let photoUrl: string | undefined
       let photoTypeId: number | undefined
 
+      const [photoTypes, entityTypes] = await Promise.all([
+        getCodeTable('photoType'),
+        getCodeTable('entityType'),
+      ])
+
       if (newPhoto && newPhoto.size > 0) {
         // Handle photo upload: delete old, upload new
-        const existingPhoto = await tx.photo.findFirst({
+        const existingPrimaryPhoto = await tx.photo.findFirst({
           where: {
             entityId: userId,
-            entityTypeId: (await getCodeTable('entityType')).user.id,
-            typeId: (await getCodeTable('photoType')).primary.id,
+            entityTypeId: entityTypes.user.id,
+            typeId: photoTypes.primary.id,
           },
         })
 
-        if (existingPhoto?.url) {
-          await deleteFile(existingPhoto.url)
-          await tx.photo.delete({ where: { id: existingPhoto.id } })
+        if (existingPrimaryPhoto?.url) {
+          await deleteFile(existingPrimaryPhoto.url)
+          await tx.photo.delete({ where: { id: existingPrimaryPhoto.id } })
         }
 
         const newPhotoKey = await uploadFile(newPhoto, 'user-photos', userId)
         await tx.photo.create({
           data: {
             url: newPhotoKey,
-            entityTypeId: (await getCodeTable('entityType')).user.id,
+            entityTypeId: entityTypes.user.id,
             entityId: userId,
-            typeId: (await getCodeTable('photoType')).primary.id,
+            typeId: photoTypes.primary.id,
             userId: managerId,
           },
         })
+      } else {
+        // If no new photo, ensure the latest existing photo is primary
+        const latestPhoto = await tx.photo.findFirst({
+          where: { entityId: userId, entityTypeId: entityTypes.user.id },
+          orderBy: { createdAt: 'desc' },
+        })
+
+        if (latestPhoto && latestPhoto.typeId !== photoTypes.primary.id) {
+          // Set this photo as primary
+          await tx.photo.update({
+            where: { id: latestPhoto.id },
+            data: { typeId: photoTypes.primary.id },
+          })
+        }
       }
 
       let hashedPassword
