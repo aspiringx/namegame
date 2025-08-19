@@ -11,6 +11,7 @@ import {
   MoreVertical,
   Edit,
   Trash2,
+  AlertTriangle,
 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -28,22 +29,48 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { Button } from '@/components/ui/button'
-import { User, Photo, ManagedStatus } from '@/generated/prisma/client'
-import { deleteManagedUser } from './actions'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
+import { toast } from 'sonner'
 
-type ManagedUserWithPhoto = User & {
+import { Button } from '@/components/ui/button'
+import type { User, Photo, ManagedStatus } from '@/generated/prisma/client'
+import { deleteManagedUser } from './actions'
+import { allowUserToManageMe, revokeManagementPermission } from '@/lib/actions'
+import { Combobox } from '@/components/ui/combobox'
+import Modal from '@/components/ui/modal'
+
+export type ManagedUserWithPhoto = User & {
   photos: Photo[]
   managedStatus: ManagedStatus
 }
 
-interface UsersListProps {
+const getManagedStatusText = (status: ManagedStatus | null) => {
+  switch (status) {
+    case 'full':
+      return 'Fully managed'
+    case 'partial':
+      return 'Partially managed'
+    default:
+      return 'Backup manager'
+  }
+}
+
+export type UsersListProps = {
   managedUsers: ManagedUserWithPhoto[]
-  successMessage?: string
+  usersManagingMe: (User & { photos: Photo[] })[]
+  potentialManagers: User[]
+  successMessage?: string | null
 }
 
 export default function UsersList({
   managedUsers,
+  usersManagingMe,
+  potentialManagers,
   successMessage,
 }: UsersListProps) {
   const [showInfo, setShowInfo] = useState(false)
@@ -52,6 +79,35 @@ export default function UsersList({
     null,
   )
   const [isPending, startTransition] = useTransition()
+
+  const [selectedManagerId, setSelectedManagerId] = useState('')
+  const [userToRevoke, setUserToRevoke] = useState<User | null>(null)
+
+  const handleAllow = () => {
+    if (!selectedManagerId) return
+    startTransition(async () => {
+      const result = await allowUserToManageMe(selectedManagerId)
+      if (result.success) {
+        toast.success('Manager added successfully.')
+        setSelectedManagerId('')
+      } else {
+        toast.error(result.message || 'Failed to add manager.')
+      }
+    })
+  }
+
+  const handleRevoke = () => {
+    if (!userToRevoke) return
+    startTransition(async () => {
+      const result = await revokeManagementPermission(userToRevoke.id)
+      if (result.success) {
+        toast.success('Manager revoked successfully.')
+        setUserToRevoke(null)
+      } else {
+        toast.error(result.message || 'Failed to revoke manager.')
+      }
+    })
+  }
 
   return (
     <div>
@@ -69,6 +125,7 @@ export default function UsersList({
           <Link href="/me/users/create">Create</Link>
         </Button>
       </div>
+      <h4 className="mb-4">Users I Manage</h4>
       {showSuccess && successMessage && (
         <div className="mb-4 rounded-md border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/30">
           <div className="flex">
@@ -134,7 +191,7 @@ export default function UsersList({
           </button>
         </div>
       )}
-      {managedUsers.length > 0 && (
+      {managedUsers.length > 0 ? (
         <div className="mt-8 flow-root">
           <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
             <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
@@ -152,13 +209,11 @@ export default function UsersList({
                       height={48}
                     />
                     <div className="min-w-0">
-                      <p className="text-sm leading-6 font-semibold text-gray-900 dark:text-white">
-                        {user.firstName} {user.lastName}
+                      <p className="text-sm font-semibold leading-6 text-gray-900 dark:text-white">
+                        {[user.firstName, user.lastName].filter(Boolean).join(' ')}
                       </p>
                       <p className="mt-1 truncate text-xs leading-5 text-gray-500 dark:text-gray-400">
-                        {user.managedStatus === 'partial'
-                          ? user.email
-                          : 'Fully managed'}
+                        {getManagedStatusText(user.managedStatus)}
                       </p>
                     </div>
                     <div className="ml-auto">
@@ -191,6 +246,105 @@ export default function UsersList({
             </div>
           </div>
         </div>
+      ) : (
+        <div className="mt-8 text-center">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            No managed users.
+          </p>
+        </div>
+      )}
+
+      <div className="mt-6 mb-4 flex items-center gap-2">
+        <h4 className="">Users Who Can Manage Me</h4>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger>
+              <AlertTriangle className="h-5 w-5 text-yellow-500" />
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>
+                Make sure you trust this person. They can control your account.
+                If your relationship changes, revoke their access any time.
+              </p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
+      <div className="mt-4 rounded-lg border p-4">
+        <h5 className="mb-2 font-semibold">Allow a new user to manage you</h5>
+        <div className="flex items-center gap-2">
+          <div className="w-64">
+            <Combobox
+              options={potentialManagers.map((user) => ({
+                value: user.id,
+                label: [user.firstName, user.lastName].filter(Boolean).join(' '),
+              }))}
+              selectedValue={selectedManagerId}
+              onSelectValue={setSelectedManagerId}
+              placeholder="Select a user..."
+            />
+          </div>
+          <Button onClick={handleAllow} disabled={!selectedManagerId || isPending}>
+            {isPending ? 'Allowing...' : 'Allow'}
+          </Button>
+        </div>
+
+        <h5 className="mb-2 mt-6 font-semibold">Current Managers</h5>
+        {usersManagingMe.length > 0 ? (
+          <ul className="space-y-2">
+            {usersManagingMe.map((user) => (
+              <li
+                key={user.id}
+                className="flex items-center justify-between rounded-md border p-2"
+              >
+                <span>
+                  {[user.firstName, user.lastName].filter(Boolean).join(' ')}
+                </span>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => setUserToRevoke(user)}
+                >
+                  Revoke
+                </Button>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            No users are currently managing you.
+          </p>
+        )}
+      </div>
+
+      {userToRevoke && (
+        <Modal
+          isOpen={!!userToRevoke}
+          onClose={() => setUserToRevoke(null)}
+          title="Confirm Revoke"
+        >
+          <div className="mt-4">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Are you sure you want to revoke management permissions for{' '}
+              <strong>
+                {[userToRevoke.firstName, userToRevoke.lastName].filter(Boolean).join(' ')}
+              </strong>
+              ?
+            </p>
+          </div>
+          <div className="mt-6 flex justify-end space-x-2">
+            <Button variant="outline" onClick={() => setUserToRevoke(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleRevoke}
+              disabled={isPending}
+            >
+              {isPending ? 'Revoking...' : 'Revoke'}
+            </Button>
+          </div>
+        </Modal>
       )}
 
       <AlertDialog
