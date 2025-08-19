@@ -78,7 +78,7 @@ export default function ManagedUserProfileForm({
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isOptionalOpen, setIsOptionalOpen] = useState(false)
   const [managedStatus, setManagedStatus] = useState<ManagedStatus | null>(
-    user?.managed || ManagedStatus.full,
+    isEditMode ? user.managed : ManagedStatus.full,
   )
   const [gender, setGender] = useState<Gender | null>(user?.gender || null)
   const [birthDatePrecision, setBirthDatePrecision] = useState<DatePrecision>(
@@ -634,6 +634,9 @@ export default function ManagedUserProfileForm({
                         <br />
                         <b>Partial:</b> For users who can log in under your
                         supervision.
+                        <br />
+                        <b>Unselected:</b> Don't select Full or Partial if
+                        you're a Backup manager for an active user.
                       </p>
                     </TooltipContent>
                   </Tooltip>
@@ -644,6 +647,7 @@ export default function ManagedUserProfileForm({
                   type="hidden"
                   name="managed"
                   value={managedStatus || ''}
+                  required={!isEditMode || managedStatus !== null}
                 />
                 <button
                   type="button"

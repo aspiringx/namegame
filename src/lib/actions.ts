@@ -1,5 +1,6 @@
 'use server'
 
+import type { User } from '@/generated/prisma'
 import { auth } from '@/auth'
 import { revalidatePath } from 'next/cache'
 import prisma from '@/lib/prisma'
@@ -59,6 +60,111 @@ export async function getMemberRelations(userId: string, groupSlug: string) {
     ...r,
     relatedUser: r.user1Id === userId ? r.user2 : r.user1,
   }))
+}
+
+export async function getUsersManagingMe() {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return []
+  }
+
+  const managers = await prisma.managedUser.findMany({
+    where: {
+      managedId: session.user.id,
+    },
+    include: {
+      manager: {
+        include: {
+          photos: {
+            where: { type: { code: 'profile' } },
+            take: 1,
+          },
+        },
+      },
+    },
+  })
+
+  return managers.map(m => m.manager)
+}
+
+export async function getPotentialManagers() {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return []
+  }
+  const userId = session.user.id
+
+  const existingManagers = await prisma.managedUser.findMany({
+    where: { managedId: userId },
+    select: { managerId: true },
+  })
+  const existingManagerIds = existingManagers.map(m => m.managerId)
+
+  const userRelations = await prisma.userUser.findMany({
+    where: {
+      OR: [{ user1Id: userId }, { user2Id: userId }],
+    },
+    include: {
+      user1: true,
+      user2: true,
+    },
+  })
+
+  const relatedUsers = new Map<string, User>()
+  userRelations.forEach(rel => {
+    const otherUser = rel.user1Id === userId ? rel.user2 : rel.user1
+    if (!existingManagerIds.includes(otherUser.id)) {
+      relatedUsers.set(otherUser.id, otherUser)
+    }
+  })
+
+  return Array.from(relatedUsers.values())
+}
+
+export async function allowUserToManageMe(managerId: string): Promise<{ success: boolean; message?: string }> {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return { success: false, message: 'Not authenticated' }
+  }
+  const managedId = session.user.id
+
+  try {
+    await prisma.managedUser.create({
+      data: {
+        managerId,
+        managedId,
+      },
+    })
+    revalidatePath('/me/users')
+    return { success: true }
+  } catch (error) {
+    console.error('Failed to allow user to manage:', error)
+    return { success: false, message: 'A database error occurred.' }
+  }
+}
+
+export async function revokeManagementPermission(managerId: string): Promise<{ success: boolean; message?: string }> {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return { success: false, message: 'Not authenticated' }
+  }
+  const managedId = session.user.id
+
+  try {
+    await prisma.managedUser.delete({
+      where: {
+        managerId_managedId: {
+          managerId,
+          managedId,
+        },
+      },
+    })
+    revalidatePath('/me/users')
+    return { success: true }
+  } catch (error) {
+    console.error('Failed to revoke management permission:', error)
+    return { success: false, message: 'A database error occurred.' }
+  }
 }
 
 export async function addUserRelation(
