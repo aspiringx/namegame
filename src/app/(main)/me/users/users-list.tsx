@@ -75,6 +75,7 @@ export default function UsersList({
   const [selectedManagerId, setSelectedManagerId] = useState('')
   const [userToRevoke, setUserToRevoke] = useState<User | null>(null)
   const [userToDelete, setUserToDelete] = useState<ManagedUserWithPhoto | null>(null)
+  const [isTooltipOpen, setIsTooltipOpen] = useState(false)
 
   const handleAllow = () => {
     if (!selectedManagerId) return
@@ -245,9 +246,15 @@ export default function UsersList({
       <div className="mt-6 mb-4 flex items-center gap-2">
         <h4 className="">Users Who Can Manage Me</h4>
         <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger>
-              <AlertTriangle className="h-5 w-5 text-yellow-500" />
+          <Tooltip open={isTooltipOpen} onOpenChange={setIsTooltipOpen}>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={() => setIsTooltipOpen(!isTooltipOpen)}
+                className="focus:outline-none"
+              >
+                <AlertTriangle className="h-5 w-5 text-yellow-500" />
+              </button>
             </TooltipTrigger>
             <TooltipContent>
               <p>
