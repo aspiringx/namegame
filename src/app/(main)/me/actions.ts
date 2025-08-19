@@ -12,7 +12,6 @@ import { uploadFile, deleteFile, getPublicUrl } from '@/lib/storage'
 import { sendVerificationEmail } from '@/lib/mail'
 import { disposableEmailDomains } from '@/lib/disposable-email-domains'
 
-
 export type State = {
   success: boolean
   message: string | null
@@ -31,7 +30,6 @@ export type State = {
   newFirstName?: string | null
   redirectUrl?: string | null
 }
-
 
 const UserProfileSchema = z.object({
   password: z
@@ -140,7 +138,7 @@ export async function updateUserProfile(
     email: emailFromForm,
     photo: formData.get('photo'),
     password: formData.get('password'),
-    gender: formData.get('gender'),
+    gender: formData.get('gender') || null,
     birthDate: formData.get('birthDate'),
     birthPlace: formData.get('birthPlace'),
   })
@@ -160,8 +158,16 @@ export async function updateUserProfile(
   }
 
   // const { username, firstName, lastName, photo, password } = validatedFields.data;
-  const { firstName, lastName, email, photo, password, gender, birthDate, birthPlace } =
-    validatedFields.data
+  const {
+    firstName,
+    lastName,
+    email,
+    photo,
+    password,
+    gender,
+    birthDate,
+    birthPlace,
+  } = validatedFields.data
   const userId = session.user.id
 
   let newPhotoKey: string | null = null
@@ -185,7 +191,7 @@ export async function updateUserProfile(
     let photoUrlForCheck: string | null = null
 
     if (photo && photo.size > 0) {
-      newPhotoKey = await uploadFile(photo, 'user-profile-photos', userId)
+      newPhotoKey = await uploadFile(photo, 'user-photos', userId)
     }
 
     let birthDateObj: Date | undefined

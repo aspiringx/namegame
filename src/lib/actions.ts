@@ -76,7 +76,7 @@ export async function getUsersManagingMe() {
       manager: {
         include: {
           photos: {
-            where: { type: { code: 'profile' } },
+            where: { type: { code: 'primary' } },
             take: 1,
           },
         },

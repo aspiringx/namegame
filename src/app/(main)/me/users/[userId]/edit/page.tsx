@@ -8,7 +8,7 @@ export default async function EditManagedUserPage({
   params: Promise<{ userId: string }> 
 }) {
   const { userId } = await params
-  const { managedUser, authdUserGroups } = await getGroupDataForEditPage(userId)
+  const { managedUser, authdUserGroups, publicPhotoUrl } = await getGroupDataForEditPage(userId)
 
   if (!managedUser) {
     notFound()
@@ -17,7 +17,7 @@ export default async function EditManagedUserPage({
   return (
     <div className="mx-auto max-w-4xl">
       <h1 className="mb-6 text-2xl font-bold">Edit Managed User</h1>
-      <ManagedUserProfileForm user={managedUser} authdUserGroups={authdUserGroups} />
+      <ManagedUserProfileForm user={managedUser} authdUserGroups={authdUserGroups} publicPhotoUrl={publicPhotoUrl} />
     </div>
   )
 }

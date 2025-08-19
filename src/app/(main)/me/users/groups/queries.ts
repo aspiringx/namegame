@@ -21,10 +21,6 @@ export async function getGroupDataForEditPage(managedUserId: string) {
       },
     },
     include: {
-      photos: {
-        where: { type: { code: 'primary' } },
-        take: 1,
-      },
       groupMemberships: {
         select: {
           group: true,
@@ -34,11 +30,36 @@ export async function getGroupDataForEditPage(managedUserId: string) {
   })
 
   if (!managedUser) {
-    return { managedUser: null, authdUserGroups: [] }
+    return { managedUser: null, authdUserGroups: [], publicPhotoUrl: null }
   }
 
-  if (managedUser.photos.length > 0 && managedUser.photos[0].url) {
-    managedUser.photos[0].url = await getPublicUrl(managedUser.photos[0].url)
+  // First, try to find the primary photo.
+  let photo = await prisma.photo.findFirst({
+    where: {
+      entityId: managedUserId,
+      entityType: { code: 'user' },
+      type: { code: 'primary' },
+    },
+    orderBy: { createdAt: 'desc' },
+  })
+
+  // If no primary photo, fall back to the most recent photo.
+  if (!photo) {
+    photo = await prisma.photo.findFirst({
+      where: {
+        entityId: managedUserId,
+        entityType: { code: 'user' },
+      },
+      orderBy: { createdAt: 'desc' },
+    })
+  }
+
+  // Attach the photo to the user object to match the expected type.
+  const userWithPhoto = { ...managedUser, photos: photo ? [photo] : [] }
+
+  let publicPhotoUrl = null
+  if (photo?.url) {
+    publicPhotoUrl = await getPublicUrl(photo.url)
   }
 
   const authdUserGroups = await prisma.group.findMany({
@@ -58,5 +79,5 @@ export async function getGroupDataForEditPage(managedUserId: string) {
     },
   })
 
-  return { managedUser, authdUserGroups }
+  return { managedUser: userWithPhoto, authdUserGroups, publicPhotoUrl }
 }

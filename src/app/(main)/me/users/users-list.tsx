@@ -14,12 +14,6 @@ import {
   AlertTriangle,
 } from 'lucide-react'
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -28,6 +22,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import {
   Tooltip,
@@ -75,13 +70,12 @@ export default function UsersList({
 }: UsersListProps) {
   const [showInfo, setShowInfo] = useState(false)
   const [showSuccess, setShowSuccess] = useState(!!successMessage)
-  const [userToDelete, setUserToDelete] = useState<ManagedUserWithPhoto | null>(
-    null,
-  )
   const [isPending, startTransition] = useTransition()
 
   const [selectedManagerId, setSelectedManagerId] = useState('')
   const [userToRevoke, setUserToRevoke] = useState<User | null>(null)
+  const [userToDelete, setUserToDelete] = useState<ManagedUserWithPhoto | null>(null)
+  const [isTooltipOpen, setIsTooltipOpen] = useState(false)
 
   const handleAllow = () => {
     if (!selectedManagerId) return
@@ -203,42 +197,37 @@ export default function UsersList({
                   <li key={user.id} className="flex items-center gap-x-6 py-5">
                     <Image
                       className="h-12 w-12 flex-none rounded-full bg-gray-50 dark:bg-gray-800"
-                      src={user.photos[0]?.url || '/default-avatar.png'}
+                      src={user.photos[0]?.url || '/images/default-avatar.png'}
                       alt=""
                       width={48}
                       height={48}
                     />
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold leading-6 text-gray-900 dark:text-white">
-                        {[user.firstName, user.lastName].filter(Boolean).join(' ')}
+                      <p className="text-sm leading-6 font-semibold text-gray-900 dark:text-white">
+                        {[user.firstName, user.lastName]
+                          .filter(Boolean)
+                          .join(' ')}
                       </p>
                       <p className="mt-1 truncate text-xs leading-5 text-gray-500 dark:text-gray-400">
                         {getManagedStatusText(user.managedStatus)}
                       </p>
                     </div>
-                    <div className="ml-auto">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreVertical className="h-5 w-5" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                          <DropdownMenuItem asChild>
-                            <Link href={`/me/users/${user.id}/edit`}>
-                              <Edit className="mr-2 h-4 w-4" />
-                              <span>Edit</span>
-                            </Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => setUserToDelete(user)}
-                            className="text-red-600 dark:text-red-400"
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            <span>Delete</span>
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                    <div className="ml-auto flex items-center gap-x-4">
+                      <Button asChild variant="ghost" size="icon">
+                        <Link href={`/me/users/${user.id}/edit`}>
+                          <Edit className="h-5 w-5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200" />
+                          <span className="sr-only">Edit</span>
+                        </Link>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setUserToDelete(user)}
+                        className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-500"
+                      >
+                        <Trash2 className="h-5 w-5" />
+                        <span className="sr-only">Delete</span>
+                      </Button>
                     </div>
                   </li>
                 ))}
@@ -257,9 +246,15 @@ export default function UsersList({
       <div className="mt-6 mb-4 flex items-center gap-2">
         <h4 className="">Users Who Can Manage Me</h4>
         <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger>
-              <AlertTriangle className="h-5 w-5 text-yellow-500" />
+          <Tooltip open={isTooltipOpen} onOpenChange={setIsTooltipOpen}>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={() => setIsTooltipOpen(!isTooltipOpen)}
+                className="focus:outline-none"
+              >
+                <AlertTriangle className="h-5 w-5 text-yellow-500" />
+              </button>
             </TooltipTrigger>
             <TooltipContent>
               <p>
@@ -277,19 +272,24 @@ export default function UsersList({
             <Combobox
               options={potentialManagers.map((user) => ({
                 value: user.id,
-                label: [user.firstName, user.lastName].filter(Boolean).join(' '),
+                label: [user.firstName, user.lastName]
+                  .filter(Boolean)
+                  .join(' '),
               }))}
               selectedValue={selectedManagerId}
               onSelectValue={setSelectedManagerId}
               placeholder="Select a user..."
             />
           </div>
-          <Button onClick={handleAllow} disabled={!selectedManagerId || isPending}>
+          <Button
+            onClick={handleAllow}
+            disabled={!selectedManagerId || isPending}
+          >
             {isPending ? 'Allowing...' : 'Allow'}
           </Button>
         </div>
 
-        <h5 className="mb-2 mt-6 font-semibold">Current Managers</h5>
+        <h5 className="mt-6 mb-2 font-semibold">Current Managers</h5>
         {usersManagingMe.length > 0 ? (
           <ul className="space-y-2">
             {usersManagingMe.map((user) => (
@@ -327,7 +327,9 @@ export default function UsersList({
             <p className="text-sm text-gray-600 dark:text-gray-400">
               Are you sure you want to revoke management permissions for{' '}
               <strong>
-                {[userToRevoke.firstName, userToRevoke.lastName].filter(Boolean).join(' ')}
+                {[userToRevoke.firstName, userToRevoke.lastName]
+                  .filter(Boolean)
+                  .join(' ')}
               </strong>
               ?
             </p>
@@ -347,39 +349,49 @@ export default function UsersList({
         </Modal>
       )}
 
-      <AlertDialog
-        open={!!userToDelete}
-        onOpenChange={() => setUserToDelete(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              Are you sure you want to delete this user?
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the
-              user and remove them from all associated groups.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                if (userToDelete) {
+      {userToDelete && (
+        <AlertDialog
+          open={!!userToDelete}
+          onOpenChange={(open) => {
+            if (!open) {
+              setUserToDelete(null)
+            }
+          }}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                Are you sure you want to delete this user?
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. This will permanently delete the user{' '}
+                <strong>
+                  {[userToDelete.firstName, userToDelete.lastName]
+                    .filter(Boolean)
+                    .join(' ')}
+                </strong>{' '}
+                and remove them from all associated groups.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
                   startTransition(async () => {
                     await deleteManagedUser(userToDelete.id)
                     setUserToDelete(null)
                   })
-                }
-              }}
-              disabled={isPending}
-              className="bg-red-600 text-white hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600"
-            >
-              {isPending ? 'Deleting...' : 'Delete'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
+                }}
+                disabled={isPending}
+                className="bg-red-600 text-white hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600"
+              >
+                {isPending ? 'Deleting...' : 'Delete'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
+
+          </div>
   )
 }

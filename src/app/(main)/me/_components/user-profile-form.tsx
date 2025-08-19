@@ -4,6 +4,7 @@ import { useSession } from 'next-auth/react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useActionState, useEffect, useRef, useState } from 'react'
 import { useFormStatus } from 'react-dom'
+import { Badge } from '@/components/ui/badge'
 import { updateUserProfile, State, getUserUpdateRequirements } from '../actions'
 import { Info } from 'lucide-react'
 import Image from 'next/image'
@@ -121,6 +122,15 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
   const [isEmailValid, setIsEmailValid] = useState(
     !!user.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(user.email),
   )
+  const [isEmailTooltipOpen, setIsEmailTooltipOpen] = useState(false)
+  const [isPasswordTooltipOpen, setIsPasswordTooltipOpen] = useState(false)
+  const [isBirthDateTooltipOpen, setIsBirthDateTooltipOpen] = useState(false)
+
+  const optionalFields = [birthDate, birthPlace, gender]
+  const completedOptionalFields = optionalFields.filter(
+    (field) => field !== null && field !== '',
+  ).length
+  const totalOptionalFields = optionalFields.length
 
   const validatePassword = (password: string) => {
     if (password && password === 'password123') {
@@ -455,12 +465,16 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
               }`}
             />
             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-              <TooltipProvider disableHoverableContent={true}>
-                <Tooltip>
+              <TooltipProvider>
+                <Tooltip
+                  open={isEmailTooltipOpen}
+                  onOpenChange={setIsEmailTooltipOpen}
+                >
                   <TooltipTrigger asChild>
                     <button
                       type="button"
                       className="pointer-events-auto focus:outline-none"
+                      onClick={() => setIsEmailTooltipOpen(!isEmailTooltipOpen)}
                     >
                       {isVerifiedForDisplay ? (
                         <ShieldCheck
@@ -547,12 +561,18 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
               )}
             </button>
             <TooltipProvider>
-              <Tooltip>
+              <Tooltip
+                open={isPasswordTooltipOpen}
+                onOpenChange={setIsPasswordTooltipOpen}
+              >
                 <TooltipTrigger asChild>
                   {password && !passwordError ? (
                     <button
                       type="button"
-                      onClick={handleCopyPassword}
+                      onClick={() => {
+                        handleCopyPassword()
+                        setIsPasswordTooltipOpen(!isPasswordTooltipOpen)
+                      }}
                       className="inline-flex items-center rounded-r-md border border-l-0 border-gray-300 bg-gray-50 px-3 text-sm text-gray-500 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
                       aria-label="Copy password to clipboard"
                     >
@@ -565,7 +585,10 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
                   ) : (
                     <button
                       type="button"
-                      onClick={handleGeneratePassword}
+                      onClick={() => {
+                        handleGeneratePassword()
+                        setIsPasswordTooltipOpen(!isPasswordTooltipOpen)
+                      }}
                       className="inline-flex items-center rounded-r-md border border-l-0 border-gray-300 bg-gray-50 px-3 text-sm text-gray-500 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
                       aria-label="Generate a new password"
                     >
@@ -679,7 +702,12 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
             onClick={() => setIsOptionalOpen(!isOptionalOpen)}
             className="flex w-full items-center justify-between text-left text-lg font-medium text-gray-900 dark:text-gray-100"
           >
-            <span>Optional Fields</span>
+            <div className="flex items-center gap-x-2">
+              <span>Optional Fields</span>
+              <Badge variant="secondary">
+                {completedOptionalFields} of {totalOptionalFields}
+              </Badge>
+            </div>
             <ChevronDown
               className={`h-5 w-5 transform transition-transform ${
                 isOptionalOpen ? 'rotate-180' : ''
@@ -699,12 +727,18 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
                 >
                   Birth Date
                   <TooltipProvider>
-                    <Tooltip>
+                    <Tooltip
+                      open={isBirthDateTooltipOpen}
+                      onOpenChange={setIsBirthDateTooltipOpen}
+                    >
                       <TooltipTrigger asChild>
                         <button
                           type="button"
                           className="ml-2 rounded-full focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
-                          onClick={(e) => e.preventDefault()}
+                          onClick={(e) => {
+                            e.preventDefault()
+                            setIsBirthDateTooltipOpen(!isBirthDateTooltipOpen)
+                          }}
                         >
                           <Info className="h-4 w-4 text-gray-400" />
                         </button>
@@ -774,6 +808,7 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Gender
                 </label>
+                <input type="hidden" name="gender" value={gender ?? ''} />
                 <div className="mt-2 flex space-x-2">
                   {[
                     ['male', 'He'],

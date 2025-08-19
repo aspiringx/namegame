@@ -40,6 +40,7 @@ type ManagedUserProfileFormProps = {
     groupMemberships: { group: Group }[]
   }
   authdUserGroups?: (Group & { members: { userId: string }[] })[]
+  publicPhotoUrl?: string | null
 }
 
 function SubmitButton({ isEditMode }: { isEditMode: boolean }) {
@@ -65,12 +66,14 @@ function SubmitButton({ isEditMode }: { isEditMode: boolean }) {
 export default function ManagedUserProfileForm({
   user,
   authdUserGroups,
+  publicPhotoUrl,
 }: ManagedUserProfileFormProps) {
   const isEditMode = !!user
   const router = useRouter()
-  const [previewUrl, setPreviewUrl] = useState<string | null>(
-    user?.photos?.[0]?.url || null,
-  )
+  const [photoFile, setPhotoFile] = useState<File | null>(null)
+  const [localPreview, setLocalPreview] = useState<string | null>(null)
+
+  const previewUrl = localPreview || publicPhotoUrl
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [passwordError, setPasswordError] = useState<string | null>(null)
@@ -123,7 +126,12 @@ export default function ManagedUserProfileForm({
   const action = isEditMode
     ? updateManagedUser.bind(null, user.id)
     : createManagedUser
-  const [state, formAction] = useActionState(action, initialState)
+  const [state, formAction] = useActionState(async (prevState: State, formData: FormData) => {
+    if (photoFile) {
+      formData.append('photo', photoFile)
+    }
+    return action(prevState, formData)
+  }, initialState)
 
   useEffect(() => {
     if (state.success && state.redirectUrl) {
@@ -159,13 +167,11 @@ export default function ManagedUserProfileForm({
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file) {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setPreviewUrl(reader.result as string)
-      }
-      reader.readAsDataURL(file)
+      setPhotoFile(file)
+      setLocalPreview(URL.createObjectURL(file))
     } else {
-      setPreviewUrl(null)
+      setPhotoFile(null)
+      setLocalPreview(null)
     }
   }
 
@@ -399,55 +405,51 @@ export default function ManagedUserProfileForm({
           Profile Picture
         </label>
         <div className="mt-2 flex flex-col items-start space-y-4">
-          <label
-            htmlFor="photo"
-            className="group relative inline-block h-32 w-32 cursor-pointer overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700"
+          <div
+            className="group relative h-24 w-24 cursor-pointer overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700"
+            onClick={handleChoosePhoto}
           >
-            <div
-              className={`h-full w-full ${state?.errors?.photo ? 'ring-2 ring-red-500 ring-offset-2 dark:ring-offset-gray-800' : ''} rounded-full`}
-            >
-              {previewUrl ? (
-                <Image
-                  src={previewUrl}
-                  alt="Profile photo preview"
-                  width={128}
-                  height={128}
-                  className="h-full w-full object-cover text-gray-300"
-                />
-              ) : (
-                <svg
-                  className="h-full w-full text-gray-300 dark:text-gray-500"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" />
-                </svg>
-              )}
-            </div>
-            <div className="bg-opacity-50 absolute inset-0 flex flex-col items-center justify-center bg-black opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+            {previewUrl ? (
+              <Image
+                key={previewUrl} // Add key to force re-render on src change
+                src={previewUrl}
+                alt="Profile preview"
+                layout="fill"
+                objectFit="cover"
+                className="rounded-full"
+              />
+            ) : (
+              <svg
+                className="h-full w-full text-gray-300 dark:text-gray-500"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+            )}
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-50 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
               <Upload className="h-8 w-8 text-white" />
               <span className="mt-1 text-xs font-semibold text-white">
                 Change
               </span>
             </div>
-          </label>
+          </div>
+          <button
+            type="button"
+            onClick={handleChoosePhoto}
+            className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium leading-4 text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 dark:focus:ring-offset-gray-800"
+          >
+            Change Photo
+          </button>
           <input
             type="file"
             id="photo"
             name="photo"
             accept="image/*"
-            required={!isEditMode}
             onChange={handleFileChange}
             ref={fileInputRef}
             className="hidden"
           />
-          <button
-            type="button"
-            onClick={handleChoosePhoto}
-            className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm leading-4 font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 dark:focus:ring-offset-gray-800"
-          >
-            Change Photo
-          </button>
           {state?.errors?.photo && (
             <p className="mt-1 text-xs text-red-500 dark:text-red-400">
               {state.errors.photo[0]}

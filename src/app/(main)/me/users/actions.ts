@@ -1,7 +1,7 @@
 'use server'
 
 import { z } from 'zod'
-import { Gender, ManagedStatus } from '@/generated/prisma/client'
+import { Gender, ManagedStatus, User, Photo } from '@/generated/prisma/client'
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
 import bcrypt from 'bcrypt'
@@ -10,6 +10,11 @@ import { revalidatePath } from 'next/cache'
 import crypto from 'crypto'
 import { parseDateAndDeterminePrecision } from '@/lib/utils'
 import { getCodeTable } from '@/lib/codes'
+
+export type ManagedUserWithPhoto = User & {
+  photos: Photo[]
+  managedStatus: ManagedStatus
+}
 
 export type State = {
   message?: string | null
@@ -27,6 +32,7 @@ export type State = {
   } | null
   success?: boolean
   redirectUrl?: string
+  updatedUser?: User & { photos: Photo[] }
 }
 
 const CreateUserSchema = z
@@ -128,8 +134,6 @@ export async function createManagedUser(
     const hashedPassword = await bcrypt.hash(finalPassword, 10)
     const username = `${firstName.toLowerCase()}${Date.now()}`.slice(0, 15)
 
-    const photoKey = await uploadFile(photo, 'user-profile-photos', username)
-
     let birthDateData = {}
     if (birthDate) {
       const parsedDate = parseDateAndDeterminePrecision(birthDate)
@@ -174,6 +178,8 @@ export async function createManagedUser(
         },
       })
 
+      const photoKey = await uploadFile(photo, 'user-photos', newUser.id)
+
       await tx.managedUser.create({
         data: {
           managerId: managerId,
@@ -186,7 +192,6 @@ export async function createManagedUser(
         getCodeTable('entityType'),
       ])
 
-      const photoUrl = await getPublicUrl(photoKey)
       await tx.photo.create({
         data: {
           url: photoKey,
@@ -213,7 +218,7 @@ export async function createManagedUser(
   }
 }
 
-export async function getManagedUsers() {
+export async function getManagedUsers(): Promise<ManagedUserWithPhoto[]> {
   const session = await auth()
   if (!session?.user?.id) {
     return []
@@ -221,42 +226,58 @@ export async function getManagedUsers() {
 
   const managerId = session.user.id
 
+  const [photoTypes, entityTypes] = await Promise.all([
+    getCodeTable('photoType'),
+    getCodeTable('entityType'),
+  ])
+  const primaryPhotoTypeId = photoTypes.primary.id
+  const userEntityTypeId = entityTypes.user.id
+
   const managedUserRelations = await prisma.managedUser.findMany({
     where: { managerId },
     include: {
-      managed: {
-        include: {
-          photos: {
-            where: {
-              type: { code: 'primary' },
-            },
-            take: 1,
-          },
-        },
-      },
+      managed: true,
     },
   })
 
-  const photoUrls = await Promise.all(
-    managedUserRelations.flatMap((rel) =>
-      rel.managed.photos.map((photo) => getPublicUrl(photo.url)),
-    ),
+  if (managedUserRelations.length === 0) {
+    return []
+  }
+
+  const managedUserIds = managedUserRelations.map((rel) => rel.managedId)
+
+  const photos = await prisma.photo.findMany({
+    where: {
+      entityId: { in: managedUserIds },
+      entityTypeId: userEntityTypeId,
+      typeId: primaryPhotoTypeId,
+    },
+  })
+
+  const photosWithPublicUrls = await Promise.all(
+    photos.map(async (photo) => {
+      if (photo.url.startsWith('https')) {
+        return photo
+      }
+      const publicUrl = await getPublicUrl(photo.url)
+      return { ...photo, url: publicUrl }
+    }),
   )
 
-  let photoUrlIndex = 0
-  return managedUserRelations.map((rel) => {
+  const photoMap = new Map(photosWithPublicUrls.map((p) => [p.entityId, p]))
+
+  const usersWithPhotos = managedUserRelations.map((rel) => {
     const user = rel.managed
-    const userWithStatus = {
+    const photo = photoMap.get(user.id)
+
+    return {
       ...user,
       managedStatus: user.managed as ManagedStatus,
-      photos: user.photos.map((p) => {
-        if (p.url.startsWith('https')) return p
-        const photoUrl = photoUrls[photoUrlIndex++]
-        return { ...p, url: photoUrl }
-      }),
+      photos: photo ? [photo] : [],
     }
-    return userWithStatus
   })
+
+  return usersWithPhotos
 }
 
 export async function updateManagedUser(
@@ -295,48 +316,50 @@ export async function updateManagedUser(
 
   const UpdateUserSchema = z
     .object({
-    firstName: z.string().min(1, 'First name is required.'),
-    lastName: z.string().min(1, 'Last name is required.'),
-    email: z
-      .string()
-      .email('Invalid email address.')
-      .optional()
-      .or(z.literal(''))
-      .nullable(),
-    password: z
-      .string()
-      .min(6, 'Password must be at least 6 characters.')
-      .optional()
-      .or(z.literal(''))
-      .nullable(),
-    photo: z.instanceof(File).optional(),
-    birthDate: z.string().optional(),
-    birthPlace: z.string().optional(),
-    deathDate: z.string().optional(),
-    deathPlace: z.string().optional(),
-    gender: z.nativeEnum(Gender).optional(),
-    managedStatus: z.nativeEnum(ManagedStatus).optional(),
-  })
-  .superRefine((data, ctx) => {
-    if (data.managedStatus === ManagedStatus.partial) {
-      if (!data.email) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ['email'],
-          message: 'Email is required for partially managed users.',
-        })
+      firstName: z.string().min(1, 'First name is required.'),
+      lastName: z.string().min(1, 'Last name is required.'),
+      email: z
+        .string()
+        .email('Invalid email address.')
+        .optional()
+        .or(z.literal(''))
+        .nullable(),
+      password: z
+        .string()
+        .min(6, 'Password must be at least 6 characters.')
+        .optional()
+        .or(z.literal(''))
+        .nullable(),
+      photo: z.instanceof(File).optional(),
+      birthDate: z.string().optional(),
+      birthPlace: z.string().optional(),
+      deathDate: z.string().optional(),
+      deathPlace: z.string().optional(),
+      gender: z.nativeEnum(Gender).optional(),
+      managedStatus: z.nativeEnum(ManagedStatus).optional(),
+    })
+    .superRefine((data, ctx) => {
+      if (data.managedStatus === ManagedStatus.partial) {
+        if (!data.email) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['email'],
+            message: 'Email is required for partially managed users.',
+          })
+        }
+        if (
+          data.password &&
+          data.password.length > 0 &&
+          data.password.length < 6
+        ) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['password'],
+            message: 'Password must be at least 6 characters.',
+          })
+        }
       }
-      if (data.password && data.password.length > 0 && data.password.length < 6) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ['password'],
-          message: 'Password must be at least 6 characters.',
-        })
-      }
-    }
-
-  })
-
+    })
 
   const validatedFields = UpdateUserSchema.safeParse({
     firstName: formData.get('firstName'),
@@ -378,35 +401,50 @@ export async function updateManagedUser(
       let photoUrl: string | undefined
       let photoTypeId: number | undefined
 
+      const [photoTypes, entityTypes] = await Promise.all([
+        getCodeTable('photoType'),
+        getCodeTable('entityType'),
+      ])
+
       if (newPhoto && newPhoto.size > 0) {
         // Handle photo upload: delete old, upload new
-        const existingPhoto = await tx.photo.findFirst({
+        const existingPrimaryPhoto = await tx.photo.findFirst({
           where: {
             entityId: userId,
-            entityTypeId: (await getCodeTable('entityType')).user.id,
-            typeId: (await getCodeTable('photoType')).primary.id,
+            entityTypeId: entityTypes.user.id,
+            typeId: photoTypes.primary.id,
           },
         })
 
-        if (existingPhoto?.url) {
-          await deleteFile(existingPhoto.url)
-          await tx.photo.delete({ where: { id: existingPhoto.id } })
+        if (existingPrimaryPhoto?.url) {
+          await deleteFile(existingPrimaryPhoto.url)
+          await tx.photo.delete({ where: { id: existingPrimaryPhoto.id } })
         }
 
-        const newPhotoKey = await uploadFile(
-          newPhoto,
-          'user-profile-photos',
-          userId,
-        )
+        const newPhotoKey = await uploadFile(newPhoto, 'user-photos', userId)
         await tx.photo.create({
           data: {
             url: newPhotoKey,
-            entityTypeId: (await getCodeTable('entityType')).user.id,
+            entityTypeId: entityTypes.user.id,
             entityId: userId,
-            typeId: (await getCodeTable('photoType')).primary.id,
-            userId: userId,
+            typeId: photoTypes.primary.id,
+            userId: managerId,
           },
         })
+      } else {
+        // If no new photo, ensure the latest existing photo is primary
+        const latestPhoto = await tx.photo.findFirst({
+          where: { entityId: userId, entityTypeId: entityTypes.user.id },
+          orderBy: { createdAt: 'desc' },
+        })
+
+        if (latestPhoto && latestPhoto.typeId !== photoTypes.primary.id) {
+          // Set this photo as primary
+          await tx.photo.update({
+            where: { id: latestPhoto.id },
+            data: { typeId: photoTypes.primary.id },
+          })
+        }
       }
 
       let hashedPassword
@@ -449,10 +487,27 @@ export async function updateManagedUser(
     })
 
     revalidatePath('/me/users')
+
+    // After the transaction, fetch the updated user with the new photo URL
+    const updatedUser = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        photos: {
+          where: { type: { code: 'primary' } },
+          take: 1,
+        },
+      },
+    })
+
+    if (updatedUser && updatedUser.photos[0] && !updatedUser.photos[0].url.startsWith('https')) {
+      updatedUser.photos[0].url = await getPublicUrl(updatedUser.photos[0].url)
+    }
+
     return {
       success: true,
       message: 'User updated successfully.',
       redirectUrl: '/me/users',
+      updatedUser: updatedUser as User & { photos: Photo[] },
     }
   } catch (error: any) {
     console.error('Failed to update user:', error)
@@ -587,7 +642,10 @@ export async function addManager(managedUserId: string, managerUserId: string) {
   return { success: true, message: 'Manager added successfully.' }
 }
 
-export async function removeManager(managedUserId: string, managerUserId: string) {
+export async function removeManager(
+  managedUserId: string,
+  managerUserId: string,
+) {
   const session = await auth()
   if (!session?.user?.id) {
     throw new Error('Unauthorized')
