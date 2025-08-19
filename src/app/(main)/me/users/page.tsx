@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { getManagedUsers } from './actions'
 import UsersList from './users-list'
 import {

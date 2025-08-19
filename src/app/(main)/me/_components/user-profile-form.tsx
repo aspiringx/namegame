@@ -774,6 +774,7 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Gender
                 </label>
+                <input type="hidden" name="gender" value={gender ?? ''} />
                 <div className="mt-2 flex space-x-2">
                   {[
                     ['male', 'He'],
