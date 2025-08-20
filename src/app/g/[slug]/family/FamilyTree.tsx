@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useMemo } from 'react'
+import React, { useMemo, useState } from 'react'
 import ReactFlow, {
   Background,
   Controls,
@@ -32,6 +32,8 @@ const FamilyTree: React.FC<FamilyTreeProps> = ({
   members,
   currentUser,
 }) => {
+  const [isMiniMapExpanded, setIsMiniMapExpanded] = useState(false)
+
   const elements = useMemo(() => {
     if (!currentUser) return { nodes: [], edges: [] }
 
@@ -85,7 +87,7 @@ const FamilyTree: React.FC<FamilyTreeProps> = ({
         data: {
           label: person.firstName,
           image: person.photoUrl,
-          size: 'large',
+          size: isEgo ? 'xlarge' : 'large',
           relationship,
           firstName: person.firstName,
           lastName: person.lastName,
@@ -214,11 +216,27 @@ const FamilyTree: React.FC<FamilyTreeProps> = ({
         edges={elements.edges}
         nodeTypes={nodeTypes}
         fitView
-        attributionPosition="bottom-right"
+        proOptions={{ hideAttribution: true }}
       >
         <Background />
         <Controls />
-        <MiniMap nodeStrokeWidth={3} zoomable pannable />
+        <div
+          onMouseEnter={() => setIsMiniMapExpanded(true)}
+          onMouseLeave={() => setIsMiniMapExpanded(false)}
+          onClick={() => setIsMiniMapExpanded(!isMiniMapExpanded)}
+          className="absolute bottom-0 right-0 z-10 cursor-pointer"
+        >
+          <MiniMap
+            nodeStrokeWidth={3}
+            zoomable
+            pannable
+            style={{
+              height: isMiniMapExpanded ? 150 : 75,
+              width: isMiniMapExpanded ? 200 : 100,
+              transition: 'all 0.2s ease-in-out',
+            }}
+          />
+        </div>
       </ReactFlow>
     </div>
   )

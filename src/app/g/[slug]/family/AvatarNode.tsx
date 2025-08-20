@@ -16,7 +16,7 @@ interface AvatarNodeData {
   label: string
   image?: string | null
   relationship?: string
-  size?: 'large' | 'default'
+  size?: 'xlarge' | 'large' | 'default'
   firstName?: string | null
   lastName?: string | null
   birthDate?: Date | string | null
@@ -48,6 +48,7 @@ const AvatarNode = ({ data }: NodeProps<AvatarNodeData>) => {
   }
 
   const isLarge = size === 'large'
+  const isXLarge = size === 'xlarge'
   const fullName = [firstName, lastName].filter(Boolean).join(' ')
 
   const formatDate = (
@@ -88,7 +89,11 @@ const AvatarNode = ({ data }: NodeProps<AvatarNodeData>) => {
             <Avatar
               className={cn(
                 'border-primary border-2',
-                isLarge ? 'h-24 w-24' : 'h-16 w-16',
+                isXLarge
+                  ? 'h-32 w-32'
+                  : isLarge
+                    ? 'h-24 w-24'
+                    : 'h-16 w-16',
               )}
             >
               <AvatarImage src={image || undefined} alt={label} />
