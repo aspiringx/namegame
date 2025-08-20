@@ -15,35 +15,38 @@ export function parseDateAndDeterminePrecision(dateString: string): {
     return null
   }
 
-  // Normalize the date string by replacing 'at' with a space
-  const normalizedDateString = dateString.replace(/\s+at\s+/i, ' ')
+  const normalizedDateString = dateString
+    .trim()
+    .replace(/\s+at\s+/i, ' ')
+    .replace(/,/, '')
 
   const dateParsingConfig = [
-    // TIME formats - most specific first
-    { format: "MMMM d, yyyy h:mm a", precision: DatePrecision.TIME },
-    { format: 'MMMM d, yyyy HH:mm', precision: DatePrecision.TIME },
-    { format: 'MMM d, yyyy h:mm a', precision: DatePrecision.TIME },
-    { format: 'MMM d, yyyy HH:mm', precision: DatePrecision.TIME },
-    { format: 'M/d/yyyy h:mm a', precision: DatePrecision.TIME },
-    { format: 'M/d/yyyy HH:mm', precision: DatePrecision.TIME },
+    // With Time (most specific)
     { format: 'M/d/yy h:mm a', precision: DatePrecision.TIME },
+    { format: 'M/d/yyyy h:mm a', precision: DatePrecision.TIME },
     { format: 'M/d/yy HH:mm', precision: DatePrecision.TIME },
-    { format: 'yyyy-MM-dd h:mm a', precision: DatePrecision.TIME },
-    { format: 'yyyy-MM-dd HH:mm', precision: DatePrecision.TIME },
+    { format: 'M/d/yyyy HH:mm', precision: DatePrecision.TIME },
+    { format: 'MMMM d yyyy h:mm a', precision: DatePrecision.TIME },
+    { format: 'MMM d yy h:mm a', precision: DatePrecision.TIME },
+    { format: 'MMM d yyyy h:mm a', precision: DatePrecision.TIME },
 
-    // DAY formats
-    { format: 'MMMM d, yyyy', precision: DatePrecision.DAY },
-    { format: 'MMM d, yyyy', precision: DatePrecision.DAY },
+    // Date only
     { format: 'M/d/yyyy', precision: DatePrecision.DAY },
     { format: 'M/d/yy', precision: DatePrecision.DAY },
+    { format: 'd/M/yyyy', precision: DatePrecision.DAY },
+    { format: 'd/M/yy', precision: DatePrecision.DAY },
+    { format: 'MMMM d yyyy', precision: DatePrecision.DAY },
+    { format: 'MMM d yyyy', precision: DatePrecision.DAY },
+    { format: 'MMM d yy', precision: DatePrecision.DAY },
     { format: 'yyyy-MM-dd', precision: DatePrecision.DAY },
 
-    // MONTH formats
+    // Month and Year
     { format: 'MMMM yyyy', precision: DatePrecision.MONTH },
     { format: 'MMM yyyy', precision: DatePrecision.MONTH },
+    { format: 'MMM yy', precision: DatePrecision.MONTH },
     { format: 'yyyy-MM', precision: DatePrecision.MONTH },
 
-    // YEAR formats
+    // Year only
     { format: 'yyyy', precision: DatePrecision.YEAR },
     { format: 'yy', precision: DatePrecision.YEAR },
   ]
@@ -55,10 +58,15 @@ export function parseDateAndDeterminePrecision(dateString: string): {
       // Post-process two-digit years to ensure correct century
       if (format.includes('yy') && !format.includes('yyyy')) {
         const year = parsedDate.getFullYear()
-        const currentYear = new Date().getFullYear()
-        // Heuristic: if parsed year is in the future, assume it's from the previous century
-        if (year > currentYear) {
-          parsedDate.setFullYear(year - 100)
+        if (year < 100) {
+          // Handles cases where '74' is parsed as year 74 instead of 1974
+          parsedDate.setFullYear(year + 1900)
+        } else {
+          // Handles cases where date-fns might guess the wrong century for a 2-digit year
+          const currentYear = new Date().getFullYear()
+          if (year > currentYear) {
+            parsedDate.setFullYear(year - 100)
+          }
         }
       }
       return { date: parsedDate, precision }

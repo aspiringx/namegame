@@ -2,6 +2,7 @@
 
 import * as React from 'react'
 import * as AvatarPrimitive from '@radix-ui/react-avatar'
+import Image from 'next/image'
 
 import { cn } from '@/lib/utils'
 
@@ -21,7 +22,14 @@ const AvatarImage = React.forwardRef<
   React.ElementRef<typeof AvatarPrimitive.Image>,
   React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Image>
 >(({ className, ...props }, ref) => (
-  <AvatarPrimitive.Image ref={ref} className={cn('aspect-square h-full w-full object-cover', className)} {...props} />
+  <AvatarPrimitive.Image asChild ref={ref} {...props}>
+    {/* @ts-expect-error - We are passing all props to Next.js Image, which is fine. */}
+    <Image
+      fill
+      className={cn('aspect-square h-full w-full object-cover', className)}
+      {...props}
+    />
+  </AvatarPrimitive.Image>
 ))
 AvatarImage.displayName = AvatarPrimitive.Image.displayName
 

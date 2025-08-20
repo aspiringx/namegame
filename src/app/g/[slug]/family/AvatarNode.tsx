@@ -1,6 +1,6 @@
 'use client'
 
-import React, { memo } from 'react'
+import React, { memo, useState } from 'react'
 import { NodeProps } from 'reactflow'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
@@ -28,6 +28,7 @@ interface AvatarNodeData {
 }
 
 const AvatarNode = ({ data }: NodeProps<AvatarNodeData>) => {
+  const [isTooltipOpen, setIsTooltipOpen] = useState(false)
   const {
     label,
     image,
@@ -83,26 +84,25 @@ const AvatarNode = ({ data }: NodeProps<AvatarNodeData>) => {
 
   return (
     <TooltipProvider>
-      <Tooltip>
+      <Tooltip open={isTooltipOpen} onOpenChange={setIsTooltipOpen}>
         <TooltipTrigger asChild>
-          <div className="flex flex-col items-center gap-2">
+          <div
+            className="flex cursor-pointer flex-col items-center gap-2"
+            onClick={() => setIsTooltipOpen(!isTooltipOpen)}
+          >
             <Avatar
               className={cn(
                 'border-primary border-2',
-                isXLarge
-                  ? 'h-32 w-32'
-                  : isLarge
-                    ? 'h-24 w-24'
-                    : 'h-16 w-16',
+                isXLarge ? 'h-32 w-32' : isLarge ? 'h-24 w-24' : 'h-16 w-16',
               )}
             >
-              <AvatarImage src={image || undefined} alt={label} />
+              {image && <AvatarImage src={image} alt={label} />}
               <AvatarFallback>{label.charAt(0)}</AvatarFallback>
             </Avatar>
             <div className="text-center">
               <div className="text-sm font-semibold">{truncate(label, 16)}</div>
               {relationship && (
-                <div className="text-muted-foreground text-xs">
+                <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
                   {relationship}
                 </div>
               )}
@@ -112,19 +112,31 @@ const AvatarNode = ({ data }: NodeProps<AvatarNodeData>) => {
         <TooltipContent>
           <div className="flex flex-col gap-1 text-left">
             <p className="font-bold">{fullName || label}</p>
-            {relationship && <p className="text-sm">{relationship}</p>}
-            {(formattedBirthDate || birthPlace) && (
-              <p className="text-xs">
-                Born: {formattedBirthDate}
-                {formattedBirthDate && birthPlace && ', '}
-                {birthPlace}
+            {relationship && (
+              <p className="text-xs text-slate-200 dark:text-slate-300">
+                {relationship}
               </p>
             )}
-            {(formattedDeathDate || deathPlace) && (
+            {formattedBirthDate && (
               <p className="text-xs">
-                Died: {formattedDeathDate}
-                {formattedDeathDate && deathPlace && ', '}
-                {deathPlace}
+                <span className="font-semibold">Birth Date:</span>{' '}
+                {formattedBirthDate}
+              </p>
+            )}
+            {birthPlace && (
+              <p className="text-xs">
+                <span className="font-semibold">Birth Place:</span> {birthPlace}
+              </p>
+            )}
+            {formattedDeathDate && (
+              <p className="text-xs">
+                <span className="font-semibold">Death Date:</span>{' '}
+                {formattedDeathDate}
+              </p>
+            )}
+            {deathPlace && (
+              <p className="text-xs">
+                <span className="font-semibold">Death Place:</span> {deathPlace}
               </p>
             )}
           </div>
@@ -132,7 +144,6 @@ const AvatarNode = ({ data }: NodeProps<AvatarNodeData>) => {
       </Tooltip>
     </TooltipProvider>
   )
-
 }
 
 export default memo(AvatarNode)
