@@ -8,6 +8,7 @@ import ReactFlow, {
   Edge,
   Position,
   useReactFlow,
+  ReactFlowProvider,
 } from 'reactflow'
 import 'reactflow/dist/style.css'
 import { FullRelationship, MemberWithUser, UserWithPhotoUrl } from '@/types'
@@ -27,7 +28,7 @@ const nodeTypes = {
 const NODE_WIDTH = 150
 const NODE_HEIGHT = 200
 
-const FamilyTree: FC<FamilyTreeProps> = ({
+const FamilyTreeComponent: FC<FamilyTreeProps> = ({
   relationships,
   members,
   currentUser,
@@ -310,51 +311,7 @@ const FamilyTree: FC<FamilyTreeProps> = ({
               targetHandle: 'top-target',
             })
           } else {
-            // side
-            const sourceHandle =
-              direction === 'right' ? 'right-source' : 'left-source'
-            const targetHandle =
-              direction === 'right' ? 'left-target' : 'right-target'
-            // Find a common parent to draw the edge from
-            const adjacencyList = buildAdjacencyList(
-              relationships,
-              members,
-              currentUser,
-            )
-            const sourceParents = new Set(
-              (adjacencyList.get(sourceNode.id) || [])
-                .filter((r) => r.type === 'parent')
-                .map((r) => r.relatedUserId),
-            )
-            const relativeParents = new Set(
-              (adjacencyList.get(relative.id) || [])
-                .filter((r) => r.type === 'parent')
-                .map((r) => r.relatedUserId),
-            )
-            const commonParent = [...sourceParents].find((p) =>
-              relativeParents.has(p),
-            )
-
-            if (commonParent && allNodes.some((n) => n.id === commonParent)) {
-              newEdges.push({
-                id: `e-${commonParent}-${relative.id}`,
-                source: commonParent,
-                target: relative.id,
-                type: 'orthogonal',
-                sourceHandle: 'bottom-source',
-                targetHandle: 'top-target',
-              })
-            } else {
-              // Fallback for no visible common parent
-              newEdges.push({
-                id: `e-${sourceNode.id}-${relative.id}`,
-                source: sourceNode.id,
-                target: relative.id,
-                type: 'orthogonal',
-                sourceHandle,
-                targetHandle,
-              })
-            }
+            // side - edges for siblings are handled separately
           }
         })
       }
@@ -400,18 +357,13 @@ const FamilyTree: FC<FamilyTreeProps> = ({
 
             setNodes((nds) => {
               const newNodes = nds.filter((n) => !nodesToRemove.has(n.id))
-              return newNodes.map((n) => {
-                if (n.id === visibleParent.id) {
-                  return {
-                    ...n,
-                    data: buildNodeDataRef.current!(
-                      allUsersMap.get(n.id)!,
-                      newNodes,
-                    ),
-                  }
-                }
-                return n
-              })
+              return newNodes.map((n) => ({
+                ...n,
+                data: buildNodeDataRef.current!(
+                  allUsersMap.get(n.id)!,
+                  newNodes,
+                ),
+              }))
             })
             setEdges((eds) =>
               eds.filter(
@@ -468,18 +420,13 @@ const FamilyTree: FC<FamilyTreeProps> = ({
 
             setNodes((nds) => {
               const newNodes = nds.filter((n) => !nodesToRemove.has(n.id))
-              return newNodes.map((n) => {
-                if (n.id === visibleChild.id) {
-                  return {
-                    ...n,
-                    data: buildNodeDataRef.current!(
-                      allUsersMap.get(n.id)!,
-                      newNodes,
-                    ),
-                  }
-                }
-                return n
-              })
+              return newNodes.map((n) => ({
+                ...n,
+                data: buildNodeDataRef.current!(
+                  allUsersMap.get(n.id)!,
+                  newNodes,
+                ),
+              }))
             })
             setEdges((eds) =>
               eds.filter(
@@ -506,21 +453,50 @@ const FamilyTree: FC<FamilyTreeProps> = ({
         const parentIds = relations
           .filter((rel) => rel.type === 'parent')
           .map((rel) => rel.relatedUserId)
+
         if (parentIds.length > 0) {
           const siblingIds = new Set<string>()
           parentIds.forEach((parentId: string) => {
-            ;(adjacencyList.get(parentId) || [])
-              .filter(
-                (rel) => rel.type === 'child' && rel.relatedUserId !== nodeId,
-              )
-              .forEach((rel) => siblingIds.add(rel.relatedUserId))
+            ;(adjacencyList.get(parentId) || []).forEach((rel) => {
+              if (rel.type === 'child') siblingIds.add(rel.relatedUserId)
+            })
           })
+
           const unaddedSiblings = Array.from(siblingIds)
             .filter((id) => !allNodes.some((n) => n.id === id))
             .map((id) => allUsersMap.get(id))
             .filter((u): u is UserWithPhotoUrl => !!u)
+
           if (unaddedSiblings.length > 0) {
             addRelatives(unaddedSiblings, 'side')
+          }
+
+          const visibleParent = allNodes.find((n) => parentIds.includes(n.id))
+          if (visibleParent) {
+            const allSiblingUsers = Array.from(siblingIds)
+              .map((id) => allUsersMap.get(id))
+              .filter((u): u is UserWithPhotoUrl => !!u)
+
+            allSiblingUsers.forEach((sibling) => {
+              newEdges.push({
+                id: `e-${visibleParent.id}-${sibling.id}`,
+                source: visibleParent.id,
+                target: sibling.id,
+                type: 'orthogonal',
+                sourceHandle: 'bottom-source',
+                targetHandle: 'top-target',
+              })
+            })
+
+            setEdges((eds) => {
+              const siblingIdsWithSource = new Set(Array.from(siblingIds).concat(nodeId))
+              return eds
+                .filter(
+                  (e) =>
+                    !( e.source === visibleParent.id && siblingIdsWithSource.has(e.target))
+                )
+                .concat(newEdges)
+            })
           }
         }
       }
@@ -529,25 +505,22 @@ const FamilyTree: FC<FamilyTreeProps> = ({
 
       setNodes((nds) => {
         const finalNodes = nds.concat(newNodes)
-        return finalNodes.map((n) => {
-          const isNewOrClicked =
-            newNodes.some((newNode) => newNode.id === n.id) || n.id === nodeId
-          if (isNewOrClicked) {
-            return {
-              ...n,
-              data: buildNodeDataRef.current!(
-                allUsersMap.get(n.id)!,
-                finalNodes,
-              ),
-            }
-          }
-          return n
-        })
+        return finalNodes.map((n) => ({
+          ...n,
+          data: buildNodeDataRef.current!(
+            allUsersMap.get(n.id)!,
+            finalNodes,
+          ),
+        }))
       })
-      setEdges((eds) => eds.concat(newEdges))
+
+      if (direction === 'up' || direction === 'down') {
+        setEdges((eds) => eds.concat(newEdges))
+      }
+
       setNodeToCenter({ id: nodeId, direction })
     },
-    [getNodes, members, relationships, setEdges, setNodes],
+    [currentUser, getNodes, members, relationships, setEdges, setNodes, ancestors, descendants, allUsersMap],
   )
 
   useEffect(() => {
@@ -562,7 +535,6 @@ const FamilyTree: FC<FamilyTreeProps> = ({
     const initialEdges: Edge[] = []
     const addedIds = new Set<string>()
 
-    // ...
     initialNodes.push({
       id: currentUser.id,
       type: 'avatar',
@@ -694,6 +666,8 @@ const FamilyTree: FC<FamilyTreeProps> = ({
 
         if (nodeToCenter.direction === 'up') {
           y -= NODE_HEIGHT * 0.75
+        } else if (nodeToCenter.direction === 'down') {
+          y += NODE_HEIGHT * 0.75
         }
 
         const isMobile = window.innerWidth < 768
@@ -723,6 +697,14 @@ const FamilyTree: FC<FamilyTreeProps> = ({
         <Controls />
       </ReactFlow>
     </div>
+  )
+}
+
+const FamilyTree: FC<FamilyTreeProps> = (props) => {
+  return (
+    <ReactFlowProvider>
+      <FamilyTreeComponent {...props} />
+    </ReactFlowProvider>
   )
 }
 
