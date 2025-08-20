@@ -21,6 +21,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { ArrowUp, ArrowDown, GitFork, LayoutGrid, List, X } from 'lucide-react'
+import { ReactFlowProvider } from 'reactflow'
 import FamilyTree from './FamilyTree'
 import { useGroup } from '@/components/GroupProvider'
 
@@ -324,11 +325,13 @@ export function FamilyGroupClient({
 
       <div className="container mx-auto mt-4 px-4">
         {settings.viewMode === 'tree' ? (
-          <FamilyTree
-            relationships={initialRelationships}
-            members={members}
-            currentUser={currentUserMember?.user}
-          />
+          <ReactFlowProvider>
+            <FamilyTree
+              relationships={initialRelationships}
+              members={members}
+              currentUser={currentUserMember?.user}
+            />
+          </ReactFlowProvider>
         ) : (
           <div
             className={

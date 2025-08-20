@@ -10,6 +10,8 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
+import { UserWithPhotoUrl } from '@/types'
+import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
 import { format } from 'date-fns'
 
 interface AvatarNodeData {
@@ -25,6 +27,10 @@ interface AvatarNodeData {
   deathDate?: Date | string | null
   deathPlace?: string | null
   deathDatePrecision?: string | null
+  canExpandUp?: boolean
+  canExpandDown?: boolean
+  canExpandHorizontal?: boolean
+  onExpand?: (direction: 'up' | 'down' | 'left' | 'right') => void
 }
 
 const AvatarNode = ({ data }: NodeProps<AvatarNodeData>) => {
@@ -42,6 +48,10 @@ const AvatarNode = ({ data }: NodeProps<AvatarNodeData>) => {
     deathPlace,
     birthDatePrecision,
     deathDatePrecision,
+    canExpandUp,
+    canExpandDown,
+    canExpandHorizontal,
+    onExpand,
   } = data
 
   const truncate = (str: string, n: number) => {
@@ -83,6 +93,7 @@ const AvatarNode = ({ data }: NodeProps<AvatarNodeData>) => {
   const formattedDeathDate = formatDate(deathDate, deathDatePrecision)
 
   return (
+    <div className="relative">
     <TooltipProvider>
       <Handle type="source" position={Position.Top} id="top-source" className="!bg-transparent !border-0" />
       <Handle type="target" position={Position.Top} id="top-target" className="!bg-transparent !border-0" />
@@ -150,7 +161,40 @@ const AvatarNode = ({ data }: NodeProps<AvatarNodeData>) => {
       <Handle type="target" position={Position.Bottom} id="bottom-target" className="!bg-transparent !border-0" />
       <Handle type="source" position={Position.Left} id="left-source" className="!bg-transparent !border-0" />
       <Handle type="target" position={Position.Left} id="left-target" className="!bg-transparent !border-0" />
+      {canExpandUp && (
+        <div
+          onClick={() => onExpand?.('up')}
+          className="absolute -top-4 left-1/2 z-10 flex h-8 w-8 -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-background text-muted-foreground shadow-md transition-colors hover:bg-accent hover:text-accent-foreground opacity-75 hover:opacity-100"
+        >
+          <ChevronUp className="h-5 w-5" />
+        </div>
+      )}
+      {canExpandDown && (
+        <div
+          onClick={() => onExpand?.('down')}
+          className="absolute -bottom-4 left-1/2 z-10 flex h-8 w-8 -translate-x-1/2 translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-background text-muted-foreground shadow-md transition-colors hover:bg-accent hover:text-accent-foreground opacity-75 hover:opacity-100"
+        >
+          <ChevronDown className="h-5 w-5" />
+        </div>
+      )}
+      {canExpandHorizontal && (
+        <>
+          <div
+            onClick={() => onExpand?.('left')}
+            className="absolute -left-4 top-1/2 z-10 flex h-8 w-8 -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-background text-muted-foreground shadow-md transition-colors hover:bg-accent hover:text-accent-foreground opacity-75 hover:opacity-100"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </div>
+          <div
+            onClick={() => onExpand?.('right')}
+            className="absolute -right-4 top-1/2 z-10 flex h-8 w-8 translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-background text-muted-foreground shadow-md transition-colors hover:bg-accent hover:text-accent-foreground opacity-75 hover:opacity-100"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </div>
+        </>
+      )}
     </TooltipProvider>
+    </div>
   )
 }
 
