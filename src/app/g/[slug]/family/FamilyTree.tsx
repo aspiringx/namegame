@@ -257,14 +257,27 @@ const FamilyTree: FC<FamilyTreeProps> = ({
           } else {
             // side
             y = sourceNode.position.y
-            const sideNodes = allNodes.filter((n) => n.position.y === y)
             const sign = direction === 'right' ? 1 : -1
-            const lastNodeX = sideNodes.reduce(
-              (acc, curr) =>
-                sign * curr.position.x > sign * acc ? curr.position.x : acc,
-              sourceNode.position.x,
-            )
-            x = lastNodeX + sign * NODE_WIDTH * 1.5
+            let lastX = sourceNode.position.x
+
+            // Find the outermost node on the side we're adding to
+            allNodes
+              .filter(
+                (n) =>
+                  Math.abs(n.position.y - y) < 10 &&
+                  sign * n.position.x > sign * sourceNode.position.x,
+              )
+              .forEach((n) => {
+                if (sign * n.position.x > sign * lastX) {
+                  lastX = n.position.x
+                }
+              })
+
+            let targetX = lastX + sign * NODE_WIDTH * 1.5
+            while (occupiedXPositions.has(targetX)) {
+              targetX += sign * NODE_WIDTH * 1.5
+            }
+            x = targetX
           }
 
           occupiedXPositions.add(x)
