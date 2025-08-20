@@ -1,7 +1,7 @@
 'use client'
 
 import React, { memo, useState } from 'react'
-import { NodeProps } from 'reactflow'
+import { Handle, Position, NodeProps } from 'reactflow'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
   Tooltip,
@@ -84,6 +84,10 @@ const AvatarNode = ({ data }: NodeProps<AvatarNodeData>) => {
 
   return (
     <TooltipProvider>
+      <Handle type="source" position={Position.Top} id="top-source" className="!bg-transparent !border-0" />
+      <Handle type="target" position={Position.Top} id="top-target" className="!bg-transparent !border-0" />
+      <Handle type="source" position={Position.Right} id="right-source" className="!bg-transparent !border-0" />
+      <Handle type="target" position={Position.Right} id="right-target" className="!bg-transparent !border-0" />
       <Tooltip open={isTooltipOpen} onOpenChange={setIsTooltipOpen}>
         <TooltipTrigger asChild>
           <div
@@ -142,6 +146,10 @@ const AvatarNode = ({ data }: NodeProps<AvatarNodeData>) => {
           </div>
         </TooltipContent>
       </Tooltip>
+      <Handle type="source" position={Position.Bottom} id="bottom-source" className="!bg-transparent !border-0" />
+      <Handle type="target" position={Position.Bottom} id="bottom-target" className="!bg-transparent !border-0" />
+      <Handle type="source" position={Position.Left} id="left-source" className="!bg-transparent !border-0" />
+      <Handle type="target" position={Position.Left} id="left-target" className="!bg-transparent !border-0" />
     </TooltipProvider>
   )
 }

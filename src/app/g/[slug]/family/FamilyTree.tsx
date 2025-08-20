@@ -57,14 +57,9 @@ const FamilyTree: React.FC<FamilyTreeProps> = ({
       .filter((p): p is UserWithPhotoUrl => !!p && !addedIds.has(p.id))
 
     // 2. Position the central group (ego and partners)
-    const partnersMidpoint = Math.ceil(partners.length / 2)
-    const centralGroup = [
-      ...partners.slice(0, partnersMidpoint),
-      currentUser,
-      ...partners.slice(partnersMidpoint),
-    ]
-    const centralGroupWidth = (centralGroup.length - 1) * NODE_WIDTH * 1.5
-    const startX = -centralGroupWidth / 2
+    const centralGroup = [currentUser, ...partners];
+    const centralGroupWidth = (centralGroup.length - 1) * NODE_WIDTH * 1.5;
+    const startX = -centralGroupWidth / 2;
 
     let egoXPosition = 0
 
@@ -103,14 +98,6 @@ const FamilyTree: React.FC<FamilyTreeProps> = ({
       })
       addedIds.add(person.id)
 
-      if (!isEgo) {
-        edges.push({
-          id: `e-${currentUser.id}-${person.id}`,
-          source: currentUser.id,
-          target: person.id,
-          type: 'smoothstep',
-        })
-      }
     })
 
     // 3. Position parents above the ego
@@ -149,13 +136,6 @@ const FamilyTree: React.FC<FamilyTreeProps> = ({
         targetPosition: Position.Bottom,
       })
       addedIds.add(parent.id)
-
-      edges.push({
-        id: `e-${parent.id}-${currentUser.id}`,
-        source: parent.id,
-        target: currentUser.id,
-        type: 'smoothstep',
-      })
     })
 
     // 4. Position children below the ego
@@ -194,14 +174,41 @@ const FamilyTree: React.FC<FamilyTreeProps> = ({
         targetPosition: Position.Bottom,
       })
       addedIds.add(child.id)
+    })
 
+    // 5. Create edges based on relationships
+    parents.forEach((parent) => {
+      edges.push({
+        id: `e-${currentUser.id}-${parent.id}`,
+        source: currentUser.id,
+        target: parent.id,
+        sourceHandle: 'top-source',
+        targetHandle: 'bottom-target',
+        type: 'orthogonal',
+      });
+    });
+
+    children.forEach((child) => {
       edges.push({
         id: `e-${currentUser.id}-${child.id}`,
         source: currentUser.id,
         target: child.id,
-        type: 'smoothstep',
-      })
-    })
+        sourceHandle: 'bottom-source',
+        targetHandle: 'top-target',
+        type: 'orthogonal',
+      });
+    });
+
+    partners.forEach((partner) => {
+      edges.push({
+        id: `e-${currentUser.id}-${partner.id}`,
+        source: currentUser.id,
+        target: partner.id,
+        sourceHandle: 'right-source',
+        targetHandle: 'left-target',
+        type: 'orthogonal',
+      });
+    });
 
     return { nodes, edges }
   }, [relationships, members, currentUser])
@@ -209,7 +216,7 @@ const FamilyTree: React.FC<FamilyTreeProps> = ({
   return (
     <div
       style={{ height: '70vh', width: '100%' }}
-      className="bg-background rounded-md border"
+      className="react-flow-wrapper bg-background rounded-md border"
     >
       <ReactFlow
         nodes={elements.nodes}

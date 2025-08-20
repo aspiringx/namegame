@@ -197,3 +197,21 @@
     @apply text-base font-semibold tracking-tight;
   }
 }
+
+.react-flow__edge-path {
+  stroke-width: 2;
+}
+
+.react-flow__edges {
+  overflow: visible !important;
+}
+
+.react-flow__container {
+  overflow: visible !important;
+}
+
+.react-flow__edges svg {
+  overflow: visible !important;
+}
+
+
