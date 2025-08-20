@@ -1,14 +1,11 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import React, { useState, useEffect, useMemo, useCallback } from 'react'
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import useLocalStorage from '@/hooks/useLocalStorage'
 import { useInView } from 'react-intersection-observer'
 import { MemberWithUser, FullRelationship, User } from '@/types'
-import {
-  getPaginatedMembers,
-  getGroupMembersForRelate,
-} from './actions'
+import { getPaginatedMembers, getGroupMembersForRelate } from './actions'
 import { getMemberRelations } from '@/lib/actions'
 import FamilyMemberCard from '@/components/FamilyMemberCard'
 import RelateModal from '@/components/RelateModal'
@@ -67,6 +64,8 @@ export function FamilyGroupClient({
   const { group, isGroupAdmin, currentUserMember } = useGroup()
   const { ref, inView } = useInView()
   const router = useRouter()
+  const treeContainerRef = useRef<HTMLDivElement>(null)
+  const [treeHeight, setTreeHeight] = useState(600) // Default height
 
   const [isRelateModalOpen, setIsRelateModalOpen] = useState(false)
   const [isLoadingRelations, setIsLoadingRelations] = useState(false)
@@ -157,6 +156,35 @@ export function FamilyGroupClient({
     }
     return newMap
   }, [currentUserMember, initialMembers, initialRelationships])
+
+  useEffect(() => {
+    const calculateHeight = () => {
+      const footer = document.querySelector('footer')
+      if (treeContainerRef.current && footer) {
+        const topOffset = treeContainerRef.current.getBoundingClientRect().top
+        const footerHeight = footer.offsetHeight
+        const windowHeight = window.innerHeight
+        // The main layout has 4rem (64px) of bottom padding. Subtract 16 of
+        // it so the bottom margin below the family tree is the same as the
+        // gap between the subheader and the family tree.
+        const mainPaddingBottom = 16
+        const finalHeight =
+          windowHeight - topOffset - footerHeight - mainPaddingBottom
+
+        setTreeHeight(finalHeight > 0 ? finalHeight : 0)
+      }
+    }
+
+    const observer = new ResizeObserver(() => {
+      calculateHeight()
+    })
+
+    observer.observe(document.body)
+
+    return () => {
+      observer.disconnect()
+    }
+  }, [])
 
   useEffect(() => {
     const loadMoreMembers = async () => {
@@ -305,7 +333,7 @@ export function FamilyGroupClient({
                   searchQuery: e.target.value,
                 }))
               }
-              className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 pr-10 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+              className="w-full rounded-md border p-2 pr-10"
             />
             {settings.searchQuery && (
               <button
@@ -326,13 +354,19 @@ export function FamilyGroupClient({
 
       <div className="container mx-auto mt-4 px-4">
         {settings.viewMode === 'tree' ? (
-          <ReactFlowProvider>
-            <FamilyTree
-              relationships={initialRelationships}
-              members={members}
-              currentUser={currentUserMember?.user}
-            />
-          </ReactFlowProvider>
+          <div
+            ref={treeContainerRef}
+            style={{ height: `${treeHeight}px` }}
+            className="rounded-md border"
+          >
+            <ReactFlowProvider>
+              <FamilyTree
+                relationships={initialRelationships}
+                members={members}
+                currentUser={currentUserMember?.user}
+              />
+            </ReactFlowProvider>
+          </div>
         ) : (
           <div
             className={
@@ -365,16 +399,19 @@ export function FamilyGroupClient({
 
       {selectedMember && group?.groupType && currentUserMember && (
         <RelateModal
-        isOpen={isRelateModalOpen}
-        onClose={handleCloseRelateModal}
-        member={selectedMember}
-        groupType={group.groupType}
-        groupMembers={allGroupMembers}
-        groupSlug={groupSlug}
-        initialRelations={memberRelations}
-        onRelationshipAdded={handleRelationshipChange}
-        isReadOnly={!isGroupAdmin && selectedMember?.userId !== currentUserMember?.userId}
-        loggedInUserId={currentUserMember.userId}
+          isOpen={isRelateModalOpen}
+          onClose={handleCloseRelateModal}
+          member={selectedMember}
+          groupType={group.groupType}
+          groupMembers={allGroupMembers}
+          groupSlug={groupSlug}
+          initialRelations={memberRelations}
+          onRelationshipAdded={handleRelationshipChange}
+          isReadOnly={
+            !isGroupAdmin &&
+            selectedMember?.userId !== currentUserMember?.userId
+          }
+          loggedInUserId={currentUserMember.userId}
         />
       )}
     </>

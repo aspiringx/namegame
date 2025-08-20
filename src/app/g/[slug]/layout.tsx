@@ -113,7 +113,7 @@ export default async function GroupLayout(props: {
           isGroupAdmin={currentUserMember?.role.code === 'admin'}
           groupSlug={slug}
         />
-        <main className="main-container flex-grow pb-24">{children}</main>
+        <main className="flex-grow bg-gray-50 pb-16 dark:bg-gray-900">{children}</main>
         <Footer />
       </div>
     </GroupProvider>
