@@ -1,5 +1,5 @@
 import { Gender, type User } from '../generated/prisma'
-import type { FullRelationship } from '@/types'
+import { FullRelationship, MemberWithUser, UserWithPhotoUrl } from '@/types'
 
 /**
  * Represents the graph of family relationships as an adjacency list.
@@ -38,31 +38,49 @@ export type RelationshipResult = {
  * @returns An object containing the relationship string and the path, or null if no relationship is found.
  */
 
-function buildAdjacencyList(relationships: FullRelationship[]): AdjacencyList {
-  const list: AdjacencyList = new Map()
+export const buildAdjacencyList = (
+  relationships: FullRelationship[],
+  members: MemberWithUser[],
+  currentUser?: UserWithPhotoUrl,
+): Map<string, { relatedUserId: string; type: 'parent' | 'child' | 'partner' }[]> => {
+  const list: Map<string, { relatedUserId: string; type: 'parent' | 'child' | 'partner' }[]> = new Map()
 
-  const addEdge = (from: string, to: string, type: string) => {
+  const addEdge = (from: string, to: string, type: 'parent' | 'child' | 'partner') => {
     if (!list.has(from)) {
       list.set(from, [])
     }
     list.get(from)!.push({ relatedUserId: to, type })
   }
 
+  // Process explicit parent-child relationships from the members array first
+  for (const member of members) {
+    if (member.parents) {
+      for (const parent of member.parents) {
+        addEdge(member.userId, parent.userId, 'parent');
+        addEdge(parent.userId, member.userId, 'child');
+      }
+    }
+    if (member.children) {
+      for (const child of member.children) {
+        addEdge(member.userId, child.userId, 'child');
+        addEdge(child.userId, member.userId, 'parent');
+      }
+    }
+  }
+
+  // Process all relationships from the relationships array
   for (const rel of relationships) {
-    // Per our convention: user1 is the parent, user2 is the child.
-    if (rel.relationType.code === 'parent') {
-      // Parent -> Child relationship
-      addEdge(rel.user1Id, rel.user2Id, 'child')
-      // Child -> Parent relationship
-      addEdge(rel.user2Id, rel.user1Id, 'parent')
-    } else if (rel.relationType.code === 'spouse') {
-      // Spouse relationships are bi-directional
-      addEdge(rel.user1Id, rel.user2Id, 'spouse')
-      addEdge(rel.user2Id, rel.user1Id, 'spouse')
-    } else if (rel.relationType.code === 'partner') {
-      // Partner relationships are bi-directional
-      addEdge(rel.user1Id, rel.user2Id, 'partner')
-      addEdge(rel.user2Id, rel.user1Id, 'partner')
+    if (rel.relationType.code === 'spouse' || rel.relationType.code === 'partner') {
+      addEdge(rel.user1Id, rel.user2Id, 'partner');
+      addEdge(rel.user2Id, rel.user1Id, 'partner');
+    } else if (rel.relationType.code === 'parent') {
+      // user1 is the parent of user2
+      addEdge(rel.user2Id, rel.user1Id, 'parent');
+      addEdge(rel.user1Id, rel.user2Id, 'child');
+    } else if (rel.relationType.code === 'child') {
+      // user1 is the child of user2
+      addEdge(rel.user1Id, rel.user2Id, 'parent');
+      addEdge(rel.user2Id, rel.user1Id, 'child');
     }
   }
 
@@ -81,11 +99,12 @@ export function getRelationship(
   egoUserId: string,
   alterUserId: string,
   allRelationships: FullRelationship[],
+  members: MemberWithUser[],
   usersMap: Map<string, User>,
   applyGender = true,
 ): RelationshipResult | null {
   // 1. Build the adjacency list from allRelationships
-  const adjacencyList = buildAdjacencyList(allRelationships)
+  const adjacencyList = buildAdjacencyList(allRelationships, members)
 
   // 2. Perform BFS to find the shortest path from ego to alter
   const queue: BfsQueueItem[] = [
@@ -711,7 +730,7 @@ export function translatePathToRelationship(
 
   if (matchedRule) {
     if (applyGender && matchedRule.genderedOn) {
-      const genderedUser = usersMap.get(path[matchedRule.genderedOn].userId)
+      const genderedUser = usersMap.get(path[matchedRule.genderedOn - 1].userId)
       return getGenderedLabel(
         matchedRule.label,
         genderedUser?.gender,

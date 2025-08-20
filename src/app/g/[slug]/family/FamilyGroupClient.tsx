@@ -145,6 +145,7 @@ export function FamilyGroupClient({
         currentUserMember.userId,
         alter.userId,
         initialRelationships,
+        initialMembers,
         usersMap,
       )
       if (result && result.relationship) {

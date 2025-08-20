@@ -14,34 +14,22 @@ import { UserWithPhotoUrl } from '@/types'
 import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
 import { format } from 'date-fns'
 
-interface AvatarNodeData {
-  label: string
-  image?: string | null
-  relationship?: string
-  size?: 'xlarge' | 'large' | 'default'
-  firstName?: string | null
-  lastName?: string | null
-  birthDate?: Date | string | null
-  birthPlace?: string | null
-  birthDatePrecision?: string | null
-  deathDate?: Date | string | null
-  deathPlace?: string | null
-  deathDatePrecision?: string | null
-  canExpandUp?: boolean
-  canExpandDown?: boolean
-  canExpandHorizontal?: boolean
-  onExpand?: (direction: 'up' | 'down' | 'left' | 'right') => void
+interface AvatarNodeData extends UserWithPhotoUrl {
+  isCurrentUser: boolean;
+  onExpand: (direction: 'up' | 'down' | 'left' | 'right') => void;
+  canExpandUp: boolean;
+  canExpandDown: boolean;
+  canExpandHorizontal: boolean;
+  relationship?: string;
 }
 
-const AvatarNode = ({ data }: NodeProps<AvatarNodeData>) => {
+const AvatarNode = ({ data, selected }: NodeProps<AvatarNodeData>) => {
   const [isTooltipOpen, setIsTooltipOpen] = useState(false)
   const {
-    label,
-    image,
-    relationship,
-    size = 'default',
     firstName,
-    lastName,
+    photoUrl,
+    relationship,
+    isCurrentUser,
     birthDate,
     birthPlace,
     deathDate,
@@ -58,9 +46,7 @@ const AvatarNode = ({ data }: NodeProps<AvatarNodeData>) => {
     return str.length > n ? str.slice(0, n - 1) + '...' : str
   }
 
-  const isLarge = size === 'large'
-  const isXLarge = size === 'xlarge'
-  const fullName = [firstName, lastName].filter(Boolean).join(' ')
+  const fullName = [data.firstName, data.lastName].filter(Boolean).join(' ')
 
   const formatDate = (
     date: Date | string | null | undefined,
@@ -101,21 +87,19 @@ const AvatarNode = ({ data }: NodeProps<AvatarNodeData>) => {
       <Handle type="target" position={Position.Right} id="right-target" className="!bg-transparent !border-0" />
       <Tooltip open={isTooltipOpen} onOpenChange={setIsTooltipOpen}>
         <TooltipTrigger asChild>
-          <div
-            className="flex cursor-pointer flex-col items-center gap-2"
-            onClick={() => setIsTooltipOpen(!isTooltipOpen)}
-          >
+          <div className="flex cursor-pointer flex-col items-center gap-2">
             <Avatar
               className={cn(
-                'border-primary border-2',
-                isXLarge ? 'h-32 w-32' : isLarge ? 'h-24 w-24' : 'h-16 w-16',
+                'h-24 w-24 border-2',
+                isCurrentUser ? 'border-primary' : 'border-transparent',
+                selected && 'ring-2 ring-ring ring-offset-2 ring-offset-background',
               )}
             >
-              {image && <AvatarImage src={image} alt={label} />}
-              <AvatarFallback>{label.charAt(0)}</AvatarFallback>
+              {photoUrl && <AvatarImage src={photoUrl} alt={fullName} />}
+              <AvatarFallback>{firstName?.charAt(0)}</AvatarFallback>
             </Avatar>
             <div className="text-center">
-              <div className="text-sm font-semibold">{truncate(label, 16)}</div>
+              <div className="text-sm font-semibold">{truncate(fullName, 16)}</div>
               {relationship && (
                 <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
                   {relationship}
@@ -126,7 +110,7 @@ const AvatarNode = ({ data }: NodeProps<AvatarNodeData>) => {
         </TooltipTrigger>
         <TooltipContent>
           <div className="flex flex-col gap-1 text-left">
-            <p className="font-bold">{fullName || label}</p>
+            <p className="font-bold">{fullName}</p>
             {relationship && (
               <p className="text-xs text-slate-200 dark:text-slate-300">
                 {relationship}
