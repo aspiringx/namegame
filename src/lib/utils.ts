@@ -11,81 +11,60 @@ export function parseDateAndDeterminePrecision(dateString: string): {
   date: Date
   precision: DatePrecision
 } | null {
-  // Special handling for two-digit years to avoid date-fns ambiguity
-  if (/^\d{2}$/.test(dateString)) {
-    const inputYear = parseInt(dateString, 10)
-    const currentYear = new Date().getFullYear()
-    const currentCentury = Math.floor(currentYear / 100) * 100
-    const lastTwoDigitsOfCurrentYear = currentYear % 100
-
-    const fullYear =
-      inputYear > lastTwoDigitsOfCurrentYear
-        ? currentCentury - 100 + inputYear // e.g., in 2025, '77' becomes 1977
-        : currentCentury + inputYear // e.g., in 2025, '15' becomes 2015
-
-    return {
-      date: new Date(fullYear, 0, 1), // Create date for Jan 1st of the correct year
-      precision: DatePrecision.YEAR,
-    }
+  if (!dateString) {
+    return null
   }
 
-  // Special handling for MM/dd/yy or M/d/yy formats
-  const twoDigitYearMatch = dateString.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2})$/)
-  if (twoDigitYearMatch) {
-    const [, month, day, yearStr] = twoDigitYearMatch
-    let year = parseInt(yearStr, 10)
-    const currentYear = new Date().getFullYear()
-    const currentCentury = Math.floor(currentYear / 100) * 100
-    const currentTwoDigitYear = currentYear % 100
-
-    if (year > currentTwoDigitYear) {
-      year = currentCentury - 100 + year
-    } else {
-      year = currentCentury + year
-    }
-
-    const parsedDate = new Date(
-      year,
-      parseInt(month, 10) - 1,
-      parseInt(day, 10),
-    )
-    if (!isNaN(parsedDate.getTime())) {
-      return { date: parsedDate, precision: DatePrecision.DAY }
-    }
-  }
+  // Normalize the date string by replacing 'at' with a space
+  const normalizedDateString = dateString.replace(/\s+at\s+/i, ' ')
 
   const dateParsingConfig = [
-    // Order matters: more specific formats first
-
-    // Time precision
-    { format: "MMMM d, yyyy 'at' HH:mm", precision: DatePrecision.TIME },
-    { format: "MMM d yyyy 'at' HH:mm", precision: DatePrecision.TIME },
-    { format: "MMM d yyyy 'at' h:mm a", precision: DatePrecision.TIME },
-    { format: 'M/d/yyyy HH:mm', precision: DatePrecision.TIME },
+    // TIME formats - most specific first
+    { format: "MMMM d, yyyy h:mm a", precision: DatePrecision.TIME },
+    { format: 'MMMM d, yyyy HH:mm', precision: DatePrecision.TIME },
+    { format: 'MMM d, yyyy h:mm a', precision: DatePrecision.TIME },
+    { format: 'MMM d, yyyy HH:mm', precision: DatePrecision.TIME },
     { format: 'M/d/yyyy h:mm a', precision: DatePrecision.TIME },
+    { format: 'M/d/yyyy HH:mm', precision: DatePrecision.TIME },
+    { format: 'M/d/yy h:mm a', precision: DatePrecision.TIME },
+    { format: 'M/d/yy HH:mm', precision: DatePrecision.TIME },
+    { format: 'yyyy-MM-dd h:mm a', precision: DatePrecision.TIME },
     { format: 'yyyy-MM-dd HH:mm', precision: DatePrecision.TIME },
 
-    // Day precision
-    { format: 'M/d/yyyy', precision: DatePrecision.DAY },
-    { format: 'MMM d yyyy', precision: DatePrecision.DAY },
+    // DAY formats
     { format: 'MMMM d, yyyy', precision: DatePrecision.DAY },
+    { format: 'MMM d, yyyy', precision: DatePrecision.DAY },
+    { format: 'M/d/yyyy', precision: DatePrecision.DAY },
+    { format: 'M/d/yy', precision: DatePrecision.DAY },
     { format: 'yyyy-MM-dd', precision: DatePrecision.DAY },
 
-    // Month precision
+    // MONTH formats
     { format: 'MMMM yyyy', precision: DatePrecision.MONTH },
     { format: 'MMM yyyy', precision: DatePrecision.MONTH },
     { format: 'yyyy-MM', precision: DatePrecision.MONTH },
 
-    // Year precision
+    // YEAR formats
     { format: 'yyyy', precision: DatePrecision.YEAR },
+    { format: 'yy', precision: DatePrecision.YEAR },
   ]
+
   for (const { format, precision } of dateParsingConfig) {
-    const parsedDate = parse(dateString, format, new Date())
+    const parsedDate = parse(normalizedDateString, format, new Date())
 
     if (isValid(parsedDate)) {
+      // Post-process two-digit years to ensure correct century
+      if (format.includes('yy') && !format.includes('yyyy')) {
+        const year = parsedDate.getFullYear()
+        const currentYear = new Date().getFullYear()
+        // Heuristic: if parsed year is in the future, assume it's from the previous century
+        if (year > currentYear) {
+          parsedDate.setFullYear(year - 100)
+        }
+      }
       return { date: parsedDate, precision }
     }
   }
+
   return null
 }
 
