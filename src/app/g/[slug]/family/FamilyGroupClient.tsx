@@ -20,7 +20,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { ArrowUp, ArrowDown, LayoutGrid, List, X } from 'lucide-react'
+import { ArrowUp, ArrowDown, GitFork, LayoutGrid, List, X } from 'lucide-react'
+import FamilyTree from './FamilyTree'
 import { useGroup } from '@/components/GroupProvider'
 
 type SortKey = 'closest' | 'firstName' | 'lastName'
@@ -32,7 +33,7 @@ interface FamilyPageSettings {
     key: SortKey
     direction: SortDirection
   }
-  viewMode: 'grid' | 'list'
+  viewMode: 'grid' | 'list' | 'tree'
 }
 
 interface FamilyGroupClientProps {
@@ -263,6 +264,15 @@ export function FamilyGroupClient({
             </div>
             <div className="ml-auto flex items-center gap-2">
               <Button
+                variant={settings.viewMode === 'tree' ? 'secondary' : 'ghost'}
+                size="sm"
+                onClick={() =>
+                  setSettings((prev) => ({ ...prev, viewMode: 'tree' }))
+                }
+              >
+                <GitFork className="h-4 w-4" />
+              </Button>
+              <Button
                 variant={settings.viewMode === 'grid' ? 'secondary' : 'ghost'}
                 size="sm"
                 onClick={() =>
@@ -312,29 +322,35 @@ export function FamilyGroupClient({
         </div>
       </div>
 
-      <div
-        className={`container mx-auto px-4 ${settings.viewMode === 'grid' ? 'mt-4' : ''}`}
-      >
-        <div
-          className={
-            settings.viewMode === 'list'
-              ? 'grid grid-cols-1 gap-2'
-              : 'grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'
-          }
-        >
-          {filteredAndSortedMembers.map((member) => (
-            <FamilyMemberCard
-              key={member.userId}
-              member={member}
-              viewMode={settings.viewMode}
-              relationship={relationshipMap.get(member.userId)?.label}
-              onRelate={handleOpenRelateModal}
-              currentUserId={currentUserMember?.userId}
-              isGroupAdmin={isGroupAdmin}
-              groupMembers={allGroupMembers}
-            />
-          ))}
-        </div>
+      <div className="container mx-auto mt-4 px-4">
+        {settings.viewMode === 'tree' ? (
+          <FamilyTree
+            relationships={initialRelationships}
+            members={members}
+            currentUser={currentUserMember?.user}
+          />
+        ) : (
+          <div
+            className={
+              settings.viewMode === 'list'
+                ? 'grid grid-cols-1 gap-2'
+                : 'grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'
+            }
+          >
+            {filteredAndSortedMembers.map((member) => (
+              <FamilyMemberCard
+                key={member.userId}
+                member={member}
+                viewMode={settings.viewMode === 'grid' ? 'grid' : 'list'}
+                relationship={relationshipMap.get(member.userId)?.label}
+                onRelate={handleOpenRelateModal}
+                currentUserId={currentUserMember?.userId}
+                isGroupAdmin={isGroupAdmin}
+                groupMembers={allGroupMembers}
+              />
+            ))}
+          </div>
+        )}
 
         {hasMore && (
           <div ref={ref} className="p-4 text-center">
