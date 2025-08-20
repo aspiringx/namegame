@@ -60,6 +60,54 @@ const FamilyTree: FC<FamilyTreeProps> = ({ relationships, members, currentUser }
     return map;
   }, [members, relationships]);
 
+  const ancestors = useMemo(() => {
+    if (!currentUser) return new Set<string>();
+
+    const ancestorSet = new Set<string>();
+    const queue = [currentUser.id];
+    const visited = new Set<string>([currentUser.id]);
+    const adjacencyList = buildAdjacencyList(relationships, members, currentUser);
+
+    while (queue.length > 0) {
+      const currentId = queue.shift()!;
+      const relations = adjacencyList.get(currentId) || [];
+      const parents = relations.filter(r => r.type === 'parent').map(r => r.relatedUserId);
+
+      for (const parentId of parents) {
+        if (!visited.has(parentId)) {
+          ancestorSet.add(parentId);
+          visited.add(parentId);
+          queue.push(parentId);
+        }
+      }
+    }
+    return ancestorSet;
+  }, [relationships, members, currentUser]);
+
+  const descendants = useMemo(() => {
+    if (!currentUser) return new Set<string>();
+
+    const descendantSet = new Set<string>();
+    const queue = [currentUser.id];
+    const visited = new Set<string>([currentUser.id]);
+    const adjacencyList = buildAdjacencyList(relationships, members, currentUser);
+
+    while (queue.length > 0) {
+      const currentId = queue.shift()!;
+      const relations = adjacencyList.get(currentId) || [];
+      const children = relations.filter(r => r.type === 'child').map(r => r.relatedUserId);
+
+      for (const childId of children) {
+        if (!visited.has(childId)) {
+          descendantSet.add(childId);
+          visited.add(childId);
+          queue.push(childId);
+        }
+      }
+    }
+    return descendantSet;
+  }, [relationships, members, currentUser]);
+
   const [nodeToCenter, setNodeToCenter] = useState<{
     id: string;
     direction: 'up' | 'down' | 'left' | 'right';
@@ -70,23 +118,17 @@ const FamilyTree: FC<FamilyTreeProps> = ({ relationships, members, currentUser }
 
   const buildNodeData = useCallback(
     (user: UserWithPhotoUrl, allNodes: Node[]) => {
-      if (!currentUser) return {};
-
-      const adjacencyList = buildAdjacencyList(relationships, members, currentUser);
+      const adjacencyList = buildAdjacencyList(relationships, members, currentUser!);
       const relations = adjacencyList.get(user.id) || [];
 
-      const hasUnaddedParents = relations
-        .filter(rel => rel.type === 'parent')
-        .some(rel => !allNodes.some(n => n.id === rel.relatedUserId));
+      const parentIds = relations.filter(rel => rel.type === 'parent').map(rel => rel.relatedUserId);
+      const hasUnaddedParents = parentIds.some(id => !allNodes.some(n => n.id === id));
+      const hasVisibleParent = parentIds.some(id => allNodes.some(n => n.id === id));
 
-      const hasUnaddedChildren = relations
-        .filter(rel => rel.type === 'child')
-        .some(rel => !allNodes.some(n => n.id === rel.relatedUserId));
+      const childrenIds = relations.filter(rel => rel.type === 'child').map(rel => rel.relatedUserId);
+      const hasUnaddedChildren = childrenIds.some(id => !allNodes.some(n => n.id === id));
+      const hasVisibleChild = childrenIds.some(id => allNodes.some(n => n.id === id));
 
-      const parentIds = relations
-        .filter(rel => rel.type === 'parent')
-        .map(rel => rel.relatedUserId);
-      
       const siblingIds = new Set<string>();
       if (parentIds.length > 0) {
         parentIds.forEach(parentId => {
@@ -98,24 +140,27 @@ const FamilyTree: FC<FamilyTreeProps> = ({ relationships, members, currentUser }
       const hasUnaddedSiblings = Array.from(siblingIds).some(id => !allNodes.some(n => n.id === id));
 
       const relationship = getRelationship(
-        currentUser.id,
+        currentUser!.id,
         user.id,
         relationships,
         members,
-        new Map(members.map((m) => [m.user.id, m.user])),
+        new Map(members.map(m => [m.user.id, m.user])),
       )?.relationship;
+
+      const showUpArrow = hasUnaddedParents || (descendants.has(user.id) && hasVisibleParent);
+      const showDownArrow = hasUnaddedChildren || (ancestors.has(user.id) && hasVisibleChild);
 
       return {
         ...user,
-        isCurrentUser: user.id === currentUser.id,
-        onExpand: (direction: 'up' | 'down' | 'left' | 'right') => handleNodeExpandRef.current?.(user.id, direction),
-        canExpandUp: hasUnaddedParents,
-        canExpandDown: hasUnaddedChildren,
-        canExpandHorizontal: hasUnaddedSiblings,
+        isCurrentUser: user.id === currentUser!.id,
         relationship,
+        onExpand: (direction: 'up' | 'down' | 'left' | 'right') => handleNodeExpandRef.current!(user.id, direction),
+        canExpandUp: showUpArrow,
+        canExpandDown: showDownArrow,
+        canExpandHorizontal: hasUnaddedSiblings,
       };
     },
-    [currentUser, members, relationships]
+    [members, relationships, currentUser, ancestors, descendants],
   );
 
   const handleNodeExpand = useCallback(
@@ -208,12 +253,89 @@ const FamilyTree: FC<FamilyTreeProps> = ({ relationships, members, currentUser }
       const allNodes = getNodes();
 
       if (direction === 'up') {
+        if (descendants.has(nodeId)) {
+          const relations = adjacencyList.get(nodeId) || [];
+          const parentIds = relations.filter(rel => rel.type === 'parent').map(rel => rel.relatedUserId);
+          const visibleParent = allNodes.find(n => parentIds.includes(n.id));
+
+          if (visibleParent) {
+            const nodesToRemove = new Set<string>([nodeId]);
+            const queue = [nodeId];
+            const visited = new Set<string>([nodeId]);
+
+            while (queue.length > 0) {
+              const currentId = queue.shift()!;
+              const childRelations = (adjacencyList.get(currentId) || []).filter(r => r.type === 'child');
+              for (const rel of childRelations) {
+                const childId = rel.relatedUserId;
+                if (!visited.has(childId) && allNodes.some(n => n.id === childId)) {
+                  nodesToRemove.add(childId);
+                  visited.add(childId);
+                  queue.push(childId);
+                }
+              }
+            }
+
+            setNodes(nds => {
+              const newNodes = nds.filter(n => !nodesToRemove.has(n.id));
+              return newNodes.map(n => {
+                if (n.id === visibleParent.id) {
+                  return { ...n, data: buildNodeDataRef.current!(allUsersMap.get(n.id)!, newNodes) };
+                }
+                return n;
+              });
+            });
+            setEdges(eds => eds.filter(e => !nodesToRemove.has(e.source) && !nodesToRemove.has(e.target)));
+            setNodeToCenter({ id: visibleParent.id, direction: 'up' });
+            return;
+          }
+        }
+
         const parentIds = relations.filter(rel => rel.type === 'parent').map(rel => rel.relatedUserId).filter(id => !allNodes.some(n => n.id === id));
         if (parentIds.length > 0) {
           const parentUsers = parentIds.map(id => allUsersMap.get(id)).filter((u): u is UserWithPhotoUrl => !!u);
           addRelatives(parentUsers, 'above');
         }
       } else if (direction === 'down') {
+        if (ancestors.has(nodeId)) {
+          const relations = adjacencyList.get(nodeId) || [];
+          const childIds = relations.filter(rel => rel.type === 'child').map(rel => rel.relatedUserId);
+          const allNodes = getNodes();
+          const visibleChild = allNodes.find(n => childIds.includes(n.id));
+
+          if (visibleChild) {
+            const nodesToRemove = new Set<string>([nodeId]);
+            const queue = [nodeId];
+            const visited = new Set<string>([nodeId]);
+
+            while (queue.length > 0) {
+              const currentId = queue.shift()!;
+              const parentRelations = (adjacencyList.get(currentId) || []).filter(r => r.type === 'parent');
+              for (const rel of parentRelations) {
+                const parentId = rel.relatedUserId;
+                if (!visited.has(parentId) && allNodes.some(n => n.id === parentId)) {
+                  nodesToRemove.add(parentId);
+                  visited.add(parentId);
+                  queue.push(parentId);
+                }
+              }
+            }
+
+            setNodes(nds => {
+              const newNodes = nds.filter(n => !nodesToRemove.has(n.id));
+              return newNodes.map(n => {
+                if (n.id === visibleChild.id) {
+                  return { ...n, data: buildNodeDataRef.current!(allUsersMap.get(n.id)!, newNodes) };
+                }
+                return n;
+              });
+            });
+            setEdges(eds => eds.filter(e => !nodesToRemove.has(e.source) && !nodesToRemove.has(e.target)));
+            setNodeToCenter({ id: visibleChild.id, direction: 'down' });
+            return;
+          }
+        }
+
         const childrenIds = relations.filter(rel => rel.type === 'child').map(rel => rel.relatedUserId).filter(id => !allNodes.some(n => n.id === id));
         if (childrenIds.length > 0) {
           const childrenUsers = childrenIds.map(id => allUsersMap.get(id)).filter((u): u is UserWithPhotoUrl => !!u);
@@ -343,6 +465,11 @@ const FamilyTree: FC<FamilyTreeProps> = ({ relationships, members, currentUser }
       if (node && node.width && node.height) {
         const x = node.position.x + node.width / 2;
         let y = node.position.y + node.height / 2;
+        const zoom = getViewport().zoom;
+
+        if (nodeToCenter.direction === 'up') {
+          y -= NODE_HEIGHT * 0.75;
+        }
 
         const isMobile = window.innerWidth < 768;
         if (isMobile) {
