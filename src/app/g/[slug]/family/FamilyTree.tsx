@@ -636,7 +636,7 @@ const FamilyTree: FC<FamilyTreeProps> = ({
 
     // 4. Add spouses/partners
     const spouses = relations
-      .filter((r) => r.type === 'partner')
+      .filter((r) => r.type === 'partner' || r.type === 'spouse')
       .map((r) => allUsersMap.get(r.relatedUserId))
       .filter((s): s is UserWithPhotoUrl => !!s && !addedIds.has(s.id))
 

@@ -42,10 +42,20 @@ export const buildAdjacencyList = (
   relationships: FullRelationship[],
   members: MemberWithUser[],
   currentUser?: UserWithPhotoUrl,
-): Map<string, { relatedUserId: string; type: 'parent' | 'child' | 'partner' }[]> => {
-  const list: Map<string, { relatedUserId: string; type: 'parent' | 'child' | 'partner' }[]> = new Map()
+): Map<
+  string,
+  { relatedUserId: string; type: 'parent' | 'child' | 'partner' | 'spouse' }[]
+> => {
+  const list: Map<
+    string,
+    { relatedUserId: string; type: 'parent' | 'child' | 'partner' | 'spouse' }[]
+  > = new Map()
 
-  const addEdge = (from: string, to: string, type: 'parent' | 'child' | 'partner') => {
+  const addEdge = (
+    from: string,
+    to: string,
+    type: 'parent' | 'child' | 'partner' | 'spouse',
+  ) => {
     if (!list.has(from)) {
       list.set(from, [])
     }
@@ -70,9 +80,12 @@ export const buildAdjacencyList = (
 
   // Process all relationships from the relationships array
   for (const rel of relationships) {
-    if (rel.relationType.code === 'spouse' || rel.relationType.code === 'partner') {
-      addEdge(rel.user1Id, rel.user2Id, 'partner');
-      addEdge(rel.user2Id, rel.user1Id, 'partner');
+    if (rel.relationType.code === 'spouse') {
+      addEdge(rel.user1Id, rel.user2Id, 'spouse')
+      addEdge(rel.user2Id, rel.user1Id, 'spouse')
+    } else if (rel.relationType.code === 'partner') {
+      addEdge(rel.user1Id, rel.user2Id, 'partner')
+      addEdge(rel.user2Id, rel.user1Id, 'partner')
     } else if (rel.relationType.code === 'parent') {
       // user1 is the parent of user2
       addEdge(rel.user2Id, rel.user1Id, 'parent');
@@ -146,7 +159,7 @@ export function getRelationship(
             return {
               relationship: getGenderedLabel(
                 'Sibling',
-                alterUser?.gender,
+                usersMap.get(alterUserId)?.gender,
                 applyGender,
               ),
               path: current.path,
@@ -163,7 +176,7 @@ export function getRelationship(
           return {
             relationship: getGenderedLabel(
               'Half-sibling',
-              alterUser?.gender,
+              usersMap.get(alterUserId)?.gender,
               applyGender,
             ),
             path: current.path,
@@ -372,9 +385,9 @@ export function translatePathToRelationship(
     label: string
     genderedOn?: number
   }[] = [
-    { path: 'child', label: 'Child', genderedOn: 1 },
-    { path: 'parent', label: 'Parent', genderedOn: 1 },
-    { path: 'spouse', label: 'Spouse', genderedOn: 1 },
+    { path: 'child', label: 'Child', genderedOn: 2 },
+    { path: 'parent', label: 'Parent', genderedOn: 2 },
+    { path: 'spouse', label: 'Spouse', genderedOn: 2 },
     { path: 'child > child', label: 'Grandchild', genderedOn: 2 },
     { path: 'parent > parent', label: 'Grandparent', genderedOn: 2 },
     { path: 'child > child > child', label: 'Great-grandchild', genderedOn: 3 },
@@ -484,7 +497,7 @@ export function translatePathToRelationship(
       genderedOn: 4,
     },
     {
-      path: 'parent > child > child > partner',
+      path: 'parent > child > child > spouse',
       label: 'Co-nibling',
       genderedOn: 4,
     },
@@ -613,95 +626,95 @@ export function translatePathToRelationship(
       label: 'Step-1st cousin-once-removed',
     },
 
-    // --- Co-relationships (via partner) ---
-    { path: 'partner', label: 'Partner', genderedOn: 1 },
-    { path: 'partner > child', label: 'Co-child', genderedOn: 2 },
-    { path: 'parent > partner', label: 'Co-parent', genderedOn: 2 },
-    { path: 'partner > parent', label: 'Co-parent', genderedOn: 2 },
-    { path: 'partner > child > child', label: 'Co-grandchild', genderedOn: 3 },
+    // --- Co-relationships (via spouse) ---
+    { path: 'spouse', label: 'Spouse', genderedOn: 2 },
+    { path: 'spouse > child', label: 'Co-child', genderedOn: 2 },
+    { path: 'parent > spouse', label: 'Co-parent', genderedOn: 2 },
+    { path: 'spouse > parent', label: 'Co-parent', genderedOn: 2 },
+    { path: 'spouse > child > child', label: 'Co-grandchild', genderedOn: 3 },
     {
-      path: 'parent > partner > parent',
+      path: 'parent > spouse > parent',
       label: 'Co-grandparent',
       genderedOn: 3,
     },
     {
-      path: 'partner > parent > parent',
+      path: 'spouse > parent > parent',
       label: 'Co-grandparent',
       genderedOn: 3,
     },
-    { path: 'parent > partner > child', label: 'Co-sibling', genderedOn: 3 },
-    { path: 'partner > parent > child', label: 'Co-sibling', genderedOn: 3 },
+    { path: 'parent > spouse > child', label: 'Co-sibling', genderedOn: 3 },
+    { path: 'spouse > parent > child', label: 'Co-sibling', genderedOn: 3 },
     {
-      path: 'partner > child > child > child',
+      path: 'spouse > child > child > child',
       label: 'Co-great-grandchild',
       genderedOn: 4,
     },
     {
-      path: 'parent > partner > parent > parent',
+      path: 'parent > spouse > parent > parent',
       label: 'Co-great-grandparent',
       genderedOn: 4,
     },
     {
-      path: 'partner > parent > parent > parent',
+      path: 'spouse > parent > parent > parent',
       label: 'Co-great-grandparent',
       genderedOn: 4,
     },
     {
-      path: 'partner > parent > child > child',
+      path: 'spouse > parent > child > child',
       label: 'Co-nibling',
       genderedOn: 4,
     },
     {
-      path: 'parent > child > partner > child',
+      path: 'parent > child > spouse > child',
       label: 'Co-nibling',
       genderedOn: 4,
     },
     {
-      path: 'parent > partner > parent > child',
+      path: 'parent > spouse > parent > child',
       label: 'Co-pibling',
       genderedOn: 4,
     },
     {
-      path: 'partner > parent > parent > child',
+      path: 'spouse > parent > parent > child',
       label: 'Co-pibling',
       genderedOn: 4,
     },
-    { path: 'partner > parent > parent > child > child', label: 'Co-cousin' },
+    { path: 'spouse > parent > parent > child > child', label: 'Co-cousin' },
     {
-      path: 'partner > child > child > child > child',
+      path: 'spouse > child > child > child > child',
       label: 'Co-great-great-grandchild',
       genderedOn: 5,
     },
     {
-      path: 'partner > parent > child > child > child',
+      path: 'spouse > parent > child > child > child',
       label: 'Co-great-nibling',
       genderedOn: 5,
     },
     {
-      path: 'parent > child > child > partner > child',
+      path: 'parent > child > child > spouse > child',
       label: 'Co-great-nibling',
       genderedOn: 5,
     },
     {
-      path: 'parent > partner > parent > parent > child',
+      path: 'parent > spouse > parent > parent > child',
       label: 'Co-great-pibling',
       genderedOn: 5,
     },
     {
-      path: 'partner > parent > parent > parent > child',
+      path: 'spouse > parent > parent > parent > child',
       label: 'Co-great-pibling',
       genderedOn: 5,
     },
     {
-      path: 'partner > parent > parent > child > child > child',
+      path: 'spouse > parent > parent > child > child > child',
       label: 'Co-1st cousin-once-removed',
     },
     {
-      path: 'partner > parent > parent > parent > child > child',
+      path: 'spouse > parent > parent > parent > child > child',
       label: 'Co-1st cousin-once-removed',
     },
     {
-      path: 'parent > parent > parent > child > child > partner',
+      path: 'parent > parent > parent > child > child > spouse',
       label: 'Co-1st cousin-once-removed',
     },
     {
@@ -713,15 +726,15 @@ export function translatePathToRelationship(
       label: 'Step-2nd cousin',
     },
     {
-      path: 'parent > parent > child > child > partner > child',
+      path: 'parent > parent > child > child > spouse > child',
       label: 'Co-1st cousin-once-removed',
     },
     {
-      path: 'partner > parent > parent > parent > child > child > child',
+      path: 'spouse > parent > parent > parent > child > child > child',
       label: 'Co-2nd cousin',
     },
     {
-      path: 'parent > parent > parent > child > child > child > partner',
+      path: 'parent > parent > parent > child > child > child > spouse',
       label: 'Co-2nd cousin',
     },
   ]
@@ -730,7 +743,7 @@ export function translatePathToRelationship(
 
   if (matchedRule) {
     if (applyGender && matchedRule.genderedOn) {
-      const genderedUser = usersMap.get(path[matchedRule.genderedOn - 1].userId)
+      const genderedUser = usersMap.get(path[path.length - 1].userId)
       return getGenderedLabel(
         matchedRule.label,
         genderedUser?.gender,
