@@ -147,7 +147,7 @@ const AvatarNode = ({ data, selected }: NodeProps<AvatarNodeData>) => {
       <Handle type="target" position={Position.Left} id="left-target" className="!bg-transparent !border-0" />
       {canExpandUp && (
         <div
-          onClick={() => onExpand?.('up')}
+          onClick={(e) => { e.stopPropagation(); onExpand?.('up'); }}
           className="absolute -top-4 left-1/2 z-10 flex h-8 w-8 -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-background text-muted-foreground shadow-md transition-colors hover:bg-accent hover:text-accent-foreground opacity-75 hover:opacity-100"
         >
           <ChevronUp className="h-5 w-5" />
@@ -155,7 +155,7 @@ const AvatarNode = ({ data, selected }: NodeProps<AvatarNodeData>) => {
       )}
       {canExpandDown && (
         <div
-          onClick={() => onExpand?.('down')}
+          onClick={(e) => { e.stopPropagation(); onExpand?.('down'); }}
           className="absolute -bottom-4 left-1/2 z-10 flex h-8 w-8 -translate-x-1/2 translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-background text-muted-foreground shadow-md transition-colors hover:bg-accent hover:text-accent-foreground opacity-75 hover:opacity-100"
         >
           <ChevronDown className="h-5 w-5" />
@@ -164,13 +164,13 @@ const AvatarNode = ({ data, selected }: NodeProps<AvatarNodeData>) => {
       {canExpandHorizontal && (
         <>
           <div
-            onClick={() => onExpand?.('left')}
+            onClick={(e) => { e.stopPropagation(); onExpand?.('left'); }}
             className="absolute -left-4 top-1/2 z-10 flex h-8 w-8 -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-background text-muted-foreground shadow-md transition-colors hover:bg-accent hover:text-accent-foreground opacity-75 hover:opacity-100"
           >
             <ChevronLeft className="h-5 w-5" />
           </div>
           <div
-            onClick={() => onExpand?.('right')}
+            onClick={(e) => { e.stopPropagation(); onExpand?.('right'); }}
             className="absolute -right-4 top-1/2 z-10 flex h-8 w-8 translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-background text-muted-foreground shadow-md transition-colors hover:bg-accent hover:text-accent-foreground opacity-75 hover:opacity-100"
           >
             <ChevronRight className="h-5 w-5" />

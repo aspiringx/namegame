@@ -59,6 +59,25 @@ A "Path Interpreter" function will handle this logic. It will analyze the path's
 - **Spouse**: `[Ego, Spouse]` (Path of length 2, connected by a `spouse` link).
 - **Parent-in-law**: `[Ego, Spouse, Parent-in-law]` (Path: over to a spouse, then up to their parent).
 
+### Node arrow logic
+
+Each person is a node in the family tree, a photo with label and arrows to
+navigate the tree. Rules:
+
+- If up (ancestors) already showing, don't show up arrow
+- If down (descendants) already showing, don't show down arrow
+- If left (siblings) already showing, don't show left or right arrows
+- If one one node in a generation (single parent), only show left arrow for siblings. No right arrow.
+- If two nodes in a generation (spouses/partners), show left arrow for the left
+  positioned-node and right arrow for the right positioned-node. But don't show
+  right arrow on the left node or left arrow on the right node (i.e. duplicate
+  arrows that do the same thing -- open siblings).
+- If already showing siblings, don't show left or right (sibling) arrows on the
+  sibling nodes.
+- If no ancestors for a node, don't show up arrow.
+- If no descendants for a node, don't show down arrow.
+- If no siblings for a node, don't show left or right arrows.
+
 ## Summary of Approach
 
 | Component                   | Recommendation                                                                          | Justification                                                                              |

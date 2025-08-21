@@ -12,7 +12,7 @@ import ReactFlow, {
 } from 'reactflow'
 import 'reactflow/dist/style.css'
 import { FullRelationship, MemberWithUser, UserWithPhotoUrl } from '@/types'
-import { getRelationship, buildAdjacencyList } from '@/lib/family-tree'
+import { buildAdjacencyList } from '@/lib/family-tree'
 import AvatarNode from './AvatarNode'
 
 interface FamilyTreeProps {
@@ -23,6 +23,11 @@ interface FamilyTreeProps {
 
 const nodeTypes = {
   avatar: AvatarNode,
+}
+
+type AdjacencyListRelationship = {
+  relatedUserId: string
+  type: 'parent' | 'child' | 'partner' | 'spouse'
 }
 
 const NODE_WIDTH = 150
@@ -51,7 +56,7 @@ const FamilyTreeComponent: FC<FamilyTreeProps> = ({
         })
       }
     })
-    relationships.forEach((rel) => {
+    relationships.forEach((rel: FullRelationship) => {
       ;[rel.user1, rel.user2].forEach((user) => {
         if (user && !map.has(user.id)) {
           const userWithPhoto = user as UserWithPhotoUrl
@@ -66,24 +71,24 @@ const FamilyTreeComponent: FC<FamilyTreeProps> = ({
     return map
   }, [members, relationships])
 
+  const adjacencyList = useMemo(() => {
+    if (!currentUser) return new Map()
+    return buildAdjacencyList(relationships, members, currentUser)
+  }, [relationships, members, currentUser])
+
   const ancestors = useMemo(() => {
     if (!focalNodeId || !currentUser) return new Set<string>()
 
     const ancestorSet = new Set<string>()
     const queue = [focalNodeId]
     const visited = new Set<string>([focalNodeId])
-    const adjacencyList = buildAdjacencyList(
-      relationships,
-      members,
-      currentUser,
-    )
 
     while (queue.length > 0) {
       const currentId = queue.shift()!
       const relations = adjacencyList.get(currentId) || []
       const parents = relations
-        .filter((r) => r.type === 'parent')
-        .map((r) => r.relatedUserId)
+        .filter((r: { type: string }) => r.type === 'parent')
+        .map((r: { relatedUserId: string }) => r.relatedUserId)
 
       for (const parentId of parents) {
         if (!visited.has(parentId)) {
@@ -94,7 +99,7 @@ const FamilyTreeComponent: FC<FamilyTreeProps> = ({
       }
     }
     return ancestorSet
-  }, [focalNodeId, relationships, members, currentUser])
+  }, [focalNodeId, adjacencyList])
 
   const descendants = useMemo(() => {
     if (!focalNodeId || !currentUser) return new Set<string>()
@@ -102,18 +107,13 @@ const FamilyTreeComponent: FC<FamilyTreeProps> = ({
     const descendantSet = new Set<string>()
     const queue = [focalNodeId]
     const visited = new Set<string>([focalNodeId])
-    const adjacencyList = buildAdjacencyList(
-      relationships,
-      members,
-      currentUser,
-    )
 
     while (queue.length > 0) {
       const currentId = queue.shift()!
       const relations = adjacencyList.get(currentId) || []
       const children = relations
-        .filter((r) => r.type === 'child')
-        .map((r) => r.relatedUserId)
+        .filter((r: { type: string }) => r.type === 'child')
+        .map((r: { relatedUserId: string }) => r.relatedUserId)
 
       for (const childId of children) {
         if (!visited.has(childId)) {
@@ -124,11 +124,13 @@ const FamilyTreeComponent: FC<FamilyTreeProps> = ({
       }
     }
     return descendantSet
-  }, [focalNodeId, relationships, members, currentUser])
+  }, [focalNodeId, adjacencyList])
 
   const [nodeToCenter, setNodeToCenter] = useState<{
     id: string
     direction: 'up' | 'down' | 'left' | 'right'
+    isCollapse?: boolean
+    sourceNodeId?: string
   } | null>(null)
 
   const buildNodeDataRef = useRef<
@@ -141,52 +143,40 @@ const FamilyTreeComponent: FC<FamilyTreeProps> = ({
 
   const buildNodeData = useCallback(
     (user: UserWithPhotoUrl, allNodes: Node[]) => {
-      const adjacencyList = buildAdjacencyList(
-        relationships,
-        members,
-        currentUser!,
-      )
       const relations = adjacencyList.get(user.id) || []
 
       const parentIds = relations
-        .filter((rel) => rel.type === 'parent')
-        .map((rel) => rel.relatedUserId)
+        .filter((rel: AdjacencyListRelationship) => rel.type === 'parent')
+        .map((rel: AdjacencyListRelationship) => rel.relatedUserId)
       const hasUnaddedParents = parentIds.some(
-        (id) => !allNodes.some((n) => n.id === id),
+        (id: string) => !allNodes.some((n) => n.id === id),
       )
-      const hasVisibleParent = parentIds.some((id) =>
+      const hasVisibleParent = parentIds.some((id: string) =>
         allNodes.some((n) => n.id === id),
       )
 
       const childrenIds = relations
-        .filter((rel) => rel.type === 'child')
-        .map((rel) => rel.relatedUserId)
+        .filter((rel: AdjacencyListRelationship) => rel.type === 'child')
+        .map((rel: AdjacencyListRelationship) => rel.relatedUserId)
       const hasUnaddedChildren = childrenIds.some(
-        (id) => !allNodes.some((n) => n.id === id),
+        (id: string) => !allNodes.some((n) => n.id === id),
       )
-      const hasVisibleChild = childrenIds.some((id) =>
+      const hasVisibleChild = childrenIds.some((id: string) =>
         allNodes.some((n) => n.id === id),
       )
 
       const siblingIds = new Set<string>()
       if (parentIds.length > 0) {
-        parentIds.forEach((parentId) => {
+        parentIds.forEach((parentId: string) => {
           ;(adjacencyList.get(parentId) || [])
             .filter(
-              (rel) => rel.type === 'child' && rel.relatedUserId !== user.id,
+              (rel: AdjacencyListRelationship) => rel.type === 'child' && rel.relatedUserId !== user.id,
             )
-            .forEach((rel) => siblingIds.add(rel.relatedUserId))
+            .forEach((rel: AdjacencyListRelationship) => siblingIds.add(rel.relatedUserId))
         })
       }
       const hasSiblings = siblingIds.size > 0
 
-      const relationship = getRelationship(
-        currentUser!.id,
-        user.id,
-        relationships,
-        members,
-        new Map(members.map((m) => [m.user.id, m.user])),
-      )?.relationship
 
       const showUpArrow =
         hasUnaddedParents || (descendants.has(user.id) && hasVisibleParent)
@@ -195,7 +185,6 @@ const FamilyTreeComponent: FC<FamilyTreeProps> = ({
       return {
         ...user,
         isCurrentUser: user.id === currentUser!.id,
-        relationship,
         onExpand: (direction: 'up' | 'down' | 'left' | 'right') =>
           handleNodeExpandRef.current!(user.id, direction),
         canExpandUp: showUpArrow,
@@ -203,7 +192,7 @@ const FamilyTreeComponent: FC<FamilyTreeProps> = ({
         canExpandHorizontal: hasSiblings,
       }
     },
-    [members, relationships, currentUser, ancestors, descendants],
+    [adjacencyList, ancestors, descendants, relationships, members, currentUser],
   )
 
   const handleNodeExpand = useCallback(
@@ -213,29 +202,25 @@ const FamilyTreeComponent: FC<FamilyTreeProps> = ({
       const sourceNode = getNodes().find((n) => n.id === nodeId)
       if (!sourceNode) return
 
-      let newNodes: Node[] = []
-      let newEdges: Edge[] = []
-
       const addRelatives = (
         relatives: UserWithPhotoUrl[],
         position: 'above' | 'below' | 'side',
+        yLevelOverride?: number,
+        expansionDirection?: 'left' | 'right',
       ) => {
         const allNodes = getNodes()
-        let yLevel
-        if (position === 'above') {
-          yLevel = sourceNode.position.y - NODE_HEIGHT
-        } else if (position === 'below') {
-          yLevel = sourceNode.position.y + NODE_HEIGHT
-        } else {
-          // side
-          yLevel = sourceNode.position.y
-        }
+        let yLevel = yLevelOverride ?? sourceNode.position.y
+        if (position === 'above' && yLevelOverride === undefined) yLevel -= NODE_HEIGHT
+        if (position === 'below' && yLevelOverride === undefined) yLevel += NODE_HEIGHT
 
         const occupiedXPositions = new Set(
           allNodes
             .filter((n) => Math.abs(n.position.y - yLevel) < 10)
             .map((n) => n.position.x),
         )
+
+        const addedNodes: Node[] = []
+        const addedEdges: Edge[] = []
 
         relatives.forEach((relative, index) => {
           if (allNodes.some((n) => n.id === relative.id)) return
@@ -246,54 +231,45 @@ const FamilyTreeComponent: FC<FamilyTreeProps> = ({
             let targetX =
               sourceNode.position.x +
               (index - (relatives.length - 1) / 2) * NODE_WIDTH * 1.5
-            let offset = 0
             while (occupiedXPositions.has(targetX)) {
-              offset += NODE_WIDTH * 1.5
-              targetX =
-                sourceNode.position.x +
-                (index - (relatives.length - 1) / 2) * NODE_WIDTH * 1.5 +
-                offset
+              targetX += NODE_WIDTH * 1.5 // Simple collision avoidance
             }
             x = targetX
-          } else {
-            // side
+          } else { // 'side'
             y = sourceNode.position.y
-            const sign = direction === 'right' ? 1 : -1
+            const sign = expansionDirection === 'right' ? 1 : -1
+
+            const siblingNodes = allNodes.filter(
+              (n) => Math.abs(n.position.y - y) < 10,
+            )
             let lastX = sourceNode.position.x
-
-            // Find the outermost node on the side we're adding to
-            allNodes
-              .filter(
-                (n) =>
-                  Math.abs(n.position.y - y) < 10 &&
-                  sign * n.position.x > sign * sourceNode.position.x,
+            if (siblingNodes.length > 0) {
+              lastX = siblingNodes.reduce(
+                (acc, node) =>
+                  sign > 0
+                    ? Math.max(acc, node.position.x)
+                    : Math.min(acc, node.position.x),
+                lastX,
               )
-              .forEach((n) => {
-                if (sign * n.position.x > sign * lastX) {
-                  lastX = n.position.x
-                }
-              })
-
-            let targetX = lastX + sign * NODE_WIDTH * 1.5
-            while (occupiedXPositions.has(targetX)) {
-              targetX += sign * NODE_WIDTH * 1.5
             }
-            x = targetX
+
+            x = lastX + sign * NODE_WIDTH * 1.2 * (index + 1)
+            occupiedXPositions.add(x)
           }
 
           occupiedXPositions.add(x)
 
-          newNodes.push({
+          addedNodes.push({
             id: relative.id,
             type: 'avatar',
             position: { x, y },
-            data: {}, // Will be populated later
+            data: {}, // Populated later
             sourcePosition: Position.Top,
             targetPosition: Position.Bottom,
           })
 
           if (position === 'above') {
-            newEdges.push({
+            addedEdges.push({
               id: `e-${relative.id}-${sourceNode.id}`,
               source: relative.id,
               target: sourceNode.id,
@@ -302,7 +278,7 @@ const FamilyTreeComponent: FC<FamilyTreeProps> = ({
               targetHandle: 'top-target',
             })
           } else if (position === 'below') {
-            newEdges.push({
+            addedEdges.push({
               id: `e-${sourceNode.id}-${relative.id}`,
               source: sourceNode.id,
               target: relative.id,
@@ -310,214 +286,172 @@ const FamilyTreeComponent: FC<FamilyTreeProps> = ({
               sourceHandle: 'bottom-source',
               targetHandle: 'top-target',
             })
-          } else {
-            // side - edges for siblings are handled separately
+          } else { // 'side'
+            addedEdges.push({
+              id: `e-${sourceNode.id}-${relative.id}-${direction}`,
+              source: sourceNode.id,
+              target: relative.id,
+              type: 'orthogonal',
+              sourceHandle: 'right-source',
+              targetHandle: 'left-target',
+            })
           }
         })
+        return { addedNodes, addedEdges }
       }
 
-      const adjacencyList = buildAdjacencyList(
-        relationships,
-        members,
-        currentUser,
-      )
-      const relations = adjacencyList.get(nodeId) || []
-      const allNodes = getNodes()
+      const isDescendant = descendants.has(nodeId)
+      const isAncestor = ancestors.has(nodeId)
 
-      if (direction === 'down' && nodeId !== focalNodeId) {
-        setFocalNodeId(nodeId)
-        return
-      }
-
-      if (direction === 'up') {
-        if (nodeId !== focalNodeId) {
-          setFocalNodeId(nodeId)
-          return
-        } else {
-          // If the node is already the focal node, add its parents
-          const parentIds = relations
-            .filter((rel) => rel.type === 'parent')
-            .map((rel) => rel.relatedUserId)
-            .filter((id) => !allNodes.some((n) => n.id === id))
-          if (parentIds.length > 0) {
-            const parentUsers = parentIds
-              .map((id) => allUsersMap.get(id))
-              .filter((u): u is UserWithPhotoUrl => !!u)
-            addRelatives(parentUsers, 'above')
-          }
-        }
-      } else if (direction === 'down') {
-        // Remove any visible siblings of the current node
-        const parentIds = relations
-          .filter((rel) => rel.type === 'parent')
-          .map((rel) => rel.relatedUserId)
-
-        const siblingIds = new Set<string>()
-        if (parentIds.length > 0) {
-          parentIds.forEach((parentId) => {
-            ;(adjacencyList.get(parentId) || [])
-              .filter((rel) => rel.type === 'child' && rel.relatedUserId !== nodeId)
-              .forEach((rel) => siblingIds.add(rel.relatedUserId))
-          })
-        }
-
+      // --- COLLAPSE LOGIC --- //
+      if ((direction === 'up' && isDescendant) || (direction === 'down' && isAncestor)) {
         const nodesToRemove = new Set<string>()
-        getNodes().forEach((n) => {
-          if (siblingIds.has(n.id)) {
-            nodesToRemove.add(n.id)
-          }
-        })
+        const queue: string[] = [nodeId]
+        const visited = new Set<string>([nodeId])
 
-        if (nodesToRemove.size > 0) {
-          setNodes((nds) => nds.filter((n) => !nodesToRemove.has(n.id)))
-          setEdges((eds) =>
-            eds.filter(
-              (e) =>
-                !nodesToRemove.has(e.source) && !nodesToRemove.has(e.target),
-            ),
-          )
-        }
-
-        // Add children
-        const childrenIds = relations
-          .filter((rel) => rel.type === 'child')
-          .map((rel) => rel.relatedUserId)
-          .filter((id) => !getNodes().some((n) => n.id === id))
-
-        if (childrenIds.length > 0) {
-          const childrenUsers = childrenIds
-            .map((id) => allUsersMap.get(id))
-            .filter((u): u is UserWithPhotoUrl => !!u)
-          addRelatives(childrenUsers, 'below')
-        }
-      } else if (direction === 'left' || direction === 'right') {
-        // 1. Hide descendants and spouse/partner of the source node
-        const nodesToRemove = new Set<string>()
-        const queue = [nodeId]
-        const visited = new Set<string>() // Don't start with nodeId, we want to check its children
+        const traversalDirection = direction === 'up' ? 'child' : 'parent'
 
         while (queue.length > 0) {
           const currentId = queue.shift()!
-          if (visited.has(currentId)) continue
-          visited.add(currentId)
+          nodesToRemove.add(currentId)
 
-          const childRelations = (adjacencyList.get(currentId) || []).filter(
-            (r) => r.type === 'child',
-          )
+          const relations = adjacencyList.get(currentId) || []
+          const relatedIds = relations
+            .filter((r: AdjacencyListRelationship) => r.type === traversalDirection)
+            .map((r: AdjacencyListRelationship) => r.relatedUserId)
 
-          for (const rel of childRelations) {
-            const childId = rel.relatedUserId
-            if (allNodes.some((n) => n.id === childId)) {
-              nodesToRemove.add(childId)
-              queue.push(childId)
+          for (const id of relatedIds) {
+            if (!visited.has(id)) {
+              visited.add(id)
+              queue.push(id)
             }
           }
         }
 
-        const partnerRelations = relations.filter(
-          (r) => r.type === 'partner' || r.type === 'spouse',
-        )
-        for (const rel of partnerRelations) {
-          if (allNodes.some((n) => n.id === rel.relatedUserId)) {
-            nodesToRemove.add(rel.relatedUserId)
-          }
-        }
-
-        let intermediateNodes = getNodes()
         if (nodesToRemove.size > 0) {
-          intermediateNodes = intermediateNodes.filter(
-            (n) => !nodesToRemove.has(n.id),
-          )
-          setNodes(intermediateNodes)
-          setEdges((eds) =>
-            eds.filter(
-              (e) =>
-                !nodesToRemove.has(e.source) && !nodesToRemove.has(e.target),
-            ),
-          )
-        }
+          let nodeToCenterAfterCollapse: string | null = null
+          if (direction === 'up') {
+            const parentIds = (adjacencyList.get(nodeId) || []).filter((r: AdjacencyListRelationship) => r.type === 'parent').map((r: AdjacencyListRelationship) => r.relatedUserId)
+            if (parentIds.length > 0) nodeToCenterAfterCollapse = parentIds[0]
+          } else {
+            nodeToCenterAfterCollapse = nodeId
+          }
 
-        // 2. Show siblings
-        const parentIds = relations
-          .filter((rel) => rel.type === 'parent')
-          .map((rel) => rel.relatedUserId)
-
-        if (parentIds.length > 0) {
-          const siblingIds = new Set<string>()
-          parentIds.forEach((parentId: string) => {
-            ;(adjacencyList.get(parentId) || []).forEach((rel) => {
-              if (rel.type === 'child' && rel.relatedUserId !== nodeId) {
-                siblingIds.add(rel.relatedUserId)
-              }
-            })
+          setNodes((currentNodes) => {
+            const remainingNodes = currentNodes.filter((n) => !nodesToRemove.has(n.id))
+            return remainingNodes.map((n) => ({
+              ...n,
+              data: buildNodeData(allUsersMap.get(n.id)!, remainingNodes),
+            }))
           })
+          setEdges((eds) => eds.filter((e) => !nodesToRemove.has(e.source) && !nodesToRemove.has(e.target)))
 
-          const unaddedSiblings = Array.from(siblingIds)
-            .filter((id) => !intermediateNodes.some((n) => n.id === id))
-            .map((id) => allUsersMap.get(id))
-            .filter((u): u is UserWithPhotoUrl => !!u)
-
-          if (unaddedSiblings.length > 0) {
-            addRelatives(unaddedSiblings, 'side')
-          }
-
-          // 3. Ensure parents are visible and connected
-          const visibleParent = allNodes.find((n) => parentIds.includes(n.id))
-          if (visibleParent) {
-            const allSiblingUsers = Array.from(siblingIds)
-              .map((id) => allUsersMap.get(id))
-              .filter((u): u is UserWithPhotoUrl => !!u)
-
-            const siblingEdges: Edge[] = []
-            allSiblingUsers.forEach((sibling) => {
-              siblingEdges.push({
-                id: `e-${visibleParent.id}-${sibling.id}`,
-                source: visibleParent.id,
-                target: sibling.id,
-                type: 'orthogonal',
-                sourceHandle: 'bottom-source',
-                targetHandle: 'top-target',
-              })
-            })
-
-            setEdges((eds) => {
-              const siblingIdsWithSource = new Set(
-                Array.from(siblingIds).concat(nodeId),
-              )
-              const filteredEdges = eds.filter(
-                (e) =>
-                  !(e.source === visibleParent.id && siblingIdsWithSource.has(e.target)),
-              )
-              return [...filteredEdges, ...siblingEdges]
-            })
+          if (nodeToCenterAfterCollapse) {
+            setNodeToCenter({ id: nodeToCenterAfterCollapse, direction, isCollapse: true })
           }
         }
-        setFocalNodeId(nodeId)
+        return // Collapse action is final
       }
 
-      // This check is now important because setFocalNodeId can cause a re-render
-      // without new nodes being added in this function.
-      if (newNodes.length === 0 && direction !== 'left' && direction !== 'right')
-        return
+      // --- EXPANSION LOGIC --- //
+      let newNodes: Node[] = []
+      let newEdges: Edge[] = []
 
-      setNodes((nds) => {
-        const finalNodes = nds.concat(newNodes)
-        return finalNodes.map((n) => ({
-          ...n,
-          data: buildNodeDataRef.current!(
-            allUsersMap.get(n.id)!,
-            finalNodes,
-          ),
-        }))
-      })
+      if (direction === 'up') {
+        const relations = adjacencyList.get(nodeId) || []
+        const parentRels = relations.filter((rel: AdjacencyListRelationship) => rel.type === 'parent')
+        const childrenRels = relations.filter((rel: AdjacencyListRelationship) => rel.type === 'child')
+        const spouseRels = relations.filter(
+          (rel: AdjacencyListRelationship) => rel.type === 'spouse' || rel.type === 'partner',
+        )
 
-      if (direction === 'up' || direction === 'down') {
-        setEdges((eds) => eds.concat(newEdges))
+        const hasParents = parentRels.length > 0
+        const hasChildren = childrenRels.length > 0
+        const hasSpouses = spouseRels.length > 0
+
+        if (hasParents) {
+          const parentUsers = parentRels
+            .map((rel: AdjacencyListRelationship) => allUsersMap.get(rel.relatedUserId))
+            .filter((u: UserWithPhotoUrl | undefined): u is UserWithPhotoUrl => !!u)
+          const { addedNodes, addedEdges } = addRelatives(parentUsers, 'above')
+          newNodes.push(...addedNodes)
+          newEdges.push(...addedEdges)
+        }
       }
 
-      setNodeToCenter({ id: nodeId, direction })
+      if (direction === 'down') {
+        if (nodeId !== focalNodeId) {
+          setFocalNodeId(nodeId)
+          return
+        }
+        const relations = adjacencyList.get(nodeId) || []
+        const childrenToAdd = relations
+          .filter((rel: AdjacencyListRelationship) => rel.type === 'child' && !getNodes().some((n) => n.id === rel.relatedUserId))
+          .map((rel: AdjacencyListRelationship) => allUsersMap.get(rel.relatedUserId))
+          .filter((u: UserWithPhotoUrl | undefined): u is UserWithPhotoUrl => !!u)
+
+        const spousesToAdd = relations
+          .filter((rel: AdjacencyListRelationship) => (rel.type === 'spouse' || rel.type === 'partner') && !getNodes().some((n) => n.id === rel.relatedUserId))
+          .map((rel: AdjacencyListRelationship) => allUsersMap.get(rel.relatedUserId))
+          .filter((u: UserWithPhotoUrl | undefined): u is UserWithPhotoUrl => !!u)
+
+        if (childrenToAdd.length > 0) {
+          const { addedNodes, addedEdges } = addRelatives(childrenToAdd, 'below')
+          newNodes.push(...addedNodes)
+          newEdges.push(...addedEdges)
+        }
+        if (spousesToAdd.length > 0) {
+          const { addedNodes, addedEdges } = addRelatives(spousesToAdd, 'side', undefined, 'right')
+          newNodes.push(...addedNodes)
+          newEdges.push(...addedEdges)
+        }
+      }
+
+      if (direction === 'left' || direction === 'right') {
+        const parentIds = (adjacencyList.get(nodeId) || []).filter((r: AdjacencyListRelationship) => r.type === 'parent').map((r: AdjacencyListRelationship) => r.relatedUserId)
+        const siblingIds = new Set<string>()
+        parentIds.forEach((parentId: string) => {
+          (adjacencyList.get(parentId) || []).forEach((rel: AdjacencyListRelationship) => {
+            if (rel.type === 'child' && rel.relatedUserId !== nodeId) {
+              siblingIds.add(rel.relatedUserId)
+            }
+          })
+        })
+
+        const existingNodeIds = new Set(getNodes().map((n) => n.id))
+        const siblingsToAdd = Array.from(siblingIds)
+          .filter((id) => !existingNodeIds.has(id))
+          .map((id: string) => allUsersMap.get(id))
+          .filter((u: UserWithPhotoUrl | undefined): u is UserWithPhotoUrl => !!u)
+
+        if (siblingsToAdd.length > 0) {
+          const { addedNodes, addedEdges } = addRelatives(siblingsToAdd, 'side', undefined, direction)
+          newNodes.push(...addedNodes)
+          newEdges.push(...addedEdges)
+        }
+      }
+
+      if (newNodes.length > 0) {
+        setNodes((nds) => {
+          const allNodes = [...nds, ...newNodes]
+          return allNodes.map((n) => ({
+            ...n,
+            data: buildNodeData(allUsersMap.get(n.id)!, allNodes),
+          }))
+        })
+        setEdges((eds) => [...eds, ...newEdges])
+
+        if (direction === 'up') {
+          setNodeToCenter({ id: nodeId, direction: 'up', sourceNodeId: nodeId })
+        } else {
+          setNodeToCenter({ id: nodeId, direction })
+        }
+      } else {
+        // If no nodes were added, still might need to update data (e.g. arrows)
+        setNodes(currentNodes => currentNodes.map(n => ({...n, data: buildNodeData(allUsersMap.get(n.id)!, currentNodes)})))
+      }
     },
-    [currentUser, getNodes, members, relationships, setEdges, setNodes, ancestors, descendants, allUsersMap],
+    [currentUser, getNodes, setEdges, setNodes, allUsersMap, buildNodeData, fitView, focalNodeId, ancestors, descendants, adjacencyList],
   )
 
   useEffect(() => {
@@ -528,39 +462,34 @@ const FamilyTreeComponent: FC<FamilyTreeProps> = ({
   useEffect(() => {
     if (!focalNodeId || !currentUser) return
 
-    const focalUser = allUsersMap.get(focalNodeId)
-    if (!focalUser) return
+    const focalUser = allUsersMap.get(focalNodeId);
+    if (!focalUser) return;
 
-    const initialNodes: Node[] = []
-    const initialEdges: Edge[] = []
-    const addedIds = new Set<string>()
+    const initialNodes: Node[] = [];
+    const initialEdges: Edge[] = [];
+    const addedIds = new Set<string>();
 
     // 1. Add the focal node
     initialNodes.push({
       id: focalUser.id,
       type: 'avatar',
       position: { x: 0, y: 0 },
-      data: {},
+      data: {}, // will be populated later
       sourcePosition: Position.Top,
       targetPosition: Position.Bottom,
-    })
-    addedIds.add(focalUser.id)
+    });
+    addedIds.add(focalUser.id);
 
-    const adjacencyList = buildAdjacencyList(
-      relationships,
-      members,
-      currentUser,
-    )
-    const relations = adjacencyList.get(focalUser.id) || []
+    const relations = adjacencyList.get(focalUser.id) || [];
 
     // 2. Add parents
     const parents = relations
-      .filter((r) => r.type === 'parent')
-      .map((r) => allUsersMap.get(r.relatedUserId))
-      .filter((p): p is UserWithPhotoUrl => !!p && !addedIds.has(p.id))
+      .filter((r: AdjacencyListRelationship) => r.type === 'parent')
+      .map((r: AdjacencyListRelationship) => allUsersMap.get(r.relatedUserId))
+      .filter((p: UserWithPhotoUrl | undefined): p is UserWithPhotoUrl => !!p && !addedIds.has(p.id));
 
-    parents.forEach((parent, index) => {
-      const x = (index - (parents.length - 1) / 2) * NODE_WIDTH * 1.5
+    parents.forEach((parent: UserWithPhotoUrl, index: number) => {
+      const x = (index - (parents.length - 1) / 2) * NODE_WIDTH * 1.5;
       initialNodes.push({
         id: parent.id,
         type: 'avatar',
@@ -568,8 +497,8 @@ const FamilyTreeComponent: FC<FamilyTreeProps> = ({
         data: {},
         sourcePosition: Position.Top,
         targetPosition: Position.Bottom,
-      })
-      addedIds.add(parent.id)
+      });
+      addedIds.add(parent.id);
       initialEdges.push({
         id: `e-${parent.id}-${focalUser.id}`,
         source: parent.id,
@@ -577,17 +506,17 @@ const FamilyTreeComponent: FC<FamilyTreeProps> = ({
         type: 'orthogonal',
         sourceHandle: 'bottom-source',
         targetHandle: 'top-target',
-      })
-    })
+      });
+    });
 
     // 3. Add children
     const children = relations
-      .filter((r) => r.type === 'child')
-      .map((r) => allUsersMap.get(r.relatedUserId))
-      .filter((c): c is UserWithPhotoUrl => !!c && !addedIds.has(c.id))
+      .filter((r: AdjacencyListRelationship) => r.type === 'child')
+      .map((r: AdjacencyListRelationship) => allUsersMap.get(r.relatedUserId))
+      .filter((c: UserWithPhotoUrl | undefined): c is UserWithPhotoUrl => !!c && !addedIds.has(c.id));
 
-    children.forEach((child, index) => {
-      const x = (index - (children.length - 1) / 2) * NODE_WIDTH * 1.5
+    children.forEach((child: UserWithPhotoUrl, index: number) => {
+      const x = (index - (children.length - 1) / 2) * NODE_WIDTH * 1.5;
       initialNodes.push({
         id: child.id,
         type: 'avatar',
@@ -595,8 +524,8 @@ const FamilyTreeComponent: FC<FamilyTreeProps> = ({
         data: {},
         sourcePosition: Position.Top,
         targetPosition: Position.Bottom,
-      })
-      addedIds.add(child.id)
+      });
+      addedIds.add(child.id);
       initialEdges.push({
         id: `e-${focalUser.id}-${child.id}`,
         source: focalUser.id,
@@ -604,17 +533,17 @@ const FamilyTreeComponent: FC<FamilyTreeProps> = ({
         type: 'orthogonal',
         sourceHandle: 'bottom-source',
         targetHandle: 'top-target',
-      })
-    })
+      });
+    });
 
     // 4. Add spouses/partners
     const spouses = relations
-      .filter((r) => r.type === 'partner' || r.type === 'spouse')
-      .map((r) => allUsersMap.get(r.relatedUserId))
-      .filter((s): s is UserWithPhotoUrl => !!s && !addedIds.has(s.id))
+      .filter((r: AdjacencyListRelationship) => r.type === 'partner' || r.type === 'spouse')
+      .map((r: AdjacencyListRelationship) => allUsersMap.get(r.relatedUserId))
+      .filter((s: UserWithPhotoUrl | undefined): s is UserWithPhotoUrl => !!s && !addedIds.has(s.id));
 
-    spouses.forEach((spouse, index) => {
-      const x = (index + 1) * NODE_WIDTH * 1.5
+    spouses.forEach((spouse: UserWithPhotoUrl, index: number) => {
+      const x = (index + 1) * NODE_WIDTH * 1.5;
       initialNodes.push({
         id: spouse.id,
         type: 'avatar',
@@ -622,8 +551,8 @@ const FamilyTreeComponent: FC<FamilyTreeProps> = ({
         data: {},
         sourcePosition: Position.Top,
         targetPosition: Position.Bottom,
-      })
-      addedIds.add(spouse.id)
+      });
+      addedIds.add(spouse.id);
       initialEdges.push({
         id: `e-${focalUser.id}-${spouse.id}`,
         source: focalUser.id,
@@ -631,21 +560,21 @@ const FamilyTreeComponent: FC<FamilyTreeProps> = ({
         type: 'orthogonal',
         sourceHandle: 'right-source',
         targetHandle: 'left-target',
-      })
-    })
+      });
+    });
 
     // Finalize data for all nodes
     const finalInitialNodes = initialNodes.map((n) => ({
       ...n,
       data: buildNodeData(allUsersMap.get(n.id)!, initialNodes),
-    }))
+    }));
 
-    setNodes(finalInitialNodes)
-    setEdges(initialEdges)
+    setNodes(finalInitialNodes);
+    setEdges(initialEdges);
 
     // Center on the new focal node
-    setTimeout(() => fitView({ duration: 800 }), 100)
-  }, [focalNodeId, relationships, members, currentUser, buildNodeData, allUsersMap, fitView])
+    setTimeout(() => fitView({ duration: 800 }), 100);
+  }, [focalNodeId, buildNodeData, allUsersMap, fitView, adjacencyList, currentUser])
 
   useEffect(() => {
     if (!nodeToCenter) return
@@ -654,19 +583,35 @@ const FamilyTreeComponent: FC<FamilyTreeProps> = ({
       const node = getNodes().find((n) => n.id === nodeToCenter.id)
       if (node && node.width && node.height) {
         const x = node.position.x + node.width / 2
-        let y = node.position.y + node.height / 2
+        let y = node.position.y
         const zoom = getViewport().zoom
 
-        if (nodeToCenter.direction === 'up') {
-          y -= NODE_HEIGHT * 0.75
-        } else if (nodeToCenter.direction === 'down') {
-          y += NODE_HEIGHT * 0.75
-        }
+        const sourceNode = getNodes().find((n) => n.id === nodeToCenter.sourceNodeId);
 
-        const isMobile = window.innerWidth < 768
-        if (isMobile) {
-          if (nodeToCenter.direction === 'up') y -= node.height * 0.75
-          if (nodeToCenter.direction === 'down') y += node.height * 0.75
+        if (nodeToCenter.isCollapse) {
+          // For collapse, center on the node that remains visible.
+          y = node.position.y + node.height / 2;
+        } else { // Handle expansion centering
+          if (nodeToCenter.direction === 'up' && sourceNode && sourceNode.id === nodeToCenter.id) {
+            // Ancestor expansion: center between the source node and its new parents.
+            const parentNodeRelations = (adjacencyList.get(sourceNode.id) || []).filter((rel: AdjacencyListRelationship) => rel.type === 'parent');
+            const parentNodes = getNodes().filter(n => parentNodeRelations.some((rel: AdjacencyListRelationship) => rel.relatedUserId === n.id));
+
+            if (parentNodes.length > 0 && sourceNode.width && sourceNode.height && parentNodes[0].height) {
+              const avgParentY = parentNodes.reduce((acc, p) => acc + p.position.y, 0) / parentNodes.length;
+              y = (avgParentY + parentNodes[0].height / 2 + sourceNode.position.y + sourceNode.height / 2) / 2;
+            } else {
+              requestAnimationFrame(checkAndCenter); // Wait for nodes
+              return;
+            }
+          } else if (sourceNode?.width && sourceNode?.height) {
+            // For descendant and horizontal expansions, center on the source node.
+            y = sourceNode.position.y + sourceNode.height / 2;
+          } else {
+            // If we are here, it means a node required for centering is not ready. Poll again.
+            requestAnimationFrame(checkAndCenter);
+            return; // Exit to avoid setting center prematurely
+          }
         }
 
         setCenter(x, y, { zoom: 1.2, duration: 800 })
@@ -676,7 +621,7 @@ const FamilyTreeComponent: FC<FamilyTreeProps> = ({
       }
     }
     requestAnimationFrame(checkAndCenter)
-  })
+  }, [getNodes, getViewport, setCenter, nodeToCenter, adjacencyList])
 
   return (
     <div style={{ width: '100%', height: '100%' }} ref={reactFlowWrapper}>
@@ -688,6 +633,7 @@ const FamilyTreeComponent: FC<FamilyTreeProps> = ({
         proOptions={{ hideAttribution: true }}
       >
         <Controls />
+        <Background />
       </ReactFlow>
     </div>
   )
