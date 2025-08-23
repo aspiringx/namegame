@@ -142,6 +142,8 @@ export const getGroup = async (
           name,
           photoUrl: photoUrl || '/images/default-avatar.png',
         },
+        parents: [],
+        children: [],
       }
     },
   )

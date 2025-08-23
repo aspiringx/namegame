@@ -159,6 +159,8 @@ export async function getPaginatedMembers(
         name,
         photoUrl,
       },
+      parents: [],
+      children: [],
     }
   })
 

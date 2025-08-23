@@ -40,16 +40,18 @@ export function MemberDetailsModal({
 
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
-      <div className="relative">
-        <button
-          onClick={onClose}
-          className="absolute -top-2 -right-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-        >
-          <X className="h-5 w-5" />
-          <span className="sr-only">Close</span>
-        </button>
-        <div className="flex flex-col items-center gap-4 pt-4">
-          <div className="relative h-96 w-96">
+      <div className="p-4">
+        <div className="flex justify-end">
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+          >
+            <X className="h-5 w-5" />
+            <span className="sr-only">Close</span>
+          </button>
+        </div>
+        <div className="flex flex-col items-center gap-4 mt-2">
+          <div className="relative w-full aspect-square sm:w-96">
             <Image
               src={member.user.photoUrl || '/default-avatar.png'}
               alt={`${member.user.firstName} ${member.user.lastName}`}
@@ -95,11 +97,11 @@ export function MemberDetailsModal({
               </p>
             )}
           </div>
-        </div>
-        <div className="mt-6 flex justify-center">
-          <Button type="button" variant="link" onClick={onClose}>
-            Close
-          </Button>
+          <div className="mt-6 flex justify-center">
+            <Button type="button" variant="link" onClick={onClose}>
+              Close
+            </Button>
+          </div>
         </div>
       </div>
     </Modal>
