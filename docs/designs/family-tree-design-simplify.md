@@ -73,8 +73,9 @@ the family tree.
 
 This is the library we use to render the family tree. It's made of nodes (users)
 and edges (relationships between users). Each node has handles that we used to
-connect edges and display arrows (up, down, left, right) people can click to
-traverse the tree.
+connect edges and display arrows (up/parent, down/child, left/sibling) people
+can click to traverse the tree. No right arrows since they're duplicates of
+left.
 
 **CurrentUser** This is always the authenticated user we're calling Ego.
 
@@ -89,23 +90,19 @@ current state.
 To help limit complexity, we need a [finite] state machine pattern to manage
 what options are available to each visible node based on the current state.
 
-### State Options
+### State Machine
 
 Each node has a limited number of options that may be enabled or disabled based
 on the current state.
 
-- Arrows: up, down, left, right
+- Arrows: up, down, left
   - Only show arrows that are available based on state of the node. e.g. if a
     user doesn't have ancestors, don't show up arrow. If no children, don't show
-    down arrow. If no siblings don't show left/right arrow. If siblings already
-    showing, none shows left/right arrow.
+    down arrow. If no siblings don't show left arrow. If siblings already
+    showing, none shows left arrow.
   - The behavior of arrows may change on the state. e.g. If children already
     visible, down arrow collapses self (and all ancestors above). If children
     not visible, expands to show them.
-  - The placement of arrows depends on the position of the node in relation to
-    others. e.g. If row shows Ego and spouse, left node only left arrow, right
-    node only right arrow. Left and right arrows shouldn't appear on the same
-    node with duplicate functionality.
 - Tooltip - Hover/tap shows tooltip with additional details and possibly
 - Other node options (need to decide UI for this -- currently only tooltip)
   - View bigger photo and details
@@ -117,24 +114,105 @@ To correctly know the state of each user/node, in addition to knowing the Ego
 user's intial state (direct relations, etc.), we need to know the direct
 relations of each potential focal user.
 
-So each node that becomes visible should have this state. Don't pre-load states
-for all nodes. Do it when they become visible. Once loaded, cache it. If they're
-collapsed/invisible and re-expanded/made visible, we should retain state to
-avoid needless network requests.
+#### Group State
 
-### State
+- id (group.id, name, slug, logo, description, etc.)
+- users (array of all users in the group via GroupUser relation)
+- currentUser (authenticated user)
+- focalUser (user/node with current focus, starting with currentUser)
 
-Group:
+We need to be initially aware of all users in the group to support planned new
+ways to set the focal user (like via the search box) and change the tree view to
+center them.
 
-- id (group.id)
-- users (array of users)
-  - relations for each user (if efficient)?
+#### User State
 
-Node:
+When we load the group, we should load and cache the following:
 
-- id (user.id)
-- user
-  - info (name, photoUrl, etc.)
-  - relationships
-- direct relations (parent, child, spouse, partner)
+- direct vertical relations (parent, child)
+- direct horizontal relations (spouse, partner)
+- indirect horizontal relations (siblings, step-siblings, co-siblings,
+  half-siblings)
+- user info (name, photoUrl, gender, etc.)
 - ui state (drives arrows, what's visible, etc.)
+- relation paths to all users in the group (e.g. parent > child), keyed by
+  user.id with non-gendered relation labels and gendered relation labels for
+  anyone with a male/female gender.
+- For users with a GroupUser relation connecting them to the group but without
+  UserUser relations connecting them to the tree, we don't have a path between
+  them and Ego and we use the default label of 'relative'.
+
+Initially, we only render the Ego user and their direct relations. As we
+traverse the tree using arrows, new users are rendered. Before rendering them,
+we should load and cache their:
+
+- direct vertical relations (parent, child)
+- direct horizontal relations (spouse, partner)
+- indirect horizontal relations (siblings, step-siblings, co-siblings,
+  half-siblings)
+- user info (name, photoUrl, gender, etc.)
+- ui state (drives arrows, what's visible, etc.)
+- Notice that here, we don't load new relation paths and labels because we
+  already did this relative to the Ego user.
+
+#### Focal User Behavior
+
+Our Ego (current user) is the initial focal user centered in the viewport with a
+slightly larger size (photo and label) than other users.
+
+When we click/tap an arrow/handle for any visible user, they become the focal
+user, centered and slightly larger.
+
+You traverse the family tree by clicking arrows, handles on user nodes. Arrows
+should only appear on a user node if they can lead to a new state. For example,
+if a user has no children, they should never have a down arrow.
+
+Since siblings aren't direct relations, we need to load the child relations of
+each user's parents (for siblings or half-siblings), step parents (for
+step-siblings), and co-parents (parent's partner, for co-siblings).
+
+When siblings are displayed, we order them like this:
+
+- First full siblings (left), then half-siblings, then step-siblings, then
+  co-siblings
+- For each type of siblings, if we have their birth dates, order them from
+  oldest (left) to youngest (right) within each sibling type (full, half, etc.)
+- If we don't have a sibling birth date, order them alphabetically by first name
+  after the above sorting is applied.
+
+Clicking/tapping any arrow on a user makes them the focal user. A focal user can
+be in one of two modes:
+
+- Vertical (parent, spouse/partner, child): If they become the focal user by
+  clicking their up or down arrow, they are in vertical mode. This means they're
+  centered and we show:
+  - A spouse or partner (if any)
+  - Children (if any)
+    - If a child has children, we show down arrow. Since their siblings are
+      already visible, no left arrow. Since parents already displayed, no up
+      arrow.
+    - Children are siblings. Order them as described in "Horizontal" below.
+  - Parents (if any)
+    - If parent has siblings, show left arrow. Since child is already visible,
+      no down arrow. If parent has parents, show up arrow.
+    - To show parent's children, the focal user can click/tap their left arrow.
+  - All other group users are hidden.
+
+- Horizontal (siblings): If they become the focal user by clicking their left
+  arrow, they are in horizontal mode. The user whose left arrow we
+  clicked/tapped is centered (slightly larger) and we show:
+  - Siblings (if any)
+    - We're already showing parents so siblings may only have a down arrow (if
+      they have children).
+    - In horizontal mode, siblings are already showing so no left arrow.
+    - If a sibling down arrow (including the focal user) is clicked, we switch
+      to vertical mode. That user becomes centered with spouse/partner (if any),
+      parents (if any), and children (if any).
+  - Parents (if any)
+    - If parent has siblings, show left arrow. Since child is already visible,
+      no down arrow. If parent has parents, show up arrow.
+  - All other group users are hidden.
+
+I believe this gives us a complete state machine for the family tree. It should
+render according to these rules. All users in the group that don't fit these
+rules should be hidden so we don't have orphan nodes.
