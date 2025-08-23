@@ -68,7 +68,7 @@ export default function UserMenu() {
             alt="User Profile"
             width={40}
             height={40}
-            className="h-10 w-10 rounded-full"
+            className="h-10 w-10 rounded-full object-cover"
             key={imageUrl} // Force re-render on image change
           />
         ) : (

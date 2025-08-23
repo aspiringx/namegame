@@ -117,6 +117,8 @@ export const getGroup = async (
           name,
           photoUrl,
         },
+        parents: [],
+        children: [],
       }
     },
   )

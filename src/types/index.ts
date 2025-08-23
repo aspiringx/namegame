@@ -38,10 +38,12 @@ export type GroupWithMembers = Omit<GroupPayload, 'members'> & {
 export type UserWithPhotoUrl = User & { name: string; photoUrl?: string }
 
 export type MemberWithUser = GroupUser & {
-  user: UserWithPhotoUrl
-  role: GroupUserRole
-  relationUpdatedAt?: Date
-}
+  user: UserWithPhotoUrl;
+  role: GroupUserRole;
+  relationUpdatedAt?: Date;
+  parents: (GroupUser & { user: UserWithPhotoUrl })[];
+  children: (GroupUser & { user: UserWithPhotoUrl })[];
+};
 
 export type GroupData = Group & {
   logo?: string

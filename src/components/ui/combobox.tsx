@@ -54,7 +54,7 @@ export function Combobox({
     <HeadlessCombobox value={selectedValue} onChange={onSelectValue} name={name}>
       <div className="relative mt-1">
         <input type="hidden" name={name} value={selectedValue} />
-        <div className="relative w-full cursor-default overflow-hidden rounded-lg bg-white text-left shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm dark:bg-gray-700">
+        <div className="relative w-full cursor-default overflow-hidden rounded-md border bg-white text-left shadow-sm focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 dark:border-gray-600 dark:bg-gray-700">
           <HeadlessCombobox.Input
             className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-gray-900 focus:ring-0 dark:bg-gray-700 dark:text-white"
             onChange={(event) => setQuery(event.target.value)}
