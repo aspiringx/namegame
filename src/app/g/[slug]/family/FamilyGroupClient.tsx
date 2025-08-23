@@ -17,7 +17,15 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { ArrowUp, ArrowDown, GitFork, LayoutGrid, List, X } from 'lucide-react'
+import {
+  ArrowUp,
+  ArrowDown,
+  GitFork,
+  LayoutGrid,
+  List,
+  X,
+  FlaskConical,
+} from 'lucide-react'
 import { ReactFlowProvider } from 'reactflow'
 import FamilyTree from './FamilyTree'
 import type { FamilyTreeRef } from './FamilyTree'
@@ -60,7 +68,7 @@ export function FamilyGroupClient({
     {
       searchQuery: '',
       sortConfig: { key: 'closest', direction: 'asc' },
-      viewMode: 'grid',
+      viewMode: 'tree',
     },
   )
   const { group, isGroupAdmin, currentUserMember } = useGroup()
@@ -315,7 +323,9 @@ export function FamilyGroupClient({
                 (['closest', 'firstName', 'lastName'] as const).map((key) => {
                   const isActive = settings.sortConfig.key === key
                   const SortIcon =
-                    settings.sortConfig.direction === 'asc' ? ArrowUp : ArrowDown
+                    settings.sortConfig.direction === 'asc'
+                      ? ArrowUp
+                      : ArrowDown
                   return (
                     <Button
                       key={key}
@@ -405,15 +415,35 @@ export function FamilyGroupClient({
           <div
             ref={treeContainerRef}
             style={{ height: `${treeHeight}px` }}
-            className="rounded-md border"
+            className="relative rounded-md border"
           >
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="bg-background/80 absolute top-2 left-1/2 z-10 flex -translate-x-1/2 cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm backdrop-blur-sm">
+                    <FlaskConical className="h-4 w-4 text-lime-400" />
+                    <span>Experimental</span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>
+                    The family tree view is new and still experimental. If you
+                    find bugs or have suggestions, please share with Joe... cuz
+                    yeah, it's still just our families using this until the
+                    kinks are ironed out.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
             <ReactFlowProvider>
               <FamilyTree
                 ref={familyTreeRef}
                 relationships={initialRelationships}
                 members={members}
                 currentUser={currentUserMember?.user}
-                onIsFocalUserCurrentUserChange={handleIsFocalUserCurrentUserChange}
+                onIsFocalUserCurrentUserChange={
+                  handleIsFocalUserCurrentUserChange
+                }
                 relationshipMap={treeRelationshipMap}
               />
             </ReactFlowProvider>
