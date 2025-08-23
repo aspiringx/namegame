@@ -88,6 +88,8 @@ export function FamilyGroupClient({
   >([])
   const [allGroupMembers, setAllGroupMembers] = useState<MemberWithUser[]>([])
   const [isResetDisabled, setIsResetDisabled] = useState(true)
+  const [isExperimentalTooltipOpen, setIsExperimentalTooltipOpen] =
+    useState(false)
 
   const [isMounted, setIsMounted] = useState(false)
 
@@ -418,9 +420,17 @@ export function FamilyGroupClient({
             className="relative rounded-md border"
           >
             <TooltipProvider>
-              <Tooltip>
+              <Tooltip
+                open={isExperimentalTooltipOpen}
+                onOpenChange={setIsExperimentalTooltipOpen}
+              >
                 <TooltipTrigger asChild>
-                  <div className="bg-background/80 absolute top-2 left-1/2 z-10 flex -translate-x-1/2 cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm backdrop-blur-sm">
+                  <div
+                    className="bg-background/80 absolute top-2 left-1/2 z-10 flex -translate-x-1/2 cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm backdrop-blur-sm"
+                    onClick={() =>
+                      setIsExperimentalTooltipOpen(!isExperimentalTooltipOpen)
+                    }
+                  >
                     <FlaskConical className="h-4 w-4 text-lime-400" />
                     <span>Experimental</span>
                   </div>
