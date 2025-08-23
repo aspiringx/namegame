@@ -29,9 +29,9 @@ const FamilyTreeComponent: FC<FamilyTreeProps> = ({ relationships, members, curr
         nodeTypes={nodeTypes}
         fitView
         proOptions={{ hideAttribution: true }}
+        style={{ background: 'transparent' }}
       >
         <Controls />
-        <Background />
       </ReactFlow>
     </div>
   )

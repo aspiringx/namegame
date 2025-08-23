@@ -17,6 +17,7 @@ import { format } from 'date-fns'
 interface AvatarNodeData extends UserWithPhotoUrl {
   isCurrentUser: boolean
   isFocalUser: boolean
+  isFocalUserSpouseOrPartner: boolean
   onExpand: (direction: 'up' | 'down' | 'left' | 'right') => void
   canExpandUp: boolean
   canExpandDown: boolean
@@ -32,6 +33,7 @@ const AvatarNode = ({ data, selected }: NodeProps<AvatarNodeData>) => {
     relationship,
     isCurrentUser,
     isFocalUser,
+    isFocalUserSpouseOrPartner,
     birthDate,
     birthPlace,
     deathDate,
@@ -113,7 +115,9 @@ const AvatarNode = ({ data, selected }: NodeProps<AvatarNodeData>) => {
               <Avatar
                 className={cn(
                   'border-2 transition-all',
-                  isFocalUser ? 'h-28 w-28' : 'h-24 w-24',
+                  isFocalUser || isFocalUserSpouseOrPartner
+                    ? 'h-32 w-32'
+                    : 'h-24 w-24',
                   isCurrentUser ? 'border-primary' : 'border-transparent',
                   selected &&
                     'ring-ring ring-offset-background ring-2 ring-offset-2',
@@ -123,11 +127,25 @@ const AvatarNode = ({ data, selected }: NodeProps<AvatarNodeData>) => {
                 <AvatarFallback>{firstName?.charAt(0)}</AvatarFallback>
               </Avatar>
               <div className="text-center">
-                <div className="text-sm font-semibold">
+                <div
+                  className={cn(
+                    'font-semibold',
+                    isFocalUser || isFocalUserSpouseOrPartner
+                      ? 'text-base'
+                      : 'text-sm',
+                  )}
+                >
                   {truncate(fullName, 16)}
                 </div>
                 {relationship && (
-                  <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                  <div
+                    className={cn(
+                      'font-medium text-slate-500 dark:text-slate-400',
+                      isFocalUser || isFocalUserSpouseOrPartner
+                        ? 'text-sm'
+                        : 'text-xs',
+                    )}
+                  >
                     {relationship}
                   </div>
                 )}

@@ -1,7 +1,13 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { Node, Edge, Position, useReactFlow } from 'reactflow'
-import { FullRelationship, MemberWithUser, UserWithPhotoUrl } from '@/types'
+import {
+  User,
+  FullRelationship,
+  MemberWithUser,
+  UserWithPhotoUrl,
+} from '@/types'
 import { buildAdjacencyList } from '@/lib/family-tree'
+import { getRelationship as getComplexRelationship } from '@/lib/family-tree'
 
 interface FamilyTreeProps {
   relationships: FullRelationship[]
@@ -10,7 +16,7 @@ interface FamilyTreeProps {
 }
 
 const NODE_WIDTH = 150
-const NODE_HEIGHT = 200
+const NODE_HEIGHT = 230
 
 type AdjacencyListRelationship = {
   relatedUserId: string
@@ -30,7 +36,7 @@ export const useFamilyTree = ({
 
   const allUsersMap = useMemo(() => {
     const map = new Map<string, UserWithPhotoUrl>()
-    members.forEach((member) => {
+    members.forEach((member: MemberWithUser) => {
       if (member?.user) {
         map.set(member.userId, {
           ...member.user,
@@ -40,7 +46,7 @@ export const useFamilyTree = ({
       }
     })
     relationships.forEach((rel: FullRelationship) => {
-      ;[rel.user1, rel.user2].forEach((user) => {
+      ;[rel.user1, rel.user2].forEach((user: User) => {
         if (user && !map.has(user.id)) {
           const userWithPhoto = user as UserWithPhotoUrl
           map.set(user.id, {
@@ -63,9 +69,11 @@ export const useFamilyTree = ({
     (userId: string, type: 'parent' | 'child' | 'spouse' | 'partner') => {
       const relations = adjacencyList.get(userId) || []
       return relations
-        .filter((rel) => rel.type === type)
-        .map((rel) => allUsersMap.get(rel.relatedUserId))
-        .filter((u): u is UserWithPhotoUrl => !!u)
+        .filter((rel: AdjacencyListRelationship) => rel.type === type)
+        .map((rel: AdjacencyListRelationship) =>
+          allUsersMap.get(rel.relatedUserId),
+        )
+        .filter((u: UserWithPhotoUrl | undefined): u is UserWithPhotoUrl => !!u)
     },
     [adjacencyList, allUsersMap],
   )
@@ -73,15 +81,17 @@ export const useFamilyTree = ({
   const getSiblings = useCallback(
     (userId: string) => {
       const parentIds = (
-        adjacencyList.get(userId)?.filter((r) => r.type === 'parent') || []
-      ).map((r) => r.relatedUserId)
+        adjacencyList
+          .get(userId)
+          ?.filter((r: AdjacencyListRelationship) => r.type === 'parent') || []
+      ).map((r: AdjacencyListRelationship) => r.relatedUserId)
 
       if (parentIds.length === 0) return []
 
       const siblingIds = new Set<string>()
-      parentIds.forEach((parentId) => {
+      parentIds.forEach((parentId: string) => {
         const childrenOfParent = adjacencyList.get(parentId) || []
-        childrenOfParent.forEach((rel) => {
+        childrenOfParent.forEach((rel: AdjacencyListRelationship) => {
           if (rel.type === 'child' && rel.relatedUserId !== userId) {
             siblingIds.add(rel.relatedUserId)
           }
@@ -107,17 +117,44 @@ export const useFamilyTree = ({
     [],
   )
 
+  const getRelationship = useCallback(
+    (userId: string, focalId: string): string | undefined => {
+      if (userId === currentUser?.id) return 'Me'
+      if (userId === focalId) return undefined
+
+      const result = getComplexRelationship(
+        focalId,
+        userId,
+        relationships,
+        members,
+        allUsersMap,
+      )
+
+      return result?.relationship ?? undefined
+    },
+    [relationships, members, allUsersMap, currentUser?.id],
+  )
+
   const { nodes, edges } = useMemo(() => {
     if (!focalNodeId) return { nodes: [], edges: [] }
 
     const focalUser = allUsersMap.get(focalNodeId)
     if (!focalUser) return { nodes: [], edges: [] }
 
+    const focalUserSpouseAndPartnerIds = new Set(
+      (adjacencyList.get(focalNodeId) || [])
+        .filter(
+          (rel: AdjacencyListRelationship) =>
+            rel.type === 'spouse' || rel.type === 'partner',
+        )
+        .map((rel: AdjacencyListRelationship) => rel.relatedUserId),
+    )
+
     const visibleUsers = new Map<string, UserWithPhotoUrl>()
     visibleUsers.set(focalUser.id, focalUser)
 
     const parents = getRelatives(focalNodeId, 'parent')
-    parents.forEach((p) => visibleUsers.set(p.id, p))
+    parents.forEach((p: UserWithPhotoUrl) => visibleUsers.set(p.id, p))
 
     if (mode === 'vertical') {
       const spouses = [
@@ -125,11 +162,11 @@ export const useFamilyTree = ({
         ...getRelatives(focalNodeId, 'partner'),
       ]
       const children = getRelatives(focalNodeId, 'child')
-      spouses.forEach((s) => visibleUsers.set(s.id, s))
-      children.forEach((c) => visibleUsers.set(c.id, c))
+      spouses.forEach((s: UserWithPhotoUrl) => visibleUsers.set(s.id, s))
+      children.forEach((c: UserWithPhotoUrl) => visibleUsers.set(c.id, c))
     } else if (mode === 'horizontal') {
       const siblings = getSiblings(focalNodeId)
-      siblings.forEach((s) => visibleUsers.set(s.id, s))
+      siblings.forEach((s: UserWithPhotoUrl) => visibleUsers.set(s.id, s))
     }
 
     const newNodes: Node[] = []
@@ -148,7 +185,7 @@ export const useFamilyTree = ({
     addedIds.add(focalUser.id)
 
     // 2. Add parents
-    parents.forEach((parent, index) => {
+    parents.forEach((parent: UserWithPhotoUrl, index: number) => {
       if (addedIds.has(parent.id)) return
       const x = (index - (parents.length - 1) / 2) * NODE_WIDTH * 1.5
       newNodes.push({
@@ -175,9 +212,9 @@ export const useFamilyTree = ({
       const spouses = [
         ...getRelatives(focalNodeId, 'spouse'),
         ...getRelatives(focalNodeId, 'partner'),
-      ].filter((s) => visibleUsers.has(s.id))
+      ].filter((s: UserWithPhotoUrl) => visibleUsers.has(s.id))
 
-      spouses.forEach((spouse, index) => {
+      spouses.forEach((spouse: UserWithPhotoUrl, index: number) => {
         if (addedIds.has(spouse.id)) return
         const x = (index + 1) * NODE_WIDTH * 1.2
         newNodes.push({
@@ -200,10 +237,10 @@ export const useFamilyTree = ({
       })
 
       // 4a. Add children
-      const children = getRelatives(focalNodeId, 'child').filter((c) =>
-        visibleUsers.has(c.id),
+      const children = getRelatives(focalNodeId, 'child').filter(
+        (c: UserWithPhotoUrl) => visibleUsers.has(c.id),
       )
-      children.forEach((child, index) => {
+      children.forEach((child: UserWithPhotoUrl, index: number) => {
         if (addedIds.has(child.id)) return
         const x = (index - (children.length - 1) / 2) * NODE_WIDTH * 1.5
         newNodes.push({
@@ -226,14 +263,14 @@ export const useFamilyTree = ({
       })
     } else if (mode === 'horizontal') {
       // 3b. Add siblings
-      const siblings = getSiblings(focalNodeId).filter((s) =>
+      const siblings = getSiblings(focalNodeId).filter((s: UserWithPhotoUrl) =>
         visibleUsers.has(s.id),
       )
       const focalUserIndex = siblings.findIndex(
         (s: UserWithPhotoUrl) => s.id === focalNodeId,
       )
 
-      siblings.forEach((sibling, index) => {
+      siblings.forEach((sibling: UserWithPhotoUrl, index: number) => {
         if (addedIds.has(sibling.id)) return
         const x = (index - focalUserIndex) * NODE_WIDTH * 1.2
         if (x === 0) return // Skip focal user, already added
@@ -249,10 +286,14 @@ export const useFamilyTree = ({
         addedIds.add(sibling.id)
         // Edge from parent to sibling
         const parentIds = (
-          adjacencyList.get(sibling.id)?.filter((r) => r.type === 'parent') ||
+          adjacencyList
+            .get(sibling.id)
+            ?.filter((r: AdjacencyListRelationship) => r.type === 'parent') ||
           []
-        ).map((r) => r.relatedUserId)
-        const commonParent = parents.find((p) => parentIds.includes(p.id))
+        ).map((r: AdjacencyListRelationship) => r.relatedUserId)
+        const commonParent = parents.find((p: UserWithPhotoUrl) =>
+          parentIds.includes(p.id),
+        )
         if (commonParent) {
           newEdges.push({
             id: `e-${commonParent.id}-${sibling.id}`,
@@ -266,31 +307,34 @@ export const useFamilyTree = ({
       })
     }
 
-    // Finalize node data with arrow visibility
-    const finalNodes = newNodes.map((node) => {
-      const isFocal = node.id === focalNodeId
+    // Finalize node data with relationship and expansion info
+    const finalNodes = newNodes.map((newNode) => {
+      const user = visibleUsers.get(newNode.id)!
 
-      // Check if there are relatives that are not currently visible
-      const hasUnaddedParents = getRelatives(node.id, 'parent').some(
+      const hasUnaddedParents = getRelatives(user.id, 'parent').some(
         (p: UserWithPhotoUrl) => !visibleUsers.has(p.id),
       )
-      const hasUnaddedChildren = getRelatives(node.id, 'child').some(
+      const hasUnaddedChildren = getRelatives(user.id, 'child').some(
         (c: UserWithPhotoUrl) => !visibleUsers.has(c.id),
       )
-      const hasUnaddedSiblings = getSiblings(node.id).some(
+      const hasUnaddedSiblings = getSiblings(user.id).some(
         (s: UserWithPhotoUrl) => !visibleUsers.has(s.id),
       )
 
       return {
-        ...node,
+        ...newNode,
         data: {
-          ...allUsersMap.get(node.id),
-          isCurrentUser: node.id === currentUser?.id,
-          isFocalUser: isFocal,
-          onExpand: handleNodeExpand,
-          canExpandUp: isFocal && hasUnaddedParents,
-          canExpandDown: isFocal && hasUnaddedChildren,
-          canExpandHorizontal: isFocal && hasUnaddedSiblings,
+          ...user,
+          relationship: getRelationship(user.id, focalNodeId),
+          isCurrentUser: user.id === currentUser?.id,
+          isFocalUser: user.id === focalNodeId,
+          isFocalUserSpouseOrPartner:
+            mode === 'vertical' && focalUserSpouseAndPartnerIds.has(user.id),
+          onExpand: (direction: 'up' | 'down' | 'left' | 'right') =>
+            handleNodeExpand(user.id, direction),
+          canExpandUp: hasUnaddedParents,
+          canExpandDown: hasUnaddedChildren,
+          canExpandHorizontal: hasUnaddedSiblings,
         },
       }
     })
@@ -305,6 +349,7 @@ export const useFamilyTree = ({
     getSiblings,
     handleNodeExpand,
     currentUser?.id,
+    getRelationship,
   ])
 
   useEffect(() => {
