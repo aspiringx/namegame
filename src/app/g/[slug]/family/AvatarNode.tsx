@@ -1,32 +1,15 @@
 'use client'
 
-import React, { memo, useState } from 'react'
+import React, { memo } from 'react'
 import { Handle, Position, NodeProps } from 'reactflow'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
-import { UserWithPhotoUrl } from '@/types'
+import { AvatarNodeData } from './useFamilyTree'
 import { ChevronUp, ChevronDown, ChevronLeft } from 'lucide-react'
 import { format } from 'date-fns'
 
-interface AvatarNodeData extends UserWithPhotoUrl {
-  isCurrentUser: boolean
-  isFocalUser: boolean
-  isFocalUserSpouseOrPartner: boolean
-  onExpand: (direction: 'up' | 'down' | 'left' | 'right') => void
-  canExpandUp: boolean
-  canExpandDown: boolean
-  canExpandHorizontal: boolean
-  relationship?: string
-}
 
 const AvatarNode = ({ data, selected }: NodeProps<AvatarNodeData>) => {
-  const [isTooltipOpen, setIsTooltipOpen] = useState(false)
   const {
     firstName,
     photoUrl,
@@ -84,7 +67,6 @@ const AvatarNode = ({ data, selected }: NodeProps<AvatarNodeData>) => {
 
   return (
     <div className="relative">
-      <TooltipProvider>
         <Handle
           type="source"
           position={Position.Top}
@@ -109,8 +91,6 @@ const AvatarNode = ({ data, selected }: NodeProps<AvatarNodeData>) => {
           id="right-target"
           className="!border-0 !bg-transparent"
         />
-        <Tooltip open={isTooltipOpen} onOpenChange={setIsTooltipOpen}>
-          <TooltipTrigger asChild>
             <div className="flex cursor-pointer flex-col items-center gap-2">
               <Avatar
                 className={cn(
@@ -151,42 +131,6 @@ const AvatarNode = ({ data, selected }: NodeProps<AvatarNodeData>) => {
                 )}
               </div>
             </div>
-          </TooltipTrigger>
-          <TooltipContent>
-            <div className="flex flex-col gap-1 text-left">
-              <p className="font-bold">{fullName}</p>
-              {relationship && (
-                <p className="text-xs text-slate-200 dark:text-slate-300">
-                  {relationship}
-                </p>
-              )}
-              {formattedBirthDate && (
-                <p className="text-xs">
-                  <span className="font-semibold">Birth Date:</span>{' '}
-                  {formattedBirthDate}
-                </p>
-              )}
-              {birthPlace && (
-                <p className="text-xs">
-                  <span className="font-semibold">Birth Place:</span>{' '}
-                  {birthPlace}
-                </p>
-              )}
-              {formattedDeathDate && (
-                <p className="text-xs">
-                  <span className="font-semibold">Death Date:</span>{' '}
-                  {formattedDeathDate}
-                </p>
-              )}
-              {deathPlace && (
-                <p className="text-xs">
-                  <span className="font-semibold">Death Place:</span>{' '}
-                  {deathPlace}
-                </p>
-              )}
-            </div>
-          </TooltipContent>
-        </Tooltip>
         <Handle
           type="source"
           position={Position.Bottom}
@@ -244,7 +188,6 @@ const AvatarNode = ({ data, selected }: NodeProps<AvatarNodeData>) => {
             <ChevronLeft className="h-5 w-5" />
           </div>
         )}
-      </TooltipProvider>
     </div>
   )
 }

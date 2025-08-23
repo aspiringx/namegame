@@ -20,6 +20,8 @@ import {
 import { ArrowUp, ArrowDown, GitFork, LayoutGrid, List, X } from 'lucide-react'
 import { ReactFlowProvider } from 'reactflow'
 import FamilyTree from './FamilyTree'
+import type { FamilyTreeRef } from './FamilyTree'
+import { FocalUserSearch } from './FocalUserSearch'
 import { useGroup } from '@/components/GroupProvider'
 
 type SortKey = 'closest' | 'firstName' | 'lastName'
@@ -65,6 +67,7 @@ export function FamilyGroupClient({
   const { ref, inView } = useInView()
   const router = useRouter()
   const treeContainerRef = useRef<HTMLDivElement>(null)
+  const familyTreeRef = useRef<FamilyTreeRef>(null)
   const [treeHeight, setTreeHeight] = useState(600) // Default height
 
   const [isRelateModalOpen, setIsRelateModalOpen] = useState(false)
@@ -76,8 +79,21 @@ export function FamilyGroupClient({
     Awaited<ReturnType<typeof getMemberRelations>>
   >([])
   const [allGroupMembers, setAllGroupMembers] = useState<MemberWithUser[]>([])
+  const [isResetDisabled, setIsResetDisabled] = useState(true)
 
   const [isMounted, setIsMounted] = useState(false)
+
+  const handleResetTree = () => {
+    familyTreeRef.current?.reset()
+  }
+
+  const handleSetFocalUser = (userId: string) => {
+    familyTreeRef.current?.setFocalUser(userId)
+  }
+
+  const handleIsFocalUserCurrentUserChange = (isCurrentUser: boolean) => {
+    setIsResetDisabled(isCurrentUser)
+  }
   useEffect(() => {
     setIsMounted(true)
   }, [])
@@ -156,6 +172,17 @@ export function FamilyGroupClient({
     }
     return newMap
   }, [currentUserMember, initialMembers, initialRelationships])
+
+  const treeRelationshipMap = useMemo(() => {
+    const newMap = new Map<string, string>()
+    for (const [userId, rel] of relationshipMap.entries()) {
+      newMap.set(userId, rel.label)
+    }
+    if (currentUserMember) {
+      newMap.set(currentUserMember.userId, 'Me')
+    }
+    return newMap
+  }, [relationshipMap, currentUserMember])
 
   useEffect(() => {
     const calculateHeight = () => {
@@ -272,27 +299,39 @@ export function FamilyGroupClient({
     <>
       <div className="bg-background border-border sticky top-16 z-10 border-b py-4">
         <div className="container mx-auto px-4">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              {(['closest', 'firstName', 'lastName'] as const).map((key) => {
-                const isActive = settings.sortConfig.key === key
-                const SortIcon =
-                  settings.sortConfig.direction === 'asc' ? ArrowUp : ArrowDown
-                return (
-                  <Button
-                    key={key}
-                    variant={isActive ? 'secondary' : 'ghost'}
-                    size="sm"
-                    onClick={() => handleSort(key)}
-                    className="flex items-center gap-1 capitalize"
-                  >
-                    {key.replace('Name', '')}
-                    {isActive && <SortIcon className="h-4 w-4" />}
-                  </Button>
-                )
-              })}
+              {settings.viewMode === 'tree' ? (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleResetTree}
+                  className="flex items-center gap-1"
+                  disabled={isResetDisabled}
+                >
+                  Reset
+                </Button>
+              ) : (
+                (['closest', 'firstName', 'lastName'] as const).map((key) => {
+                  const isActive = settings.sortConfig.key === key
+                  const SortIcon =
+                    settings.sortConfig.direction === 'asc' ? ArrowUp : ArrowDown
+                  return (
+                    <Button
+                      key={key}
+                      variant={isActive ? 'secondary' : 'ghost'}
+                      size="sm"
+                      onClick={() => handleSort(key)}
+                      className="flex items-center gap-1 capitalize"
+                    >
+                      {key.replace('Name', '')}
+                      {isActive && <SortIcon className="h-4 w-4" />}
+                    </Button>
+                  )
+                })
+              )}
             </div>
-            <div className="ml-auto flex items-center gap-2">
+            <div className="flex items-center gap-2">
               <Button
                 variant={settings.viewMode === 'tree' ? 'secondary' : 'ghost'}
                 size="sm"
@@ -323,30 +362,39 @@ export function FamilyGroupClient({
             </div>
           </div>
           <div className="relative mt-4">
-            <input
-              type="text"
-              placeholder="Search members..."
-              value={settings.searchQuery}
-              onChange={(e) =>
-                setSettings((prev) => ({
-                  ...prev,
-                  searchQuery: e.target.value,
-                }))
-              }
-              className="w-full rounded-md border p-2 pr-10"
-            />
-            {settings.searchQuery && (
-              <button
-                onClick={() =>
-                  setSettings((prev) => ({
-                    ...prev,
-                    searchQuery: '',
-                  }))
-                }
-                className="absolute inset-y-0 right-0 flex items-center pr-3"
-              >
-                <X className="h-4 w-4 text-gray-400" />
-              </button>
+            {settings.viewMode === 'tree' ? (
+              <FocalUserSearch
+                members={allGroupMembers}
+                onSelect={handleSetFocalUser}
+              />
+            ) : (
+              <>
+                <input
+                  type="text"
+                  placeholder="Search members..."
+                  value={settings.searchQuery}
+                  onChange={(e) =>
+                    setSettings((prev) => ({
+                      ...prev,
+                      searchQuery: e.target.value,
+                    }))
+                  }
+                  className="w-full rounded-md border p-2 pr-10"
+                />
+                {settings.searchQuery && (
+                  <button
+                    onClick={() =>
+                      setSettings((prev) => ({
+                        ...prev,
+                        searchQuery: '',
+                      }))
+                    }
+                    className="absolute inset-y-0 right-0 flex items-center pr-3"
+                  >
+                    <X className="h-4 w-4 text-gray-400" />
+                  </button>
+                )}
+              </>
             )}
           </div>
         </div>
@@ -361,9 +409,12 @@ export function FamilyGroupClient({
           >
             <ReactFlowProvider>
               <FamilyTree
+                ref={familyTreeRef}
                 relationships={initialRelationships}
                 members={members}
                 currentUser={currentUserMember?.user}
+                onIsFocalUserCurrentUserChange={handleIsFocalUserCurrentUserChange}
+                relationshipMap={treeRelationshipMap}
               />
             </ReactFlowProvider>
           </div>

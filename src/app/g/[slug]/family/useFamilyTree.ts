@@ -9,6 +9,17 @@ import {
 import { buildAdjacencyList } from '@/lib/family-tree'
 import { getRelationship as getComplexRelationship } from '@/lib/family-tree'
 
+export interface AvatarNodeData extends UserWithPhotoUrl {
+  isCurrentUser: boolean
+  isFocalUser: boolean
+  isFocalUserSpouseOrPartner: boolean
+  onExpand: (direction: 'up' | 'down' | 'left' | 'right') => void
+  canExpandUp: boolean
+  canExpandDown: boolean
+  canExpandHorizontal: boolean
+  relationship?: string
+}
+
 interface FamilyTreeProps {
   relationships: FullRelationship[]
   members: MemberWithUser[]
@@ -358,5 +369,26 @@ export const useFamilyTree = ({
     }
   }, [nodes, fitView, focalNodeId, mode])
 
-  return { nodes, edges }
+  const setFocalUser = useCallback((userId: string) => {
+    setFocalNodeId(userId)
+    setMode('vertical')
+  }, [])
+
+  const resetFocalUser = useCallback(() => {
+    if (currentUser) {
+      setFocalNodeId(currentUser.id)
+      setMode('vertical')
+    }
+  }, [currentUser])
+
+  const isFocalUserTheCurrentUser = focalNodeId === currentUser?.id
+
+  return {
+    nodes,
+    edges,
+    resetFocalUser,
+    focalNodeId,
+    isFocalUserTheCurrentUser,
+    setFocalUser,
+  }
 }
