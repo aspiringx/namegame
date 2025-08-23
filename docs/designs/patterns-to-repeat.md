@@ -52,3 +52,14 @@ export function ComponentWithTooltip() {
 1.  **State Management:** Use a `useState` hook (e.g., `isTooltipOpen`) to control the tooltip's visibility.
 2.  **Controlled Component:** Pass the `open` and `onOpenChange` props to the `<Tooltip>` component.
 3.  **Click Handler:** Add an `onClick` event to the `TooltipTrigger`'s child element to toggle the state.
+
+## Known Build Issues
+
+### ESLint `useEslintrc` and `extensions` Error
+
+**Status:** Ignored
+**Re-assessment Date:** February 23, 2026
+
+**Description:** The `npm run build` command currently throws an ESLint error: `Invalid Options: - Unknown options: useEslintrc, extensions`. This is a known issue related to the transition to ESLint's new flat config format.
+
+**Decision:** We have decided to ignore this error for now to avoid getting sidetracked. It does not block the build from completing successfully. We will re-assess the need to fix this on or after February 23, 2026.

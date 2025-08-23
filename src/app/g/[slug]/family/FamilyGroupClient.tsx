@@ -426,12 +426,12 @@ export function FamilyGroupClient({
               >
                 <TooltipTrigger asChild>
                   <div
-                    className="bg-background/80 absolute top-2 left-1/2 z-10 flex -translate-x-1/2 cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm backdrop-blur-sm"
+                    className="bg-background/80 absolute top-2 right-2 z-10 flex cursor-pointer items-center gap-1 rounded-full border px-2 py-1 text-xs backdrop-blur-sm sm:gap-1.5 sm:px-3 sm:py-1.5 sm:text-sm"
                     onClick={() =>
                       setIsExperimentalTooltipOpen(!isExperimentalTooltipOpen)
                     }
                   >
-                    <FlaskConical className="h-4 w-4 text-lime-400" />
+                    <FlaskConical className="h-3 w-3 text-lime-400 sm:h-4 sm:w-4" />
                     <span>Experimental</span>
                   </div>
                 </TooltipTrigger>
