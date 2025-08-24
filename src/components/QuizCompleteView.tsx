@@ -57,14 +57,16 @@ const QuizCompleteView: React.FC<QuizCompleteViewProps> = ({
         )}
       </div>
       <h2 className="mt-4 text-2xl font-bold">Congratulations!</h2>
-      <p className="mt-2 text-gray-600 dark:text-gray-400">
-        You've remembered everyone you've greeted three times! In three months,
-        we'll unlock them again to keep your memory fresh. Or click "Start Over"
-        to play again.
+      <p className="mt-2 text-left text-gray-600 dark:text-gray-400">
+        You've remembered everyone you've greeted three times!
       </p>
-      <p className="mt-4 text-sm text-gray-500 dark:text-gray-500">
-        We only show users you've greeted who have a real photo. Invite others
-        to add their photo so you can remember them here.
+      <p className="mt-2 text-left text-gray-600 dark:text-gray-400">
+        In three months, we'll unlock them again to keep your memory fresh. Or
+        click "Start Over" to play again.
+      </p>
+      <p className="mt-4 text-left text-gray-600 italic dark:text-gray-400">
+        p.s. We only show users you've greeted who have a real photo. Invite
+        others to add their photo so you can remember them here too.
       </p>
     </div>
   )

@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useMemo } from 'react'
+import Modal from './ui/modal'
 import type { MemberWithUser } from '@/types'
 import {
   getQuizScores,
@@ -8,6 +9,7 @@ import {
   getEligibleQuizMembers,
   generateQuizQuestion,
   clearQuizScores,
+  resetCorrectGuesses,
 } from '@/lib/quizUtils'
 import Image from 'next/image'
 import QuizCompleteView from './QuizCompleteView'
@@ -37,6 +39,7 @@ const NameQuizView: React.FC<NameQuizViewProps> = ({
   const [question, setQuestion] = useState<QuizQuestion | null>(null)
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null)
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null)
+  const [modalPerson, setModalPerson] = useState<MemberWithUser | null>(null)
 
   const quizPoolMembers = useMemo(
     () =>
@@ -93,13 +96,37 @@ const NameQuizView: React.FC<NameQuizViewProps> = ({
     setIsCorrect(correct)
 
     if (question) {
-      saveQuizScore(groupSlug, question.correctMember.userId, correct)
-    }
+      const correctMemberId = question.correctMember.userId
+      saveQuizScore(groupSlug, correctMemberId, correct)
+      const newScores = getQuizScores(groupSlug)
+      const memberScore = newScores[correctMemberId]
 
-    // After a delay to show feedback, update scores to trigger the next question.
-    setTimeout(() => {
-      setScores(getQuizScores(groupSlug))
-    }, 800)
+      if (correct && memberScore && memberScore.correctGuesses === 3) {
+        setTimeout(() => {
+          setModalPerson(question.correctMember)
+        }, 800)
+      } else {
+        setTimeout(() => {
+          setScores(newScores)
+        }, 800)
+      }
+    }
+  }
+
+  const handleKeepAtIt = () => {
+    if (!modalPerson) return
+    resetCorrectGuesses(groupSlug, modalPerson.userId)
+    const newScores = getQuizScores(groupSlug)
+    setScores(newScores)
+    setModalPerson(null)
+    loadNextQuestion()
+  }
+
+  const handleGotIt = () => {
+    if (!modalPerson) return
+    setModalPerson(null)
+    setScores(getQuizScores(groupSlug))
+    loadNextQuestion()
   }
 
   if (eligibleMembers.length === 0) {
@@ -122,42 +149,77 @@ const NameQuizView: React.FC<NameQuizViewProps> = ({
   }
 
   return (
-    <div className="flex flex-col items-center gap-4 py-4">
-      <div className="relative h-64 w-64 overflow-hidden rounded-full shadow-lg">
-        <Image
-          src={
-            question.correctMember.user.photoUrl || '/images/default-avatar.png'
-          }
-          alt="Who is this?"
-          fill
-          sizes="224px"
-          className="object-cover"
-        />
-      </div>
-      <div className="grid w-full max-w-xs grid-cols-1 gap-2">
-        {question.options.map((option) => {
-          const isSelected = selectedAnswer === option.userId
-          const isCorrectOption =
-            question.correctMember.userId === option.userId
-
-          return (
+    <>
+      <Modal isOpen={!!modalPerson} onClose={() => setModalPerson(null)}>
+        <div className="p-6">
+          <h2 className="mb-4 text-xl font-bold">Congratulations!</h2>
+          <p className="mb-4">
+            You've remembered {modalPerson?.user.name} three times!
+          </p>
+          <div className="mb-4 text-sm text-gray-600 dark:text-gray-400">
+            <p>
+              <strong>Keep at It:</strong> Keep this person in the quiz for
+              three more tries.
+            </p>
+            <p>
+              <strong>Got It:</strong> You're confident you remember them. We'll
+              add them back after three months to keep you sharp.
+            </p>
+          </div>
+          <div className="flex justify-end space-x-4">
             <Button
-              key={option.userId}
-              onClick={() => handleAnswer(option.userId)}
-              disabled={!!selectedAnswer}
-              className={clsx('transition-colors', {
-                'bg-green-500 hover:bg-green-600': isSelected && isCorrect,
-                'bg-red-500 hover:bg-red-600': isSelected && !isCorrect,
-                'border-2 border-green-500':
-                  selectedAnswer && isCorrectOption && !isSelected,
-              })}
+              onClick={handleKeepAtIt}
+              className="bg-gray-200 text-gray-800 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
             >
-              {option.user.name}
+              Keep at It
             </Button>
-          )
-        })}
+            <Button
+              onClick={handleGotIt}
+              className="bg-indigo-600 text-white hover:bg-indigo-700"
+            >
+              Got It
+            </Button>
+          </div>
+        </div>
+      </Modal>
+      <div className="flex flex-col items-center gap-4 py-4">
+        <div className="relative h-64 w-64 overflow-hidden rounded-full shadow-lg">
+          <Image
+            src={
+              question.correctMember.user.photoUrl ||
+              '/images/default-avatar.png'
+            }
+            alt="Who is this?"
+            fill
+            sizes="224px"
+            className="object-cover"
+          />
+        </div>
+        <div className="grid w-full max-w-xs grid-cols-1 gap-2">
+          {question.options.map((option) => {
+            const isSelected = selectedAnswer === option.userId
+            const isCorrectOption =
+              question.correctMember.userId === option.userId
+
+            return (
+              <Button
+                key={option.userId}
+                onClick={() => handleAnswer(option.userId)}
+                disabled={!!selectedAnswer}
+                className={clsx('transition-colors', {
+                  'bg-green-500 hover:bg-green-600': isSelected && isCorrect,
+                  'bg-red-500 hover:bg-red-600': isSelected && !isCorrect,
+                  'border-2 border-green-500':
+                    selectedAnswer && isCorrectOption && !isSelected,
+                })}
+              >
+                {option.user.name}
+              </Button>
+            )
+          })}
+        </div>
       </div>
-    </div>
+    </>
   )
 }
 

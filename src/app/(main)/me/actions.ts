@@ -29,6 +29,7 @@ export type State = {
   newPhotoUrl?: string | null
   newFirstName?: string | null
   redirectUrl?: string | null
+  emailUpdated?: boolean
 }
 
 const UserProfileSchema = z.object({
@@ -172,6 +173,7 @@ export async function updateUserProfile(
 
   let newPhotoKey: string | null = null
   let updatedUser
+  let emailChanged = false
 
   // This needs to happen before the try to be available in the try and after.
   // Unlike the other getCodeTable calls below.
@@ -222,7 +224,6 @@ export async function updateUserProfile(
       dataToUpdate.birthDatePrecision = null
     }
 
-    let emailChanged = false
     const lowercasedEmail = email ? email.toLowerCase() : null
     if (lowercasedEmail && (lowercasedEmail !== user.email || !user.emailVerified)) {
       const existingUser = await prisma.user.findFirst({
@@ -403,6 +404,7 @@ export async function updateUserProfile(
     newPhotoUrl: newPhotoKey ? await getPublicUrl(newPhotoKey) : null,
     newFirstName: updatedUser.firstName,
     redirectUrl,
+    emailUpdated: emailChanged,
   }
 }
 

@@ -25,15 +25,23 @@ export const getQuizScores = (groupSlug: string): Record<string, QuizScore> => {
   }
 }
 
+const saveQuizScores = (groupSlug: string, scores: Record<string, QuizScore>) => {
+  if (typeof window === 'undefined') {
+    return
+  }
+  const key = `${QUIZ_STORAGE_PREFIX}${groupSlug}`
+  try {
+    localStorage.setItem(key, JSON.stringify(scores))
+  } catch (error) {
+    console.error('Error saving quiz scores to localStorage:', error)
+  }
+}
+
 export const saveQuizScore = (
   groupSlug: string,
   userId: string,
   isCorrect: boolean,
 ) => {
-  if (typeof window === 'undefined') {
-    return
-  }
-  const key = `${QUIZ_STORAGE_PREFIX}${groupSlug}`
   const scores = getQuizScores(groupSlug)
   const userScore = scores[userId] || {
     userId,
@@ -48,11 +56,7 @@ export const saveQuizScore = (
 
   scores[userId] = userScore
 
-  try {
-    localStorage.setItem(key, JSON.stringify(scores))
-  } catch (error) {
-    console.error('Error saving quiz scores to localStorage:', error)
-  }
+  saveQuizScores(groupSlug, scores)
 }
 
 export const getEligibleQuizMembers = (
@@ -65,11 +69,11 @@ export const getEligibleQuizMembers = (
     if (!score) {
       return true // Never been guessed
     }
-    // Exclude if guessed correctly 5 or more times, unless enough time has passed
-    if (score.correctGuesses >= 5) {
+    // Exclude if guessed correctly 3 or more times, unless enough time has passed
+    if (score.correctGuesses >= 3) {
       return now - score.lastCorrectTimestamp > SPACED_REPETITION_INTERVAL
     }
-    return true // Fewer than 5 correct guesses
+    return true // Fewer than 3 correct guesses
   })
 }
 
@@ -119,5 +123,13 @@ export const clearQuizScores = (groupSlug: string) => {
     localStorage.removeItem(key)
   } catch (error) {
     console.error('Error clearing quiz scores from localStorage:', error)
+  }
+}
+
+export const resetCorrectGuesses = (groupSlug: string, userId: string) => {
+  const scores = getQuizScores(groupSlug)
+  if (scores[userId]) {
+    scores[userId].correctGuesses = 0
+    saveQuizScores(groupSlug, scores)
   }
 }

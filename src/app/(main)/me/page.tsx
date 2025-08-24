@@ -34,6 +34,22 @@ export default async function UserProfilePage(props: {
         },
         orderBy: { type: { code: 'asc' } },
       },
+      groupMemberships: {
+        orderBy: {
+          group: {
+            name: 'asc',
+          },
+        },
+        include: {
+          group: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+            },
+          },
+        },
+      },
     },
   })
 
@@ -63,7 +79,10 @@ export default async function UserProfilePage(props: {
         </div>
       ) : null}
 
-      <UserProfileForm user={userWithPublicUrls} />
+      <UserProfileForm
+        user={userWithPublicUrls}
+        groups={user.groupMemberships.map((mem) => mem.group)}
+      />
     </>
   )
 }
