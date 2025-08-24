@@ -64,6 +64,13 @@ const FamilyTreeComponent = forwardRef<
     const [isFullScreen, setIsFullScreen] = useState(false)
     const { fitView, zoomTo } = useReactFlow()
 
+    const handleExitFullScreen = () => {
+      setIsFullScreen(false)
+      setTimeout(() => {
+        fitView()
+      }, 100)
+    }
+
     useEffect(() => {
       const checkIsMobile = () => {
         setIsMobile(window.innerWidth < 768)
@@ -103,6 +110,27 @@ const FamilyTreeComponent = forwardRef<
       onIsFocalUserCurrentUserChange?.(isFocalUserTheCurrentUser)
     }, [isFocalUserTheCurrentUser, onIsFocalUserCurrentUserChange])
 
+    useEffect(() => {
+      const setHeight = () => {
+        if (reactFlowWrapper.current) {
+          reactFlowWrapper.current.style.height = `${window.innerHeight}px`
+        }
+      }
+
+      if (isFullScreen) {
+        setHeight()
+        window.addEventListener('resize', setHeight)
+        return () => {
+          window.removeEventListener('resize', setHeight)
+          if (reactFlowWrapper.current) {
+            reactFlowWrapper.current.style.height = ''
+          }
+        }
+      } else if (reactFlowWrapper.current) {
+        reactFlowWrapper.current.style.height = ''
+      }
+    }, [isFullScreen])
+
     useImperativeHandle(ref, () => ({
       reset: resetFocalUser,
       setFocalUser: setFocalUser,
@@ -122,10 +150,9 @@ const FamilyTreeComponent = forwardRef<
     return (
       <>
         <div
-          className={isFullScreen ? 'bg-background' : ''}
+          className={`h-full ${isFullScreen ? 'bg-background' : ''}`}
           style={{
             width: isFullScreen ? '100vw' : '100%',
-            height: isFullScreen ? '100vh' : '100%',
             position: isFullScreen ? 'fixed' : 'relative',
             top: 0,
             left: 0,
@@ -141,10 +168,14 @@ const FamilyTreeComponent = forwardRef<
             onNodeClick={handleNodeClick}
             className="bg-background"
           >
-            <FamilyTreeControls onFullScreen={() => setIsFullScreen(true)} />
+            <FamilyTreeControls
+              onFullScreen={() => setIsFullScreen(true)}
+              isFullScreen={isFullScreen}
+              isMobile={isMobile}
+            />
             {isFullScreen && (
               <button
-                onClick={() => setIsFullScreen(false)}
+                onClick={handleExitFullScreen}
                 className="absolute top-4 right-4 z-50 rounded-full bg-white p-2 shadow-lg"
                 aria-label="Exit full screen"
               >
