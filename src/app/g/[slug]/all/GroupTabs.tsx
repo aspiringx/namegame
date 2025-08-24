@@ -8,6 +8,15 @@ import clsx from 'clsx'
 import { useInView } from 'react-intersection-observer'
 import type { MemberWithUser, FullRelationship } from '@/types'
 import MemberCard from '@/components/MemberCard'
+import dynamic from 'next/dynamic'
+
+const NameQuizViewClient = dynamic(
+  () => import('@/components/NameQuizViewClient'),
+  {
+    loading: () => <div className="text-center p-4">Loading quiz...</div>,
+    ssr: false,
+  },
+)
 import {
   getPaginatedMembers,
   getGroupMembersForRelate,
@@ -18,7 +27,7 @@ import { useGroup } from '@/components/GroupProvider'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { ArrowUp, ArrowDown, LayoutGrid, List, X } from 'lucide-react'
+import { ArrowUp, ArrowDown, LayoutGrid, List, X, Brain } from 'lucide-react'
 
 interface GroupTabsProps {
   greetedMembers: MemberWithUser[]
@@ -29,8 +38,8 @@ interface GroupTabsProps {
 }
 
 interface GroupPageSettings {
-  sortConfig: { key: 'greeted' | 'firstName' | 'lastName'; direction: 'asc' | 'desc' }
-  viewMode: 'grid' | 'list'
+  sortConfig: { key: 'greeted' | 'firstName' | 'lastName'; direction: 'asc' | 'desc' };
+  viewMode: 'grid' | 'list' | 'quiz';
   searchQueries: { greeted: string; notGreeted: string }
   selectedTabIndex: number
 }
@@ -47,7 +56,7 @@ interface SearchableMemberListProps {
   listType: 'greeted' | 'notGreeted'
   slug: string
   searchQuery: string
-  viewMode: 'grid' | 'list'
+  viewMode: 'grid' | 'list' | 'quiz'
   isGroupAdmin?: boolean
   groupMembers: MemberWithUser[]
   onRelate: (member: MemberWithUser) => void
@@ -142,20 +151,32 @@ const GroupTabs: React.FC<GroupTabsProps> = ({
   currentUserMember,
 }) => {
   const isGroupAdmin = currentUserMember?.role?.code === 'admin'
+  const { group, currentUserMember: ego } = useGroup()
+  const router = useRouter()
+
+  const [settings, setSettings] = useLocalStorage<GroupPageSettings>(
+    `group-settings-${group?.slug || ''}`,
+    {
+      sortConfig: { key: 'greeted', direction: 'desc' },
+      viewMode: 'grid',
+      searchQueries: { greeted: '', notGreeted: '' },
+      selectedTabIndex: 0,
+    },
+  )
+
+  const [isLoading, setIsLoading] = useState(true)
   const [isRelateModalOpen, setIsRelateModalOpen] = useState(false)
-  const [isLoadingRelations, setIsLoadingRelations] = useState(false)
   const [selectedMember, setSelectedMember] = useState<MemberWithUser | null>(
     null,
   )
   const [memberRelations, setMemberRelations] = useState<FullRelationship[]>([])
   const [allGroupMembers, setAllGroupMembers] = useState<MemberWithUser[]>([])
+  const [isLoadingRelations, setIsLoadingRelations] = useState(false)
 
   const allMembers = useMemo(
     () => [...greetedMembers, ...notGreetedMembers],
     [greetedMembers, notGreetedMembers],
   )
-  const router = useRouter()
-  const { group, isAuthorizedMember, currentUserMember: ego } = useGroup()
 
   useEffect(() => {
     if (group?.slug) {
@@ -164,6 +185,13 @@ const GroupTabs: React.FC<GroupTabsProps> = ({
       )
     }
   }, [group?.slug])
+
+  useEffect(() => {
+    // Check if settings are loaded from localStorage
+    if (settings && settings.viewMode) {
+      setIsLoading(false)
+    }
+  }, [settings])
 
   const handleOpenRelateModal = useCallback(
     async (member: MemberWithUser) => {
@@ -195,16 +223,6 @@ const GroupTabs: React.FC<GroupTabsProps> = ({
   const handleRelationshipChange = () => {
     router.refresh()
   }
-
-  const [settings, setSettings] = useLocalStorage<GroupPageSettings>(
-    `group-settings-${group?.slug || ''}`,
-    {
-      sortConfig: { key: 'greeted', direction: 'desc' },
-      viewMode: 'grid',
-      searchQueries: { greeted: '', notGreeted: '' },
-      selectedTabIndex: 0,
-    },
-  )
 
   const handleSort = (key: 'greeted' | 'firstName' | 'lastName') => {
     setSettings((prev) => ({
@@ -272,12 +290,6 @@ const GroupTabs: React.FC<GroupTabsProps> = ({
     settings.sortConfig,
   ])
 
-  useEffect(() => {
-    if (isAuthorizedMember === false) {
-      router.push('/')
-    }
-  }, [isAuthorizedMember, router])
-
   if (!group || group.groupType?.code === 'family') {
     return null
   }
@@ -298,8 +310,8 @@ const GroupTabs: React.FC<GroupTabsProps> = ({
                   key={tab.name}
                   className={({ selected }) =>
                     clsx(
-                      'w-full rounded-lg py-2.5 text-sm leading-5 font-medium',
-                      'ring-opacity-60 ring-white ring-offset-2 ring-offset-blue-400 focus:ring-2 focus:outline-none',
+                      'w-full rounded-lg py-2.5 text-sm font-medium leading-5',
+                      'ring-white ring-opacity-60 ring-offset-2 ring-offset-blue-400 focus:outline-none focus:ring-2',
                       selected
                         ? 'bg-white text-blue-700 shadow dark:bg-gray-800 dark:text-white'
                         : 'text-gray-600 hover:bg-white/[0.12] hover:text-white dark:text-blue-100',
@@ -325,111 +337,128 @@ const GroupTabs: React.FC<GroupTabsProps> = ({
               ))}
             </Tab.List>
             <Tab.Panels className="mt-2">
-              {tabs.map((tab: TabInfo) => (
-                <Tab.Panel
-                  key={tab.name}
-                  className={clsx(
-                    'rounded-xl bg-white p-3 dark:bg-gray-800',
-                    'ring-white/60 ring-offset-2 ring-offset-blue-400 focus:ring-2 focus:outline-none',
-                  )}
-                >
-                  {tab.type === 'greeted' ? (
-                    <div className="mb-4 flex items-center">
-                      <div className="flex items-center gap-2">
-                        {(['greeted', 'firstName', 'lastName'] as const).map(
-                          (key) => {
-                            const isActive = settings.sortConfig.key === key
-                            const SortIcon =
-                              settings.sortConfig.direction === 'asc'
-                                ? ArrowUp
-                                : ArrowDown
-                            return (
-                              <Button
-                                key={key}
-                                variant={isActive ? 'secondary' : 'ghost'}
-                                size="sm"
-                                onClick={() => handleSort(key)}
-                                className="flex items-center gap-1 capitalize"
-                              >
-                                {key.replace('Name', '')}
-                                {isActive && <SortIcon className="h-4 w-4" />}
-                              </Button>
-                            )
-                          },
-                        )}
-                      </div>
-                      <div className="ml-auto flex items-center gap-2">
-                        <Button
-                          variant={settings.viewMode === 'grid' ? 'secondary' : 'ghost'}
-                          size="sm"
-                          onClick={() =>
-                            setSettings((prev) => ({ ...prev, viewMode: 'grid' }))
-                          }
-                        >
-                          <LayoutGrid className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant={settings.viewMode === 'list' ? 'secondary' : 'ghost'}
-                          size="sm"
-                          onClick={() =>
-                            setSettings((prev) => ({ ...prev, viewMode: 'list' }))
-                          }
-                        >
-                          <List className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
-                    <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
-                      People you haven't greeted.
-                    </p>
-                  )}
-
-                  {tab.count > 3 && (
-                    <div className="relative mb-4">
-                      <input
-                        type="text"
-                        placeholder={`Search ${tab.type === 'greeted' ? 'greeted' : 'not greeted'} members...`}
-                        value={settings.searchQueries[tab.type]}
-                        onChange={(e) =>
-                          setSettings((prev) => ({
-                            ...prev,
-                            searchQueries: {
-                              ...prev.searchQueries,
-                              [tab.type]: e.target.value,
+              {isLoading ? (
+                <div className="py-8 text-center text-gray-500 dark:text-gray-400">
+                  Loading...
+                </div>
+              ) : (
+                tabs.map((tab: TabInfo) => (
+                  <Tab.Panel
+                    key={tab.name}
+                    className={clsx(
+                      'rounded-xl bg-white p-3 dark:bg-gray-800',
+                      'ring-white/60 ring-offset-2 ring-offset-blue-400 focus:outline-none focus:ring-2',
+                    )}
+                  >
+                    {tab.type === 'greeted' && (
+                      <div className="mb-4 flex items-center">
+                        <div className="flex items-center gap-2">
+                          {(['greeted', 'firstName', 'lastName'] as const).map(
+                            (key) => {
+                              const isActive = settings.sortConfig.key === key
+                              const SortIcon =
+                                settings.sortConfig.direction === 'asc'
+                                  ? ArrowUp
+                                  : ArrowDown
+                              return (
+                                <Button
+                                  key={key}
+                                  variant={isActive ? 'secondary' : 'ghost'}
+                                  size="sm"
+                                  onClick={() => handleSort(key)}
+                                  className={clsx(
+                                    'flex items-center gap-1 capitalize',
+                                    {
+                                      'hidden md:flex':
+                                        key === 'firstName' ||
+                                        key === 'lastName',
+                                    },
+                                  )}
+                                >
+                                  {key.replace('Name', '')}
+                                  {isActive && (
+                                    <SortIcon className="h-4 w-4" />
+                                  )}
+                                </Button>
+                              )
                             },
-                          }))
-                        }
-                        className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 pr-10 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+                          )}
+                        </div>
+                        <div className="ml-auto flex items-center gap-2">
+                          <Button
+                            variant={
+                              settings.viewMode === 'grid'
+                                ? 'secondary'
+                                : 'ghost'
+                            }
+                            size="sm"
+                            onClick={() =>
+                              setSettings((prev) => ({
+                                ...prev,
+                                viewMode: 'grid',
+                              }))
+                            }
+                          >
+                            <LayoutGrid className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant={
+                              settings.viewMode === 'list'
+                                ? 'secondary'
+                                : 'ghost'
+                            }
+                            size="sm"
+                            onClick={() =>
+                              setSettings((prev) => ({
+                                ...prev,
+                                viewMode: 'list',
+                              }))
+                            }
+                          >
+                            <List className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant={
+                              settings.viewMode === 'quiz'
+                                ? 'secondary'
+                                : 'ghost'
+                            }
+                            size="sm"
+                            onClick={() =>
+                              setSettings((prev) => ({
+                                ...prev,
+                                viewMode: 'quiz',
+                              }))
+                            }
+                          >
+                            <Brain className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {settings.viewMode === 'quiz' && tab.type === 'greeted' ? (
+                      <NameQuizViewClient
+                        members={allMembers.filter((m) => m.user.photoUrl)}
+                        groupSlug={group?.slug || ''}
+                        currentUserId={ego?.userId}
                       />
-                      {settings.searchQueries[tab.type] && (
-                        <button
-                          onClick={() =>
-                            setSettings((prev) => ({
-                              ...prev,
-                              searchQueries: { ...prev.searchQueries, [tab.type]: '' },
-                            }))
-                          }
-                          className="absolute inset-y-0 right-0 flex items-center pr-3"
-                        >
-                          <X className="h-4 w-4 text-gray-400" />
-                        </button>
-                      )}
-                    </div>
-                  )}
-                  <SearchableMemberList
-                    initialMembers={tab.members}
-                    listType={tab.type}
-                    slug={group?.slug || ''}
-                    searchQuery={settings.searchQueries[tab.type]}
-                    viewMode={settings.viewMode}
-                    isGroupAdmin={isGroupAdmin}
-                    groupMembers={allMembers}
-                    onRelate={handleOpenRelateModal}
-                    currentUserId={ego?.userId}
-                  />
-                </Tab.Panel>
-              ))}
+                    ) : settings.viewMode !== 'quiz' ? (
+                      <SearchableMemberList
+                        initialMembers={tab.members}
+                        listType={tab.type}
+                        slug={group?.slug || ''}
+                        searchQuery={settings.searchQueries[tab.type]}
+                        viewMode={settings.viewMode}
+                        isGroupAdmin={isGroupAdmin}
+                        groupMembers={allMembers}
+                        onRelate={handleOpenRelateModal}
+                        currentUserId={ego?.userId}
+                      />
+                    ) : null}
+                  </Tab.Panel>
+                ))
+              )}
             </Tab.Panels>
           </Tab.Group>
         </div>

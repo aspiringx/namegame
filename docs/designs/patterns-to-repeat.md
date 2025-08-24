@@ -63,3 +63,21 @@ export function ComponentWithTooltip() {
 **Description:** The `npm run build` command currently throws an ESLint error: `Invalid Options: - Unknown options: useEslintrc, extensions`. This is a known issue related to the transition to ESLint's new flat config format.
 
 **Decision:** We have decided to ignore this error for now to avoid getting sidetracked. It does not block the build from completing successfully. We will re-assess the need to fix this on or after February 23, 2026.
+
+## Lottie Animations
+
+**Problem:** When using Lottie animations, links from `lottie.host` can be unreliable and result in `Access Denied` XML errors, breaking the build.
+
+**Solution:** Use direct asset links from a stable source. The `assets*.lottiefiles.com` CDN has proven to be reliable.
+
+### Example of a good URL:
+
+```
+https://assets4.lottiefiles.com/datafiles/U1I3rWEyksM9cCH/data.json
+```
+
+### How to find the URL:
+
+1. Find an animation on [lottiefiles.com](https://lottiefiles.com).
+2. Look for an example implementation or a web player that uses the animation.
+3. Inspect the source code (e.g., an `index.html` file on a GitHub example) to find the direct asset URL, often ending in `data.json`.

@@ -32,7 +32,7 @@ export default function Home() {
             stressful or awkward.
           </p>
           <p>
-            We call this stress{' '}
+            We call this stress or unfamiliarity{' '}
             <span className="text-blue-600 italic dark:text-blue-400">
               the ice
             </span>
