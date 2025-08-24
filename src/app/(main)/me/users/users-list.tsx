@@ -321,9 +321,11 @@ export default function UsersList({
         <Modal
           isOpen={!!userToRevoke}
           onClose={() => setUserToRevoke(null)}
-          title="Confirm Revoke"
         >
-          <div className="mt-4">
+          <div className="p-6">
+            <h3 className="text-lg font-medium leading-6 text-gray-900 dark:text-gray-100 mb-4">
+              Confirm Revoke
+            </h3>
             <p className="text-sm text-gray-600 dark:text-gray-400">
               Are you sure you want to revoke management permissions for{' '}
               <strong>
@@ -333,18 +335,18 @@ export default function UsersList({
               </strong>
               ?
             </p>
-          </div>
-          <div className="mt-6 flex justify-end space-x-2">
-            <Button variant="outline" onClick={() => setUserToRevoke(null)}>
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleRevoke}
-              disabled={isPending}
-            >
-              {isPending ? 'Revoking...' : 'Revoke'}
-            </Button>
+            <div className="mt-6 flex justify-end space-x-2">
+              <Button variant="outline" onClick={() => setUserToRevoke(null)}>
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleRevoke}
+                disabled={isPending}
+              >
+                {isPending ? 'Revoking...' : 'Revoke'}
+              </Button>
+            </div>
           </div>
         </Modal>
       )}
@@ -358,7 +360,7 @@ export default function UsersList({
             }
           }}
         >
-          <AlertDialogContent>
+          <AlertDialogContent className="p-6">
             <AlertDialogHeader>
               <AlertDialogTitle>
                 Are you sure you want to delete this user?

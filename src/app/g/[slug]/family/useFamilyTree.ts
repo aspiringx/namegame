@@ -24,6 +24,7 @@ interface FamilyTreeProps {
   relationships: FullRelationship[]
   members: MemberWithUser[]
   currentUser?: UserWithPhotoUrl
+  relationshipMap: Map<string, string>
 }
 
 const NODE_WIDTH = 150
@@ -38,6 +39,7 @@ export const useFamilyTree = ({
   relationships,
   members,
   currentUser,
+  relationshipMap,
 }: FamilyTreeProps) => {
   const [focalNodeId, setFocalNodeId] = useState<string | null>(
     currentUser?.id || null,
@@ -128,23 +130,6 @@ export const useFamilyTree = ({
     [],
   )
 
-  const getRelationship = useCallback(
-    (userId: string, focalId: string): string | undefined => {
-      if (userId === currentUser?.id) return 'Me'
-      if (userId === focalId) return undefined
-
-      const result = getComplexRelationship(
-        focalId,
-        userId,
-        relationships,
-        members,
-        allUsersMap,
-      )
-
-      return result?.relationship ?? undefined
-    },
-    [relationships, members, allUsersMap, currentUser?.id],
-  )
 
   const { nodes, edges } = useMemo(() => {
     if (!focalNodeId) return { nodes: [], edges: [] }
@@ -336,7 +321,7 @@ export const useFamilyTree = ({
         ...newNode,
         data: {
           ...user,
-          relationship: getRelationship(user.id, focalNodeId),
+          relationship: relationshipMap.get(user.id),
           isCurrentUser: user.id === currentUser?.id,
           isFocalUser: user.id === focalNodeId,
           isFocalUserSpouseOrPartner:
@@ -360,7 +345,6 @@ export const useFamilyTree = ({
     getSiblings,
     handleNodeExpand,
     currentUser?.id,
-    getRelationship,
   ])
 
   useEffect(() => {

@@ -37,6 +37,7 @@ const FamilyTreeComponent = forwardRef<
     relationships,
     members,
     currentUser,
+    relationshipMap,
   })
 
   useEffect(() => {

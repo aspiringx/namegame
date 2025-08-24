@@ -366,7 +366,7 @@ function RelateModalContent({
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="">
-      <div>
+      <div className="p-6">
         <div>
           <div className="flex items-center justify-between">
             <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100">

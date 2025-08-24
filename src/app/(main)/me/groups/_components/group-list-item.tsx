@@ -81,26 +81,28 @@ export function GroupListItem({ group }: GroupListItemProps) {
         <Modal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
-          title="Confirm Leaving Group"
         >
-          <div className="p-4">
+          <div className="p-6">
+            <h3 className="text-lg font-medium leading-6 text-gray-900 dark:text-gray-100 mb-4">
+              Confirm Leaving Group
+            </h3>
             <p>Are you sure you want to leave the group "{group.name}"?</p>
-            <div className="mt-6 flex justify-end space-x-2">
-              <Button
-                variant="outline"
-                onClick={() => setIsModalOpen(false)}
-                disabled={isPending}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={handleLeaveGroup}
-                disabled={isPending}
-              >
-                {isPending ? 'Leaving...' : 'Leave'}
-              </Button>
-            </div>
+          </div>
+          <div className="flex justify-end space-x-2 p-6 pt-0">
+            <Button
+              variant="outline"
+              onClick={() => setIsModalOpen(false)}
+              disabled={isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleLeaveGroup}
+              disabled={isPending}
+            >
+              {isPending ? 'Leaving...' : 'Leave'}
+            </Button>
           </div>
         </Modal>
       )}
