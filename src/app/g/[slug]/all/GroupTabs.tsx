@@ -30,6 +30,7 @@ import { useGroup } from '@/components/GroupProvider'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { ArrowUp, ArrowDown, LayoutGrid, List, X, Brain } from 'lucide-react'
 import NameQuizIntroModal from '@/components/NameQuizIntroModal'
 
@@ -254,6 +255,19 @@ const GroupTabs: React.FC<GroupTabsProps> = ({
 
   const handleRelationshipChange = () => {
     router.refresh()
+  }
+
+  const handleSearchChange = (
+    listType: 'greeted' | 'notGreeted',
+    query: string,
+  ) => {
+    setSettings((prev) => ({
+      ...prev,
+      searchQueries: {
+        ...prev.searchQueries,
+        [listType]: query,
+      },
+    }))
   }
 
   const handleSort = (key: 'greeted' | 'firstName' | 'lastName') => {
@@ -485,6 +499,27 @@ const GroupTabs: React.FC<GroupTabsProps> = ({
                       'ring-white/60 ring-offset-2 ring-offset-blue-400 focus:ring-2 focus:outline-none',
                     )}
                   >
+                    <div className="relative mb-4">
+                      <Input
+                        type="text"
+                        placeholder="Search by name..."
+                        value={settings.searchQueries[tab.type]}
+                        onChange={(e) =>
+                          handleSearchChange(tab.type, e.target.value)
+                        }
+                        className="pl-4 pr-10"
+                      />
+                      {settings.searchQueries[tab.type] && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2"
+                          onClick={() => handleSearchChange(tab.type, '')}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                     <SearchableMemberList
                       initialMembers={tab.members}
                       listType={tab.type}
