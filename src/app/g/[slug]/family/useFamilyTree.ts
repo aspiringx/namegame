@@ -157,9 +157,17 @@ export const useFamilyTree = ({
         ...getRelatives(focalNodeId, 'spouse'),
         ...getRelatives(focalNodeId, 'partner'),
       ]
-      const children = getRelatives(focalNodeId, 'child')
       spouses.forEach((s: UserWithPhotoUrl) => visibleUsers.set(s.id, s))
-      children.forEach((c: UserWithPhotoUrl) => visibleUsers.set(c.id, c))
+
+      // Add children from focal user
+      const focalUserChildren = getRelatives(focalNodeId, 'child')
+      focalUserChildren.forEach((c: UserWithPhotoUrl) => visibleUsers.set(c.id, c))
+
+      // Add children from spouses (step-children)
+      spouses.forEach((spouse) => {
+        const spouseChildren = getRelatives(spouse.id, 'child')
+        spouseChildren.forEach((c: UserWithPhotoUrl) => visibleUsers.set(c.id, c))
+      })
     } else if (mode === 'horizontal') {
       const siblings = getSiblings(focalNodeId)
       siblings.forEach((s: UserWithPhotoUrl) => visibleUsers.set(s.id, s))
@@ -232,13 +240,44 @@ export const useFamilyTree = ({
         })
       })
 
-      // 4a. Add children
-      const children = getRelatives(focalNodeId, 'child').filter(
-        (c: UserWithPhotoUrl) => visibleUsers.has(c.id),
+      // 4a. Add all children of the focal user and their spouse(s)
+      const allChildren = new Map<string, UserWithPhotoUrl>()
+
+      // Get focal user's children
+      const focalUserChildren = getRelatives(focalNodeId, 'child')
+      focalUserChildren.forEach((child: UserWithPhotoUrl) =>
+        allChildren.set(child.id, child),
       )
+
+      // Get spouse's children
+      spouses.forEach((spouse) => {
+        const spouseChildren = getRelatives(spouse.id, 'child')
+        spouseChildren.forEach((child: UserWithPhotoUrl) =>
+          allChildren.set(child.id, child),
+        )
+      })
+
+      const children = Array.from(allChildren.values()).filter((c) =>
+        visibleUsers.has(c.id),
+      )
+
+      // Center children below parents
+      const focalUserNode = newNodes.find((n) => n.id === focalNodeId)!
+      const spouseNodes = newNodes.filter((n) =>
+        spouses.some((s) => s.id === n.id),
+      )
+
+      const parentNodes = [focalUserNode, ...spouseNodes]
+      const minX = Math.min(...parentNodes.map((n) => n.position.x))
+      const maxX = Math.max(...parentNodes.map((n) => n.position.x))
+      const parentMidpointX = (minX + maxX) / 2
+
       children.forEach((child: UserWithPhotoUrl, index: number) => {
         if (addedIds.has(child.id)) return
-        const x = (index - (children.length - 1) / 2) * NODE_WIDTH * 1.5
+        const xOffset =
+          (index - (children.length - 1) / 2) * NODE_WIDTH * 1.5
+        const x = parentMidpointX + xOffset
+
         newNodes.push({
           id: child.id,
           type: 'avatar',
@@ -248,14 +287,7 @@ export const useFamilyTree = ({
           targetPosition: Position.Top,
         })
         addedIds.add(child.id)
-        newEdges.push({
-          id: `e-${focalUser.id}-${child.id}`,
-          source: focalUser.id,
-          target: child.id,
-          type: 'orthogonal',
-          sourceHandle: 'bottom-source',
-          targetHandle: 'top-target',
-        })
+        // No edge created between parent and child to reduce clutter
       })
     } else if (mode === 'horizontal') {
       // 3b. Add siblings
