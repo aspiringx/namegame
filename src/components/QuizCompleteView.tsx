@@ -8,11 +8,14 @@ import { Button } from '@/components/ui/button'
 interface QuizCompleteViewProps {
   groupSlug: string
   onStartOver: () => void
+  onSwitchToGrid: () => void
+  onSwitchToList: () => void
 }
 
 const QuizCompleteView: React.FC<QuizCompleteViewProps> = ({
-  groupSlug,
   onStartOver,
+  onSwitchToGrid,
+  onSwitchToList,
 }) => {
   const [animationComplete, setAnimationComplete] = useState(false)
 
@@ -31,7 +34,26 @@ const QuizCompleteView: React.FC<QuizCompleteViewProps> = ({
             onComplete={() => setAnimationComplete(true)}
           />
         ) : (
-          <Button onClick={handleStartOver}>Start Over</Button>
+          <div className="flex flex-col items-center gap-4">
+            <Button onClick={handleStartOver}>Start Over</Button>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Or switch back to{' '}
+              <button
+                onClick={onSwitchToGrid}
+                className="underline hover:text-gray-700 dark:hover:text-gray-200"
+              >
+                Grid
+              </button>{' '}
+              or{' '}
+              <button
+                onClick={onSwitchToList}
+                className="underline hover:text-gray-700 dark:hover:text-gray-200"
+              >
+                List
+              </button>{' '}
+              view.
+            </p>
+          </div>
         )}
       </div>
       <h2 className="mt-4 text-2xl font-bold">Congratulations!</h2>

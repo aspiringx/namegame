@@ -18,6 +18,8 @@ interface NameQuizViewProps {
   members: MemberWithUser[]
   groupSlug: string
   currentUserId?: string
+  onSwitchToGrid: () => void
+  onSwitchToList: () => void
 }
 
 interface QuizQuestion {
@@ -29,6 +31,8 @@ const NameQuizView: React.FC<NameQuizViewProps> = ({
   members,
   groupSlug,
   currentUserId,
+  onSwitchToGrid,
+  onSwitchToList,
 }) => {
   const [question, setQuestion] = useState<QuizQuestion | null>(null)
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null)
@@ -99,32 +103,42 @@ const NameQuizView: React.FC<NameQuizViewProps> = ({
   }
 
   if (eligibleMembers.length === 0) {
-    return <QuizCompleteView groupSlug={groupSlug} onStartOver={handleStartOver} />
+    return (
+      <QuizCompleteView
+        groupSlug={groupSlug}
+        onStartOver={handleStartOver}
+        onSwitchToGrid={onSwitchToGrid}
+        onSwitchToList={onSwitchToList}
+      />
+    )
   }
 
   if (!question) {
     return (
-      <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+      <div className="py-8 text-center text-gray-500 dark:text-gray-400">
         Loading quiz...
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col items-center gap-4">
-      <div className="relative h-48 w-48 overflow-hidden rounded-full shadow-lg">
+    <div className="flex flex-col items-center gap-4 py-4">
+      <div className="relative h-64 w-64 overflow-hidden rounded-full shadow-lg">
         <Image
-          src={question.correctMember.user.photoUrl || '/images/default-avatar.png'}
+          src={
+            question.correctMember.user.photoUrl || '/images/default-avatar.png'
+          }
           alt="Who is this?"
           fill
-          sizes="192px"
+          sizes="224px"
           className="object-cover"
         />
       </div>
-      <div className="grid grid-cols-1 gap-2 w-full max-w-xs">
+      <div className="grid w-full max-w-xs grid-cols-1 gap-2">
         {question.options.map((option) => {
           const isSelected = selectedAnswer === option.userId
-          const isCorrectOption = question.correctMember.userId === option.userId
+          const isCorrectOption =
+            question.correctMember.userId === option.userId
 
           return (
             <Button
@@ -132,10 +146,8 @@ const NameQuizView: React.FC<NameQuizViewProps> = ({
               onClick={() => handleAnswer(option.userId)}
               disabled={!!selectedAnswer}
               className={clsx('transition-colors', {
-                'bg-green-500 hover:bg-green-600':
-                  isSelected && isCorrect,
-                'bg-red-500 hover:bg-red-600':
-                  isSelected && !isCorrect,
+                'bg-green-500 hover:bg-green-600': isSelected && isCorrect,
+                'bg-red-500 hover:bg-red-600': isSelected && !isCorrect,
                 'border-2 border-green-500':
                   selectedAnswer && isCorrectOption && !isSelected,
               })}
