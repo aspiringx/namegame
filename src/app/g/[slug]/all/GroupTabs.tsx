@@ -31,6 +31,7 @@ import { TooltipProvider } from '@/components/ui/tooltip'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ArrowUp, ArrowDown, LayoutGrid, List, X, Brain } from 'lucide-react'
+import NameQuizIntroModal from '@/components/NameQuizIntroModal'
 
 interface GroupTabsProps {
   greetedMembers: MemberWithUser[]
@@ -178,6 +179,12 @@ const GroupTabs: React.FC<GroupTabsProps> = ({
   const [memberRelations, setMemberRelations] = useState<FullRelationship[]>([])
   const [allGroupMembers, setAllGroupMembers] = useState<MemberWithUser[]>([])
   const [isLoadingRelations, setIsLoadingRelations] = useState(false)
+  const [isIntroModalOpen, setIsIntroModalOpen] = useState(false)
+
+  const [introSeen, setIntroSeen] = useLocalStorage(
+    `nameQuizIntroSeen-${group?.slug || ''}`,
+    false,
+  )
 
   const allMembers = useMemo(
     () => [...greetedMembers, ...notGreetedMembers],
@@ -229,6 +236,20 @@ const GroupTabs: React.FC<GroupTabsProps> = ({
 
   const handleSwitchToList = () => {
     setSettings((prev) => ({ ...prev, viewMode: 'list' }))
+  }
+
+  const handleSwitchToQuiz = () => {
+    if (!introSeen) {
+      setIsIntroModalOpen(true)
+    } else {
+      setSettings((prev) => ({ ...prev, viewMode: 'quiz' }))
+    }
+  }
+
+  const handleCloseIntroModal = () => {
+    setIsIntroModalOpen(false)
+    setIntroSeen(true)
+    setSettings((prev) => ({ ...prev, viewMode: 'quiz' }))
   }
 
   const handleRelationshipChange = () => {
@@ -333,11 +354,9 @@ const GroupTabs: React.FC<GroupTabsProps> = ({
                 <Button
                   variant={'secondary'}
                   size="sm"
-                  onClick={() =>
-                    setSettings((prev) => ({ ...prev, viewMode: 'quiz' }))
-                  }
+                  onClick={handleSwitchToQuiz}
                 >
-                  <Brain className="h-4 w-4" />
+                  <Brain className="h-4 w-4 text-orange-500" />
                 </Button>
               </div>
               <div className="mt-4 rounded-xl bg-white p-3 dark:bg-gray-800">
@@ -450,11 +469,9 @@ const GroupTabs: React.FC<GroupTabsProps> = ({
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() =>
-                      setSettings((prev) => ({ ...prev, viewMode: 'quiz' }))
-                    }
+                    onClick={handleSwitchToQuiz}
                   >
-                    <Brain className="h-4 w-4" />
+                    <Brain className="h-4 w-4 text-orange-500" />
                   </Button>
                 </div>
               </div>
@@ -490,6 +507,10 @@ const GroupTabs: React.FC<GroupTabsProps> = ({
           )}
         </div>
       </TooltipProvider>
+      <NameQuizIntroModal
+        isOpen={isIntroModalOpen}
+        onClose={handleCloseIntroModal}
+      />
       {isRelateModalOpen && selectedMember && group?.groupType && ego && (
         <RelateModal
           isOpen={isRelateModalOpen}

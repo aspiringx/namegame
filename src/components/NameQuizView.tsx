@@ -99,7 +99,7 @@ const NameQuizView: React.FC<NameQuizViewProps> = ({
     // After a delay to show feedback, update scores to trigger the next question.
     setTimeout(() => {
       setScores(getQuizScores(groupSlug))
-    }, 1500)
+    }, 800)
   }
 
   if (eligibleMembers.length === 0) {
