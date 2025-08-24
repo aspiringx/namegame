@@ -15,7 +15,7 @@ import ManageUserModal from './ManageUserModal'
 interface MemberCardProps {
   member: Member
   listType: 'greeted' | 'notGreeted'
-  viewMode: 'grid' | 'list'
+  viewMode: 'grid' | 'list' | 'quiz'
   relationship?: string
   isGroupAdmin?: boolean
   groupMembers: Member[]

@@ -116,7 +116,8 @@ export default function UserMenu() {
               <hr className="my-2 border-gray-200 dark:border-gray-700" />
               <button
                 onClick={() => {
-                  signOut({ callbackUrl: '/' })
+                  const callbackUrl = `${window.location.origin}/`;
+                  signOut({ callbackUrl });
                   closeDropdown()
                 }}
                 className="block w-full px-4 py-2 text-left text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
