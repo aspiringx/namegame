@@ -410,7 +410,7 @@ const GroupTabs: React.FC<GroupTabsProps> = ({
               </Tab.List>
 
               {/* Sort and View Mode Buttons */}
-              <div className="md:-pt-0 my-4 flex items-center justify-end pt-2">
+              <div className="md:-pt-0 mt-1 mb-4 flex items-center justify-end pt-2">
                 {/* Sort Buttons */}
                 <div className="mr-auto flex items-center gap-2">
                   {(['greeted', 'firstName', 'lastName'] as const).map(
