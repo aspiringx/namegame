@@ -65,11 +65,11 @@ export const getEligibleQuizMembers = (
     if (!score) {
       return true // Never been guessed
     }
-    // Exclude if guessed correctly 3 or more times, unless enough time has passed
-    if (score.correctGuesses >= 3) {
+    // Exclude if guessed correctly 5 or more times, unless enough time has passed
+    if (score.correctGuesses >= 5) {
       return now - score.lastCorrectTimestamp > SPACED_REPETITION_INTERVAL
     }
-    return true // Fewer than 3 correct guesses
+    return true // Fewer than 5 correct guesses
   })
 }
 

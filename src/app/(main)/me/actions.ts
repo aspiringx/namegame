@@ -223,8 +223,28 @@ export async function updateUserProfile(
     }
 
     let emailChanged = false
-    if (email && (email !== user.email || !user.emailVerified)) {
-      dataToUpdate.email = email
+    const lowercasedEmail = email ? email.toLowerCase() : null
+    if (lowercasedEmail && (lowercasedEmail !== user.email || !user.emailVerified)) {
+      const existingUser = await prisma.user.findFirst({
+        where: {
+          email: lowercasedEmail,
+          id: { not: userId },
+        },
+      })
+
+      if (existingUser) {
+        return {
+          success: false,
+          error: 'This email is already in use by another account.',
+          message: null,
+          errors: { email: ['This email is already in use.'] },
+        }
+      }
+
+      dataToUpdate.email = lowercasedEmail
+      if (user.username === user.email) {
+        dataToUpdate.username = lowercasedEmail
+      }
       dataToUpdate.emailVerified = null // Mark new email as unverified
       emailChanged = true
     }

@@ -47,6 +47,7 @@ export async function signup(
   }
 
   const { email, firstName, lastName, password } = validatedFields.data
+  const lowercasedEmail = email.toLowerCase()
 
   if (password === 'password123') {
     return {
@@ -59,7 +60,7 @@ export async function signup(
 
   try {
     const existingUser = await prisma.user.findUnique({
-      where: { email },
+      where: { email: lowercasedEmail },
     })
 
     if (existingUser) {
@@ -75,8 +76,8 @@ export async function signup(
     await prisma.$transaction(async (tx) => {
       newUser = await tx.user.create({
         data: {
-          email,
-          username: email,
+          email: lowercasedEmail,
+          username: lowercasedEmail,
           firstName,
           lastName,
           password: hashedPassword,

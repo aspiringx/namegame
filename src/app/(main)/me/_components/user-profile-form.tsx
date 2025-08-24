@@ -503,6 +503,10 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
               </TooltipProvider>
             </div>
           </div>
+          <p className="mt-1 text-xs text-gray-500 italic dark:text-gray-400">
+            By saving and verifying my email address, I consent to receiving
+            messages from my NameGame groups.
+          </p>
           {state?.errors?.email ? (
             <p className="mt-1 text-xs text-red-500 dark:text-red-400">
               {state.errors.email[0]}
