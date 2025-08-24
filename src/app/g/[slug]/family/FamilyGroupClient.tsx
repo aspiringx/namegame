@@ -432,7 +432,6 @@ export function FamilyGroupClient({
                     }
                   >
                     <FlaskConical className="h-3 w-3 text-lime-400 sm:h-4 sm:w-4" />
-                    <span>Experimental</span>
                   </div>
                 </TooltipTrigger>
                 <TooltipContent>
