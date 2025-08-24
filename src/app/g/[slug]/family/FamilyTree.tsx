@@ -7,10 +7,10 @@ import {
   useEffect,
   useState,
 } from 'react'
+import { X } from 'lucide-react'
 import { useReactFlow } from 'reactflow'
 import ReactFlow, {
   Background,
-  Controls,
   ReactFlowProvider,
   Node,
 } from 'reactflow'
@@ -19,6 +19,7 @@ import { MemberWithUser, UserWithPhotoUrl, FullRelationship } from '@/types'
 import AvatarNode from './AvatarNode'
 import { MemberDetailsModal } from './MemberDetailsModal'
 import { useFamilyTree, AvatarNodeData } from './useFamilyTree'
+import { FamilyTreeControls } from './FamilyTreeControls'
 
 interface FamilyTreeProps {
   relationships: FullRelationship[]
@@ -60,6 +61,7 @@ const FamilyTreeComponent = forwardRef<
     )
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [isMobile, setIsMobile] = useState(false)
+    const [isFullScreen, setIsFullScreen] = useState(false)
     const { fitView, zoomTo } = useReactFlow()
 
     useEffect(() => {
@@ -119,16 +121,36 @@ const FamilyTreeComponent = forwardRef<
 
     return (
       <>
-        <div style={{ width: '100%', height: '100%' }} ref={reactFlowWrapper}>
+        <div
+          className={isFullScreen ? 'bg-background' : ''}
+          style={{
+            width: isFullScreen ? '100vw' : '100%',
+            height: isFullScreen ? '100vh' : '100%',
+            position: isFullScreen ? 'fixed' : 'relative',
+            top: 0,
+            left: 0,
+            zIndex: isFullScreen ? 50 : 'auto',
+          }}
+          ref={reactFlowWrapper}
+        >
           <ReactFlow
             nodes={nodes}
             edges={edges}
             nodeTypes={nodeTypes}
             proOptions={{ hideAttribution: true }}
-            style={{ background: 'transparent' }}
             onNodeClick={handleNodeClick}
+            className="bg-background"
           >
-            <Controls />
+            <FamilyTreeControls onFullScreen={() => setIsFullScreen(true)} />
+            {isFullScreen && (
+              <button
+                onClick={() => setIsFullScreen(false)}
+                className="absolute top-4 right-4 z-50 rounded-full bg-white p-2 shadow-lg"
+                aria-label="Exit full screen"
+              >
+                <X className="h-6 w-6 text-gray-700" />
+              </button>
+            )}
           </ReactFlow>
         </div>
         <MemberDetailsModal

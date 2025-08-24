@@ -426,7 +426,7 @@ export function FamilyGroupClient({
               >
                 <TooltipTrigger asChild>
                   <div
-                    className="bg-background/80 absolute top-2 right-2 z-10 flex cursor-pointer items-center gap-1 rounded-full border px-2 py-1 text-xs backdrop-blur-sm sm:gap-1.5 sm:px-3 sm:py-1.5 sm:text-sm"
+                    className="bg-background/80 absolute top-2 left-2 z-10 flex cursor-pointer items-center gap-1 rounded-full border px-2 py-1 text-xs backdrop-blur-sm sm:gap-1.5 sm:px-3 sm:py-1.5 sm:text-sm"
                     onClick={() =>
                       setIsExperimentalTooltipOpen(!isExperimentalTooltipOpen)
                     }
