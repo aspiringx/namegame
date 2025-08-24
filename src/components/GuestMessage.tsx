@@ -92,15 +92,16 @@ export function GuestMessage({
 
   // For the /me page, show an inline message
   return (
-    <div className="my-2 rounded-md bg-blue-300 p-4 dark:bg-blue-900">
+    <div className="my-2 rounded-md bg-blue-200 p-4 dark:bg-blue-900">
       <h3 className="mb-2 text-center text-lg font-semibold">
         Hi {firstName}!
       </h3>
       <p className="mb-4">
-        You're playing as a guest. Add the required info below so others can
+        You're playing as a guest. Add the{' '}
+        <span className="text-red-500">required</span> info below so others can
         recognize and remember you.
       </p>
-      <p className="text-sm text-gray-500 italic dark:text-gray-400">
+      <p className="text-sm text-gray-600 italic dark:text-gray-300">
         After you save changes, check your email for a verification link to
         finish the process.
       </p>

@@ -423,7 +423,7 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
               required
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
-              className={`mt-1 -ml-px block w-full rounded-l-none rounded-r-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 ${
+              className={`mt-1 -ml-px block w-full rounded-l-none rounded-r-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 ${
                 !lastName || state?.errors?.lastName
                   ? 'bg-red-100 dark:bg-red-900'
                   : ''
@@ -536,7 +536,7 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
               autoComplete="new-password"
               value={password}
               required={validation.passwordRequired}
-              className={`block w-full min-w-0 flex-1 rounded-none rounded-l-md border border-gray-300 bg-white px-3 py-2 focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 ${
+              className={`block w-full min-w-0 flex-1 rounded-none rounded-l-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 ${
                 (validation.passwordRequired && !password) ||
                 state?.errors?.password
                   ? 'bg-red-100 dark:bg-red-900'
@@ -634,7 +634,15 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
             Profile Picture
           </label>
-          <div className="mt-2 flex flex-col items-start space-y-4">
+          <div
+            className={`mt-2 flex flex-col items-start space-y-4 ${
+              validation.photoRequired &&
+              previewUrl?.includes('dicebear.com') &&
+              !fileSelected
+                ? 'rounded-md bg-red-100 p-4 dark:bg-red-900'
+                : ''
+            }`}
+          >
             <label
               htmlFor="photo"
               className="group relative inline-block h-32 w-32 cursor-pointer overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700"
@@ -688,12 +696,10 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
             >
               Change Photo
             </button>
-            <p
-              className={`-mt-3 text-xs text-red-500 dark:text-red-400 ${
-                validation.photoRequired ? 'text-red-500 dark:text-red-400' : ''
-              }`}
-            >
-              {validation.photoRequired && previewUrl?.includes('dicebear.com')
+            <p className={`-mt-3 text-xs text-gray-500 dark:text-gray-400`}>
+              {validation.photoRequired &&
+              previewUrl?.includes('dicebear.com') &&
+              !fileSelected
                 ? 'Add a real profile pic so people recognize you.'
                 : ''}
             </p>
