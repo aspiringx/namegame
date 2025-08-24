@@ -366,7 +366,7 @@ function RelateModalContent({
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="">
-      <div>
+      <div className="p-6">
         <div>
           <div className="flex items-center justify-between">
             <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100">
@@ -653,34 +653,39 @@ function RelateModalContent({
         <Modal
           isOpen={!!relationToDelete}
           onClose={() => setRelationToDelete(null)}
-          title="Confirm Deletion"
+          title=""
         >
-          <div className="mt-4">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Are you sure you want to delete the relationship with{' '}
-              <strong>
-                {relationToDelete.relatedUser.firstName}{' '}
-                {relationToDelete.relatedUser.lastName}
-              </strong>
-              ?
-            </p>
-          </div>
-          <div className="mt-6 flex justify-end space-x-2">
-            <button
-              type="button"
-              className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
-              onClick={() => setRelationToDelete(null)}
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              disabled={isDeleting}
-              className="inline-flex justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              onClick={handleDelete}
-            >
-              {isDeleting ? 'Deleting...' : 'Delete'}
-            </button>
+          <div className="p-6">
+            <h3 className="text-lg font-medium leading-6 text-gray-900 dark:text-gray-100">
+              Confirm Deletion
+            </h3>
+            <div className="mt-4">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Are you sure you want to delete the relationship with{' '}
+                <strong>
+                  {relationToDelete.relatedUser.firstName}{' '}
+                  {relationToDelete.relatedUser.lastName}
+                </strong>
+                ?
+              </p>
+            </div>
+            <div className="mt-6 flex justify-end space-x-2">
+              <button
+                type="button"
+                className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+                onClick={() => setRelationToDelete(null)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isDeleting}
+                className="inline-flex justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={handleDelete}
+              >
+                {isDeleting ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
           </div>
         </Modal>
       )}

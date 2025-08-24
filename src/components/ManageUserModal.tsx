@@ -75,8 +75,11 @@ export default function ManageUserModal({
 
   return (
     <>
-      <Modal isOpen={isOpen} onClose={onClose} title={`Manage ${managedUser.firstName}`}>
-        <div className="mt-4">
+      <Modal isOpen={isOpen} onClose={onClose}>
+        <div className="p-6">
+          <h3 className="text-lg font-medium leading-6 text-gray-900 dark:text-gray-100 mb-4">
+            {`Manage ${managedUser.firstName}`}
+          </h3>
           {isCurrentUserMananger && (
             <div className="space-y-4 py-4 border-b border-gray-200 dark:border-gray-700">
               <h3 className="text-md font-medium text-gray-900 dark:text-gray-100">Add Manager</h3>
@@ -159,9 +162,11 @@ export default function ManageUserModal({
         <Modal
           isOpen={!!managerToDelete}
           onClose={() => setManagerToDelete(null)}
-          title="Confirm Removal"
         >
-          <div className="mt-4">
+          <div className="p-6">
+            <h3 className="text-lg font-medium leading-6 text-gray-900 dark:text-gray-100 mb-4">
+              Confirm Removal
+            </h3>
             <p className="text-sm text-gray-600 dark:text-gray-400">
               Are you sure you want to remove {' '}
               <strong>
