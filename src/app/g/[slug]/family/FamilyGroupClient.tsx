@@ -32,7 +32,7 @@ import type { FamilyTreeRef } from './FamilyTree'
 import { FocalUserSearch } from './FocalUserSearch'
 import { useGroup } from '@/components/GroupProvider'
 
-type SortKey = 'closest' | 'firstName' | 'lastName'
+type SortKey = 'joined' | 'firstName' | 'lastName'
 type SortDirection = 'asc' | 'desc'
 
 interface FamilyPageSettings {
@@ -67,7 +67,7 @@ export function FamilyGroupClient({
     `family-group-settings-${groupSlug}`,
     {
       searchQuery: '',
-      sortConfig: { key: 'closest', direction: 'asc' },
+      sortConfig: { key: 'joined', direction: 'desc' },
       viewMode: 'tree',
     },
   )
@@ -268,28 +268,14 @@ export function FamilyGroupClient({
       })
     }
 
-    if (settings.sortConfig.key === 'closest') {
-      return [...filtered].sort((a, b) => {
-        const aRel = relationshipMap.get(a.userId)
-        const bRel = relationshipMap.get(b.userId)
-        const aSteps = aRel ? aRel.steps : Infinity
-        const bSteps = bRel ? bRel.steps : Infinity
-
-        if (aSteps !== bSteps) {
-          return settings.sortConfig.direction === 'asc'
-            ? aSteps - bSteps
-            : bSteps - aSteps
-        }
-
-        // Secondary sort by first name
-        const aName = a.user.firstName || ''
-        const bName = b.user.firstName || ''
-        return aName.localeCompare(bName)
-      })
-    }
-
     return [...filtered].sort((a, b) => {
       const { key, direction } = settings.sortConfig
+      if (key === 'joined') {
+        const aDate = new Date(a.createdAt).getTime()
+        const bDate = new Date(b.createdAt).getTime()
+        return direction === 'asc' ? aDate - bDate : bDate - aDate
+      }
+
       const aValue =
         a.user[key === 'firstName' ? 'firstName' : 'lastName'] || ''
       const bValue =
@@ -322,7 +308,7 @@ export function FamilyGroupClient({
                   Reset
                 </Button>
               ) : (
-                (['closest', 'firstName', 'lastName'] as const).map((key) => {
+                (['joined', 'firstName', 'lastName'] as const).map((key) => {
                   const isActive = settings.sortConfig.key === key
                   const SortIcon =
                     settings.sortConfig.direction === 'asc'
@@ -334,7 +320,7 @@ export function FamilyGroupClient({
                       variant={isActive ? 'secondary' : 'ghost'}
                       size="sm"
                       onClick={() => handleSort(key)}
-                      className="flex items-center gap-1 capitalize"
+                      className={`flex items-center gap-1 capitalize ${key !== 'joined' ? 'hidden sm:flex' : ''}`}
                     >
                       {key.replace('Name', '')}
                       {isActive && <SortIcon className="h-4 w-4" />}
