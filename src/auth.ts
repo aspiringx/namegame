@@ -21,10 +21,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const lowercasedIdentifier = (email as string).toLowerCase()
         const isEmail = lowercasedIdentifier.includes('@')
 
-        const dbUser = await prisma.user.findUnique({
+        const dbUser = await prisma.user.findFirst({
           where: isEmail
-            ? { email: lowercasedIdentifier }
-            : { username: lowercasedIdentifier },
+            ? { email: { equals: lowercasedIdentifier, mode: 'insensitive' } }
+            : {
+                username: { equals: lowercasedIdentifier, mode: 'insensitive' },
+              },
           include: {
             groupMemberships: { include: { group: true, role: true } },
             photos: true, // We'll filter photos manually after getting code tables

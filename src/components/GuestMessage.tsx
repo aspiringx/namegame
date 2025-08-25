@@ -55,28 +55,26 @@ export function GuestMessage({
       </h3>
       <div className="space-y-2">
         <p>
-          <b>You're in the {groupName}</b> private group, playing as a
+          <b>You're in the {groupName}</b> private group, playing as a{' '}
           <b>new guest.</b>
         </p>
         <p>
           First, complete your profile so others recognize you with a real
           photo!
         </p>
-        <p>
-          {groupType === 'family' ? (
-            <>
-              <p className="mb-2">
-                Then you can connect to others in the group so you appear in the
-                family tree.
-              </p>
-            </>
-          ) : (
-            <>
-              <b>You're in the {groupName}</b> private NameGame group, where
-              meeting and remembering names is easy and fun.
-            </>
-          )}
-        </p>
+        {groupType === 'family' ? (
+          <>
+            <p className="mb-2">
+              Then you can connect to others in the group so you appear in the
+              family tree.
+            </p>
+          </>
+        ) : (
+          <>
+            <b>You're in the {groupName}</b> private NameGame group, where
+            meeting and remembering names is easy and fun.
+          </>
+        )}
       </div>
       <div className="mt-6 flex justify-center gap-4">
         <Button onClick={handleClose} variant="outline">
@@ -114,7 +112,7 @@ export function GuestMessage({
         Hi {firstName}!
       </h3>
       <p className="mb-4">
-        You're playing as a guest. Add the{' '}
+        You're playing as a new guest. Add the{' '}
         <span className="text-red-500">required</span> info below so others can
         recognize and remember you.
       </p>
