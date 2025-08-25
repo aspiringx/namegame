@@ -34,6 +34,7 @@ export default function GroupPageClient({
         isGuest={isGuest}
         firstName={session?.user?.firstName}
         groupName={groupData.name}
+        groupType={groupData.groupType.code}
       />
       <GroupTabs
         greetedMembers={greetedMembers}

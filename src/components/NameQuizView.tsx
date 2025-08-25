@@ -15,6 +15,7 @@ import Image from 'next/image'
 import QuizCompleteView from './QuizCompleteView'
 import { Button } from './ui/button'
 import clsx from 'clsx'
+import { truncate } from '@/lib/utils'
 
 interface NameQuizViewProps {
   members: MemberWithUser[]
@@ -22,6 +23,7 @@ interface NameQuizViewProps {
   currentUserId?: string
   onSwitchToGrid: () => void
   onSwitchToList: () => void
+  groupType?: string
 }
 
 interface QuizQuestion {
@@ -35,53 +37,49 @@ const NameQuizView: React.FC<NameQuizViewProps> = ({
   currentUserId,
   onSwitchToGrid,
   onSwitchToList,
+  groupType,
 }) => {
   const [question, setQuestion] = useState<QuizQuestion | null>(null)
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null)
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null)
   const [modalPerson, setModalPerson] = useState<MemberWithUser | null>(null)
 
-  const quizPoolMembers = useMemo(
-    () =>
-      currentUserId
-        ? members.filter((member) => member.userId !== currentUserId)
-        : members,
-    [members, currentUserId],
-  )
+  const quizPoolMembers = useMemo(() => {
+    return members.filter((member) => {
+      // Exclude the current user from the quiz
+      if (member.userId === currentUserId) return false
 
-  const membersWithPhotos = useMemo(
-    () =>
-      quizPoolMembers.filter(
-        (member) =>
-          member.user.photoUrl &&
-          !member.user.photoUrl.includes('default-avatar.png') &&
-          !member.user.photoUrl.includes('dicebear.com'),
-      ),
-    [quizPoolMembers],
-  )
+      // Exclude members without a valid photo
+      return (
+        member.user.photoUrl &&
+        !member.user.photoUrl.includes('default-avatar.png') &&
+        !member.user.photoUrl.includes('dicebear.com')
+      )
+    })
+  }, [members, currentUserId])
 
   const [scores, setScores] = useState(() => getQuizScores(groupSlug))
 
   const eligibleMembers = useMemo(
-    () => getEligibleQuizMembers(membersWithPhotos, scores),
-    [membersWithPhotos, scores],
+    () => getEligibleQuizMembers(quizPoolMembers, scores),
+    [quizPoolMembers, scores],
   )
 
   const loadNextQuestion = () => {
     setSelectedAnswer(null)
     setIsCorrect(null)
-    const nextQuestion = generateQuizQuestion(eligibleMembers, quizPoolMembers)
+    const nextQuestion = generateQuizQuestion(eligibleMembers, members)
     setQuestion(nextQuestion)
   }
 
   // Load a question whenever the eligible members pool changes.
   useEffect(() => {
     // Do not run on initial mount if members aren't loaded yet.
-    if (membersWithPhotos.length > 0) {
+    if (quizPoolMembers.length > 0) {
       loadNextQuestion()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scores, membersWithPhotos])
+  }, [scores, quizPoolMembers])
 
   const handleStartOver = () => {
     clearQuizScores(groupSlug)
@@ -127,6 +125,14 @@ const NameQuizView: React.FC<NameQuizViewProps> = ({
     setModalPerson(null)
     setScores(getQuizScores(groupSlug))
     loadNextQuestion()
+  }
+
+  if (members.length === 0) {
+    return (
+      <div className="py-8 text-center text-gray-500 dark:text-gray-400">
+        Loading quiz...
+      </div>
+    )
   }
 
   if (eligibleMembers.length === 0) {
@@ -182,7 +188,7 @@ const NameQuizView: React.FC<NameQuizViewProps> = ({
           </div>
         </div>
       </Modal>
-      <div className="flex flex-col items-center gap-4 py-4">
+      <div className="flex flex-col items-center gap-4 p-4">
         <div className="relative h-64 w-64 overflow-hidden rounded-full shadow-lg">
           <Image
             src={
@@ -213,7 +219,7 @@ const NameQuizView: React.FC<NameQuizViewProps> = ({
                     selectedAnswer && isCorrectOption && !isSelected,
                 })}
               >
-                {option.user.name}
+                {truncate(option.user.name || '', 32)}
               </Button>
             )
           })}

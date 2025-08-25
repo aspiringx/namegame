@@ -375,7 +375,7 @@ const GroupTabs: React.FC<GroupTabsProps> = ({
               </div>
               <div className="mt-4 rounded-xl bg-white p-3 dark:bg-gray-800">
                 <NameQuizViewClient
-                  members={allMembers.filter((m) => m.user.photoUrl)}
+                  members={allMembers}
                   groupSlug={group?.slug || ''}
                   currentUserId={ego?.userId}
                   onSwitchToGrid={handleSwitchToGrid}

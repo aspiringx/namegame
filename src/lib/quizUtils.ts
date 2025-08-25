@@ -79,26 +79,28 @@ export const getEligibleQuizMembers = (
 
 export const generateQuizQuestion = (
   eligibleMembers: MemberWithUser[],
-  allMembers: MemberWithUser[],
+  allMembersForOptions: MemberWithUser[],
 ) => {
   if (eligibleMembers.length === 0) {
     return null
   }
 
-  // Select a random member to be the correct answer
+  // Select a random member to be the correct answer from the eligible pool
   const correctMember =
     eligibleMembers[Math.floor(Math.random() * eligibleMembers.length)]
 
-  // Get two other random members for incorrect options
-  const otherMembers = allMembers.filter(
-    (m) => m.userId !== correctMember.userId,
+  // Get up to two other random members from the main pool for incorrect options
+  const otherMembers = allMembersForOptions.filter(
+    m => m.userId !== correctMember.userId,
   )
 
-  // Not enough members to create a full quiz, but we can proceed with fewer options
-  const numOptions = Math.min(2, otherMembers.length)
-
   const incorrectOptions: MemberWithUser[] = []
-  while (incorrectOptions.length < numOptions && otherMembers.length > 0) {
+  const numOptionsToSelect = Math.min(2, otherMembers.length)
+
+  while (
+    incorrectOptions.length < numOptionsToSelect &&
+    otherMembers.length > 0
+  ) {
     const randomIndex = Math.floor(Math.random() * otherMembers.length)
     const randomMember = otherMembers.splice(randomIndex, 1)[0]
     incorrectOptions.push(randomMember)

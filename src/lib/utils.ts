@@ -99,3 +99,10 @@ export function formatDateForInput(
       return format(adjustedDate, 'MMMM d, yyyy')
   }
 }
+
+export function truncate(str: string, n: number): string {
+  if (!str) {
+    return ''
+  }
+  return str.length > n ? str.slice(0, n) + '...' : str
+}

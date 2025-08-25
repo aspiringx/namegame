@@ -11,10 +11,12 @@ export function GuestMessage({
   isGuest,
   firstName,
   groupName,
+  groupType,
 }: {
   isGuest: boolean
   firstName?: string | null
   groupName?: string
+  groupType?: 'community' | 'family' | string
 }) {
   const pathname = usePathname()
   const router = useRouter()
@@ -51,14 +53,29 @@ export function GuestMessage({
       <h3 className="mb-4 text-center text-xl font-semibold text-gray-900 dark:text-gray-100">
         Welcome {firstName}!
       </h3>
-      <div className="space-y-2 text-gray-600 dark:text-gray-400">
+      <div className="space-y-2">
         <p>
-          <b>You're in the {groupName}</b> private NameGame group, where meeting
-          and remembering names is easy and fun.
+          <b>You're in the {groupName}</b> private group, playing as a
+          <b>new guest.</b>
         </p>
         <p>
-          <b>You're currently playing as a new guest.</b> Complete your profile
-          so others can see and remember you.
+          First, complete your profile so others recognize you with a real
+          photo!
+        </p>
+        <p>
+          {groupType === 'family' ? (
+            <>
+              <p className="mb-2">
+                Then you can connect to others in the group so you appear in the
+                family tree.
+              </p>
+            </>
+          ) : (
+            <>
+              <b>You're in the {groupName}</b> private NameGame group, where
+              meeting and remembering names is easy and fun.
+            </>
+          )}
         </p>
       </div>
       <div className="mt-6 flex justify-center gap-4">
@@ -68,16 +85,16 @@ export function GuestMessage({
         <Button onClick={handleUpdateProfile}>Complete Profile Now</Button>
       </div>
       <p className="mt-6">
-        <b>
-          While you're here, use Name Quiz
-          <Brain className="mx-1 -mt-1 inline-block h-4 w-4 align-middle text-orange-500" />{' '}
-        </b>
+        While you're here, use the Name Quiz
+        <Brain className="mx-1 -mt-1 inline-block h-4 w-4 align-middle text-orange-500" />{' '}
         to remember names.
       </p>
-      <p className="mt-6 text-sm text-gray-500 italic dark:text-gray-400">
-        p.s. If you're new to this group and laying low, feel free to continue
-        as a guest.
-      </p>
+      {groupType === 'community' && (
+        <p className="mt-6 text-sm text-gray-500 italic dark:text-gray-400">
+          p.s. If you're new to this group and laying low, feel free to continue
+          as a guest.
+        </p>
+      )}
     </div>
   )
 
