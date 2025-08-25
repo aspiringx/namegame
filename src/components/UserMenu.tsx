@@ -5,10 +5,13 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { signOut, useSession } from 'next-auth/react'
 import { useUserSession } from '@/context/UserSessionContext'
+import { useAddToHomescreenPrompt } from '@/hooks/useAddToHomescreenPrompt'
 
 export default function UserMenu() {
   const { data: session, update } = useSession()
   const { imageUrl } = useUserSession()
+  const { prompt, isIOS, isMacSafari } = useAddToHomescreenPrompt()
+  const canShowPrompt = prompt || isIOS || isMacSafari
   const [isDropdownOpen, setDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
@@ -112,6 +115,17 @@ export default function UserMenu() {
                     Users
                   </Link>
                 </>
+              )}
+              {canShowPrompt && (
+                <button
+                  onClick={() => {
+                    localStorage.removeItem('namegame_pwa_prompt_dismissed')
+                    window.location.reload()
+                  }}
+                  className="block w-full px-4 py-2 text-left text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
+                >
+                  Install App
+                </button>
               )}
               <hr className="my-2 border-gray-200 dark:border-gray-700" />
               <button
