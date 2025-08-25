@@ -6,6 +6,7 @@ import useLocalStorage from '@/hooks/useLocalStorage'
 import { useInView } from 'react-intersection-observer'
 import { MemberWithUser, FullRelationship, User } from '@/types'
 import { getPaginatedMembers, getGroupMembersForRelate } from './actions'
+import dynamic from 'next/dynamic'
 import { getMemberRelations } from '@/lib/actions'
 import FamilyMemberCard from '@/components/FamilyMemberCard'
 import RelateModal from '@/components/RelateModal'
@@ -25,12 +26,15 @@ import {
   List,
   X,
   FlaskConical,
+  Brain,
 } from 'lucide-react'
 import { ReactFlowProvider } from 'reactflow'
 import FamilyTree from './FamilyTree'
 import type { FamilyTreeRef } from './FamilyTree'
 import { FocalUserSearch } from './FocalUserSearch'
 import { useGroup } from '@/components/GroupProvider'
+import NameQuizIntroModal from '@/components/NameQuizIntroModal'
+import { GuestMessage } from '@/components/GuestMessage'
 
 type SortKey = 'joined' | 'firstName' | 'lastName'
 type SortDirection = 'asc' | 'desc'
@@ -41,7 +45,7 @@ interface FamilyPageSettings {
     key: SortKey
     direction: SortDirection
   }
-  viewMode: 'grid' | 'list' | 'tree'
+  viewMode: 'grid' | 'list' | 'tree' | 'quiz'
 }
 
 interface FamilyGroupClientProps {
@@ -63,15 +67,19 @@ export function FamilyGroupClient({
     initialMembers.length < initialMemberCount,
   )
 
+  const { group, isGroupAdmin, currentUserMember } = useGroup()
+  const isGuest = !currentUserMember || currentUserMember.role?.code === 'guest'
+
   const [settings, setSettings] = useLocalStorage<FamilyPageSettings>(
     `family-group-settings-${groupSlug}`,
     {
       searchQuery: '',
       sortConfig: { key: 'joined', direction: 'desc' },
-      viewMode: 'tree',
+      viewMode: isGuest ? 'grid' : 'tree',
     },
   )
-  const { group, isGroupAdmin, currentUserMember } = useGroup()
+  const prevIsGuestRef = useRef(isGuest)
+
   const { ref, inView } = useInView()
   const router = useRouter()
   const treeContainerRef = useRef<HTMLDivElement>(null)
@@ -90,6 +98,12 @@ export function FamilyGroupClient({
   const [isResetDisabled, setIsResetDisabled] = useState(true)
   const [isExperimentalTooltipOpen, setIsExperimentalTooltipOpen] =
     useState(false)
+  const [isIntroModalOpen, setIsIntroModalOpen] = useState(false)
+
+  const [introSeen, setIntroSeen] = useLocalStorage(
+    `nameQuizIntroSeen-${groupSlug}`,
+    false,
+  )
 
   const [isMounted, setIsMounted] = useState(false)
 
@@ -106,7 +120,16 @@ export function FamilyGroupClient({
   }
   useEffect(() => {
     setIsMounted(true)
-  }, [])
+
+    // If the user was a guest and is now a registered user, set the default
+    // view back to 'tree'. This handles the case where their last-used view
+    // was 'grid' (the guest default) and we want to switch them to the
+    // registered-user default.
+    if (prevIsGuestRef.current && !isGuest) {
+      setSettings((prev) => ({ ...prev, viewMode: 'tree' }))
+    }
+    prevIsGuestRef.current = isGuest
+  }, [isGuest, setSettings])
 
   useEffect(() => {
     setMembers(initialMembers)
@@ -253,6 +276,28 @@ export function FamilyGroupClient({
     }))
   }
 
+    const handleSwitchToQuiz = () => {
+    if (!introSeen) {
+      setIsIntroModalOpen(true)
+    } else {
+      setSettings((prev) => ({ ...prev, viewMode: 'quiz' }))
+    }
+  }
+
+  const handleCloseIntroModal = () => {
+    setIsIntroModalOpen(false)
+    setIntroSeen(true)
+    setSettings((prev) => ({ ...prev, viewMode: 'quiz' }))
+  }
+
+  const handleSwitchToGrid = () => {
+    setSettings((prev) => ({ ...prev, viewMode: 'grid' }))
+  }
+
+  const handleSwitchToList = () => {
+    setSettings((prev) => ({ ...prev, viewMode: 'list' }))
+  }
+
   const filteredAndSortedMembers = useMemo(() => {
     let filtered = members
     if (settings.searchQuery) {
@@ -287,12 +332,26 @@ export function FamilyGroupClient({
     })
   }, [members, settings.searchQuery, settings.sortConfig])
 
+  const NameQuizViewClient = dynamic(
+  () => import('@/components/NameQuizViewClient'),
+  {
+    loading: () => <div className="p-4 text-center">Loading quiz...</div>,
+    ssr: false,
+  },
+)
+
   if (!isMounted) {
     return null // Or a loading spinner
   }
 
   return (
     <>
+      <GuestMessage
+        isGuest={!currentUserMember || currentUserMember.role?.code === 'guest'}
+        firstName={currentUserMember?.user?.firstName}
+        groupName={group?.name}
+        groupType={group?.groupType?.code}
+      />
       <div className="bg-background border-border sticky top-16 z-10 border-b py-4">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between gap-2">
@@ -307,7 +366,7 @@ export function FamilyGroupClient({
                 >
                   Reset
                 </Button>
-              ) : (
+              ) : settings.viewMode !== 'quiz' ? (
                 (['joined', 'firstName', 'lastName'] as const).map((key) => {
                   const isActive = settings.sortConfig.key === key
                   const SortIcon =
@@ -327,7 +386,7 @@ export function FamilyGroupClient({
                     </Button>
                   )
                 })
-              )}
+              ) : null}
             </div>
             <div className="flex items-center gap-2">
               <Button
@@ -357,6 +416,13 @@ export function FamilyGroupClient({
               >
                 <List className="h-4 w-4" />
               </Button>
+              <Button
+                variant={settings.viewMode === 'quiz' ? 'secondary' : 'ghost'}
+                size="sm"
+                onClick={handleSwitchToQuiz}
+              >
+                <Brain className="h-4 w-4 text-orange-500" />
+              </Button>
             </div>
           </div>
           <div className="relative mt-4">
@@ -365,7 +431,7 @@ export function FamilyGroupClient({
                 members={allGroupMembers}
                 onSelect={handleSetFocalUser}
               />
-            ) : (
+            ) : settings.viewMode !== 'quiz' ? (
               <>
                 <input
                   type="text"
@@ -393,13 +459,23 @@ export function FamilyGroupClient({
                   </button>
                 )}
               </>
-            )}
+            ) : null}
           </div>
         </div>
       </div>
 
       <div className="container mx-auto mt-4 px-4">
-        {settings.viewMode === 'tree' ? (
+        {isMounted && settings.viewMode === 'quiz' ? (
+          <div className="rounded-xl bg-white p-3 dark:bg-gray-800">
+            <NameQuizViewClient
+              members={allGroupMembers}
+              groupSlug={groupSlug}
+              currentUserId={currentUserMember?.userId}
+              onSwitchToGrid={handleSwitchToGrid}
+              onSwitchToList={handleSwitchToList}
+            />
+          </div>
+        ) : isMounted && settings.viewMode === 'tree' ? (
           <div
             ref={treeContainerRef}
             style={{ height: `${treeHeight}px` }}
@@ -443,34 +519,35 @@ export function FamilyGroupClient({
               />
             </ReactFlowProvider>
           </div>
-        ) : (
-          <div
-            className={
-              settings.viewMode === 'list'
-                ? 'grid grid-cols-1 gap-2'
-                : 'grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'
-            }
-          >
-            {filteredAndSortedMembers.map((member) => (
-              <FamilyMemberCard
-                key={member.userId}
-                member={member}
-                viewMode={settings.viewMode === 'grid' ? 'grid' : 'list'}
-                relationship={relationshipMap.get(member.userId)?.label}
-                onRelate={handleOpenRelateModal}
-                currentUserId={currentUserMember?.userId}
-                isGroupAdmin={isGroupAdmin}
-                groupMembers={allGroupMembers}
-              />
-            ))}
-          </div>
-        )}
-
-        {hasMore && (
-          <div ref={ref} className="p-4 text-center">
-            Loading more...
-          </div>
-        )}
+        ) : isMounted ? (
+          <>
+            <div
+              className={
+                settings.viewMode === 'list'
+                  ? 'grid grid-cols-1 gap-2'
+                  : 'grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'
+              }
+            >
+              {filteredAndSortedMembers.map((member) => (
+                <FamilyMemberCard
+                  key={member.userId}
+                  member={member}
+                  viewMode={settings.viewMode === 'grid' ? 'grid' : 'list'}
+                  relationship={relationshipMap.get(member.userId)?.label}
+                  onRelate={handleOpenRelateModal}
+                  currentUserId={currentUserMember?.userId}
+                  isGroupAdmin={isGroupAdmin}
+                  groupMembers={allGroupMembers}
+                />
+              ))}
+            </div>
+            {hasMore && (
+              <div ref={ref} className="p-4 text-center">
+                Loading more...
+              </div>
+            )}
+          </>
+        ) : null}
       </div>
 
       {selectedMember && group?.groupType && currentUserMember && (
@@ -490,6 +567,10 @@ export function FamilyGroupClient({
           loggedInUserId={currentUserMember.userId}
         />
       )}
+      <NameQuizIntroModal
+        isOpen={isIntroModalOpen}
+        onClose={handleCloseIntroModal}
+      />
     </>
   )
 }

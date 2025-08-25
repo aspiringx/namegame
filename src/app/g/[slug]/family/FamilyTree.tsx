@@ -19,6 +19,7 @@ import { MemberWithUser, UserWithPhotoUrl, FullRelationship } from '@/types'
 import AvatarNode from './AvatarNode'
 import { MemberDetailsModal } from './MemberDetailsModal'
 import { useFamilyTree, AvatarNodeData } from './useFamilyTree'
+import { useGroup } from '@/components/GroupProvider'
 import { FamilyTreeControls } from './FamilyTreeControls'
 
 interface FamilyTreeProps {

@@ -45,7 +45,7 @@ export default async function MeLayout({
   return (
     <main className="container mx-auto mb-12 px-4 pb-8">
       <div className="mx-auto max-w-2xl">
-        <GuestMessage isGuest={isGuest} />
+        <GuestMessage isGuest={isGuest} firstName={session.user.firstName} />
         <MeTabs isGuest={isGuest} />
         {children}
       </div>

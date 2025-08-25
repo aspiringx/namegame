@@ -106,6 +106,30 @@ const NameQuizIntroModal: React.FC<NameQuizIntroModalProps> = ({ isOpen, onClose
 2.  **Props:** The component requires `isOpen` (a boolean) and `onClose` (a function) to control its state.
 3.  **Content:** Place all modal content inside the `<Modal>` tags as `children`.
 
+## Working with Code Tables (Foreign Keys)
+
+**Problem:** When checking a condition based on a related table (e.g., a user's role), it's common to mistakenly check the foreign key ID (e.g., `user.roleId === 1`). This is brittle because the meaning of the ID is not clear from the code, and it can break if the IDs in the database change.
+
+**Solution:** Always include the related table in your data query (e.g., `include: { role: true }`) and check the `code` property of the related record. This makes the code self-documenting and resilient to changes in database IDs.
+
+### Example Implementation
+
+Here's how to correctly check if a user has the 'guest' role:
+
+```tsx
+// Incorrect - relies on a 'magic number' ID
+const isGuest_bad = !currentUserMember || currentUserMember.roleId === 2;
+
+// Correct - checks the human-readable 'code'
+const isGuest_good = !currentUserMember || currentUserMember.role?.code === 'guest';
+```
+
+### Key Points
+
+1.  **Querying:** When fetching data, use `include` in your Prisma query to join the code table.
+2.  **Checking:** Always reference the `.code` property on the included relation (e.g., `currentUserMember.role.code`).
+3.  **Clarity:** This pattern makes the code's intent clear without needing to look up foreign key IDs in the database.
+
 ---
 
 ## Known Build Issues

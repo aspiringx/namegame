@@ -72,12 +72,14 @@ export async function getPaginatedMembers(
       .filter(Boolean)
       .join(' ')
 
+    const { photos, ...userWithoutPhotos } = member.user
     return {
       ...member,
       user: {
-        ...member.user,
+        ...userWithoutPhotos,
         name,
         photoUrl,
+        status: 'active',
       },
       parents: [],
       children: [],
@@ -123,23 +125,66 @@ export async function getFamilyRelationships(
   return relationships as FullRelationship[]
 }
 
-export async function getGroupMembersForRelate(groupSlug: string) {
+export async function getGroupMembersForRelate(
+  groupSlug: string,
+): Promise<MemberWithUser[]> {
   const group = await prisma.group.findUnique({
     where: { slug: groupSlug },
-    select: { members: { include: { user: true } } },
+    select: { id: true },
   })
 
   if (!group) {
     return []
   }
 
-  return group.members.map((member) => ({
-    ...member,
-    user: {
-      ...member.user,
-      name: [member.user.firstName, member.user.lastName]
-        .filter(Boolean)
-        .join(' '),
+  const [photoTypes, entityTypes] = await Promise.all([
+    getCodeTable('photoType'),
+    getCodeTable('entityType'),
+  ])
+
+  const members = await prisma.groupUser.findMany({
+    where: {
+      groupId: group.id,
     },
-  }))
+    include: {
+      role: true,
+      user: {
+        include: {
+          photos: {
+            where: {
+              typeId: photoTypes.primary.id,
+              entityTypeId: entityTypes.user.id,
+            },
+            take: 1,
+          },
+        },
+      },
+    },
+  })
+
+  const memberPromises = members.map(async member => {
+    const primaryPhoto = member.user.photos[0]
+    const photoUrl = primaryPhoto
+      ? await getPublicUrl(primaryPhoto.url)
+      : undefined
+
+    const name = [member.user.firstName, member.user.lastName]
+      .filter(Boolean)
+      .join(' ')
+
+    const { photos, ...userWithoutPhotos } = member.user
+    return {
+      ...member,
+      parents: [],
+      children: [],
+      user: {
+        ...userWithoutPhotos,
+        name,
+        photoUrl,
+        status: 'active',
+      },
+    }
+  })
+
+  return Promise.all(memberPromises)
 }

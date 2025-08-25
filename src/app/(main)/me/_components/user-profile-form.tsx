@@ -5,7 +5,11 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useActionState, useEffect, useRef, useState } from 'react'
 import { useFormStatus } from 'react-dom'
 import { Badge } from '@/components/ui/badge'
-import { updateUserProfile, State, getUserUpdateRequirements } from '../actions'
+import {
+  updateUserProfile,
+  getUserUpdateRequirements,
+  type State,
+} from '../actions'
 import { Info } from 'lucide-react'
 import Image from 'next/image'
 import {
@@ -19,6 +23,7 @@ import {
   Upload,
   ChevronDown,
   XCircle as XCircleIcon,
+  CheckCircle as CheckCircleIcon,
 } from 'lucide-react'
 import {
   Tooltip,
@@ -28,6 +33,7 @@ import {
 } from '@/components/ui/tooltip'
 import { DatePrecision, Gender } from '@/generated/prisma/client'
 import { format } from 'date-fns'
+import Link from 'next/link'
 
 export type UserProfile = {
   id: string
@@ -41,6 +47,12 @@ export type UserProfile = {
   birthDate: string | null
   birthDatePrecision: DatePrecision | null
   birthPlace: string | null
+}
+
+type Group = {
+  id: number
+  name: string
+  slug: string
 }
 
 function SubmitButton({
@@ -64,7 +76,13 @@ function SubmitButton({
   )
 }
 
-export default function UserProfileForm({ user }: { user: UserProfile }) {
+export default function UserProfileForm({
+  user,
+  groups,
+}: {
+  user: UserProfile
+  groups: Group[]
+}) {
   const [displayEmail, setDisplayEmail] = useState(user.email || '')
   const { data: session, update: updateSession } = useSession()
   const router = useRouter()
@@ -107,7 +125,6 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
   const [showPassword, setShowPassword] = useState(false)
   const [passwordError, setPasswordError] = useState<string | null>(null)
   const [showSuccessMessage, setShowSuccessMessage] = useState(false)
-  const [isFadingOut, setIsFadingOut] = useState(false)
   const formSubmitted = useRef(false)
   const [validation, setValidation] = useState({
     submitted: false,
@@ -154,6 +171,8 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
     success: false,
     newFirstName: null,
     newPhotoUrl: null,
+    redirectUrl: null,
+    emailUpdated: false,
   }
 
   const [state, formAction] = useActionState(updateUserProfile, initialState)
@@ -162,6 +181,7 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
     // Determine if the form is dirty
     const isFirstNameDirty = firstName !== (user.firstName ?? '')
     const isLastNameDirty = lastName !== (user.lastName ?? '')
+    const isEmailDirty = displayEmail !== (user.email ?? '')
     const isPasswordDirty = !!password
     const isPhotoDirty = fileSelected
     const isGenderDirty = gender !== user.gender
@@ -175,6 +195,7 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
     setIsDirty(
       isFirstNameDirty ||
         isLastNameDirty ||
+        isEmailDirty ||
         isPasswordDirty ||
         isPhotoDirty ||
         isGenderDirty ||
@@ -184,12 +205,14 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
   }, [
     firstName,
     lastName,
+    displayEmail,
     password,
     fileSelected,
     gender,
     birthDate,
     user.firstName,
     user.lastName,
+    user.email,
     user.gender,
     user.birthDate,
     user.birthDatePrecision,
@@ -244,24 +267,6 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
       })
     }
   }, [state, updateSession, router, password, fileSelected])
-
-  useEffect(() => {
-    if (showSuccessMessage) {
-      setIsFadingOut(false)
-      const fadeOutTimer = setTimeout(() => {
-        setIsFadingOut(true)
-      }, 2500) // Start fading out after 2.5 seconds
-
-      const hideTimer = setTimeout(() => {
-        setShowSuccessMessage(false)
-      }, 3000) // Hide completely after 3 seconds
-
-      return () => {
-        clearTimeout(fadeOutTimer)
-        clearTimeout(hideTimer)
-      }
-    }
-  }, [showSuccessMessage])
 
   const handleNewSubmission = () => {
     setValidation((v) => ({ ...v, submitted: true }))
@@ -345,13 +350,67 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
       <h3 className="mb-6">My Profile</h3>
       <form action={formAction} className="space-y-6">
         {showSuccessMessage && state?.message && (
-          <p
-            className={`text-green-500 transition-opacity duration-500 ease-in-out ${
-              isFadingOut ? 'opacity-0' : 'opacity-100'
-            }`}
-          >
-            {state.message}
-          </p>
+          <div className="space-y-4">
+            <div className="rounded-md bg-green-50 p-4 dark:bg-green-900/30">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <CheckCircleIcon
+                    className="h-5 w-5 text-green-400"
+                    aria-hidden="true"
+                  />
+                </div>
+                <div className="ml-3">
+                  <div className="text-sm font-medium text-green-800 dark:text-green-300">
+                    <p>{state.message}</p>
+                    {state.emailUpdated && !isVerifiedForDisplay && (
+                      <p className="mt-2">
+                        We sent you a verification email. Find it and click the
+                        link to complete the process.
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <div className="ml-auto pl-3">
+                  <div className="-mx-1.5 -my-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setShowSuccessMessage(false)}
+                      className="inline-flex rounded-md bg-green-50 p-1.5 text-green-500 hover:bg-green-100 focus:ring-2 focus:ring-green-600 focus:ring-offset-2 focus:ring-offset-green-50 focus:outline-none dark:bg-transparent dark:text-green-400 dark:hover:bg-green-800/50"
+                    >
+                      <span className="sr-only">Dismiss</span>
+                      <XCircleIcon className="h-5 w-5" aria-hidden="true" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {groups.length > 0 && (
+              <div className="overflow-hidden rounded-md bg-white shadow sm:rounded-md dark:bg-gray-800">
+                <p className="max-w-2xl p-4 text-sm text-gray-500 dark:text-gray-400">
+                  Now you can return to a group here:
+                </p>
+                <ul
+                  role="list"
+                  className="divide-y divide-gray-200 dark:divide-gray-700"
+                >
+                  {groups.map((group) => (
+                    <li key={group.id}>
+                      <Link
+                        href={`/groups/${group.slug}`}
+                        className="block px-4 py-4 hover:bg-gray-50 sm:px-6 dark:hover:bg-gray-700"
+                      >
+                        <div className="flex items-center justify-between">
+                          <p className="truncate text-sm font-medium text-indigo-600 dark:text-indigo-400">
+                            {group.name}
+                          </p>
+                        </div>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
         )}
         {state?.errors && (
           <div className="rounded-md bg-red-50 p-4 dark:bg-red-900/30">
@@ -423,7 +482,7 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
               required
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
-              className={`mt-1 -ml-px block w-full rounded-l-none rounded-r-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 ${
+              className={`mt-1 -ml-px block w-full rounded-l-none rounded-r-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 ${
                 !lastName || state?.errors?.lastName
                   ? 'bg-red-100 dark:bg-red-900'
                   : ''
@@ -510,11 +569,16 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
           ) : (
             displayEmail &&
             !isVerifiedForDisplay && (
-              <p className="mt-1 rounded-md bg-red-50 p-2 text-sm text-xs text-red-700 dark:bg-red-900 dark:text-red-300">
-                Email not verified. Save and check email to verify.
+              <p className="mt-1 rounded-md bg-yellow-50 p-2 text-sm text-xs text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300">
+                Email not yet verified. Save this and check email for a link to
+                complete verification.
               </p>
             )
           )}
+          <p className="mt-1 text-xs text-gray-500 italic dark:text-gray-400">
+            By saving and verifying my email address, I consent to receiving
+            messages from my NameGame groups.
+          </p>
         </div>
 
         <div>
@@ -532,7 +596,7 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
               autoComplete="new-password"
               value={password}
               required={validation.passwordRequired}
-              className={`block w-full min-w-0 flex-1 rounded-none rounded-l-md border border-gray-300 bg-white px-3 py-2 focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 ${
+              className={`block w-full min-w-0 flex-1 rounded-none rounded-l-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 ${
                 (validation.passwordRequired && !password) ||
                 state?.errors?.password
                   ? 'bg-red-100 dark:bg-red-900'
@@ -630,7 +694,15 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
             Profile Picture
           </label>
-          <div className="mt-2 flex flex-col items-start space-y-4">
+          <div
+            className={`mt-2 flex flex-col items-start space-y-4 ${
+              validation.photoRequired &&
+              previewUrl?.includes('dicebear.com') &&
+              !fileSelected
+                ? 'rounded-md bg-red-100 p-4 dark:bg-red-900'
+                : ''
+            }`}
+          >
             <label
               htmlFor="photo"
               className="group relative inline-block h-32 w-32 cursor-pointer overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700"
@@ -684,12 +756,10 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
             >
               Change Photo
             </button>
-            <p
-              className={`-mt-3 text-xs text-red-500 dark:text-red-400 ${
-                validation.photoRequired ? 'text-red-500 dark:text-red-400' : ''
-              }`}
-            >
-              {validation.photoRequired && previewUrl?.includes('dicebear.com')
+            <p className={`-mt-3 text-xs text-gray-500 dark:text-gray-400`}>
+              {validation.photoRequired &&
+              previewUrl?.includes('dicebear.com') &&
+              !fileSelected
                 ? 'Add a real profile pic so people recognize you.'
                 : ''}
             </p>
@@ -847,8 +917,10 @@ export default function UserProfileForm({ user }: { user: UserProfile }) {
             onNewSubmission={handleNewSubmission}
             disabled={
               !isDirty ||
-              !!passwordError ||
+              !firstName ||
+              !lastName ||
               !isEmailValid ||
+              !!passwordError ||
               (validation.passwordRequired && !password) ||
               (validation.photoRequired && previewUrl?.includes('dicebear.com'))
             }

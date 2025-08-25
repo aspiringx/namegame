@@ -3,7 +3,7 @@
 import React, { memo } from 'react'
 import { Handle, Position, NodeProps } from 'reactflow'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { cn } from '@/lib/utils'
+import { cn, truncate } from '@/lib/utils'
 import { AvatarNodeData } from './useFamilyTree'
 import { ChevronUp, ChevronDown, ChevronLeft } from 'lucide-react'
 import { format } from 'date-fns'
@@ -28,9 +28,6 @@ const AvatarNode = ({ data, selected }: NodeProps<AvatarNodeData>) => {
     onExpand,
   } = data
 
-  const truncate = (str: string, n: number) => {
-    return str.length > n ? str.slice(0, n - 1) + '...' : str
-  }
 
   const fullName = [data.firstName, data.lastName].filter(Boolean).join(' ')
 
@@ -112,7 +109,7 @@ const AvatarNode = ({ data, selected }: NodeProps<AvatarNodeData>) => {
                 : 'text-sm',
             )}
           >
-            {truncate(fullName, 16)}
+            {truncate(fullName, 20)}
           </div>
           {relationship && (
             <div
