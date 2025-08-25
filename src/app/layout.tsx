@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import localFont from 'next/font/local'
 
 import { auth } from '@/auth'
@@ -154,11 +154,14 @@ export const metadata: Metadata = {
   formatDetection: {
     telephone: false,
   },
-  themeColor: '#ffffff',
   icons: {
     icon: '/icon.png',
     apple: '/icons/apple-touch-icon.png',
   },
+}
+
+export const viewport: Viewport = {
+  themeColor: '#ffffff',
 }
 
 export default async function RootLayout({
