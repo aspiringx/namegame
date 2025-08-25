@@ -51,7 +51,6 @@ export const getGroup = async (
     },
   })
 
-  console.log('# GROUP MEMBERS', group?.members.length)
   if (!group) {
     return null
   }

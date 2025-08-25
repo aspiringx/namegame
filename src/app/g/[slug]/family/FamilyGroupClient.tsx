@@ -373,7 +373,6 @@ export function FamilyGroupClient({
                     settings.sortConfig.direction === 'asc'
                       ? ArrowUp
                       : ArrowDown
-                  const groupMemberCount = allGroupMembers.length
                   return (
                     <Button
                       key={key}
