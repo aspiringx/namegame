@@ -276,7 +276,7 @@ export function FamilyGroupClient({
     }))
   }
 
-    const handleSwitchToQuiz = () => {
+  const handleSwitchToQuiz = () => {
     if (!introSeen) {
       setIsIntroModalOpen(true)
     } else {
@@ -333,12 +333,12 @@ export function FamilyGroupClient({
   }, [members, settings.searchQuery, settings.sortConfig])
 
   const NameQuizViewClient = dynamic(
-  () => import('@/components/NameQuizViewClient'),
-  {
-    loading: () => <div className="p-4 text-center">Loading quiz...</div>,
-    ssr: false,
-  },
-)
+    () => import('@/components/NameQuizViewClient'),
+    {
+      loading: () => <div className="p-4 text-center">Loading quiz...</div>,
+      ssr: false,
+    },
+  )
 
   if (!isMounted) {
     return null // Or a loading spinner
@@ -435,7 +435,7 @@ export function FamilyGroupClient({
               <>
                 <input
                   type="text"
-                  placeholder="Search members..."
+                  placeholder={`Search ${members.length} members...`}
                   value={settings.searchQuery}
                   onChange={(e) =>
                     setSettings((prev) => ({

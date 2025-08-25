@@ -24,7 +24,7 @@ const QuizCompleteView: React.FC<QuizCompleteViewProps> = ({
   }
 
   return (
-    <div className="py-8 text-center">
+    <div className="mx-auto max-w-[600px] py-8 text-center">
       <div style={{ height: 150 }} className="flex items-center justify-center">
         {!animationComplete ? (
           <Lottie
@@ -65,8 +65,8 @@ const QuizCompleteView: React.FC<QuizCompleteViewProps> = ({
         click "Start Over" to play again.
       </p>
       <p className="mt-4 text-left text-gray-600 italic dark:text-gray-400">
-        p.s. We only show users you've greeted who have a real photo. Invite
-        others to add their photo so you can remember them here too.
+        p.s. We only show users have a real photo. Invite others to add their
+        photo so you can remember them here too.
       </p>
     </div>
   )
