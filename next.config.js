@@ -1,4 +1,11 @@
 const nextBuildId = require('next-build-id')
+const withPWA = require('next-pwa')({
+  dest: 'public',
+  register: true,
+  skipWaiting: true,
+  // I've commented this out so we can test in development
+  // disable: process.env.NODE_ENV === 'development',
+})
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -41,4 +48,4 @@ const nextConfig = {
   },
 }
 
-module.exports = nextConfig
+module.exports = withPWA(nextConfig)

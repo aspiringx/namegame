@@ -225,7 +225,10 @@ export async function updateUserProfile(
     }
 
     const lowercasedEmail = email ? email.toLowerCase() : null
-    if (lowercasedEmail && (lowercasedEmail !== user.email || !user.emailVerified)) {
+    if (
+      lowercasedEmail &&
+      (lowercasedEmail !== user.email || !user.emailVerified)
+    ) {
       const existingUser = await prisma.user.findFirst({
         where: {
           email: lowercasedEmail,
@@ -333,7 +336,11 @@ export async function updateUserProfile(
     }
 
     if (emailChanged && updatedUser.email) {
-      await sendVerificationEmail(updatedUser.email, userId)
+      await sendVerificationEmail(
+        updatedUser.email,
+        userId,
+        updatedUser.firstName,
+      )
     }
 
     if (profileIsNowComplete) {

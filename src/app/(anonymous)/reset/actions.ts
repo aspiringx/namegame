@@ -28,6 +28,7 @@ export async function sendPasswordResetLink(
     await sendPasswordResetEmail(
       passwordResetToken.email,
       passwordResetToken.token,
+      existingUser.firstName,
     )
     return {
       success: 'If email exists, we sent a link that will expire in 1 hour.',

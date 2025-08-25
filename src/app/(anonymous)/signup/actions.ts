@@ -104,7 +104,7 @@ export async function signup(
     })
 
     if (newUser && newUser.email) {
-      await sendVerificationEmail(newUser.email, newUser.id)
+      await sendVerificationEmail(newUser.email, newUser.id, newUser.firstName)
     }
   } catch (error) {
     return {
