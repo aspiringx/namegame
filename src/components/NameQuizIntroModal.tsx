@@ -23,11 +23,7 @@ const NameQuizIntroModal: React.FC<NameQuizIntroModalProps> = ({
         </div>
         <div className="py-4 text-center">
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            Relationships start with names, the name of the game!
-            <br />
-            <br />
-            Test your memory and see how many names you remember. You'll see
-            photos of people you've greeted. Pick the right name for each photo.
+            Test your memory by picking the right name for each photo!
           </p>
         </div>
         <Button onClick={onClose} className="mt-4 w-full">
