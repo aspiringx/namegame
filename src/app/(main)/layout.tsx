@@ -1,6 +1,7 @@
 'use client'
 
 import { AddToHomescreenPrompt } from '@/components/AddToHomescreenPrompt'
+import { ServiceWorkerRegistrar } from '@/components/ServiceWorkerRegistrar'
 import Footer from '@/components/Footer'
 import Header from '@/components/Header'
 
@@ -17,6 +18,7 @@ export default function MainLayout({
       </main>
       <Footer />
       <AddToHomescreenPrompt />
+      <ServiceWorkerRegistrar />
     </div>
   )
 }
