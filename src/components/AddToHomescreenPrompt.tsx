@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 
-import { Share } from 'lucide-react'
+import { Menu, Share } from 'lucide-react'
 
 import { useAddToHomescreenPrompt } from '@/hooks/useAddToHomescreenPrompt'
 import { Button } from './ui/button'
@@ -10,17 +10,17 @@ import { Button } from './ui/button'
 const NAMEGAME_PWA_PROMPT_DISMISSED_KEY = 'namegame_pwa_prompt_dismissed'
 
 export function AddToHomescreenPrompt() {
-  const { prompt, promptToInstall, isIOS, isMacSafari } =
+  const { prompt, promptToInstall, isIOS, isMacSafari, isIosFirefox, isAndroidFirefox } =
     useAddToHomescreenPrompt()
   const [isVisible, setVisibleState] = useState(false)
 
   useEffect(() => {
     const dismissed =
       localStorage.getItem(NAMEGAME_PWA_PROMPT_DISMISSED_KEY) === 'true'
-    if (!dismissed && (prompt || isIOS || isMacSafari)) {
+    if (!dismissed && (prompt || isIOS || isMacSafari || isAndroidFirefox)) {
       setVisibleState(true)
     }
-  }, [prompt, isIOS, isMacSafari])
+  }, [prompt, isIOS, isMacSafari, isAndroidFirefox])
 
   const hide = () => {
     localStorage.setItem(NAMEGAME_PWA_PROMPT_DISMISSED_KEY, 'true')
@@ -41,14 +41,20 @@ export function AddToHomescreenPrompt() {
       <div className="flex items-start">
         <div className="ml-3 flex-1">
           <p className="text-foreground text-sm font-medium">
-            {isIOS
+            {isIOS || isAndroidFirefox
               ? 'Add to Home Screen'
               : isMacSafari
                 ? 'Add to Dock or Bookmark'
-                : 'Add NameGame to your Home Screen'}
+                : 'Install App'}
           </p>
           <div className="text-muted-foreground mt-1 flex items-center text-sm">
-            {isIOS ? (
+            {isIosFirefox ? (
+              <>
+                <Menu className="mr-2 h-5 w-5" />
+                <Share className="mr-2 h-5 w-5 text-blue-500" />
+                <span>Tap your menu, then Share, then Add to Home Screen.</span>
+              </>
+            ) : isIOS ? (
               <>
                 <Share className="mr-2 h-6 w-6 text-blue-500" />
                 <span>
@@ -60,6 +66,11 @@ export function AddToHomescreenPrompt() {
                 To install, go to File &gt; Add to Dock, or press Cmd+D to
                 bookmark.
               </p>
+            ) : isAndroidFirefox ? (
+              <>
+                <Menu className="mr-2 h-5 w-5" />
+                <span>Tap your menu, then select "Install".</span>
+              </>
             ) : (
               <p>For a better experience, install the app on your device.</p>
             )}
