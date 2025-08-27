@@ -10,11 +10,13 @@ import { Button } from './ui/button'
 const NAMEGAME_PWA_PROMPT_DISMISSED_KEY = 'namegame_pwa_prompt_dismissed'
 
 export function AddToHomescreenPrompt() {
-  const { prompt, promptToInstall, isIOS, isMacSafari } = useAddToHomescreenPrompt()
+  const { prompt, promptToInstall, isIOS, isMacSafari } =
+    useAddToHomescreenPrompt()
   const [isVisible, setVisibleState] = useState(false)
 
   useEffect(() => {
-    const dismissed = localStorage.getItem(NAMEGAME_PWA_PROMPT_DISMISSED_KEY) === 'true'
+    const dismissed =
+      localStorage.getItem(NAMEGAME_PWA_PROMPT_DISMISSED_KEY) === 'true'
     if (!dismissed && (prompt || isIOS || isMacSafari)) {
       setVisibleState(true)
     }
@@ -35,17 +37,17 @@ export function AddToHomescreenPrompt() {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 rounded-lg bg-background p-4 shadow-lg border">
+    <div className="bg-background fixed right-4 bottom-4 z-50 rounded-lg border p-4 shadow-lg">
       <div className="flex items-start">
         <div className="ml-3 flex-1">
-          <p className="text-sm font-medium text-foreground">
+          <p className="text-foreground text-sm font-medium">
             {isIOS
               ? 'Add to Home Screen'
               : isMacSafari
                 ? 'Add to Dock or Bookmark'
                 : 'Add NameGame to your Home Screen'}
           </p>
-          <div className="mt-1 text-sm text-muted-foreground flex items-center">
+          <div className="text-muted-foreground mt-1 flex items-center text-sm">
             {isIOS ? (
               <>
                 <Share className="mr-2 h-6 w-6 text-blue-500" />
@@ -54,7 +56,10 @@ export function AddToHomescreenPrompt() {
                 </span>
               </>
             ) : isMacSafari ? (
-              <p>To install, go to File &gt; Add to Dock, or press Cmd+D to bookmark.</p>
+              <p>
+                To install, go to File &gt; Add to Dock, or press Cmd+D to
+                bookmark.
+              </p>
             ) : (
               <p>For a better experience, install the app on your device.</p>
             )}

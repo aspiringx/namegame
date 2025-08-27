@@ -10,8 +10,11 @@ if (
   process.env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY &&
   process.env.WEB_PUSH_PRIVATE_KEY
 ) {
+  const subject = process.env.WEB_PUSH_EMAIL.startsWith('mailto:')
+    ? process.env.WEB_PUSH_EMAIL
+    : `mailto:${process.env.WEB_PUSH_EMAIL}`
   webPush.setVapidDetails(
-    `mailto:${process.env.WEB_PUSH_EMAIL}`,
+    subject,
     process.env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY,
     process.env.WEB_PUSH_PRIVATE_KEY,
   )
@@ -93,16 +96,27 @@ export async function deleteSubscription(
 
 export async function sendNotification(
   payload: any,
+  endpoint?: string,
 ): Promise<{ success: boolean; message: string }> {
   const session = await auth()
   if (!session?.user?.id) {
     return { success: false, message: 'User not authenticated.' }
   }
 
+  if (!endpoint) {
+    return { success: false, message: 'No subscription endpoint provided.' }
+  }
+
   try {
-    const subscriptions = await db.pushSubscription.findMany({
-      where: { userId: session.user.id },
+    const subscription = await db.pushSubscription.findUnique({
+      where: { endpoint },
     })
+
+    if (!subscription) {
+      return { success: false, message: 'Subscription not found.' }
+    }
+
+    const subscriptions = [subscription]
 
     if (subscriptions.length === 0) {
       return { success: false, message: 'No push subscriptions found for user.' }
@@ -139,4 +153,23 @@ export async function sendNotification(
     console.error('Error sending notifications:', error)
     return { success: false, message: 'Failed to send notifications.' }
   }
+}
+
+export async function getSubscriptions(): Promise<
+  { endpoint: string; userName: string | null }[]
+> {
+  const subscriptions = await db.pushSubscription.findMany({
+    include: {
+      user: {
+        select: {
+          firstName: true,
+        },
+      },
+    },
+  })
+
+  return subscriptions.map((sub) => ({
+    endpoint: sub.endpoint,
+    userName: sub.user.firstName,
+  }))
 }

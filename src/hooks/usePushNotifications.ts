@@ -20,6 +20,7 @@ export function usePushNotifications() {
   const [isSubscribed, setIsSubscribed] = useState(false)
   const [isSubscribing, setIsSubscribing] = useState(false)
   const [isSupported, setIsSupported] = useState(false)
+  const [isStandalone, setIsStandalone] = useState(false)
   const [subscription, setSubscription] = useState<PushSubscription | null>(null)
   const [permissionStatus, setPermissionStatus] = useState<PermissionState | null>(
     null,
@@ -29,6 +30,10 @@ export function usePushNotifications() {
     let permissionStatusInstance: PermissionStatus | null = null
 
     const checkSupportAndPermissions = async () => {
+      const runningAsPWA =
+        (window.navigator as any).standalone ||
+        window.matchMedia('(display-mode: standalone)').matches
+      setIsStandalone(runningAsPWA)
       if ('serviceWorker' in navigator && 'PushManager' in window) {
         setIsSupported(true)
         permissionStatusInstance = await navigator.permissions.query({
@@ -139,6 +144,7 @@ export function usePushNotifications() {
 
   return {
     isSupported,
+    isStandalone,
     isSubscribed,
     isSubscribing,
     subscribe,
