@@ -19,14 +19,12 @@ export function AddToHomescreenPrompt() {
     isAndroid,
     isFirefox,
     isSafari,
+    isChrome,
+    isEdge,
   } = useAddToHomescreenPrompt()
   const [isVisible, setVisibleState] = useState(false)
 
-  const showInstallPrompt =
-    isIos ||
-    (isAndroid && isFirefox) ||
-    (isDesktop && (isFirefox || (isMac && isSafari))) ||
-    !!prompt
+  const showInstallPrompt = !!prompt
 
   useEffect(() => {
     const dismissed =
@@ -52,21 +50,26 @@ export function AddToHomescreenPrompt() {
 
   const getTitle = () => {
     if (isIos || (isAndroid && isFirefox)) return 'Add to Home Screen'
-    if (isDesktop && (isFirefox || isSafari)) return 'Add to Bookmarks'
+    if (isDesktop && isFirefox) return 'Add to Bookmarks'
     return 'Install App'
   }
 
   const getInstructions = () => {
-    if (isIos) {
+    if ((isIos || isAndroid) && isFirefox) {
+      return (
+        <>
+          <Share className="mr-2 h-6 w-6 text-blue-500" />
+          <span>Tap your menu, Share, then select "Add to Home Screen".</span>
+        </>
+      )
+    }
+    if (isIos || isAndroid) {
       return (
         <>
           <Share className="mr-2 h-6 w-6 text-blue-500" />
           <span>Tap the share icon, then select "Add to Home Screen".</span>
         </>
       )
-    }
-    if (isAndroid && isFirefox) {
-      return <span>Tap your menu, then select "Install".</span>
     }
     if (isDesktop && isFirefox) {
       return (
@@ -76,19 +79,27 @@ export function AddToHomescreenPrompt() {
             {isMac ? '⌘' : 'Ctrl'}
           </kbd>{' '}
           +{' '}
-          <kbd className="bg-muted rounded-md border px-2 py-1 text-sm">
-            D
-          </kbd>{' '}
+          <kbd className="bg-muted rounded-md border px-2 py-1 text-sm">D</kbd>{' '}
           to bookmark this page.
         </p>
       )
     }
-    if (isDesktop && isMac && isSafari) {
+    if (isDesktop && isMac) {
+      if (isChrome || isEdge) {
+        return <p>Install app or press Cmd+D to bookmark in browser.</p>
+      }
       return (
-        <p>To install, go to File &gt; Add to Dock, or press Cmd+D to bookmark.</p>
+        <p>
+          To install, go to File &gt; Add to Dock, or press Cmd+D to bookmark.
+        </p>
       )
     }
-    return <p>For a better experience, install the app on your device.</p>
+    if (isDesktop && (isChrome || isEdge)) {
+      return <p>Install app or press Cmd+D to bookmark in browser.</p>
+    }
+    return (
+      <p>For a better experience, install the app or bookmark this page.</p>
+    )
   }
 
   return (

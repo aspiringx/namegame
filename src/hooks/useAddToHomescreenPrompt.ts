@@ -20,6 +20,7 @@ export function useAddToHomescreenPrompt(): {
   isIos: boolean
   isAndroid: boolean
   isChrome: boolean
+  isEdge: boolean
   isFirefox: boolean
   isSafari: boolean
 } {
@@ -32,6 +33,7 @@ export function useAddToHomescreenPrompt(): {
   const [isIos, setIsIos] = useState(false)
   const [isAndroid, setIsAndroid] = useState(false)
   const [isChrome, setIsChrome] = useState(false)
+  const [isEdge, setIsEdge] = useState(false)
   const [isFirefox, setIsFirefox] = useState(false)
   const [isSafari, setIsSafari] = useState(false)
 
@@ -68,9 +70,11 @@ export function useAddToHomescreenPrompt(): {
 
     // Browser
     const chrome = /chrome/.test(userAgent) && !/edg/.test(userAgent)
+    const edge = /edg/.test(userAgent)
     const firefox = /firefox/.test(userAgent)
     const safari = /safari/.test(userAgent) && !/chrome/.test(userAgent)
     setIsChrome(chrome)
+    setIsEdge(edge)
     setIsFirefox(firefox)
     setIsSafari(safari)
 
@@ -80,7 +84,10 @@ export function useAddToHomescreenPrompt(): {
     }
 
     // Don't show the prompt if the app is already installed
-    if ('standalone' in window.navigator && (window.navigator as any).standalone) {
+    if (
+      'standalone' in window.navigator &&
+      (window.navigator as any).standalone
+    ) {
       return
     }
 
@@ -102,6 +109,7 @@ export function useAddToHomescreenPrompt(): {
     isIos,
     isAndroid,
     isChrome,
+    isEdge,
     isFirefox,
     isSafari,
   }
