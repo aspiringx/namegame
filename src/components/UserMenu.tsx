@@ -10,8 +10,8 @@ import { useAddToHomescreenPrompt } from '@/hooks/useAddToHomescreenPrompt'
 export default function UserMenu() {
   const { data: session, update } = useSession()
   const { imageUrl } = useUserSession()
-  const { prompt, isIOS, isMacSafari } = useAddToHomescreenPrompt()
-  const canShowPrompt = prompt || isIOS || isMacSafari
+  const { prompt, isIos, isMac, isSafari } = useAddToHomescreenPrompt()
+  const canShowPrompt = !!prompt || isIos || (isMac && isSafari)
   const [isDropdownOpen, setDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
