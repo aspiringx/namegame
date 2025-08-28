@@ -24,7 +24,12 @@ export function AddToHomescreenPrompt() {
   } = useAddToHomescreenPrompt()
   const [isVisible, setVisibleState] = useState(false)
 
-  const showInstallPrompt = !!prompt
+  const showInstallPrompt = true
+  // isIos ||
+  // (isAndroid && isFirefox) ||
+  // (isDesktop && (isFirefox || (isMac && isSafari))) ||
+  // (isDesktop && (isChrome || isEdge)) ||
+  // !!prompt
 
   useEffect(() => {
     const dismissed =
