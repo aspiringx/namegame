@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react'
 
 import { Share } from 'lucide-react'
 
+import { useSession } from 'next-auth/react'
+import { useA2HS } from '@/context/A2HSContext'
 import { useDeviceInfo } from '@/hooks/useDeviceInfo'
 import { Button } from './ui/button'
 
@@ -11,32 +13,35 @@ const NAMEGAME_PWA_PROMPT_DISMISSED_KEY = 'namegame_pwa_prompt_dismissed'
 
 export function AddToHomescreenPrompt() {
   const deviceInfo = useDeviceInfo()
-  const [isVisible, setVisibleState] = useState(false)
+  const { data: session } = useSession()
+  const { isPromptVisible, hidePrompt } = useA2HS()
+  const [isLocallyVisible, setLocallyVisible] = useState(false)
 
   useEffect(() => {
-    if (!deviceInfo || deviceInfo.isPWA) return
-
-    const dismissed =
-      localStorage.getItem(NAMEGAME_PWA_PROMPT_DISMISSED_KEY) === 'true'
-
-    if (!dismissed && deviceInfo.a2hs.isSupported) {
-      setVisibleState(true)
+    if (deviceInfo && !deviceInfo.isPWA && deviceInfo.a2hs.isSupported && !session) {
+      const dismissed = localStorage.getItem(NAMEGAME_PWA_PROMPT_DISMISSED_KEY) === 'true'
+      if (!dismissed) {
+        setLocallyVisible(true)
+      }
+    } else {
+      setLocallyVisible(false)
     }
-  }, [deviceInfo])
+  }, [deviceInfo, session])
 
   const hide = () => {
     localStorage.setItem(NAMEGAME_PWA_PROMPT_DISMISSED_KEY, 'true')
-    setVisibleState(false)
+    setLocallyVisible(false)
+    hidePrompt()
   }
 
   const handleInstall = () => {
-    if (deviceInfo?.pwaPrompt.isReady) {
+    if (deviceInfo?.pwaPrompt.isReady && deviceInfo.a2hs.canInstall) {
       deviceInfo.pwaPrompt.prompt()
     }
-    // The prompt's userChoice property will handle hiding the prompt.
-    // For other cases, we just hide it immediately.
     hide()
   }
+
+  const isVisible = isPromptVisible || isLocallyVisible
 
   if (!isVisible || !deviceInfo || deviceInfo.isPWA) {
     return null
@@ -44,7 +49,10 @@ export function AddToHomescreenPrompt() {
 
   const renderInstructions = () => {
     // A simple way to check if we need the Share icon or special formatting.
-    if (typeof deviceInfo.a2hs.instructions === 'string' && deviceInfo.a2hs.instructions.includes('share icon')) {
+    if (
+      typeof deviceInfo.a2hs.instructions === 'string' &&
+      deviceInfo.a2hs.instructions.includes('share icon')
+    ) {
       return (
         <>
           <Share className="mr-2 h-6 w-6 text-blue-500" />
@@ -52,16 +60,28 @@ export function AddToHomescreenPrompt() {
         </>
       )
     }
-    if (typeof deviceInfo.a2hs.instructions === 'string' && deviceInfo.a2hs.instructions.includes('⌘')) {
-        const parts = deviceInfo.a2hs.instructions.split(/(\s\+\s|\s)/g);
-        return <p>
-            {parts.map((part, index) => {
-                if (part === '⌘' || part === 'Ctrl' || part === 'D') {
-                    return <kbd key={index} className="bg-muted rounded-md border px-2 py-1 text-sm">{part}</kbd>
-                }
-                return <span key={index}>{part}</span>
-            })}
+    if (
+      typeof deviceInfo.a2hs.instructions === 'string' &&
+      deviceInfo.a2hs.instructions.includes('⌘')
+    ) {
+      const parts = deviceInfo.a2hs.instructions.split(/(\s\+\s|\s)/g)
+      return (
+        <p>
+          {parts.map((part, index) => {
+            if (part === '⌘' || part === 'Ctrl' || part === 'D') {
+              return (
+                <kbd
+                  key={index}
+                  className="bg-muted rounded-md border px-2 py-1 text-sm"
+                >
+                  {part}
+                </kbd>
+              )
+            }
+            return <span key={index}>{part}</span>
+          })}
         </p>
+      )
     }
 
     return <p>{deviceInfo.a2hs.instructions}</p>
@@ -71,7 +91,9 @@ export function AddToHomescreenPrompt() {
     <div className="bg-background fixed right-4 bottom-4 z-50 rounded-lg border p-4 shadow-lg">
       <div className="flex items-start">
         <div className="ml-3 flex-1">
-          <p className="text-foreground text-sm font-medium">{deviceInfo.a2hs.actionLabel}</p>
+          <p className="text-foreground text-sm font-medium">
+            {deviceInfo.a2hs.actionLabel}
+          </p>
           <div className="text-muted-foreground mt-1 flex items-center text-sm">
             {renderInstructions()}
           </div>

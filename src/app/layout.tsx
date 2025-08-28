@@ -80,7 +80,7 @@ export const metadata: Metadata = {
     telephone: false,
   },
   icons: {
-    icon: '/icons/favicon-196.png',
+    icon: '/icon.png',
     apple: '/icons/apple-icon-180.png',
   },
 }

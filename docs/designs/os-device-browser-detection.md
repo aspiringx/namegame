@@ -1,63 +1,79 @@
-# Operating System (OS), Device, Browser Detection
+# Operating System (OS), Device, and Browser Detection
 
-We need to detect a user's combination of OS and browser to understand available
-features and give correct instructions.
+This document outlines the strategy for detecting a user's environment to provide tailored instructions and enable or disable features accordingly.
 
-## Operating Systems
+## Implementation: The `useDeviceInfo` Hook
 
-Common operating systems. Features or APIs may differ by version.
+To centralize and standardize environment detection, we have implemented the `useDeviceInfo` hook, located at `src/hooks/useDeviceInfo.ts`.
 
-- iOS
-- Android
-- ChromeOS
-- Windows
-- MacOS
-- Linux
+This hook is the **single source of truth** for all client-side environment information. All components that need to adapt their behavior based on the user's OS, browser, or device capabilities **must** use this hook.
 
-## Browsers
+### How It Works
 
-Top browsers. Features or APIs may differ by version and OS where they're
-installed (e.g. Chrome on Android, iOS, Windows, MacOS, etc.).
+1.  **Client-Side Execution**: The hook runs exclusively on the client and is initialized within a context provider (`DeviceInfoProvider`) in the root layout. This ensures the data is available to all components without re-computing.
+2.  **Browser/OS Detection**: It uses the `bowser` library to parse the `User-Agent` string and identify the browser (e.g., Chrome, Safari) and operating system (e.g., iOS, Android, macOS).
+3.  **PWA Detection**: It checks if the app is running in standalone mode (i.e., as an installed PWA).
+4.  **Feature Detection**: It performs runtime checks for key PWA and browser APIs:
+    *   **Add to Home Screen (A2HS)**: It listens for the `beforeinstallprompt` event to determine if the browser's native installation prompt is available.
+    *   **Push Notifications**: It checks for the existence of `navigator.serviceWorker` and `window.PushManager`.
 
-- Safari
-- Chrome
-- Firefox
-- Edge
+### Data Provided
 
-## Device Types / Form Factors
+The hook returns a `DeviceInfo` object with a clean, easy-to-consume interface:
 
-Once we know the OS and browser, we can determine secondary information:
+```typescript
+interface DeviceInfo {
+  os: 'ios' | 'android' | 'windows' | 'macos' | 'linux' | 'unknown';
+  browser: 'chrome' | 'safari' | 'firefox' | 'edge' | 'unknown';
+  isMobile: boolean;
+  isDesktop: boolean;
+  isPWA: boolean;
+  pwaPrompt: {
+    isReady: boolean; // Is the beforeinstallprompt event ready?
+    prompt: () => void; // Function to trigger the browser's install prompt
+  };
+  push: {
+    isSupported: boolean; // Are Push Notifications supported?
+  };
+  a2hs: { // Add to Home Screen
+    isSupported: boolean; // Is there any way to install the app?
+    actionLabel: string; // e.g., 'Install App', 'Add to Home Screen', 'Add to Dock'
+    instructions: string; // Human-readable instructions
+  };
+}
+```
 
-- Device Type - Mobile, Tablet, Chromebook, Desktop
-- Form Factor - Orientation (Portrait, Landscape), Resolution
+### Usage
 
-## Feature Detection
+Components should consume the `useDeviceInfo` hook to make decisions. This replaces all previous, fragmented detection logic.
 
-For each combination of OS and browser, we need to know features and give
-correct instructions for Progressive Web App (PWA) features.
+**Example: Displaying an install prompt**
 
-We use Next.js with the `next-pwa` package to implement PWA features.
+```tsx
+import { useDeviceInfo } from '@/hooks/useDeviceInfo';
 
-### Add to Home Screen
+function MyComponent() {
+  const deviceInfo = useDeviceInfo();
 
-#### Install Prompt
+  if (deviceInfo && !deviceInfo.isPWA && deviceInfo.a2hs.isSupported) {
+    return (
+      <button onClick={() => deviceInfo.pwaPrompt.prompt()}>
+        {deviceInfo.a2hs.actionLabel}
+      </button>
+    );
+  }
 
-Do we invite the user to Add to Home Screen, Add to Dock, Install App, or save a
-Bookmark?
+  return null;
+}
+```
 
-#### Install Prompt Trigger
+### Refactored Components
 
-All users should see the prompt. The fallback is to tell them how to save a
-bookmark, but ideally we show a button to install the app.
+The following components have been refactored to use the new hook, serving as examples of its intended use:
 
-#### Enable/Disable Push Notifications
+*   `src/components/AddToHomescreenPrompt.tsx`
+*   `src/components/InstallAppPrompt.tsx`
+*   `src/components/PushManager.tsx`
+*   `src/components/UserMenu.tsx`
+*   `src/hooks/usePushNotifications.ts`
 
-When the user clicks this, their browser will prompt them to grant permission
-for push notifications. We store these as a PushSubscription in the database.
-
-One user can have a push subscription per device and browser. For example, if
-they use both Chrome and Firefox on their Macbook Pro, they will have two push
-subscriptions, one for each browser. Then if they use their Android tablet and
-iPhone, they will have two more push subscriptions, one for each device. If they
-use both Safari and Chrome on their iPhone, they will have two more push
-subscriptions, one for each browser on the device.

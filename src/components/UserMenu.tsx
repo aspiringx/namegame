@@ -6,14 +6,18 @@ import Link from 'next/link'
 import { signOut, useSession } from 'next-auth/react'
 import { useUserSession } from '@/context/UserSessionContext'
 import { useDeviceInfo } from '@/hooks/useDeviceInfo'
+import { useA2HS } from '@/context/A2HSContext'
 
 export default function UserMenu() {
   const { data: session, update } = useSession()
   const { imageUrl } = useUserSession()
   const deviceInfo = useDeviceInfo()
-  const canShowPrompt = deviceInfo && !deviceInfo.isPWA && deviceInfo.a2hs.isSupported
+  const { showPrompt } = useA2HS()
   const [isDropdownOpen, setDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
+
+  const isAppInstalled = deviceInfo?.isPWAInstalled
+  const canShowPrompt = deviceInfo && !deviceInfo.isPWA && deviceInfo.a2hs.isSupported
 
   useEffect(() => {
     const channel = new BroadcastChannel('photo_updates')
@@ -116,16 +120,23 @@ export default function UserMenu() {
                   </Link>
                 </>
               )}
-              {canShowPrompt && (
-                <button
-                  onClick={() => {
-                    localStorage.removeItem('namegame_pwa_prompt_dismissed')
-                    window.location.reload()
-                  }}
-                  className="block w-full px-4 py-2 text-left text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
-                >
-                  {deviceInfo?.a2hs.actionLabel || 'Install App'}
-                </button>
+              {canShowPrompt && !isAppInstalled && (
+                <>
+                  <hr className="my-2 border-gray-200 dark:border-gray-700" />
+                  <button
+                    onClick={() => {
+                      if (deviceInfo?.pwaPrompt.canInstall) {
+                        deviceInfo.pwaPrompt.prompt();
+                      } else {
+                        showPrompt();
+                      }
+                      closeDropdown();
+                    }}
+                    className="block w-full px-4 py-2 text-left text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
+                  >
+                    {deviceInfo?.a2hs.actionLabel || 'Install App'}
+                  </button>
+                </>
               )}
               <hr className="my-2 border-gray-200 dark:border-gray-700" />
               <button
