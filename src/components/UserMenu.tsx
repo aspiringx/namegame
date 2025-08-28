@@ -5,13 +5,13 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { signOut, useSession } from 'next-auth/react'
 import { useUserSession } from '@/context/UserSessionContext'
-import { useAddToHomescreenPrompt } from '@/hooks/useAddToHomescreenPrompt'
+import { useDeviceInfo } from '@/hooks/useDeviceInfo'
 
 export default function UserMenu() {
   const { data: session, update } = useSession()
   const { imageUrl } = useUserSession()
-  const { prompt, isIos, isMac, isSafari } = useAddToHomescreenPrompt()
-  const canShowPrompt = !!prompt || isIos || (isMac && isSafari)
+  const deviceInfo = useDeviceInfo()
+  const canShowPrompt = deviceInfo && !deviceInfo.isPWA && deviceInfo.a2hs.isSupported
   const [isDropdownOpen, setDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
@@ -124,7 +124,7 @@ export default function UserMenu() {
                   }}
                   className="block w-full px-4 py-2 text-left text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
                 >
-                  Install App
+                  {deviceInfo?.a2hs.actionLabel || 'Install App'}
                 </button>
               )}
               <hr className="my-2 border-gray-200 dark:border-gray-700" />

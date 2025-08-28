@@ -1,11 +1,11 @@
 'use client'
 
-import { useAddToHomescreenPrompt } from '@/hooks/useAddToHomescreenPrompt'
+import { useDeviceInfo } from '@/hooks/useDeviceInfo'
 import { Button } from './ui/button'
 import { ArrowDownToLine, Share } from 'lucide-react'
 
 export function InstallAppPrompt() {
-  const { isIos, isMac, isSafari } = useAddToHomescreenPrompt()
+  const deviceInfo = useDeviceInfo()
 
   const handleShowInstallInstructions = () => {
     // This will cause the AddToHomescreenPrompt to show up again
@@ -13,9 +13,13 @@ export function InstallAppPrompt() {
     window.location.reload()
   }
 
-  // For non-Apple devices, the browser install prompt is handled by useAddToHomescreenPrompt.
+  if (!deviceInfo) {
+    return null
+  }
+
+  // For non-Apple devices, the browser install prompt is handled by AddToHomescreenPrompt.
   // We just need a button to re-trigger it if dismissed.
-  if (!isIos && !(isMac && isSafari)) {
+  if (deviceInfo.os !== 'ios' && !(deviceInfo.os === 'macos' && deviceInfo.browser === 'safari')) {
     return (
       <div className="text-sm text-muted-foreground">
         <p className="mb-2">For a better experience, install the app.</p>
@@ -31,7 +35,7 @@ export function InstallAppPrompt() {
     )
   }
 
-  if (isIos) {
+  if (deviceInfo.os === 'ios') {
     return (
       <div className="text-muted-foreground flex items-center text-sm">
         <Share className="mr-2 h-6 w-6 flex-shrink-0 text-blue-500" />

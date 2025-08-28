@@ -11,13 +11,13 @@ export function PushManager() {
     unsubscribe,
     isSubscribed,
     isSupported,
-    isStandalone,
+    isPWA,
     permissionStatus,
     isSubscribing,
   } = usePushNotifications()
 
   if (!isSupported) {
-    if (!isStandalone) {
+    if (!isPWA) {
       return <InstallAppPrompt />
     }
     return null // Push notifications not supported by the browser for other reasons

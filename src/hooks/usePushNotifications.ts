@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useDeviceInfo } from './useDeviceInfo'
 import { saveSubscription, deleteSubscription } from '@/actions/push'
 
 function urlBase64ToUint8Array(base64String: string) {
@@ -17,45 +18,39 @@ function urlBase64ToUint8Array(base64String: string) {
 }
 
 export function usePushNotifications() {
+  const deviceInfo = useDeviceInfo()
   const [isSubscribed, setIsSubscribed] = useState(false)
   const [isSubscribing, setIsSubscribing] = useState(false)
-  const [isSupported, setIsSupported] = useState(false)
-  const [isStandalone, setIsStandalone] = useState(false)
   const [subscription, setSubscription] = useState<PushSubscription | null>(null)
   const [permissionStatus, setPermissionStatus] = useState<PermissionState | null>(
     null,
   )
 
+  const isSupported = deviceInfo?.push.isSupported ?? false
+
   useEffect(() => {
+    if (!isSupported) return
+
     let permissionStatusInstance: PermissionStatus | null = null
 
-    const checkSupportAndPermissions = async () => {
-      const runningAsPWA =
-        (window.navigator as any).standalone ||
-        window.matchMedia('(display-mode: standalone)').matches
-      setIsStandalone(runningAsPWA)
-      if ('serviceWorker' in navigator && 'PushManager' in window) {
-        setIsSupported(true)
-        permissionStatusInstance = await navigator.permissions.query({
-          name: 'notifications',
-        })
-        setPermissionStatus(permissionStatusInstance.state)
-        permissionStatusInstance.onchange = () => {
-          setPermissionStatus(permissionStatusInstance?.state ?? null)
-        }
-      } else {
-        setIsSupported(false)
+    const checkPermissions = async () => {
+      permissionStatusInstance = await navigator.permissions.query({
+        name: 'notifications',
+      })
+      setPermissionStatus(permissionStatusInstance.state)
+      permissionStatusInstance.onchange = () => {
+        setPermissionStatus(permissionStatusInstance?.state ?? null)
       }
     }
 
-    checkSupportAndPermissions()
+    checkPermissions()
 
     return () => {
       if (permissionStatusInstance) {
         permissionStatusInstance.onchange = null
       }
     }
-  }, [])
+  }, [isSupported])
 
   useEffect(() => {
     if (permissionStatus === 'granted') {
@@ -144,7 +139,7 @@ export function usePushNotifications() {
 
   return {
     isSupported,
-    isStandalone,
+    isPWA: deviceInfo?.isPWA ?? false,
     isSubscribed,
     isSubscribing,
     subscribe,
