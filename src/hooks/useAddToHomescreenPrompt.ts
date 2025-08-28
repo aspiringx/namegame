@@ -12,12 +12,30 @@ interface IBeforeInstallPromptEvent extends Event {
 export function useAddToHomescreenPrompt(): {
   prompt: IBeforeInstallPromptEvent | null
   promptToInstall: () => void
-  isIOS: boolean
-  isMacSafari: boolean
+  isDesktop: boolean
+  isMobile: boolean
+  isMac: boolean
+  isWindows: boolean
+  isLinux: boolean
+  isIos: boolean
+  isAndroid: boolean
+  isChrome: boolean
+  isEdge: boolean
+  isFirefox: boolean
+  isSafari: boolean
 } {
   const [prompt, setState] = useState<IBeforeInstallPromptEvent | null>(null)
-  const [isIOS, setIsIOS] = useState(false)
-  const [isMacSafari, setIsMacSafari] = useState(false)
+  const [isDesktop, setIsDesktop] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+  const [isMac, setIsMac] = useState(false)
+  const [isWindows, setIsWindows] = useState(false)
+  const [isLinux, setIsLinux] = useState(false)
+  const [isIos, setIsIos] = useState(false)
+  const [isAndroid, setIsAndroid] = useState(false)
+  const [isChrome, setIsChrome] = useState(false)
+  const [isEdge, setIsEdge] = useState(false)
+  const [isFirefox, setIsFirefox] = useState(false)
+  const [isSafari, setIsSafari] = useState(false)
 
   const promptToInstall = () => {
     if (prompt) {
@@ -31,34 +49,46 @@ export function useAddToHomescreenPrompt(): {
   }
 
   useEffect(() => {
-    const isIOS = () => {
-      const userAgent = window.navigator.userAgent.toLowerCase()
-      return /iphone|ipad|ipod/.test(userAgent)
-    }
-    // @ts-ignore
-    const isInStandaloneMode = () => 'standalone' in window.navigator && window.navigator.standalone
+    const userAgent = navigator.userAgent.toLowerCase()
 
-    // Don't show the prompt if the app is already installed
-    if (isInStandaloneMode()) {
-      return
-    }
+    // Platform
+    const mobile = /iphone|ipad|ipod|android/.test(userAgent)
+    setIsMobile(mobile)
+    setIsDesktop(!mobile)
 
-    const isMac = () => /macintosh|macintel|macppc|mac68k/i.test(window.navigator.userAgent)
-    const isSafari = () => /^((?!chrome|android).)*safari/i.test(navigator.userAgent)
+    // OS
+    const mac = /mac os x/.test(userAgent)
+    const windows = /windows/.test(userAgent)
+    const linux = /linux/.test(userAgent)
+    const ios = /iphone|ipad|ipod/.test(userAgent)
+    const android = /android/.test(userAgent)
+    setIsMac(mac)
+    setIsWindows(windows)
+    setIsLinux(linux)
+    setIsIos(ios)
+    setIsAndroid(android)
 
-    if (isIOS()) {
-      setIsIOS(true)
-      return
-    }
-
-    if (isMac() && isSafari()) {
-      setIsMacSafari(true)
-      return
-    }
+    // Browser
+    const chrome = /chrome/.test(userAgent) && !/edg/.test(userAgent)
+    const edge = /edg/.test(userAgent)
+    const firefox = /firefox/.test(userAgent)
+    const safari = /safari/.test(userAgent) && !/chrome/.test(userAgent)
+    setIsChrome(chrome)
+    setIsEdge(edge)
+    setIsFirefox(firefox)
+    setIsSafari(safari)
 
     const ready = (e: IBeforeInstallPromptEvent) => {
       e.preventDefault()
       setState(e)
+    }
+
+    // Don't show the prompt if the app is already installed
+    if (
+      'standalone' in window.navigator &&
+      (window.navigator as any).standalone
+    ) {
+      return
     }
 
     window.addEventListener('beforeinstallprompt', ready as any)
@@ -68,5 +98,19 @@ export function useAddToHomescreenPrompt(): {
     }
   }, [])
 
-  return { prompt, promptToInstall, isIOS, isMacSafari }
+  return {
+    prompt,
+    promptToInstall,
+    isDesktop,
+    isMobile,
+    isMac,
+    isWindows,
+    isLinux,
+    isIos,
+    isAndroid,
+    isChrome,
+    isEdge,
+    isFirefox,
+    isSafari,
+  }
 }

@@ -85,6 +85,7 @@ model User {
   managed          ManagedStatus?
   managing         ManagedUser[] @relation("ManagingUsers")
   managedBy        ManagedUser[] @relation("ManagedUsers")
+  pushSubscriptions PushSubscription[]
 
   @@map("users")
 }
@@ -337,4 +338,16 @@ model PasswordResetToken {
   expires DateTime
 
   @@unique([email, token])
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
