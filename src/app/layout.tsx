@@ -6,6 +6,7 @@ import AuthProvider from '@/components/AuthProvider'
 import { Providers } from '@/components/providers'
 import { Toaster } from '@/components/ui/toaster'
 import { UserSessionProvider } from '@/context/UserSessionContext'
+import { A2HSProvider } from '@/context/A2HSContext'
 
 import './globals.css'
 
@@ -104,7 +105,9 @@ export default async function RootLayout({
         <Providers>
           <div className="relative min-h-screen">
             <AuthProvider session={session}>
-              <UserSessionProvider>{children}</UserSessionProvider>
+              <A2HSProvider>
+                <UserSessionProvider>{children}</UserSessionProvider>
+              </A2HSProvider>
             </AuthProvider>
           </div>
           <Toaster />
