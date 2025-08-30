@@ -40,7 +40,7 @@ export type DeviceInfo = {
   pwaPrompt: {
     canInstall: boolean
     isReady: boolean
-    prompt: () => Promise<'accepted' | 'dismissed'>
+    prompt: () => Promise<void>
   }
   a2hs: {
     isSupported: boolean
@@ -111,7 +111,12 @@ const A2HS_FEATURE_MATRIX: { [os: string]: { [browser: string]: A2HSRule } } = {
     },
   },
   windows: {
-    // All modern browsers on Windows support the standard beforeinstallprompt event.
+    firefox: {
+      isSupported: true,
+      canInstall: (isStandalone) => !isStandalone,
+      actionLabel: 'Bookmark',
+      instructions: 'Press Ctrl-D to bookmark this page.',
+    },
     '*': {
       isSupported: true,
       canInstall: (isStandalone, wasInstalled) => !isStandalone && !wasInstalled,
@@ -126,6 +131,12 @@ const A2HS_FEATURE_MATRIX: { [os: string]: { [browser: string]: A2HSRule } } = {
       actionLabel: 'Add to Dock',
       instructions: 'Click the Share icon, then "Add to Dock".',
     },
+    firefox: {
+      isSupported: true,
+      canInstall: (isStandalone) => !isStandalone,
+      actionLabel: 'Bookmark',
+      instructions: 'Press Cmd-D to bookmark this page.',
+    },
     '*': {
       isSupported: true,
       canInstall: (isStandalone, wasInstalled) => !isStandalone && !wasInstalled,
@@ -134,7 +145,12 @@ const A2HS_FEATURE_MATRIX: { [os: string]: { [browser: string]: A2HSRule } } = {
     },
   },
   linux: {
-    // All modern browsers on Linux support the standard beforeinstallprompt event.
+    firefox: {
+      isSupported: true,
+      canInstall: (isStandalone) => !isStandalone,
+      actionLabel: 'Bookmark',
+      instructions: 'Press Ctrl-D to bookmark this page.',
+    },
     '*': {
       isSupported: true,
       canInstall: (isStandalone, wasInstalled) => !isStandalone && !wasInstalled,
@@ -186,10 +202,7 @@ export function useDeviceInfo(session: Session | null): DeviceInfo {
     pwaPrompt: {
       canInstall: false,
       isReady: false,
-      prompt: () =>
-        Promise.reject<'accepted' | 'dismissed'>(
-          new Error('Install prompt not ready.'),
-        ),
+      prompt: () => Promise.resolve<void>(undefined),
     },
     a2hs: {
       isSupported: false,
@@ -247,10 +260,7 @@ export function useDeviceInfo(session: Session | null): DeviceInfo {
       pwaPrompt: {
         canInstall: false,
         isReady: false,
-        prompt: () =>
-          Promise.reject<'accepted' | 'dismissed'>(
-            new Error('Install prompt not ready.'),
-          ),
+        prompt: () => Promise.resolve<void>(undefined),
       },
       a2hs: {
         isSupported: false,
@@ -272,6 +282,7 @@ export function useDeviceInfo(session: Session | null): DeviceInfo {
       instructions: a2hsConfig.instructions,
     };
 
+
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault()
       const promptEvent = e as IBeforeInstallPromptEvent
@@ -291,7 +302,6 @@ export function useDeviceInfo(session: Session | null): DeviceInfo {
             if (outcome === 'accepted') {
               setDeviceInfo((p) => ({ ...p, isPWAInstalled: true }))
             }
-            return outcome
           },
         },
       }))

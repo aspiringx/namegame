@@ -8,6 +8,7 @@ import { Toaster } from '@/components/ui/toaster'
 import { UserSessionProvider } from '@/context/UserSessionContext'
 import { DeviceInfoProvider } from '@/context/DeviceInfoContext'
 import { A2HSProvider } from '@/context/A2HSContext'
+import { InstallAppPrompt } from '@/components/InstallAppPrompt'
 
 import './globals.css'
 
@@ -109,6 +110,7 @@ export default async function RootLayout({
               <UserSessionProvider>
                 <A2HSProvider>
                   <div className="relative min-h-screen">{children}</div>
+                  <InstallAppPrompt />
                   <Toaster />
                 </A2HSProvider>
               </UserSessionProvider>

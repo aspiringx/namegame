@@ -7,6 +7,7 @@ import { signOut, useSession } from 'next-auth/react'
 import { useUserSession } from '@/context/UserSessionContext'
 import { useA2HS } from '@/context/A2HSContext'
 import { useDeviceInfoContext } from '@/context/DeviceInfoContext'
+import { NAMEGAME_PWA_PROMPT_DISMISSED_KEY } from '@/lib/constants'
 
 export default function UserMenu() {
   const { data: session, update } = useSession()
@@ -128,7 +129,9 @@ export default function UserMenu() {
                         // For Chrome/Edge, trigger the native prompt
                         deviceInfo.pwaPrompt.prompt()
                       } else {
-                        // For Safari, show the manual instructions prompt
+                        // For Safari, show the manual instructions prompt.
+                        // We clear the dismissal flag so it always shows from the menu.
+                        localStorage.removeItem(NAMEGAME_PWA_PROMPT_DISMISSED_KEY)
                         showPrompt()
                       }
                       closeDropdown()

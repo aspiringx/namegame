@@ -16,7 +16,7 @@ interface A2HSContextType {
   isPromptVisible: boolean
   showPrompt: () => void
   hidePrompt: (userInitiated?: boolean) => void
-  promptToInstall: () => Promise<'accepted' | 'dismissed'>
+  promptToInstall: () => Promise<void>
 }
 
 const A2HSContext = createContext<A2HSContextType | undefined>(undefined)
@@ -39,9 +39,9 @@ export const A2HSProvider = ({ children }: { children: ReactNode }) => {
 
   const promptToInstall = async () => {
     if (deviceInfo?.pwaPrompt.canInstall) {
-      return await deviceInfo.pwaPrompt.prompt()
+      await deviceInfo.pwaPrompt.prompt()
     }
-    return Promise.resolve<'accepted' | 'dismissed'>('dismissed')
+    return Promise.resolve()
   }
 
   useEffect(() => {
