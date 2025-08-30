@@ -1,13 +1,14 @@
 'use client'
 
 import { createContext, useContext, ReactNode } from 'react'
+import { useSession } from 'next-auth/react'
 import { useDeviceInfo, DeviceInfo } from '@/hooks/useDeviceInfo'
-
 
 export const DeviceInfoContext = createContext<DeviceInfo | null>(null)
 
 export function DeviceInfoProvider({ children }: { children: ReactNode }) {
-  const deviceInfo = useDeviceInfo()
+  const { data: session } = useSession()
+  const deviceInfo = useDeviceInfo(session)
 
   return (
     <DeviceInfoContext.Provider value={deviceInfo}>

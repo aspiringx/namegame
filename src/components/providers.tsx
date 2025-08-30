@@ -2,7 +2,6 @@
 
 import * as React from 'react'
 import { ThemeProvider } from 'next-themes'
-import { DeviceInfoProvider } from '@/context/DeviceInfoContext'
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -12,7 +11,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       enableSystem
       disableTransitionOnChange
     >
-      <DeviceInfoProvider>{children}</DeviceInfoProvider>
+      {children}
     </ThemeProvider>
   )
 }

@@ -5,12 +5,14 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { signOut, useSession } from 'next-auth/react'
 import { useUserSession } from '@/context/UserSessionContext'
-import { DeviceInfoContext } from '@/context/DeviceInfoContext'
+import { useA2HS } from '@/context/A2HSContext'
+import { useDeviceInfoContext } from '@/context/DeviceInfoContext'
 
 export default function UserMenu() {
   const { data: session, update } = useSession()
   const { imageUrl } = useUserSession()
-  const deviceInfo = useContext(DeviceInfoContext)
+  const { showPrompt } = useA2HS()
+  const deviceInfo = useDeviceInfoContext()
   const [isDropdownOpen, setDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
@@ -38,15 +40,6 @@ export default function UserMenu() {
     }
   }, [update])
 
-  useEffect(() => {
-    if (deviceInfo && deviceInfo.isReady) {
-      console.log('[UserMenu] State:', {
-        isAppInstalled: deviceInfo.isPWAInstalled,
-        canShowPrompt: deviceInfo.pwaPrompt.isReady,
-        isReady: deviceInfo.isReady,
-      })
-    }
-  }, [deviceInfo])
 
   if (!deviceInfo) {
     return null // Don't render anything until the device info is loaded
@@ -126,17 +119,23 @@ export default function UserMenu() {
                 </>
               )}
 
-              {deviceInfo.isReady && deviceInfo.pwaPrompt.canInstall && (
+              {deviceInfo.a2hs.canInstall && (
                 <>
                   <hr className="my-2 border-gray-200 dark:border-gray-700" />
                   <button
                     onClick={() => {
-                      deviceInfo.pwaPrompt.prompt()
+                      if (deviceInfo.pwaPrompt.isReady) {
+                        // For Chrome/Edge, trigger the native prompt
+                        deviceInfo.pwaPrompt.prompt()
+                      } else {
+                        // For Safari, show the manual instructions prompt
+                        showPrompt()
+                      }
                       closeDropdown()
                     }}
                     className="block w-full px-4 py-2 text-left text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
                   >
-                    Install App
+                    {deviceInfo.a2hs.actionLabel}
                   </button>
                 </>
               )}

@@ -4,46 +4,32 @@ import { useEffect, useState } from 'react'
 
 import { Share } from 'lucide-react'
 
-import { useSession } from 'next-auth/react'
 import { useA2HS } from '@/context/A2HSContext'
-import { useDeviceInfo } from '@/hooks/useDeviceInfo'
+import { useDeviceInfoContext } from '@/context/DeviceInfoContext'
 import { Button } from './ui/button'
 
 const NAMEGAME_PWA_PROMPT_DISMISSED_KEY = 'namegame_pwa_prompt_dismissed'
 
 export function AddToHomescreenPrompt() {
-  const deviceInfo = useDeviceInfo()
-  const { data: session } = useSession()
   const { isPromptVisible, hidePrompt } = useA2HS()
-  const [isLocallyVisible, setLocallyVisible] = useState(false)
+  const deviceInfo = useDeviceInfoContext()
 
-  useEffect(() => {
-    if (deviceInfo && !deviceInfo.isPWA && deviceInfo.a2hs.isSupported && !session) {
-      const dismissed = localStorage.getItem(NAMEGAME_PWA_PROMPT_DISMISSED_KEY) === 'true'
-      if (!dismissed) {
-        setLocallyVisible(true)
-      }
-    } else {
-      setLocallyVisible(false)
-    }
-  }, [deviceInfo, session])
-
-  const hide = () => {
+  const dismiss = () => {
     localStorage.setItem(NAMEGAME_PWA_PROMPT_DISMISSED_KEY, 'true')
-    setLocallyVisible(false)
     hidePrompt()
   }
 
   const handleInstall = () => {
-    if (deviceInfo?.pwaPrompt.isReady && deviceInfo.a2hs.canInstall) {
+    if (deviceInfo?.pwaPrompt.isReady) {
       deviceInfo.pwaPrompt.prompt()
     }
-    hide()
+    // The prompt's userChoice will determine if it was accepted or dismissed.
+    // We'll hide our custom prompt either way.
+    dismiss()
   }
 
-  const isVisible = isPromptVisible || isLocallyVisible
-
-  if (!isVisible || !deviceInfo || deviceInfo.isPWA) {
+  // The component is now only controlled by the A2HSContext
+  if (!isPromptVisible || !deviceInfo || deviceInfo.isPWA || !deviceInfo.a2hs.isSupported) {
     return null
   }
 
@@ -99,7 +85,7 @@ export function AddToHomescreenPrompt() {
           </div>
         </div>
         <div className="ml-4 flex flex-shrink-0">
-          <Button variant="outline" size="sm" onClick={hide}>
+                    <Button variant="outline" size="sm" onClick={dismiss}>
             Dismiss
           </Button>
           {deviceInfo.pwaPrompt.isReady && (

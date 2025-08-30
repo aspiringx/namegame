@@ -1,8 +1,8 @@
 'use client'
 
-import { AddToHomescreenPrompt } from '@/components/AddToHomescreenPrompt'
 import { UserSessionProvider } from '@/context/UserSessionContext'
 import { A2HSProvider } from '@/context/A2HSContext'
+import { InstallAppPrompt } from '@/components/InstallAppPrompt'
 import { ServiceWorkerRegistrar } from '@/components/ServiceWorkerRegistrar'
 import Footer from '@/components/Footer'
 import Header from '@/components/Header'
@@ -21,7 +21,7 @@ export default function MainLayout({
             {children}
           </main>
           <Footer />
-          <AddToHomescreenPrompt />
+          <InstallAppPrompt />
           <ServiceWorkerRegistrar />
         </div>
       </A2HSProvider>

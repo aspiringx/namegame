@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useDeviceInfo } from './useDeviceInfo'
+import { useDeviceInfoContext } from '@/context/DeviceInfoContext'
 import { saveSubscription, deleteSubscription } from '@/actions/push'
 
 function urlBase64ToUint8Array(base64String: string) {
@@ -18,7 +18,7 @@ function urlBase64ToUint8Array(base64String: string) {
 }
 
 export function usePushNotifications() {
-  const deviceInfo = useDeviceInfo()
+  const deviceInfo = useDeviceInfoContext()
   const [isSubscribed, setIsSubscribed] = useState(false)
   const [isSubscribing, setIsSubscribing] = useState(false)
   const [subscription, setSubscription] = useState<PushSubscription | null>(null)

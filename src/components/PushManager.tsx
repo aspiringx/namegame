@@ -3,7 +3,6 @@
 import { usePushNotifications } from '@/hooks/usePushNotifications'
 import { Button } from './ui/button'
 import { BellIcon, BellOffIcon } from 'lucide-react'
-import { InstallAppPrompt } from './InstallAppPrompt'
 
 export function PushManager() {
   const {
@@ -17,10 +16,7 @@ export function PushManager() {
   } = usePushNotifications()
 
   if (!isSupported) {
-    if (!isPWA) {
-      return <InstallAppPrompt />
-    }
-    return null // Push notifications not supported by the browser for other reasons
+    return null // Push notifications not supported by the browser
   }
 
   if (permissionStatus === 'denied') {

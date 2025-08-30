@@ -1,6 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { Session } from 'next-auth'
+import { NAMEGAME_PWA_PROMPT_DISMISSED_KEY } from '@/lib/constants'
 
 // Re-defining this interface locally to avoid dependency on the old hook.
 interface RelatedApp {
@@ -25,7 +27,7 @@ type OperatingSystem =
   | 'macos'
   | 'linux'
   | 'unknown'
-type Browser = 'safari' | 'chrome' | 'firefox' | 'edge' | 'unknown'
+type Browser = 'safari' | 'chrome' | 'firefox' | 'edge' | 'samsung' | 'brave' | 'unknown'
 
 export type DeviceInfo = {
   isReady: boolean
@@ -38,7 +40,7 @@ export type DeviceInfo = {
   pwaPrompt: {
     canInstall: boolean
     isReady: boolean
-    prompt: () => Promise<void>
+    prompt: () => Promise<'accepted' | 'dismissed'>
   }
   a2hs: {
     isSupported: boolean
@@ -51,7 +53,117 @@ export type DeviceInfo = {
   }
 }
 
-export function useDeviceInfo(): DeviceInfo {
+type A2HSRule = {
+  isSupported: boolean
+  canInstall: (isStandalone: boolean, wasInstalled?: boolean) => boolean
+  actionLabel: string
+  instructions: string
+}
+
+// A nested lookup matrix for A2HS feature configuration.
+const A2HS_FEATURE_MATRIX: { [os: string]: { [browser: string]: A2HSRule } } = {
+  ios: {
+    // On iOS 16.4+, Safari, Chrome, Edge, and Firefox support PWA installation via the Share menu.
+    '*': {
+      isSupported: true,
+      canInstall: (isStandalone) => !isStandalone,
+      actionLabel: 'Add to Home Screen',
+      instructions: 'Tap the Share icon, then "Add to Home Screen".',
+    },
+  },
+  android: {
+    firefox: {
+      isSupported: true,
+      canInstall: (isStandalone) => !isStandalone,
+      actionLabel: 'Add to Home Screen',
+      instructions: 'Tap the menu button (⋮), then select "Install".',
+    },
+    chrome: {
+      isSupported: true,
+      canInstall: (isStandalone, wasInstalled) => !isStandalone && !wasInstalled,
+      actionLabel: 'Install App',
+      instructions: 'Tap the menu button (⋮), then select "Install app".',
+    },
+    brave: {
+      isSupported: true,
+      canInstall: (isStandalone, wasInstalled) => !isStandalone && !wasInstalled,
+      actionLabel: 'Install App',
+      instructions: 'Tap the menu button (⋮), then select "Install app".',
+    },
+    edge: {
+      isSupported: true,
+      canInstall: (isStandalone, wasInstalled) => !isStandalone && !wasInstalled,
+      actionLabel: 'Install App',
+      instructions: 'Tap the menu button (…), then select "Add to phone".',
+    },
+    samsung: {
+      isSupported: true,
+      canInstall: (isStandalone, wasInstalled) => !isStandalone && !wasInstalled,
+      actionLabel: 'Install App',
+      instructions: 'Tap the download icon in the address bar, or find "Add page to" in the menu.',
+    },
+    // Wildcard for other Chromium-based browsers on Android
+    '*': {
+      isSupported: true,
+      canInstall: (isStandalone, wasInstalled) => !isStandalone && !wasInstalled,
+      actionLabel: 'Install App',
+      instructions: 'Find the "Install" or "Add to Home Screen" option in your browser\'s menu.',
+    },
+  },
+  windows: {
+    // All modern browsers on Windows support the standard beforeinstallprompt event.
+    '*': {
+      isSupported: true,
+      canInstall: (isStandalone, wasInstalled) => !isStandalone && !wasInstalled,
+      actionLabel: 'Install App',
+      instructions: 'Install this app for a better experience.',
+    },
+  },
+  macos: {
+    safari: {
+      isSupported: true,
+      canInstall: (isStandalone) => !isStandalone,
+      actionLabel: 'Add to Dock',
+      instructions: 'Click the Share icon, then "Add to Dock".',
+    },
+    '*': {
+      isSupported: true,
+      canInstall: (isStandalone, wasInstalled) => !isStandalone && !wasInstalled,
+      actionLabel: 'Install App',
+      instructions: 'Install this app for a better experience.',
+    },
+  },
+  linux: {
+    // All modern browsers on Linux support the standard beforeinstallprompt event.
+    '*': {
+      isSupported: true,
+      canInstall: (isStandalone, wasInstalled) => !isStandalone && !wasInstalled,
+      actionLabel: 'Install App',
+      instructions: 'Install this app for a better experience.',
+    },
+  },
+};
+
+const A2HS_FALLBACK_RULE: A2HSRule = {
+  isSupported: false,
+  canInstall: () => false,
+  actionLabel: 'Bookmark',
+  instructions: 'Bookmark this page for easy access.',
+};
+
+/**
+ * Looks up the A2HS configuration from the feature matrix.
+ */
+function getA2hsConfig(os: string, browser: string) {
+  const osRules = A2HS_FEATURE_MATRIX[os as keyof typeof A2HS_FEATURE_MATRIX];
+  if (!osRules) {
+    return A2HS_FALLBACK_RULE;
+  }
+  const rule = osRules[browser as keyof typeof osRules] || osRules['*'];
+  return rule || A2HS_FALLBACK_RULE;
+}
+
+export function useDeviceInfo(session: Session | null): DeviceInfo {
   // HACK: This is a hack to get around the fact that BeforeInstallPromptEvent is not in the default TS lib
   // See https://developer.mozilla.org/en-US/docs/Web/API/BeforeInstallPromptEvent
   interface BeforeInstallPromptEvent extends Event {
@@ -74,7 +186,10 @@ export function useDeviceInfo(): DeviceInfo {
     pwaPrompt: {
       canInstall: false,
       isReady: false,
-      prompt: () => Promise.reject(new Error('Install prompt not ready.')),
+      prompt: () =>
+        Promise.reject<'accepted' | 'dismissed'>(
+          new Error('Install prompt not ready.'),
+        ),
     },
     a2hs: {
       isSupported: false,
@@ -88,6 +203,8 @@ export function useDeviceInfo(): DeviceInfo {
   })
 
   useEffect(() => {
+    if (typeof window === 'undefined') return
+
     const userAgent = navigator.userAgent.toLowerCase()
 
     // --- Platform detection ---
@@ -100,7 +217,10 @@ export function useDeviceInfo(): DeviceInfo {
 
     // --- Browser Detection ---
     let browser: Browser = 'unknown'
-    if (/edg/.test(userAgent)) browser = 'edge'
+    // Brave browser check must come before Chrome check
+    if ((navigator as any).brave?.isBrave) browser = 'brave'
+    else if (/samsungbrowser/.test(userAgent)) browser = 'samsung'
+    else if (/edg/.test(userAgent)) browser = 'edge'
     else if (/chrome/.test(userAgent) && !/edg/.test(userAgent))
       browser = 'chrome'
     else if (/safari/.test(userAgent) && !/chrome/.test(userAgent))
@@ -109,9 +229,12 @@ export function useDeviceInfo(): DeviceInfo {
 
     const isMobile = os === 'ios' || os === 'android'
     const isDesktop = !isMobile
-    const isPWA =
+    const isStandalone =
       window.matchMedia('(display-mode: standalone)').matches ||
       (window.navigator as any).standalone === true
+    const wasInstalled = localStorage.getItem('isPWAInstalled') === 'true'
+    const promptDismissed =
+      localStorage.getItem(NAMEGAME_PWA_PROMPT_DISMISSED_KEY) === 'true'
 
     const initialInfo: DeviceInfo = {
       isReady: false,
@@ -119,67 +242,45 @@ export function useDeviceInfo(): DeviceInfo {
       browser,
       isMobile,
       isDesktop,
-      isPWA,
-      isPWAInstalled: false,
+      isPWA: isStandalone,
+      isPWAInstalled: isStandalone || wasInstalled,
       pwaPrompt: {
         canInstall: false,
         isReady: false,
-        prompt: () => Promise.reject(new Error('Install prompt not ready.')),
+        prompt: () =>
+          Promise.reject<'accepted' | 'dismissed'>(
+            new Error('Install prompt not ready.'),
+          ),
       },
       a2hs: {
         isSupported: false,
         canInstall: false,
-        actionLabel: 'Bookmark',
-        instructions: 'Bookmark this page for easy access.',
+        actionLabel: '',
+        instructions: '',
       },
       push: {
         isSupported: 'PushManager' in window && 'serviceWorker' in navigator,
       },
     }
 
-    // --- Derive A2HS logic ---
-    if (os === 'ios') {
-      initialInfo.a2hs.isSupported = true
-      initialInfo.a2hs.canInstall = !isPWA
-      initialInfo.a2hs.actionLabel = 'Add to Home Screen'
-      initialInfo.a2hs.instructions =
-        'Tap the share icon, then select "Add to Home Screen".'
-    } else if (os === 'android' && browser === 'firefox') {
-      initialInfo.a2hs.isSupported = true
-      initialInfo.a2hs.canInstall = !isPWA
-      initialInfo.a2hs.actionLabel = 'Add to Home Screen'
-      initialInfo.a2hs.instructions =
-        'Tap your menu, Share, then select "Add to Home Screen".'
-    } else if (os === 'android' && browser === 'chrome') {
-      initialInfo.a2hs.isSupported = true
-      initialInfo.a2hs.canInstall = !isPWA
-    } else if (isDesktop) {
-      if (browser === 'firefox') {
-        initialInfo.a2hs.isSupported = true
-        initialInfo.a2hs.canInstall = false
-        initialInfo.a2hs.actionLabel = 'Bookmark'
-        initialInfo.a2hs.instructions = `Press ${os === 'macos' ? '⌘' : 'Ctrl'} + D to bookmark this page.`
-      } else if (os === 'macos' && browser === 'safari') {
-        initialInfo.a2hs.isSupported = true
-        initialInfo.a2hs.canInstall = !isPWA
-        initialInfo.a2hs.actionLabel = 'Add to Dock'
-        initialInfo.a2hs.instructions =
-          'Go to File > Add to Dock, or press Cmd+D to bookmark.'
-      } else if (browser === 'chrome' || browser === 'edge') {
-        initialInfo.a2hs.isSupported = true
-        initialInfo.a2hs.canInstall = !isPWA
-        initialInfo.a2hs.actionLabel = 'Install App'
-        initialInfo.a2hs.instructions =
-          'Install the app for a better experience.'
-      }
-    }
-
+    // --- Derive A2HS logic from the matrix ---
+    const a2hsConfig = getA2hsConfig(os, browser);
+    initialInfo.a2hs = {
+      isSupported: a2hsConfig.isSupported,
+      canInstall: a2hsConfig.canInstall(isStandalone, wasInstalled),
+      actionLabel: a2hsConfig.actionLabel,
+      instructions: a2hsConfig.instructions,
+    };
 
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault()
       const promptEvent = e as IBeforeInstallPromptEvent
       setDeviceInfo((prev) => ({
         ...prev,
+        a2hs: {
+          ...prev.a2hs,
+          canInstall: true, // This is the true signal for installability
+        },
         pwaPrompt: {
           ...prev.pwaPrompt,
           canInstall: true,
@@ -190,6 +291,7 @@ export function useDeviceInfo(): DeviceInfo {
             if (outcome === 'accepted') {
               setDeviceInfo((p) => ({ ...p, isPWAInstalled: true }))
             }
+            return outcome
           },
         },
       }))
@@ -200,25 +302,19 @@ export function useDeviceInfo(): DeviceInfo {
       window.location.reload()
     }
 
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
-    const wasInstalled = localStorage.getItem('isPWAInstalled') === 'true';
-
     if (isStandalone) {
-      localStorage.setItem('isPWAInstalled', 'true');
+      localStorage.setItem('isPWAInstalled', 'true')
     }
 
-    initialInfo.isPWA = isStandalone;
-
-    setDeviceInfo(prev => ({
+    setDeviceInfo((prev) => ({
       ...prev,
       ...initialInfo,
-      isPWAInstalled: isStandalone || wasInstalled,
-      isReady: true,
-    }));
+      isReady: true, // Signal that the initial info is ready
+    }))
 
-    if (!isStandalone && !wasInstalled) {
-      window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-      window.addEventListener('appinstalled', handleAppInstalled);
+    if (!isStandalone) {
+      window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+      window.addEventListener('appinstalled', handleAppInstalled)
     }
 
     return () => {

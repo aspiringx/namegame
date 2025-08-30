@@ -6,6 +6,7 @@ import AuthProvider from '@/components/AuthProvider'
 import { Providers } from '@/components/providers'
 import { Toaster } from '@/components/ui/toaster'
 import { UserSessionProvider } from '@/context/UserSessionContext'
+import { DeviceInfoProvider } from '@/context/DeviceInfoContext'
 import { A2HSProvider } from '@/context/A2HSContext'
 
 import './globals.css'
@@ -103,14 +104,16 @@ export default async function RootLayout({
         className={`${inter.variable} bg-background text-foreground overflow-visible font-sans`}
       >
         <Providers>
-          <div className="relative min-h-screen">
-            <AuthProvider session={session}>
-              <A2HSProvider>
-                <UserSessionProvider>{children}</UserSessionProvider>
-              </A2HSProvider>
-            </AuthProvider>
-          </div>
-          <Toaster />
+          <AuthProvider session={session}>
+            <DeviceInfoProvider>
+              <UserSessionProvider>
+                <A2HSProvider>
+                  <div className="relative min-h-screen">{children}</div>
+                  <Toaster />
+                </A2HSProvider>
+              </UserSessionProvider>
+            </DeviceInfoProvider>
+          </AuthProvider>
         </Providers>
       </body>
     </html>
