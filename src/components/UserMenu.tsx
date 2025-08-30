@@ -1,23 +1,18 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useContext } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { signOut, useSession } from 'next-auth/react'
 import { useUserSession } from '@/context/UserSessionContext'
-import { useDeviceInfo } from '@/hooks/useDeviceInfo'
-import { useA2HS } from '@/context/A2HSContext'
+import { DeviceInfoContext } from '@/context/DeviceInfoContext'
 
 export default function UserMenu() {
   const { data: session, update } = useSession()
   const { imageUrl } = useUserSession()
-  const deviceInfo = useDeviceInfo()
-  const { showPrompt } = useA2HS()
+  const deviceInfo = useContext(DeviceInfoContext)
   const [isDropdownOpen, setDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
-
-  const isAppInstalled = deviceInfo?.isPWAInstalled
-  const canShowPrompt = deviceInfo && !deviceInfo.isPWA && deviceInfo.a2hs.isSupported
 
   useEffect(() => {
     const channel = new BroadcastChannel('photo_updates')
@@ -25,14 +20,8 @@ export default function UserMenu() {
       update() // Refetch the session
     }
     channel.addEventListener('message', handlePhotoUpdate)
-    return () => {
-      channel.removeEventListener('message', handlePhotoUpdate)
-      channel.close()
-    }
-  }, [update])
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    function handleClickOutside(event: MouseEvent) {
       if (
         dropdownRef.current &&
         !dropdownRef.current.contains(event.target as Node)
@@ -40,12 +29,28 @@ export default function UserMenu() {
         setDropdownOpen(false)
       }
     }
-
     document.addEventListener('mousedown', handleClickOutside)
+
     return () => {
+      channel.removeEventListener('message', handlePhotoUpdate)
+      channel.close()
       document.removeEventListener('mousedown', handleClickOutside)
     }
-  }, [])
+  }, [update])
+
+  useEffect(() => {
+    if (deviceInfo && deviceInfo.isReady) {
+      console.log('[UserMenu] State:', {
+        isAppInstalled: deviceInfo.isPWAInstalled,
+        canShowPrompt: deviceInfo.pwaPrompt.isReady,
+        isReady: deviceInfo.isReady,
+      })
+    }
+  }, [deviceInfo])
+
+  if (!deviceInfo) {
+    return null // Don't render anything until the device info is loaded
+  }
 
   const toggleDropdown = () => {
     setDropdownOpen(!isDropdownOpen)
@@ -120,29 +125,28 @@ export default function UserMenu() {
                   </Link>
                 </>
               )}
-              {canShowPrompt && !isAppInstalled && (
+
+              {deviceInfo.isReady && deviceInfo.pwaPrompt.canInstall && (
                 <>
                   <hr className="my-2 border-gray-200 dark:border-gray-700" />
                   <button
                     onClick={() => {
-                      if (deviceInfo?.pwaPrompt.canInstall) {
-                        deviceInfo.pwaPrompt.prompt();
-                      } else {
-                        showPrompt();
-                      }
-                      closeDropdown();
+                      deviceInfo.pwaPrompt.prompt()
+                      closeDropdown()
                     }}
                     className="block w-full px-4 py-2 text-left text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
                   >
-                    {deviceInfo?.a2hs.actionLabel || 'Install App'}
+                    Install App
                   </button>
                 </>
               )}
+
+              {/* Logout */}
               <hr className="my-2 border-gray-200 dark:border-gray-700" />
               <button
                 onClick={() => {
-                  const callbackUrl = `${window.location.origin}/`;
-                  signOut({ callbackUrl });
+                  const callbackUrl = `${window.location.origin}/`
+                  signOut({ callbackUrl })
                   closeDropdown()
                 }}
                 className="block w-full px-4 py-2 text-left text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"

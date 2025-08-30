@@ -2,6 +2,7 @@ import { auth } from '@/auth'
 import Footer from '@/components/Footer'
 import Header from '@/components/Header'
 import { GroupProvider } from '@/components/GroupProvider'
+import { A2HSProvider } from '@/context/A2HSContext'
 import { getGroupTypeBySlug } from './data'
 import { getGroup as getAllGroup } from './all/data'
 import { getGroup as getFamilyGroup } from './family/data'
@@ -96,7 +97,8 @@ export default async function GroupLayout(props: {
   const isGroupAdmin = currentUserMember?.role.code === 'admin'
 
   return (
-    <GroupProvider
+    <A2HSProvider>
+      <GroupProvider
       value={{
         group: groupForProvider,
         greetedMembers,
@@ -116,6 +118,7 @@ export default async function GroupLayout(props: {
         <main className="flex-grow bg-gray-50 pb-16 dark:bg-gray-900">{children}</main>
         <Footer />
       </div>
-    </GroupProvider>
+      </GroupProvider>
+    </A2HSProvider>
   )
 }

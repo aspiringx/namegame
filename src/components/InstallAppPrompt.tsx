@@ -1,11 +1,11 @@
 'use client'
 
-import { useDeviceInfo } from '@/hooks/useDeviceInfo'
+import { useDeviceInfoContext } from '@/context/DeviceInfoContext'
 import { Button } from './ui/button'
 import { ArrowDownToLine, Share } from 'lucide-react'
 
 export function InstallAppPrompt() {
-  const deviceInfo = useDeviceInfo()
+  const deviceInfo = useDeviceInfoContext()
 
   const handleShowInstallInstructions = () => {
     // This will cause the AddToHomescreenPrompt to show up again
