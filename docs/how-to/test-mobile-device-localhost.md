@@ -81,3 +81,55 @@ To test on a different device (like a mobile phone), you must use a secure (HTTP
 1.  Follow the `ngrok` setup steps in Method 1 to start your server and create a secure tunnel.
 2.  Open the `https://...ngrok-free.app` URL on your mobile device.
 3.  Navigate to the profile and test pages to subscribe and send notifications.
+
+---
+
+## Method 3: Local SSL with Android Emulator (ngrok Alternative)
+
+This method allows you to test secure (HTTPS) features like PWA installation and Push Notifications on a simulated Android device without using `ngrok`. It uses `mkcert` and `local-ssl-proxy` to create a trusted local environment.
+
+For a full setup guide, see [Local Network SSL Testing](./local-network-ssl-like-ngrok.md). The key steps for Android are summarized below.
+
+### 1. Install and Set Up Android Studio
+
+If you don't have it, download and install [Android Studio](https://developer.android.com/studio).
+
+- **Create a Virtual Device (AVD):**
+  - In Android Studio, go to **Tools > Device Manager** and create a new device.
+  - **Important**: When selecting a system image, choose one where the "Target" column includes **"(Google APIs)"** instead of "(Google Play)". This avoids the mandatory Google login.
+
+### 2. Generate a Certificate for the Emulator
+
+Your SSL certificate must be valid for the special IP address the Android emulator uses to access your host machine (`10.0.2.2`).
+
+- In your project's root directory on your Mac, run this command to create/overwrite your certificate:
+  ```bash
+  mkcert -key-file local.namegame.app-key.pem -cert-file local.namegame.app.pem local.namegame.app 10.0.2.2
+  ```
+
+### 3. Install the Root CA on the Emulator
+
+The emulator needs to trust your local Certificate Authority (CA).
+
+1.  **Find your CA file:** Run `mkcert -CAROOT` on your Mac to find the `rootCA.pem` file.
+2.  **Start your emulator.**
+3.  **Install the CA:** Drag the `rootCA.pem` file from your Mac's Finder directly onto the running emulator screen. Android should prompt you to install it. If it doesn't, you can install it manually:
+    - In the emulator, go to **Settings**.
+    - Search for and select **"CA certificate"**.
+    - Tap **"Install anyway"** and browse to the **Downloads** folder to select the `rootCA.pem` file.
+
+### 4. Run and Test
+
+1.  **Start your app's production server**:
+    ```bash
+    npm run build
+    npm start
+    ```
+2.  **Start the SSL proxy** in a new terminal:
+    ```bash
+    npm run start:ssl
+    ```
+    Ensure your `package.json` script for `start:ssl` is `npx local-ssl-proxy --key local.namegame.app-key.pem --cert local.namegame.app.pem --source 3001 --target 3000`.
+
+3.  **Access the site in the emulator's browser**:
+    Navigate to **`https://10.0.2.2:3001`**. The site should load securely, and all PWA features will be functional.

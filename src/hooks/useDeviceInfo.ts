@@ -27,7 +27,14 @@ type OperatingSystem =
   | 'macos'
   | 'linux'
   | 'unknown'
-type Browser = 'safari' | 'chrome' | 'firefox' | 'edge' | 'samsung' | 'brave' | 'unknown'
+type Browser =
+  | 'safari'
+  | 'chrome'
+  | 'firefox'
+  | 'edge'
+  | 'samsung'
+  | 'brave'
+  | 'unknown'
 
 export type DeviceInfo = {
   isReady: boolean
@@ -80,34 +87,41 @@ const A2HS_FEATURE_MATRIX: { [os: string]: { [browser: string]: A2HSRule } } = {
     },
     chrome: {
       isSupported: true,
-      canInstall: (isStandalone, wasInstalled) => !isStandalone && !wasInstalled,
+      canInstall: (isStandalone, wasInstalled) =>
+        !isStandalone && !wasInstalled,
       actionLabel: 'Install App',
-      instructions: 'Tap the menu button (⋮), then select "Install app".',
+      instructions: 'Install this app for a better experience.',
     },
     brave: {
       isSupported: true,
-      canInstall: (isStandalone, wasInstalled) => !isStandalone && !wasInstalled,
+      canInstall: (isStandalone, wasInstalled) =>
+        !isStandalone && !wasInstalled,
       actionLabel: 'Install App',
-      instructions: 'Tap the menu button (⋮), then select "Install app".',
+      instructions: 'Install this app for a better experience.',
     },
     edge: {
       isSupported: true,
-      canInstall: (isStandalone, wasInstalled) => !isStandalone && !wasInstalled,
+      canInstall: (isStandalone, wasInstalled) =>
+        !isStandalone && !wasInstalled,
       actionLabel: 'Install App',
-      instructions: 'Tap the menu button (…), then select "Add to phone".',
+      instructions: 'Install this app for a better experience.',
     },
     samsung: {
       isSupported: true,
-      canInstall: (isStandalone, wasInstalled) => !isStandalone && !wasInstalled,
+      canInstall: (isStandalone, wasInstalled) =>
+        !isStandalone && !wasInstalled,
       actionLabel: 'Install App',
-      instructions: 'Tap the download icon in the address bar, or find "Add page to" in the menu.',
+      instructions:
+        'Tap the download icon in the address bar, or find "Add page to" in the menu.',
     },
     // Wildcard for other Chromium-based browsers on Android
     '*': {
       isSupported: true,
-      canInstall: (isStandalone, wasInstalled) => !isStandalone && !wasInstalled,
+      canInstall: (isStandalone, wasInstalled) =>
+        !isStandalone && !wasInstalled,
       actionLabel: 'Install App',
-      instructions: 'Find the "Install" or "Add to Home Screen" option in your browser\'s menu.',
+      instructions:
+        'Find the "Install" or "Add to Home Screen" option in your browser\'s menu.',
     },
   },
   windows: {
@@ -119,7 +133,8 @@ const A2HS_FEATURE_MATRIX: { [os: string]: { [browser: string]: A2HSRule } } = {
     },
     '*': {
       isSupported: true,
-      canInstall: (isStandalone, wasInstalled) => !isStandalone && !wasInstalled,
+      canInstall: (isStandalone, wasInstalled) =>
+        !isStandalone && !wasInstalled,
       actionLabel: 'Install App',
       instructions: 'Install this app for a better experience.',
     },
@@ -139,7 +154,8 @@ const A2HS_FEATURE_MATRIX: { [os: string]: { [browser: string]: A2HSRule } } = {
     },
     '*': {
       isSupported: true,
-      canInstall: (isStandalone, wasInstalled) => !isStandalone && !wasInstalled,
+      canInstall: (isStandalone, wasInstalled) =>
+        !isStandalone && !wasInstalled,
       actionLabel: 'Install App',
       instructions: 'Install this app for a better experience.',
     },
@@ -153,30 +169,31 @@ const A2HS_FEATURE_MATRIX: { [os: string]: { [browser: string]: A2HSRule } } = {
     },
     '*': {
       isSupported: true,
-      canInstall: (isStandalone, wasInstalled) => !isStandalone && !wasInstalled,
+      canInstall: (isStandalone, wasInstalled) =>
+        !isStandalone && !wasInstalled,
       actionLabel: 'Install App',
       instructions: 'Install this app for a better experience.',
     },
   },
-};
+}
 
 const A2HS_FALLBACK_RULE: A2HSRule = {
   isSupported: false,
   canInstall: () => false,
   actionLabel: 'Bookmark',
   instructions: 'Bookmark this page for easy access.',
-};
+}
 
 /**
  * Looks up the A2HS configuration from the feature matrix.
  */
 function getA2hsConfig(os: string, browser: string) {
-  const osRules = A2HS_FEATURE_MATRIX[os as keyof typeof A2HS_FEATURE_MATRIX];
+  const osRules = A2HS_FEATURE_MATRIX[os as keyof typeof A2HS_FEATURE_MATRIX]
   if (!osRules) {
-    return A2HS_FALLBACK_RULE;
+    return A2HS_FALLBACK_RULE
   }
-  const rule = osRules[browser as keyof typeof osRules] || osRules['*'];
-  return rule || A2HS_FALLBACK_RULE;
+  const rule = osRules[browser as keyof typeof osRules] || osRules['*']
+  return rule || A2HS_FALLBACK_RULE
 }
 
 export function useDeviceInfo(session: Session | null): DeviceInfo {
@@ -274,14 +291,13 @@ export function useDeviceInfo(session: Session | null): DeviceInfo {
     }
 
     // --- Derive A2HS logic from the matrix ---
-    const a2hsConfig = getA2hsConfig(os, browser);
+    const a2hsConfig = getA2hsConfig(os, browser)
     initialInfo.a2hs = {
       isSupported: a2hsConfig.isSupported,
       canInstall: a2hsConfig.canInstall(isStandalone, wasInstalled),
       actionLabel: a2hsConfig.actionLabel,
       instructions: a2hsConfig.instructions,
-    };
-
+    }
 
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault()

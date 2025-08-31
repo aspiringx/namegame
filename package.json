@@ -10,7 +10,7 @@
     "build": "prisma generate && next build",
     "build:clean": "rm -rf .next && npm run build",
     "start": "next start",
-    "start:ssl": "local-ssl-proxy --key local.namegame.app-key.pem --cert local.namegame.app.pem --source 3001 --target 3000",
+    "start:ssl": "npx local-ssl-proxy --key local.namegame.app-key.pem --cert local.namegame.app.pem --source 3001 --target 3000",
     "lint": "next lint",
     "test": "vitest run",
     "test:watch": "vitest",
