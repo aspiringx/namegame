@@ -8,6 +8,7 @@ import { UserSessionProvider } from '@/context/UserSessionContext'
 import { DeviceInfoProvider } from '@/context/DeviceInfoContext'
 import { A2HSProvider } from '@/context/A2HSContext'
 import { InstallAppPrompt } from '@/components/InstallAppPrompt'
+import { ClientOnly } from '@/components/ClientOnly'
 import AuthProvider from '@/components/AuthProvider'
 
 import './globals.css'
@@ -100,7 +101,7 @@ export default async function RootLayout({
   const session = await auth()
 
   return (
-      <html lang="en" suppressHydrationWarning>
+      <html lang="en">
         <body
           className={`${inter.variable} bg-background text-foreground overflow-visible font-sans`}
         >
@@ -110,7 +111,7 @@ export default async function RootLayout({
                 <UserSessionProvider>
                   <A2HSProvider>
                     <div className="relative min-h-screen">{children}</div>
-                    <InstallAppPrompt />
+                    <ClientOnly><InstallAppPrompt /></ClientOnly>
                     <Toaster />
                   </A2HSProvider>
                 </UserSessionProvider>

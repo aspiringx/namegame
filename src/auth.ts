@@ -11,6 +11,9 @@ import { authConfig } from './auth.config'
 // It merges the Edge-safe config with server-only providers.
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
+  session: {
+    maxAge: 90 * 24 * 60 * 60, // 30 days
+  },
   providers: [
     Credentials({
       async authorize(credentials) {
