@@ -1,10 +1,12 @@
 'use client'
 
+import { useState } from 'react'
 import type { GroupUser, GroupUserRole, User } from '@/generated/prisma'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import RemoveMemberButton from './remove-member-button'
+import { LoginCodeModal } from '@/components/LoginCodeModal'
 
 type GroupUserWithRelations = GroupUser & {
   user: User & { photoUrl: string }
@@ -19,13 +21,23 @@ export default function MembersTable({
   const params = useParams()
   const slug = params.slug as string
 
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
+  const [selectedUserForLogin, setSelectedUserForLogin] = useState<User | null>(
+    null,
+  )
+
+  const handleLoginLinkClick = (user: User) => {
+    setSelectedUserForLogin(user)
+    setIsLoginModalOpen(true)
+  }
+
   return (
     <div>
       <div className="mt-8 flow-root">
-        <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-          <div className="inline-block min-w-full py-2 align-middle sm:px-4 lg:px-8">
-            <table className="min-w-full table-fixed divide-y divide-gray-300 dark:divide-gray-700">
-              <thead>
+        <div className="-my-2">
+          <div className="inline-block min-w-full py-2 align-middle">
+            <table className="min-w-full table-fixed divide-y divide-gray-300 dark:divide-gray-700 sm:table">
+              <thead className="hidden sm:table-header-group"> 
                 <tr>
                   <th
                     scope="col"
@@ -47,10 +59,13 @@ export default function MembersTable({
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+              <tbody className="block divide-y divide-gray-200 dark:divide-gray-800 sm:table-row-group">
                 {groupUsers.map((groupUser) => (
-                  <tr key={groupUser.userId}>
-                    <td className="px-2 py-4 text-sm break-all sm:pl-0">
+                  <tr
+                  key={groupUser.userId}
+                  className="block border-b border-gray-200 dark:border-gray-800 sm:table-row"
+                >
+                    <td className="block px-2 py-4 text-sm sm:table-cell sm:w-1/2 sm:pl-0">
                       <div className="flex items-center">
                         <div className="h-10 w-10 flex-shrink-0">
                           <Image
@@ -67,34 +82,46 @@ export default function MembersTable({
                           />
                         </div>
                         <div className="ml-4">
-                          <div className="font-medium text-gray-900 dark:text-white">
+                          <div className="truncate font-medium text-gray-900 dark:text-white max-w-[25ch] sm:max-w-none">
                             {[groupUser.user.firstName, groupUser.user.lastName]
                               .filter(Boolean)
                               .join(' ')}
                           </div>
-                          <div className="text-gray-500 dark:text-gray-400">
+                          <div className="truncate text-gray-500 dark:text-gray-400 max-w-[25ch] sm:max-w-none">
                             {groupUser.user.email}
                           </div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-2 py-4 text-sm text-gray-500">
+                    <td className="block px-2 py-4 text-sm text-gray-500 sm:table-cell sm:w-1/4">
+                      <span className="font-semibold sm:hidden">Role: </span>
                       {groupUser.role.code}
                     </td>
-                    <td className="relative py-4 pr-4 pl-3 text-right text-sm font-medium sm:pr-0">
+                    <td className="block px-4 py-4 text-sm font-medium sm:relative sm:table-cell sm:w-1/4 sm:px-2 sm:pr-0">
+                      <div className="flex flex-col items-end space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2">
                       <Link
                         href={`/g/${slug}/admin/members/${groupUser.userId}/edit`}
                         className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-200"
                       >
                         Edit
                       </Link>
-                      <span className="mx-2 text-gray-300 dark:text-gray-600">
+                      <span className="hidden sm:inline mx-2 text-gray-300 dark:text-gray-600">
+                        |
+                      </span>
+                      <button
+                        onClick={() => handleLoginLinkClick(groupUser.user)}
+                        className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-200"
+                      >
+                        Login Link
+                      </button>
+                      <span className="hidden sm:inline mx-2 text-gray-300 dark:text-gray-600">
                         |
                       </span>
                       <RemoveMemberButton
                         userId={groupUser.userId}
                         groupId={groupUser.groupId}
                       />
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -103,6 +130,15 @@ export default function MembersTable({
           </div>
         </div>
       </div>
+      {selectedUserForLogin && groupUsers.length > 0 && (
+        <LoginCodeModal
+          isOpen={isLoginModalOpen}
+          onClose={() => setIsLoginModalOpen(false)}
+          user={selectedUserForLogin}
+          groupId={groupUsers[0].groupId}
+          groupSlug={slug}
+        />
+      )}
     </div>
   )
 }

@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import prisma from '@/lib/prisma'
 import UserProfileForm from './_components/user-profile-form'
 import { getCodeTable } from '@/lib/codes'
+import { AddToHomescreenPrompt } from '@/components/AddToHomescreenPrompt'
 
 export default async function UserProfilePage(props: {
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>
@@ -73,6 +74,7 @@ export default async function UserProfilePage(props: {
 
   return (
     <>
+      {searchParams?.sso === 'true' && <AddToHomescreenPrompt />}
       {searchParams?.welcome === 'true' ? (
         <div className="mb-4 rounded-md bg-green-50 p-4 text-sm text-green-700 dark:bg-green-900 dark:text-green-300">
           Welcome, {user.firstName}!
