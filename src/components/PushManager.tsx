@@ -8,10 +8,8 @@ export function PushManager() {
   const {
     subscribe,
     unsubscribe,
-    isSubscribed,
+    isPushEnabled,
     isSupported,
-    isPWA,
-    permissionStatus,
     isSubscribing,
   } = usePushNotifications()
 
@@ -19,16 +17,8 @@ export function PushManager() {
     return null // Push notifications not supported by the browser
   }
 
-  if (permissionStatus === 'denied') {
-    return (
-      <p className="text-sm text-muted-foreground">
-        You have blocked notifications. Please enable them in your browser
-        settings.
-      </p>
-    )
-  }
 
-  if (isSubscribed) {
+  if (isPushEnabled) {
     return (
       <Button
         variant="outline"

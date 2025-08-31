@@ -1,34 +1,80 @@
 'use client'
 
 import { useEffect } from 'react'
+import { useServiceWorkerRegistrar } from '@/context/ServiceWorkerContext'
 
 export function ServiceWorkerRegistrar() {
+  const { _setRegistration, _setIsReady } = useServiceWorkerRegistrar()
+
   useEffect(() => {
-    if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
-      const unregisterAndRegister = async () => {
-        try {
-          // Unregister all existing service workers
-          const registrations = await navigator.serviceWorker.getRegistrations()
-          for (const registration of registrations) {
-            await registration.unregister()
-            console.log('Old service worker unregistered:', registration.scope)
+    if (
+      !('serviceWorker' in navigator) ||
+      process.env.NODE_ENV !== 'production'
+    ) {
+      return
+    }
+
+    const setupServiceWorker = async () => {
+      try {
+        // Unregister any existing service workers to ensure a clean slate.
+        const oldRegistrations = await navigator.serviceWorker.getRegistrations()
+        for (const reg of oldRegistrations) {
+          await reg.unregister()
+          console.log('Old service worker unregistered:', reg.scope)
+        }
+
+        // Register the new service worker.
+        const newRegistration = await navigator.serviceWorker.register('/sw.js')
+        console.log('New service worker registered:', newRegistration.scope)
+
+        // Wait for the new service worker to become active.
+        await new Promise<void>((resolve) => {
+          const awaitStateChange = () => {
+            newRegistration.installing?.addEventListener('statechange', (e) => {
+              const worker = e.target as ServiceWorker
+              if (worker.state === 'activated') {
+                console.log('Service worker is active.')
+                resolve()
+              }
+            })
           }
 
-          // Register the new service worker
-          console.log('Attempting to register new service worker...')
-          const registration = await navigator.serviceWorker.register('/sw.js')
-          console.log(
-            'New Service Worker registered with scope:',
-            registration.scope,
-          )
-        } catch (error) {
-          console.error('Service Worker registration failed:', error)
-        }
-      }
+          if (newRegistration.installing) {
+            awaitStateChange()
+          } else if (newRegistration.waiting) {
+            // If a worker is already waiting, it might not fire 'installing'.
+            // This path is less common with our unregister logic but is a safeguard.
+            const worker = newRegistration.waiting
+            if (worker.state === 'installed') {
+              console.log('Waiting worker is installed, waiting for activation.')
+              worker.addEventListener('statechange', (e) => {
+                const updatedWorker = e.target as ServiceWorker
+                if (updatedWorker.state === 'activated') {
+                  console.log('Service worker is active.')
+                  resolve()
+                }
+              })
+            }
+          } else if (newRegistration.active) {
+            // If a worker is already active, we're good to go.
+            console.log('Service worker is already active.')
+            resolve()
+          }
+        })
 
-      unregisterAndRegister()
+        // Now that the worker is active, update the context.
+        const readyRegistration = await navigator.serviceWorker.ready
+        _setRegistration(readyRegistration)
+        _setIsReady(true)
+        console.log('Service worker context updated to ready state.')
+      } catch (error) {
+        console.error('Service Worker setup failed:', error)
+        _setIsReady(false)
+      }
     }
-  }, [])
+
+    setupServiceWorker()
+  }, [_setRegistration, _setIsReady])
 
   return null
 }
