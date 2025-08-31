@@ -41,6 +41,8 @@ export function PushTestClientPage() {
     // HACK: Temporary for Android Emulator testing. Leave this commented code
     // here as a reminder for local testing.
     // const baseUrl = 'https://10.0.2.2:3001'
+    // Same for local iPhone based on mac ip address which could change.
+    // const baseUrl = 'https://192.168.50.177:3001'
 
     const payload = {
       title,
