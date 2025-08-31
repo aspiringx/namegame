@@ -21,6 +21,7 @@ export function PushManager() {
   if (isPushEnabled) {
     return (
       <Button
+        type="button"
         variant="outline"
         size="sm"
         onClick={() => unsubscribe()}
@@ -34,6 +35,7 @@ export function PushManager() {
 
   return (
     <Button
+      type="button"
       variant="outline"
       size="sm"
       onClick={subscribe}

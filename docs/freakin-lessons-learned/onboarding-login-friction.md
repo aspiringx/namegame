@@ -1,7 +1,41 @@
 # Onboarding/Login Friction
 
 As of 8/31/2025, there is still friction in the onboarding/login process. The
-initial greeting links are working well, but after this:
+initial greeting links are working well, but after this, people get confused.
+
+Our top priories are:
+
+- Installing the app
+- Subscribing to push notifications
+- Making it super easy to add a last name, gender, and photo
+- Easily helping people login with an single sign-on link. Group admins should
+  be able to do this for any member of their group.
+  - If a user doesn't yet have a verified email address when the admin attempts
+    to create their SSO link, the group admin can add it, which should
+    automatically verify it. Then they can click a button to send the link via
+    email.
+  - Or the group admin can just copy the generated SSO link:
+    - On any @membercard.ts or @familymembercard.ts, in the three-dot menu, show
+      a "Login Code" link
+    - When clicked, open a LoginLinkModal user via text or let the user scan it
+      as a QR code (if they're together) just like a greeting link that opens a
+      QRCodeModal.
+- A group admin should be able to bulk-add/update users in the group by:
+  - downloading a csv with columns:
+    - email
+    - first name
+    - last name
+    - gender
+  - Fill out any info for users
+  - Upload the csv to the group and:
+    - If the user doesn't exist, create them
+    - If the user exists, update their info
+    - If a user exists and didn't have a verified email address, mark it as
+      verified, but if they already had a verified email, don't change it.
+    - Send an email to each new or updated user with an SSO link
+- Changing password and verifying an email address (later/optional) so they can
+  reset their password later if they forget it.
+  - We've updated the session to 90 days.
 
 ## User forgetting how to get back to the app
 
