@@ -11,6 +11,7 @@ export function PushManager() {
     isPushEnabled,
     isSupported,
     isSubscribing,
+    isReady,
   } = usePushNotifications()
 
   if (!isSupported) {
@@ -25,7 +26,7 @@ export function PushManager() {
         variant="outline"
         size="sm"
         onClick={() => unsubscribe()}
-        disabled={isSubscribing}
+        disabled={isSubscribing || !isReady}
       >
         <BellOffIcon className="mr-2 h-4 w-4" />
         Disable Notifications
