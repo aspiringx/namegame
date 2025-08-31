@@ -15,7 +15,10 @@ export function PushTestClientPage() {
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([])
   const [selectedEndpoint, setSelectedEndpoint] = useState<string>('')
   const [title, setTitle] = useState('Test Notification')
-  const [body, setBody] = useState('This is a test notification from the NameGame app!')
+  const [body, setBody] = useState(
+    'This is a test notification from the NameGame app!',
+  )
+  const [url, setUrl] = useState('/me')
 
   useEffect(() => {
     async function fetchSubscriptions() {
@@ -29,10 +32,21 @@ export function PushTestClientPage() {
   }, [])
 
   const handleSendNotification = async () => {
+    // const origin = window.location.origin
+    // // HACK: In local dev with an SSL proxy, the origin can be http even if the site is served over https.
+    // // This forces https to ensure the link works on devices.
+    const baseUrl = origin.startsWith('http://')
+      ? origin.replace('http://', 'https://')
+      : origin
+    // HACK: Temporary for Android Emulator testing. Leave this commented code
+    // here as a reminder for local testing.
+    // const baseUrl = 'https://10.0.2.2:3001'
+
     const payload = {
       title,
       body,
       icon: '/icons/icon-192x192.png',
+      url: new URL(url, baseUrl).href,
     }
     const result = await sendNotification(payload, selectedEndpoint)
     if (result.success) {
@@ -92,8 +106,22 @@ export function PushTestClientPage() {
           rows={3}
         />
       </div>
+      <div className="mb-4 max-w-sm space-y-2">
+        <label
+          htmlFor="url-input"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+        >
+          URL
+        </label>
+        <Input
+          id="url-input"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+        />
+      </div>
       <p className="mb-4">
-        Click the button below to send a test notification to the selected device.
+        Click the button below to send a test notification to the selected
+        device.
       </p>
       <Button onClick={handleSendNotification} disabled={!selectedEndpoint}>
         Send Test Notification
