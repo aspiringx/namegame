@@ -10,31 +10,44 @@ Easily help people login with an single sign-on link like our greeting codes
 member of their group.
 
 - On any @membercard.ts or @familymembercard.ts, in the three-dot menu, show a
-  "Login Code" link
-- When clicked, open a LoginLinkModal user via text or let the user scan it as a
-  QR code (if they're together) just like a greeting link that opens a
-  QRCodeModal.
-
-- If a user doesn't yet have a verified email address when the admin attempts to
-  create their SSO link, the group admin can add it, which should automatically
-  verify it. Then they can click a button to send the link via email.
-- Or the group admin can just copy the generated SSO link:
+  "Share Login Code" when a user is a group admin
+- When clicked, open a LoginCodeModal similar to our current QRCodeModal.
+  - System geneates a new code in the codes table. The createdAt timestamp will
+    be used to expire the code after 7 days.
+  - Append the code to the base URL + '/one-time-login/[code]'
+  - Generate a QR code for this URL
+  - Show the QR code in the LoginCodeModal.
+  - The admin can either copy and send the link to the user or show them to QR
+    code (if they're together).
+  - When the user scans or clicks/taps it, we look up the code:
+    - If we find it and it's not expired (createdAt < 7 days ago), we should
+      login the user, redirect to the user profile page at /me
+      - If expired or an invalid code, tell them they need a new one and to
+        contact [firstName] of the person who shared it with them.
+- Show success alert: "Whew, you're back in! You can avoid this later by:
+  - Installing the app [install app or add to home screen button here].
+    - This line only shows if they haven't already installed it and if they have
+      the ability (based on os/browser) to install it.
+  - Verifying an email address and updating your password
 
 ## Bulk add/update group users
 
-- A group admin should be able to bulk-add/update users in the group by:
-  - downloading a csv with columns:
-    - email
-    - first name
-    - last name
-    - gender
-  - Fill out any info for users
-  - Upload the csv to the group and:
-    - If the user doesn't exist, create them
-    - If the user exists, update their info
-    - If a user exists and didn't have a verified email address, mark it as
-      verified, but if they already had a verified email, don't change it.
-    - Send an email to each new or updated user with an SSO link
+A group admin should be able to bulk-add/update users in the group. Many groups
+(families, churches, etc.) already have a list of members.
+
+downloading a csv with columns:
+
+- email
+- first name
+- last name
+- gender
+- Fill out any info for users
+- Upload the csv to the group and:
+  - If the user doesn't exist, create them
+  - If the user exists, update their info
+  - If a user exists and didn't have a verified email address, mark it as
+    verified, but if they already had a verified email, don't change it.
+  - Send an email to each new or updated user with an SSO link
 
 ## Simplify adding a last name, gender, and photo
 

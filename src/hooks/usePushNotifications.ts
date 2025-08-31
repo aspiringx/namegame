@@ -131,5 +131,6 @@ export function usePushNotifications() {
     unsubscribe,
     subscription,
     error,
+    isReady,
   }
 }

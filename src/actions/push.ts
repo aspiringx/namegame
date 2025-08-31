@@ -5,7 +5,6 @@ import db from '@/lib/prisma'
 import webPush, { type WebPushError } from 'web-push'
 import { z } from 'zod'
 
-
 const subscriptionSchema = z.object({
   endpoint: z.string().url(),
   keys: z.object({
@@ -106,28 +105,27 @@ export async function sendNotification(
 
   // Configure VAPID details just-in-time to ensure keys are fresh.
   if (
-    !process.env.WEB_PUSH_EMAIL ||
     !process.env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY ||
     !process.env.WEB_PUSH_PRIVATE_KEY
   ) {
-    console.error('VAPID keys are not configured. Push notifications will fail.')
-    return { success: false, message: 'VAPID keys are not configured on the server.' }
+    console.error(
+      'VAPID keys are not configured. Push notifications will fail.',
+    )
+    return {
+      success: false,
+      message: 'VAPID keys are not configured on the server.',
+    }
   }
 
-  const subject = process.env.WEB_PUSH_EMAIL.startsWith('mailto:')
+  const subject = process.env.WEB_PUSH_EMAIL
     ? process.env.WEB_PUSH_EMAIL
-    : `mailto:${process.env.WEB_PUSH_EMAIL}`
+    : 'https://www.namegame.app'
 
-  const publicKey = process.env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY
-  const privateKey = process.env.WEB_PUSH_PRIVATE_KEY
-
-  console.log('VAPID Check: Public Key Loaded:', !!publicKey)
-  console.log(
-    'VAPID Check: Public Key Snippet:',
-    publicKey?.substring(0, 10) + '...',
+  webPush.setVapidDetails(
+    subject,
+    process.env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY,
+    process.env.WEB_PUSH_PRIVATE_KEY,
   )
-
-  webPush.setVapidDetails(subject, publicKey, privateKey)
 
   try {
     const subscription = await db.pushSubscription.findUnique({
@@ -141,7 +139,10 @@ export async function sendNotification(
     const subscriptions = [subscription]
 
     if (subscriptions.length === 0) {
-      return { success: false, message: 'No push subscriptions found for user.' }
+      return {
+        success: false,
+        message: 'No push subscriptions found for user.',
+      }
     }
 
     const notificationPayload = JSON.stringify(payload)
@@ -160,7 +161,10 @@ export async function sendNotification(
         )
         .catch((error: WebPushError) => {
           if (error.statusCode === 410 || error.statusCode === 404) {
-            console.log('Subscription has expired or is no longer valid: ', sub.id)
+            console.log(
+              'Subscription has expired or is no longer valid: ',
+              sub.id,
+            )
             return db.pushSubscription.delete({ where: { id: sub.id } })
           } else {
             console.error('Error sending push notification:', error)
