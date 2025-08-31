@@ -1,17 +1,19 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useContext } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { signOut, useSession } from 'next-auth/react'
 import { useUserSession } from '@/context/UserSessionContext'
-import { useAddToHomescreenPrompt } from '@/hooks/useAddToHomescreenPrompt'
+import { useA2HS } from '@/context/A2HSContext'
+import { useDeviceInfoContext } from '@/context/DeviceInfoContext'
+import { NAMEGAME_PWA_PROMPT_DISMISSED_KEY } from '@/lib/constants'
 
 export default function UserMenu() {
   const { data: session, update } = useSession()
   const { imageUrl } = useUserSession()
-  const { prompt, isIOS, isMacSafari } = useAddToHomescreenPrompt()
-  const canShowPrompt = prompt || isIOS || isMacSafari
+  const { showPrompt } = useA2HS()
+  const deviceInfo = useDeviceInfoContext()
   const [isDropdownOpen, setDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
@@ -21,14 +23,8 @@ export default function UserMenu() {
       update() // Refetch the session
     }
     channel.addEventListener('message', handlePhotoUpdate)
-    return () => {
-      channel.removeEventListener('message', handlePhotoUpdate)
-      channel.close()
-    }
-  }, [update])
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    function handleClickOutside(event: MouseEvent) {
       if (
         dropdownRef.current &&
         !dropdownRef.current.contains(event.target as Node)
@@ -36,12 +32,19 @@ export default function UserMenu() {
         setDropdownOpen(false)
       }
     }
-
     document.addEventListener('mousedown', handleClickOutside)
+
     return () => {
+      channel.removeEventListener('message', handlePhotoUpdate)
+      channel.close()
       document.removeEventListener('mousedown', handleClickOutside)
     }
-  }, [])
+  }, [update])
+
+
+  if (!deviceInfo) {
+    return null // Don't render anything until the device info is loaded
+  }
 
   const toggleDropdown = () => {
     setDropdownOpen(!isDropdownOpen)
@@ -116,22 +119,36 @@ export default function UserMenu() {
                   </Link>
                 </>
               )}
-              {canShowPrompt && (
-                <button
-                  onClick={() => {
-                    localStorage.removeItem('namegame_pwa_prompt_dismissed')
-                    window.location.reload()
-                  }}
-                  className="block w-full px-4 py-2 text-left text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
-                >
-                  Install App
-                </button>
+
+              {deviceInfo.a2hs.canInstall && (
+                <>
+                  <hr className="my-2 border-gray-200 dark:border-gray-700" />
+                  <button
+                    onClick={() => {
+                      if (deviceInfo.pwaPrompt.isReady) {
+                        // For Chrome/Edge, trigger the native prompt
+                        deviceInfo.pwaPrompt.prompt()
+                      } else {
+                        // For Safari, show the manual instructions prompt.
+                        // We clear the dismissal flag so it always shows from the menu.
+                        localStorage.removeItem(NAMEGAME_PWA_PROMPT_DISMISSED_KEY)
+                        showPrompt()
+                      }
+                      closeDropdown()
+                    }}
+                    className="block w-full px-4 py-2 text-left text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
+                  >
+                    {deviceInfo.a2hs.actionLabel}
+                  </button>
+                </>
               )}
+
+              {/* Logout */}
               <hr className="my-2 border-gray-200 dark:border-gray-700" />
               <button
                 onClick={() => {
-                  const callbackUrl = `${window.location.origin}/`;
-                  signOut({ callbackUrl });
+                  const callbackUrl = `${window.location.origin}/`
+                  signOut({ callbackUrl })
                   closeDropdown()
                 }}
                 className="block w-full px-4 py-2 text-left text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"

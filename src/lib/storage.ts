@@ -12,7 +12,10 @@ import { writeFile, unlink, mkdir } from 'fs/promises'
 import sharp from 'sharp'
 import { env } from 'process'
 
-const STORAGE_PROVIDER = process.env.NEXT_PUBLIC_STORAGE_PROVIDER || 'local'
+const STORAGE_PROVIDER =
+  process.env.NEXT_PUBLIC_STORAGE_PROVIDER === 'do_spaces'
+    ? 'do_spaces'
+    : 'local'
 const BUCKET_NAME = env.DO_SPACES_BUCKET || ''
 
 const ALLOWED_FORMATS = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
@@ -103,35 +106,32 @@ export async function uploadFile(
 export async function getPublicUrl(
   storagePath: string | null | undefined,
 ): Promise<string> {
-  // 1. Handle the case where there is no image path.
+  // 1. Handle null or undefined paths.
   if (!storagePath) {
     return '/images/default-avatar.png'
   }
 
-  // 2. Handle full external URLs.
+  // 2. If it's already a full URL, return it as is.
   if (storagePath.startsWith('http')) {
     return storagePath
   }
 
-  // 3. Handle legacy local paths (stored in the public/uploads directory).
-  // These paths are stored as 'uploads/...' and need a leading slash.
-  if (storagePath.startsWith('uploads/')) {
-    return `/${storagePath}`
+  // 3. If it's a legacy local path or a new local path, make it a root-relative URL.
+  if (
+    STORAGE_PROVIDER === 'local' ||
+    storagePath.startsWith('uploads/') ||
+    storagePath.startsWith('/uploads/')
+  ) {
+    return `/${storagePath.replace(/^\/?uploads\//, 'uploads/')}`
   }
 
-  // 4. Handle already-proxied DigitalOcean Spaces paths.
+  // 4. If it's already a proxied path, return it as is.
   if (storagePath.startsWith('/api/images')) {
     return storagePath
   }
 
-  // 5. Handle new DigitalOcean Spaces paths by routing them through our secure proxy.
-  // These paths are stored as 'user-photos/...' and need to be prefixed.
-  if (STORAGE_PROVIDER === 'do_spaces') {
-    return `/api/images?key=${storagePath}`
-  }
-
-  // 5. Fallback for any other path, ensuring it's a valid root-relative URL.
-  return `/${storagePath.replace(/^\/+/, '')}`
+  // 5. For all other cases (assumed to be S3 keys), route them through the proxy.
+  return `/api/images?key=${storagePath}`
 }
 
 export async function deleteFile(storagePath: string): Promise<void> {

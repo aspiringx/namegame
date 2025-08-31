@@ -4,67 +4,91 @@ import { useEffect, useState } from 'react'
 
 import { Share } from 'lucide-react'
 
-import { useAddToHomescreenPrompt } from '@/hooks/useAddToHomescreenPrompt'
+import { useA2HS } from '@/context/A2HSContext'
+import { useDeviceInfoContext } from '@/context/DeviceInfoContext'
 import { Button } from './ui/button'
 
 const NAMEGAME_PWA_PROMPT_DISMISSED_KEY = 'namegame_pwa_prompt_dismissed'
 
 export function AddToHomescreenPrompt() {
-  const { prompt, promptToInstall, isIOS, isMacSafari } = useAddToHomescreenPrompt()
-  const [isVisible, setVisibleState] = useState(false)
+  const { isPromptVisible, hidePrompt } = useA2HS()
+  const deviceInfo = useDeviceInfoContext()
 
-  useEffect(() => {
-    const dismissed = localStorage.getItem(NAMEGAME_PWA_PROMPT_DISMISSED_KEY) === 'true'
-    if (!dismissed && (prompt || isIOS || isMacSafari)) {
-      setVisibleState(true)
-    }
-  }, [prompt, isIOS, isMacSafari])
-
-  const hide = () => {
+  const dismiss = () => {
     localStorage.setItem(NAMEGAME_PWA_PROMPT_DISMISSED_KEY, 'true')
-    setVisibleState(false)
+    hidePrompt()
   }
 
   const handleInstall = () => {
-    promptToInstall()
-    hide()
+    if (deviceInfo?.pwaPrompt.isReady) {
+      deviceInfo.pwaPrompt.prompt()
+    }
+    // The prompt's userChoice will determine if it was accepted or dismissed.
+    // We'll hide our custom prompt either way.
+    dismiss()
   }
 
-  if (!isVisible) {
+  // The component is now only controlled by the A2HSContext
+  if (!isPromptVisible || !deviceInfo || deviceInfo.isPWA || !deviceInfo.a2hs.isSupported) {
     return null
   }
 
+  const renderInstructions = () => {
+    // A simple way to check if we need the Share icon or special formatting.
+    if (
+      typeof deviceInfo.a2hs.instructions === 'string' &&
+      deviceInfo.a2hs.instructions.includes('share icon')
+    ) {
+      return (
+        <>
+          <Share className="mr-2 h-6 w-6 text-blue-500" />
+          <span>{deviceInfo.a2hs.instructions}</span>
+        </>
+      )
+    }
+    if (
+      typeof deviceInfo.a2hs.instructions === 'string' &&
+      deviceInfo.a2hs.instructions.includes('⌘')
+    ) {
+      const parts = deviceInfo.a2hs.instructions.split(/(\s\+\s|\s)/g)
+      return (
+        <p>
+          {parts.map((part, index) => {
+            if (part === '⌘' || part === 'Ctrl' || part === 'D') {
+              return (
+                <kbd
+                  key={index}
+                  className="bg-muted rounded-md border px-2 py-1 text-sm"
+                >
+                  {part}
+                </kbd>
+              )
+            }
+            return <span key={index}>{part}</span>
+          })}
+        </p>
+      )
+    }
+
+    return <p>{deviceInfo.a2hs.instructions}</p>
+  }
+
   return (
-    <div className="fixed bottom-4 right-4 z-50 rounded-lg bg-background p-4 shadow-lg border">
+    <div className="bg-background fixed right-4 bottom-4 z-50 rounded-lg border p-4 shadow-lg">
       <div className="flex items-start">
         <div className="ml-3 flex-1">
-          <p className="text-sm font-medium text-foreground">
-            {isIOS
-              ? 'Add to Home Screen'
-              : isMacSafari
-                ? 'Add to Dock or Bookmark'
-                : 'Add NameGame to your Home Screen'}
+          <p className="text-foreground text-sm font-medium">
+            {deviceInfo.a2hs.actionLabel}
           </p>
-          <div className="mt-1 text-sm text-muted-foreground flex items-center">
-            {isIOS ? (
-              <>
-                <Share className="mr-2 h-6 w-6 text-blue-500" />
-                <span>
-                  Tap the share icon, then select "Add to Home Screen".
-                </span>
-              </>
-            ) : isMacSafari ? (
-              <p>To install, go to File &gt; Add to Dock, or press Cmd+D to bookmark.</p>
-            ) : (
-              <p>For a better experience, install the app on your device.</p>
-            )}
+          <div className="text-muted-foreground mt-1 flex items-center text-sm">
+            {renderInstructions()}
           </div>
         </div>
         <div className="ml-4 flex flex-shrink-0">
-          <Button variant="outline" size="sm" onClick={hide}>
+                    <Button variant="outline" size="sm" onClick={dismiss}>
             Dismiss
           </Button>
-          {!isIOS && !isMacSafari && (
+          {deviceInfo.pwaPrompt.isReady && (
             <Button size="sm" onClick={handleInstall} className="ml-2">
               Install
             </Button>
