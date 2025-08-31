@@ -12,7 +12,10 @@ import { writeFile, unlink, mkdir } from 'fs/promises'
 import sharp from 'sharp'
 import { env } from 'process'
 
-const STORAGE_PROVIDER = process.env.DO_SPACES_BUCKET ? 'do_spaces' : 'local'
+const STORAGE_PROVIDER =
+  process.env.NEXT_PUBLIC_STORAGE_PROVIDER === 'do_spaces'
+    ? 'do_spaces'
+    : 'local'
 const BUCKET_NAME = env.DO_SPACES_BUCKET || ''
 
 const ALLOWED_FORMATS = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
@@ -113,9 +116,13 @@ export async function getPublicUrl(
     return storagePath
   }
 
-  // 3. If it's a legacy local path, make it a root-relative URL.
-  if (storagePath.startsWith('uploads/')) {
-    return `/${storagePath}`
+  // 3. If it's a legacy local path or a new local path, make it a root-relative URL.
+  if (
+    STORAGE_PROVIDER === 'local' ||
+    storagePath.startsWith('uploads/') ||
+    storagePath.startsWith('/uploads/')
+  ) {
+    return `/${storagePath.replace(/^\/?uploads\//, 'uploads/')}`
   }
 
   // 4. If it's already a proxied path, return it as is.
