@@ -81,7 +81,8 @@ export function usePushNotifications() {
 
     setIsSubscribing(true)
     try {
-      const registration = await navigator.serviceWorker.ready
+      let registration = await navigator.serviceWorker.ready
+
 
       let sub = await registration.pushManager.getSubscription()
 
@@ -93,8 +94,7 @@ export function usePushNotifications() {
           return
         }
 
-        const swRegistration = await navigator.serviceWorker.ready
-        sub = await swRegistration.pushManager.subscribe({
+        sub = await registration.pushManager.subscribe({
           userVisibleOnly: true,
           applicationServerKey: urlBase64ToUint8Array(
             process.env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY,
