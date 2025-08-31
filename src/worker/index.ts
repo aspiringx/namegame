@@ -12,7 +12,12 @@ cleanupOutdatedCaches()
 // Filter out problematic manifests and precache the rest.
 const manifest = (self.__WB_MANIFEST || []).filter((entry) => {
   const url = typeof entry === 'string' ? entry : entry.url
-  return !url.endsWith('.map') && !url.endsWith('app-build-manifest.json')
+  // The _buildManifest.js file is not needed for precaching and can cause issues.
+  return (
+    !url.endsWith('.map') &&
+    !url.endsWith('app-build-manifest.json') &&
+    !url.endsWith('_buildManifest.js')
+  )
 })
 precacheAndRoute(manifest)
 
