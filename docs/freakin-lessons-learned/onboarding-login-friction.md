@@ -9,8 +9,10 @@ Easily help people login with an single sign-on link like our greeting codes
 (model Code in schema.prisma).Group admins should be able to do this for any
 member of their group.
 
-- On any @membercard.ts or @familymembercard.ts, in the three-dot menu, show a
-  "Share Login Code" when a user is a group admin
+Group Admin
+
+- In group admin pages at /admin/groups/[slug]/edit/members, show a new Login
+  link for each user.
 - When clicked, open a LoginCodeModal similar to our current QRCodeModal.
   - System geneates a new code in the codes table. The createdAt timestamp will
     be used to expire the code after 7 days.
@@ -19,11 +21,18 @@ member of their group.
   - Show the QR code in the LoginCodeModal.
   - The admin can either copy and send the link to the user or show them to QR
     code (if they're together).
-  - When the user scans or clicks/taps it, we look up the code:
-    - If we find it and it's not expired (createdAt < 7 days ago), we should
-      login the user, redirect to the user profile page at /me
-      - If expired or an invalid code, tell them they need a new one and to
-        contact [firstName] of the person who shared it with them.
+- Make this view mobile friendly:
+  - On mobile, don't show photos
+  - Limit the width of names and emails shown in this table to 25 characters
+    with the truncate class and show ellipsis if it's longer.
+
+Login Link Recipient
+
+- When the user scans or clicks/taps it, we look up the code:
+  - If we find it and it's not expired (createdAt < 7 days ago), we should login
+    the user, redirect to the user profile page at /me
+    - If expired or an invalid code, tell them they need a new one and to
+      contact [firstName] of the person who shared it with them.
 - Show success alert: "Whew, you're back in! You can avoid this later by:
   - Installing the app [install app or add to home screen button here].
     - This line only shows if they haven't already installed it and if they have
@@ -35,7 +44,7 @@ member of their group.
 A group admin should be able to bulk-add/update users in the group. Many groups
 (families, churches, etc.) already have a list of members.
 
-downloading a csv with columns:
+1. Download a csv with columns:
 
 - email
 - first name

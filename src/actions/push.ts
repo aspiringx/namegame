@@ -136,6 +136,11 @@ export async function sendNotification(
       return { success: false, message: 'Subscription not found.' }
     }
 
+    console.log(
+      'Server-side subscription object:',
+      JSON.stringify(subscription, null, 2),
+    )
+
     const subscriptions = [subscription]
 
     if (subscriptions.length === 0) {
