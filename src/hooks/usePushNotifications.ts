@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useUser } from '@clerk/nextjs'
+import { useSession } from 'next-auth/react'
 import { useServiceWorker } from '@/context/ServiceWorkerContext'
 import { useDeviceInfoContext } from '@/context/DeviceInfoContext'
 import { saveSubscription, deleteSubscription } from '@/actions/push'
@@ -21,7 +21,7 @@ function urlBase64ToUint8Array(base64String: string) {
 
 export function usePushNotifications() {
   const deviceInfo = useDeviceInfoContext()
-  const { user } = useUser()
+  const { data: session } = useSession()
   const { registration, isReady } = useServiceWorker()
 
   const [isSubscribing, setIsSubscribing] = useState(false)
@@ -34,7 +34,7 @@ export function usePushNotifications() {
 
   // Effect to check for an existing subscription once the service worker is ready
   useEffect(() => {
-    if (isReady && registration) {
+    if (isReady && registration && session) {
       const checkSubscription = async () => {
         try {
           const sub = await registration.pushManager.getSubscription()
@@ -49,7 +49,7 @@ export function usePushNotifications() {
       }
       checkSubscription()
     }
-  }, [isReady, registration, user])
+  }, [isReady, registration, session])
 
   const subscribe = useCallback(async () => {
     if (!isSupported || !process.env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY) {

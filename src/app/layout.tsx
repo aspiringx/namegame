@@ -2,13 +2,13 @@ import type { Metadata, Viewport } from 'next'
 import localFont from 'next/font/local'
 
 import { auth } from '@/auth'
-import AuthProvider from '@/components/AuthProvider'
 import { Providers } from '@/components/providers'
 import { Toaster } from '@/components/ui/toaster'
 import { UserSessionProvider } from '@/context/UserSessionContext'
 import { DeviceInfoProvider } from '@/context/DeviceInfoContext'
 import { A2HSProvider } from '@/context/A2HSContext'
 import { InstallAppPrompt } from '@/components/InstallAppPrompt'
+import AuthProvider from '@/components/AuthProvider'
 
 import './globals.css'
 
@@ -100,24 +100,24 @@ export default async function RootLayout({
   const session = await auth()
 
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${inter.variable} bg-background text-foreground overflow-visible font-sans`}
-      >
-        <Providers>
-          <AuthProvider session={session}>
-            <DeviceInfoProvider>
-              <UserSessionProvider>
-                <A2HSProvider>
-                  <div className="relative min-h-screen">{children}</div>
-                  <InstallAppPrompt />
-                  <Toaster />
-                </A2HSProvider>
-              </UserSessionProvider>
-            </DeviceInfoProvider>
-          </AuthProvider>
-        </Providers>
-      </body>
-    </html>
+      <html lang="en" suppressHydrationWarning>
+        <body
+          className={`${inter.variable} bg-background text-foreground overflow-visible font-sans`}
+        >
+          <Providers>
+            <AuthProvider session={session}>
+              <DeviceInfoProvider>
+                <UserSessionProvider>
+                  <A2HSProvider>
+                    <div className="relative min-h-screen">{children}</div>
+                    <InstallAppPrompt />
+                    <Toaster />
+                  </A2HSProvider>
+                </UserSessionProvider>
+              </DeviceInfoProvider>
+            </AuthProvider>
+          </Providers>
+        </body>
+      </html>
   )
 }
