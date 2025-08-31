@@ -11,6 +11,22 @@ type Subscription = {
   userName: string | null
 }
 
+function getBrowserInfo(endpoint: string): string {
+  if (endpoint.includes('notify.windows.com')) {
+    return 'Windows/Edge'
+  }
+  if (endpoint.includes('web.push.apple.com')) {
+    return 'Apple/Safari'
+  }
+  if (endpoint.includes('fcm.googleapis.com')) {
+    return 'Google/Chrome'
+  }
+  if (endpoint.includes('updates.push.services.mozilla.com')) {
+    return 'Mozilla/Firefox'
+  }
+  return 'Unknown Device'
+}
+
 export function PushTestClientPage() {
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([])
   const [selectedEndpoint, setSelectedEndpoint] = useState<string>('')
@@ -60,7 +76,7 @@ export function PushTestClientPage() {
 
   const subscriptionOptions: ComboboxOption[] = subscriptions.map((sub) => ({
     value: sub.endpoint,
-    label: `${sub.userName} - ${sub.endpoint.substring(0, 40)}...`,
+    label: `${sub.userName} - ${getBrowserInfo(sub.endpoint)}`,
   }))
 
   return (
