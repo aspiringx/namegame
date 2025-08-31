@@ -21,8 +21,8 @@ self.addEventListener('push', (event: PushEvent) => {
   const title = data.title || 'NameGame'
   const options = {
     body: data.body || 'You have a new notification.',
-    icon: '/icons/apple-icon-180.png',
-    badge: '/icons/apple-icon-180.png',
+    icon: data.icon || '/icons/icon-192x192.png',
+    badge: '/icons/icon-96x96.png',
     data: {
       url: data.url || self.location.origin,
     },
