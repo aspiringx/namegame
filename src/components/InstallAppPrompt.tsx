@@ -15,8 +15,10 @@ function InstallPromptContent({ a2hs }: { a2hs: ReturnType<typeof useA2HS> }) {
 
   if (!deviceInfo) return null
 
-  const handleInstallClick = async () => {
-    await a2hs.promptToInstall()
+  const handleInstallClick = () => {
+    if (deviceInfo?.pwaPrompt.isReady) {
+      deviceInfo.pwaPrompt.prompt()
+    }
     a2hs.hidePrompt()
   }
 

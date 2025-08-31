@@ -12,11 +12,20 @@ const nextConfig = {
   async headers() {
     return [
       {
-        source: '/:path*{/}?',
+        source: '/((?!api$|api/|_next/static|_next/image|favicon.ico|sw.js|worker.*.js).*)',
         headers: [
           {
             key: 'Cache-Control',
             value: 'no-store, max-age=0',
+          },
+        ],
+      },
+      {
+        source: '/(icon.png|icons/.*|fonts/.*|images/.*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
           },
         ],
       },
