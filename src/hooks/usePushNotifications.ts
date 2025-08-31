@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useUser } from '@clerk/nextjs'
+import { useServiceWorker } from '@/context/ServiceWorkerContext'
 import { useDeviceInfoContext } from '@/context/DeviceInfoContext'
 import { saveSubscription, deleteSubscription } from '@/actions/push'
 
@@ -19,59 +21,35 @@ function urlBase64ToUint8Array(base64String: string) {
 
 export function usePushNotifications() {
   const deviceInfo = useDeviceInfoContext()
-  const [isSubscribed, setIsSubscribed] = useState(false)
+  const { user } = useUser()
+  const { registration, isReady } = useServiceWorker()
+
   const [isSubscribing, setIsSubscribing] = useState(false)
+  const [isPushEnabled, setIsPushEnabled] = useState(false)
   const [subscription, setSubscription] = useState<PushSubscription | null>(null)
-  const [permissionStatus, setPermissionStatus] = useState<PermissionState | null>(
-    null,
-  )
+  const [error, setError] = useState<Error | null>(null)
 
-  const isSupported = deviceInfo?.push.isSupported ?? false
+  const isSupported =
+    typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window
 
+  // Effect to check for an existing subscription once the service worker is ready
   useEffect(() => {
-    if (!isSupported) return
-
-    let permissionStatusInstance: PermissionStatus | null = null
-
-    const checkPermissions = async () => {
-      permissionStatusInstance = await navigator.permissions.query({
-        name: 'notifications',
-      })
-      setPermissionStatus(permissionStatusInstance.state)
-      permissionStatusInstance.onchange = () => {
-        setPermissionStatus(permissionStatusInstance?.state ?? null)
-      }
-    }
-
-    checkPermissions()
-
-    return () => {
-      if (permissionStatusInstance) {
-        permissionStatusInstance.onchange = null
-      }
-    }
-  }, [isSupported])
-
-  useEffect(() => {
-    if (permissionStatus === 'granted') {
-      navigator.serviceWorker.ready.then((registration) => {
-        registration.pushManager.getSubscription().then((sub) => {
+    if (isReady && registration) {
+      const checkSubscription = async () => {
+        try {
+          const sub = await registration.pushManager.getSubscription()
           if (sub) {
-            setIsSubscribed(true)
             setSubscription(sub)
-          } else {
-            // This can happen if the user revokes permission, the subscription is cleared
-            // but our app state doesn't reflect it.
-            setIsSubscribed(false)
-            setSubscription(null)
+            setIsPushEnabled(true)
           }
-        })
-      })
-    } else {
-      setIsSubscribed(false)
-      setSubscription(null)
+        } catch (e) {
+          console.error('Error checking for push subscription:', e)
+          setError(e as Error)
+        }
+      }
+      checkSubscription()
     }
-  }, [permissionStatus])
+  }, [isReady, registration, user])
 
   const subscribe = useCallback(async () => {
     if (!isSupported || !process.env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY) {
@@ -79,21 +57,23 @@ export function usePushNotifications() {
       return
     }
 
+    if (!isReady || !registration) {
+      console.error('Service worker not ready, cannot subscribe.')
+      setError(new Error('Service worker not ready.'))
+      return
+    }
+
     setIsSubscribing(true)
     try {
-      let registration = await navigator.serviceWorker.ready
-
+      const permission = await Notification.requestPermission()
+      if (permission !== 'granted') {
+        console.error('Permission not granted for Notification')
+        setIsSubscribing(false)
+        return
+      }
 
       let sub = await registration.pushManager.getSubscription()
-
       if (!sub) {
-        const permission = await Notification.requestPermission()
-
-        if (permission !== 'granted') {
-          console.error('Permission not granted for Notification')
-          return
-        }
-
         sub = await registration.pushManager.subscribe({
           userVisibleOnly: true,
           applicationServerKey: urlBase64ToUint8Array(
@@ -102,49 +82,54 @@ export function usePushNotifications() {
         })
       }
 
-      if (sub) {
-        const result = await saveSubscription(sub)
-        if (result.success) {
-          setSubscription(sub)
-          setIsSubscribed(true)
-        } else {
-          console.error('Failed to save subscription:', result.message)
-        }
+      const result = await saveSubscription(sub)
+      if (result.success) {
+        setSubscription(sub)
+        setIsPushEnabled(true)
       } else {
+        console.error('Failed to save subscription:', result.message)
+        setError(new Error(result.message || 'Failed to save subscription.'))
       }
-    } catch (error) {
-      console.error('An error occurred during the subscription process:', error)
+    } catch (err) {
+      console.error('An error occurred during the subscription process:', err)
+      setError(err as Error)
     } finally {
       setIsSubscribing(false)
     }
-  }, [isSupported])
+  }, [isReady, registration, isSupported])
 
   const unsubscribe = useCallback(async () => {
     if (!subscription) return
 
     setIsSubscribing(true)
+    try {
+      // We don't need to await the unsubscribe call
+      subscription.unsubscribe()
+      const result = await deleteSubscription(subscription.endpoint)
 
-    const result = await deleteSubscription(subscription.endpoint)
-
-    if (result.success) {
-      await subscription.unsubscribe()
-      setSubscription(null)
-      setIsSubscribed(false)
-    } else {
-      console.error('Failed to delete subscription:', result.message)
+      if (result.success) {
+        setSubscription(null)
+        setIsPushEnabled(false)
+      } else {
+        console.error('Failed to delete subscription:', result.message)
+        setError(new Error(result.message || 'Failed to delete subscription.'))
+      }
+    } catch (err) {
+      console.error('An error occurred during unsubscription:', err)
+      setError(err as Error)
+    } finally {
+      setIsSubscribing(false)
     }
-
-    setIsSubscribing(false)
   }, [subscription])
 
   return {
     isSupported,
     isPWA: deviceInfo?.isPWA ?? false,
-    isSubscribed,
+    isPushEnabled,
     isSubscribing,
     subscribe,
     unsubscribe,
     subscription,
-    permissionStatus,
+    error,
   }
 }

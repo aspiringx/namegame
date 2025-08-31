@@ -1,6 +1,7 @@
 'use client'
 
 import { ServiceWorkerRegistrar } from '@/components/ServiceWorkerRegistrar'
+import { ServiceWorkerProvider } from '@/context/ServiceWorkerContext'
 import Footer from '@/components/Footer'
 import Header from '@/components/Header'
 
@@ -10,13 +11,15 @@ export default function MainLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="relative flex min-h-screen flex-col">
-      <Header />
-      <main className="container mx-auto flex-1 px-4 py-4 sm:px-6 lg:px-8">
-        {children}
-      </main>
-      <Footer />
-      <ServiceWorkerRegistrar />
-    </div>
+    <ServiceWorkerProvider>
+      <div className="relative flex min-h-screen flex-col">
+        <Header />
+        <main className="container mx-auto flex-1 px-4 py-4 sm:px-6 lg:px-8">
+          {children}
+        </main>
+        <Footer />
+        <ServiceWorkerRegistrar />
+      </div>
+    </ServiceWorkerProvider>
   )
 }
