@@ -3,23 +3,25 @@
 As of 8/31/2025, there is still friction in the onboarding/login process. The
 initial greeting links are working well, but after this, people get confused.
 
-Our top priories are:
+## SSO codes (QR or link)
 
-- Installing the app
-- Subscribing to push notifications
-- Making it super easy to add a last name, gender, and photo
-- Easily helping people login with an single sign-on link. Group admins should
-  be able to do this for any member of their group.
-  - If a user doesn't yet have a verified email address when the admin attempts
-    to create their SSO link, the group admin can add it, which should
-    automatically verify it. Then they can click a button to send the link via
-    email.
-  - Or the group admin can just copy the generated SSO link:
-    - On any @membercard.ts or @familymembercard.ts, in the three-dot menu, show
-      a "Login Code" link
-    - When clicked, open a LoginLinkModal user via text or let the user scan it
-      as a QR code (if they're together) just like a greeting link that opens a
-      QRCodeModal.
+Easily help people login with an single sign-on link like our greeting codes
+(model Code in schema.prisma).Group admins should be able to do this for any
+member of their group.
+
+- On any @membercard.ts or @familymembercard.ts, in the three-dot menu, show a
+  "Login Code" link
+- When clicked, open a LoginLinkModal user via text or let the user scan it as a
+  QR code (if they're together) just like a greeting link that opens a
+  QRCodeModal.
+
+- If a user doesn't yet have a verified email address when the admin attempts to
+  create their SSO link, the group admin can add it, which should automatically
+  verify it. Then they can click a button to send the link via email.
+- Or the group admin can just copy the generated SSO link:
+
+## Bulk add/update group users
+
 - A group admin should be able to bulk-add/update users in the group by:
   - downloading a csv with columns:
     - email
@@ -33,6 +35,10 @@ Our top priories are:
     - If a user exists and didn't have a verified email address, mark it as
       verified, but if they already had a verified email, don't change it.
     - Send an email to each new or updated user with an SSO link
+
+## Simplify adding a last name, gender, and photo
+
+- Making it super easy to add a last name, gender, and photo
 - Changing password and verifying an email address (later/optional) so they can
   reset their password later if they forget it.
   - We've updated the session to 90 days.

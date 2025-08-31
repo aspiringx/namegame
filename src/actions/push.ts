@@ -118,11 +118,16 @@ export async function sendNotification(
     ? process.env.WEB_PUSH_EMAIL
     : `mailto:${process.env.WEB_PUSH_EMAIL}`
 
-  webPush.setVapidDetails(
-    subject,
-    process.env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY,
-    process.env.WEB_PUSH_PRIVATE_KEY,
+  const publicKey = process.env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY
+  const privateKey = process.env.WEB_PUSH_PRIVATE_KEY
+
+  console.log('VAPID Check: Public Key Loaded:', !!publicKey)
+  console.log(
+    'VAPID Check: Public Key Snippet:',
+    publicKey?.substring(0, 10) + '...',
   )
+
+  webPush.setVapidDetails(subject, publicKey, privateKey)
 
   try {
     const subscription = await db.pushSubscription.findUnique({
