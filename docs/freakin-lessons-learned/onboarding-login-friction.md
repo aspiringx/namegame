@@ -3,7 +3,7 @@
 As of 8/31/2025, there is still friction in the onboarding/login process. The
 initial greeting links are working well, but after this, people get confused.
 
-## SSO codes (QR or link)
+## SSO codes (QR or link) - DONE 8/31/25
 
 Easily help people login with an single sign-on link like our greeting codes
 (model Code in schema.prisma).Group admins should be able to do this for any

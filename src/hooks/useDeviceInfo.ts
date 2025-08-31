@@ -74,37 +74,39 @@ const A2HS_FEATURE_MATRIX: { [os: string]: { [browser: string]: A2HSRule } } = {
     '*': {
       isSupported: true,
       canInstall: (isStandalone) => !isStandalone,
-      actionLabel: 'Add to Home Screen',
-      instructions: 'Tap the Share icon, then "Add to Home Screen".',
+      actionLabel: 'Install App',
+      instructions:
+        'Tap the Share icon, then "Add to Home Screen" to easily return.',
     },
   },
   android: {
     firefox: {
       isSupported: true,
       canInstall: (isStandalone) => !isStandalone,
-      actionLabel: 'Add to Home Screen',
-      instructions: 'Tap the menu button (⋮), then select "Install".',
+      actionLabel: 'Install App',
+      instructions:
+        'Tap the menu button (⋮), then "Install" to add to your home screen.',
     },
     chrome: {
       isSupported: true,
       canInstall: (isStandalone, wasInstalled) =>
         !isStandalone && !wasInstalled,
       actionLabel: 'Install App',
-      instructions: 'Install this app for a better experience.',
+      instructions: 'Install this app to your home screen to easily return.',
     },
     brave: {
       isSupported: true,
       canInstall: (isStandalone, wasInstalled) =>
         !isStandalone && !wasInstalled,
       actionLabel: 'Install App',
-      instructions: 'Install this app for a better experience.',
+      instructions: 'Install this app to your home screen to easily return.',
     },
     edge: {
       isSupported: true,
       canInstall: (isStandalone, wasInstalled) =>
         !isStandalone && !wasInstalled,
       actionLabel: 'Install App',
-      instructions: 'Install this app for a better experience.',
+      instructions: 'Install this app to your home screen to easily return.',
     },
     samsung: {
       isSupported: true,
@@ -136,15 +138,16 @@ const A2HS_FEATURE_MATRIX: { [os: string]: { [browser: string]: A2HSRule } } = {
       canInstall: (isStandalone, wasInstalled) =>
         !isStandalone && !wasInstalled,
       actionLabel: 'Install App',
-      instructions: 'Install this app for a better experience.',
+      instructions: 'Install this app to easily return.',
     },
   },
   macos: {
     safari: {
       isSupported: true,
       canInstall: (isStandalone) => !isStandalone,
-      actionLabel: 'Add to Dock',
-      instructions: 'Click the Share icon, then "Add to Dock".',
+      actionLabel: 'Install App',
+      instructions:
+        'Click the Share icon, then "Add to Dock" to easily return.',
     },
     firefox: {
       isSupported: true,
@@ -157,7 +160,7 @@ const A2HS_FEATURE_MATRIX: { [os: string]: { [browser: string]: A2HSRule } } = {
       canInstall: (isStandalone, wasInstalled) =>
         !isStandalone && !wasInstalled,
       actionLabel: 'Install App',
-      instructions: 'Install this app for a better experience.',
+      instructions: 'Install this app to easily return.',
     },
   },
   linux: {
@@ -172,7 +175,7 @@ const A2HS_FEATURE_MATRIX: { [os: string]: { [browser: string]: A2HSRule } } = {
       canInstall: (isStandalone, wasInstalled) =>
         !isStandalone && !wasInstalled,
       actionLabel: 'Install App',
-      instructions: 'Install this app for a better experience.',
+      instructions: 'Install this app to easily return.',
     },
   },
 }
