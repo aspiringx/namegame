@@ -5,22 +5,6 @@ import db from '@/lib/prisma'
 import webPush, { type WebPushError } from 'web-push'
 import { z } from 'zod'
 
-if (
-  process.env.WEB_PUSH_EMAIL &&
-  process.env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY &&
-  process.env.WEB_PUSH_PRIVATE_KEY
-) {
-  const subject = process.env.WEB_PUSH_EMAIL.startsWith('mailto:')
-    ? process.env.WEB_PUSH_EMAIL
-    : `mailto:${process.env.WEB_PUSH_EMAIL}`
-  webPush.setVapidDetails(
-    subject,
-    process.env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY,
-    process.env.WEB_PUSH_PRIVATE_KEY,
-  )
-} else {
-  console.error('VAPID keys are not configured. Push notifications will fail.')
-}
 
 const subscriptionSchema = z.object({
   endpoint: z.string().url(),
@@ -50,13 +34,26 @@ export async function saveSubscription(
   const { endpoint, keys } = parsedSubscription.data
 
   try {
-    // Upsert to handle cases where the subscription already exists for the endpoint
+    // Find an existing subscription by its endpoint.
+    const existingSubscription = await db.pushSubscription.findUnique({
+      where: { endpoint },
+    })
+
+    if (existingSubscription) {
+      // If it exists and belongs to a different user, delete it.
+      if (existingSubscription.userId !== userId) {
+        await db.pushSubscription.delete({ where: { endpoint } })
+      }
+    }
+
+    // Upsert the subscription. This will create it if it doesn't exist,
+    // or update it if it already belongs to the current user.
     await db.pushSubscription.upsert({
       where: { endpoint },
       update: {
         p256dh: keys.p256dh,
         auth: keys.auth,
-        userId,
+        userId: userId, // Ensure userId is explicitly set on update
       },
       create: {
         userId,
@@ -106,6 +103,26 @@ export async function sendNotification(
   if (!endpoint) {
     return { success: false, message: 'No subscription endpoint provided.' }
   }
+
+  // Configure VAPID details just-in-time to ensure keys are fresh.
+  if (
+    !process.env.WEB_PUSH_EMAIL ||
+    !process.env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY ||
+    !process.env.WEB_PUSH_PRIVATE_KEY
+  ) {
+    console.error('VAPID keys are not configured. Push notifications will fail.')
+    return { success: false, message: 'VAPID keys are not configured on the server.' }
+  }
+
+  const subject = process.env.WEB_PUSH_EMAIL.startsWith('mailto:')
+    ? process.env.WEB_PUSH_EMAIL
+    : `mailto:${process.env.WEB_PUSH_EMAIL}`
+
+  webPush.setVapidDetails(
+    subject,
+    process.env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY,
+    process.env.WEB_PUSH_PRIVATE_KEY,
+  )
 
   try {
     const subscription = await db.pushSubscription.findUnique({
