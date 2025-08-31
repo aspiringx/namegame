@@ -4,6 +4,7 @@ import { useState, useTransition, ChangeEvent, useMemo } from 'react'
 import type { GroupWithMembers } from '@/types/index'
 import Image from 'next/image'
 import Link from 'next/link'
+import { LoginCodeModal } from '@/components/LoginCodeModal';
 import { searchUsers, addMember, removeMember, updateMember } from './actions'
 import { GroupUser, User } from '@/generated/prisma'
 
@@ -48,6 +49,10 @@ export default function GroupMembers({
     null,
   )
   const [memberSearchQuery, setMemberSearchQuery] = useState('')
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
+  const [selectedUserForLogin, setSelectedUserForLogin] = useState<User | null>(
+    null,
+  )
 
   type SortableKey = 'username' | 'name' | 'role' | 'memberSince'
   const [sortConfig, setSortConfig] = useState<{
@@ -149,6 +154,16 @@ export default function GroupMembers({
 
   return (
     <div>
+      <LoginCodeModal
+        isOpen={isLoginModalOpen}
+        onClose={() => {
+          setIsLoginModalOpen(false)
+          setSelectedUserForLogin(null)
+        }}
+        user={selectedUserForLogin}
+        groupId={group.id}
+        groupSlug={group.slug}
+      />
       <div className="mb-8 rounded-lg border p-4 dark:border-gray-700">
         <h2 className="mb-4 text-xl font-semibold">Add New Member</h2>
         <div className="max-w-lg">
@@ -318,21 +333,27 @@ export default function GroupMembers({
                         alt={`${member.user.username}'s profile picture`}
                         width={40}
                         height={40}
-                        className="rounded-full"
+                        className="hidden rounded-full sm:block"
                       />
                       <div>
-                        {member.user.firstName} {member.user.lastName}
+                        <span className="block max-w-[25ch] truncate">
+                          {member.user.firstName} {member.user.lastName}
+                        </span>
                         <dl className="font-normal lg:hidden">
                           <dt className="sr-only">Username</dt>
                           <dd className="mt-1 truncate text-gray-700 dark:text-gray-400">
-                            @{member.user.username}
+                            <span className="block max-w-[25ch] truncate">
+                              @{member.user.username}
+                            </span>
                           </dd>
                         </dl>
                       </div>
                     </div>
                   </td>
                   <td className="hidden px-3 py-4 text-sm text-gray-500 sm:table-cell dark:text-gray-400">
-                    @{member.user.username}
+                    <span className="block max-w-[25ch] truncate">
+                      @{member.user.username}
+                    </span>
                   </td>
                   <td className="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell dark:text-gray-400">
                     {editingMemberUserId === member.userId ? (
@@ -425,7 +446,16 @@ export default function GroupMembers({
                         </button>
                       </div>
                     ) : (
-                      <div className="flex gap-2">
+                      <div className="flex items-center justify-end gap-4">
+                        <button
+                          onClick={() => {
+                            setSelectedUserForLogin(member.user as User)
+                            setIsLoginModalOpen(true)
+                          }}
+                          className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-200"
+                        >
+                          Login Link
+                        </button>
                         <button
                           onClick={() => setEditingMemberUserId(member.userId)}
                           className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-200"

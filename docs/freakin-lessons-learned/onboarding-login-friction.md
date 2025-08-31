@@ -33,11 +33,9 @@ Login Link Recipient
     the user, redirect to the user profile page at /me
     - If expired or an invalid code, tell them they need a new one and to
       contact [firstName] of the person who shared it with them.
-- Show success alert: "Whew, you're back in! You can avoid this later by:
-  - Installing the app [install app or add to home screen button here].
-    - This line only shows if they haven't already installed it and if they have
-      the ability (based on os/browser) to install it.
-  - Verifying an email address and updating your password
+- Show success alert: "Whew, you're back in!"
+  - If the user doesn't have an installed app, invite them to install it and let
+    them know it's the easiest way to get back.
 
 ## Bulk add/update group users
 
