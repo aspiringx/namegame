@@ -57,7 +57,7 @@ export function LoginCodeModal({ user, isOpen, onClose, groupId, groupSlug }: Lo
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/25 p-4 backdrop-blur-sm">
-      <div className="relative my-8 max-w-xl rounded-lg bg-white p-8 text-center shadow-xl dark:bg-gray-800">
+      <div className="relative my-8 w-full max-w-xl rounded-lg bg-white p-8 text-center shadow-xl dark:bg-gray-800">
         <button
           onClick={onClose}
           className="absolute top-3 right-3 flex h-8 w-8 items-center justify-center rounded-full text-3xl text-gray-500 hover:bg-gray-200 hover:text-gray-800 dark:hover:bg-gray-700 dark:hover:text-gray-200"
@@ -73,8 +73,8 @@ export function LoginCodeModal({ user, isOpen, onClose, groupId, groupSlug }: Lo
           {isPending && <p>Generating code...</p>}
           {loginUrl && (
             <>
-              <div className="inline-block rounded-md bg-white p-4">
-                <QRCode value={loginUrl} size={200} />
+              <div className="inline-block rounded-md bg-white p-2">
+                <QRCode value={loginUrl} size={150} />
               </div>
               <div className="mt-4 flex w-full items-center rounded-lg bg-gray-100 p-2 dark:bg-gray-700">
                 <p className="mr-2 flex-grow overflow-hidden text-ellipsis whitespace-nowrap text-sm text-gray-600 dark:text-gray-300">

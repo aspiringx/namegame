@@ -3,6 +3,7 @@
 import { removeMember } from './actions'
 import { useState, useTransition } from 'react'
 import { useParams } from 'next/navigation'
+import { Trash2 } from 'lucide-react'
 
 export default function RemoveMemberButton({
   userId,
@@ -39,12 +40,12 @@ export default function RemoveMemberButton({
         disabled={isPending}
         className="font-medium text-red-600 hover:text-red-900 disabled:text-gray-400 dark:text-red-500 dark:hover:text-red-400 dark:disabled:text-gray-500"
       >
-        Remove
+        <Trash2 className="h-5 w-5" />
       </button>
 
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/25 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl dark:bg-gray-800">
+          <div className="mx-4 w-full max-w-md rounded-lg bg-white p-6 shadow-xl dark:bg-gray-800 sm:mx-0">
             <h3 className="mb-4 text-lg font-bold dark:text-white">
               Remove Member
             </h3>
