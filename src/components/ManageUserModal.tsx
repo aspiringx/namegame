@@ -8,8 +8,11 @@ import {
   addManager,
   removeManager,
   getRelatedUsers,
+  getGroupsForCurrentUser,
+  getGroupMembers,
 } from '@/app/(main)/me/users/actions'
-import { User } from '@/generated/prisma/client'
+import { createUserUserRelation } from '@/lib/actions'
+import { User, Group, GroupType } from '@/generated/prisma/client'
 import { toast } from 'sonner'
 import { Combobox } from './ui/combobox'
 import Image from 'next/image'
@@ -33,17 +36,24 @@ export default function ManageUserModal({
   const [isPending, startTransition] = useTransition()
   const [isDeleting, startDeletingTransition] = useTransition()
   const [managerToDelete, setManagerToDelete] = useState<any | null>(null)
+  const [groups, setGroups] = useState<(Group & { groupType: GroupType })[]>([])
+  const [managerSource, setManagerSource] = useState('direct') // 'direct' or a group ID
+  const [potentialManagers, setPotentialManagers] = useState<User[]>([])
 
   useEffect(() => {
     if (isOpen && session?.user?.id) {
+      setManagerSource('direct')
       const authenticatedUserId = session.user.id
       startTransition(async () => {
-        const [fetchedManagers, fetchedRelatedUsers] = await Promise.all([
-          getManagers(managedUser.id),
-          getRelatedUsers(authenticatedUserId),
-        ])
+        const [fetchedManagers, fetchedRelatedUsers, fetchedGroups] =
+          await Promise.all([
+            getManagers(managedUser.id),
+            getRelatedUsers(authenticatedUserId),
+            getGroupsForCurrentUser(),
+          ])
         setManagers(fetchedManagers)
         setRelatedUsers(fetchedRelatedUsers)
+        setGroups(fetchedGroups)
         setIsCurrentUserManager(
           fetchedManagers.some((m) => m.id === authenticatedUserId),
         )
@@ -51,18 +61,62 @@ export default function ManageUserModal({
     }
   }, [isOpen, managedUser.id, session?.user?.id])
 
+  useEffect(() => {
+    if (managerSource === 'direct') {
+      setPotentialManagers(relatedUsers)
+    } else {
+      startTransition(async () => {
+        const members = await getGroupMembers(parseInt(managerSource, 10))
+        setPotentialManagers(members)
+      })
+    }
+    setSelectedMemberId('') // Reset selection when source changes
+  }, [managerSource, relatedUsers])
+
+  const sourceOptions = [
+    { value: 'direct', label: 'My direct relationships' },
+    ...groups.map((group) => ({
+      value: group.id.toString(),
+      label: group.name,
+    })),
+  ]
+
   const handleAddManager = async () => {
-    if (!selectedMemberId) return
+    if (!selectedMemberId || !session?.user?.id) return
 
     startTransition(async () => {
       try {
+        // If manager is from a group, create a user-user relationship first
+        if (managerSource !== 'direct') {
+          const group = groups.find((g) => g.id.toString() === managerSource)
+          if (group) {
+            const relationTypeCode =
+              group.groupType.code === 'family' ? 'family' : 'friend'
+            await createUserUserRelation(
+              managedUser.id,
+              selectedMemberId,
+              relationTypeCode,
+            )
+          }
+        }
+
+        // Add the manager role
         await addManager(managedUser.id, selectedMemberId)
+
+        // Refresh state
         const updatedManagers = await getManagers(managedUser.id)
         setManagers(updatedManagers)
+
+        if (session?.user?.id) {
+          const updatedRelatedUsers = await getRelatedUsers(session.user.id)
+          setRelatedUsers(updatedRelatedUsers)
+        }
+
         toast.success('Manager added successfully.')
         setSelectedMemberId('')
       } catch (error) {
         toast.error('Failed to add manager.')
+        console.error(error)
       }
     })
   }
@@ -94,34 +148,60 @@ export default function ManageUserModal({
               <h3 className="text-md font-medium text-gray-900 dark:text-gray-100">
                 Add Manager
               </h3>
-              <div className="flex items-center space-x-2">
-                <div className="flex-grow">
+              <div className="flex flex-col space-y-4">
+                <div>
+                  <label
+                    htmlFor="managerSource"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                  >
+                    Select Source
+                  </label>
                   <Combobox
-                    name="managerId"
-                    options={relatedUsers
-                      .filter(
-                        (user) =>
-                          !managers.some((m) => m.id === user.id) &&
-                          user.id !== managedUser.id,
-                      )
-                      .map((user) => ({
-                        value: user.id,
-                        label: [user.firstName, user.lastName]
-                          .filter(Boolean)
-                          .join(' '),
-                      }))}
-                    selectedValue={selectedMemberId}
-                    onSelectValue={setSelectedMemberId}
-                    placeholder="Choose another manager"
+                    name="managerSource"
+                    options={sourceOptions}
+                    selectedValue={managerSource}
+                    onSelectValue={setManagerSource}
+                    placeholder="Select a source"
                   />
                 </div>
-                <button
-                  onClick={handleAddManager}
-                  disabled={isPending || !selectedMemberId}
-                  className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {isPending ? 'Adding...' : 'Add'}
-                </button>
+                <div>
+                  <label
+                    htmlFor="managerId"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                  >
+                    Choose Manager
+                  </label>
+                  <div className="flex items-end space-x-2">
+                    <div className="flex-grow">
+                      <Combobox
+                        name="managerId"
+                        options={potentialManagers
+                          .filter(
+                            (user) =>
+                              !managers.some((m) => m.id === user.id) &&
+                              user.id !== managedUser.id &&
+                              user.id !== session?.user?.id,
+                          )
+                          .map((user) => ({
+                            value: user.id,
+                            label: [user.firstName, user.lastName]
+                              .filter(Boolean)
+                              .join(' '),
+                          }))}
+                        selectedValue={selectedMemberId}
+                        onSelectValue={setSelectedMemberId}
+                        placeholder="Choose another manager"
+                      />
+                    </div>
+                    <button
+                      onClick={handleAddManager}
+                      disabled={isPending || !selectedMemberId}
+                      className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {isPending ? 'Adding...' : 'Add'}
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           )}

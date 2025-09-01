@@ -507,3 +507,53 @@ export async function getRelationTypes() {
     select: { id: true, code: true, category: true },
   })
 }
+
+export async function createUserUserRelation(
+  user1Id: string,
+  user2Id: string,
+  relationTypeCode: 'family' | 'friend',
+): Promise<{ success: boolean; message: string }> {
+  try {
+    const session = await auth()
+    if (!session?.user?.id) {
+      return { success: false, message: 'Not authenticated.' }
+    }
+
+    const relationType = await prisma.userUserRelationType.findFirst({
+      where: { code: relationTypeCode },
+    })
+
+    if (!relationType) {
+      return { success: false, message: 'Relation type not found.' }
+    }
+
+    // Avoid creating duplicate relationships
+    const existingRelation = await prisma.userUser.findFirst({
+      where: {
+        relationTypeId: relationType.id,
+        OR: [
+          { user1Id: user1Id, user2Id: user2Id },
+          { user1Id: user2Id, user2Id: user1Id },
+        ],
+      },
+    })
+
+    if (existingRelation) {
+      return { success: true, message: 'Relationship already exists.' }
+    }
+
+    await prisma.userUser.create({
+      data: {
+        user1Id,
+        user2Id,
+        relationTypeId: relationType.id,
+      },
+    })
+
+    revalidatePath('/me/users') // Or a more specific path
+    return { success: true, message: 'Relationship created successfully.' }
+  } catch (error) {
+    console.error('Error creating user-user relation:', error)
+    return { success: false, message: 'Failed to create relationship.' }
+  }
+}
