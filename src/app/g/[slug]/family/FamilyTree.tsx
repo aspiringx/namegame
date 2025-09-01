@@ -16,7 +16,8 @@ import ReactFlow, {
 } from 'reactflow'
 import 'reactflow/dist/style.css'
 import { MemberWithUser, UserWithPhotoUrl, FullRelationship } from '@/types'
-import AvatarNode from './AvatarNode'
+import AvatarNode from './AvatarNode';
+import SmoothFlowEdge from './SmoothFlowEdge';
 import { MemberDetailsModal } from './MemberDetailsModal'
 import { useFamilyTree, AvatarNodeData } from './useFamilyTree'
 import { useGroup } from '@/components/GroupProvider'
@@ -32,9 +33,11 @@ interface FamilyTreeProps {
 
 const nodeTypes = {
   avatar: AvatarNode,
-}
+};
 
-const edgeTypes = {}
+const edgeTypes = {
+  smoothflow: SmoothFlowEdge,
+};
 
 const fitViewOptions = {
   padding: 0.4,
@@ -45,7 +48,10 @@ const mobileFitViewOptions = {
 }
 
 const FamilyTreeComponent = forwardRef<
-  { reset: () => void; setFocalUser: (userId: string) => void },
+  {
+    reset: () => void
+    setFocalUser: (userId: string) => void
+  },
   FamilyTreeProps
 >(
   (
@@ -99,7 +105,7 @@ const FamilyTreeComponent = forwardRef<
     useEffect(() => {
       const timer = setTimeout(() => {
         if (isMobile) {
-          fitView(fitViewOptions)
+          fitView(mobileFitViewOptions)
           zoomTo(0.8, { duration: 200 })
         } else {
           fitView(fitViewOptions)
