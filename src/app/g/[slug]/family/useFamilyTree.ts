@@ -205,7 +205,7 @@ export const useFamilyTree = ({
         id: `e-${parent.id}-${focalUser.id}`,
         source: parent.id,
         target: focalUser.id,
-        type: 'orthogonal',
+        type: 'bezier',
         sourceHandle: 'bottom-source',
         targetHandle: 'top-target',
       })
@@ -236,7 +236,7 @@ export const useFamilyTree = ({
           id: `e-${focalUser.id}-${spouse.id}`,
           source: focalUser.id,
           target: spouse.id,
-          type: 'orthogonal',
+          type: 'bezier',
           sourceHandle: 'right-source',
           targetHandle: 'left-target',
         })
@@ -348,7 +348,7 @@ export const useFamilyTree = ({
               id: edgeId,
               source: commonParent.id,
               target: sibling.id,
-              type: 'orthogonal',
+              type: 'bezier',
               sourceHandle: 'bottom-source',
               targetHandle: 'top-target',
             });

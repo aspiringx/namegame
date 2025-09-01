@@ -18,13 +18,17 @@ const Avatar = React.forwardRef<
 ))
 Avatar.displayName = AvatarPrimitive.Root.displayName
 
+type AvatarImageProps = React.ComponentPropsWithoutRef<typeof Image> & {
+  asChild?: boolean
+}
+
 const AvatarImage = React.forwardRef<
   React.ElementRef<typeof AvatarPrimitive.Image>,
-  React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Image>
->(({ className, ...props }, ref) => (
-  <AvatarPrimitive.Image asChild ref={ref} {...props}>
-    {/* @ts-expect-error - We are passing all props to Next.js Image, which is fine. */}
+  AvatarImageProps
+>(({ className, alt, ...props }, ref) => (
+  <AvatarPrimitive.Image ref={ref} asChild>
     <Image
+      alt={alt ?? ''}
       fill
       className={cn('aspect-square h-full w-full object-cover', className)}
       {...props}

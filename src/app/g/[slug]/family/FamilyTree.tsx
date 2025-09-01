@@ -34,6 +34,8 @@ const nodeTypes = {
   avatar: AvatarNode,
 }
 
+const edgeTypes = {}
+
 const fitViewOptions = {
   padding: 0.4,
 }
@@ -165,6 +167,7 @@ const FamilyTreeComponent = forwardRef<
             nodes={nodes}
             edges={edges}
             nodeTypes={nodeTypes}
+            edgeTypes={edgeTypes}
             proOptions={{ hideAttribution: true }}
             onNodeClick={handleNodeClick}
             className="bg-background"

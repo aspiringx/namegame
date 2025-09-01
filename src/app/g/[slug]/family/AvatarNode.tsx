@@ -2,7 +2,8 @@
 
 import React, { memo } from 'react'
 import { Handle, Position, NodeProps } from 'reactflow'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import Image from 'next/image'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { cn, truncate } from '@/lib/utils'
 import { AvatarNodeData } from './useFamilyTree'
 import { ChevronUp, ChevronDown, ChevronLeft } from 'lucide-react'
@@ -98,8 +99,19 @@ const AvatarNode = ({ data, selected }: NodeProps<AvatarNodeData>) => {
             selected && 'ring-ring ring-offset-background ring-2 ring-offset-2',
           )}
         >
-          {photoUrl && <AvatarImage src={photoUrl} alt={fullName} />}
-          <AvatarFallback>{firstName?.charAt(0)}</AvatarFallback>
+                    {photoUrl && (
+              <Image
+              src={photoUrl}
+              alt={fullName}
+              fill
+              sizes={isFocalUser || isFocalUserSpouseOrPartner ? '128px' : '96px'}
+              priority={isFocalUser}
+              className="object-cover"
+            />
+          )}
+          {
+            !photoUrl && <AvatarFallback>{firstName?.charAt(0)}</AvatarFallback>
+          }
         </Avatar>
         <div className="text-center">
           <div

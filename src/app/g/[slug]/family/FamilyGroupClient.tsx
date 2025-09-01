@@ -239,12 +239,16 @@ export function FamilyGroupClient({
       calculateHeight()
     })
 
+    // Initial calculation
+    calculateHeight()
+
     observer.observe(document.body)
 
     return () => {
       observer.disconnect()
     }
   }, [])
+
 
   useEffect(() => {
     const loadMoreMembers = async () => {

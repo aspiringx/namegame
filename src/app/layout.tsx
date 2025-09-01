@@ -101,7 +101,7 @@ export default async function RootLayout({
   const session = await auth()
 
   return (
-      <html lang="en">
+      <html lang="en" suppressHydrationWarning>
         <body
           className={`${inter.variable} bg-background text-foreground overflow-visible font-sans`}
         >
