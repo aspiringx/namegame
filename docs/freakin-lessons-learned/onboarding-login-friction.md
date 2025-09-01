@@ -3,59 +3,6 @@
 As of 8/31/2025, there is still friction in the onboarding/login process. The
 initial greeting links are working well, but after this, people get confused.
 
-## SSO codes (QR or link) - DONE 8/31/25
-
-Easily help people login with an single sign-on link like our greeting codes
-(model Code in schema.prisma).Group admins should be able to do this for any
-member of their group.
-
-Group Admin
-
-- In group admin pages at /admin/groups/[slug]/edit/members, show a new Login
-  link for each user.
-- When clicked, open a LoginCodeModal similar to our current QRCodeModal.
-  - System geneates a new code in the codes table. The createdAt timestamp will
-    be used to expire the code after 7 days.
-  - Append the code to the base URL + '/one-time-login/[code]'
-  - Generate a QR code for this URL
-  - Show the QR code in the LoginCodeModal.
-  - The admin can either copy and send the link to the user or show them to QR
-    code (if they're together).
-- Make this view mobile friendly:
-  - On mobile, don't show photos
-  - Limit the width of names and emails shown in this table to 25 characters
-    with the truncate class and show ellipsis if it's longer.
-
-Login Link Recipient
-
-- When the user scans or clicks/taps it, we look up the code:
-  - If we find it and it's not expired (createdAt < 7 days ago), we should login
-    the user, redirect to the user profile page at /me
-    - If expired or an invalid code, tell them they need a new one and to
-      contact [firstName] of the person who shared it with them.
-- Show success alert: "Whew, you're back in!"
-  - If the user doesn't have an installed app, invite them to install it and let
-    them know it's the easiest way to get back.
-
-## Bulk add/update group users
-
-A group admin should be able to bulk-add/update users in the group. Many groups
-(families, churches, etc.) already have a list of members.
-
-1. Download a csv with columns:
-
-- email
-- first name
-- last name
-- gender
-- Fill out any info for users
-- Upload the csv to the group and:
-  - If the user doesn't exist, create them
-  - If the user exists, update their info
-  - If a user exists and didn't have a verified email address, mark it as
-    verified, but if they already had a verified email, don't change it.
-  - Send an email to each new or updated user with an SSO link
-
 ## Simplify adding a last name, gender, and photo
 
 - Making it super easy to add a last name, gender, and photo
@@ -82,6 +29,9 @@ Problem:
 
 The user still must open their app or web page in the browser to learn about
 news. We want the ability to send updates they'll notice or have requested.
+
+Also, depending on their device, browser, or bugs, push notifications may not be
+an option.
 
 Solution:
 
@@ -124,4 +74,66 @@ People must leave the app to check email and click verification link.
 - I would like group admins or members to be able to add and/or verify an email
   address for another user so they can reset their password. Friends already
   have each other's email addresses, but there are two security risks:
-  -
+
+Solution:
+
+- Allow people to save their profile without an email address.
+- Allow group admins or members to add and verify an email address for another
+  user, but require user to grant permission before we use it for
+  non-transactional messages.
+-
+
+## (Maybe) Bulk add/update group users
+
+A group admin should be able to bulk-add/update users in the group. Many groups
+(families, churches, etc.) already have a list of members.
+
+1. Download a csv with columns:
+
+- email
+- first name
+- last name
+- gender
+- Fill out any info for users
+- Upload the csv to the group and:
+  - If the user doesn't exist, create them
+  - If the user exists, update their info
+  - If a user exists and didn't have a verified email address, mark it as
+    verified, but if they already had a verified email, don't change it.
+  - Send an email to each new or updated user with an SSO link
+
+# DONE
+
+## SSO codes (QR or link) - DONE 8/31/25
+
+Easily help people login with an single sign-on link like our greeting codes
+(model Code in schema.prisma).Group admins should be able to do this for any
+member of their group.
+
+Group Admin
+
+- In group admin pages at /admin/groups/[slug]/edit/members, show a new Login
+  link for each user.
+- When clicked, open a LoginCodeModal similar to our current QRCodeModal.
+  - System geneates a new code in the codes table. The createdAt timestamp will
+    be used to expire the code after 7 days.
+  - Append the code to the base URL + '/one-time-login/[code]'
+  - Generate a QR code for this URL
+  - Show the QR code in the LoginCodeModal.
+  - The admin can either copy and send the link to the user or show them to QR
+    code (if they're together).
+- Make this view mobile friendly:
+  - On mobile, don't show photos
+  - Limit the width of names and emails shown in this table to 25 characters
+    with the truncate class and show ellipsis if it's longer.
+
+Login Link Recipient
+
+- When the user scans or clicks/taps it, we look up the code:
+  - If we find it and it's not expired (createdAt < 7 days ago), we should login
+    the user, redirect to the user profile page at /me
+    - If expired or an invalid code, tell them they need a new one and to
+      contact [firstName] of the person who shared it with them.
+- Show success alert: "Whew, you're back in!"
+  - If the user doesn't have an installed app, invite them to install it and let
+    them know it's the easiest way to get back.

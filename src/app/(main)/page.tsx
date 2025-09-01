@@ -20,31 +20,25 @@ export default function Home() {
             height={267}
             className="mx-auto -mt-6 h-auto md:max-w-[500px]"
           />
-
-          <p className="text-2xl text-gray-600 italic dark:text-gray-400">
-            Break the ice!
+          <p className="mx-auto max-w-[240px] text-xl text-gray-600 italic sm:max-w-[500px] dark:text-gray-400">
+            The relationship game that starts with a name
           </p>
         </header>
 
         <section className="space-y-4 text-lg leading-relaxed">
+          <p>Relationships are simple, right?</p>
+          <ul className="ml-4 list-outside list-disc space-y-2">
+            <li>They start when people meet and learn each other's names</li>
+            <li>They grow as people interact and spend time together</li>
+          </ul>
+          <p>Kids get it. They just play.</p>
           <p>
-            Some social situations are familiar and comfortable. Others feel
-            stressful or awkward.
+            Adults often overthink it, calculating costs, benefits, risks, and
+            rewards.
           </p>
           <p>
-            We call this stress or unfamiliarity{' '}
-            <span className="text-blue-600 italic dark:text-blue-400">
-              the ice
-            </span>
-            . Meeting new people, remembering names, getting acquainted, etc.
-          </p>
-          <p>
-            NameGame makes{' '}
-            <span className="text-blue-600 dark:text-blue-400">
-              breaking the ice
-            </span>{' '}
-            easy! A fun excuse to greet and learn each other's names. And that's
-            just the start.
+            NameGame makes relationships easy and fun again, starting with
+            names.
           </p>
         </section>
 
@@ -60,6 +54,7 @@ export default function Home() {
 
         <section className="mt-6 space-y-4 text-lg">
           <h2 className="mb-6 text-center text-3xl font-bold">How to Play</h2>
+          <p className="text-center italic">Hi, I'm Mindy. What's your name?</p>
           <ul className="list-inside list-disc space-y-2">
             <li>
               <Link
@@ -76,9 +71,9 @@ export default function Home() {
                 login
               </Link>
             </li>
-            <li>Create a private group*</li>
-            <li>Add your name and pic</li>
-            <li>Share a greeting code</li>
+            <li>Add your name and picture</li>
+            <li>Create a private group</li>
+            <li>Say hello with a greeting code</li>
           </ul>
           <p className="text-sm text-gray-600 dark:text-gray-400">
             * Creating groups is currently by request only.{' '}

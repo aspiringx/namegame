@@ -283,6 +283,31 @@ export default function ManagedUserProfileForm({
         </div>
       </div>
 
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          Gender
+        </label>
+        <input type="hidden" name="gender" value={gender || ''} />
+        <div className="mt-2 flex space-x-2">
+          {[
+            ['male', 'He'],
+            ['female', 'She'],
+            ['non_binary', 'They'],
+          ].map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() =>
+                setGender(gender === value ? null : (value as Gender))
+              }
+              className={`rounded-md px-3 py-1 text-sm font-medium ${gender === value ? 'border-transparent bg-indigo-600 text-white hover:bg-indigo-700' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'}`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {managedStatus === ManagedStatus.partial && (
         <>
           {/* Email */}
@@ -592,30 +617,6 @@ export default function ManagedUserProfileForm({
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Gender
-              </label>
-              <input type="hidden" name="gender" value={gender || ''} />
-              <div className="mt-2 flex space-x-2">
-                {[
-                  ['male', 'He'],
-                  ['female', 'She'],
-                  ['non_binary', 'They'],
-                ].map(([value, label]) => (
-                  <button
-                    key={value}
-                    type="button"
-                    onClick={() =>
-                      setGender(gender === value ? null : (value as Gender))
-                    }
-                    className={`rounded-md px-3 py-1 text-sm font-medium ${gender === value ? 'border-transparent bg-indigo-600 text-white hover:bg-indigo-700' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'}`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
             <div>
               <label className="flex items-center text-sm font-medium text-gray-700 dark:text-gray-300">
                 Managed Level

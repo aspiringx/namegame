@@ -102,7 +102,7 @@ export default function MembersTable({
                       {groupUser.role.code}
                     </td>
                     <td className="w-1/6 py-2 text-right text-sm font-medium sm:relative sm:table-cell sm:w-auto sm:py-4 sm:pr-0">
-                      <div className="flex flex-col items-center space-y-4 sm:flex-row sm:space-y-0 sm:space-x-2">
+                      <div className="flex flex-col items-center space-y-4 sm:flex-row sm:space-y-0 sm:space-x-8">
                         <Link
                           href={`/g/${slug}/admin/members/${groupUser.userId}/edit`}
                           className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-200"
