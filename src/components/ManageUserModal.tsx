@@ -3,7 +3,12 @@
 import { useState, useEffect, useTransition } from 'react'
 import Modal from './ui/modal'
 import { useSession } from 'next-auth/react'
-import { getManagers, addManager, removeManager } from '@/app/(main)/me/users/actions'
+import {
+  getManagers,
+  addManager,
+  removeManager,
+  getRelatedUsers,
+} from '@/app/(main)/me/users/actions'
 import { User } from '@/generated/prisma/client'
 import { toast } from 'sonner'
 import { Combobox } from './ui/combobox'
@@ -13,30 +18,34 @@ interface ManageUserModalProps {
   isOpen: boolean
   onClose: () => void
   managedUser: User & { managers?: any[] }
-  groupMembers: any[]
 }
 
 export default function ManageUserModal({ 
   isOpen, 
   onClose, 
-  managedUser, 
-  groupMembers 
+  managedUser,
 }: ManageUserModalProps) {
   const { data: session } = useSession()
   const [managers, setManagers] = useState<any[]>([])
   const [isCurrentUserMananger, setIsCurrentUserManager] = useState(false)
   const [selectedMemberId, setSelectedMemberId] = useState('')
+  const [relatedUsers, setRelatedUsers] = useState<User[]>([])
   const [isPending, startTransition] = useTransition()
   const [isDeleting, startDeletingTransition] = useTransition()
   const [managerToDelete, setManagerToDelete] = useState<any | null>(null)
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && session?.user?.id) {
+      const authenticatedUserId = session.user.id
       startTransition(async () => {
-        const fetchedManagers = await getManagers(managedUser.id)
+        const [fetchedManagers, fetchedRelatedUsers] = await Promise.all([
+          getManagers(managedUser.id),
+          getRelatedUsers(authenticatedUserId),
+        ])
         setManagers(fetchedManagers)
+        setRelatedUsers(fetchedRelatedUsers)
         setIsCurrentUserManager(
-          fetchedManagers.some((m) => m.id === session?.user?.id)
+          fetchedManagers.some((m) => m.id === authenticatedUserId)
         )
       })
     }
@@ -87,9 +96,18 @@ export default function ManageUserModal({
                 <div className="flex-grow">
                   <Combobox
                     name="managerId"
-                    options={groupMembers
-                      .filter(gm => !managers.some(m => m.id === gm.user.id) && gm.user.id !== managedUser.id)
-                      .map(gm => ({ value: gm.user.id, label: [gm.user.firstName, gm.user.lastName].filter(Boolean).join(' ') }))}
+                    options={relatedUsers
+                      .filter(
+                        (user) =>
+                          !managers.some((m) => m.id === user.id) &&
+                          user.id !== managedUser.id,
+                      )
+                      .map((user) => ({
+                        value: user.id,
+                        label: [user.firstName, user.lastName]
+                          .filter(Boolean)
+                          .join(' '),
+                      }))}
                     selectedValue={selectedMemberId}
                     onSelectValue={setSelectedMemberId}
                     placeholder="Select a group member"
@@ -168,29 +186,29 @@ export default function ManageUserModal({
               Confirm Removal
             </h3>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Are you sure you want to remove {' '}
+              Are you sure you want to remove{' '}
               <strong>
                 {[managerToDelete.firstName, managerToDelete.lastName].filter(Boolean).join(' ')}
               </strong>{' '}
               as a manager?
             </p>
-          </div>
-          <div className="mt-6 flex justify-end space-x-2">
-            <button
-              type="button"
-              className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
-              onClick={() => setManagerToDelete(null)}
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              disabled={isDeleting}
-              className="inline-flex justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              onClick={handleRemoveManager}
-            >
-              {isDeleting ? 'Removing...' : 'Remove'}
-            </button>
+            <div className="mt-6 flex justify-end space-x-2">
+              <button
+                type="button"
+                className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+                onClick={() => setManagerToDelete(null)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isDeleting}
+                className="inline-flex justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={handleRemoveManager}
+              >
+                {isDeleting ? 'Removing...' : 'Remove'}
+              </button>
+            </div>
           </div>
         </Modal>
       )}

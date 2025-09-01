@@ -1,6 +1,7 @@
 'use server'
 
 import { z } from 'zod'
+import { MemberWithUser } from '@/types'
 import { Gender, ManagedStatus, User, Photo } from '@/generated/prisma/client'
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
@@ -278,6 +279,31 @@ export async function getManagedUsers(): Promise<ManagedUserWithPhoto[]> {
   })
 
   return usersWithPhotos
+}
+
+export async function getRelatedUsers(userId: string): Promise<User[]> {
+  const userRelations = await prisma.userUser.findMany({
+    where: {
+      OR: [{ user1Id: userId }, { user2Id: userId }],
+    },
+    include: {
+      user1: true,
+      user2: true,
+    },
+  })
+
+  const relatedUsers = userRelations.flatMap((relation) => {
+    if (relation.user1Id === userId) {
+      return relation.user2
+    } else {
+      return relation.user1
+    }
+  })
+
+  // Deduplicate users
+  const uniqueUsers = Array.from(new Map(relatedUsers.map((u) => [u.id, u])).values())
+
+  return uniqueUsers
 }
 
 export async function updateManagedUser(
