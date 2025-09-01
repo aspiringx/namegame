@@ -239,16 +239,17 @@ export function FamilyGroupClient({
       calculateHeight()
     })
 
-    // Initial calculation
-    calculateHeight()
+    // Initial calculation, deferred 100ms to allow screen to load before it
+    // tries to know height. 0ms didn't work.
+    const timeoutId = setTimeout(calculateHeight, 100)
 
     observer.observe(document.body)
 
     return () => {
+      clearTimeout(timeoutId)
       observer.disconnect()
     }
   }, [])
-
 
   useEffect(() => {
     const loadMoreMembers = async () => {
