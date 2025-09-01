@@ -144,7 +144,7 @@ export default function UserProfileForm({
   const [isPasswordTooltipOpen, setIsPasswordTooltipOpen] = useState(false)
   const [isBirthDateTooltipOpen, setIsBirthDateTooltipOpen] = useState(false)
 
-  const optionalFields = [birthDate, birthPlace, gender]
+  const optionalFields = [birthDate, birthPlace]
   const completedOptionalFields = optionalFields.filter(
     (field) => field !== null && field !== '',
   ).length
@@ -388,27 +388,15 @@ export default function UserProfileForm({
             {groups.length > 0 && (
               <div className="overflow-hidden rounded-md bg-white shadow sm:rounded-md dark:bg-gray-800">
                 <p className="max-w-2xl p-4 text-sm text-gray-500 dark:text-gray-400">
-                  Now you can return to a group here:
+                  Return to a{' '}
+                  <Link
+                    href={`/me/groups`}
+                    className="block px-4 py-4 hover:bg-gray-50 sm:px-6 dark:hover:bg-gray-700"
+                  >
+                    to a group
+                  </Link>{' '}
+                  .
                 </p>
-                <ul
-                  role="list"
-                  className="divide-y divide-gray-200 dark:divide-gray-700"
-                >
-                  {groups.map((group) => (
-                    <li key={group.id}>
-                      <Link
-                        href={`/groups/${group.slug}`}
-                        className="block px-4 py-4 hover:bg-gray-50 sm:px-6 dark:hover:bg-gray-700"
-                      >
-                        <div className="flex items-center justify-between">
-                          <p className="truncate text-sm font-medium text-indigo-600 dark:text-indigo-400">
-                            {group.name}
-                          </p>
-                        </div>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
               </div>
             )}
           </div>
@@ -512,8 +500,7 @@ export default function UserProfileForm({
                 key={value}
                 type="button"
                 onClick={() => {
-                  const newGender =
-                    gender === value ? null : (value as Gender)
+                  const newGender = gender === value ? null : (value as Gender)
                   setGender(newGender)
                 }}
                 className={`rounded-md px-3 py-1 text-sm font-medium ${
@@ -542,12 +529,15 @@ export default function UserProfileForm({
               name="email"
               value={displayEmail}
               placeholder="Email"
-              required
               onChange={(e) => {
                 const newEmail = e.target.value
                 setDisplayEmail(newEmail)
-                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-                setIsEmailValid(emailRegex.test(newEmail))
+                if (newEmail === '') {
+                  setIsEmailValid(true)
+                } else {
+                  const emailRegex = /^[\s\S]*@[\s\S]*\.[\s\S]*$/
+                  setIsEmailValid(emailRegex.test(newEmail))
+                }
               }}
               className={`block w-full rounded-md border-gray-300 py-2 pr-10 pl-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 ${
                 !isEmailValid || (state?.errors?.email && !isDirty)
@@ -594,22 +584,14 @@ export default function UserProfileForm({
               </TooltipProvider>
             </div>
           </div>
-          {state?.errors?.email ? (
+          {state?.errors?.email && (
             <p className="mt-1 text-xs text-red-500 dark:text-red-400">
               {state.errors.email[0]}
             </p>
-          ) : (
-            displayEmail &&
-            !isVerifiedForDisplay && (
-              <p className="mt-1 rounded-md bg-yellow-50 p-2 text-sm text-xs text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300">
-                Email not yet verified. Save this and check email for a link to
-                complete verification.
-              </p>
-            )
           )}
-          <p className="mt-1 text-xs text-gray-500 italic dark:text-gray-400">
-            By saving and verifying my email address, I consent to receiving
-            messages from my NameGame groups.
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Add an email to login later. By saving an email, you consent to
+            receive messages.
           </p>
         </div>
 

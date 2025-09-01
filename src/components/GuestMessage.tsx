@@ -112,13 +112,8 @@ export function GuestMessage({
         Hi {firstName}!
       </h3>
       <p className="mb-4">
-        You're playing as a new guest. Add the{' '}
-        <span className="text-red-500">required</span> info below so others can
-        recognize and remember you.
-      </p>
-      <p className="text-sm text-gray-600 italic dark:text-gray-300">
-        After you save changes, check your email for a verification link to
-        finish the process.
+        You're playing as a guest. Complete your profile to unlock features and
+        help others recognize you.
       </p>
     </div>
   )

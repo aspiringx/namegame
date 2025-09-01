@@ -46,7 +46,10 @@ const UserProfileSchema = z.object({
   // username: z.string().min(3, 'Username must be at least 3 characters long.'),
   firstName: z.string().min(1, 'First name is required'),
   lastName: z.string().optional().nullable(),
-  email: z.string().email('Invalid email address.').optional().nullable(),
+  email: z.preprocess(
+    (val) => (val === '' ? null : val),
+    z.string().email('Invalid email address.').optional().nullable(),
+  ),
   photo: z.instanceof(File).optional(),
   gender: z.enum(['male', 'female', 'non_binary']).optional().nullable(),
   birthDate: z.string().optional().nullable(),

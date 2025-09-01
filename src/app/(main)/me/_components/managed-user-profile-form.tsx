@@ -112,7 +112,6 @@ export default function ManagedUserProfileForm({
   const optionalFields = [
     birthDate,
     birthPlace,
-    gender,
     managedStatus,
     deathDate,
     deathPlace,
@@ -126,12 +125,15 @@ export default function ManagedUserProfileForm({
   const action = isEditMode
     ? updateManagedUser.bind(null, user.id)
     : createManagedUser
-  const [state, formAction] = useActionState(async (prevState: State, formData: FormData) => {
-    if (photoFile) {
-      formData.append('photo', photoFile)
-    }
-    return action(prevState, formData)
-  }, initialState)
+  const [state, formAction] = useActionState(
+    async (prevState: State, formData: FormData) => {
+      if (photoFile) {
+        formData.append('photo', photoFile)
+      }
+      return action(prevState, formData)
+    },
+    initialState,
+  )
 
   useEffect(() => {
     if (state.success && state.redirectUrl) {
@@ -452,7 +454,7 @@ export default function ManagedUserProfileForm({
                 <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" />
               </svg>
             )}
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-50 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+            <div className="bg-opacity-50 absolute inset-0 flex flex-col items-center justify-center bg-black opacity-0 transition-opacity duration-300 group-hover:opacity-100">
               <Upload className="h-8 w-8 text-white" />
               <span className="mt-1 text-xs font-semibold text-white">
                 Change
@@ -462,7 +464,7 @@ export default function ManagedUserProfileForm({
           <button
             type="button"
             onClick={handleChoosePhoto}
-            className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium leading-4 text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 dark:focus:ring-offset-gray-800"
+            className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm leading-4 font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 dark:focus:ring-offset-gray-800"
           >
             Change Photo
           </button>
