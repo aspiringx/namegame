@@ -58,16 +58,16 @@ const Controls = ({ onFullScreen, fitView, zoomIn, zoomOut }: any) => {
 
   return (
     <div className="bg-background flex flex-col overflow-hidden rounded-md border shadow-lg">
-      <StyledControlButton onClick={handleFullScreenClick} title="full screen">
+      <StyledControlButton onClick={handleFullScreenClick} title="Full screen">
         <Maximize size={24} strokeWidth={1.5} />
       </StyledControlButton>
-      <StyledControlButton onClick={() => zoomIn()} title="zoom in">
+      <StyledControlButton onClick={() => zoomIn()} title="Zoom in">
         <ZoomIn size={24} strokeWidth={1.5} />
       </StyledControlButton>
-      <StyledControlButton onClick={() => zoomOut()} title="zoom out">
+      <StyledControlButton onClick={() => zoomOut()} title="Zoom out">
         <ZoomOut size={24} strokeWidth={1.5} />
       </StyledControlButton>
-      <StyledControlButton onClick={() => fitView()} title="fit view" isLast>
+      <StyledControlButton onClick={() => fitView()} title="Fit view" isLast>
         <Expand size={24} strokeWidth={1.5} />
       </StyledControlButton>
     </div>
@@ -121,7 +121,7 @@ export function FamilyTreeControls({
         {isMobileMenuOpen ? (
           <Controls {...{ onFullScreen, fitView, zoomIn, zoomOut }} />
         ) : (
-                    <div className="overflow-hidden rounded-md border">
+          <div className="overflow-hidden rounded-md border">
             <StyledControlButton
               onClick={() => setIsMobileMenuOpen(true)}
               title="tools"

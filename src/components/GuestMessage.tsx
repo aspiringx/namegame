@@ -55,13 +55,18 @@ export function GuestMessage({
       </h3>
       <div className="space-y-2">
         <p>
-          <b>You're in the {groupName}</b> private group, playing as a{' '}
-          <b>new guest.</b>
+          <b>You're in the {groupName}</b> group as a guest.
         </p>
-        <p>
-          First, complete your profile so others recognize you with a real
-          photo!
-        </p>
+        <div>
+          Next steps:
+          <ul>
+            <li>
+              Install or bookmark NameGame from the prompts or user menu (top
+              right)
+            </li>
+            <li>Complete your profile so others recognize you</li>
+          </ul>
+        </div>
         {groupType === 'family' ? (
           <>
             <p className="mb-2">
@@ -80,7 +85,7 @@ export function GuestMessage({
         <Button onClick={handleClose} variant="outline">
           Later
         </Button>
-        <Button onClick={handleUpdateProfile}>Complete Profile Now</Button>
+        <Button onClick={handleUpdateProfile}>Complete Profile</Button>
       </div>
       <p className="mt-6">
         While you're here, use the Name Quiz

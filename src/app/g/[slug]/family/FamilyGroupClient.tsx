@@ -75,7 +75,7 @@ export function FamilyGroupClient({
     {
       searchQuery: '',
       sortConfig: { key: 'joined', direction: 'desc' },
-      viewMode: isGuest ? 'grid' : 'tree',
+      viewMode: 'grid',
     },
   )
   const prevIsGuestRef = useRef(isGuest)
@@ -395,15 +395,6 @@ export function FamilyGroupClient({
             </div>
             <div className="flex items-center gap-2">
               <Button
-                variant={settings.viewMode === 'tree' ? 'secondary' : 'ghost'}
-                size="sm"
-                onClick={() =>
-                  setSettings((prev) => ({ ...prev, viewMode: 'tree' }))
-                }
-              >
-                <GitFork className="h-4 w-4" />
-              </Button>
-              <Button
                 variant={settings.viewMode === 'grid' ? 'secondary' : 'ghost'}
                 size="sm"
                 onClick={() =>
@@ -420,6 +411,15 @@ export function FamilyGroupClient({
                 }
               >
                 <List className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={settings.viewMode === 'tree' ? 'secondary' : 'ghost'}
+                size="sm"
+                onClick={() =>
+                  setSettings((prev) => ({ ...prev, viewMode: 'tree' }))
+                }
+              >
+                <GitFork className="h-4 w-4" />
               </Button>
               <Button
                 variant={settings.viewMode === 'quiz' ? 'secondary' : 'ghost'}

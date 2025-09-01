@@ -188,7 +188,7 @@ const NameQuizView: React.FC<NameQuizViewProps> = ({
           </div>
         </div>
       </Modal>
-      <div className="flex flex-col items-center gap-4 p-4">
+      <div className="flex flex-col items-center gap-4 p-4 pt-0">
         <div className="relative h-64 w-64 overflow-hidden rounded-full shadow-lg">
           <Image
             src={
