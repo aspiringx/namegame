@@ -213,7 +213,9 @@ function RelateModalContent({
 
       if (groupType.code === 'family') {
         fetchedTypes = allTypes.filter(
-          (t: RelationTypeOption) => t.category === 'family',
+          (t: RelationTypeOption) =>
+            t.category === 'family' ||
+            (t.category === 'other' && t.code === 'family'),
         )
       } else {
         fetchedTypes = allTypes // For community, use all types
@@ -474,7 +476,42 @@ function RelateModalContent({
                     }
                   }
 
-                  // Fallback for family groups or if no divider is needed
+                  if (groupType.code === 'family') {
+                    const directFamilyTypes = relationTypes.filter(
+                      (rt) => rt.category === 'family',
+                    )
+                    const otherFamilyTypes = relationTypes.filter(
+                      (rt) => rt.category === 'other',
+                    )
+
+                    const options: (ComboboxOption | ComboboxOptionDivider)[] = []
+
+                    if (directFamilyTypes.length > 0) {
+                      options.push({ isDivider: true, label: 'Direct Family Relationships' })
+                      directFamilyTypes
+                        .sort((a, b) => a.code.localeCompare(b.code))
+                        .forEach((rt) => {
+                        options.push({
+                          value: rt.id.toString(),
+                          label: capitalize(rt.code),
+                        })
+                      })
+                    }
+
+                    if (otherFamilyTypes.length > 0) {
+                      options.push({ isDivider: true, label: 'Other Family Relationships' })
+                      otherFamilyTypes.forEach((rt) => {
+                        options.push({
+                          value: rt.id.toString(),
+                          label: capitalize(rt.code),
+                        })
+                      })
+                    }
+                    return options
+
+                  }
+
+                  // Fallback for other group types or if no sorting is needed
                   return relationTypes.map((rt) => ({
                     value: rt.id.toString(),
                     label: capitalize(rt.code),

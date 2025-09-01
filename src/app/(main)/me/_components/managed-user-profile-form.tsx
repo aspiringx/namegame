@@ -226,7 +226,7 @@ export default function ManagedUserProfileForm({
   return (
     <>
       <form action={formAction} className="space-y-6">
-        <div className="flex items-start justify-between">
+        <div className="flex items-center justify-between">
           <FormHeader
             title={isEditMode ? 'Edit Profile' : 'Create a New Profile'}
             description={
@@ -241,7 +241,7 @@ export default function ManagedUserProfileForm({
               variant="outline"
               onClick={() => setIsManageModalOpen(true)}
             >
-              Manage
+              Managers
             </Button>
           )}
         </div>

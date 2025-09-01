@@ -20,9 +20,9 @@ interface ManageUserModalProps {
   managedUser: User & { managers?: any[] }
 }
 
-export default function ManageUserModal({ 
-  isOpen, 
-  onClose, 
+export default function ManageUserModal({
+  isOpen,
+  onClose,
   managedUser,
 }: ManageUserModalProps) {
   const { data: session } = useSession()
@@ -45,7 +45,7 @@ export default function ManageUserModal({
         setManagers(fetchedManagers)
         setRelatedUsers(fetchedRelatedUsers)
         setIsCurrentUserManager(
-          fetchedManagers.some((m) => m.id === authenticatedUserId)
+          fetchedManagers.some((m) => m.id === authenticatedUserId),
         )
       })
     }
@@ -86,12 +86,14 @@ export default function ManageUserModal({
     <>
       <Modal isOpen={isOpen} onClose={onClose}>
         <div className="p-6">
-          <h3 className="text-lg font-medium leading-6 text-gray-900 dark:text-gray-100 mb-4">
+          <h3 className="mb-4 text-lg leading-6 font-medium text-gray-900 dark:text-gray-100">
             {`Manage ${managedUser.firstName}`}
           </h3>
           {isCurrentUserMananger && (
-            <div className="space-y-4 py-4 border-b border-gray-200 dark:border-gray-700">
-              <h3 className="text-md font-medium text-gray-900 dark:text-gray-100">Add Manager</h3>
+            <div className="space-y-4 border-b border-gray-200 py-4 dark:border-gray-700">
+              <h3 className="text-md font-medium text-gray-900 dark:text-gray-100">
+                Add Manager
+              </h3>
               <div className="flex items-center space-x-2">
                 <div className="flex-grow">
                   <Combobox
@@ -110,11 +112,11 @@ export default function ManageUserModal({
                       }))}
                     selectedValue={selectedMemberId}
                     onSelectValue={setSelectedMemberId}
-                    placeholder="Select a group member"
+                    placeholder="Choose another manager"
                   />
                 </div>
-                <button 
-                  onClick={handleAddManager} 
+                <button
+                  onClick={handleAddManager}
                   disabled={isPending || !selectedMemberId}
                   className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                 >
@@ -130,8 +132,11 @@ export default function ManageUserModal({
             </h4>
             {managers.length > 0 ? (
               <ul className="mt-2 divide-y divide-gray-200 dark:divide-gray-700">
-                {managers.map(manager => (
-                  <li key={manager.id} className="flex items-center justify-between py-2">
+                {managers.map((manager) => (
+                  <li
+                    key={manager.id}
+                    className="flex items-center justify-between py-2"
+                  >
                     <div className="flex items-center space-x-3">
                       <div className="relative h-8 w-8 flex-shrink-0">
                         <Image
@@ -141,20 +146,36 @@ export default function ManageUserModal({
                           className="rounded-full object-cover"
                         />
                       </div>
-                      <span>{[manager.firstName, manager.lastName].filter(Boolean).join(' ')}</span>
+                      <span>
+                        {[manager.firstName, manager.lastName]
+                          .filter(Boolean)
+                          .join(' ')}
+                      </span>
                     </div>
-                    {isCurrentUserMananger && session?.user?.id !== manager.id && (
-                      <button
-                        type="button"
-                        onClick={() => setManagerToDelete(manager)}
-                        className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-500"
-                        aria-label={`Remove ${manager.firstName} as a manager`}
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    )}
+                    {isCurrentUserMananger &&
+                      session?.user?.id !== manager.id && (
+                        <button
+                          type="button"
+                          onClick={() => setManagerToDelete(manager)}
+                          className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-500"
+                          aria-label={`Remove ${manager.firstName} as a manager`}
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-4 w-4"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M6 18L18 6M6 6l12 12"
+                            />
+                          </svg>
+                        </button>
+                      )}
                   </li>
                 ))}
               </ul>
@@ -182,13 +203,15 @@ export default function ManageUserModal({
           onClose={() => setManagerToDelete(null)}
         >
           <div className="p-6">
-            <h3 className="text-lg font-medium leading-6 text-gray-900 dark:text-gray-100 mb-4">
+            <h3 className="mb-4 text-lg leading-6 font-medium text-gray-900 dark:text-gray-100">
               Confirm Removal
             </h3>
             <p className="text-sm text-gray-600 dark:text-gray-400">
               Are you sure you want to remove{' '}
               <strong>
-                {[managerToDelete.firstName, managerToDelete.lastName].filter(Boolean).join(' ')}
+                {[managerToDelete.firstName, managerToDelete.lastName]
+                  .filter(Boolean)
+                  .join(' ')}
               </strong>{' '}
               as a manager?
             </p>
