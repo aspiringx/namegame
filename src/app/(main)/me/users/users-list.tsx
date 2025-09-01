@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useTransition } from 'react'
+import React, { useState, useTransition, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import {
@@ -69,8 +69,25 @@ export default function UsersList({
   successMessage,
 }: UsersListProps) {
   const [showInfo, setShowInfo] = useState(false)
+  const [hasAgreed, setHasAgreed] = useState(false)
   const [showSuccess, setShowSuccess] = useState(!!successMessage)
   const [isPending, startTransition] = useTransition()
+
+  const managedUserAgreementKey = 'managedUserAgreement'
+
+  useEffect(() => {
+    const agreed = localStorage.getItem(managedUserAgreementKey) === 'true'
+    setHasAgreed(agreed)
+    if (!agreed) {
+      setShowInfo(true) // Show info by default if they haven't agreed
+    }
+  }, [])
+
+  const handleAgree = () => {
+    localStorage.setItem(managedUserAgreementKey, 'true')
+    setHasAgreed(true)
+    setShowInfo(false)
+  }
 
   const [selectedManagerId, setSelectedManagerId] = useState('')
   const [userToRevoke, setUserToRevoke] = useState<User | null>(null)
@@ -117,8 +134,23 @@ export default function UsersList({
             <Info className="h-6 w-6 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" />
           </button>
         </div>
-        <Button asChild className="flex-shrink-0">
-          <Link href="/me/users/create">Create</Link>
+        <Button
+          asChild
+          className={`flex-shrink-0 ${!hasAgreed ? 'cursor-not-allowed opacity-50' : ''}`}
+        >
+          <Link
+            href={hasAgreed ? '/me/users/create' : '#'}
+            onClick={(e) => {
+              if (!hasAgreed) {
+                e.preventDefault()
+                toast.info(
+                  'Please agree to the terms for creating managed users first.',
+                )
+              }
+            }}
+          >
+            Create
+          </Link>
         </Button>
       </div>
       <h4 className="mb-4">Users I Manage</h4>
@@ -166,31 +198,35 @@ export default function UsersList({
           </p>
           <p className="mb-4 text-sm text-gray-700 dark:text-gray-300">
             Multiple people can manage the same account (e.g. parents managing a
-            child account, etc). You can add managed users to groups you're in.
+            child account, etc). After you create a user, Edit them to add
+            others.
+          </p>
+          <p className="mb-4 text-sm text-gray-700 dark:text-gray-300">
+            You can add managed users to your groups.
           </p>
           <p className="mb-4 text-sm text-red-700 italic dark:text-red-400">
-            Note: You must have explicit permission to create a managed user.
-            <ul className="my-4 list-outside list-disc space-y-1 pl-4">
-              <li>
-                Living minor children: be a parent, legal guardian, or get
-                permission from one
-              </li>
-              <li>Living adults: get permission</li>
-              <li>
-                Deceased people: you should be a relative or get permission from
-                one.
-              </li>
-            </ul>
-            If you abuse managed users to pose as other people,
+            You must have permission or authority to create managed users, such
+            as being a child's parent, direct descendent of a deceased person,
+            permission from a living adult, etc.
           </p>
-          <button
-            type="button"
-            onClick={() => setShowInfo(false)}
-            className="mx-auto flex items-center pt-2 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-          >
-            <ChevronUp className="mr-1 h-4 w-4" />
-            Close
-          </button>
+          {hasAgreed ? (
+            <button
+              type="button"
+              onClick={() => setShowInfo(false)}
+              className="mx-auto flex items-center pt-2 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            >
+              <ChevronUp className="mr-1 h-4 w-4" />
+              Close
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleAgree}
+              className="mt-4 rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+            >
+              I Agree
+            </button>
+          )}
         </div>
       )}
       {managedUsers.length > 0 ? (
@@ -251,30 +287,14 @@ export default function UsersList({
         </div>
       )}
 
-      <div className="mt-6 mb-4 flex items-center gap-2">
+      <div className="mt-6 mb-4 flex flex-col">
         <h4 className="">Users Who Can Manage Me</h4>
-        <TooltipProvider>
-          <Tooltip open={isTooltipOpen} onOpenChange={setIsTooltipOpen}>
-            <TooltipTrigger asChild>
-              <button
-                type="button"
-                onClick={() => setIsTooltipOpen(!isTooltipOpen)}
-                className="focus:outline-none"
-              >
-                <AlertTriangle className="h-5 w-5 text-yellow-500" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>
-                Make sure you trust this person. They can control your account.
-                If your relationship changes, revoke their access any time.
-              </p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          Allow a trusted person to manage your account in case you become
+          unable/unavailable.
+        </p>
       </div>
       <div className="mt-4 rounded-lg border p-4">
-        <h5 className="mb-2 font-semibold">Allow a new user to manage you</h5>
         <div className="flex items-center gap-2">
           <div className="w-64">
             <Combobox
