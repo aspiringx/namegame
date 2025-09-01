@@ -16,7 +16,14 @@ export default async function GreetPage({
     where: { code },
     include: {
       user: { select: { firstName: true, id: true } },
-      group: { select: { slug: true, id: true, name: true } },
+      group: {
+        select: {
+          slug: true,
+          id: true,
+          name: true,
+          groupType: { select: { code: true } },
+        },
+      },
     },
   })
 
