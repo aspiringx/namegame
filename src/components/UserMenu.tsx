@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect, useContext } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { signOut, useSession } from 'next-auth/react'
@@ -8,6 +8,12 @@ import { useUserSession } from '@/context/UserSessionContext'
 import { useA2HS } from '@/context/A2HSContext'
 import { useDeviceInfoContext } from '@/context/DeviceInfoContext'
 import { NAMEGAME_PWA_PROMPT_DISMISSED_KEY } from '@/lib/constants'
+import { getRecentGroups } from '@/actions/auth'
+
+type RecentGroup = {
+  name: string
+  slug: string
+}
 
 export default function UserMenu() {
   const { data: session, update } = useSession()
@@ -15,6 +21,7 @@ export default function UserMenu() {
   const { showPrompt } = useA2HS()
   const deviceInfo = useDeviceInfoContext()
   const [isDropdownOpen, setDropdownOpen] = useState(false)
+  const [recentGroups, setRecentGroups] = useState<RecentGroup[]>([])
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -32,6 +39,18 @@ export default function UserMenu() {
         setDropdownOpen(false)
       }
     }
+
+    const fetchRecentGroups = async () => {
+      const result = await getRecentGroups()
+      if (result.groups) {
+        setRecentGroups(result.groups as RecentGroup[])
+      }
+    }
+
+    if (isDropdownOpen) {
+      fetchRecentGroups()
+    }
+
     document.addEventListener('mousedown', handleClickOutside)
 
     return () => {
@@ -39,7 +58,7 @@ export default function UserMenu() {
       channel.close()
       document.removeEventListener('mousedown', handleClickOutside)
     }
-  }, [update])
+  }, [update, isDropdownOpen])
 
   if (!deviceInfo) {
     return null // Don't render anything until the device info is loaded
@@ -99,6 +118,20 @@ export default function UserMenu() {
               >
                 My Groups
               </Link>
+              {recentGroups && recentGroups.length > 0 && (
+                <>
+                  {recentGroups.map((group) => (
+                    <Link
+                      key={group.slug}
+                      href={`/g/${group.slug}`}
+                      className="block py-2 pr-4 pl-8 text-sm text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
+                      onClick={closeDropdown}
+                    >
+                      {group.name}
+                    </Link>
+                  ))}
+                </>
+              )}
               {isSuperAdmin && (
                 <>
                   <hr className="my-2 border-gray-200 dark:border-gray-700" />

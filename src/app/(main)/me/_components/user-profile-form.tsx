@@ -351,6 +351,14 @@ export default function UserProfileForm({
 
   return (
     <>
+      <div className="mb-6">
+        <UserProfileNextSteps
+          user={user}
+          validation={validation}
+          isInFamilyGroup={isInFamilyGroup}
+        />
+      </div>
+
       <h3 className="mb-6">My Profile</h3>
       <form action={formAction} className="space-y-6">
         {showSuccessMessage && state?.message && (
@@ -410,13 +418,6 @@ export default function UserProfileForm({
             </div>
           </div>
         )}
-        <div className="mb-6">
-          <UserProfileNextSteps
-            user={user}
-            validation={validation}
-            isInFamilyGroup={isInFamilyGroup}
-          />
-        </div>
         <div className="flex">
           <div className="flex-grow">
             <label
