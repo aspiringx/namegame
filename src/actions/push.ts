@@ -186,6 +186,28 @@ export async function sendNotification(
   }
 }
 
+export async function getSubscription(
+  endpoint: string,
+): Promise<{ success: boolean; subscription: any | null }> {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return { success: false, subscription: null }
+  }
+
+  try {
+    const subscription = await db.pushSubscription.findFirst({
+      where: {
+        endpoint: endpoint,
+        userId: session.user.id,
+      },
+    })
+    return { success: true, subscription: subscription }
+  } catch (error) {
+    console.error('Error fetching subscription:', error)
+    return { success: false, subscription: null }
+  }
+}
+
 export async function getSubscriptions(): Promise<
   { endpoint: string; userName: string | null }[]
 > {

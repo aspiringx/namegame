@@ -12,15 +12,27 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { UserProfile } from './user-profile-form'
+import { ChevronRight } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useA2HS } from '@/context/A2HSContext'
 import { useDeviceInfoContext } from '@/context/DeviceInfoContext'
-import { usePushNotificationsContext } from '@/context/PushNotificationsContext'
-import { NAMEGAME_PWA_PROMPT_DISMISSED_KEY } from '@/lib/constants'
+import { usePushManager } from '@/hooks/use-push-manager'
+import {
+  NAMEGAME_PWA_PROMPT_DISMISSED_KEY,
+  NAMEGAME_PWA_INSTALL_STEP_DISMISSED_KEY,
+} from '@/lib/constants'
 
 type ValidationRequirements = {
   passwordRequired: boolean
   photoRequired: boolean
+}
+
+type ProfileCompletionStep = {
+  id: string
+  isComplete: boolean
+  title: string
+  description: string
+  href?: string
 }
 
 export default function UserProfileNextSteps({
@@ -34,13 +46,23 @@ export default function UserProfileNextSteps({
 }) {
   const deviceInfo = useDeviceInfoContext()
   const [isCollapsed, setIsCollapsed] = useState(true)
+  const [isInstallStepDismissed, setIsInstallStepDismissed] = useState(false)
+  useEffect(() => {
+    const dismissed = localStorage.getItem(
+      NAMEGAME_PWA_INSTALL_STEP_DISMISSED_KEY,
+    )
+    if (dismissed === 'true') {
+      setIsInstallStepDismissed(true)
+    }
+  }, [])
+
   const { showPrompt } = useA2HS()
   const {
     isPushEnabled,
     subscribe,
     isSupported: isPushSupported,
     permissionStatus,
-  } = usePushNotificationsContext()
+  } = usePushManager()
 
   const notificationsBlocked = permissionStatus === 'denied'
 
@@ -61,11 +83,16 @@ export default function UserProfileNextSteps({
     await subscribe()
   }
 
-  const canInstall = deviceInfo.a2hs.canInstall
+  const handleDismissInstallStep = () => {
+    localStorage.setItem(NAMEGAME_PWA_INSTALL_STEP_DISMISSED_KEY, 'true')
+    setIsInstallStepDismissed(true)
+  }
+
+  const canInstall = deviceInfo.a2hs.canInstall && !isInstallStepDismissed
   const canEnableNotifications =
     isPushSupported && !isPushEnabled && !notificationsBlocked
 
-  const profileCompletionStepsRequired = [
+  const profileCompletionStepsRequired: ProfileCompletionStep[] = [
     {
       id: 'email',
       isComplete: !!user.email,
@@ -100,14 +127,34 @@ export default function UserProfileNextSteps({
     },
   ]
 
-  const profileCompletionStepsOptional = [
+  const getOptionalFieldsDescription = () => {
+    const missingFields = []
+    if (!user.gender) missingFields.push('gender')
+    if (!user.birthDate) missingFields.push('birth date')
+    if (!user.birthPlace) missingFields.push('birth place')
+
+    if (missingFields.length === 0) {
+      return 'All optional details have been added.'
+    }
+
+    let fieldList = ''
+    if (missingFields.length === 1) {
+      fieldList = missingFields[0]
+    } else if (missingFields.length === 2) {
+      fieldList = missingFields.join(' and ')
+    } else {
+      fieldList = `${missingFields.slice(0, -1).join(', ')}, and ${missingFields[missingFields.length - 1]}`
+    }
+
+    return `Optionally include your ${fieldList} used in family groups.`
+  }
+
+  const profileCompletionStepsOptional: ProfileCompletionStep[] = [
     {
       id: 'optional',
-      isComplete: !!user.birthDate && !!user.birthPlace,
+      isComplete: !!user.gender && !!user.birthDate && !!user.birthPlace,
       title: 'Add optional details',
-      description:
-        'Optionally include your gender, birth date, and birth place used in family groups.',
-      href: '#birthDate',
+      description: getOptionalFieldsDescription(),
     },
   ]
 
@@ -198,12 +245,38 @@ export default function UserProfileNextSteps({
                       <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-gray-600 dark:text-gray-400">
                         {incompleteSteps.map((step) => (
                           <li key={step.id}>
-                            <a href={step.href} className="hover:underline">
-                              {step.title}:{' '}
-                              <span className="text-gray-500 dark:text-gray-300">
-                                {step.description}
-                              </span>
-                            </a>
+                            {step.href ? (
+                              <Link href={step.href} className="block hover:bg-gray-50 dark:hover:bg-gray-800">
+                                <div className="flex items-center px-4 py-4 sm:px-6">
+                                  <div className="min-w-0 flex-1 sm:flex sm:items-center sm:justify-between">
+                                    <div className="truncate">
+                                      <div className="flex text-sm">
+                                        <p className="truncate font-medium text-indigo-600 dark:text-indigo-400">
+                                          {step.title}
+                                        </p>
+                                      </div>
+                                      <div className="mt-2 flex">
+                                        <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                                          <p>{step.description}</p>
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <div className="mt-4 flex-shrink-0 sm:mt-0 sm:ml-5">
+                                      <div className="flex items-center justify-center text-gray-500 dark:text-gray-400">
+                                        <ChevronRight className="h-5 w-5" />
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </Link>
+                            ) : (
+                              <div>
+                                {step.title}:{' '}
+                                <span className="text-gray-500 dark:text-gray-300">
+                                  {step.description}
+                                </span>
+                              </div>
+                            )}
                           </li>
                         ))}
                       </ul>
@@ -233,6 +306,12 @@ export default function UserProfileNextSteps({
                         className="mt-2 inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none dark:focus:ring-offset-gray-800"
                       >
                         {deviceInfo.a2hs.actionLabel}
+                      </button>
+                      <button
+                        onClick={handleDismissInstallStep}
+                        className="mt-2 ml-2 inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 dark:focus:ring-offset-gray-800"
+                      >
+                        Already Done
                       </button>
                     </div>
                   </div>
@@ -274,9 +353,9 @@ export default function UserProfileNextSteps({
                         Enable Notifications
                       </h3>
                       <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                        Push notifications are the easiest and least expensive
-                        way for your groups to communicate with you. Once
-                        enabled, you can limit how often you receive them.
+                        Notifications are the easiest way for your groups to
+                        communicate with you. Enable them on each device and
+                        browser where you play.
                       </p>
                       <button
                         onClick={subscribe}

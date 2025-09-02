@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useTransition, useRef, useMemo } from 'react'
+import { X } from 'lucide-react'
 import Modal from './ui/modal'
 import {
   Combobox,
@@ -135,7 +136,7 @@ function RelationshipEditor({
       value={currentValue}
       onChange={handleRelationChange}
       disabled={isUpdating}
-      className="rounded-md border-gray-300 bg-white px-2 py-1 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 disabled:cursor-not-allowed disabled:opacity-50"
+      className="rounded-md border border-gray-300 bg-white px-2 py-1 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 disabled:cursor-not-allowed disabled:opacity-50"
       aria-label={`Edit relationship with ${relation.relatedUser.firstName}`}
     >
       {relationTypes.map((rt) => (
@@ -182,6 +183,43 @@ function RelateModalContent({
   const [relationToDelete, setRelationToDelete] =
     useState<RelationWithUser | null>(null)
   const [showMemberGenderEditor, setShowMemberGenderEditor] = useState(false)
+  const [isFamilyExpanded, setIsFamilyExpanded] = useState(true)
+  const [isFriendsExpanded, setIsFriendsExpanded] = useState(true)
+
+  const { familyRelations, friendRelations } = useMemo(() => {
+    const family: RelationWithUser[] = []
+    const friends: RelationWithUser[] = []
+
+    relations.forEach((relation) => {
+      const isFamily =
+        relation.relationType.category === 'family' ||
+        (relation.relationType.category === 'other' &&
+          relation.relationType.code === 'family')
+
+      if (isFamily) {
+        family.push(relation)
+      } else {
+        friends.push(relation)
+      }
+    })
+
+    const sortByName = (a: RelationWithUser, b: RelationWithUser) => {
+      const lastNameA = a.relatedUser.lastName || ''
+      const lastNameB = b.relatedUser.lastName || ''
+      const firstNameA = a.relatedUser.firstName || ''
+      const firstNameB = b.relatedUser.firstName || ''
+
+      if (lastNameA.localeCompare(lastNameB) !== 0) {
+        return lastNameA.localeCompare(lastNameB)
+      }
+      return firstNameA.localeCompare(firstNameB)
+    }
+
+    family.sort(sortByName)
+    friends.sort(sortByName)
+
+    return { familyRelations: family, friendRelations: friends }
+  }, [relations])
 
   const refreshRelations = async () => {
     if (!member) return
@@ -367,7 +405,15 @@ function RelateModalContent({
   const selectedMember = groupMembers.find((m) => m.userId === selectedMemberId)
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="">
+        <Modal isOpen={isOpen} onClose={onClose} title="">
+      <button
+        type="button"
+        className="absolute top-4 right-4 z-10 text-gray-400 hover:text-gray-500 dark:text-gray-400 dark:hover:text-gray-300"
+        onClick={onClose}
+      >
+        <span className="sr-only">Close</span>
+        <X className="h-6 w-6" />
+      </button>
       <div className="p-6">
         <div>
           <div className="flex items-center justify-between">
@@ -623,52 +669,150 @@ function RelateModalContent({
             Existing Relationships
           </h4>
           {relations.length > 0 ? (
-            <ul className="mt-2 divide-y divide-gray-200 dark:divide-gray-700">
-              {relations.map((r) => (
-                <li
-                  key={r.id}
-                  className="flex items-center justify-between py-2"
-                >
-                  <span>
-                    {r.relatedUser.firstName} {r.relatedUser.lastName}
-                  </span>
-                  <div className="flex items-center gap-4">
-                    <RelationshipEditor
-                      relation={r}
-                      isReadOnly={isReadOnly}
-                      relationTypes={relationTypes}
-                      groupSlug={groupSlug}
-                      onUpdate={refreshRelations}
-                      loggedInUserId={loggedInUserId}
-                      mainUserId={member.userId}
-                    />
-                    {!isReadOnly && (
-                      <button
-                        type="button"
-                        onClick={() => setRelationToDelete(r)}
-                        className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-500"
-                        aria-label={`Delete relationship with ${r.relatedUser.firstName} ${r.relatedUser.lastName}`}
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-4 w-4"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
+            <div className="mt-2 max-h-64 overflow-y-auto pr-2">
+              {familyRelations.length > 0 && (
+                <div className="mb-4">
+                  <button
+                    type="button"
+                    className="flex w-full items-center justify-between rounded-md bg-gray-200 px-3 py-2 text-left text-sm font-semibold text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                    onClick={() => setIsFamilyExpanded(!isFamilyExpanded)}
+                  >
+                    <span>Family</span>
+                    <svg
+                      className={`h-5 w-5 transform transition-transform ${isFamilyExpanded ? 'rotate-180' : ''}`}
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </button>
+                  {isFamilyExpanded && (
+                    <ul className="mt-1 divide-y divide-gray-200 dark:divide-gray-700">
+                      {familyRelations.map((r) => (
+                        <li
+                          key={r.id}
+                          className="flex items-center justify-between py-2 pl-3"
                         >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M6 18L18 6M6 6l12 12"
-                          />
-                        </svg>
-                      </button>
-                    )}
-                  </div>
-                </li>
-              ))}
-            </ul>
+                          <span>
+                            {r.relatedUser.firstName} {r.relatedUser.lastName}
+                          </span>
+                          <div className="flex items-center gap-4">
+                            <RelationshipEditor
+                              relation={r}
+                              isReadOnly={isReadOnly}
+                              relationTypes={relationTypes}
+                              groupSlug={groupSlug}
+                              onUpdate={refreshRelations}
+                              loggedInUserId={loggedInUserId}
+                              mainUserId={member.userId}
+                            />
+                            {!isReadOnly && (
+                              <button
+                                type="button"
+                                onClick={() => setRelationToDelete(r)}
+                                className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-500"
+                                aria-label={`Delete relationship with ${r.relatedUser.firstName} ${r.relatedUser.lastName}`}
+                              >
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  className="h-4 w-4"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M6 18L18 6M6 6l12 12"
+                                  />
+                                </svg>
+                              </button>
+                            )}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
+              {friendRelations.length > 0 && (
+                <div>
+                  <button
+                    type="button"
+                    className="flex w-full items-center justify-between rounded-md bg-gray-200 px-3 py-2 text-left text-sm font-semibold text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                    onClick={() => setIsFriendsExpanded(!isFriendsExpanded)}
+                  >
+                    <span>Friends</span>
+                    <svg
+                      className={`h-5 w-5 transform transition-transform ${isFriendsExpanded ? 'rotate-180' : ''}`}
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </button>
+                  {isFriendsExpanded && (
+                    <ul className="mt-1 divide-y divide-gray-200 dark:divide-gray-700">
+                      {friendRelations.map((r) => (
+                        <li
+                          key={r.id}
+                          className="flex items-center justify-between py-2 pl-3"
+                        >
+                          <span>
+                            {r.relatedUser.firstName} {r.relatedUser.lastName}
+                          </span>
+                          <div className="flex items-center gap-4">
+                            <RelationshipEditor
+                              relation={r}
+                              isReadOnly={isReadOnly}
+                              relationTypes={relationTypes}
+                              groupSlug={groupSlug}
+                              onUpdate={refreshRelations}
+                              loggedInUserId={loggedInUserId}
+                              mainUserId={member.userId}
+                            />
+                            {!isReadOnly && (
+                              <button
+                                type="button"
+                                onClick={() => setRelationToDelete(r)}
+                                className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-500"
+                                aria-label={`Delete relationship with ${r.relatedUser.firstName} ${r.relatedUser.lastName}`}
+                              >
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  className="h-4 w-4"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M6 18L18 6M6 6l12 12"
+                                  />
+                                </svg>
+                              </button>
+                            )}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
+            </div>
           ) : (
             <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
               No relationships yet.
