@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { UserProfile } from './user-profile-form'
+import { ChevronRight } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useA2HS } from '@/context/A2HSContext'
 import { useDeviceInfoContext } from '@/context/DeviceInfoContext'
@@ -24,6 +25,14 @@ import {
 type ValidationRequirements = {
   passwordRequired: boolean
   photoRequired: boolean
+}
+
+type ProfileCompletionStep = {
+  id: string
+  isComplete: boolean
+  title: string
+  description: string
+  href?: string
 }
 
 export default function UserProfileNextSteps({
@@ -83,7 +92,7 @@ export default function UserProfileNextSteps({
   const canEnableNotifications =
     isPushSupported && !isPushEnabled && !notificationsBlocked
 
-  const profileCompletionStepsRequired = [
+  const profileCompletionStepsRequired: ProfileCompletionStep[] = [
     {
       id: 'email',
       isComplete: !!user.email,
@@ -118,14 +127,34 @@ export default function UserProfileNextSteps({
     },
   ]
 
-  const profileCompletionStepsOptional = [
+  const getOptionalFieldsDescription = () => {
+    const missingFields = []
+    if (!user.gender) missingFields.push('gender')
+    if (!user.birthDate) missingFields.push('birth date')
+    if (!user.birthPlace) missingFields.push('birth place')
+
+    if (missingFields.length === 0) {
+      return 'All optional details have been added.'
+    }
+
+    let fieldList = ''
+    if (missingFields.length === 1) {
+      fieldList = missingFields[0]
+    } else if (missingFields.length === 2) {
+      fieldList = missingFields.join(' and ')
+    } else {
+      fieldList = `${missingFields.slice(0, -1).join(', ')}, and ${missingFields[missingFields.length - 1]}`
+    }
+
+    return `Optionally include your ${fieldList} used in family groups.`
+  }
+
+  const profileCompletionStepsOptional: ProfileCompletionStep[] = [
     {
       id: 'optional',
-      isComplete: !!user.birthDate && !!user.birthPlace,
+      isComplete: !!user.gender && !!user.birthDate && !!user.birthPlace,
       title: 'Add optional details',
-      description:
-        'Optionally include your gender, birth date, and birth place used in family groups.',
-      href: '#birthDate',
+      description: getOptionalFieldsDescription(),
     },
   ]
 
@@ -216,12 +245,38 @@ export default function UserProfileNextSteps({
                       <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-gray-600 dark:text-gray-400">
                         {incompleteSteps.map((step) => (
                           <li key={step.id}>
-                            <a href={step.href} className="hover:underline">
-                              {step.title}:{' '}
-                              <span className="text-gray-500 dark:text-gray-300">
-                                {step.description}
-                              </span>
-                            </a>
+                            {step.href ? (
+                              <Link href={step.href} className="block hover:bg-gray-50 dark:hover:bg-gray-800">
+                                <div className="flex items-center px-4 py-4 sm:px-6">
+                                  <div className="min-w-0 flex-1 sm:flex sm:items-center sm:justify-between">
+                                    <div className="truncate">
+                                      <div className="flex text-sm">
+                                        <p className="truncate font-medium text-indigo-600 dark:text-indigo-400">
+                                          {step.title}
+                                        </p>
+                                      </div>
+                                      <div className="mt-2 flex">
+                                        <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                                          <p>{step.description}</p>
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <div className="mt-4 flex-shrink-0 sm:mt-0 sm:ml-5">
+                                      <div className="flex items-center justify-center text-gray-500 dark:text-gray-400">
+                                        <ChevronRight className="h-5 w-5" />
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </Link>
+                            ) : (
+                              <div>
+                                {step.title}:{' '}
+                                <span className="text-gray-500 dark:text-gray-300">
+                                  {step.description}
+                                </span>
+                              </div>
+                            )}
                           </li>
                         ))}
                       </ul>
