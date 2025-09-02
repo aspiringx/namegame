@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useTransition, useRef, useMemo } from 'react'
+import { X } from 'lucide-react'
 import Modal from './ui/modal'
 import {
   Combobox,
@@ -404,7 +405,15 @@ function RelateModalContent({
   const selectedMember = groupMembers.find((m) => m.userId === selectedMemberId)
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="">
+        <Modal isOpen={isOpen} onClose={onClose} title="">
+      <button
+        type="button"
+        className="absolute top-4 right-4 z-10 text-gray-400 hover:text-gray-500 dark:text-gray-400 dark:hover:text-gray-300"
+        onClick={onClose}
+      >
+        <span className="sr-only">Close</span>
+        <X className="h-6 w-6" />
+      </button>
       <div className="p-6">
         <div>
           <div className="flex items-center justify-between">
