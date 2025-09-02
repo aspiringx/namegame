@@ -65,7 +65,7 @@ export default function UserProfileNextSteps({
   const canEnableNotifications =
     isPushSupported && !isPushEnabled && !notificationsBlocked
 
-  const profileCompletionSteps = [
+  const profileCompletionStepsRequired = [
     {
       id: 'email',
       isComplete: !!user.email,
@@ -98,6 +98,9 @@ export default function UserProfileNextSteps({
         'Help others recognize you by adding a real profile picture.',
       href: '#photo',
     },
+  ]
+
+  const profileCompletionStepsOptional = [
     {
       id: 'optional',
       isComplete: !!user.birthDate && !!user.birthPlace,
@@ -108,14 +111,17 @@ export default function UserProfileNextSteps({
     },
   ]
 
-  const incompleteSteps = profileCompletionSteps
-    .filter((step) => {
-      if (step.id === 'optional' && !isInFamilyGroup) {
-        return false
-      }
-      return true
-    })
-    .filter((step) => !step.isComplete)
+  const incompleteRequiredSteps = profileCompletionStepsRequired.filter(
+    (step) => !step.isComplete,
+  )
+  const incompleteOptionalSteps = isInFamilyGroup
+    ? profileCompletionStepsOptional.filter((step) => !step.isComplete)
+    : []
+
+  const incompleteSteps = [
+    ...incompleteRequiredSteps,
+    ...incompleteOptionalSteps,
+  ]
 
   const nextStepsCount =
     (incompleteSteps.length > 0 ? 1 : 0) +
@@ -268,8 +274,9 @@ export default function UserProfileNextSteps({
                         Enable Notifications
                       </h3>
                       <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                        Get notified about group updates. It's the easiest way
-                        for groups to communicate with you.
+                        Push notifications are the easiest and least expensive
+                        way for your groups to communicate with you. Once
+                        enabled, you can limit how often you receive them.
                       </p>
                       <button
                         onClick={subscribe}
