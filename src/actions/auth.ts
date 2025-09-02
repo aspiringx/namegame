@@ -1,5 +1,6 @@
 'use server'
 
+import { auth } from '@/auth'
 import { z } from 'zod'
 import { nanoid } from 'nanoid'
 import prisma from '@/lib/prisma'
@@ -41,6 +42,47 @@ export async function createLoginCode(formData: FormData) {
     return { code }
   } catch (error) {
     console.error('Failed to create login code:', error)
+    return { error: 'A database error occurred.' }
+  }
+}
+
+export async function getRecentGroups() {
+  try {
+    const session = await auth()
+    if (!session?.user?.id) {
+      return { groups: [] }
+    }
+    const userId = session.user.id
+
+    const groupUsers = await prisma.groupUser.findMany({
+      where: {
+        userId: userId,
+      },
+      orderBy: {
+        updatedAt: 'desc',
+      },
+      take: 5,
+      include: {
+        group: {
+          select: {
+            name: true,
+            slug: true,
+          },
+        },
+      },
+    })
+
+    if (!groupUsers) {
+      return { groups: [] }
+    }
+
+    const sortedGroups = groupUsers
+      .map((gu) => gu.group)
+      .sort((a, b) => a.name.localeCompare(b.name))
+
+    return { groups: sortedGroups }
+  } catch (error) {
+    console.error('Failed to fetch recent groups:', error)
     return { error: 'A database error occurred.' }
   }
 }
