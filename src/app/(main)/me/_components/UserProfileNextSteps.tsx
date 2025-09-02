@@ -274,9 +274,9 @@ export default function UserProfileNextSteps({
                         Enable Notifications
                       </h3>
                       <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                        Push notifications are the easiest and least expensive
-                        way for your groups to communicate with you. Once
-                        enabled, you can limit how often you receive them.
+                        Notifications are the easiest way for your groups to
+                        communicate with you. Enable them on each device and
+                        browser where you play.
                       </p>
                       <button
                         onClick={subscribe}

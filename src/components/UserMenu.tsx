@@ -8,20 +8,14 @@ import { useUserSession } from '@/context/UserSessionContext'
 import { useA2HS } from '@/context/A2HSContext'
 import { useDeviceInfoContext } from '@/context/DeviceInfoContext'
 import { NAMEGAME_PWA_PROMPT_DISMISSED_KEY } from '@/lib/constants'
-import { getRecentGroups } from '@/actions/auth'
 
-type RecentGroup = {
-  name: string
-  slug: string
-}
 
 export default function UserMenu() {
   const { data: session, update } = useSession()
-  const { imageUrl } = useUserSession()
+  const { imageUrl, recentGroups } = useUserSession()
   const { showPrompt } = useA2HS()
   const deviceInfo = useDeviceInfoContext()
   const [isDropdownOpen, setDropdownOpen] = useState(false)
-  const [recentGroups, setRecentGroups] = useState<RecentGroup[]>([])
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -40,16 +34,6 @@ export default function UserMenu() {
       }
     }
 
-    const fetchRecentGroups = async () => {
-      const result = await getRecentGroups()
-      if (result.groups) {
-        setRecentGroups(result.groups as RecentGroup[])
-      }
-    }
-
-    if (isDropdownOpen) {
-      fetchRecentGroups()
-    }
 
     document.addEventListener('mousedown', handleClickOutside)
 
@@ -58,7 +42,7 @@ export default function UserMenu() {
       channel.close()
       document.removeEventListener('mousedown', handleClickOutside)
     }
-  }, [update, isDropdownOpen])
+  }, [update])
 
   if (!deviceInfo) {
     return null // Don't render anything until the device info is loaded
