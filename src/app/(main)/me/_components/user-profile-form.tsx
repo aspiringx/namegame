@@ -35,6 +35,7 @@ import {
 import { DatePrecision, Gender } from '@/generated/prisma/client'
 import { format } from 'date-fns'
 import Link from 'next/link'
+import UserProfileNextSteps from './UserProfileNextSteps'
 
 export type UserProfile = {
   id: string
@@ -80,9 +81,11 @@ function SubmitButton({
 export default function UserProfileForm({
   user,
   groups,
+  isInFamilyGroup,
 }: {
   user: UserProfile
   groups: Group[]
+  isInFamilyGroup: boolean
 }) {
   const [displayEmail, setDisplayEmail] = useState(user.email || '')
   const { data: session, update: updateSession } = useSession()
@@ -138,13 +141,13 @@ export default function UserProfileForm({
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isOptionalOpen, setIsOptionalOpen] = useState(false)
   const [isEmailValid, setIsEmailValid] = useState(
-    !!user.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(user.email),
+    !user.email || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(user.email),
   )
   const [isEmailTooltipOpen, setIsEmailTooltipOpen] = useState(false)
   const [isPasswordTooltipOpen, setIsPasswordTooltipOpen] = useState(false)
   const [isBirthDateTooltipOpen, setIsBirthDateTooltipOpen] = useState(false)
 
-  const optionalFields = [birthDate, birthPlace, gender]
+  const optionalFields = [birthDate, birthPlace]
   const completedOptionalFields = optionalFields.filter(
     (field) => field !== null && field !== '',
   ).length
@@ -363,12 +366,6 @@ export default function UserProfileForm({
                 <div className="ml-3">
                   <div className="text-sm font-medium text-green-800 dark:text-green-300">
                     <p>{state.message}</p>
-                    {state.emailUpdated && !isVerifiedForDisplay && (
-                      <p className="mt-2">
-                        We sent you a verification email. Find it and click the
-                        link to complete the process.
-                      </p>
-                    )}
                   </div>
                 </div>
                 <div className="ml-auto pl-3">
@@ -385,32 +382,6 @@ export default function UserProfileForm({
                 </div>
               </div>
             </div>
-            {groups.length > 0 && (
-              <div className="overflow-hidden rounded-md bg-white shadow sm:rounded-md dark:bg-gray-800">
-                <p className="max-w-2xl p-4 text-sm text-gray-500 dark:text-gray-400">
-                  Now you can return to a group here:
-                </p>
-                <ul
-                  role="list"
-                  className="divide-y divide-gray-200 dark:divide-gray-700"
-                >
-                  {groups.map((group) => (
-                    <li key={group.id}>
-                      <Link
-                        href={`/groups/${group.slug}`}
-                        className="block px-4 py-4 hover:bg-gray-50 sm:px-6 dark:hover:bg-gray-700"
-                      >
-                        <div className="flex items-center justify-between">
-                          <p className="truncate text-sm font-medium text-indigo-600 dark:text-indigo-400">
-                            {group.name}
-                          </p>
-                        </div>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
           </div>
         )}
         {state?.errors && (
@@ -439,6 +410,13 @@ export default function UserProfileForm({
             </div>
           </div>
         )}
+        <div className="mb-6">
+          <UserProfileNextSteps
+            user={user}
+            validation={validation}
+            isInFamilyGroup={isInFamilyGroup}
+          />
+        </div>
         <div className="flex">
           <div className="flex-grow">
             <label
@@ -497,6 +475,36 @@ export default function UserProfileForm({
           </div>
         </div>
 
+        <div className="mt-4">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            Gender
+          </label>
+          <input type="hidden" name="gender" value={gender ?? ''} />
+          <div className="mt-2 flex space-x-2">
+            {[
+              ['male', 'He'],
+              ['female', 'She'],
+              ['non_binary', 'They'],
+            ].map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => {
+                  const newGender = gender === value ? null : (value as Gender)
+                  setGender(newGender)
+                }}
+                className={`rounded-md px-3 py-1 text-sm font-medium ${
+                  gender === value
+                    ? 'border-transparent bg-indigo-600 text-white hover:bg-indigo-700'
+                    : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div>
           <label
             htmlFor="email"
@@ -511,12 +519,15 @@ export default function UserProfileForm({
               name="email"
               value={displayEmail}
               placeholder="Email"
-              required
               onChange={(e) => {
                 const newEmail = e.target.value
                 setDisplayEmail(newEmail)
-                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-                setIsEmailValid(emailRegex.test(newEmail))
+                if (newEmail === '') {
+                  setIsEmailValid(true)
+                } else {
+                  const emailRegex = /^[\s\S]*@[\s\S]*\.[\s\S]*$/
+                  setIsEmailValid(emailRegex.test(newEmail))
+                }
               }}
               className={`block w-full rounded-md border-gray-300 py-2 pr-10 pl-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 ${
                 !isEmailValid || (state?.errors?.email && !isDirty)
@@ -563,22 +574,14 @@ export default function UserProfileForm({
               </TooltipProvider>
             </div>
           </div>
-          {state?.errors?.email ? (
+          {state?.errors?.email && (
             <p className="mt-1 text-xs text-red-500 dark:text-red-400">
               {state.errors.email[0]}
             </p>
-          ) : (
-            displayEmail &&
-            !isVerifiedForDisplay && (
-              <p className="mt-1 rounded-md bg-yellow-50 p-2 text-sm text-xs text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300">
-                Email not yet verified. Save this and check email for a link to
-                complete verification.
-              </p>
-            )
           )}
-          <p className="mt-1 text-xs text-gray-500 italic dark:text-gray-400">
-            By saving and verifying my email address, I consent to receiving
-            messages from my NameGame groups.
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            Add and verify an email address to login later. Saving an email is
+            your consent to receive messages.
           </p>
         </div>
 
@@ -685,7 +688,7 @@ export default function UserProfileForm({
           ) : (
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               {validation.passwordRequired
-                ? 'Enter or generate a new password.'
+                ? 'Enter or generate a new password with at least six characters, letters, and numbers.'
                 : ''}
             </p>
           )}
@@ -761,7 +764,7 @@ export default function UserProfileForm({
               {validation.photoRequired &&
               previewUrl?.includes('dicebear.com') &&
               !fileSelected
-                ? 'Add a real profile pic so people recognize you.'
+                ? 'Add a real profile pic.'
                 : ''}
             </p>
           </div>
@@ -800,8 +803,8 @@ export default function UserProfileForm({
           {isOptionalOpen && (
             <div className="mt-4 space-y-6">
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Optional profile info. Family members may have provided initial
-                values you can change.
+                Optional info used in family groups. Family members may have
+                provided initial values.
               </p>
               <div>
                 <label
@@ -884,37 +887,6 @@ export default function UserProfileForm({
                     className="block w-full rounded-md border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
                     placeholder="City, State, Country"
                   />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Gender
-                </label>
-                <input type="hidden" name="gender" value={gender ?? ''} />
-                <div className="mt-2 flex space-x-2">
-                  {[
-                    ['male', 'He'],
-                    ['female', 'She'],
-                    ['non_binary', 'They'],
-                  ].map(([value, label]) => (
-                    <button
-                      key={value}
-                      type="button"
-                      onClick={() => {
-                        const newGender =
-                          gender === value ? null : (value as Gender)
-                        setGender(newGender)
-                      }}
-                      className={`rounded-md px-3 py-1 text-sm font-medium ${
-                        gender === value
-                          ? 'border-transparent bg-indigo-600 text-white hover:bg-indigo-700'
-                          : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  ))}
                 </div>
               </div>
             </div>

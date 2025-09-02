@@ -23,6 +23,9 @@ export interface CodeData {
     name: string
     slug: string
     id: number
+    groupType: {
+      code: string
+    }
   }
 }
 
@@ -35,10 +38,6 @@ export async function handleAuthenticatedGreeting(
   codeData: CodeData,
   currentUserId: string,
 ) {
-  const user1Id =
-    currentUserId < codeData.user.id ? currentUserId : codeData.user.id
-  const user2Id =
-    currentUserId > codeData.user.id ? currentUserId : codeData.user.id
 
   const [relationTypes, roleTypes, photoTypes, entityTypes] = await Promise.all(
     [
@@ -76,25 +75,44 @@ export async function handleAuthenticatedGreeting(
   const roleId = isGuest ? roleTypes.guest.id : roleTypes.member.id
 
   await prisma.$transaction(async (tx) => {
-    // 1. Create or update the UserUser relationship
-    await tx.userUser.upsert({
+    // 1. Determine the relation type based on the group type
+    const relationTypeId = codeData.group.groupType.code === 'family'
+      ? relationTypes.family.id
+      : relationTypes.acquaintance.id;
+
+    // 2. Create or update the UserUser relationship
+    const existingRelation = await tx.userUser.findFirst({
       where: {
-        user1Id_user2Id_relationTypeId: {
+        OR: [
+          { user1Id: currentUserId, user2Id: codeData.user.id },
+          { user1Id: codeData.user.id, user2Id: currentUserId },
+        ],
+      },
+    });
+
+    if (existingRelation) {
+      await tx.userUser.update({
+        where: {
+          id: existingRelation.id,
+        },
+        data: {
+          greetCount: { increment: 1 },
+        },
+      });
+    } else {
+      // For non-directional relationships, sort IDs to prevent duplicates
+      const user1Id = currentUserId < codeData.user.id ? currentUserId : codeData.user.id;
+      const user2Id = currentUserId > codeData.user.id ? currentUserId : codeData.user.id;
+
+      await tx.userUser.create({
+        data: {
           user1Id,
           user2Id,
-          relationTypeId: relationTypes.acquaintance.id,
+          relationTypeId: relationTypeId,
+          greetCount: 1,
         },
-      },
-      update: {
-        greetCount: { increment: 1 },
-      },
-      create: {
-        user1Id,
-        user2Id,
-        relationTypeId: relationTypes.acquaintance.id,
-        greetCount: 1,
-      },
-    })
+      });
+    }
 
     // 2. Ensure the scanning user is a member of the group
     await tx.groupUser.upsert({
@@ -200,27 +218,23 @@ export async function handleGuestGreeting(
       })
 
       // 3. Create the UserUser relationship
-      const user1Id = codeData.user.id // The user who shared the code
-      const user2Id = newUser.id // The new user who scanned the code
+      // For non-directional relationships, sort IDs to prevent duplicates
+      const user1Id = codeData.user.id < newUser.id ? codeData.user.id : newUser.id;
+      const user2Id = codeData.user.id > newUser.id ? codeData.user.id : newUser.id;
 
-      await tx.userUser.upsert({
-        where: {
-          user1Id_user2Id_relationTypeId: {
-            user1Id,
-            user2Id,
-            relationTypeId: relationTypes.acquaintance.id,
-          },
-        },
-        update: {
-          greetCount: { increment: 1 },
-        },
-        create: {
+      const relationTypeId = codeData.group.groupType.code === 'family'
+        ? relationTypes.family.id
+        : relationTypes.acquaintance.id;
+
+      // We don't use upsert here because we don't expect a relationship to exist for a new guest.
+      await tx.userUser.create({
+        data: {
           user1Id,
           user2Id,
-          relationTypeId: relationTypes.acquaintance.id,
+          relationTypeId: relationTypeId,
           greetCount: 1,
         },
-      })
+      });
 
       // 4. Add the new user to the group as a guest
       await tx.groupUser.create({

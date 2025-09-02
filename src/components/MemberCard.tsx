@@ -9,8 +9,6 @@ import {
 } from '@/components/ui/tooltip'
 import { MoreVertical } from 'lucide-react'
 import { Dropdown, DropdownItem } from './ui/dropdown'
-import { useState } from 'react'
-import ManageUserModal from './ManageUserModal'
 
 interface MemberCardProps {
   member: Member
@@ -18,7 +16,6 @@ interface MemberCardProps {
   viewMode: 'grid' | 'list' | 'quiz'
   relationship?: string
   isGroupAdmin?: boolean
-  groupMembers: Member[]
   onRelate: (member: Member) => void
   currentUserId?: string
 }
@@ -29,11 +26,9 @@ export default function MemberCard({
   viewMode,
   relationship,
   isGroupAdmin,
-  groupMembers,
   onRelate,
   currentUserId,
 }: MemberCardProps) {
-  const [isManageModalOpen, setIsManageModalOpen] = useState(false)
   const imageUrl = member.user.photoUrl || '/images/default-avatar.png'
   
   if (listType === 'greeted' && viewMode === 'list') {
@@ -81,22 +76,9 @@ export default function MemberCard({
               triggerClassName="rounded-full p-1 hover:bg-gray-200 dark:hover:bg-gray-700"
             >
               <DropdownItem onClick={() => onRelate(member)}>Relate</DropdownItem>
-              {isGroupAdmin && (
-                <DropdownItem onClick={() => setIsManageModalOpen(true)}>
-                  Manage
-                </DropdownItem>
-              )}
             </Dropdown>
           </div>
         </div>
-        {isManageModalOpen && (
-          <ManageUserModal
-            isOpen={isManageModalOpen}
-            onClose={() => setIsManageModalOpen(false)}
-            managedUser={member.user}
-            groupMembers={groupMembers}
-          />
-        )}
       </>
     )
   }
@@ -157,23 +139,10 @@ export default function MemberCard({
               triggerClassName="rounded-full p-1 hover:bg-gray-200 dark:hover:bg-gray-700"
             >
               <DropdownItem onClick={() => onRelate(member)}>Relate</DropdownItem>
-              {isGroupAdmin && (
-                <DropdownItem onClick={() => setIsManageModalOpen(true)}>
-                  Manage
-                </DropdownItem>
-              )}
             </Dropdown>
           </div>
         </div>
       </div>
-      {isManageModalOpen && (
-        <ManageUserModal
-          isOpen={isManageModalOpen}
-          onClose={() => setIsManageModalOpen(false)}
-          managedUser={member.user}
-          groupMembers={groupMembers}
-        />
-      )}
     </>
   )
 }

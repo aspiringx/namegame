@@ -9,29 +9,26 @@ import {
 } from 'react'
 import { X } from 'lucide-react'
 import { useReactFlow } from 'reactflow'
-import ReactFlow, {
-  Background,
-  ReactFlowProvider,
-  Node,
-} from 'reactflow'
+import ReactFlow, { Background, ReactFlowProvider, Node } from 'reactflow'
 import 'reactflow/dist/style.css'
 import { MemberWithUser, UserWithPhotoUrl, FullRelationship } from '@/types'
 import AvatarNode from './AvatarNode'
+import SmoothFlowEdge from './SmoothFlowEdge'
 import { MemberDetailsModal } from './MemberDetailsModal'
 import { useFamilyTree, AvatarNodeData } from './useFamilyTree'
-import { useGroup } from '@/components/GroupProvider'
 import { FamilyTreeControls } from './FamilyTreeControls'
-
-interface FamilyTreeProps {
-  relationships: FullRelationship[]
-  members: MemberWithUser[]
-  currentUser?: UserWithPhotoUrl
-  onIsFocalUserCurrentUserChange?: (isCurrentUser: boolean) => void
-  relationshipMap: Map<string, string>
-}
+import { useTourManagement } from '@/hooks/useTourManagement'
+import { useTheme } from 'next-themes'
+import { TourProvider, StepType } from '@reactour/tour'
+import { steps as desktopSteps } from '@/components/tours/FamilyTreeTour'
+import { steps as mobileSteps } from '@/components/tours/FamilyTreeTourMobile'
 
 const nodeTypes = {
   avatar: AvatarNode,
+}
+
+const edgeTypes = {
+  smoothflow: SmoothFlowEdge,
 }
 
 const fitViewOptions = {
@@ -42,9 +39,21 @@ const mobileFitViewOptions = {
   padding: 0.2,
 }
 
+interface FamilyTreeComponentProps {
+  relationships: FullRelationship[]
+  members: MemberWithUser[]
+  currentUser?: UserWithPhotoUrl
+  onIsFocalUserCurrentUserChange?: (isCurrentUser: boolean) => void
+  relationshipMap: Map<string, string>
+  isMobile: boolean
+}
+
 const FamilyTreeComponent = forwardRef<
-  { reset: () => void; setFocalUser: (userId: string) => void },
-  FamilyTreeProps
+  {
+    reset: () => void
+    setFocalUser: (userId: string) => void
+  },
+  FamilyTreeComponentProps
 >(
   (
     {
@@ -53,6 +62,7 @@ const FamilyTreeComponent = forwardRef<
       currentUser,
       onIsFocalUserCurrentUserChange,
       relationshipMap,
+      isMobile,
     },
     ref,
   ) => {
@@ -61,9 +71,9 @@ const FamilyTreeComponent = forwardRef<
       null,
     )
     const [isModalOpen, setIsModalOpen] = useState(false)
-    const [isMobile, setIsMobile] = useState(false)
     const [isFullScreen, setIsFullScreen] = useState(false)
     const { fitView, zoomTo } = useReactFlow()
+    const { startTour } = useTourManagement('familyTree')
 
     const handleExitFullScreen = () => {
       setIsFullScreen(false)
@@ -71,15 +81,6 @@ const FamilyTreeComponent = forwardRef<
         fitView()
       }, 100)
     }
-
-    useEffect(() => {
-      const checkIsMobile = () => {
-        setIsMobile(window.innerWidth < 768)
-      }
-      checkIsMobile()
-      window.addEventListener('resize', checkIsMobile)
-      return () => window.removeEventListener('resize', checkIsMobile)
-    }, [])
 
     const {
       nodes,
@@ -97,7 +98,7 @@ const FamilyTreeComponent = forwardRef<
     useEffect(() => {
       const timer = setTimeout(() => {
         if (isMobile) {
-          fitView(fitViewOptions)
+          fitView(mobileFitViewOptions)
           zoomTo(0.8, { duration: 200 })
         } else {
           fitView(fitViewOptions)
@@ -165,6 +166,7 @@ const FamilyTreeComponent = forwardRef<
             nodes={nodes}
             edges={edges}
             nodeTypes={nodeTypes}
+            edgeTypes={edgeTypes}
             proOptions={{ hideAttribution: true }}
             onNodeClick={handleNodeClick}
             className="bg-background"
@@ -173,6 +175,7 @@ const FamilyTreeComponent = forwardRef<
               onFullScreen={() => setIsFullScreen(true)}
               isFullScreen={isFullScreen}
               isMobile={isMobile}
+              onStartTour={startTour}
             />
             {isFullScreen && (
               <button
@@ -205,10 +208,108 @@ export type FamilyTreeRef = {
   setFocalUser: (userId: string) => void
 }
 
+interface FamilyTreeProps {
+  relationships: FullRelationship[]
+  members: MemberWithUser[]
+  currentUser?: UserWithPhotoUrl
+  onIsFocalUserCurrentUserChange?: (isCurrentUser: boolean) => void
+  relationshipMap: Map<string, string>
+}
+
 const FamilyTree = forwardRef<FamilyTreeRef, FamilyTreeProps>((props, ref) => {
+  const { resolvedTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const checkIsMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    checkIsMobile()
+    window.addEventListener('resize', checkIsMobile)
+    return () => window.removeEventListener('resize', checkIsMobile)
+  }, [])
+
+  useEffect(() => setMounted(true), [])
+
+  const tourSteps = isMobile ? mobileSteps : desktopSteps
+
+  // Render nothing on the server to avoid hydration mismatch
+  if (!mounted) {
+    return null
+  }
+
   return (
     <ReactFlowProvider>
-      <FamilyTreeComponent {...props} ref={ref} />
+      <TourProvider
+        steps={tourSteps}
+        onClickMask={() => {}}
+        styles={{
+          popover: (base: React.CSSProperties) => {
+            const popoverStyles = isMobile
+              ? {
+                  position: 'fixed' as const,
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  width: 'calc(100vw - 40px)',
+                  maxWidth: 'calc(100vw - 40px)',
+                }
+              : {
+                  maxWidth: '380px',
+                }
+
+            return {
+              ...base,
+              ...popoverStyles,
+              backgroundColor: 'var(--background)',
+              color: 'var(--foreground)',
+              borderRadius: '0.375rem',
+              boxShadow:
+                '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
+              border: mounted
+                ? `3px solid ${
+                    resolvedTheme === 'dark'
+                      ? 'hsl(240 3.7% 25.9%)'
+                      : 'hsl(214.3 31.8% 81.4%)'
+                  }`
+                : 'none',
+            }
+          },
+          badge: (base: React.CSSProperties) => ({
+            ...base,
+            backgroundColor: '#4f46e5',
+          }),
+          dot: (
+            base: React.CSSProperties,
+            { current }: { current?: boolean } = {},
+          ) => ({
+            ...base,
+            backgroundColor: current ? '#4f46e5' : '#a5b4fc',
+          }),
+          close: (base: React.CSSProperties) => ({
+            ...base,
+            color: 'var(--foreground)',
+            top: 12,
+            right: 12,
+          }),
+          arrow: (base: React.CSSProperties) => ({
+            ...base,
+            display: 'block',
+            color: 'var(--foreground)',
+          }),
+          maskWrapper: (base: React.CSSProperties) => {
+            if (isMobile) {
+              return { ...base, color: 'transparent' }
+            }
+            return base
+          },
+        }}
+        showNavigation={true}
+        showCloseButton={true}
+      >
+        <FamilyTreeComponent {...props} ref={ref} isMobile={isMobile} />
+      </TourProvider>
     </ReactFlowProvider>
   )
 })

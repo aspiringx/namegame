@@ -43,13 +43,11 @@ export default function QRCodeModal({
         >
           <span className="mb-1">&times;</span>
         </button>
-        <h2 className="mb-4 text-2xl font-bold">
-          {isFamilyGroup ? 'Invite Code' : 'Greeting Code'}
-        </h2>
+        <h2 className="mb-4 text-2xl font-bold">Greeting Code</h2>
         <p className="mb-4 text-left text-sm text-gray-600 dark:text-gray-300">
           {isFamilyGroup
-            ? 'Share code or link to invite family here.'
-            : 'Share code or link to greet or welcome people here.'}{' '}
+            ? 'Share this greeting code or link to invite family here.'
+            : 'Share this greeting code or link to invite people here.'}{' '}
           <i>Expires in seven days.</i>
         </p>
         <div className="inline-block rounded-md bg-white p-4">

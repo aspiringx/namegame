@@ -4,12 +4,20 @@ import { useEffect, useState, useRef } from 'react'
 import { useTheme } from 'next-themes'
 import { Panel, useReactFlow } from 'reactflow'
 import type { ComponentProps } from 'react'
-import { ZoomIn, ZoomOut, Expand, Maximize, Wrench } from 'lucide-react'
+import {
+  ZoomIn,
+  ZoomOut,
+  Expand,
+  Maximize,
+  HelpCircle,
+  SlidersHorizontal,
+} from 'lucide-react'
 
 interface FamilyTreeControlsProps {
   onFullScreen: () => void
   isFullScreen?: boolean
   isMobile?: boolean
+  onStartTour?: () => void
 }
 
 interface StyledControlButtonProps extends ComponentProps<'button'> {
@@ -48,7 +56,12 @@ const StyledControlButton = ({
   )
 }
 
-const Controls = ({ onFullScreen, fitView, zoomIn, zoomOut }: any) => {
+const Controls = ({
+  onFullScreen,
+  fitView,
+  zoomIn,
+  zoomOut,
+}: { onFullScreen: () => void; fitView: () => void; zoomIn: () => void; zoomOut: () => void }) => {
   const handleFullScreenClick = () => {
     onFullScreen()
     setTimeout(() => {
@@ -57,17 +70,24 @@ const Controls = ({ onFullScreen, fitView, zoomIn, zoomOut }: any) => {
   }
 
   return (
-    <div className="bg-background flex flex-col overflow-hidden rounded-md border shadow-lg">
-      <StyledControlButton onClick={handleFullScreenClick} title="full screen">
+    <div
+      className="bg-background flex flex-col overflow-hidden rounded-md border shadow-lg"
+      data-tour="family-tree-controls"
+    >
+      <StyledControlButton
+        onClick={handleFullScreenClick}
+        title="Full screen"
+        data-tour="fullscreen-button"
+      >
         <Maximize size={24} strokeWidth={1.5} />
       </StyledControlButton>
-      <StyledControlButton onClick={() => zoomIn()} title="zoom in">
+      <StyledControlButton onClick={() => zoomIn()} title="Zoom in">
         <ZoomIn size={24} strokeWidth={1.5} />
       </StyledControlButton>
-      <StyledControlButton onClick={() => zoomOut()} title="zoom out">
+      <StyledControlButton onClick={() => zoomOut()} title="Zoom out">
         <ZoomOut size={24} strokeWidth={1.5} />
       </StyledControlButton>
-      <StyledControlButton onClick={() => fitView()} title="fit view" isLast>
+      <StyledControlButton onClick={() => fitView()} title="Fit view">
         <Expand size={24} strokeWidth={1.5} />
       </StyledControlButton>
     </div>
@@ -78,6 +98,7 @@ export function FamilyTreeControls({
   onFullScreen,
   isFullScreen,
   isMobile,
+  onStartTour,
 }: FamilyTreeControlsProps) {
   const { zoomIn, zoomOut, fitView } = useReactFlow()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -92,45 +113,75 @@ export function FamilyTreeControls({
         setIsMobileMenuOpen(false)
       }
     }
-
     if (isMobileMenuOpen) {
       document.addEventListener('mousedown', handleClickOutside)
     } else {
       document.removeEventListener('mousedown', handleClickOutside)
     }
-
     return () => {
       document.removeEventListener('mousedown', handleClickOutside)
     }
   }, [isMobileMenuOpen])
 
+  const handleFullScreenClick = () => {
+    onFullScreen()
+    setTimeout(() => {
+      fitView()
+    }, 100)
+  }
+
   if (!isMobile) {
     return (
-      <Panel position="bottom-left">
-        <Controls {...{ onFullScreen, fitView, zoomIn, zoomOut }} />
+      <Panel position="bottom-center">
+        <div className="bg-background flex items-center overflow-hidden rounded-md border shadow-lg">
+          <StyledControlButton
+            onClick={handleFullScreenClick}
+            title="Full screen"
+          >
+            <Maximize size={24} strokeWidth={1.5} />
+          </StyledControlButton>
+          <StyledControlButton onClick={() => zoomIn()} title="Zoom in">
+            <ZoomIn size={24} strokeWidth={1.5} />
+          </StyledControlButton>
+          <StyledControlButton onClick={() => zoomOut()} title="Zoom out">
+            <ZoomOut size={24} strokeWidth={1.5} />
+          </StyledControlButton>
+          <StyledControlButton onClick={() => fitView()} title="Fit view">
+            <Expand size={24} strokeWidth={1.5} />
+          </StyledControlButton>
+          <StyledControlButton onClick={onStartTour} title="Help" isLast>
+            <HelpCircle size={24} strokeWidth={1.5} />
+          </StyledControlButton>
+        </div>
       </Panel>
     )
   }
 
   // Mobile view
-  const positionClass = isFullScreen ? 'fixed bottom-4 left-4 z-50' : ''
-
   return (
     <Panel position="bottom-left">
-      <div className={positionClass} ref={controlsRef}>
-        {isMobileMenuOpen ? (
-          <Controls {...{ onFullScreen, fitView, zoomIn, zoomOut }} />
-        ) : (
-                    <div className="overflow-hidden rounded-md border">
-            <StyledControlButton
-              onClick={() => setIsMobileMenuOpen(true)}
-              title="tools"
-              isLast
-            >
-              <Wrench size={24} strokeWidth={1.5} />
-            </StyledControlButton>
+      <div ref={controlsRef} className="flex flex-col items-start gap-2">
+        {isMobileMenuOpen && (
+          <div className="overflow-hidden rounded-md border bg-background shadow-lg">
+            <Controls {...{ onFullScreen, fitView, zoomIn, zoomOut }} />
           </div>
         )}
+        <StyledControlButton
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          title="Tools"
+          isLast
+          className="rounded-md border bg-background shadow-lg"
+        >
+          <SlidersHorizontal size={24} strokeWidth={1.5} />
+        </StyledControlButton>
+        <StyledControlButton
+          onClick={onStartTour}
+          title="Help"
+          isLast
+          className="rounded-md border bg-background shadow-lg"
+        >
+          <HelpCircle size={24} strokeWidth={1.5} />
+        </StyledControlButton>
       </div>
     </Panel>
   )

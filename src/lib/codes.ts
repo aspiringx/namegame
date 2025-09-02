@@ -19,7 +19,8 @@ export const getCodeTable = cache(
       | 'photoType'
       | 'entityType'
       | 'groupUserRole'
-      | 'userUserRelationType',
+      | 'userUserRelationType'
+      | 'groupType',
   ): Promise<Record<string, { id: number; code: string }>> => {
     const results = await (prisma as any)[tableName].findMany({
       select: { id: true, code: true },

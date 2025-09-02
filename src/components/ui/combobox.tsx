@@ -13,6 +13,7 @@ export interface ComboboxOption {
 
 export interface DividerOption {
   isDivider: true
+  label?: string
 }
 
 type ComboboxOptionWithDivider = ComboboxOption | DividerOption
@@ -79,6 +80,13 @@ export function Combobox({
           ) : (
             filteredOptions.map((option, index) => {
               if ('isDivider' in option) {
+                if (option.label) {
+                  return (
+                    <div key={`divider-label-${index}`} className="px-4 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400">
+                      {option.label}
+                    </div>
+                  )
+                }
                 return <div key={`divider-${index}`} className="my-1 h-px bg-gray-200 dark:bg-gray-600" />
               }
               return (

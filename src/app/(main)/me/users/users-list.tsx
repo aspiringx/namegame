@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useTransition } from 'react'
+import React, { useState, useTransition, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import {
@@ -69,12 +69,31 @@ export default function UsersList({
   successMessage,
 }: UsersListProps) {
   const [showInfo, setShowInfo] = useState(false)
+  const [hasAgreed, setHasAgreed] = useState(false)
   const [showSuccess, setShowSuccess] = useState(!!successMessage)
   const [isPending, startTransition] = useTransition()
 
+  const managedUserAgreementKey = 'managedUserAgreement'
+
+  useEffect(() => {
+    const agreed = localStorage.getItem(managedUserAgreementKey) === 'true'
+    setHasAgreed(agreed)
+    if (!agreed) {
+      setShowInfo(true) // Show info by default if they haven't agreed
+    }
+  }, [])
+
+  const handleAgree = () => {
+    localStorage.setItem(managedUserAgreementKey, 'true')
+    setHasAgreed(true)
+    setShowInfo(false)
+  }
+
   const [selectedManagerId, setSelectedManagerId] = useState('')
   const [userToRevoke, setUserToRevoke] = useState<User | null>(null)
-  const [userToDelete, setUserToDelete] = useState<ManagedUserWithPhoto | null>(null)
+  const [userToDelete, setUserToDelete] = useState<ManagedUserWithPhoto | null>(
+    null,
+  )
   const [isTooltipOpen, setIsTooltipOpen] = useState(false)
 
   const handleAllow = () => {
@@ -115,8 +134,23 @@ export default function UsersList({
             <Info className="h-6 w-6 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" />
           </button>
         </div>
-        <Button asChild className="flex-shrink-0">
-          <Link href="/me/users/create">Create</Link>
+        <Button
+          asChild
+          className={`flex-shrink-0 ${!hasAgreed ? 'cursor-not-allowed opacity-50' : ''}`}
+        >
+          <Link
+            href={hasAgreed ? '/me/users/create' : '#'}
+            onClick={(e) => {
+              if (!hasAgreed) {
+                e.preventDefault()
+                toast.info(
+                  'Please agree to the terms for creating managed users first.',
+                )
+              }
+            }}
+          >
+            Create
+          </Link>
         </Button>
       </div>
       <h4 className="mb-4">Users I Manage</h4>
@@ -154,35 +188,45 @@ export default function UsersList({
           id="managed-user-info"
           className="mb-6 rounded-md border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800"
         >
-          <p className="mb-4 text-sm font-medium text-gray-700 dark:text-gray-300">
-            Managed users are accounts you can manage, either because you
-            created their account or someone else gave you access to manage it
-            with them (e.g. two parents managing a child account).
+          <p className="mb-4 text-sm text-gray-700 dark:text-gray-300">
+            Create and manage users who can't or shouldn't yet have their own
+            accounts.
           </p>
-          <p className="mb-4 text-sm font-medium text-gray-700 dark:text-gray-300">
-            Create and manage accounts for minor children, deceased relatives,
-            those who are disabled, lack internet access, or even pets!
+          <p className="mb-4 text-sm text-gray-700 dark:text-gray-300">
+            Examples: Minor children, deceased relatives, disabled individuals,
+            people without internet access, pets, etc.
           </p>
-          <p className="mb-4 text-sm font-medium text-gray-700 dark:text-gray-300">
-            You can add managed users to any group you belong to.
+          <p className="mb-4 text-sm text-gray-700 dark:text-gray-300">
+            Multiple people can manage the same account (e.g. parents managing a
+            child account, etc). After you create a user, Edit them to add
+            others.
           </p>
-          <p className="mb-4 text-sm font-medium text-red-700 dark:text-red-400">
-            DISCLAIMER: You must have permission to manage an account for a
-            living person. If the person is deceased, you must be a direct
-            descendent or have permission from one.
-            <br />
-            <br />
-            If an authorized user (the person or one of their managers) makes
-            you a manager, this is considered permission.
+          <p className="mb-4 text-sm text-gray-700 dark:text-gray-300">
+            You can add managed users to your groups.
           </p>
-          <button
-            type="button"
-            onClick={() => setShowInfo(false)}
-            className="mx-auto flex items-center pt-2 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-          >
-            <ChevronUp className="mr-1 h-4 w-4" />
-            Close
-          </button>
+          <p className="mb-4 text-sm text-red-700 italic dark:text-red-400">
+            You must have permission or authority to create managed users, such
+            as being a child's parent, direct descendent of a deceased person,
+            permission from a living adult, etc.
+          </p>
+          {hasAgreed ? (
+            <button
+              type="button"
+              onClick={() => setShowInfo(false)}
+              className="mx-auto flex items-center pt-2 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            >
+              <ChevronUp className="mr-1 h-4 w-4" />
+              Close
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleAgree}
+              className="mt-4 rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+            >
+              I Agree
+            </button>
+          )}
         </div>
       )}
       {managedUsers.length > 0 ? (
@@ -243,30 +287,14 @@ export default function UsersList({
         </div>
       )}
 
-      <div className="mt-6 mb-4 flex items-center gap-2">
+      <div className="mt-6 mb-4 flex flex-col">
         <h4 className="">Users Who Can Manage Me</h4>
-        <TooltipProvider>
-          <Tooltip open={isTooltipOpen} onOpenChange={setIsTooltipOpen}>
-            <TooltipTrigger asChild>
-              <button
-                type="button"
-                onClick={() => setIsTooltipOpen(!isTooltipOpen)}
-                className="focus:outline-none"
-              >
-                <AlertTriangle className="h-5 w-5 text-yellow-500" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>
-                Make sure you trust this person. They can control your account.
-                If your relationship changes, revoke their access any time.
-              </p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          Allow a trusted person to manage your account in case you become
+          unable/unavailable.
+        </p>
       </div>
       <div className="mt-4 rounded-lg border p-4">
-        <h5 className="mb-2 font-semibold">Allow a new user to manage you</h5>
         <div className="flex items-center gap-2">
           <div className="w-64">
             <Combobox
@@ -318,12 +346,9 @@ export default function UsersList({
       </div>
 
       {userToRevoke && (
-        <Modal
-          isOpen={!!userToRevoke}
-          onClose={() => setUserToRevoke(null)}
-        >
+        <Modal isOpen={!!userToRevoke} onClose={() => setUserToRevoke(null)}>
           <div className="p-6">
-            <h3 className="text-lg font-medium leading-6 text-gray-900 dark:text-gray-100 mb-4">
+            <h3 className="mb-4 text-lg leading-6 font-medium text-gray-900 dark:text-gray-100">
               Confirm Revoke
             </h3>
             <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -366,7 +391,8 @@ export default function UsersList({
                 Are you sure you want to delete this user?
               </AlertDialogTitle>
               <AlertDialogDescription>
-                This action cannot be undone. This will permanently delete the user{' '}
+                This action cannot be undone. This will permanently delete the
+                user{' '}
                 <strong>
                   {[userToDelete.firstName, userToDelete.lastName]
                     .filter(Boolean)
@@ -393,7 +419,6 @@ export default function UsersList({
           </AlertDialogContent>
         </AlertDialog>
       )}
-
-          </div>
+    </div>
   )
 }

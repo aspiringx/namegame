@@ -130,7 +130,6 @@ export const useFamilyTree = ({
     [],
   )
 
-
   const { nodes, edges } = useMemo(() => {
     if (!focalNodeId) return { nodes: [], edges: [] }
 
@@ -161,12 +160,16 @@ export const useFamilyTree = ({
 
       // Add children from focal user
       const focalUserChildren = getRelatives(focalNodeId, 'child')
-      focalUserChildren.forEach((c: UserWithPhotoUrl) => visibleUsers.set(c.id, c))
+      focalUserChildren.forEach((c: UserWithPhotoUrl) =>
+        visibleUsers.set(c.id, c),
+      )
 
       // Add children from spouses (step-children)
       spouses.forEach((spouse) => {
         const spouseChildren = getRelatives(spouse.id, 'child')
-        spouseChildren.forEach((c: UserWithPhotoUrl) => visibleUsers.set(c.id, c))
+        spouseChildren.forEach((c: UserWithPhotoUrl) =>
+          visibleUsers.set(c.id, c),
+        )
       })
     } else if (mode === 'horizontal') {
       const siblings = getSiblings(focalNodeId)
@@ -205,7 +208,7 @@ export const useFamilyTree = ({
         id: `e-${parent.id}-${focalUser.id}`,
         source: parent.id,
         target: focalUser.id,
-        type: 'orthogonal',
+        type: 'smoothstep',
         sourceHandle: 'bottom-source',
         targetHandle: 'top-target',
       })
@@ -236,7 +239,7 @@ export const useFamilyTree = ({
           id: `e-${focalUser.id}-${spouse.id}`,
           source: focalUser.id,
           target: spouse.id,
-          type: 'orthogonal',
+          type: 'smoothstep',
           sourceHandle: 'right-source',
           targetHandle: 'left-target',
         })
@@ -279,8 +282,7 @@ export const useFamilyTree = ({
 
       children.forEach((child: UserWithPhotoUrl, index: number) => {
         if (addedIds.has(child.id)) return
-        const xOffset =
-          (index - (children.length - 1) / 2) * NODE_WIDTH * 1.5
+        const xOffset = (index - (children.length - 1) / 2) * NODE_WIDTH * 1.5
         const x = parentMidpointX + xOffset
         newNodes.push({
           id: child.id,
@@ -295,10 +297,12 @@ export const useFamilyTree = ({
     } else if (mode === 'horizontal') {
       // In horizontal mode, we remove the pre-added focal user and re-add all siblings (including focal)
       // in the correct sorted order.
-      const initialFocalNodeIndex = newNodes.findIndex(n => n.id === focalNodeId);
+      const initialFocalNodeIndex = newNodes.findIndex(
+        (n) => n.id === focalNodeId,
+      )
       if (initialFocalNodeIndex > -1) {
-        newNodes.splice(initialFocalNodeIndex, 1);
-        addedIds.delete(focalNodeId);
+        newNodes.splice(initialFocalNodeIndex, 1)
+        addedIds.delete(focalNodeId)
       }
 
       const allSiblings = [focalUser, ...getSiblings(focalNodeId)]
@@ -335,23 +339,24 @@ export const useFamilyTree = ({
         const parentIds = (
           adjacencyList
             .get(sibling.id)
-            ?.filter((r: AdjacencyListRelationship) => r.type === 'parent') || []
+            ?.filter((r: AdjacencyListRelationship) => r.type === 'parent') ||
+          []
         ).map((r: AdjacencyListRelationship) => r.relatedUserId)
         const commonParent = parents.find((p: UserWithPhotoUrl) =>
           parentIds.includes(p.id),
         )
 
         if (commonParent) {
-          const edgeId = `e-${commonParent.id}-${sibling.id}`;
-          if (!newEdges.find(e => e.id === edgeId)) {
+          const edgeId = `e-${commonParent.id}-${sibling.id}`
+          if (!newEdges.find((e) => e.id === edgeId)) {
             newEdges.push({
               id: edgeId,
               source: commonParent.id,
               target: sibling.id,
-              type: 'orthogonal',
+              type: 'smoothstep',
               sourceHandle: 'bottom-source',
               targetHandle: 'top-target',
-            });
+            })
           }
         }
       })

@@ -27,6 +27,7 @@ export function usePushNotifications() {
   const [isSubscribing, setIsSubscribing] = useState(false)
   const [isPushEnabled, setIsPushEnabled] = useState(false)
   const [subscription, setSubscription] = useState<PushSubscription | null>(null)
+  const [permissionStatus, setPermissionStatus] = useState<NotificationPermission>('default')
   const [error, setError] = useState<Error | null>(null)
 
   const isSupported =
@@ -66,6 +67,7 @@ export function usePushNotifications() {
     setIsSubscribing(true)
     try {
       const permission = await Notification.requestPermission()
+      setPermissionStatus(permission)
       if (permission !== 'granted') {
         console.error('Permission not granted for Notification')
         setIsSubscribing(false)
@@ -134,5 +136,6 @@ export function usePushNotifications() {
     subscription,
     error,
     isReady,
+    permissionStatus,
   }
 }

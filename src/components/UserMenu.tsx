@@ -41,7 +41,6 @@ export default function UserMenu() {
     }
   }, [update])
 
-
   if (!deviceInfo) {
     return null // Don't render anything until the device info is loaded
   }
@@ -93,6 +92,13 @@ export default function UserMenu() {
               >
                 Me
               </Link>
+              <Link
+                href="/me/groups"
+                className="block px-4 py-2 text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
+                onClick={closeDropdown}
+              >
+                My Groups
+              </Link>
               {isSuperAdmin && (
                 <>
                   <hr className="my-2 border-gray-200 dark:border-gray-700" />
@@ -131,7 +137,9 @@ export default function UserMenu() {
                       } else {
                         // For Safari, show the manual instructions prompt.
                         // We clear the dismissal flag so it always shows from the menu.
-                        localStorage.removeItem(NAMEGAME_PWA_PROMPT_DISMISSED_KEY)
+                        localStorage.removeItem(
+                          NAMEGAME_PWA_PROMPT_DISMISSED_KEY,
+                        )
                         showPrompt()
                       }
                       closeDropdown()

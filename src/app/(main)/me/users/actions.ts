@@ -1,7 +1,8 @@
 'use server'
 
 import { z } from 'zod'
-import { Gender, ManagedStatus, User, Photo } from '@/generated/prisma/client'
+import { MemberWithUser } from '@/types'
+import { Gender, ManagedStatus, User, Photo, GroupUser } from '@/generated/prisma/client'
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
 import bcrypt from 'bcrypt'
@@ -10,6 +11,7 @@ import { revalidatePath } from 'next/cache'
 import crypto from 'crypto'
 import { parseDateAndDeterminePrecision } from '@/lib/utils'
 import { getCodeTable } from '@/lib/codes'
+import { Group, GroupType } from '@/generated/prisma/client'
 
 export type ManagedUserWithPhoto = User & {
   photos: Photo[]
@@ -278,6 +280,31 @@ export async function getManagedUsers(): Promise<ManagedUserWithPhoto[]> {
   })
 
   return usersWithPhotos
+}
+
+export async function getRelatedUsers(userId: string): Promise<User[]> {
+  const userRelations = await prisma.userUser.findMany({
+    where: {
+      OR: [{ user1Id: userId }, { user2Id: userId }],
+    },
+    include: {
+      user1: true,
+      user2: true,
+    },
+  })
+
+  const relatedUsers = userRelations.flatMap((relation) => {
+    if (relation.user1Id === userId) {
+      return relation.user2
+    } else {
+      return relation.user1
+    }
+  })
+
+  // Deduplicate users
+  const uniqueUsers = Array.from(new Map(relatedUsers.map((u) => [u.id, u])).values())
+
+  return uniqueUsers
 }
 
 export async function updateManagedUser(
@@ -669,4 +696,60 @@ export async function removeManager(
 
   revalidatePath(`/g/[slug]`) // Or a more specific path
   return { success: true, message: 'Manager removed successfully.' }
+}
+
+export async function getGroupsForCurrentUser(): Promise<
+  (Group & { groupType: GroupType })[]
+> {
+  const session = await auth()
+  if (!session?.user?.id) {
+    console.error('No session found')
+    return []
+  }
+
+  const groupUsers: (GroupUser & { group: Group & { groupType: GroupType } })[] = await prisma.groupUser.findMany({
+    where: { userId: session.user.id },
+    include: {
+      group: {
+        include: {
+          groupType: true,
+        },
+      },
+    },
+  })
+
+  return groupUsers.map((gu) => gu.group)
+}
+
+export async function getGroupMembers(groupId: number): Promise<User[]> {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return []
+  }
+
+  const groupMembers: (GroupUser & { user: User & { photos: Photo[] } })[] = await prisma.groupUser.findMany({
+    where: { groupId },
+    include: {
+      user: {
+        include: {
+          photos: {
+            where: { type: { code: 'primary' } },
+            take: 1,
+          },
+        },
+      },
+    },
+  })
+
+  const usersWithPhotoUrls = await Promise.all(
+    groupMembers.map(async (member) => {
+      const user = member.user
+      if (user.photos[0]?.url && !user.photos[0].url.startsWith('https')) {
+        user.photos[0].url = await getPublicUrl(user.photos[0].url)
+      }
+      return user
+    }),
+  )
+
+  return usersWithPhotoUrls
 }

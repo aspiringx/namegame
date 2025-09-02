@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { Button } from './ui/button'
 import Modal from './ui/modal'
-import { Brain } from 'lucide-react'
+import { Brain, X } from 'lucide-react'
 import Image from 'next/image'
 
 export function GuestMessage({
@@ -43,6 +43,13 @@ export function GuestMessage({
 
   const modalContent = (
     <div className="p-6">
+      <button
+        onClick={handleClose}
+        className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+        aria-label="Close"
+      >
+        <X className="h-6 w-6" />
+      </button>
       <Image
         src="/images/butterflies.png"
         alt="NameGame social butterflies"
@@ -54,45 +61,19 @@ export function GuestMessage({
         Welcome {firstName}!
       </h3>
       <div className="space-y-2">
+        <p className="mb-4">You're in the private {groupName} group!</p>
         <p>
-          <b>You're in the {groupName}</b> private group, playing as a{' '}
-          <b>new guest.</b>
+          Complete your profile to access all features and help others recognize
+          you.
         </p>
-        <p>
-          First, complete your profile so others recognize you with a real
-          photo!
-        </p>
-        {groupType === 'family' ? (
-          <>
-            <p className="mb-2">
-              Then you can connect to others in the group so you appear in the
-              family tree.
-            </p>
-          </>
-        ) : (
-          <>
-            <b>You're in the {groupName}</b> private NameGame group, where
-            meeting and remembering names is easy and fun.
-          </>
-        )}
       </div>
-      <div className="mt-6 flex justify-center gap-4">
-        <Button onClick={handleClose} variant="outline">
-          Later
-        </Button>
-        <Button onClick={handleUpdateProfile}>Complete Profile Now</Button>
+      <div className="mt-6 flex w-full justify-center gap-4 sm:w-auto">
+        <Button onClick={handleUpdateProfile}>Complete Profile</Button>
       </div>
-      <p className="mt-6">
-        While you're here, use the Name Quiz
-        <Brain className="mx-1 -mt-1 inline-block h-4 w-4 align-middle text-orange-500" />{' '}
-        to remember names.
+      <p className="mt-6 text-sm text-gray-500 dark:text-gray-400">
+        p.s. You can do it now or later from the user menu on the top right.
+        Just click/tap <i>Me</i>.
       </p>
-      {groupType === 'community' && (
-        <p className="mt-6 text-sm text-gray-500 italic dark:text-gray-400">
-          p.s. If you're new to this group and laying low, feel free to continue
-          as a guest.
-        </p>
-      )}
     </div>
   )
 
@@ -111,14 +92,9 @@ export function GuestMessage({
       <h3 className="mb-2 text-center text-lg font-semibold">
         Hi {firstName}!
       </h3>
-      <p className="mb-4">
-        You're playing as a new guest. Add the{' '}
-        <span className="text-red-500">required</span> info below so others can
-        recognize and remember you.
-      </p>
-      <p className="text-sm text-gray-600 italic dark:text-gray-300">
-        After you save changes, check your email for a verification link to
-        finish the process.
+      <p>
+        Please complete your profile to unlock group features and help others
+        recognize you.
       </p>
     </div>
   )
