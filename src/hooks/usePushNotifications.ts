@@ -4,7 +4,11 @@ import { useState, useEffect, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useServiceWorker } from '@/context/ServiceWorkerContext'
 import { useDeviceInfoContext } from '@/context/DeviceInfoContext'
-import { saveSubscription, deleteSubscription } from '@/actions/push'
+import {
+  saveSubscription,
+  deleteSubscription,
+  getSubscription,
+} from '@/actions/push'
 
 function urlBase64ToUint8Array(base64String: string) {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
@@ -18,6 +22,8 @@ function urlBase64ToUint8Array(base64String: string) {
   }
   return outputArray
 }
+
+const PUSH_SUBSCRIPTION_ENDPOINT_KEY = 'namegame_push_subscription_endpoint'
 
 export function usePushNotifications() {
   const deviceInfo = useDeviceInfoContext()
@@ -33,23 +39,56 @@ export function usePushNotifications() {
   const isSupported =
     typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window
 
-  // Effect to check for an existing subscription once the service worker is ready
   useEffect(() => {
-    if (isReady && registration && session) {
-      const checkSubscription = async () => {
-        try {
-          const sub = await registration.pushManager.getSubscription()
-          if (sub) {
-            setSubscription(sub)
-            setIsPushEnabled(true)
-          }
-        } catch (e) {
-          console.error('Error checking for push subscription:', e)
-          setError(e as Error)
-        }
+    if (!isReady || !registration || !session) return
+
+    const verifySubscription = async () => {
+      const localEndpoint = localStorage.getItem(PUSH_SUBSCRIPTION_ENDPOINT_KEY)
+
+      if (!localEndpoint) {
+        setIsPushEnabled(false)
+        setSubscription(null)
+        return
       }
-      checkSubscription()
+
+      // Optimistically set UI state while we verify
+      setIsPushEnabled(true)
+
+      try {
+        const serverResult = await getSubscription(localEndpoint)
+
+        if (serverResult.success && serverResult.subscription) {
+          // Server confirms subscription exists. Sync with browser.
+          const browserSub = await registration.pushManager.getSubscription()
+          if (browserSub && browserSub.endpoint === localEndpoint) {
+            setSubscription(browserSub)
+          } else if (!browserSub) {
+            // This can happen on a hard refresh. The state is still valid.
+            console.log('Browser subscription not immediately available, but server confirmed.')
+          } else {
+            // Browser has a different subscription. This is an edge case.
+            // We trust the one in localStorage which is confirmed by the server.
+            console.warn('Browser and local storage subscriptions mismatch.')
+            setSubscription(browserSub) // Or handle as an error
+          }
+        } else {
+          // Server says subscription is invalid. Clean up everywhere.
+          console.log('Server could not find subscription. Cleaning up.')
+          localStorage.removeItem(PUSH_SUBSCRIPTION_ENDPOINT_KEY)
+          setIsPushEnabled(false)
+          setSubscription(null)
+          const browserSub = await registration.pushManager.getSubscription()
+          if (browserSub) {
+            await browserSub.unsubscribe()
+          }
+        }
+      } catch (e) {
+        console.error('Error verifying push subscription:', e)
+        setError(e as Error)
+      }
     }
+
+    verifySubscription()
   }, [isReady, registration, session])
 
   const subscribe = useCallback(async () => {
@@ -90,6 +129,7 @@ export function usePushNotifications() {
       if (result.success) {
         setSubscription(sub)
         setIsPushEnabled(true)
+        localStorage.setItem(PUSH_SUBSCRIPTION_ENDPOINT_KEY, sub.endpoint)
       } else {
         console.error('Failed to save subscription:', result.message)
         setError(new Error(result.message || 'Failed to save subscription.'))
@@ -103,28 +143,44 @@ export function usePushNotifications() {
   }, [isReady, registration, isSupported])
 
   const unsubscribe = useCallback(async () => {
-    if (!subscription) return
+    const endpoint = localStorage.getItem(PUSH_SUBSCRIPTION_ENDPOINT_KEY)
+    if (!endpoint) {
+      // Already unsubscribed or in a weird state, ensure UI is correct
+      setIsPushEnabled(false)
+      setSubscription(null)
+      return
+    }
 
     setIsSubscribing(true)
     try {
-      // We don't need to await the unsubscribe call
-      subscription.unsubscribe()
-      const result = await deleteSubscription(subscription.endpoint)
-
-      if (result.success) {
-        setSubscription(null)
-        setIsPushEnabled(false)
-      } else {
-        console.error('Failed to delete subscription:', result.message)
+      // Delete from server first
+      const result = await deleteSubscription(endpoint)
+      if (!result.success) {
+        // If server fails, we shouldn't proceed with client-side changes
+        console.error('Failed to delete subscription from server:', result.message)
         setError(new Error(result.message || 'Failed to delete subscription.'))
+        return
       }
+
+      // Then, unsubscribe from the browser's push manager
+      if (registration) {
+        const browserSub = await registration.pushManager.getSubscription()
+        if (browserSub) {
+          await browserSub.unsubscribe()
+        }
+      }
+
+      // Finally, clean up local state
+      localStorage.removeItem(PUSH_SUBSCRIPTION_ENDPOINT_KEY)
+      setSubscription(null)
+      setIsPushEnabled(false)
     } catch (err) {
       console.error('An error occurred during unsubscription:', err)
       setError(err as Error)
     } finally {
       setIsSubscribing(false)
     }
-  }, [subscription])
+  }, [registration])
 
   return {
     isSupported,

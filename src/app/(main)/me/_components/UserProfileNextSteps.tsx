@@ -15,8 +15,11 @@ import { UserProfile } from './user-profile-form'
 import { useEffect, useState } from 'react'
 import { useA2HS } from '@/context/A2HSContext'
 import { useDeviceInfoContext } from '@/context/DeviceInfoContext'
-import { usePushNotificationsContext } from '@/context/PushNotificationsContext'
-import { NAMEGAME_PWA_PROMPT_DISMISSED_KEY } from '@/lib/constants'
+import { usePushManager } from '@/hooks/use-push-manager'
+import {
+  NAMEGAME_PWA_PROMPT_DISMISSED_KEY,
+  NAMEGAME_PWA_INSTALL_STEP_DISMISSED_KEY,
+} from '@/lib/constants'
 
 type ValidationRequirements = {
   passwordRequired: boolean
@@ -34,13 +37,23 @@ export default function UserProfileNextSteps({
 }) {
   const deviceInfo = useDeviceInfoContext()
   const [isCollapsed, setIsCollapsed] = useState(true)
+  const [isInstallStepDismissed, setIsInstallStepDismissed] = useState(false)
+  useEffect(() => {
+    const dismissed = localStorage.getItem(
+      NAMEGAME_PWA_INSTALL_STEP_DISMISSED_KEY,
+    )
+    if (dismissed === 'true') {
+      setIsInstallStepDismissed(true)
+    }
+  }, [])
+
   const { showPrompt } = useA2HS()
   const {
     isPushEnabled,
     subscribe,
     isSupported: isPushSupported,
     permissionStatus,
-  } = usePushNotificationsContext()
+  } = usePushManager()
 
   const notificationsBlocked = permissionStatus === 'denied'
 
@@ -61,7 +74,12 @@ export default function UserProfileNextSteps({
     await subscribe()
   }
 
-  const canInstall = deviceInfo.a2hs.canInstall
+  const handleDismissInstallStep = () => {
+    localStorage.setItem(NAMEGAME_PWA_INSTALL_STEP_DISMISSED_KEY, 'true')
+    setIsInstallStepDismissed(true)
+  }
+
+  const canInstall = deviceInfo.a2hs.canInstall && !isInstallStepDismissed
   const canEnableNotifications =
     isPushSupported && !isPushEnabled && !notificationsBlocked
 
@@ -233,6 +251,12 @@ export default function UserProfileNextSteps({
                         className="mt-2 inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none dark:focus:ring-offset-gray-800"
                       >
                         {deviceInfo.a2hs.actionLabel}
+                      </button>
+                      <button
+                        onClick={handleDismissInstallStep}
+                        className="mt-2 ml-2 inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 dark:focus:ring-offset-gray-800"
+                      >
+                        Already Done
                       </button>
                     </div>
                   </div>

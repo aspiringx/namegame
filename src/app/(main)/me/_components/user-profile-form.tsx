@@ -6,6 +6,7 @@ import { useActionState, useEffect, useRef, useState } from 'react'
 import { useFormStatus } from 'react-dom'
 import { Badge } from '@/components/ui/badge'
 import { PushManager } from '@/components/PushManager'
+import { usePushManager } from '@/hooks/use-push-manager'
 import {
   updateUserProfile,
   getUserUpdateRequirements,
@@ -146,6 +147,7 @@ export default function UserProfileForm({
   const [isEmailTooltipOpen, setIsEmailTooltipOpen] = useState(false)
   const [isPasswordTooltipOpen, setIsPasswordTooltipOpen] = useState(false)
   const [isBirthDateTooltipOpen, setIsBirthDateTooltipOpen] = useState(false)
+  const { isSupported: isPushSupported } = usePushManager()
 
   const optionalFields = [birthDate, birthPlace]
   const completedOptionalFields = optionalFields.filter(
@@ -771,17 +773,19 @@ export default function UserProfileForm({
           </div>
         </div>
 
-        <div className="border-t border-gray-200 pt-6 dark:border-gray-700">
-          <h4 className="text-md font-medium text-gray-900 dark:text-gray-100">
-            Notifications
-          </h4>
-          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-            Enable push notifications to receive updates from your groups.
-          </p>
-          <div className="mt-4">
-            <PushManager />
+        {isPushSupported && (
+          <div className="border-t border-gray-200 pt-6 dark:border-gray-700">
+            <h4 className="text-md font-medium text-gray-900 dark:text-gray-100">
+              Notifications
+            </h4>
+            <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+              Enable push notifications to receive updates from your groups.
+            </p>
+            <div className="mt-4">
+              <PushManager />
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="border-t border-gray-200 py-6 dark:border-gray-700">
           <button
