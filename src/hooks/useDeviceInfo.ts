@@ -328,7 +328,6 @@ export function useDeviceInfo(session: Session | null): DeviceInfo {
 
     const handleAppInstalled = () => {
       setDeviceInfo((prev) => ({ ...prev, isPWAInstalled: true }))
-      window.location.reload()
     }
 
     if (isStandalone) {

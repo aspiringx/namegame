@@ -1,6 +1,6 @@
 'use client'
 
-import { usePushNotifications } from '@/hooks/usePushNotifications'
+import { usePushNotificationsContext } from '@/context/PushNotificationsContext'
 import { Button } from './ui/button'
 import { BellIcon, BellOffIcon } from 'lucide-react'
 
@@ -12,7 +12,7 @@ export function PushManager() {
     isSupported,
     isSubscribing,
     isReady,
-  } = usePushNotifications()
+  } = usePushNotificationsContext()
 
   if (!isSupported) {
     return null // Push notifications not supported by the browser

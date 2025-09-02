@@ -66,7 +66,6 @@ interface SearchableMemberListProps {
   searchQuery: string
   viewMode: 'grid' | 'list' | 'quiz'
   isGroupAdmin?: boolean
-  groupMembers: MemberWithUser[]
   onRelate: (member: MemberWithUser) => void
   currentUserId?: string
 }
@@ -78,7 +77,6 @@ const SearchableMemberList: React.FC<SearchableMemberListProps> = ({
   searchQuery,
   viewMode,
   isGroupAdmin,
-  groupMembers,
   onRelate,
   currentUserId,
 }) => {
@@ -134,7 +132,6 @@ const SearchableMemberList: React.FC<SearchableMemberListProps> = ({
           listType={listType}
           viewMode={viewMode}
           isGroupAdmin={isGroupAdmin}
-          groupMembers={groupMembers}
           onRelate={onRelate}
           currentUserId={currentUserId}
         />
@@ -527,8 +524,7 @@ const GroupTabs: React.FC<GroupTabsProps> = ({
                       searchQuery={settings.searchQueries[tab.type]}
                       viewMode={settings.viewMode}
                       isGroupAdmin={isGroupAdmin}
-                      groupMembers={allMembers}
-                      onRelate={handleOpenRelateModal}
+                                  onRelate={handleOpenRelateModal}
                       currentUserId={ego?.userId}
                     />
                   </Tab.Panel>

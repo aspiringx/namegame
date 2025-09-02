@@ -18,9 +18,10 @@ export default async function UserProfilePage(props: {
     redirect('/login?callbackUrl=/me')
   }
 
-  const [photoTypes, entityTypes] = await Promise.all([
+  const [photoTypes, entityTypes, groupTypes] = await Promise.all([
     getCodeTable('photoType'),
     getCodeTable('entityType'),
+    getCodeTable('groupType'),
   ])
 
   // Get the primary photo for the current user.
@@ -47,6 +48,7 @@ export default async function UserProfilePage(props: {
               id: true,
               name: true,
               slug: true,
+              groupTypeId: true,
             },
           },
         },
@@ -58,6 +60,10 @@ export default async function UserProfilePage(props: {
     // This is also unreachable, but required for type safety.
     redirect('/api/auth/signout-and-redirect')
   }
+
+  const isInFamilyGroup = user.groupMemberships.some(
+    (mem) => mem.group.groupTypeId === groupTypes.family.id,
+  )
 
   const userWithPublicUrls = {
     ...user,
@@ -84,6 +90,7 @@ export default async function UserProfilePage(props: {
       <UserProfileForm
         user={userWithPublicUrls}
         groups={user.groupMemberships.map((mem) => mem.group)}
+        isInFamilyGroup={isInFamilyGroup}
       />
     </>
   )

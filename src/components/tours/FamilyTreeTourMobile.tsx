@@ -88,8 +88,7 @@ export const steps: StepType[] = [
           </li>
           <li>
             If the person is deceased, a minor, or unable/unavailable, you can
-            add them as a <Link href="/me/users">Managed User</Link> then relate
-            to them.
+            add them as a <Link href="/me/users">Managed User</Link>.
           </li>
         </ol>
       </div>

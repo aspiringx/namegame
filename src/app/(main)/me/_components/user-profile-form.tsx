@@ -35,6 +35,7 @@ import {
 import { DatePrecision, Gender } from '@/generated/prisma/client'
 import { format } from 'date-fns'
 import Link from 'next/link'
+import UserProfileNextSteps from './UserProfileNextSteps'
 
 export type UserProfile = {
   id: string
@@ -80,9 +81,11 @@ function SubmitButton({
 export default function UserProfileForm({
   user,
   groups,
+  isInFamilyGroup,
 }: {
   user: UserProfile
   groups: Group[]
+  isInFamilyGroup: boolean
 }) {
   const [displayEmail, setDisplayEmail] = useState(user.email || '')
   const { data: session, update: updateSession } = useSession()
@@ -138,7 +141,7 @@ export default function UserProfileForm({
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isOptionalOpen, setIsOptionalOpen] = useState(false)
   const [isEmailValid, setIsEmailValid] = useState(
-    !!user.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(user.email),
+    !user.email || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(user.email),
   )
   const [isEmailTooltipOpen, setIsEmailTooltipOpen] = useState(false)
   const [isPasswordTooltipOpen, setIsPasswordTooltipOpen] = useState(false)
@@ -363,12 +366,6 @@ export default function UserProfileForm({
                 <div className="ml-3">
                   <div className="text-sm font-medium text-green-800 dark:text-green-300">
                     <p>{state.message}</p>
-                    {state.emailUpdated && !isVerifiedForDisplay && (
-                      <p className="mt-2">
-                        We sent you a verification email. Find it and click the
-                        link to complete the process.
-                      </p>
-                    )}
                   </div>
                 </div>
                 <div className="ml-auto pl-3">
@@ -385,20 +382,6 @@ export default function UserProfileForm({
                 </div>
               </div>
             </div>
-            {groups.length > 0 && (
-              <div className="overflow-hidden rounded-md bg-white shadow sm:rounded-md dark:bg-gray-800">
-                <p className="max-w-2xl p-4 text-sm text-gray-500 dark:text-gray-400">
-                  Return to a{' '}
-                  <Link
-                    href={`/me/groups`}
-                    className="block px-4 py-4 hover:bg-gray-50 sm:px-6 dark:hover:bg-gray-700"
-                  >
-                    to a group
-                  </Link>{' '}
-                  .
-                </p>
-              </div>
-            )}
           </div>
         )}
         {state?.errors && (
@@ -427,6 +410,13 @@ export default function UserProfileForm({
             </div>
           </div>
         )}
+        <div className="mb-6">
+          <UserProfileNextSteps
+            user={user}
+            validation={validation}
+            isInFamilyGroup={isInFamilyGroup}
+          />
+        </div>
         <div className="flex">
           <div className="flex-grow">
             <label
@@ -589,9 +579,9 @@ export default function UserProfileForm({
               {state.errors.email[0]}
             </p>
           )}
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Add an email to login later. By saving an email, you consent to
-            receive messages.
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            Add and verify an email address to login later. Saving an email is
+            your consent to receive messages.
           </p>
         </div>
 
@@ -698,7 +688,7 @@ export default function UserProfileForm({
           ) : (
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               {validation.passwordRequired
-                ? 'Enter or generate a new password.'
+                ? 'Enter or generate a new password with at least six characters, letters, and numbers.'
                 : ''}
             </p>
           )}
@@ -774,7 +764,7 @@ export default function UserProfileForm({
               {validation.photoRequired &&
               previewUrl?.includes('dicebear.com') &&
               !fileSelected
-                ? 'Add a real profile pic so people recognize you.'
+                ? 'Add a real profile pic.'
                 : ''}
             </p>
           </div>
@@ -813,8 +803,8 @@ export default function UserProfileForm({
           {isOptionalOpen && (
             <div className="mt-4 space-y-6">
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Optional profile info. Family members may have provided initial
-                values you can change.
+                Optional info used in family groups. Family members may have
+                provided initial values.
               </p>
               <div>
                 <label
