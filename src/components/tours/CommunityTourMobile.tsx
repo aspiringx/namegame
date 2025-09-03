@@ -16,6 +16,7 @@ import {
   EllipsisVertical,
   LayoutGrid,
   Plus,
+  Heart,
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -26,7 +27,7 @@ export const steps: StepType[] = [
     selector: 'body[data-this-does-not-exist]',
     content: (
       <div className="flex flex-col items-center gap-4 text-center">
-        <LayoutGrid size={32} strokeWidth={1.5} />
+        <Heart size={32} strokeWidth={1.5} />
         <p>Welcome to your community group!</p>
       </div>
     ),

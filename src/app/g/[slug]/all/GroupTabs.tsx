@@ -15,7 +15,11 @@ import { useInView } from 'react-intersection-observer'
 import type { MemberWithUser, FullRelationship } from '@/types'
 import MemberCard from '@/components/MemberCard'
 import dynamic from 'next/dynamic'
-import { getPaginatedMembers, getGroupMembersForRelate } from './actions'
+import {
+  getPaginatedMembers,
+  getGroupMembersForRelate,
+  createAcquaintanceRelationship,
+} from './actions'
 import { getMemberRelations } from '@/lib/actions'
 import RelateModal from '@/components/RelateModal'
 import { useGroup } from '@/components/GroupProvider'
@@ -35,8 +39,8 @@ import {
 import NameQuizIntroModal from '@/components/NameQuizIntroModal'
 import { useTourManagement } from '@/hooks/useTourManagement'
 import { TourProvider } from '@reactour/tour'
-import { steps as desktopSteps } from '@/components/tours/CommunityPageTour'
-import { steps as mobileSteps } from '@/components/tours/CommunityPageTourMobile'
+import { steps as desktopSteps } from '@/components/tours/CommunityTour'
+import { steps as mobileSteps } from '@/components/tours/CommunityTourMobile'
 import { useTheme } from 'next-themes'
 
 const NameQuizViewClient = dynamic(
@@ -80,6 +84,7 @@ interface SearchableMemberListProps {
   viewMode: 'grid' | 'list' | 'quiz'
   isGroupAdmin?: boolean
   onRelate: (member: MemberWithUser) => void
+  onConnect?: (member: MemberWithUser) => void
   currentUserId?: string
 }
 
@@ -91,6 +96,7 @@ const SearchableMemberList: React.FC<SearchableMemberListProps> = ({
   viewMode,
   isGroupAdmin,
   onRelate,
+  onConnect,
   currentUserId,
 }) => {
   const [members, setMembers] = useState(initialMembers)
@@ -146,6 +152,7 @@ const SearchableMemberList: React.FC<SearchableMemberListProps> = ({
           viewMode={viewMode}
           isGroupAdmin={isGroupAdmin}
           onRelate={onRelate}
+          onConnect={onConnect}
           currentUserId={currentUserId}
         />
       ))}
@@ -234,6 +241,22 @@ const GroupTabsContent: React.FC<GroupTabsProps> = ({
       }
     },
     [group?.slug],
+  )
+
+  const handleConnect = useCallback(
+    async (member: MemberWithUser) => {
+      if (!group?.slug) {
+        console.error('groupSlug is not available. Cannot create relationship.')
+        return
+      }
+      try {
+        await createAcquaintanceRelationship(member.userId, group.slug)
+        router.refresh()
+      } catch (error) {
+        console.error('Failed to create acquaintance relationship:', error)
+      }
+    },
+    [group?.slug, router],
   )
 
   const handleCloseRelateModal = () => {
@@ -400,7 +423,10 @@ const GroupTabsContent: React.FC<GroupTabsProps> = ({
                 setSettings((prev) => ({ ...prev, selectedTabIndex: index }))
               }
             >
-              <Tab.List className="flex space-x-1 rounded-xl bg-blue-900/20 p-1">
+              <Tab.List
+                className="flex space-x-1 rounded-xl bg-blue-900/20 p-1"
+                data-tour="greeted-not-greeted-tabs"
+              >
                 {tabs.map((tab) => (
                   <Tab
                     key={tab.name}
@@ -541,6 +567,7 @@ const GroupTabsContent: React.FC<GroupTabsProps> = ({
                       viewMode={settings.viewMode}
                       isGroupAdmin={isGroupAdmin}
                       onRelate={handleOpenRelateModal}
+                      onConnect={handleConnect}
                       currentUserId={ego?.userId}
                     />
                   </Tab.Panel>
@@ -565,6 +592,7 @@ const GroupTabsContent: React.FC<GroupTabsProps> = ({
           member={selectedMember}
           groupType={group.groupType}
           groupMembers={allGroupMembers}
+          groupSlug={group.slug}
           initialRelations={memberRelations}
           onRelationshipAdded={handleRelationshipChange}
           isReadOnly={!isGroupAdmin && selectedMember?.userId !== ego?.userId}

@@ -30,80 +30,92 @@ export const steps: StepType[] = [
           alt="NameGame social butterflies"
           width={48}
           height={48}
-          className="mx-auto mt-12 h-auto w-auto"
+          className="mx-auto h-auto w-auto"
         />
-        <p>
-          Welcome to your NameGame group! A place to meet, remember names, and
-          get to know each other better.
+        <p>Welcome to your NameGame group!</p>
+        <p className="text-left">
+          <b>What it is:</b> A place to meet, learn names, and get to know each
+          other, ideally in person.
+        </p>
+        <p className="text-left">
+          <b>What it's not:</b> Another mindnumbing social media app that leaves
+          you feeling empty despite having hundreds of "friends".
         </p>
       </div>
     ),
   },
   {
-        selector: 'body',
+    selector: 'body',
     content: (
       <div className="flex flex-col items-center gap-4 text-center">
-        <GitFork size={32} />
+        <Image
+          src="/images/butterflies.png"
+          alt="NameGame social butterflies"
+          width={48}
+          height={48}
+          className="mx-auto h-auto w-auto"
+        />
         <p className="text-left">
-          Initially, you are the focus. You may not see others until you're
-          connected.
+          Gradually getting to know a few people well is waaaaay more important
+          than connecting with everyone.
         </p>
         <p className="text-left">
-          Your family tree is made from your direct <b>parent/child</b> and{' '}
-          <b>spouse/partner</b> relationships.
-        </p>
-        <p className="text-left">
-          Everything else (siblings, aunts, uncles, etc.) flow from the direct
-          relationships.
+          Take your time. There's no pressure; no incentive to appear popular or
+          influential.
         </p>
       </div>
     ),
   },
   {
-        selector: 'body',
+    selector: 'body',
     content: (
       <div className="flex flex-col items-center gap-4 text-center">
-        <GitFork size={32} />
-        <p>To add relationships:</p>
-        <ol className="ml-8 list-decimal text-left">
-          <li>
-            Tap the grid (
-            <LayoutGrid size={16} className="inline align-middle" />) view
-          </li>
-          <li>Find yourself</li>
-          <li>
-            Tap your three-dot (
-            <EllipsisVertical size={16} className="inline align-middle" />) menu
-            and choose <i>Relate</i>
-          </li>
-        </ol>
+        <Image
+          src="/images/butterflies.png"
+          alt="NameGame social butterflies"
+          width={48}
+          height={48}
+          className="mx-auto h-auto w-auto"
+        />
+        <p className="text-left">
+          With that said, you can make this group more more welcome and
+          inclusive, even if you're not a social butterfly.
+        </p>
+        <p className="text-left">How?</p>
       </div>
     ),
   },
   {
-        selector: 'body',
+    selector: '[data-tour="greeted-not-greeted-tabs"]',
+    content: (
+      <div className="flex flex-col items-center gap-4 text-center">
+        <p className="text-left">
+          Start with your Greeted and Not Greeted tabs.
+        </p>
+        <p className="text-left">
+          <b>Greeted:</b> people you've greeted with a code or vice-versa.
+        </p>
+        <p className="text-left">
+          <b>Not Greeted:</b> people you haven't greeted.
+        </p>
+      </div>
+    ),
+  },
+  {
+    selector: '[data-tour="greet-button"]',
     content: (
       <div className="flex flex-col items-center gap-4 text-center">
         <Plus size={32} />
-        <p className="text-left">
-          If those you're related to aren't here yet, new options appear when
-          you've completed your profile.
-        </p>
+        <p className="text-left">Use the Greet button to:</p>
         <ol className="ml-8 list-decimal text-left">
-          <li>
-            Invite (<Plus size={16} className="inline align-middle" />) others
-            by tapping the blue Invite button at the bottom of your group.
-          </li>
-          <li>
-            If the person is deceased, a minor, or unable/unavailable, you can
-            add them as a <Link href="/me/users">Managed User</Link>.
-          </li>
+          <li>Invite people into this group</li>
+          <li>Greet people in the Not Greeted tab</li>
         </ol>
       </div>
     ),
   },
   {
-        selector: 'body',
+    selector: 'body',
     content: (
       <div className="flex flex-col items-center gap-4 text-center">
         <div className="flex items-center gap-2">
@@ -127,7 +139,7 @@ export const steps: StepType[] = [
     ),
   },
   {
-        selector: 'body',
+    selector: 'body',
     content: (
       <div className="flex flex-col items-center gap-4 text-center">
         <div className="flex items-center gap-2">
@@ -146,7 +158,7 @@ export const steps: StepType[] = [
     ),
   },
   {
-        selector: 'body',
+    selector: 'body',
     content: (
       <div className="flex flex-col items-center gap-4 text-center">
         <p>Use these view controls for:</p>
@@ -176,20 +188,20 @@ export const steps: StepType[] = [
     ),
   },
   {
-        selector: 'body',
+    selector: 'body',
     content:
       'Use the Reset button above to start over with the focus back on you.',
   },
   {
-        selector: 'body',
+    selector: 'body',
     content: 'Welcome to your community group!',
   },
   {
-        selector: 'body',
+    selector: 'body',
     content: 'Click on any family member to see more details.',
   },
   {
-        selector: 'body',
+    selector: 'body',
     content: (
       <div className="flex flex-col items-center gap-4 text-center">
         Have fun! Invite missing family members to complete your family tree.
