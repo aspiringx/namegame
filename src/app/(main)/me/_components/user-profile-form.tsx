@@ -464,7 +464,7 @@ export default function UserProfileForm({
               required
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
-              className={`scroll-mt-24 mt-1 -ml-px block w-full rounded-l-none rounded-r-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 ${
+              className={`mt-1 -ml-px block w-full scroll-mt-24 rounded-l-none rounded-r-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 ${
                 !lastName || state?.errors?.lastName
                   ? 'bg-red-100 dark:bg-red-900'
                   : ''
@@ -476,7 +476,6 @@ export default function UserProfileForm({
               </p>
             )}
           </div>
-
         </div>
 
         <div id="email" className="scroll-mt-24">
@@ -503,7 +502,7 @@ export default function UserProfileForm({
                   setIsEmailValid(emailRegex.test(newEmail))
                 }
               }}
-              className={`scroll-mt-24 block w-full rounded-md border-gray-300 py-2 pr-10 pl-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 ${
+              className={`block w-full scroll-mt-24 rounded-md border-gray-300 py-2 pr-10 pl-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 ${
                 !isEmailValid || (state?.errors?.email && !isDirty)
                   ? 'bg-red-100 dark:bg-red-900'
                   : ''
@@ -511,40 +510,33 @@ export default function UserProfileForm({
             />
             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
               <TooltipProvider>
-                <Tooltip
-                  open={isEmailTooltipOpen}
-                  onOpenChange={setIsEmailTooltipOpen}
-                >
-                  <TooltipTrigger asChild>
-                    <button
-                      type="button"
-                      className="pointer-events-auto focus:outline-none"
-                      onClick={() => setIsEmailTooltipOpen(!isEmailTooltipOpen)}
-                    >
-                      {isVerifiedForDisplay ? (
+                {displayEmail && isVerifiedForDisplay && (
+                  <Tooltip
+                    open={isEmailTooltipOpen}
+                    onOpenChange={setIsEmailTooltipOpen}
+                  >
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        className="pointer-events-auto focus:outline-none"
+                        onClick={() =>
+                          setIsEmailTooltipOpen(!isEmailTooltipOpen)
+                        }
+                      >
                         <ShieldCheck
                           className="h-5 w-5 text-green-500"
                           aria-hidden="true"
                         />
-                      ) : (
-                        <ShieldAlert
-                          className="h-5 w-5 text-red-500"
-                          aria-hidden="true"
-                        />
-                      )}
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {isVerifiedForDisplay ? (
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>
                       <p>
                         Email verified on{' '}
                         {new Date(user.emailVerified!).toLocaleDateString()}
                       </p>
-                    ) : (
-                      <p>Email not verified</p>
-                    )}
-                  </TooltipContent>
-                </Tooltip>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
               </TooltipProvider>
             </div>
           </div>
@@ -574,7 +566,7 @@ export default function UserProfileForm({
               autoComplete="new-password"
               value={password}
               required={validation.passwordRequired}
-              className={`scroll-mt-24 block w-full min-w-0 flex-1 rounded-none rounded-l-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 ${
+              className={`block w-full min-w-0 flex-1 scroll-mt-24 rounded-none rounded-l-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 ${
                 (validation.passwordRequired && !password) ||
                 state?.errors?.password
                   ? 'bg-red-100 dark:bg-red-900'
@@ -667,22 +659,42 @@ export default function UserProfileForm({
             </p>
           )}
         </div>
-        <div id="profile-photo-section" className="scroll-mt-24">
+        <div
+          id="profile-photo-section"
+          className={`scroll-mt-24 rounded-md p-4 ${
+            validation.photoRequired &&
+            previewUrl?.includes('dicebear.com') &&
+            !fileSelected
+              ? 'bg-red-100 dark:bg-red-900'
+              : ''
+          }`}
+        >
           <label className="block text-sm font-medium text-gray-900 dark:text-gray-100">
             Profile Photo
           </label>
-          <div className="mt-2 flex items-center gap-x-3">
-            {previewUrl ? (
-              <Image
-                src={previewUrl}
-                alt="Profile Photo Preview"
-                width={48}
-                height={48}
-                className="h-12 w-12 rounded-full object-cover"
-              />
-            ) : (
-              <div className="h-12 w-12 rounded-full bg-gray-200 dark:bg-gray-700"></div>
-            )}
+          <div className="mt-2 flex flex-col items-start gap-y-3">
+            <div className="group relative h-32 w-32 cursor-pointer rounded-full">
+              {previewUrl ? (
+                <Image
+                  src={previewUrl}
+                  alt="Profile Photo Preview"
+                  width={128}
+                  height={128}
+                  className="h-32 w-32 rounded-full object-cover"
+                  onClick={handleChoosePhoto}
+                />
+              ) : (
+                <div
+                  className="h-32 w-32 rounded-full bg-gray-200 dark:bg-gray-700"
+                  onClick={handleChoosePhoto}
+                />
+              )}
+              <div className="bg-opacity-50 pointer-events-none absolute inset-0 flex items-center justify-center rounded-full bg-black opacity-0 transition-opacity group-hover:opacity-100">
+                <span className="px-2 text-center text-sm font-medium text-white">
+                  Change Photo
+                </span>
+              </div>
+            </div>
             <input
               ref={fileInputRef}
               type="file"
@@ -699,13 +711,13 @@ export default function UserProfileForm({
             >
               Change Photo
             </button>
-            <p className={`-mt-3 text-xs text-gray-500 dark:text-gray-400`}>
-              {validation.photoRequired &&
+            {validation.photoRequired &&
               previewUrl?.includes('dicebear.com') &&
-              !fileSelected
-                ? 'Add a real profile pic.'
-                : ''}
-            </p>
+              !fileSelected && (
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Please add a real profile pic.
+                </p>
+              )}
           </div>
         </div>
 
