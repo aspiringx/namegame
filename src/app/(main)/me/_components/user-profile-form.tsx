@@ -358,6 +358,7 @@ export default function UserProfileForm({
           user={user}
           validation={validation}
           isInFamilyGroup={isInFamilyGroup}
+          setIsOptionalOpen={setIsOptionalOpen}
         />
       </div>
 
@@ -430,7 +431,6 @@ export default function UserProfileForm({
             </label>
             <input
               type="text"
-              id="firstName"
               name="firstName"
               placeholder="First name"
               required
@@ -457,14 +457,14 @@ export default function UserProfileForm({
               Last
             </label>
             <input
-              type="text"
               id="lastName"
+              type="text"
               name="lastName"
               placeholder="Last name"
               required
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
-              className={`mt-1 -ml-px block w-full rounded-l-none rounded-r-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 ${
+              className={`scroll-mt-24 mt-1 -ml-px block w-full rounded-l-none rounded-r-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 ${
                 !lastName || state?.errors?.lastName
                   ? 'bg-red-100 dark:bg-red-900'
                   : ''
@@ -476,39 +476,10 @@ export default function UserProfileForm({
               </p>
             )}
           </div>
+
         </div>
 
-        <div className="mt-4">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Gender
-          </label>
-          <input type="hidden" name="gender" value={gender ?? ''} />
-          <div className="mt-2 flex space-x-2">
-            {[
-              ['male', 'He'],
-              ['female', 'She'],
-              ['non_binary', 'They'],
-            ].map(([value, label]) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => {
-                  const newGender = gender === value ? null : (value as Gender)
-                  setGender(newGender)
-                }}
-                className={`rounded-md px-3 py-1 text-sm font-medium ${
-                  gender === value
-                    ? 'border-transparent bg-indigo-600 text-white hover:bg-indigo-700'
-                    : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div>
+        <div id="email" className="scroll-mt-24">
           <label
             htmlFor="email"
             className="block text-sm font-medium text-gray-700 dark:text-gray-300"
@@ -517,8 +488,8 @@ export default function UserProfileForm({
           </label>
           <div className="relative mt-1">
             <input
-              type="email"
               id="email"
+              type="email"
               name="email"
               value={displayEmail}
               placeholder="Email"
@@ -532,7 +503,7 @@ export default function UserProfileForm({
                   setIsEmailValid(emailRegex.test(newEmail))
                 }
               }}
-              className={`block w-full rounded-md border-gray-300 py-2 pr-10 pl-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 ${
+              className={`scroll-mt-24 block w-full rounded-md border-gray-300 py-2 pr-10 pl-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 ${
                 !isEmailValid || (state?.errors?.email && !isDirty)
                   ? 'bg-red-100 dark:bg-red-900'
                   : ''
@@ -588,7 +559,7 @@ export default function UserProfileForm({
           </p>
         </div>
 
-        <div>
+        <div id="password" className="scroll-mt-24">
           <label
             htmlFor="password"
             className="block text-sm font-medium text-gray-700 dark:text-gray-300"
@@ -603,7 +574,7 @@ export default function UserProfileForm({
               autoComplete="new-password"
               value={password}
               required={validation.passwordRequired}
-              className={`block w-full min-w-0 flex-1 rounded-none rounded-l-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 ${
+              className={`scroll-mt-24 block w-full min-w-0 flex-1 rounded-none rounded-l-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 ${
                 (validation.passwordRequired && !password) ||
                 state?.errors?.password
                   ? 'bg-red-100 dark:bg-red-900'
@@ -696,67 +667,32 @@ export default function UserProfileForm({
             </p>
           )}
         </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Profile Picture
+        <div id="profile-photo-section" className="scroll-mt-24">
+          <label className="block text-sm font-medium text-gray-900 dark:text-gray-100">
+            Profile Photo
           </label>
-          <div
-            className={`mt-2 flex flex-col items-start space-y-4 ${
-              validation.photoRequired &&
-              previewUrl?.includes('dicebear.com') &&
-              !fileSelected
-                ? 'rounded-md bg-red-100 p-4 dark:bg-red-900'
-                : ''
-            }`}
-          >
-            <label
-              htmlFor="photo"
-              className="group relative inline-block h-32 w-32 cursor-pointer overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700"
-            >
-              <div
-                className={`h-full w-full ${
-                  validation.photoRequired && !previewUrl
-                    ? 'ring-2 ring-red-500 ring-offset-2 dark:ring-offset-gray-800'
-                    : ''
-                } rounded-full`}
-              >
-                {previewUrl ? (
-                  <Image
-                    src={previewUrl}
-                    alt="Profile photo preview"
-                    width={128}
-                    height={128}
-                    className="h-full w-full object-cover text-gray-300"
-                  />
-                ) : (
-                  <svg
-                    className="h-full w-full text-gray-300 dark:text-gray-500"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" />
-                  </svg>
-                )}
-              </div>
-              <div className="bg-opacity-50 absolute inset-0 flex flex-col items-center justify-center bg-black opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                <Upload className="h-8 w-8 text-white" />
-                <span className="mt-1 text-xs font-semibold text-white">
-                  Change
-                </span>
-              </div>
-            </label>
+          <div className="mt-2 flex items-center gap-x-3">
+            {previewUrl ? (
+              <Image
+                src={previewUrl}
+                alt="Profile Photo Preview"
+                width={48}
+                height={48}
+                className="h-12 w-12 rounded-full object-cover"
+              />
+            ) : (
+              <div className="h-12 w-12 rounded-full bg-gray-200 dark:bg-gray-700"></div>
+            )}
             <input
-              type="file"
-              id="photo"
-              name="photo"
-              accept="image/*"
-              required={validation.photoRequired}
-              onChange={handleFileChange}
               ref={fileInputRef}
+              type="file"
+              name="photo"
               className="hidden"
+              onChange={handleFileChange}
+              accept="image/*"
             />
             <button
+              id="change-photo-button"
               type="button"
               onClick={handleChoosePhoto}
               className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm leading-4 font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 dark:focus:ring-offset-gray-800"
@@ -787,7 +723,10 @@ export default function UserProfileForm({
           </div>
         )}
 
-        <div className="border-t border-gray-200 py-6 dark:border-gray-700">
+        <div
+          id="optional-details"
+          className="scroll-mt-24 border-t border-gray-200 py-6 dark:border-gray-700"
+        >
           <button
             type="button"
             onClick={() => setIsOptionalOpen(!isOptionalOpen)}
