@@ -15,14 +15,6 @@ import { useInView } from 'react-intersection-observer'
 import type { MemberWithUser, FullRelationship } from '@/types'
 import MemberCard from '@/components/MemberCard'
 import dynamic from 'next/dynamic'
-
-const NameQuizViewClient = dynamic(
-  () => import('@/components/NameQuizViewClient'),
-  {
-    loading: () => <div className="p-4 text-center">Loading quiz...</div>,
-    ssr: false,
-  },
-)
 import { getPaginatedMembers, getGroupMembersForRelate } from './actions'
 import { getMemberRelations } from '@/lib/actions'
 import RelateModal from '@/components/RelateModal'
@@ -31,8 +23,29 @@ import { TooltipProvider } from '@/components/ui/tooltip'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { ArrowUp, ArrowDown, LayoutGrid, List, X, Brain } from 'lucide-react'
+import {
+  ArrowUp,
+  ArrowDown,
+  LayoutGrid,
+  List,
+  X,
+  Brain,
+  HelpCircle,
+} from 'lucide-react'
 import NameQuizIntroModal from '@/components/NameQuizIntroModal'
+import { useTourManagement } from '@/hooks/useTourManagement'
+import { TourProvider } from '@reactour/tour'
+import { steps as desktopSteps } from '@/components/tours/CommunityPageTour'
+import { steps as mobileSteps } from '@/components/tours/CommunityPageTourMobile'
+import { useTheme } from 'next-themes'
+
+const NameQuizViewClient = dynamic(
+  () => import('@/components/NameQuizViewClient'),
+  {
+    loading: () => <div className="p-4 text-center">Loading quiz...</div>,
+    ssr: false,
+  },
+)
 
 interface GroupTabsProps {
   greetedMembers: MemberWithUser[]
@@ -148,13 +161,14 @@ const SearchableMemberList: React.FC<SearchableMemberListProps> = ({
   )
 }
 
-const GroupTabs: React.FC<GroupTabsProps> = ({
+const GroupTabsContent: React.FC<GroupTabsProps> = ({
   greetedMembers,
   notGreetedMembers,
   greetedCount,
   notGreetedCount,
   currentUserMember,
 }) => {
+  const { startTour } = useTourManagement('communityPage')
   const isGroupAdmin = currentUserMember?.role?.code === 'admin'
   const { group, currentUserMember: ego } = useGroup()
   const router = useRouter()
@@ -178,7 +192,6 @@ const GroupTabs: React.FC<GroupTabsProps> = ({
   const [allGroupMembers, setAllGroupMembers] = useState<MemberWithUser[]>([])
   const [isLoadingRelations, setIsLoadingRelations] = useState(false)
   const [isIntroModalOpen, setIsIntroModalOpen] = useState(false)
-
   const [introSeen, setIntroSeen] = useLocalStorage(
     `nameQuizIntroSeen-${group?.slug || ''}`,
     false,
@@ -451,6 +464,9 @@ const GroupTabs: React.FC<GroupTabsProps> = ({
                       )
                     },
                   )}
+                  <Button variant="ghost" size="sm" onClick={startTour}>
+                    <HelpCircle className="h-4 w-4" />
+                  </Button>
                 </div>
 
                 {/* View Mode Buttons */}
@@ -504,13 +520,13 @@ const GroupTabs: React.FC<GroupTabsProps> = ({
                         onChange={(e) =>
                           handleSearchChange(tab.type, e.target.value)
                         }
-                        className="pl-4 pr-10"
+                        className="pr-10 pl-4"
                       />
                       {settings.searchQueries[tab.type] && (
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2"
+                          className="absolute top-1/2 right-1 h-8 w-8 -translate-y-1/2"
                           onClick={() => handleSearchChange(tab.type, '')}
                         >
                           <X className="h-4 w-4" />
@@ -524,7 +540,7 @@ const GroupTabs: React.FC<GroupTabsProps> = ({
                       searchQuery={settings.searchQueries[tab.type]}
                       viewMode={settings.viewMode}
                       isGroupAdmin={isGroupAdmin}
-                                  onRelate={handleOpenRelateModal}
+                      onRelate={handleOpenRelateModal}
                       currentUserId={ego?.userId}
                     />
                   </Tab.Panel>
@@ -549,7 +565,6 @@ const GroupTabs: React.FC<GroupTabsProps> = ({
           member={selectedMember}
           groupType={group.groupType}
           groupMembers={allGroupMembers}
-          groupSlug={group?.slug || ''}
           initialRelations={memberRelations}
           onRelationshipAdded={handleRelationshipChange}
           isReadOnly={!isGroupAdmin && selectedMember?.userId !== ego?.userId}
@@ -557,6 +572,108 @@ const GroupTabs: React.FC<GroupTabsProps> = ({
         />
       )}
     </>
+  )
+}
+
+const GroupTabs: React.FC<GroupTabsProps> = (props) => {
+  const [hasMounted, setHasMounted] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+  const { resolvedTheme } = useTheme()
+
+  useEffect(() => {
+    setHasMounted(true)
+  }, [])
+
+  useEffect(() => {
+    const checkIsMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    checkIsMobile()
+    window.addEventListener('resize', checkIsMobile)
+    return () => window.removeEventListener('resize', checkIsMobile)
+  }, [])
+
+  const tourSteps = isMobile ? mobileSteps : desktopSteps
+
+  if (!hasMounted) {
+    return (
+      <div className="py-8 text-center text-gray-500 dark:text-gray-400">
+        Loading...
+      </div>
+    )
+  }
+
+  return (
+    <TourProvider
+      steps={tourSteps}
+      onClickMask={() => {}}
+      styles={{
+        popover: (base: React.CSSProperties) => {
+          const popoverStyles = isMobile
+            ? {
+                position: 'fixed' as const,
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                width: 'calc(100vw - 40px)',
+                maxWidth: 'calc(100vw - 40px)',
+              }
+            : {
+                maxWidth: '380px',
+              }
+
+          return {
+            ...base,
+            ...popoverStyles,
+            backgroundColor: 'var(--background)',
+            color: 'var(--foreground)',
+            borderRadius: '0.375rem',
+            boxShadow:
+              '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
+            border: hasMounted
+              ? `3px solid ${
+                  resolvedTheme === 'dark'
+                    ? 'hsl(240 3.7% 25.9%)'
+                    : 'hsl(214.3 31.8% 81.4%)'
+                }`
+              : 'none',
+          }
+        },
+        badge: (base: React.CSSProperties) => ({
+          ...base,
+          backgroundColor: '#4f46e5',
+        }),
+        dot: (
+          base: React.CSSProperties,
+          { current }: { current?: boolean } = {},
+        ) => ({
+          ...base,
+          backgroundColor: current ? '#4f46e5' : '#a5b4fc',
+        }),
+        close: (base: React.CSSProperties) => ({
+          ...base,
+          color: 'var(--foreground)',
+          top: 12,
+          right: 12,
+        }),
+        arrow: (base: React.CSSProperties) => ({
+          ...base,
+          display: 'block',
+          color: 'var(--foreground)',
+        }),
+        maskWrapper: (base: React.CSSProperties) => {
+          if (isMobile) {
+            return { ...base, color: 'transparent' }
+          }
+          return base
+        },
+      }}
+      showNavigation={true}
+      showCloseButton={true}
+      disableInteraction={true}
+    >
+      <GroupTabsContent {...props} />
+    </TourProvider>
   )
 }
 
