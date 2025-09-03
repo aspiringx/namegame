@@ -11,6 +11,7 @@ export function usePushManager() {
     isSubscribing,
     isReady,
     permissionStatus,
+    error,
   } = usePushNotificationsContext()
 
   return {
@@ -21,5 +22,6 @@ export function usePushManager() {
     isSubscribing,
     isReady,
     permissionStatus,
+    error,
   }
 }

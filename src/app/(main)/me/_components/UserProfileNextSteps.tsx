@@ -62,6 +62,7 @@ export default function UserProfileNextSteps({
     subscribe,
     isSupported: isPushSupported,
     permissionStatus,
+    error,
   } = usePushManager()
 
   const notificationsBlocked = permissionStatus === 'denied'
@@ -331,9 +332,7 @@ export default function UserProfileNextSteps({
                         Notifications Blocked
                       </h3>
                       <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                        You have previously blocked notifications. To enable
-                        them, you'll need to go to your browser's site settings
-                        for this page.
+                        {deviceInfo.push.instructions}
                       </p>
                     </div>
                   </div>
@@ -363,6 +362,11 @@ export default function UserProfileNextSteps({
                       >
                         Enable Notifications
                       </button>
+                      {error && (
+                        <div className="mt-2 text-sm font-semibold text-red-600 dark:text-red-400">
+                          {error.message}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </li>

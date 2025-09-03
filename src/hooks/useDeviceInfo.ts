@@ -57,6 +57,7 @@ export type DeviceInfo = {
   }
   push: {
     isSupported: boolean
+    instructions: string
   }
 }
 
@@ -180,6 +181,61 @@ const A2HS_FEATURE_MATRIX: { [os: string]: { [browser: string]: A2HSRule } } = {
   },
 }
 
+type NotificationRule = {
+  instructions: string
+  pwaInstructions?: string
+}
+
+const NOTIFICATIONS_INSTRUCTIONS_MATRIX: {
+  [os: string]: { [browser: string]: NotificationRule }
+} = {
+  '*': {
+    '*': {
+      instructions:
+        'To enable notifications, please check your browser and system settings for this site.',
+    },
+    chrome: {
+      instructions:
+        'Click the icon to the left of the address bar (often a 🔒) to open site settings, then toggle on Notifications.',
+      pwaInstructions:
+        'Click the ⋮ menu in the top-right corner, select "App Info", and set Notifications to "Allow".',
+    },
+    firefox: {
+      instructions:
+        'Click the lock icon (🔒) in the address bar, find the "Permissions" section, and change Notifications to "Allow".',
+    },
+    edge: {
+      instructions:
+        'Click the lock icon (🔒) in the address bar, select "Permissions for this site", and set Notifications to "Allow".',
+    },
+    safari: {
+      instructions:
+        'Go to Safari > Settings > Websites > Notifications, find this site, and select "Allow".',
+    },
+  },
+  android: {
+    '*': {
+      instructions:
+        'Go to your browser settings, find "Site Settings" > "Notifications", and allow notifications for this site.',
+    },
+    chrome: {
+      instructions:
+        'Tap the lock icon (🔒) in the address bar, then go to Permissions > Notifications and select "Allow".',
+    },
+  },
+  ios: {
+    '*': {
+      instructions:
+        'To enable notifications, add this app to your Home Screen from the Safari Share menu. Then, manage permissions in your device Settings.',
+    },
+  },
+}
+
+const NOTIFICATIONS_FALLBACK_RULE: NotificationRule = {
+  instructions:
+    'To enable notifications, please check your browser settings for this site.',
+}
+
 const A2HS_FALLBACK_RULE: A2HSRule = {
   isSupported: false,
   canInstall: () => false,
@@ -190,6 +246,18 @@ const A2HS_FALLBACK_RULE: A2HSRule = {
 /**
  * Looks up the A2HS configuration from the feature matrix.
  */
+function getNotificationConfig(os: string, browser: string) {
+  const osRules =
+    NOTIFICATIONS_INSTRUCTIONS_MATRIX[
+      os as keyof typeof NOTIFICATIONS_INSTRUCTIONS_MATRIX
+    ] || NOTIFICATIONS_INSTRUCTIONS_MATRIX['*']
+  if (!osRules) {
+    return NOTIFICATIONS_FALLBACK_RULE
+  }
+  const rule = osRules[browser as keyof typeof osRules] || osRules['*']
+  return rule || NOTIFICATIONS_FALLBACK_RULE
+}
+
 function getA2hsConfig(os: string, browser: string) {
   const osRules = A2HS_FEATURE_MATRIX[os as keyof typeof A2HS_FEATURE_MATRIX]
   if (!osRules) {
@@ -232,6 +300,7 @@ export function useDeviceInfo(session: Session | null): DeviceInfo {
     },
     push: {
       isSupported: false,
+      instructions: '',
     },
   })
 
@@ -290,10 +359,17 @@ export function useDeviceInfo(session: Session | null): DeviceInfo {
       },
       push: {
         isSupported: 'PushManager' in window && 'serviceWorker' in navigator,
+        instructions: '',
       },
     }
 
     // --- Derive A2HS logic from the matrix ---
+    const notificationsConfig = getNotificationConfig(os, browser)
+    initialInfo.push.instructions =
+      isStandalone && notificationsConfig.pwaInstructions
+        ? notificationsConfig.pwaInstructions
+        : notificationsConfig.instructions
+
     const a2hsConfig = getA2hsConfig(os, browser)
     initialInfo.a2hs = {
       isSupported: a2hsConfig.isSupported,
