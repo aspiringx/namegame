@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import { usePathname } from 'next/navigation'
 import { toast } from 'sonner'
 import { useDeviceInfoContext } from '@/context/DeviceInfoContext'
 import { Button } from './ui/button'
@@ -61,11 +62,14 @@ function InstallPromptContent({ a2hs }: { a2hs: ReturnType<typeof useA2HS> }) {
 export function InstallAppPrompt() {
   const a2hs = useA2HS()
   const deviceInfo = useDeviceInfoContext()
+  const pathname = usePathname()
 
   useEffect(() => {
     let toastId: string | number | undefined
 
-    if (a2hs.isPromptVisible && deviceInfo?.a2hs.canInstall) {
+    const isGreetPage = pathname.startsWith('/greet')
+
+    if (a2hs.isPromptVisible && deviceInfo?.a2hs.canInstall && !isGreetPage) {
       toastId = toast(<InstallPromptContent a2hs={a2hs} />, {
         id: TOAST_ID,
         duration: Infinity,
@@ -82,7 +86,7 @@ export function InstallAppPrompt() {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [a2hs.isPromptVisible, deviceInfo?.a2hs.canInstall])
+  }, [a2hs.isPromptVisible, deviceInfo?.a2hs.canInstall, pathname])
 
   return null // This component only manages the toast, it doesn't render anything
 }

@@ -15,6 +15,7 @@ import { UserProfile } from './user-profile-form'
 import { ChevronRight } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useA2HS } from '@/context/A2HSContext'
+import { Dispatch, SetStateAction } from 'react'
 import { useDeviceInfoContext } from '@/context/DeviceInfoContext'
 import { usePushManager } from '@/hooks/use-push-manager'
 import {
@@ -33,17 +34,22 @@ type ProfileCompletionStep = {
   title: string
   description: string
   href?: string
+  isOptional?: boolean
+}
+
+type UserProfileNextStepsProps = {
+  user: UserProfile
+  validation: ValidationRequirements
+  isInFamilyGroup: boolean
+  setIsOptionalOpen?: Dispatch<SetStateAction<boolean>>
 }
 
 export default function UserProfileNextSteps({
   user,
   validation,
   isInFamilyGroup,
-}: {
-  user: UserProfile
-  validation: ValidationRequirements
-  isInFamilyGroup: boolean
-}) {
+  setIsOptionalOpen,
+}: UserProfileNextStepsProps) {
   const deviceInfo = useDeviceInfoContext()
   const [isCollapsed, setIsCollapsed] = useState(true)
   const [isInstallStepDismissed, setIsInstallStepDismissed] = useState(false)
@@ -62,6 +68,7 @@ export default function UserProfileNextSteps({
     subscribe,
     isSupported: isPushSupported,
     permissionStatus,
+    error,
   } = usePushManager()
 
   const notificationsBlocked = permissionStatus === 'denied'
@@ -94,6 +101,13 @@ export default function UserProfileNextSteps({
 
   const profileCompletionStepsRequired: ProfileCompletionStep[] = [
     {
+      id: 'lastName',
+      isComplete: !!user.lastName,
+      title: 'Add your last name',
+      description: 'Your last name is missing.',
+      href: '#lastName',
+    },
+    {
       id: 'email',
       isComplete: !!user.email,
       title: 'Add an email address',
@@ -123,7 +137,7 @@ export default function UserProfileNextSteps({
       title: 'Add a profile photo',
       description:
         'Help others recognize you by adding a real profile picture.',
-      href: '#photo',
+      href: '#profile-photo-section',
     },
   ]
 
@@ -155,6 +169,8 @@ export default function UserProfileNextSteps({
       isComplete: !!user.gender && !!user.birthDate && !!user.birthPlace,
       title: 'Add optional details',
       description: getOptionalFieldsDescription(),
+      href: '#optional-details',
+      isOptional: true,
     },
   ]
 
@@ -175,6 +191,48 @@ export default function UserProfileNextSteps({
     (canInstall ? 1 : 0) +
     (canEnableNotifications ? 1 : 0) +
     1
+
+  const handleSmoothScroll = (
+    e: React.MouseEvent<HTMLAnchorElement>,
+    isOptional?: boolean,
+  ) => {
+    e.preventDefault()
+
+    if (isOptional && setIsOptionalOpen) {
+      setIsOptionalOpen(true)
+    }
+
+    const targetId = e.currentTarget.getAttribute('href')?.substring(1)
+    if (!targetId) return
+
+    setTimeout(() => {
+      const targetElement = document.getElementById(targetId) as HTMLElement
+      if (!targetElement) return
+
+      targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' })
+
+      if (targetId === 'profile-photo-section') {
+        const button = document.getElementById('change-photo-button')
+        if (button) {
+          button.focus({ preventScroll: true })
+        }
+        return
+      }
+
+      // Check if the target element itself is an input/focusable field
+      if (['INPUT', 'SELECT', 'TEXTAREA'].includes(targetElement.tagName)) {
+        targetElement.focus({ preventScroll: true })
+      } else {
+        // Otherwise, find the first focusable field within the target
+        const inputElement = targetElement.querySelector(
+          'input, select, textarea',
+        ) as HTMLElement
+        if (inputElement) {
+          inputElement.focus({ preventScroll: true })
+        }
+      }
+    }, 100)
+  }
 
   return (
     <div
@@ -242,14 +300,18 @@ export default function UserProfileNextSteps({
                       <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200">
                         Complete Your Profile
                       </h3>
-                      <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-gray-600 dark:text-gray-400">
+                      <ul className="-my-2 mt-2 divide-y divide-gray-200 text-sm text-gray-600 dark:divide-gray-700 dark:text-gray-400">
                         {incompleteSteps.map((step) => (
-                          <li key={step.id}>
+                          <li key={step.id} className="scroll-mt-20">
                             {step.href ? (
-                              <Link href={step.href} className="block hover:bg-gray-50 dark:hover:bg-gray-800">
-                                <div className="flex items-center px-4 py-4 sm:px-6">
-                                  <div className="min-w-0 flex-1 sm:flex sm:items-center sm:justify-between">
-                                    <div className="truncate">
+                              <a
+                                href={step.href!}
+                                onClick={(e) => handleSmoothScroll(e, step.isOptional)}
+                                className="block cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800"
+                              >
+                                <div className="flex items-center px-4 py-2 sm:px-6">
+                                  <div className="min-w-0 flex-1 flex items-center justify-between">
+                                    <div>
                                       <div className="flex text-sm">
                                         <p className="truncate font-medium text-indigo-600 dark:text-indigo-400">
                                           {step.title}
@@ -257,7 +319,9 @@ export default function UserProfileNextSteps({
                                       </div>
                                       <div className="mt-2 flex">
                                         <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                                          <p>{step.description}</p>
+                                          <p className="pr-4 break-words">
+                                            {step.description}
+                                          </p>
                                         </div>
                                       </div>
                                     </div>
@@ -268,7 +332,7 @@ export default function UserProfileNextSteps({
                                     </div>
                                   </div>
                                 </div>
-                              </Link>
+                              </a>
                             ) : (
                               <div>
                                 {step.title}:{' '}
@@ -331,9 +395,7 @@ export default function UserProfileNextSteps({
                         Notifications Blocked
                       </h3>
                       <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                        You have previously blocked notifications. To enable
-                        them, you'll need to go to your browser's site settings
-                        for this page.
+                        {deviceInfo.push.instructions}
                       </p>
                     </div>
                   </div>
@@ -363,6 +425,11 @@ export default function UserProfileNextSteps({
                       >
                         Enable Notifications
                       </button>
+                      {error && (
+                        <div className="mt-2 text-sm font-semibold text-red-600 dark:text-red-400">
+                          {error.message}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </li>

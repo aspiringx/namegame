@@ -37,7 +37,26 @@ export function usePushNotifications() {
   const [error, setError] = useState<Error | null>(null)
 
   const isSupported =
-    typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window
+    typeof window !== 'undefined' &&
+    'serviceWorker' in navigator &&
+    'PushManager' in window &&
+    'permissions' in navigator
+
+  useEffect(() => {
+    if (isSupported) {
+      navigator.permissions
+        .query({ name: 'notifications' })
+        .then((status) => {
+          const mapState = (state: PermissionState): NotificationPermission =>
+            state === 'prompt' ? 'default' : state
+
+          setPermissionStatus(mapState(status.state))
+          status.onchange = () => {
+            setPermissionStatus(mapState(status.state))
+          }
+        })
+    }
+  }, [isSupported])
 
   useEffect(() => {
     if (!isReady || !registration || !session) return
@@ -100,6 +119,16 @@ export function usePushNotifications() {
     if (!isReady || !registration) {
       console.error('Service worker not ready, cannot subscribe.')
       setError(new Error('Service worker not ready.'))
+      return
+    }
+
+    if (permissionStatus === 'denied') {
+      console.error('Notification permission has been denied.')
+      setError(
+        new Error(
+          'Notifications are blocked. Please enable them in your browser settings.',
+        ),
+      )
       return
     }
 
@@ -181,6 +210,15 @@ export function usePushNotifications() {
       setIsSubscribing(false)
     }
   }, [registration])
+
+  useEffect(() => {
+    // When permissions change to default or denied, the existing subscription
+    // is no longer valid and should be cleaned up.
+    if (isPushEnabled && (permissionStatus === 'default' || permissionStatus === 'denied')) {
+      console.log('Permission changed, cleaning up old subscription.')
+      unsubscribe()
+    }
+  }, [permissionStatus, isPushEnabled, unsubscribe])
 
   return {
     isSupported,

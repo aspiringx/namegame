@@ -45,7 +45,7 @@ const UserProfileSchema = z.object({
     }, 'Password must be at least 6 characters and include both letters and numbers.'),
   // username: z.string().min(3, 'Username must be at least 3 characters long.'),
   firstName: z.string().min(1, 'First name is required'),
-  lastName: z.string().optional().nullable(),
+  lastName: z.string().min(1, 'Last name is required'),
   email: z.preprocess(
     (val) => (val === '' ? null : val),
     z.string().email('Invalid email address.').optional().nullable(),

@@ -159,22 +159,26 @@ export default function GreetPageClient({
                   </button>
                 </div>
               ) : !showSignupForm ? (
-                <div className="space-y-4">
-                  <p className="mb-8 text-left">
-                    Enter (first-timers and guests) or Login to see{' '}
-                    {codeData.user.firstName} and others at{' '}
-                    {codeData.group.name}.
-                  </p>
-                  <div className="mb-8 flex justify-center gap-4">
+                <div className="w-full space-y-4">
+                  <div>
+                    <p className="mb-4 text-center text-xl">
+                      Is this your first time playing NameGame?
+                    </p>
                     <button
                       onClick={() => setShowSignupForm(true)}
-                      className="bg-primary text-primary-foreground rounded-md border px-6 py-2"
+                      className="bg-primary text-primary-foreground w-full rounded-md border px-6 py-2 sm:w-auto"
                     >
-                      Enter
+                      <span className="md:hidden">Enter as a First-Timer</span>
+                      <span className="hidden md:inline">Enter</span>
                     </button>
+                  </div>
+                  <div className="pt-8">
+                    <p className="mb-4 text-center">
+                      Can you already log in to NameGame?
+                    </p>
                     <button
                       onClick={handleLogin}
-                      className="rounded-md px-6 py-2"
+                      className="w-full rounded-md border px-6 py-2 sm:w-auto"
                     >
                       Login
                     </button>
