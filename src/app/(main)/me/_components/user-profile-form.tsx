@@ -147,6 +147,7 @@ export default function UserProfileForm({
   const [isEmailTooltipOpen, setIsEmailTooltipOpen] = useState(false)
   const [isPasswordTooltipOpen, setIsPasswordTooltipOpen] = useState(false)
   const [isBirthDateTooltipOpen, setIsBirthDateTooltipOpen] = useState(false)
+  const [isLoadingRequirements, setIsLoadingRequirements] = useState(true)
   const { isSupported: isPushSupported } = usePushManager()
 
   const optionalFields = [birthDate, birthPlace]
@@ -228,9 +229,11 @@ export default function UserProfileForm({
 
   useEffect(() => {
     async function fetchRequirements() {
+      setIsLoadingRequirements(true)
       const { passwordRequired, photoRequired } =
         await getUserUpdateRequirements()
       setValidation((v) => ({ ...v, passwordRequired, photoRequired }))
+      setIsLoadingRequirements(false)
     }
     fetchRequirements()
   }, [user.id])
@@ -359,6 +362,7 @@ export default function UserProfileForm({
           validation={validation}
           isInFamilyGroup={isInFamilyGroup}
           setIsOptionalOpen={setIsOptionalOpen}
+          isLoading={isLoadingRequirements}
         />
       </div>
 
@@ -546,8 +550,7 @@ export default function UserProfileForm({
             </p>
           )}
           <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            Add and verify an email address to login later. Saving an email is
-            your consent to receive messages.
+            Saving an email is your consent to receive messages.
           </p>
         </div>
 
