@@ -12,7 +12,7 @@ export default function Home() {
   return (
     <div className="font-sans text-gray-800 dark:text-gray-200">
       <div className="container mx-auto max-w-3xl p-8 pt-4">
-        <header className="mb-6 text-center">
+        <header className="mt-2 mb-8 text-center">
           <Image
             src="/images/NameGame-600x267.png"
             alt="NameGame logo"
@@ -26,23 +26,23 @@ export default function Home() {
         </header>
 
         <section className="space-y-4 text-lg leading-relaxed">
-          <p>Relationships are simple, right?</p>
-          <ul className="ml-4 list-outside list-disc space-y-2">
-            <li>They start when people meet and learn each other's names</li>
-            <li>They grow as people interact and spend time together</li>
-          </ul>
-          <p>Kids get it. They just play.</p>
           <p>
-            Adults often overthink it, calculating costs, benefits, risks, and
-            rewards.
+            NameGame is the fun, easy, non-scary, no-stress way for people in
+            groups to:
           </p>
+          <ul className="ml-4 list-inside list-disc">
+            <li>Meet</li>
+            <li>Remember names</li>
+            <li>Get to know each other</li>
+            <li>Do stuff together</li>
+          </ul>
           <p>
-            NameGame makes relationships easy and fun again, starting with
-            names.
+            You don't have to be a social butterfly to break the ice or get to
+            know people. Just play.
           </p>
         </section>
 
-        <section className="mt-4 space-y-4 text-lg leading-relaxed">
+        <section className="mt-8 space-y-4 text-lg leading-relaxed">
           <Image
             src="/images/butterflies.png"
             alt="NameGame social butterflies"
@@ -52,10 +52,10 @@ export default function Home() {
           />
         </section>
 
-        <section className="mt-6 space-y-4 text-lg">
+        <section className="mt-8 space-y-4 text-lg leading-relaxed">
           <h2 className="mb-6 text-center text-3xl font-bold">How to Play</h2>
-          <p className="text-center italic">Hi, I'm Mindy. What's your name?</p>
-          <ul className="list-inside list-disc space-y-2">
+          <p>Start with people you know.</p>
+          <ul className="ml-4 list-inside list-disc">
             <li>
               <Link
                 href="/signup"
@@ -71,58 +71,39 @@ export default function Home() {
                 login
               </Link>
             </li>
-            <li>Add your name and picture</li>
-            <li>Create a private group</li>
+            <li>
+              Add your info <br />
+              <div className="ml-6 text-sm text-gray-500 italic dark:text-gray-400">
+                (name, photo, etc.)
+              </div>
+            </li>
+            <li>
+              Create a private group
+              <br />
+              <div className="ml-6 text-sm text-gray-500 italic dark:text-gray-400">
+                (not yet publicly available)
+              </div>
+            </li>
             <li>Say hello with a greeting code</li>
           </ul>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            * Creating groups is currently by request only.{' '}
-            <Link
-              href="/signup"
-              className="text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
-            >
-              Sign up
-            </Link>{' '}
-            to request access.
-          </p>
+          <p>A greeting code is both a QR code and a link/URL.</p>
+          <ul className="ml-8 list-outside list-disc">
+            <li>If you're together, they scan your code with their camera</li>
+            <li>If not, they open your link via text or email</li>
+          </ul>
           <p>
-            People who open your greetings get instant access to your private
-            group with names, photos, etc.
+            People open your greeting code to enter your private group with just
+            their first name.
           </p>
-          <div className="space-y-4 rounded-md border border-blue-200 p-4">
-            <p className="mb-4 text-center font-bold text-orange-600 dark:text-orange-400">
-              The Ultimate Icebreaker
-            </p>
-            <p className="text-blue-600 dark:text-blue-400">
-              Knowing a name is the ultimate icebreaker!
-            </p>
-            <p className="text-gray-600 dark:text-gray-400">
-              When you confidently remember someone's name, noticing and
-              greeting them feels comfortable so you naturally interact more.
-            </p>
-            <p className="text-gray-600 dark:text-gray-400">
-              When you don't remember a name, you feel the awkward ice.
-            </p>
-            <p className="text-gray-600 italic dark:text-gray-400">
-              Do you avoid, pretend to not see them, or greet without their
-              name, hoping they don't notice? Do you ask them to remind you...
-              again?
-            </p>
-            <p className="text-blue-600 dark:text-blue-400">
-              Don't underestimate the ice-breaking power of names!
-            </p>
-            <p className="text-gray-600 dark:text-gray-400">
-              NameGame makes it easy.
-            </p>
-          </div>
+          <p>What happens next depends on the type of group you make.</p>
           <Image
             src="/images/butterflies.png"
             alt="NameGame social butterflies"
             width={48}
             height={48}
-            className="mx-auto mt-6 h-auto w-auto"
+            className="mx-auto mt-8 h-auto w-auto"
           />
-          <h3 className="mt-6 mb-6 text-2xl font-bold">Group Types</h3>
+          <h3 className="my-8 text-2xl font-bold">Group Types</h3>
           <p>You can create community or family groups.</p>
           <div className="pt-2">
             <button
@@ -140,36 +121,39 @@ export default function Home() {
             {isCommunityOpen && (
               <div className="mt-4 mb-8 space-y-4">
                 <p>
-                  Community groups are great for neighborhoods, schools,
-                  churches, workplaces, etc.
+                  Community groups are great for neighborhoods, churches,
+                  workplaces, schools, etc.
                 </p>
                 <p>
-                  Within a few minutes, you get a private group photo directory.
-                  Everyone has a fun way to notice each other, meet, remember
-                  names, and...
+                  Within minutes, you can have a private group photo directory.
+                  Everyone can see each other, meet, and remember names.
                 </p>
                 <p>
-                  <i>Circles</i> are sub-groups where people connect more
-                  personally. Most groups already have formal circles: classes,
-                  teams, committees, clubs, etc.
+                  People appear on two tabs: <i>Greeted</i> or{' '}
+                  <i>Not Greeted</i>.
                 </p>
                 <p>
-                  Group members can also create informal circles around shared
-                  interests, welcoming others into new ways to connect.
+                  Greeting someone (with a code) adds them to your{' '}
+                  <i>Greeted</i> tab, unlocking new ways to connect.
                 </p>
                 <p>
-                  You can communicate with groups, circles, or individuals to
-                  share events and announcements. Assign roles and titles to
-                  reflect ways people participate over time.
+                  Once connected, the game does the rest with fun prompts to get
+                  to know each other, discover shared interests, and interact.
+                </p>
+                {/* Uncomment when these features are live. */}
+                {/* <p>
+                  <i>Sub-groups</i> are where people connect more personally.
+                  Most groups already have formal sub-groups: classes, teams,
+                  committees, etc.
                 </p>
                 <p>
-                  Being inclusive doesn't have to be hard. Just play NameGame
-                  and everyone will get involved... naturally.
+                  Group members can also create informal sub-groups around
+                  shared interests, giving people new ways to connect.
                 </p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Group admins can moderate, limit, or remove access to maintain
-                  your community guidelines.
-                </p>
+                <p>
+                  You can communicate with your group, sub-groups, or
+                  individuals to share events and announcements.
+                </p> */}
                 <button
                   type="button"
                   onClick={() => setIsCommunityOpen(false)}
@@ -201,31 +185,21 @@ export default function Home() {
                   start with the roots (parents or grandparents).
                 </p>
                 <p>
+                  Each person indicates their direct relationships as a{' '}
+                  <i>parent / child</i> or <i>spouse / partner</i>.
+                </p>
+                <p>
+                  NameGame does the rest, connecting everyone to your{' '}
+                  <i>shared roots</i> and showing how everyone is related.
+                </p>
+                <p>
                   With <i>managed users</i> you can safely include everyone.
                   Grandparents or others who have passed, kids too young for
                   their own account, etc.
                 </p>
                 <p>
-                  Each person, or a group admin, indicates their direct
-                  relationships as a <i>parent / child</i> or{' '}
-                  <i>spouse / partner</i>.
-                </p>
-                <p>
-                  NameGame does the rest, showing how everyone is related:
-                  siblings, cousins, aunts, uncles, step-siblings, in-laws, etc.
-                </p>
-                <p>
-                  Why would you need to break the ice with family? Because it's
-                  always changing (birth, death, marriage, divorce, etc.).
-                </p>
-                <p>
                   NameGame helps extended families stay connected, learn names,
                   communicate, plan events, share memories, and more.
-                </p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  When divorce, break-ups, abuse, or other issues impact
-                  relationships, you can update your group or individual
-                  experience, as needed.
                 </p>
                 <button
                   type="button"
@@ -244,9 +218,34 @@ export default function Home() {
               alt="NameGame social butterflies"
               width={48}
               height={48}
-              className="mx-auto mb-12 h-auto w-auto"
+              className="mx-auto mt-12 h-auto w-auto"
             />
           </p>
+
+          <ul className="mt-8 mb-16 ml-4 list-inside list-disc">
+            <li>
+              <Link
+                href="/signup"
+                className="text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
+              >
+                Sign up
+              </Link>{' '}
+              or{' '}
+              <Link
+                href="/login"
+                className="text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
+              >
+                login
+              </Link>
+            </li>
+            <li>
+              Create a private group
+              <br />
+              <div className="ml-6 text-sm text-gray-500 italic dark:text-gray-400">
+                (not yet publicly available)
+              </div>
+            </li>
+          </ul>
         </section>
       </div>
     </div>

@@ -306,11 +306,13 @@ export default function UserProfileNextSteps({
                             {step.href ? (
                               <a
                                 href={step.href!}
-                                onClick={(e) => handleSmoothScroll(e, step.isOptional)}
+                                onClick={(e) =>
+                                  handleSmoothScroll(e, step.isOptional)
+                                }
                                 className="block cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800"
                               >
                                 <div className="flex items-center px-4 py-2 sm:px-6">
-                                  <div className="min-w-0 flex-1 flex items-center justify-between">
+                                  <div className="flex min-w-0 flex-1 items-center justify-between">
                                     <div>
                                       <div className="flex text-sm">
                                         <p className="truncate font-medium text-indigo-600 dark:text-indigo-400">
@@ -415,9 +417,8 @@ export default function UserProfileNextSteps({
                         Enable Notifications
                       </h3>
                       <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                        Notifications are the easiest way for your groups to
-                        communicate with you. Enable them on each device and
-                        browser where you play.
+                        Push notifications are the easiest way for your groups
+                        to communicate with you.
                       </p>
                       <button
                         onClick={subscribe}
