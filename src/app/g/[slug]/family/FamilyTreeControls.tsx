@@ -61,7 +61,12 @@ const Controls = ({
   fitView,
   zoomIn,
   zoomOut,
-}: { onFullScreen: () => void; fitView: () => void; zoomIn: () => void; zoomOut: () => void }) => {
+}: {
+  onFullScreen: () => void
+  fitView: () => void
+  zoomIn: () => void
+  zoomOut: () => void
+}) => {
   const handleFullScreenClick = () => {
     onFullScreen()
     setTimeout(() => {
@@ -133,7 +138,10 @@ export function FamilyTreeControls({
   if (!isMobile) {
     return (
       <Panel position="bottom-center">
-        <div className="bg-background flex items-center overflow-hidden rounded-md border shadow-lg">
+        <div
+            className="bg-background flex items-center overflow-hidden rounded-md border shadow-lg"
+            data-tour="family-tree-controls"
+          >
           <StyledControlButton
             onClick={handleFullScreenClick}
             title="Full screen"
@@ -162,7 +170,7 @@ export function FamilyTreeControls({
     <Panel position="bottom-left">
       <div ref={controlsRef} className="flex flex-col items-start gap-2">
         {isMobileMenuOpen && (
-          <div className="overflow-hidden rounded-md border bg-background shadow-lg">
+          <div className="bg-background overflow-hidden rounded-md border shadow-lg">
             <Controls {...{ onFullScreen, fitView, zoomIn, zoomOut }} />
           </div>
         )}
@@ -170,7 +178,7 @@ export function FamilyTreeControls({
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           title="Tools"
           isLast
-          className="rounded-md border bg-background shadow-lg"
+          className="bg-background rounded-md border shadow-lg"
         >
           <SlidersHorizontal size={24} strokeWidth={1.5} />
         </StyledControlButton>
@@ -178,7 +186,7 @@ export function FamilyTreeControls({
           onClick={onStartTour}
           title="Help"
           isLast
-          className="rounded-md border bg-background shadow-lg"
+          className="bg-background rounded-md border shadow-lg"
         >
           <HelpCircle size={24} strokeWidth={1.5} />
         </StyledControlButton>

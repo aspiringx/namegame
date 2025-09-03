@@ -368,6 +368,7 @@ export function FamilyGroupClient({
                   onClick={handleResetTree}
                   className="flex items-center gap-1"
                   disabled={isResetDisabled}
+                  data-tour="reset-tree-button"
                 >
                   Reset
                 </Button>
@@ -400,6 +401,7 @@ export function FamilyGroupClient({
                 onClick={() =>
                   setSettings((prev) => ({ ...prev, viewMode: 'grid' }))
                 }
+                data-tour="family-group-grid-button"
               >
                 <LayoutGrid className="h-4 w-4" />
               </Button>

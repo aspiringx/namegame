@@ -41,9 +41,8 @@ export const steps: StepType[] = [
           <b>spouse/partner</b> relationships.
         </p>
         <p className="text-left">
-          Everything else (siblings, aunts, uncles, etc.) flow from these.
-          Including those through marriage (in-law, step), a shared parent
-          (half), and co-relationships through partners.
+          Everything else (siblings, aunts, uncles, etc.) flow from the direct
+          relationships.
         </p>
       </div>
     ),
@@ -53,10 +52,7 @@ export const steps: StepType[] = [
     content: (
       <div className="flex flex-col items-center gap-4 text-center">
         <GitFork size={32} />
-        <p>
-          When you're new here, you're not connected to others in the tree until
-          you add relationships.
-        </p>
+        <p>To add relationships:</p>
         <ol className="ml-8 list-decimal text-left">
           <li>
             Tap the grid (
@@ -84,7 +80,7 @@ export const steps: StepType[] = [
         <ol className="ml-8 list-decimal text-left">
           <li>
             Invite (<Plus size={16} className="inline align-middle" />) others
-            by tapping the blue Invite button at the bottom.
+            by tapping the blue Invite button at the bottom of your group.
           </li>
           <li>
             If the person is deceased, a minor, or unable/unavailable, you can
@@ -127,10 +123,13 @@ export const steps: StepType[] = [
           <ChevronDown size={32} />
           <ChevronLeft size={32} />
         </div>
-        <span>
-          Use arrows to see ancestors (up), spouse/parnter and descendents
+        <p>
+          Use arrows to see ancestors (up), spouse/partner and descendents
           (down), and siblings (left).
-        </span>
+        </p>
+        <p>
+          Arrows only appear if those relationships are available on a person.
+        </p>
       </div>
     ),
   },
@@ -142,6 +141,23 @@ export const steps: StepType[] = [
         <p>Use view tools (bottom left) for full screen, zoom, etc.</p>
         <HelpCircle size={32} strokeWidth={1.5} />
         <p>Or help to see this tour again.</p>
+      </div>
+    ),
+  },
+  {
+    selector: 'body[data-this-does-not-exist]',
+    content:
+      'Use the Reset button above to start over with the focus back on you.',
+  },
+  {
+    selector: 'body[data-this-does-not-exist]',
+    content: 'Click on any family member to see more details.',
+  },
+  {
+    selector: 'body[data-this-does-not-exist]',
+    content: (
+      <div className="flex flex-col items-center gap-4 text-center">
+        Have fun! Invite missing family members to complete your family tree.
       </div>
     ),
   },
