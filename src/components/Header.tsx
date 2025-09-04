@@ -29,6 +29,7 @@ export default function Header({
             <button
               onClick={() => setIsModalOpen(true)}
               className="flex items-center gap-2 text-left"
+              data-tour="group-name"
             >
               {group.logo && (
                 <Image

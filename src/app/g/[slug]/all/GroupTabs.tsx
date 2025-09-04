@@ -39,7 +39,7 @@ import {
 import NameQuizIntroModal from '@/components/NameQuizIntroModal'
 import { TourProvider, useTour } from '@reactour/tour'
 import { communityTourSteps } from '@/components/tours/CommunityTour'
-import { steps as mobileSteps } from '@/components/tours/CommunityTourMobile'
+import { communityTourMobileSteps } from '@/components/tours/CommunityTourMobile'
 import { useTheme } from 'next-themes'
 import { Toaster, toast } from 'sonner'
 
@@ -463,29 +463,37 @@ const GroupTabsContent: React.FC<GroupTabsContentProps> = ({
               {/* Sort and View Mode Buttons */}
               <div className="md:-pt-0 mt-1 mb-4 flex items-center justify-between pt-2">
                 {/* Sort Buttons */}
-                <div className="flex items-center gap-2">
-                  {(['greeted', 'firstName', 'lastName'] as const).map((key) => {
-                    const isActive = settings.sortConfig.key === key
-                    const SortIcon =
-                      settings.sortConfig.direction === 'asc'
-                        ? ArrowUp
-                        : ArrowDown
-                    return (
-                      <Button
-                        key={key}
-                        variant={isActive ? 'secondary' : 'ghost'}
-                        size="sm"
-                        onClick={() => handleSort(key)}
-                        className={clsx('flex items-center gap-1 capitalize', {
-                          'hidden md:flex':
-                            key === 'firstName' || key === 'lastName',
-                        })}
-                      >
-                        {key.replace('Name', '')}
-                        {isActive && <SortIcon className="h-4 w-4" />}
-                      </Button>
-                    )
-                  })}
+                <div
+                  className="flex items-center gap-2"
+                  data-tour="sort-buttons"
+                >
+                  {(['greeted', 'firstName', 'lastName'] as const).map(
+                    (key) => {
+                      const isActive = settings.sortConfig.key === key
+                      const SortIcon =
+                        settings.sortConfig.direction === 'asc'
+                          ? ArrowUp
+                          : ArrowDown
+                      return (
+                        <Button
+                          key={key}
+                          variant={isActive ? 'secondary' : 'ghost'}
+                          size="sm"
+                          onClick={() => handleSort(key)}
+                          className={clsx(
+                            'flex items-center gap-1 capitalize',
+                            {
+                              'hidden md:flex':
+                                key === 'firstName' || key === 'lastName',
+                            },
+                          )}
+                        >
+                          {key.replace('Name', '')}
+                          {isActive && <SortIcon className="h-4 w-4" />}
+                        </Button>
+                      )
+                    },
+                  )}
                   <Button
                     variant="ghost"
                     size="icon"
@@ -497,7 +505,10 @@ const GroupTabsContent: React.FC<GroupTabsContentProps> = ({
                 </div>
 
                 {/* View Mode Buttons */}
-                <div className="flex items-center gap-2">
+                <div
+                  className="flex items-center gap-2"
+                  data-tour="view-mode-buttons"
+                >
                   <Button
                     variant={
                       settings.viewMode === 'grid' ? 'secondary' : 'ghost'
@@ -539,7 +550,7 @@ const GroupTabsContent: React.FC<GroupTabsContentProps> = ({
                       'ring-white/60 ring-offset-2 ring-offset-blue-400 focus:ring-2 focus:outline-none',
                     )}
                   >
-                    <div className="relative mb-4">
+                    <div className="relative mb-4" data-tour="search-input">
                       <Input
                         type="text"
                         placeholder="Search by name..."
@@ -617,7 +628,6 @@ const GroupTabs: React.FC<GroupTabsProps> = (props) => {
     },
   )
 
-
   const [hasMounted, setHasMounted] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const { resolvedTheme } = useTheme()
@@ -637,7 +647,7 @@ const GroupTabs: React.FC<GroupTabsProps> = (props) => {
 
   const tourSteps = useMemo(() => {
     if (isMobile) {
-      return mobileSteps
+      return communityTourMobileSteps
     }
     return communityTourSteps
   }, [isMobile])
@@ -716,7 +726,11 @@ const GroupTabs: React.FC<GroupTabsProps> = (props) => {
       disableInteraction={true}
     >
       <Toaster />
-      <GroupTabsContent {...props} settings={settings} setSettings={setSettings} />
+      <GroupTabsContent
+        {...props}
+        settings={settings}
+        setSettings={setSettings}
+      />
     </TourProvider>
   )
 }

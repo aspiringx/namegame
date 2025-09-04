@@ -1,164 +1,171 @@
 import { StepType } from '@reactour/tour'
 import {
-  Wrench,
-  ChevronUp,
+  Brain,
   ChevronDown,
-  ChevronLeft,
-  MousePointerClick,
-  User,
-  GitFork,
-  SlidersHorizontal,
+  ChevronUp,
   HelpCircle,
-  Mars,
-  Venus,
-  Transgender,
-  Grid,
-  EllipsisVertical,
   LayoutGrid,
+  Link,
+  List,
   Plus,
-  Heart,
+  Search,
 } from 'lucide-react'
-import Link from 'next/link'
+import Image from 'next/image'
 
-// For mobile steps, use a non-matching selector since StepType expects it.
-// Mobile tours are centered and shouldn't refer to highlighted elements.
-export const steps: StepType[] = [
+export const communityTourMobileSteps: StepType[] = [
   {
     selector: 'body[data-this-does-not-exist]',
+    position: 'center',
     content: (
       <div className="flex flex-col items-center gap-4 text-center">
-        <Heart size={32} strokeWidth={1.5} />
-        <p>Welcome to your community group!</p>
-      </div>
-    ),
-  },
-  {
-    selector: 'body[data-this-does-not-exist]',
-    content: (
-      <div className="flex flex-col items-center gap-4 text-center">
-        <GitFork size={32} />
+        <Image
+          src="/images/butterflies.png"
+          alt="NameGame social butterflies"
+          width={48}
+          height={48}
+          className="mx-auto h-auto w-auto"
+        />
+        <p>Welcome to your NameGame group!</p>
         <p className="text-left">
-          Your family tree is made from your direct <b>parent/child</b> and{' '}
-          <b>spouse/partner</b> relationships.
-        </p>
-        <p className="text-left">
-          Everything else (siblings, aunts, uncles, etc.) flow from the direct
-          relationships.
+          A place to meet, learn names, and get to know people in this group.
         </p>
       </div>
     ),
   },
   {
     selector: 'body[data-this-does-not-exist]',
+    position: 'center',
     content: (
       <div className="flex flex-col items-center gap-4 text-center">
-        <GitFork size={32} />
-        <p>To add relationships:</p>
-        <ol className="ml-8 list-decimal text-left">
+        <Link size={32} />
+        <p className="text-left">
+          You have two tabs on top: Greeted and Not Greeted.
+        </p>
+        <ul className="ml-4 list-outside list-disc space-y-1 text-left">
           <li>
-            Tap the grid (
-            <LayoutGrid size={16} className="inline align-middle" />) view above
+            <b>Greeted</b> shows the people you've already met or know. You can
+            do more with people in this tab.
           </li>
-          <li>Find yourself</li>
           <li>
-            Tap your three-dot (
-            <EllipsisVertical size={16} className="inline align-middle" />) menu
-            and choose <i>Relate</i>
+            <b>Not Greeted</b> shows people you haven't met or connected with in
+            the game.
           </li>
-        </ol>
+        </ul>
+        <p className="text-left">
+          If you already know someone in Not Greeted, just click their{' '}
+          <Link size={16} className="inline-block" /> icon to add them to your
+          Greeted tab.
+        </p>
+        <p className="text-left">
+          If you don't know them, you can share a greeting code, which we'll see
+          next.
+        </p>
       </div>
     ),
   },
   {
     selector: 'body[data-this-does-not-exist]',
+    position: 'center',
     content: (
       <div className="flex flex-col items-center gap-4 text-center">
         <Plus size={32} />
         <p className="text-left">
-          If those you're related to aren't here yet, there are options you only
-          see if you've completed your profile (photo, last name, etc.).
+          The Greet button below appears after you've completed your profile.
         </p>
-        <ol className="ml-8 list-decimal text-left">
-          <li>
-            Invite (<Plus size={16} className="inline align-middle" />) others
-            by tapping the blue Invite button at the bottom of your group.
-          </li>
-          <li>
-            If the person is deceased, a minor, or unable/unavailable, you can
-            add them as a <Link href="/me/users">Managed User</Link>.
-          </li>
-        </ol>
+        <p className="text-left">
+          Use it to invite people into this group or greet existing members in
+          your Not Greeted tab.
+        </p>
+        <p className="text-left">Click it to create a greeting code.</p>
+        <ul className="ml-4 list-outside list-disc space-y-1 text-left">
+          <li>A QR code others can scan</li>
+          <li>Or a link/URL you can send</li>
+        </ul>
       </div>
     ),
   },
   {
     selector: 'body[data-this-does-not-exist]',
-    content: (
-      <div className="flex flex-col items-center gap-4 text-center">
-        <div className="flex items-center gap-2">
-          <Venus size={32} />
-          <Mars size={32} />
-          <Transgender size={32} />
-        </div>
-        <p className="text-left">
-          Users can identify as He, She, They, or none (not selected). When
-          known, we use gendered relationship labels like Mother or Father. If
-          not we use neutral labels like Parent.
-        </p>
-        <p className="text-left">
-          <i>Pibling</i> is gender-neutral for aunt or uncle (parent's sibling).
-        </p>
-        <p className="text-left">
-          <i>Nibling</i> is gender-neutral for niece or nephew (sibling's
-          children).
-        </p>
-      </div>
-    ),
-  },
-  {
-    selector: 'body[data-this-does-not-exist]',
+    position: 'center',
     content: (
       <div className="flex flex-col items-center gap-4 text-center">
         <div className="flex items-center gap-2">
           <ChevronUp size={32} />
           <ChevronDown size={32} />
-          <ChevronLeft size={32} />
         </div>
-        <p>
-          Use arrows to see ancestors (up), spouse/partner and descendents
-          (down), and siblings (left).
+        <p className="text-left">
+          You can sort group members by Greeted (when they were added to your
+          Greeted tab).
         </p>
-        <p>
-          Arrows only appear if those relationships are available on a person.
+        <HelpCircle size={32} />
+        <p>Or click help to see this tour again.</p>
+      </div>
+    ),
+  },
+  {
+    selector: 'body[data-this-does-not-exist]',
+    position: 'center',
+    content: (
+      <div className="flex flex-col items-center gap-4 text-center">
+        <Search size={32} />
+        <p>Or search for anyone by name.</p>
+      </div>
+    ),
+  },
+  {
+    selector: 'body[data-this-does-not-exist]',
+    position: 'center',
+    content: (
+      <div className="flex flex-col items-center gap-4 text-center">
+        <div className="flex items-center gap-2">
+          <LayoutGrid size={32} />
+          <List size={32} />
+        </div>
+        <p>View people in a grid (bigger photos) or list.</p>
+      </div>
+    ),
+  },
+  {
+    selector: 'body[data-this-does-not-exist]',
+    position: 'center',
+    content: (
+      <div className="flex flex-col items-center gap-4 text-center">
+        <Brain size={32} className="text-orange-500" />
+        <p className="text-left">
+          Use the Name Quiz to test your memory of faces and names of people in
+          your Greeted tab.
+        </p>
+        <p className="text-left">
+          Note: only people with real photos (not a random avatar from when they
+          first join) appear in the quiz.
         </p>
       </div>
     ),
   },
   {
     selector: 'body[data-this-does-not-exist]',
+    position: 'center',
     content: (
       <div className="flex flex-col items-center gap-4 text-center">
-        <SlidersHorizontal size={32} strokeWidth={1.5} />
-        <p>Use view tools (bottom left) for full screen, zoom, etc.</p>
-        <HelpCircle size={32} strokeWidth={1.5} />
-        <p>Or help to see this tour again.</p>
-      </div>
-    ),
-  },
-  {
-    selector: 'body[data-this-does-not-exist]',
-    content:
-      'Use the Reset button above to start over with the focus back on you.',
-  },
-  {
-    selector: 'body[data-this-does-not-exist]',
-    content: 'Click on any family member to see more details.',
-  },
-  {
-    selector: 'body[data-this-does-not-exist]',
-    content: (
-      <div className="flex flex-col items-center gap-4 text-center">
-        Have fun! Invite missing family members to complete your family tree.
+        <Image
+          src="/images/butterflies.png"
+          alt="NameGame social butterflies"
+          width={48}
+          height={48}
+          className="mx-auto h-auto w-auto"
+        />
+        <p className="text-center text-2xl">Have fun!</p>
+        <p className="text-left">
+          Be sure to <i>Enable Notifications</i> in your profile to learn when
+          new features are available, like:
+        </p>
+        <ul className="ml-4 list-outside list-disc space-y-1 text-left">
+          <li>Discovering people with shared interests</li>
+          <li>Games based on stories people share</li>
+          <li>Map view of your group</li>
+          <li>Sub-groups</li>
+          <li>Etc.</li>
+        </ul>
       </div>
     ),
   },
