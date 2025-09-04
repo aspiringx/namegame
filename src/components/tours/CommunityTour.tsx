@@ -1,9 +1,7 @@
 import { StepType } from '@reactour/tour'
-import { Button } from '@/components/ui/button'
-import { Link as LinkIcon, Plus } from 'lucide-react'
 import Image from 'next/image'
 
-export const getGreetedSteps = (onNext: () => void): StepType[] => [
+export const communityTourSteps: StepType[] = [
   {
     selector: '[data-tour="search-input"]',
     content: (
@@ -44,58 +42,10 @@ export const getGreetedSteps = (onNext: () => void): StepType[] => [
     ),
   },
   {
-    selector: 'body',
-    position: 'center',
-    content: (
-      <div className="flex flex-col items-center gap-4 text-center">
-        <h3 className="text-xl font-bold">Ready for the next step?</h3>
-        <p>
-          Next, we'll look at the members you haven't greeted yet. This is a
-          great way to build community!
-        </p>
-        <Button onClick={onNext}>Continue</Button>
-      </div>
-    ),
-  },
-]
-
-export const getNotGreetedSteps = (notGreetedCount: number): StepType[] => [
-  {
     selector: '[data-tour="greet-button"]',
     content: (
       <div className="flex flex-col items-center gap-4 text-center">
-        <Plus size={32} />
-        <p className="text-left">Use the Greet button to:</p>
-        <ol className="ml-8 list-decimal text-left">
-          <li>Invite people into this group</li>
-          <li>Greet people in the Not Greeted tab</li>
-        </ol>
-      </div>
-    ),
-  },
-  {
-    selector:
-      notGreetedCount > 0 ? '[data-tour="not-greeted-member-card"]' : 'body',
-    position: notGreetedCount > 0 ? 'top' : 'center',
-    content: (
-      <div className="flex flex-col items-center gap-4 text-center">
-        {notGreetedCount > 0 ? (
-          <>
-            <p className="text-left">
-              If you already know someone in this list, you don't need to use
-              the "Greet" button.
-            </p>
-            <p className="text-left">
-              Instead, you can click the <LinkIcon className="inline h-4 w-4" />{' '}
-              icon to instantly mark them as greeted.
-            </p>
-          </>
-        ) : (
-          <p>
-            This tab is empty right now, but as people join the group, they'll
-            appear here until you greet them.
-          </p>
-        )}
+        <p>Use the Greet button to invite people or greet existing members.</p>
       </div>
     ),
   },
@@ -109,3 +59,4 @@ export const getNotGreetedSteps = (notGreetedCount: number): StepType[] => [
     ),
   },
 ]
+

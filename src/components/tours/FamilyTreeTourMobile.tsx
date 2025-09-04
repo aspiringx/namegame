@@ -16,6 +16,7 @@ import {
   EllipsisVertical,
   LayoutGrid,
   Plus,
+  Lock,
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -37,11 +38,15 @@ export const steps: StepType[] = [
       <div className="flex flex-col items-center gap-4 text-center">
         <GitFork size={32} />
         <p className="text-left">
-          Your family tree is made from your direct <b>parent/child</b> and{' '}
+          Initially, you are the focus. You may not see others until you're
+          connected.
+        </p>
+        <p className="text-left">
+          Your family tree is made from direct <b>parent/child</b> and{' '}
           <b>spouse/partner</b> relationships.
         </p>
         <p className="text-left">
-          Everything else (siblings, aunts, uncles, etc.) flow from the direct
+          All others (siblings, aunts, uncles, etc.) flow from the direct
           relationships.
         </p>
       </div>
@@ -84,7 +89,8 @@ export const steps: StepType[] = [
           </li>
           <li>
             If the person is deceased, a minor, or unable/unavailable, you can
-            add them as a <Link href="/me/users">Managed User</Link>.
+            add them as a <Link href="/me/users">Managed User</Link> from your
+            profile.
           </li>
         </ol>
       </div>
@@ -100,17 +106,20 @@ export const steps: StepType[] = [
           <Transgender size={32} />
         </div>
         <p className="text-left">
-          Users can identify as He, She, They, or none (not selected). When
-          known, we use gendered relationship labels like Mother or Father. If
-          not we use neutral labels like Parent.
+          Users may identify as He, She, They, or none (not selected).
         </p>
-        <p className="text-left">
-          <i>Pibling</i> is gender-neutral for aunt or uncle (parent's sibling).
-        </p>
-        <p className="text-left">
-          <i>Nibling</i> is gender-neutral for niece or nephew (sibling's
-          children).
-        </p>
+        <ul className="ml-8 list-disc text-left">
+          <li>If known, we use gendered labels (e.g. Mother/Father)</li>
+          <li>If not, we use neutral labels (e.g. Parent)</li>
+          <li>
+            <i>Pibling</i> is gender-neutral for aunt or uncle (parent's
+            sibling)
+          </li>
+          <li>
+            <i>Nibling</i> is gender-neutral for niece or nephew (sibling's
+            children)
+          </li>
+        </ul>
       </div>
     ),
   },
@@ -127,9 +136,7 @@ export const steps: StepType[] = [
           Use arrows to see ancestors (up), spouse/partner and descendents
           (down), and siblings (left).
         </p>
-        <p>
-          Arrows only appear if those relationships are available on a person.
-        </p>
+        <p>Arrows only appear when those relationships are defined.</p>
       </div>
     ),
   },
@@ -138,7 +145,7 @@ export const steps: StepType[] = [
     content: (
       <div className="flex flex-col items-center gap-4 text-center">
         <SlidersHorizontal size={32} strokeWidth={1.5} />
-        <p>Use view tools (bottom left) for full screen, zoom, etc.</p>
+        <p>Use view control (bottom left) for full screen, zoom, etc.</p>
         <HelpCircle size={32} strokeWidth={1.5} />
         <p>Or help to see this tour again.</p>
       </div>
@@ -157,7 +164,21 @@ export const steps: StepType[] = [
     selector: 'body[data-this-does-not-exist]',
     content: (
       <div className="flex flex-col items-center gap-4 text-center">
-        Have fun! Invite missing family members to complete your family tree.
+        <Lock size={48} />
+        <p>Privacy</p>
+        <p>
+          NameGame is private. Your personal and family information is never
+          shared or sold. No ads.
+        </p>
+      </div>
+    ),
+  },
+  {
+    selector: 'body[data-this-does-not-exist]',
+    content: (
+      <div className="flex flex-col items-center gap-4 text-center">
+        <p>Have fun!</p>
+        <p>Invite missing family members to complete your family tree.</p>
       </div>
     ),
   },

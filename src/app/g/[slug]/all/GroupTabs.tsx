@@ -38,10 +38,7 @@ import {
 } from 'lucide-react'
 import NameQuizIntroModal from '@/components/NameQuizIntroModal'
 import { TourProvider, useTour } from '@reactour/tour'
-import {
-  getGreetedSteps,
-  getNotGreetedSteps,
-} from '@/components/tours/CommunityTour'
+import { communityTourSteps } from '@/components/tours/CommunityTour'
 import { steps as mobileSteps } from '@/components/tours/CommunityTourMobile'
 import { useTheme } from 'next-themes'
 import { Toaster, toast } from 'sonner'
@@ -63,8 +60,6 @@ interface GroupTabsProps {
 }
 
 interface GroupTabsContentProps extends GroupTabsProps {
-  activeTour: 'greeted' | 'notGreeted' | null
-  setActiveTour: React.Dispatch<React.SetStateAction<'greeted' | 'notGreeted' | null>>
   settings: GroupPageSettings
   setSettings: React.Dispatch<React.SetStateAction<GroupPageSettings>>
 }
@@ -184,8 +179,6 @@ const GroupTabsContent: React.FC<GroupTabsContentProps> = ({
   greetedCount,
   notGreetedCount,
   currentUserMember,
-  activeTour,
-  setActiveTour,
   settings,
   setSettings,
 }) => {
@@ -195,13 +188,6 @@ const GroupTabsContent: React.FC<GroupTabsContentProps> = ({
 
   const handleTabChange = (index: number) => {
     setSettings((prev) => ({ ...prev, selectedTabIndex: index }))
-    if (isOpen && activeTour === 'greeted' && index === 1) {
-      // User is in the first part of the tour and clicks the 'Not Greeted' tab
-      setActiveTour('notGreeted')
-    } else if (isOpen && activeTour === 'notGreeted' && index === 0) {
-      // User is in the second part of the tour and clicks the 'Greeted' tab
-      setActiveTour('greeted')
-    }
   }
   const router = useRouter()
 
@@ -503,10 +489,7 @@ const GroupTabsContent: React.FC<GroupTabsContentProps> = ({
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => {
-                      setActiveTour('greeted')
-                      setIsOpen(true)
-                    }}
+                    onClick={() => setIsOpen(true)}
                     data-tour="help-button"
                   >
                     <HelpCircle className="h-4 w-4" />
@@ -634,9 +617,6 @@ const GroupTabs: React.FC<GroupTabsProps> = (props) => {
     },
   )
 
-  const [activeTour, setActiveTour] = useState<'greeted' | 'notGreeted' | null>(
-    null,
-  )
 
   const [hasMounted, setHasMounted] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
@@ -659,15 +639,8 @@ const GroupTabs: React.FC<GroupTabsProps> = (props) => {
     if (isMobile) {
       return mobileSteps
     }
-    if (activeTour === 'notGreeted') {
-      return getNotGreetedSteps(props.notGreetedCount)
-    }
-    // Default to 'greeted' steps, even if activeTour is null initially
-    return getGreetedSteps(() => {
-      setActiveTour('notGreeted')
-      setSettings((prev) => ({ ...prev, selectedTabIndex: 1 }))
-    })
-  }, [isMobile, activeTour, props.notGreetedCount, setSettings])
+    return communityTourSteps
+  }, [isMobile])
 
   if (!hasMounted) {
     return (
@@ -743,13 +716,7 @@ const GroupTabs: React.FC<GroupTabsProps> = (props) => {
       disableInteraction={true}
     >
       <Toaster />
-      <GroupTabsContent
-        {...props}
-        activeTour={activeTour}
-        setActiveTour={setActiveTour}
-        settings={settings}
-        setSettings={setSettings}
-      />
+      <GroupTabsContent {...props} settings={settings} setSettings={setSettings} />
     </TourProvider>
   )
 }
