@@ -54,6 +54,7 @@ export default function Footer() {
           className="h-10"
           onClick={handleClick}
           disabled={isLoading}
+          data-tour="greet-button"
         >
           <PlusIcon className="mr-2 h-6 w-6" />
           {isLoading ? 'Generating...' : buttonText}

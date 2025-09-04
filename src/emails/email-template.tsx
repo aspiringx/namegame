@@ -62,7 +62,9 @@ export const EmailTemplate = ({ children, preview }: EmailTemplateProps) => (
             <Heading style={h1} className="h1">
               NameGame
               <br />
-              <span style={h2}>Break the ice!</span>
+              <span style={h2}>
+                The relationship game that starts with a name
+              </span>
             </Heading>
           </Section>
           {children}

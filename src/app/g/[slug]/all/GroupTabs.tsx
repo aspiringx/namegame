@@ -15,6 +15,33 @@ import { useInView } from 'react-intersection-observer'
 import type { MemberWithUser, FullRelationship } from '@/types'
 import MemberCard from '@/components/MemberCard'
 import dynamic from 'next/dynamic'
+import {
+  getPaginatedMembers,
+  getGroupMembersForRelate,
+  createAcquaintanceRelationship,
+} from './actions'
+import { getMemberRelations } from '@/lib/actions'
+import RelateModal from '@/components/RelateModal'
+import { useGroup } from '@/components/GroupProvider'
+import { TooltipProvider } from '@/components/ui/tooltip'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import {
+  ArrowUp,
+  ArrowDown,
+  LayoutGrid,
+  List,
+  X,
+  Brain,
+  HelpCircle,
+} from 'lucide-react'
+import NameQuizIntroModal from '@/components/NameQuizIntroModal'
+import { TourProvider, useTour } from '@reactour/tour'
+import { communityTourSteps } from '@/components/tours/CommunityTour'
+import { communityTourMobileSteps } from '@/components/tours/CommunityTourMobile'
+import { useTheme } from 'next-themes'
+import { Toaster, toast } from 'sonner'
 
 const NameQuizViewClient = dynamic(
   () => import('@/components/NameQuizViewClient'),
@@ -23,16 +50,6 @@ const NameQuizViewClient = dynamic(
     ssr: false,
   },
 )
-import { getPaginatedMembers, getGroupMembersForRelate } from './actions'
-import { getMemberRelations } from '@/lib/actions'
-import RelateModal from '@/components/RelateModal'
-import { useGroup } from '@/components/GroupProvider'
-import { TooltipProvider } from '@/components/ui/tooltip'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { ArrowUp, ArrowDown, LayoutGrid, List, X, Brain } from 'lucide-react'
-import NameQuizIntroModal from '@/components/NameQuizIntroModal'
 
 interface GroupTabsProps {
   greetedMembers: MemberWithUser[]
@@ -40,6 +57,11 @@ interface GroupTabsProps {
   greetedCount: number
   notGreetedCount: number
   currentUserMember: MemberWithUser | undefined
+}
+
+interface GroupTabsContentProps extends GroupTabsProps {
+  settings: GroupPageSettings
+  setSettings: React.Dispatch<React.SetStateAction<GroupPageSettings>>
 }
 
 interface GroupPageSettings {
@@ -67,6 +89,7 @@ interface SearchableMemberListProps {
   viewMode: 'grid' | 'list' | 'quiz'
   isGroupAdmin?: boolean
   onRelate: (member: MemberWithUser) => void
+  onConnect?: (member: MemberWithUser) => void
   currentUserId?: string
 }
 
@@ -78,6 +101,7 @@ const SearchableMemberList: React.FC<SearchableMemberListProps> = ({
   viewMode,
   isGroupAdmin,
   onRelate,
+  onConnect,
   currentUserId,
 }) => {
   const [members, setMembers] = useState(initialMembers)
@@ -115,7 +139,7 @@ const SearchableMemberList: React.FC<SearchableMemberListProps> = ({
     }
   }, [inView, hasMore, isLoading, slug, listType, page])
 
-  const isListView = listType === 'greeted' && viewMode === 'list'
+  const isListView = viewMode === 'list'
 
   return (
     <div
@@ -133,6 +157,7 @@ const SearchableMemberList: React.FC<SearchableMemberListProps> = ({
           viewMode={viewMode}
           isGroupAdmin={isGroupAdmin}
           onRelate={onRelate}
+          onConnect={onConnect}
           currentUserId={currentUserId}
         />
       ))}
@@ -148,26 +173,23 @@ const SearchableMemberList: React.FC<SearchableMemberListProps> = ({
   )
 }
 
-const GroupTabs: React.FC<GroupTabsProps> = ({
+const GroupTabsContent: React.FC<GroupTabsContentProps> = ({
   greetedMembers,
   notGreetedMembers,
   greetedCount,
   notGreetedCount,
   currentUserMember,
+  settings,
+  setSettings,
 }) => {
   const isGroupAdmin = currentUserMember?.role?.code === 'admin'
   const { group, currentUserMember: ego } = useGroup()
-  const router = useRouter()
+  const { isOpen, setIsOpen } = useTour()
 
-  const [settings, setSettings] = useLocalStorage<GroupPageSettings>(
-    `group-settings-${group?.slug || ''}`,
-    {
-      sortConfig: { key: 'greeted', direction: 'desc' },
-      viewMode: 'grid',
-      searchQueries: { greeted: '', notGreeted: '' },
-      selectedTabIndex: 0,
-    },
-  )
+  const handleTabChange = (index: number) => {
+    setSettings((prev) => ({ ...prev, selectedTabIndex: index }))
+  }
+  const router = useRouter()
 
   const [hasMounted, setHasMounted] = useState(false)
   const [isRelateModalOpen, setIsRelateModalOpen] = useState(false)
@@ -178,7 +200,6 @@ const GroupTabs: React.FC<GroupTabsProps> = ({
   const [allGroupMembers, setAllGroupMembers] = useState<MemberWithUser[]>([])
   const [isLoadingRelations, setIsLoadingRelations] = useState(false)
   const [isIntroModalOpen, setIsIntroModalOpen] = useState(false)
-
   const [introSeen, setIntroSeen] = useLocalStorage(
     `nameQuizIntroSeen-${group?.slug || ''}`,
     false,
@@ -221,6 +242,24 @@ const GroupTabs: React.FC<GroupTabsProps> = ({
       }
     },
     [group?.slug],
+  )
+
+  const handleConnect = useCallback(
+    async (member: MemberWithUser) => {
+      if (!group?.slug) {
+        console.error('groupSlug is not available. Cannot create relationship.')
+        return
+      }
+      try {
+        await createAcquaintanceRelationship(member.userId, group.slug)
+        toast.success(`You are now connected with ${member.user.name}.`)
+        router.refresh()
+      } catch (error) {
+        console.error('Failed to create acquaintance relationship:', error)
+        toast.error('Failed to connect.')
+      }
+    },
+    [group?.slug, router],
   )
 
   const handleCloseRelateModal = () => {
@@ -383,17 +422,18 @@ const GroupTabs: React.FC<GroupTabsProps> = ({
           ) : hasMounted ? (
             <Tab.Group
               selectedIndex={settings.selectedTabIndex}
-              onChange={(index) =>
-                setSettings((prev) => ({ ...prev, selectedTabIndex: index }))
-              }
+              onChange={handleTabChange}
             >
-              <Tab.List className="flex space-x-1 rounded-xl bg-blue-900/20 p-1">
+              <Tab.List
+                className="flex space-x-1 rounded-xl bg-blue-900/20 p-1"
+                data-tour="greeted-not-greeted-tabs"
+              >
                 {tabs.map((tab) => (
                   <Tab
                     key={tab.name}
                     className={({ selected }) =>
                       clsx(
-                        'w-full rounded-lg py-2.5 text-sm leading-5 font-medium',
+                        'w-full rounded-lg py-2.5 text-sm font-medium',
                         'ring-opacity-60 ring-white ring-offset-2 ring-offset-blue-400 focus:ring-2 focus:outline-none',
                         selected
                           ? 'bg-white text-blue-700 shadow dark:bg-gray-800 dark:text-white'
@@ -421,9 +461,12 @@ const GroupTabs: React.FC<GroupTabsProps> = ({
               </Tab.List>
 
               {/* Sort and View Mode Buttons */}
-              <div className="md:-pt-0 mt-1 mb-4 flex items-center justify-end pt-2">
+              <div className="md:-pt-0 mt-1 mb-4 flex items-center justify-between pt-2">
                 {/* Sort Buttons */}
-                <div className="mr-auto flex items-center gap-2">
+                <div
+                  className="flex items-center gap-2"
+                  data-tour="sort-buttons"
+                >
                   {(['greeted', 'firstName', 'lastName'] as const).map(
                     (key) => {
                       const isActive = settings.sortConfig.key === key
@@ -451,10 +494,21 @@ const GroupTabs: React.FC<GroupTabsProps> = ({
                       )
                     },
                   )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setIsOpen(true)}
+                    data-tour="help-button"
+                  >
+                    <HelpCircle className="h-4 w-4" />
+                  </Button>
                 </div>
 
                 {/* View Mode Buttons */}
-                <div className="flex items-center gap-2">
+                <div
+                  className="flex items-center gap-2"
+                  data-tour="view-mode-buttons"
+                >
                   <Button
                     variant={
                       settings.viewMode === 'grid' ? 'secondary' : 'ghost'
@@ -496,7 +550,7 @@ const GroupTabs: React.FC<GroupTabsProps> = ({
                       'ring-white/60 ring-offset-2 ring-offset-blue-400 focus:ring-2 focus:outline-none',
                     )}
                   >
-                    <div className="relative mb-4">
+                    <div className="relative mb-4" data-tour="search-input">
                       <Input
                         type="text"
                         placeholder="Search by name..."
@@ -504,13 +558,13 @@ const GroupTabs: React.FC<GroupTabsProps> = ({
                         onChange={(e) =>
                           handleSearchChange(tab.type, e.target.value)
                         }
-                        className="pl-4 pr-10"
+                        className="pr-10 pl-4"
                       />
                       {settings.searchQueries[tab.type] && (
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2"
+                          className="absolute top-1/2 right-1 h-8 w-8 -translate-y-1/2"
                           onClick={() => handleSearchChange(tab.type, '')}
                         >
                           <X className="h-4 w-4" />
@@ -524,7 +578,8 @@ const GroupTabs: React.FC<GroupTabsProps> = ({
                       searchQuery={settings.searchQueries[tab.type]}
                       viewMode={settings.viewMode}
                       isGroupAdmin={isGroupAdmin}
-                                  onRelate={handleOpenRelateModal}
+                      onRelate={handleOpenRelateModal}
+                      onConnect={handleConnect}
                       currentUserId={ego?.userId}
                     />
                   </Tab.Panel>
@@ -549,7 +604,7 @@ const GroupTabs: React.FC<GroupTabsProps> = ({
           member={selectedMember}
           groupType={group.groupType}
           groupMembers={allGroupMembers}
-          groupSlug={group?.slug || ''}
+          groupSlug={group.slug}
           initialRelations={memberRelations}
           onRelationshipAdded={handleRelationshipChange}
           isReadOnly={!isGroupAdmin && selectedMember?.userId !== ego?.userId}
@@ -557,6 +612,126 @@ const GroupTabs: React.FC<GroupTabsProps> = ({
         />
       )}
     </>
+  )
+}
+
+const GroupTabs: React.FC<GroupTabsProps> = (props) => {
+  const { group } = useGroup()
+
+  const [settings, setSettings] = useLocalStorage<GroupPageSettings>(
+    `group-settings-${group?.slug || ''}`,
+    {
+      sortConfig: { key: 'greeted', direction: 'desc' },
+      viewMode: 'grid',
+      searchQueries: { greeted: '', notGreeted: '' },
+      selectedTabIndex: 0,
+    },
+  )
+
+  const [hasMounted, setHasMounted] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+  const { resolvedTheme } = useTheme()
+
+  useEffect(() => {
+    setHasMounted(true)
+  }, [])
+
+  useEffect(() => {
+    const checkIsMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    checkIsMobile()
+    window.addEventListener('resize', checkIsMobile)
+    return () => window.removeEventListener('resize', checkIsMobile)
+  }, [])
+
+  const tourSteps = useMemo(() => {
+    if (isMobile) {
+      return communityTourMobileSteps
+    }
+    return communityTourSteps
+  }, [isMobile])
+
+  if (!hasMounted) {
+    return (
+      <div className="py-8 text-center text-gray-500 dark:text-gray-400">
+        Loading...
+      </div>
+    )
+  }
+
+  return (
+    <TourProvider
+      steps={tourSteps}
+      onClickMask={() => {}}
+      styles={{
+        popover: (base: React.CSSProperties) => {
+          const popoverStyles = isMobile
+            ? {
+                width: 'calc(100vw - 40px)',
+                maxWidth: 'calc(100vw - 40px)',
+              }
+            : {
+                maxWidth: '380px',
+              }
+
+          return {
+            ...base,
+            ...popoverStyles,
+            backgroundColor: 'var(--background)',
+            color: 'var(--foreground)',
+            borderRadius: '0.375rem',
+            boxShadow:
+              '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
+            border: hasMounted
+              ? `3px solid ${
+                  resolvedTheme === 'dark'
+                    ? 'hsl(240 3.7% 25.9%)'
+                    : 'hsl(214.3 31.8% 81.4%)'
+                }`
+              : 'none',
+          }
+        },
+        badge: (base: React.CSSProperties) => ({
+          ...base,
+          backgroundColor: '#4f46e5',
+        }),
+        dot: (
+          base: React.CSSProperties,
+          { current }: { current?: boolean } = {},
+        ) => ({
+          ...base,
+          backgroundColor: current ? '#4f46e5' : '#a5b4fc',
+        }),
+        close: (base: React.CSSProperties) => ({
+          ...base,
+          color: 'var(--foreground)',
+          top: 12,
+          right: 12,
+        }),
+        arrow: (base: React.CSSProperties) => ({
+          ...base,
+          display: 'block',
+          color: 'var(--foreground)',
+        }),
+        maskWrapper: (base: React.CSSProperties) => {
+          if (isMobile) {
+            return { ...base, color: 'transparent' }
+          }
+          return base
+        },
+      }}
+      showNavigation={true}
+      showCloseButton={true}
+      disableInteraction={true}
+    >
+      <Toaster />
+      <GroupTabsContent
+        {...props}
+        settings={settings}
+        setSettings={setSettings}
+      />
+    </TourProvider>
   )
 }
 

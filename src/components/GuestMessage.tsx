@@ -55,7 +55,7 @@ export function GuestMessage({
         alt="NameGame social butterflies"
         width={70}
         height={70}
-        className="center mx-auto h-auto w-auto"
+        className="center mx-auto mb-4 h-auto w-auto"
       />
       <h3 className="mb-4 text-center text-xl font-semibold text-gray-900 dark:text-gray-100">
         Welcome {firstName}!
@@ -71,8 +71,8 @@ export function GuestMessage({
         <Button onClick={handleUpdateProfile}>Complete Profile</Button>
       </div>
       <p className="mt-6 text-sm text-gray-500 dark:text-gray-400">
-        p.s. You can do it now or later from the user menu on the top right.
-        Just click/tap <i>Me</i>.
+        p.s. You can do it now or later from the user menu (Me) on the top
+        right.
       </p>
     </div>
   )

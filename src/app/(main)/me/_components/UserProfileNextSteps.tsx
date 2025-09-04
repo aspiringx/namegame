@@ -1,21 +1,21 @@
 'use client'
 
+import { Badge } from '@/components/ui/badge'
 import {
   ArrowRight,
   BellOff,
   BellRing,
-  CheckCircleIcon,
   ChevronDown,
   ChevronUp,
   Download,
   User,
+  ChevronRight,
+  ShieldCheck,
 } from 'lucide-react'
 import Link from 'next/link'
 import { UserProfile } from './user-profile-form'
-import { ChevronRight } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Dispatch, SetStateAction } from 'react'
 import { useA2HS } from '@/context/A2HSContext'
-import { Dispatch, SetStateAction } from 'react'
 import { useDeviceInfoContext } from '@/context/DeviceInfoContext'
 import { usePushManager } from '@/hooks/use-push-manager'
 import {
@@ -32,9 +32,8 @@ type ProfileCompletionStep = {
   id: string
   isComplete: boolean
   title: string
-  description: string
+  description: string | React.ReactNode
   href?: string
-  isOptional?: boolean
 }
 
 type UserProfileNextStepsProps = {
@@ -42,6 +41,7 @@ type UserProfileNextStepsProps = {
   validation: ValidationRequirements
   isInFamilyGroup: boolean
   setIsOptionalOpen?: Dispatch<SetStateAction<boolean>>
+  isLoading?: boolean
 }
 
 export default function UserProfileNextSteps({
@@ -49,19 +49,76 @@ export default function UserProfileNextSteps({
   validation,
   isInFamilyGroup,
   setIsOptionalOpen,
+  isLoading,
 }: UserProfileNextStepsProps) {
-  const deviceInfo = useDeviceInfoContext()
-  const [isCollapsed, setIsCollapsed] = useState(true)
-  const [isInstallStepDismissed, setIsInstallStepDismissed] = useState(false)
-  useEffect(() => {
-    const dismissed = localStorage.getItem(
-      NAMEGAME_PWA_INSTALL_STEP_DISMISSED_KEY,
-    )
-    if (dismissed === 'true') {
-      setIsInstallStepDismissed(true)
-    }
-  }, [])
+  // --- Step Definitions ---
+  const profileCompletionStepsRequired: ProfileCompletionStep[] = [
+    {
+      id: 'firstName',
+      isComplete: !!user.firstName,
+      title: 'First Name',
+      description: 'Your first name is required.',
+      href: '#firstName',
+    },
+    {
+      id: 'lastName',
+      isComplete: !!user.lastName,
+      title: 'Last Name',
+      description: 'Your last name is required.',
+      href: '#lastName',
+    },
+    {
+      id: 'email',
+      isComplete: !!user.email,
+      title: 'Email',
+      description: 'Add an email to log in on other devices.',
+      href: '#email',
+    },
+    {
+      id: 'password',
+      isComplete: !validation.passwordRequired,
+      title: 'Password',
+      description: 'A new password is required to secure your account.',
+      href: '#password',
+    },
+    {
+      id: 'photo',
+      isComplete:
+        !!user.photos?.[0]?.url && !user.photos[0].url.includes('dicebear.com'),
+      title: 'Profile Photo',
+      description: 'A real profile photo is required.',
+      href: '#profile-photo-section',
+    },
+  ]
 
+  const profileCompletionStepsOptional: ProfileCompletionStep[] = [
+    {
+      id: 'birthDate',
+      isComplete: !!user.birthDate,
+      title: 'Birth Date',
+      description: 'Add your birth date.',
+      href: '#optional-details',
+    },
+    {
+      id: 'birthPlace',
+      isComplete: !!user.birthPlace,
+      title: 'Birth Place',
+      description: 'Add your birth place.',
+      href: '#optional-details',
+    },
+  ]
+
+  const incompleteRequired = profileCompletionStepsRequired.filter(
+    (s) => !s.isComplete,
+  )
+  const needsEmailVerification = user.email && !user.emailVerified
+
+  const [isCollapsed, setIsCollapsed] = useState(
+    !incompleteRequired.length && !needsEmailVerification,
+  )
+
+  const [isInstallStepDismissed, setIsInstallStepDismissed] = useState(false)
+  const deviceInfo = useDeviceInfoContext()
   const { showPrompt } = useA2HS()
   const {
     isPushEnabled,
@@ -71,7 +128,14 @@ export default function UserProfileNextSteps({
     error,
   } = usePushManager()
 
-  const notificationsBlocked = permissionStatus === 'denied'
+  useEffect(() => {
+    const dismissed = localStorage.getItem(
+      NAMEGAME_PWA_INSTALL_STEP_DISMISSED_KEY,
+    )
+    if (dismissed === 'true') {
+      setIsInstallStepDismissed(true)
+    }
+  }, [])
 
   if (!deviceInfo) {
     return null
@@ -86,144 +150,24 @@ export default function UserProfileNextSteps({
     }
   }
 
-  const handleNotificationsClick = async () => {
-    await subscribe()
-  }
-
   const handleDismissInstallStep = () => {
     localStorage.setItem(NAMEGAME_PWA_INSTALL_STEP_DISMISSED_KEY, 'true')
     setIsInstallStepDismissed(true)
   }
 
-  const canInstall = deviceInfo.a2hs.canInstall && !isInstallStepDismissed
-  const canEnableNotifications =
-    isPushSupported && !isPushEnabled && !notificationsBlocked
-
-  const profileCompletionStepsRequired: ProfileCompletionStep[] = [
-    {
-      id: 'lastName',
-      isComplete: !!user.lastName,
-      title: 'Add your last name',
-      description: 'Your last name is missing.',
-      href: '#lastName',
-    },
-    {
-      id: 'email',
-      isComplete: !!user.email,
-      title: 'Add an email address',
-      description:
-        "Without a verified email, you can't log in later on this or other devices.",
-      href: '#email',
-    },
-    {
-      id: 'verify-email',
-      isComplete: !user.email || !!user.emailVerified,
-      title: 'Verify your email',
-      description:
-        'Check your inbox for a verification link to complete the process.',
-      href: '#email',
-    },
-    {
-      id: 'password',
-      isComplete: !validation.passwordRequired,
-      title: 'Set a new password',
-      description:
-        'Your account was created with a temporary password. Please set a new one.',
-      href: '#password',
-    },
-    {
-      id: 'photo',
-      isComplete: !validation.photoRequired,
-      title: 'Add a profile photo',
-      description:
-        'Help others recognize you by adding a real profile picture.',
-      href: '#profile-photo-section',
-    },
-  ]
-
-  const getOptionalFieldsDescription = () => {
-    const missingFields = []
-    if (!user.gender) missingFields.push('gender')
-    if (!user.birthDate) missingFields.push('birth date')
-    if (!user.birthPlace) missingFields.push('birth place')
-
-    if (missingFields.length === 0) {
-      return 'All optional details have been added.'
-    }
-
-    let fieldList = ''
-    if (missingFields.length === 1) {
-      fieldList = missingFields[0]
-    } else if (missingFields.length === 2) {
-      fieldList = missingFields.join(' and ')
-    } else {
-      fieldList = `${missingFields.slice(0, -1).join(', ')}, and ${missingFields[missingFields.length - 1]}`
-    }
-
-    return `Optionally include your ${fieldList} used in family groups.`
-  }
-
-  const profileCompletionStepsOptional: ProfileCompletionStep[] = [
-    {
-      id: 'optional',
-      isComplete: !!user.gender && !!user.birthDate && !!user.birthPlace,
-      title: 'Add optional details',
-      description: getOptionalFieldsDescription(),
-      href: '#optional-details',
-      isOptional: true,
-    },
-  ]
-
-  const incompleteRequiredSteps = profileCompletionStepsRequired.filter(
-    (step) => !step.isComplete,
-  )
-  const incompleteOptionalSteps = isInFamilyGroup
-    ? profileCompletionStepsOptional.filter((step) => !step.isComplete)
-    : []
-
-  const incompleteSteps = [
-    ...incompleteRequiredSteps,
-    ...incompleteOptionalSteps,
-  ]
-
-  const nextStepsCount =
-    (incompleteSteps.length > 0 ? 1 : 0) +
-    (canInstall ? 1 : 0) +
-    (canEnableNotifications ? 1 : 0) +
-    1
-
-  const handleSmoothScroll = (
-    e: React.MouseEvent<HTMLAnchorElement>,
-    isOptional?: boolean,
-  ) => {
+  const handleSmoothScroll = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault()
-
-    if (isOptional && setIsOptionalOpen) {
-      setIsOptionalOpen(true)
-    }
-
     const targetId = e.currentTarget.getAttribute('href')?.substring(1)
     if (!targetId) return
 
+    if (targetId === 'optional-details' && setIsOptionalOpen) {
+      setIsOptionalOpen(true)
+    }
+
     setTimeout(() => {
-      const targetElement = document.getElementById(targetId) as HTMLElement
-      if (!targetElement) return
-
-      targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' })
-
-      if (targetId === 'profile-photo-section') {
-        const button = document.getElementById('change-photo-button')
-        if (button) {
-          button.focus({ preventScroll: true })
-        }
-        return
-      }
-
-      // Check if the target element itself is an input/focusable field
-      if (['INPUT', 'SELECT', 'TEXTAREA'].includes(targetElement.tagName)) {
-        targetElement.focus({ preventScroll: true })
-      } else {
-        // Otherwise, find the first focusable field within the target
+      const targetElement = document.getElementById(targetId)
+      if (targetElement) {
+        targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' })
         const inputElement = targetElement.querySelector(
           'input, select, textarea',
         ) as HTMLElement
@@ -232,6 +176,137 @@ export default function UserProfileNextSteps({
         }
       }
     }, 100)
+  }
+
+
+  const allSteps: {
+    id: string
+    isComplete: boolean
+    title: string
+    description: React.ReactNode
+    action?: () => void
+    actionLabel?: string
+    dismiss?: () => void
+    dismissLabel?: string
+    href?: string
+  }[] = []
+
+  // 1. Profile Completion
+  if (incompleteRequired.length > 0) {
+    allSteps.push({
+      id: 'complete-profile',
+      isComplete: false,
+      title: 'Complete Your Profile',
+      description: `Add: ${incompleteRequired.map((s) => s.title).join(', ')} to unlock full features.`,
+      href: incompleteRequired[0].href,
+    })
+  }
+
+  // 2. Email Verification
+  if (user.email && !user.emailVerified) {
+    allSteps.push({
+      id: 'verify-email',
+      isComplete: false,
+      title: 'Verify Your Email',
+      description: (
+        <>
+          <ShieldCheck
+            size={16}
+            className="inline-block text-green-500 dark:text-green-400"
+          />{' '}
+          Click the email verification link we sent to{' '}
+          <strong>{user.email}</strong> to finish unlocking features. Check
+          spam/junk if you don't see it.
+        </>
+      ),
+      href: '#email',
+    })
+  }
+
+  // 3. Optional Fields
+  const incompleteOptional = profileCompletionStepsOptional.filter(
+    (s) => !s.isComplete,
+  )
+  if (isInFamilyGroup && incompleteOptional.length > 0) {
+    allSteps.push({
+      id: 'optional-details',
+      isComplete: false,
+      title: 'Add Optional Details',
+      description: 'This info is used in family groups.',
+      href: '#optional-details',
+    })
+  }
+
+  // 4. PWA Installation
+  const canInstall = deviceInfo.a2hs.canInstall && !isInstallStepDismissed
+  if (canInstall) {
+    allSteps.push({
+      id: 'install-app',
+      isComplete: false,
+      title: deviceInfo.a2hs.actionLabel,
+      description:
+        'For a better experience and easy access, install the app on your device.',
+      action: handleInstallClick,
+      actionLabel: deviceInfo.a2hs.actionLabel,
+      dismiss: handleDismissInstallStep,
+      dismissLabel: 'Already Done',
+    })
+  }
+
+  // 5. Push Notifications
+  const notificationsBlocked = permissionStatus === 'denied'
+  const canEnableNotifications =
+    isPushSupported && !isPushEnabled && !notificationsBlocked
+
+  if (notificationsBlocked) {
+    allSteps.push({
+      id: 'notifications-blocked',
+      isComplete: false,
+      title: 'Notifications Blocked',
+      description: deviceInfo.push.instructions,
+    })
+  } else if (canEnableNotifications) {
+    allSteps.push({
+      id: 'enable-notifications',
+      isComplete: false,
+      title: 'Enable Notifications',
+      description:
+        'Push notifications are the easiest way for your groups to communicate with you.',
+      action: subscribe,
+      actionLabel: 'Enable Notifications',
+    })
+  }
+
+  // 6. Return to Group
+  allSteps.push({
+    id: 'return-to-group',
+    isComplete: true, // This is always available, not a "to-do"
+    title: 'Return to a group',
+    description: "See what's new with your people.",
+    href: '/me/groups',
+  })
+
+  const nextStepsCount = allSteps.filter((step) => !step.isComplete).length
+
+  if (nextStepsCount === 0) return null
+
+  const getIcon = (id: string) => {
+    switch (id) {
+      case 'complete-profile':
+      case 'verify-email':
+      case 'optional-details':
+        return <User className="h-6 w-6 text-gray-400" />
+      case 'install-app':
+        return <Download className="h-6 w-6 text-gray-400" />
+      case 'notifications-blocked':
+        return <BellOff className="h-6 w-6 text-gray-400" />
+      case 'enable-notifications':
+        return <BellRing className="h-6 w-6 text-gray-400" />
+      case 'return-to-group':
+        return <ArrowRight className="h-6 w-6 text-gray-400" />
+      default:
+        return <User className="h-6 w-6 text-gray-400" />
+    }
   }
 
   return (
@@ -248,32 +323,20 @@ export default function UserProfileNextSteps({
           className="flex w-full items-center justify-between text-left"
           onClick={() => setIsCollapsed(!isCollapsed)}
         >
-          <div className="flex items-center">
-            {isCollapsed && (
-              <CheckCircleIcon
-                className="mr-3 h-5 w-5 text-yellow-400"
-                aria-hidden="true"
-              />
-            )}
-            <h4
-              className={`text-base leading-7 font-semibold ${
-                isCollapsed
-                  ? 'text-yellow-800 dark:text-yellow-300'
-                  : 'text-gray-900 dark:text-gray-100'
-              }`}
-            >
-              Next Steps
-              <span
-                className={`ml-2 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+          <h3 className="flex items-center gap-x-2">
+            <span>Next Steps</span>
+            {!isLoading && (
+              <Badge
+                className={
                   isCollapsed
                     ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100'
                     : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
-                }`}
+                }
               >
                 {nextStepsCount}
-              </span>
-            </h4>
-          </div>
+              </Badge>
+            )}
+          </h3>
           {isCollapsed ? (
             <ChevronDown
               className={`h-5 w-5 ${isCollapsed ? 'text-yellow-400' : 'text-gray-400'}`}
@@ -287,178 +350,55 @@ export default function UserProfileNextSteps({
         {!isCollapsed && (
           <div className="mt-6">
             <ul className="space-y-6">
-              {incompleteSteps.length > 0 && (
-                <li>
-                  <div className="flex items-start">
-                    <div className="flex-shrink-0">
-                      <User
-                        className="h-6 w-6 text-gray-400"
-                        aria-hidden="true"
-                      />
-                    </div>
-                    <div className="ml-4">
-                      <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200">
-                        Complete Your Profile
-                      </h3>
-                      <ul className="-my-2 mt-2 divide-y divide-gray-200 text-sm text-gray-600 dark:divide-gray-700 dark:text-gray-400">
-                        {incompleteSteps.map((step) => (
-                          <li key={step.id} className="scroll-mt-20">
-                            {step.href ? (
-                              <a
-                                href={step.href!}
-                                onClick={(e) =>
-                                  handleSmoothScroll(e, step.isOptional)
-                                }
-                                className="block cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800"
+              {allSteps
+                .filter((step) => !step.isComplete)
+                .map((step) => (
+                  <li key={step.id}>
+                    <div className="flex items-start">
+                      <div className="flex-shrink-0">{getIcon(step.id)}</div>
+                      <div className="ml-4">
+                        <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                          {step.title}
+                        </h3>
+                        <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                          {step.description}
+                        </p>
+                        {step.href && (
+                          <Link
+                            href={step.href}
+                            onClick={handleSmoothScroll}
+                            className="mt-2 inline-flex items-center gap-x-1 text-sm font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
+                          >
+                            Go to section <ChevronRight className="h-4 w-4" />
+                          </Link>
+                        )}
+                        {step.action && step.actionLabel && (
+                          <div className="mt-2 flex items-center gap-x-2">
+                            <button
+                              onClick={step.action}
+                              className="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none dark:focus:ring-offset-gray-800"
+                            >
+                              {step.actionLabel}
+                            </button>
+                            {step.dismiss && step.dismissLabel && (
+                              <button
+                                onClick={step.dismiss}
+                                className="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 dark:focus:ring-offset-gray-800"
                               >
-                                <div className="flex items-center px-4 py-2 sm:px-6">
-                                  <div className="flex min-w-0 flex-1 items-center justify-between">
-                                    <div>
-                                      <div className="flex text-sm">
-                                        <p className="truncate font-medium text-indigo-600 dark:text-indigo-400">
-                                          {step.title}
-                                        </p>
-                                      </div>
-                                      <div className="mt-2 flex">
-                                        <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                                          <p className="pr-4 break-words">
-                                            {step.description}
-                                          </p>
-                                        </div>
-                                      </div>
-                                    </div>
-                                    <div className="mt-4 flex-shrink-0 sm:mt-0 sm:ml-5">
-                                      <div className="flex items-center justify-center text-gray-500 dark:text-gray-400">
-                                        <ChevronRight className="h-5 w-5" />
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              </a>
-                            ) : (
-                              <div>
-                                {step.title}:{' '}
-                                <span className="text-gray-500 dark:text-gray-300">
-                                  {step.description}
-                                </span>
-                              </div>
+                                {step.dismissLabel}
+                              </button>
                             )}
-                          </li>
-                        ))}
-                      </ul>
+                          </div>
+                        )}
+                        {error && step.id === 'enable-notifications' && (
+                          <div className="mt-2 text-sm font-semibold text-red-600 dark:text-red-400">
+                            {error.message}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </li>
-              )}
-              {canInstall && (
-                <li>
-                  <div className="flex items-start">
-                    <div className="flex-shrink-0">
-                      <Download
-                        className="h-6 w-6 text-gray-400"
-                        aria-hidden="true"
-                      />
-                    </div>
-                    <div className="ml-4">
-                      <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200">
-                        {deviceInfo.a2hs.actionLabel}
-                      </h3>
-                      <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                        For a better experience and to make it easy to return,
-                        install the app on your device.
-                      </p>
-                      <button
-                        onClick={handleInstallClick}
-                        className="mt-2 inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none dark:focus:ring-offset-gray-800"
-                      >
-                        {deviceInfo.a2hs.actionLabel}
-                      </button>
-                      <button
-                        onClick={handleDismissInstallStep}
-                        className="mt-2 ml-2 inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 dark:focus:ring-offset-gray-800"
-                      >
-                        Already Done
-                      </button>
-                    </div>
-                  </div>
-                </li>
-              )}
-              {notificationsBlocked && (
-                <li>
-                  <div className="flex items-start">
-                    <div className="flex-shrink-0">
-                      <BellOff
-                        className="h-6 w-6 text-gray-400"
-                        aria-hidden="true"
-                      />
-                    </div>
-                    <div className="ml-4">
-                      <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200">
-                        Notifications Blocked
-                      </h3>
-                      <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                        {deviceInfo.push.instructions}
-                      </p>
-                    </div>
-                  </div>
-                </li>
-              )}
-              {canEnableNotifications && (
-                <li>
-                  <div className="flex items-start">
-                    <div className="flex-shrink-0">
-                      <BellRing
-                        className="h-6 w-6 text-gray-400"
-                        aria-hidden="true"
-                      />
-                    </div>
-                    <div className="ml-4">
-                      <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200">
-                        Enable Notifications
-                      </h3>
-                      <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                        Push notifications are the easiest way for your groups
-                        to communicate with you.
-                      </p>
-                      <button
-                        onClick={subscribe}
-                        className="mt-2 inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none dark:focus:ring-offset-gray-800"
-                      >
-                        Enable Notifications
-                      </button>
-                      {error && (
-                        <div className="mt-2 text-sm font-semibold text-red-600 dark:text-red-400">
-                          {error.message}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </li>
-              )}
-              <li>
-                <div className="flex items-start">
-                  <div className="flex-shrink-0">
-                    <ArrowRight
-                      className="h-6 w-6 text-gray-400"
-                      aria-hidden="true"
-                    />
-                  </div>
-                  <div className="ml-4">
-                    <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200">
-                      Return to a group
-                    </h3>
-                    <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                      See what's new with your people.
-                    </p>
-                    <Link
-                      href={`/me/groups`}
-                      className="mt-2 inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none dark:focus:ring-offset-gray-800"
-                    >
-                      Go to Groups
-                    </Link>
-                  </div>
-                </div>
-              </li>
+                  </li>
+                ))}
             </ul>
           </div>
         )}
