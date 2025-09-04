@@ -37,11 +37,14 @@ import {
   HelpCircle,
 } from 'lucide-react'
 import NameQuizIntroModal from '@/components/NameQuizIntroModal'
-import { useTourManagement } from '@/hooks/useTourManagement'
-import { TourProvider } from '@reactour/tour'
-import { steps as desktopSteps } from '@/components/tours/CommunityTour'
+import { TourProvider, useTour } from '@reactour/tour'
+import {
+  getGreetedSteps,
+  getNotGreetedSteps,
+} from '@/components/tours/CommunityTour'
 import { steps as mobileSteps } from '@/components/tours/CommunityTourMobile'
 import { useTheme } from 'next-themes'
+import { Toaster, toast } from 'sonner'
 
 const NameQuizViewClient = dynamic(
   () => import('@/components/NameQuizViewClient'),
@@ -57,6 +60,13 @@ interface GroupTabsProps {
   greetedCount: number
   notGreetedCount: number
   currentUserMember: MemberWithUser | undefined
+}
+
+interface GroupTabsContentProps extends GroupTabsProps {
+  activeTour: 'greeted' | 'notGreeted' | null
+  setActiveTour: React.Dispatch<React.SetStateAction<'greeted' | 'notGreeted' | null>>
+  settings: GroupPageSettings
+  setSettings: React.Dispatch<React.SetStateAction<GroupPageSettings>>
 }
 
 interface GroupPageSettings {
@@ -134,7 +144,7 @@ const SearchableMemberList: React.FC<SearchableMemberListProps> = ({
     }
   }, [inView, hasMore, isLoading, slug, listType, page])
 
-  const isListView = listType === 'greeted' && viewMode === 'list'
+  const isListView = viewMode === 'list'
 
   return (
     <div
@@ -168,27 +178,32 @@ const SearchableMemberList: React.FC<SearchableMemberListProps> = ({
   )
 }
 
-const GroupTabsContent: React.FC<GroupTabsProps> = ({
+const GroupTabsContent: React.FC<GroupTabsContentProps> = ({
   greetedMembers,
   notGreetedMembers,
   greetedCount,
   notGreetedCount,
   currentUserMember,
+  activeTour,
+  setActiveTour,
+  settings,
+  setSettings,
 }) => {
-  const { startTour } = useTourManagement('communityPage')
   const isGroupAdmin = currentUserMember?.role?.code === 'admin'
   const { group, currentUserMember: ego } = useGroup()
-  const router = useRouter()
+  const { isOpen, setIsOpen } = useTour()
 
-  const [settings, setSettings] = useLocalStorage<GroupPageSettings>(
-    `group-settings-${group?.slug || ''}`,
-    {
-      sortConfig: { key: 'greeted', direction: 'desc' },
-      viewMode: 'grid',
-      searchQueries: { greeted: '', notGreeted: '' },
-      selectedTabIndex: 0,
-    },
-  )
+  const handleTabChange = (index: number) => {
+    setSettings((prev) => ({ ...prev, selectedTabIndex: index }))
+    if (isOpen && activeTour === 'greeted' && index === 1) {
+      // User is in the first part of the tour and clicks the 'Not Greeted' tab
+      setActiveTour('notGreeted')
+    } else if (isOpen && activeTour === 'notGreeted' && index === 0) {
+      // User is in the second part of the tour and clicks the 'Greeted' tab
+      setActiveTour('greeted')
+    }
+  }
+  const router = useRouter()
 
   const [hasMounted, setHasMounted] = useState(false)
   const [isRelateModalOpen, setIsRelateModalOpen] = useState(false)
@@ -251,9 +266,11 @@ const GroupTabsContent: React.FC<GroupTabsProps> = ({
       }
       try {
         await createAcquaintanceRelationship(member.userId, group.slug)
+        toast.success(`You are now connected with ${member.user.name}.`)
         router.refresh()
       } catch (error) {
         console.error('Failed to create acquaintance relationship:', error)
+        toast.error('Failed to connect.')
       }
     },
     [group?.slug, router],
@@ -419,9 +436,7 @@ const GroupTabsContent: React.FC<GroupTabsProps> = ({
           ) : hasMounted ? (
             <Tab.Group
               selectedIndex={settings.selectedTabIndex}
-              onChange={(index) =>
-                setSettings((prev) => ({ ...prev, selectedTabIndex: index }))
-              }
+              onChange={handleTabChange}
             >
               <Tab.List
                 className="flex space-x-1 rounded-xl bg-blue-900/20 p-1"
@@ -432,7 +447,7 @@ const GroupTabsContent: React.FC<GroupTabsProps> = ({
                     key={tab.name}
                     className={({ selected }) =>
                       clsx(
-                        'w-full rounded-lg py-2.5 text-sm leading-5 font-medium',
+                        'w-full rounded-lg py-2.5 text-sm font-medium',
                         'ring-opacity-60 ring-white ring-offset-2 ring-offset-blue-400 focus:ring-2 focus:outline-none',
                         selected
                           ? 'bg-white text-blue-700 shadow dark:bg-gray-800 dark:text-white'
@@ -460,37 +475,40 @@ const GroupTabsContent: React.FC<GroupTabsProps> = ({
               </Tab.List>
 
               {/* Sort and View Mode Buttons */}
-              <div className="md:-pt-0 mt-1 mb-4 flex items-center justify-end pt-2">
+              <div className="md:-pt-0 mt-1 mb-4 flex items-center justify-between pt-2">
                 {/* Sort Buttons */}
-                <div className="mr-auto flex items-center gap-2">
-                  {(['greeted', 'firstName', 'lastName'] as const).map(
-                    (key) => {
-                      const isActive = settings.sortConfig.key === key
-                      const SortIcon =
-                        settings.sortConfig.direction === 'asc'
-                          ? ArrowUp
-                          : ArrowDown
-                      return (
-                        <Button
-                          key={key}
-                          variant={isActive ? 'secondary' : 'ghost'}
-                          size="sm"
-                          onClick={() => handleSort(key)}
-                          className={clsx(
-                            'flex items-center gap-1 capitalize',
-                            {
-                              'hidden md:flex':
-                                key === 'firstName' || key === 'lastName',
-                            },
-                          )}
-                        >
-                          {key.replace('Name', '')}
-                          {isActive && <SortIcon className="h-4 w-4" />}
-                        </Button>
-                      )
-                    },
-                  )}
-                  <Button variant="ghost" size="sm" onClick={startTour}>
+                <div className="flex items-center gap-2">
+                  {(['greeted', 'firstName', 'lastName'] as const).map((key) => {
+                    const isActive = settings.sortConfig.key === key
+                    const SortIcon =
+                      settings.sortConfig.direction === 'asc'
+                        ? ArrowUp
+                        : ArrowDown
+                    return (
+                      <Button
+                        key={key}
+                        variant={isActive ? 'secondary' : 'ghost'}
+                        size="sm"
+                        onClick={() => handleSort(key)}
+                        className={clsx('flex items-center gap-1 capitalize', {
+                          'hidden md:flex':
+                            key === 'firstName' || key === 'lastName',
+                        })}
+                      >
+                        {key.replace('Name', '')}
+                        {isActive && <SortIcon className="h-4 w-4" />}
+                      </Button>
+                    )
+                  })}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      setActiveTour('greeted')
+                      setIsOpen(true)
+                    }}
+                    data-tour="help-button"
+                  >
                     <HelpCircle className="h-4 w-4" />
                   </Button>
                 </div>
@@ -604,6 +622,22 @@ const GroupTabsContent: React.FC<GroupTabsProps> = ({
 }
 
 const GroupTabs: React.FC<GroupTabsProps> = (props) => {
+  const { group } = useGroup()
+
+  const [settings, setSettings] = useLocalStorage<GroupPageSettings>(
+    `group-settings-${group?.slug || ''}`,
+    {
+      sortConfig: { key: 'greeted', direction: 'desc' },
+      viewMode: 'grid',
+      searchQueries: { greeted: '', notGreeted: '' },
+      selectedTabIndex: 0,
+    },
+  )
+
+  const [activeTour, setActiveTour] = useState<'greeted' | 'notGreeted' | null>(
+    null,
+  )
+
   const [hasMounted, setHasMounted] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const { resolvedTheme } = useTheme()
@@ -621,7 +655,19 @@ const GroupTabs: React.FC<GroupTabsProps> = (props) => {
     return () => window.removeEventListener('resize', checkIsMobile)
   }, [])
 
-  const tourSteps = isMobile ? mobileSteps : desktopSteps
+  const tourSteps = useMemo(() => {
+    if (isMobile) {
+      return mobileSteps
+    }
+    if (activeTour === 'notGreeted') {
+      return getNotGreetedSteps(props.notGreetedCount)
+    }
+    // Default to 'greeted' steps, even if activeTour is null initially
+    return getGreetedSteps(() => {
+      setActiveTour('notGreeted')
+      setSettings((prev) => ({ ...prev, selectedTabIndex: 1 }))
+    })
+  }, [isMobile, activeTour, props.notGreetedCount, setSettings])
 
   if (!hasMounted) {
     return (
@@ -639,10 +685,6 @@ const GroupTabs: React.FC<GroupTabsProps> = (props) => {
         popover: (base: React.CSSProperties) => {
           const popoverStyles = isMobile
             ? {
-                position: 'fixed' as const,
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
                 width: 'calc(100vw - 40px)',
                 maxWidth: 'calc(100vw - 40px)',
               }
@@ -700,7 +742,14 @@ const GroupTabs: React.FC<GroupTabsProps> = (props) => {
       showCloseButton={true}
       disableInteraction={true}
     >
-      <GroupTabsContent {...props} />
+      <Toaster />
+      <GroupTabsContent
+        {...props}
+        activeTour={activeTour}
+        setActiveTour={setActiveTour}
+        settings={settings}
+        setSettings={setSettings}
+      />
     </TourProvider>
   )
 }
