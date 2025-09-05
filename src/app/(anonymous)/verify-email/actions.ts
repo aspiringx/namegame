@@ -1,25 +1,35 @@
 'use server'
 
+import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
 import { getEmailVerificationTokenByToken } from '@/lib/tokens'
 
 export const verifyEmail = async (
   token: string,
-): Promise<{ success: boolean; message: string }> => {
+): Promise<{ success: boolean; message: string; isAuthenticated: boolean }> => {
+  const session = await auth()
   if (!token) {
-    return { success: false, message: 'Missing verification token.' }
+    return {
+      success: false,
+      message: 'Missing verification token.',
+      isAuthenticated: !!session,
+    }
   }
 
   const verificationToken = await getEmailVerificationTokenByToken(token)
 
   if (!verificationToken) {
-    return { success: false, message: 'Invalid or expired token.' }
+    return {
+      success: false,
+      message: 'Invalid or expired token.',
+      isAuthenticated: !!session,
+    }
   }
 
   const hasExpired = new Date(verificationToken.expires) < new Date()
 
   if (hasExpired) {
-    return { success: false, message: 'Token has expired.' }
+    return { success: false, message: 'Token has expired.', isAuthenticated: !!session }
   }
 
   const existingUser = await prisma.user.findUnique({
@@ -27,7 +37,7 @@ export const verifyEmail = async (
   })
 
   if (!existingUser) {
-    return { success: false, message: 'Invalid token.' }
+    return { success: false, message: 'Invalid token.', isAuthenticated: !!session }
   }
 
   try {
@@ -42,9 +52,17 @@ export const verifyEmail = async (
       })
     })
 
-    return { success: true, message: 'Email verified successfully!' }
+    return {
+      success: true,
+      message: 'Email verified successfully!',
+      isAuthenticated: !!session,
+    }
   } catch (error) {
     console.error('Error verifying email:', error)
-    return { success: false, message: 'Database error. Please try again.' }
+    return {
+      success: false,
+      message: 'Database error. Please try again.',
+      isAuthenticated: !!session,
+    }
   }
 }

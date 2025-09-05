@@ -1,6 +1,9 @@
 'use client'
 
+import { resendVerificationEmail } from '@/app/(main)/me/actions'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { toast } from 'sonner'
 import {
   ArrowRight,
   BellOff,
@@ -116,6 +119,7 @@ export default function UserProfileNextSteps({
   const [isCollapsed, setIsCollapsed] = useState(
     !incompleteRequired.length && !needsEmailVerification,
   )
+  const [isResending, setIsResending] = useState(false)
 
   const [isInstallStepDismissed, setIsInstallStepDismissed] = useState(false)
   const deviceInfo = useDeviceInfoContext()
@@ -178,6 +182,20 @@ export default function UserProfileNextSteps({
     }, 100)
   }
 
+  const handleResendVerificationEmail = async () => {
+    setIsResending(true)
+    const result = await resendVerificationEmail()
+    if (result.success) {
+      toast.success('Success', {
+        description: result.message,
+      })
+    } else {
+      toast.error('Error', {
+        description: result.message,
+      })
+    }
+    setIsResending(false)
+  }
 
   const allSteps: {
     id: string
@@ -207,19 +225,31 @@ export default function UserProfileNextSteps({
     allSteps.push({
       id: 'verify-email',
       isComplete: false,
-      title: 'Verify Your Email',
+      title: `Verify Your Email (${user.email})`,
       description: (
         <>
-          <ShieldCheck
-            size={16}
-            className="inline-block text-green-500 dark:text-green-400"
-          />{' '}
-          Click the email verification link we sent to{' '}
-          <strong>{user.email}</strong> to finish unlocking features. Check
-          spam/junk if you don't see it.
+          <p>
+            <ShieldCheck
+              size={16}
+              className="inline-block text-green-500 dark:text-green-400"
+            />{' '}
+            Click the email verification link we sent to{' '}
+            <strong>{user.email}</strong>. Check spam/junk if you don't see it.
+          </p>
+          <ul className="my-4 ml-4 list-outside list-disc">
+            <li>
+              If you misentered your email address, update it below for a new
+              verification message.
+            </li>
+            <li>
+              If your email is correct but you didn't see a verification
+              message, resend it.
+            </li>
+          </ul>
         </>
       ),
-      href: '#email',
+      action: handleResendVerificationEmail,
+      actionLabel: 'Resend Verification Email',
     })
   }
 

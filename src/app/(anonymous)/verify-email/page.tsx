@@ -1,23 +1,29 @@
 'use client'
 
 import { useEffect, useState, Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { verifyEmail } from './actions'
 import { CheckCircle, XCircle, Loader } from 'lucide-react'
 import Link from 'next/link'
 
 function VerificationContent() {
+  const router = useRouter()
   const searchParams = useSearchParams()
   const token = searchParams.get('token')
   const [result, setResult] = useState<{
     success: boolean
     message: string
+    isAuthenticated: boolean
   } | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (!token) {
-      setResult({ success: false, message: 'No verification token found.' })
+      setResult({
+        success: false,
+        message: 'No verification token found.',
+        isAuthenticated: false,
+      })
       setLoading(false)
       return
     }
@@ -25,12 +31,20 @@ function VerificationContent() {
     const processVerification = async () => {
       setLoading(true)
       const response = await verifyEmail(token)
+
+      if (response.success && response.isAuthenticated) {
+        // If the user is already logged in, redirect them to their profile.
+        router.push('/me?verified=true')
+        // We are redirecting, so no need to set state and cause a re-render here.
+        return
+      }
+
       setResult(response)
       setLoading(false)
     }
 
     processVerification()
-  }, [token])
+  }, [token, router])
 
   return (
     <div className="bg-background text-foreground flex min-h-screen flex-col items-center justify-start pt-12">

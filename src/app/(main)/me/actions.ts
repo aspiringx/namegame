@@ -288,7 +288,7 @@ export async function updateUserProfile(
     const profileIsNowComplete = Boolean(
       formFirstName &&
         formLastName &&
-        (user.emailVerified || formEmail) && // if they are setting an email for the first time, we can consider it complete for now
+        user.emailVerified &&
         (newPhotoKey || user.photos.length > 0),
     )
 
@@ -348,13 +348,13 @@ export async function updateUserProfile(
 
     if (profileIsNowComplete) {
       const memberRoleId = groupUserRoles.member?.id
-      if (memberRoleId && user.groupMemberships.length > 0) {
-        await prisma.groupUser.update({
+      const guestRoleId = groupUserRoles.guest?.id
+      if (memberRoleId && guestRoleId && user.groupMemberships.length > 0) {
+        // Only update roles that are currently 'guest'
+        await prisma.groupUser.updateMany({
           where: {
-            userId_groupId: {
-              userId: user.id,
-              groupId: user.groupMemberships[0].groupId,
-            },
+            userId: user.id,
+            roleId: guestRoleId,
           },
           data: { roleId: memberRoleId },
         })
@@ -577,6 +577,47 @@ export async function leaveGroup(groupId: string): Promise<{
     return {
       success: false,
       error: 'An unexpected error occurred. Please try again.',
+    }
+  }
+}
+
+export async function resendVerificationEmail(): Promise<{
+  success: boolean
+  message: string
+}> {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return {
+      success: false,
+      message: 'You must be logged in to resend a verification email.',
+    }
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { email: true, firstName: true, emailVerified: true },
+  })
+
+  if (!user) {
+    return { success: false, message: 'User not found.' }
+  }
+
+  if (user.emailVerified) {
+    return { success: false, message: 'Your email is already verified.' }
+  }
+
+  if (!user.email) {
+    return { success: false, message: 'You do not have an email set.' }
+  }
+
+  try {
+    await sendVerificationEmail(user.email, session.user.id, user.firstName)
+    return { success: true, message: `Verification email sent to ${user.email}.` }
+  } catch (error) {
+    console.error('Failed to resend verification email:', error)
+    return {
+      success: false,
+      message: 'An unexpected error occurred. Please try again.',
     }
   }
 }

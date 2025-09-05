@@ -4,6 +4,7 @@ import { useSession } from 'next-auth/react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useActionState, useEffect, useRef, useState } from 'react'
 import { useFormStatus } from 'react-dom'
+import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { PushManager } from '@/components/PushManager'
 import { usePushManager } from '@/hooks/use-push-manager'
@@ -131,6 +132,7 @@ export default function UserProfileForm({
   const [passwordError, setPasswordError] = useState<string | null>(null)
   const [showSuccessMessage, setShowSuccessMessage] = useState(false)
   const formSubmitted = useRef(false)
+  const toastShownRef = useRef(false)
   const [validation, setValidation] = useState({
     submitted: false,
     passwordRequired: false,
@@ -237,6 +239,21 @@ export default function UserProfileForm({
     }
     fetchRequirements()
   }, [user.id])
+
+  useEffect(() => {
+    if (searchParams.get('verified') === 'true' && !toastShownRef.current) {
+      toast.success('Email verified successfully!', {
+        duration: 10000,
+        closeButton: true,
+      })
+      // Use the browser's history API to remove the query param without a Next.js navigation event,
+      // which was causing a re-render that cancelled the toast.
+      window.history.replaceState(null, '', pathname)
+      toastShownRef.current = true
+    }
+    // We only want this to run when the component mounts and searchParams are available.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams])
 
   useEffect(() => {
     if (state.success && !formSubmitted.current) {
@@ -866,7 +883,9 @@ export default function UserProfileForm({
               !isEmailValid ||
               !!passwordError ||
               (validation.passwordRequired && !password) ||
-              (validation.photoRequired && previewUrl?.includes('dicebear.com'))
+              (validation.photoRequired &&
+                previewUrl?.includes('dicebear.com') &&
+                !fileSelected)
             }
           />
           <button
