@@ -6,6 +6,8 @@ import { useActionState, useEffect, useRef, useState } from 'react'
 import { useFormStatus } from 'react-dom'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
+import Modal from '@/components/ui/modal'
+import { Button } from '@/components/ui/button'
 import { PushManager } from '@/components/PushManager'
 import { usePushManager } from '@/hooks/use-push-manager'
 import {
@@ -143,6 +145,8 @@ export default function UserProfileForm({
   const [showCopySuccess, setShowCopySuccess] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isOptionalOpen, setIsOptionalOpen] = useState(false)
+  const [isConfirmModalOpen, setConfirmModalOpen] = useState(false)
+  const [isSubmittingAfterConfirm, setIsSubmittingAfterConfirm] = useState(false)
   const [isEmailValid, setIsEmailValid] = useState(
     !user.email || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(user.email),
   )
@@ -256,6 +260,13 @@ export default function UserProfileForm({
   }, [searchParams])
 
   useEffect(() => {
+    if (isSubmittingAfterConfirm) {
+      // This effect triggers the form submission after the state has been updated.
+      formRef.current?.requestSubmit()
+    }
+  }, [isSubmittingAfterConfirm])
+
+  useEffect(() => {
     if (state.success && !formSubmitted.current) {
       formSubmitted.current = true
       window.scrollTo(0, 0)
@@ -293,6 +304,8 @@ export default function UserProfileForm({
       })
     }
   }, [state, updateSession, router, password, fileSelected])
+
+  const formRef = useRef<HTMLFormElement>(null)
 
   const handleNewSubmission = () => {
     setValidation((v) => ({ ...v, submitted: true }))
@@ -373,6 +386,39 @@ export default function UserProfileForm({
 
   return (
     <>
+      <Modal
+        isOpen={isConfirmModalOpen}
+        onClose={() => setConfirmModalOpen(false)}
+      >
+        <div className="bg-white p-6 dark:bg-gray-800">
+          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
+            Confirm Email Deletion
+          </h3>
+          <div className="mt-2">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              You are about to delete a verified email. If you add a new email
+              later, you will have to re-verify it. Are you sure you want to
+              continue?
+            </p>
+          </div>
+          <div className="mt-6 flex justify-end space-x-4">
+            <Button
+              variant="outline"
+              onClick={() => setConfirmModalOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                setConfirmModalOpen(false)
+                setIsSubmittingAfterConfirm(true)
+              }}
+            >
+              Confirm
+            </Button>
+          </div>
+        </div>
+      </Modal>
       <div className="mb-6">
         <UserProfileNextSteps
           user={user}
@@ -384,7 +430,27 @@ export default function UserProfileForm({
       </div>
 
       <h3 className="mb-6">My Profile</h3>
-      <form action={formAction} className="space-y-6">
+      <form
+        ref={formRef}
+        action={formAction}
+        onSubmit={(e) => {
+          // If the submission is happening after confirmation, allow it to proceed.
+          if (isSubmittingAfterConfirm) {
+            setIsSubmittingAfterConfirm(false) // Reset the flag
+            return
+          }
+
+          // Otherwise, check if we need to show the confirmation modal.
+          const isDeletingVerifiedEmail =
+            user.emailVerified && user.email && !displayEmail
+
+          if (isDeletingVerifiedEmail) {
+            e.preventDefault() // Prevent the default submission
+            setConfirmModalOpen(true) // Show the modal
+          }
+        }}
+        className="space-y-6"
+      >
         {showSuccessMessage && state?.message && (
           <div className="space-y-4">
             <div className="rounded-md bg-green-50 p-4 dark:bg-green-900/30">

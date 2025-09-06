@@ -228,32 +228,38 @@ export async function updateUserProfile(
     }
 
     const lowercasedEmail = email ? email.toLowerCase() : null
-    if (
-      lowercasedEmail &&
-      (lowercasedEmail !== user.email || !user.emailVerified)
-    ) {
-      const existingUser = await prisma.user.findFirst({
-        where: {
-          email: lowercasedEmail,
-          id: { not: userId },
-        },
-      })
 
-      if (existingUser) {
-        return {
-          success: false,
-          error: 'This email is already in use by another account.',
-          message: null,
-          errors: { email: ['This email is already in use.'] },
-        }
-      }
-
+    // Handle cases where email is changed or removed
+    if (lowercasedEmail !== user.email) {
       dataToUpdate.email = lowercasedEmail
+      dataToUpdate.emailVerified = null // Always nullify verification on change/removal
+      emailChanged = true
+
       if (user.username === user.email) {
         dataToUpdate.username = lowercasedEmail
       }
-      dataToUpdate.emailVerified = null // Mark new email as unverified
-      emailChanged = true
+
+      // Check for existing user only if a new email is provided
+      if (lowercasedEmail) {
+        const existingUser = await prisma.user.findFirst({
+          where: {
+            email: {
+              equals: lowercasedEmail,
+              mode: 'insensitive',
+            },
+            id: { not: userId },
+          },
+        })
+
+        if (existingUser) {
+          return {
+            success: false,
+            error: 'This email is already in use by another account.',
+            message: null,
+            errors: { email: ['This email is already in use.'] },
+          }
+        }
+      }
     }
 
     if (password) {
@@ -612,7 +618,10 @@ export async function resendVerificationEmail(): Promise<{
 
   try {
     await sendVerificationEmail(user.email, session.user.id, user.firstName)
-    return { success: true, message: `Verification email sent to ${user.email}.` }
+    return {
+      success: true,
+      message: `Verification email sent to ${user.email}.`,
+    }
   } catch (error) {
     console.error('Failed to resend verification email:', error)
     return {

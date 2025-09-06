@@ -116,10 +116,16 @@ export default function UserProfileNextSteps({
   )
   const needsEmailVerification = user.email && !user.emailVerified
 
-  const [isCollapsed, setIsCollapsed] = useState(
-    !incompleteRequired.length && !needsEmailVerification,
-  )
+  const [isCollapsed, setIsCollapsed] = useState(true)
   const [isResending, setIsResending] = useState(false)
+
+  useEffect(() => {
+    // This now correctly sets the initial and subsequent collapsed state on the client side,
+    // avoiding a hydration mismatch.
+    const shouldBeCollapsed = !incompleteRequired.length && !needsEmailVerification
+    setIsCollapsed(shouldBeCollapsed)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, validation]) // Rerunning only when user/validation changes is correct.
 
   const [isInstallStepDismissed, setIsInstallStepDismissed] = useState(false)
   const deviceInfo = useDeviceInfoContext()
