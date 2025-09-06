@@ -174,36 +174,29 @@ const AddMemberSchema = z.object({
   groupId: z.coerce.number(),
   userId: z.string(),
   roleId: z.coerce.number(),
-  memberSince: z
-    .preprocess(
-      (val) => (val === '' ? null : val),
-      z.coerce.number().int().optional().nullable(),
-    )
-    .transform((val) => val ?? new Date().getFullYear()),
-})
+});
 
 export async function addMember(formData: FormData) {
   const validatedFields = AddMemberSchema.safeParse({
     groupId: formData.get('groupId'),
     userId: formData.get('userId'),
     roleId: formData.get('roleId'),
-    memberSince: formData.get('memberSince'),
-  })
+  });
 
   if (!validatedFields.success) {
-    throw new Error('Invalid form data.')
+    throw new Error('Invalid form data.');
   }
 
-  const { groupId, userId, roleId, memberSince } = validatedFields.data
+  const { groupId, userId, roleId } = validatedFields.data;
 
   await prisma.groupUser.create({
     data: {
       groupId,
       userId,
       roleId,
-      memberSince,
+      memberSince: new Date().getFullYear(), // Set current year by default
     },
-  })
+  });
 
   const group = await prisma.group.findUnique({ where: { id: groupId } })
   revalidatePath(`/admin/groups/${group?.slug}/edit`)
@@ -243,26 +236,21 @@ const UpdateMemberSchema = z.object({
   groupId: z.coerce.number(),
   userId: z.string(),
   roleId: z.coerce.number(),
-  memberSince: z.preprocess(
-    (val) => (val === '' ? null : val),
-    z.coerce.number().int().optional().nullable(),
-  ),
-})
+});
 
 export async function updateMember(formData: FormData) {
   const validatedFields = UpdateMemberSchema.safeParse({
     groupId: formData.get('groupId'),
     userId: formData.get('userId'),
     roleId: formData.get('roleId'),
-    memberSince: formData.get('memberSince'),
-  })
+  });
 
   if (!validatedFields.success) {
     console.error(validatedFields.error)
     throw new Error('Invalid form data.')
   }
 
-  const { groupId, userId, roleId, memberSince } = validatedFields.data
+  const { groupId, userId, roleId } = validatedFields.data
 
   await prisma.groupUser.update({
     where: {
@@ -273,9 +261,8 @@ export async function updateMember(formData: FormData) {
     },
     data: {
       roleId,
-      memberSince,
     },
-  })
+  });
 
   const group = await prisma.group.findUnique({ where: { id: groupId } })
   revalidatePath(`/admin/groups/${group?.slug}/edit`)
