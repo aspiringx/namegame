@@ -4,7 +4,15 @@ import { useActionState, useState, useRef, useEffect } from 'react'
 import { useFormStatus } from 'react-dom'
 import Link from 'next/link'
 import Image from 'next/image'
-import { RefreshCw, Copy, Check, ShieldCheck, CheckCircleIcon, Eye, EyeOff } from 'lucide-react'
+import {
+  RefreshCw,
+  Copy,
+  Check,
+  ShieldCheck,
+  CheckCircleIcon,
+  Eye,
+  EyeOff,
+} from 'lucide-react'
 import {
   Tooltip,
   TooltipContent,
@@ -60,10 +68,15 @@ type UserFormProps = {
   user?: UserFormData
   photoUrl?: string | null
   hasPhoto?: boolean
-  onSubmit: (prevState: UserFormState, formData: FormData) => Promise<UserFormState>
+  onSubmit: (
+    prevState: UserFormState,
+    formData: FormData,
+  ) => Promise<UserFormState>
   initialState: UserFormState
   passwordRequired?: boolean
-  onPasswordRequirementCheck?: (userId: string) => Promise<{ passwordRequired: boolean }>
+  onPasswordRequirementCheck?: (
+    userId: string,
+  ) => Promise<{ passwordRequired: boolean }>
   submitButtonText?: string
   submitButtonPendingText?: string
 }
@@ -80,11 +93,11 @@ function generateRandomPassword(length: number) {
   return result
 }
 
-function SubmitButton({ 
-  disabled, 
-  text = 'Save', 
-  pendingText = 'Saving...' 
-}: { 
+function SubmitButton({
+  disabled,
+  text = 'Save',
+  pendingText = 'Saving...',
+}: {
   disabled?: boolean
   text?: string
   pendingText?: string
@@ -117,15 +130,29 @@ export default function GlobalUserForm({
   const [previewUrl, setPreviewUrl] = useState<string | null>(photoUrl || null)
   const [photoPreview, setPhotoPreview] = useState<string>(photoUrl || '')
   const [fileSelected, setFileSelected] = useState(false)
-  const [gender, setGender] = useState<Gender | null>(mode === 'edit' ? (user?.gender || null) : null)
-  const [birthDate, setBirthDate] = useState(mode === 'edit' && user?.birthDate ? new Date(user.birthDate).toISOString().split('T')[0] : '')
-  const [birthPlace, setBirthPlace] = useState(mode === 'edit' ? (user?.birthPlace || '') : '')
-  const [deathDate, setDeathDate] = useState(mode === 'edit' && user?.deathDate ? new Date(user.deathDate).toISOString().split('T')[0] : '')
+  const [gender, setGender] = useState<Gender | null>(
+    mode === 'edit' ? user?.gender || null : null,
+  )
+  const [birthDate, setBirthDate] = useState(
+    mode === 'edit' && user?.birthDate
+      ? new Date(user.birthDate).toISOString().split('T')[0]
+      : '',
+  )
+  const [birthPlace, setBirthPlace] = useState(
+    mode === 'edit' ? user?.birthPlace || '' : '',
+  )
+  const [deathDate, setDeathDate] = useState(
+    mode === 'edit' && user?.deathDate
+      ? new Date(user.deathDate).toISOString().split('T')[0]
+      : '',
+  )
   const [showCopySuccess, setShowCopySuccess] = useState(false)
   const [isPasswordTooltipOpen, setIsPasswordTooltipOpen] = useState(false)
   const [isEmailTooltipOpen, setIsEmailTooltipOpen] = useState(false)
   const [isDirty, setIsDirty] = useState(false)
-  const [passwordRequired, setPasswordRequired] = useState(mode === 'create' ? true : false)
+  const [passwordRequired, setPasswordRequired] = useState(
+    mode === 'create' ? true : false,
+  )
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [state, formAction] = useActionState(onSubmit, initialState)
@@ -135,7 +162,9 @@ export default function GlobalUserForm({
     if (mode === 'edit' && user?.id && onPasswordRequirementCheck) {
       async function fetchRequirements() {
         try {
-          const { passwordRequired } = await onPasswordRequirementCheck!(user!.id!)
+          const { passwordRequired } = await onPasswordRequirementCheck!(
+            user!.id!,
+          )
           setPasswordRequired(passwordRequired)
         } catch (error) {
           console.error('Failed to check password requirement:', error)
@@ -156,7 +185,9 @@ export default function GlobalUserForm({
       if (mode === 'edit' && user?.id && onPasswordRequirementCheck) {
         async function recheckRequirements() {
           try {
-            const { passwordRequired } = await onPasswordRequirementCheck!(user!.id!)
+            const { passwordRequired } = await onPasswordRequirementCheck!(
+              user!.id!,
+            )
             setPasswordRequired(passwordRequired)
             setPassword('')
           } catch (error) {
@@ -172,7 +203,13 @@ export default function GlobalUserForm({
         channel.close()
       }
     }
-  }, [state.success, state.photoUrl, mode, user?.id, onPasswordRequirementCheck])
+  }, [
+    state.success,
+    state.photoUrl,
+    mode,
+    user?.id,
+    onPasswordRequirementCheck,
+  ])
 
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -185,31 +222,39 @@ export default function GlobalUserForm({
     }
   }, [state.values?.password])
 
-  // Detect browser extension password autofill
+  // Detect browser extension password autofill in create mode. This uses
+  // a short-lived polling mechanism because autofill events are inconsistent.
   useEffect(() => {
-    const checkForAutofill = () => {
-      if (passwordInputRef.current && passwordInputRef.current.value !== password) {
-        setPassword(passwordInputRef.current.value)
-      }
-    }
+    if (mode === 'create') {
+      let attempts = 0
+      const maxAttempts = 20 // Poll for 2 seconds (20 * 100ms)
 
-    // Check immediately and then periodically for autofill
-    const interval = setInterval(checkForAutofill, 100)
-    
-    // Also check on focus events
-    const handleFocus = () => checkForAutofill()
-    const passwordInput = passwordInputRef.current
-    if (passwordInput) {
-      passwordInput.addEventListener('focus', handleFocus)
-    }
+      const intervalId = setInterval(() => {
+        const inputElement = passwordInputRef.current
+        if (inputElement && inputElement.value) {
+          // Use functional update to get the latest state and avoid stale closures.
+          setPassword(currentPassword => {
+            if (inputElement.value !== currentPassword) {
+              // A new value was found, so we update the state and stop polling.
+              clearInterval(intervalId)
+              return inputElement.value
+            }
+            // No change, keep the current state.
+            return currentPassword
+          })
+        }
 
-    return () => {
-      clearInterval(interval)
-      if (passwordInput) {
-        passwordInput.removeEventListener('focus', handleFocus)
-      }
+        if (++attempts >= maxAttempts) {
+          clearInterval(intervalId)
+        }
+      }, 100)
+
+      return () => clearInterval(intervalId)
     }
-  }, [password])
+    // We only want this to run once on mount in create mode.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode])
+
 
   const handleGeneratePassword = () => {
     setPassword(generateRandomPassword(6))
@@ -228,11 +273,11 @@ export default function GlobalUserForm({
 
   // State for form field values (edit mode uses controlled components)
   const [formValues, setFormValues] = useState({
-    username: mode === 'edit' ? (user?.username || '') : '',
-    firstName: mode === 'edit' ? (user?.firstName || '') : '',
-    lastName: mode === 'edit' ? (user?.lastName || '') : '',
-    email: mode === 'edit' ? (user?.email || '') : '',
-    phone: mode === 'edit' ? (user?.phone || '') : '',
+    username: mode === 'edit' ? user?.username || '' : '',
+    firstName: mode === 'edit' ? user?.firstName || '' : '',
+    lastName: mode === 'edit' ? user?.lastName || '' : '',
+    email: mode === 'edit' ? user?.email || '' : '',
+    phone: mode === 'edit' ? user?.phone || '' : '',
   })
 
   // Track if form is dirty (edit mode only)
@@ -244,13 +289,21 @@ export default function GlobalUserForm({
       const isEmailDirty = formValues.email !== (user.email || '')
       const isPhoneDirty = formValues.phone !== (user.phone || '')
       const isGenderDirty = gender !== user.gender
-      const isBirthDateDirty = birthDate !== (user.birthDate ? new Date(user.birthDate).toISOString().split('T')[0] : '')
+      const isBirthDateDirty =
+        birthDate !==
+        (user.birthDate
+          ? new Date(user.birthDate).toISOString().split('T')[0]
+          : '')
       const isBirthPlaceDirty = birthPlace !== (user.birthPlace || '')
-      const isDeathDateDirty = deathDate !== (user.deathDate ? new Date(user.deathDate).toISOString().split('T')[0] : '')
+      const isDeathDateDirty =
+        deathDate !==
+        (user.deathDate
+          ? new Date(user.deathDate).toISOString().split('T')[0]
+          : '')
       const isPasswordDirty = password !== ''
       const isPhotoDirty = fileSelected
 
-      const dirty = (
+      const dirty =
         isUsernameDirty ||
         isFirstNameDirty ||
         isLastNameDirty ||
@@ -262,7 +315,6 @@ export default function GlobalUserForm({
         isDeathDateDirty ||
         isPasswordDirty ||
         isPhotoDirty
-      )
 
       setIsDirty(dirty)
     } else if (mode === 'create') {
@@ -292,11 +344,14 @@ export default function GlobalUserForm({
     user?.gender,
     user?.birthDate,
     user?.birthPlace,
-    user?.deathDate
+    user?.deathDate,
   ])
 
   // Check if all required fields are valid
-  const isFormValid = formValues.username && formValues.firstName && (passwordRequired ? password : true)
+  const isFormValid =
+    formValues.username &&
+    formValues.firstName &&
+    (passwordRequired ? password : true)
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -364,12 +419,18 @@ export default function GlobalUserForm({
           name="username"
           required
           className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
-          {...(mode === 'edit' ? {
-            value: formValues.username,
-            onChange: (e) => setFormValues(prev => ({ ...prev, username: e.target.value }))
-          } : {
-            defaultValue: state.values?.username || ''
-          })}
+          {...(mode === 'edit'
+            ? {
+                value: formValues.username,
+                onChange: (e) =>
+                  setFormValues((prev) => ({
+                    ...prev,
+                    username: e.target.value,
+                  })),
+              }
+            : {
+                defaultValue: state.values?.username || '',
+              })}
         />
         {state.errors?.username && (
           <p className="mt-1 text-sm text-red-500">
@@ -392,12 +453,18 @@ export default function GlobalUserForm({
           name="firstName"
           required
           className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
-          {...(mode === 'edit' ? {
-            value: formValues.firstName,
-            onChange: (e) => setFormValues(prev => ({ ...prev, firstName: e.target.value }))
-          } : {
-            defaultValue: state.values?.firstName || ''
-          })}
+          {...(mode === 'edit'
+            ? {
+                value: formValues.firstName,
+                onChange: (e) =>
+                  setFormValues((prev) => ({
+                    ...prev,
+                    firstName: e.target.value,
+                  })),
+              }
+            : {
+                defaultValue: state.values?.firstName || '',
+              })}
         />
         {state.errors?.firstName && (
           <p className="mt-1 text-sm text-red-500">
@@ -419,12 +486,18 @@ export default function GlobalUserForm({
           id="lastName"
           name="lastName"
           className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
-          {...(mode === 'edit' ? {
-            value: formValues.lastName,
-            onChange: (e) => setFormValues(prev => ({ ...prev, lastName: e.target.value }))
-          } : {
-            defaultValue: state.values?.lastName || ''
-          })}
+          {...(mode === 'edit'
+            ? {
+                value: formValues.lastName,
+                onChange: (e) =>
+                  setFormValues((prev) => ({
+                    ...prev,
+                    lastName: e.target.value,
+                  })),
+              }
+            : {
+                defaultValue: state.values?.lastName || '',
+              })}
         />
         {state.errors?.lastName && (
           <p className="mt-1 text-sm text-red-500">
@@ -435,14 +508,14 @@ export default function GlobalUserForm({
 
       {/* Gender */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+        <label className="mb-3 block text-sm font-medium text-gray-700 dark:text-gray-300">
           Gender
         </label>
         <div className="flex gap-3">
           <button
             type="button"
             onClick={() => setGender(Gender.male)}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+            className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
               gender === Gender.male
                 ? 'bg-blue-600 text-white'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
@@ -453,7 +526,7 @@ export default function GlobalUserForm({
           <button
             type="button"
             onClick={() => setGender(Gender.female)}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+            className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
               gender === Gender.female
                 ? 'bg-pink-600 text-white'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
@@ -464,7 +537,7 @@ export default function GlobalUserForm({
           <button
             type="button"
             onClick={() => setGender(Gender.non_binary)}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+            className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
               gender === Gender.non_binary
                 ? 'bg-purple-600 text-white'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
@@ -476,7 +549,7 @@ export default function GlobalUserForm({
             <button
               type="button"
               onClick={() => setGender(null)}
-              className="px-3 py-2 rounded-md text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              className="rounded-md px-3 py-2 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
             >
               Clear
             </button>
@@ -502,12 +575,18 @@ export default function GlobalUserForm({
             id="email"
             name="email"
             className="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 pr-10 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
-            {...(mode === 'edit' ? {
-              value: formValues.email,
-              onChange: (e) => setFormValues(prev => ({ ...prev, email: e.target.value }))
-            } : {
-              defaultValue: state.values?.email || ''
-            })}
+            {...(mode === 'edit'
+              ? {
+                  value: formValues.email,
+                  onChange: (e) =>
+                    setFormValues((prev) => ({
+                      ...prev,
+                      email: e.target.value,
+                    })),
+                }
+              : {
+                  defaultValue: state.values?.email || '',
+                })}
           />
           {mode === 'edit' && (
             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
@@ -551,7 +630,8 @@ export default function GlobalUserForm({
           htmlFor="password"
           className="block text-sm font-medium text-gray-700 dark:text-gray-300"
         >
-          {mode === 'create' ? 'Password' : 'New Password'} {passwordRequired && <span className="text-red-500">*</span>}
+          {mode === 'create' ? 'Password' : 'New Password'}{' '}
+          {passwordRequired && <span className="text-red-500">*</span>}
         </label>
         <div className="mt-1 flex rounded-md shadow-sm">
           <input
@@ -693,12 +773,15 @@ export default function GlobalUserForm({
           id="phone"
           name="phone"
           className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
-          {...(mode === 'edit' ? {
-            value: formValues.phone,
-            onChange: (e) => setFormValues(prev => ({ ...prev, phone: e.target.value }))
-          } : {
-            defaultValue: state.values?.phone || ''
-          })}
+          {...(mode === 'edit'
+            ? {
+                value: formValues.phone,
+                onChange: (e) =>
+                  setFormValues((prev) => ({ ...prev, phone: e.target.value })),
+              }
+            : {
+                defaultValue: state.values?.phone || '',
+              })}
         />
         {state.errors?.phone && (
           <p className="mt-1 text-sm text-red-500">{state.errors.phone[0]}</p>
@@ -722,7 +805,9 @@ export default function GlobalUserForm({
           onChange={(e) => setBirthDate(e.target.value)}
         />
         {state.errors?.birthDate && (
-          <p className="mt-1 text-sm text-red-500">{state.errors.birthDate[0]}</p>
+          <p className="mt-1 text-sm text-red-500">
+            {state.errors.birthDate[0]}
+          </p>
         )}
       </div>
 
@@ -744,7 +829,9 @@ export default function GlobalUserForm({
           placeholder="e.g., New York, NY"
         />
         {state.errors?.birthPlace && (
-          <p className="mt-1 text-sm text-red-500">{state.errors.birthPlace[0]}</p>
+          <p className="mt-1 text-sm text-red-500">
+            {state.errors.birthPlace[0]}
+          </p>
         )}
       </div>
 
@@ -765,7 +852,9 @@ export default function GlobalUserForm({
           onChange={(e) => setDeathDate(e.target.value)}
         />
         {state.errors?.deathDate && (
-          <p className="mt-1 text-sm text-red-500">{state.errors.deathDate[0]}</p>
+          <p className="mt-1 text-sm text-red-500">
+            {state.errors.deathDate[0]}
+          </p>
         )}
       </div>
 
@@ -776,8 +865,8 @@ export default function GlobalUserForm({
         >
           Cancel
         </Link>
-        <SubmitButton 
-          disabled={!isDirty || !isFormValid} 
+        <SubmitButton
+          disabled={!isDirty || !isFormValid}
           text={submitButtonText}
           pendingText={submitButtonPendingText}
         />
