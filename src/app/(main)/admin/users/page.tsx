@@ -7,12 +7,10 @@ import Breadcrumbs from '@/components/Breadcrumbs'
 export const dynamic = 'force-dynamic'
 
 type SortableColumn =
-  | 'username'
   | 'firstName'
   | 'lastName'
   | 'email'
   | 'phone'
-  | 'createdAt'
   | 'updatedAt'
 type Order = 'asc' | 'desc'
 
@@ -28,7 +26,7 @@ export default async function AdminUsersPage({
 }) {
   const searchParams = await searchParamsProp
   const query = searchParams?.query || ''
-  const sort = searchParams?.sort || 'createdAt'
+  const sort = searchParams?.sort || 'updatedAt'
   const order = searchParams?.order || 'desc'
   const page = Number(searchParams?.page) || 1
 
@@ -38,10 +36,7 @@ export default async function AdminUsersPage({
       <div className="mb-6 flex items-center justify-between">
         <div className="flex flex-col gap-2 pr-4">
           <h1 className="text-2xl font-bold">Manage Users</h1>
-          <p>
-            These are all the users in the system. Soft-deleted users are
-            inactive and may be undeleted to reactivate them.
-          </p>
+          <p>These are all the users in the system.</p>
         </div>
         <Link
           href="/admin/users/create"

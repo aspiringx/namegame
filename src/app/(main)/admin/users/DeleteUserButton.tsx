@@ -2,6 +2,7 @@
 
 import { softDeleteUser, hardDeleteUser } from './actions'
 import { useState, useTransition } from 'react'
+import { Trash2 } from 'lucide-react'
 
 export function DeleteUserButton({ userId }: { userId: string }) {
   const [isPending, startTransition] = useTransition()
@@ -29,9 +30,10 @@ export function DeleteUserButton({ userId }: { userId: string }) {
         type="button"
         onClick={() => setShowModal(true)}
         disabled={isPending}
-        className="font-medium text-red-600 hover:text-red-900 disabled:text-gray-400 dark:text-red-500 dark:hover:text-red-400 dark:disabled:text-gray-500"
+        className="inline-flex items-center font-medium text-red-600 hover:text-red-900 disabled:text-gray-400 dark:text-red-500 dark:hover:text-red-400 dark:disabled:text-gray-500"
+        title="Delete user"
       >
-        Delete
+        <Trash2 className="h-4 w-4" />
       </button>
 
       {showModal && (
