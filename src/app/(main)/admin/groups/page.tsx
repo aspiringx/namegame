@@ -34,10 +34,7 @@ export default async function AdminGroupsPage({
       <div className="mb-6 flex items-center justify-between">
         <div className="flex flex-col gap-2 pr-4">
           <h1 className="text-2xl font-bold">Parent Groups</h1>
-          <p>
-            These are top-level NameGame groups. Soft-deleted groups are
-            inactive and may be undeleted to reactivate them.
-          </p>
+          <p>Top-level NameGame groups.</p>
         </div>
         <Link
           href="/admin/groups/create"

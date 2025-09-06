@@ -2,6 +2,7 @@ import prisma from '@/lib/prisma'
 import Link from 'next/link'
 import { DeleteGroupButton } from './DeleteGroupButton'
 import { UndeleteGroupButton } from './UndeleteGroupButton'
+import { Edit, Trash2, RotateCcw } from 'lucide-react'
 
 type SortableColumn =
   | 'name'
@@ -135,9 +136,10 @@ export default async function GroupsTable({
                 ) : (
                   <Link
                     href={`/admin/groups/${group.slug}/edit`}
-                    className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-200"
+                    className="inline-flex items-center text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-200"
+                    title="Edit group"
                   >
-                    Edit
+                    <Edit className="h-4 w-4" />
                   </Link>
                 )}
                 <span className="mx-2 text-gray-300 dark:text-gray-600">|</span>

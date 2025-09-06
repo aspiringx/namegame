@@ -287,12 +287,12 @@ export default function GroupMembers({
           />
         </div>
         <div className="ring-opacity-5 dark:ring-opacity-10 -mx-4 mt-8 overflow-hidden shadow ring-1 ring-black md:-mx-6 lg:mx-0 lg:rounded-lg dark:ring-white">
-          <table className="min-w-full divide-y divide-gray-300 dark:divide-gray-700">
+          <table className="w-full table-fixed divide-y divide-gray-300 dark:divide-gray-700">
             <thead className="bg-gray-50 dark:bg-gray-700">
               <tr>
                 <th
                   scope="col"
-                  className="py-3.5 pr-3 pl-4 text-left text-sm font-semibold text-gray-900 sm:pl-6 dark:text-white"
+                  className="w-1/2 py-3.5 pr-3 pl-4 text-left text-sm font-semibold text-gray-900 sm:pl-6 dark:text-white"
                 >
                   <button
                     onClick={() => requestSort('name')}
@@ -306,7 +306,7 @@ export default function GroupMembers({
                 </th>
                 <th
                   scope="col"
-                  className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 sm:table-cell dark:text-white"
+                  className="hidden w-1/4 px-3 py-3.5 text-left text-sm font-semibold text-gray-900 sm:table-cell dark:text-white"
                 >
                   <button
                     onClick={() => requestSort('email')}
@@ -320,7 +320,7 @@ export default function GroupMembers({
                 </th>
                 <th
                   scope="col"
-                  className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell dark:text-white"
+                  className="hidden w-24 px-3 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell dark:text-white"
                 >
                   <button
                     onClick={() => requestSort('role')}
@@ -332,7 +332,10 @@ export default function GroupMembers({
                     </span>
                   </button>
                 </th>
-                <th scope="col" className="relative py-3.5 pr-4 pl-3 sm:pr-6">
+                <th
+                  scope="col"
+                  className="relative w-20 py-3.5 pr-4 pl-3 sm:pr-6"
+                >
                   <span className="sr-only">Edit</span>
                 </th>
               </tr>
@@ -341,7 +344,7 @@ export default function GroupMembers({
               {filteredMembers.map((member) => (
                 <tr key={member.userId}>
                   <td className="w-full max-w-0 py-4 pr-3 pl-4 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6 dark:text-white">
-                    <div className="flex items-center gap-4">
+                    <div className="flex min-w-0 items-center gap-4">
                       <Image
                         src={member.user.photoUrl}
                         alt={`${member.user.username}'s profile picture`}
@@ -349,8 +352,8 @@ export default function GroupMembers({
                         height={48}
                         className="h-12 w-12 rounded-full object-cover"
                       />
-                      <div className="flex-1">
-                        <span className="block max-w-[25ch] truncate">
+                      <div className="min-w-0 flex-1">
+                        <span className="block truncate">
                           {member.user.firstName} {member.user.lastName}
                         </span>
                         <dl className="font-normal lg:hidden">
@@ -361,7 +364,7 @@ export default function GroupMembers({
                           </dd>
                           <dt className="sr-only">Email</dt>
                           <dd className="mt-1 truncate text-gray-700 dark:text-gray-400">
-                            <span className="block max-w-[25ch] truncate">
+                            <span className="block truncate">
                               {member.user.email}
                             </span>
                           </dd>
@@ -444,9 +447,7 @@ export default function GroupMembers({
                     </div>
                   </td>
                   <td className="hidden px-3 py-4 text-sm text-gray-500 sm:table-cell dark:text-gray-400">
-                    <span className="block max-w-[25ch] truncate">
-                      {member.user.email}
-                    </span>
+                    <span className="block truncate">{member.user.email}</span>
                   </td>
                   <td
                     className={`px-3 py-4 text-sm text-gray-500 dark:text-gray-400 ${
