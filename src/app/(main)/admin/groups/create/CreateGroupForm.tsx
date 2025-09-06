@@ -6,6 +6,13 @@ import Image from 'next/image'
 import imageCompression from 'browser-image-compression'
 import type { GroupType } from '@/generated/prisma'
 import { createGroup, type State } from './actions'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 const initialState: State = {
   message: null,
@@ -34,10 +41,17 @@ function SubmitButton() {
   )
 }
 
-export default function CreateGroupForm({ groupTypes }: { groupTypes: GroupType[] }) {
+export default function CreateGroupForm({
+  groupTypes,
+}: {
+  groupTypes: GroupType[]
+}) {
   const [state, formAction] = useActionState(createGroup, initialState)
   const [logoError, setLogoError] = useState<string | null>(null)
   const [logoBase64, setLogoBase64] = useState<string | null>(null)
+  const [selectedGroupType, setSelectedGroupType] = useState<string>(
+    state.values?.groupTypeId ? String(state.values.groupTypeId) : '',
+  )
   const formRef = useRef<HTMLFormElement>(null)
 
   const handleLogoChange = async (
@@ -107,169 +121,168 @@ export default function CreateGroupForm({ groupTypes }: { groupTypes: GroupType[
 
   return (
     <form ref={formRef} action={formAction} className="space-y-6">
-        <div>
-          <label
-            htmlFor="name"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-          >
-            Group Name <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            id="name"
-            name="name"
-            required
-            className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
-            defaultValue={state.values?.name}
-          />
-          {state.errors?.name && (
-            <p className="mt-1 text-sm text-red-500">{state.errors.name[0]}</p>
-          )}
-        </div>
+      <div>
+        <label
+          htmlFor="name"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+        >
+          Group Name <span className="text-red-500">*</span>
+        </label>
+        <input
+          type="text"
+          id="name"
+          name="name"
+          required
+          className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
+          defaultValue={state.values?.name}
+        />
+        {state.errors?.name && (
+          <p className="mt-1 text-sm text-red-500">{state.errors.name[0]}</p>
+        )}
+      </div>
 
-        <div>
-          <label
-            htmlFor="slug"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-          >
-            Slug <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            id="slug"
-            name="slug"
-            required
-            className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
-            defaultValue={state.values?.slug}
-          />
-          {state.errors?.slug && (
-            <p className="mt-1 text-sm text-red-500">{state.errors.slug[0]}</p>
-          )}
-        </div>
+      <div>
+        <label
+          htmlFor="slug"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+        >
+          Slug <span className="text-red-500">*</span>
+        </label>
+        <input
+          type="text"
+          id="slug"
+          name="slug"
+          required
+          className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
+          defaultValue={state.values?.slug}
+        />
+        {state.errors?.slug && (
+          <p className="mt-1 text-sm text-red-500">{state.errors.slug[0]}</p>
+        )}
+      </div>
 
-        <div>
-          <label
-            htmlFor="groupTypeId"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-          >
-            Group Type <span className="text-red-500">*</span>
-          </label>
-          <select
-            id="groupTypeId"
-            name="groupTypeId"
-            required
-            className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
-            defaultValue={state.values?.groupTypeId}
-          >
-            <option value="" disabled>
-              Select a group type
-            </option>
+      <div>
+        <label
+          htmlFor="groupTypeId"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+        >
+          Group Type <span className="text-red-500">*</span>
+        </label>
+        <Select
+          value={selectedGroupType}
+          onValueChange={setSelectedGroupType}
+          required
+        >
+          <SelectTrigger className="mt-1">
+            <SelectValue placeholder="Select a group type" />
+          </SelectTrigger>
+          <SelectContent>
             {groupTypes.map((groupType) => (
-              <option key={groupType.id} value={groupType.id}>
+              <SelectItem key={groupType.id} value={String(groupType.id)}>
                 {groupType.code}
-              </option>
+              </SelectItem>
             ))}
-          </select>
-          {state.errors?.groupTypeId && (
-            <p className="mt-1 text-sm text-red-500">
-              {state.errors.groupTypeId[0]}
-            </p>
-          )}
-        </div>
+          </SelectContent>
+        </Select>
+        <input type="hidden" name="groupTypeId" value={selectedGroupType} />
+        {state.errors?.groupTypeId && (
+          <p className="mt-1 text-sm text-red-500">
+            {state.errors.groupTypeId[0]}
+          </p>
+        )}
+      </div>
 
-        <div>
-          <label
-            htmlFor="description"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-          >
-            Description
-          </label>
-          <textarea
-            id="description"
-            name="description"
-            rows={3}
-            className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
-            defaultValue={state.values?.description}
-          />
-          {state.errors?.description && (
-            <p className="mt-1 text-sm text-red-500">
-              {state.errors.description[0]}
-            </p>
-          )}
-        </div>
+      <div>
+        <label
+          htmlFor="description"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+        >
+          Description
+        </label>
+        <textarea
+          id="description"
+          name="description"
+          rows={3}
+          className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
+          defaultValue={state.values?.description}
+        />
+        {state.errors?.description && (
+          <p className="mt-1 text-sm text-red-500">
+            {state.errors.description[0]}
+          </p>
+        )}
+      </div>
 
-        <div>
-          <label
-            htmlFor="logo-upload"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-          >
-            Logo
-          </label>
-          <div className="mt-1 flex items-center">
-            <span className="inline-block h-12 w-12 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700">
+      <div>
+        <label
+          htmlFor="logo-upload"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+        >
+          Logo
+        </label>
+        <div className="mt-1 space-y-3">
+          <div className="justify-left flex">
+            <span className="inline-block h-30 w-30 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700">
               <Image
                 src={logoBase64 || '/images/default-avatar.png'}
                 alt="Group logo preview"
-                width={48}
-                height={48}
+                width={120}
+                height={120}
                 className="h-full w-full text-gray-300"
               />
             </span>
-            <input
-              type="file"
-              id="logo-upload"
-              name="logo-upload"
-              accept="image/*"
-              onChange={handleLogoChange}
-              className="ml-5 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm leading-4 font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 dark:focus:ring-offset-gray-800"
-            />
           </div>
-          {logoError && (
-            <p className="mt-1 text-sm text-red-500">{logoError}</p>
-          )}
-        </div>
-
-        <div>
-          <label
-            htmlFor="address"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-          >
-            Address
-          </label>
           <input
-            type="text"
-            id="address"
-            name="address"
-            className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
-            defaultValue={state.values?.address}
+            type="file"
+            id="logo-upload"
+            name="logo-upload"
+            accept="image/*"
+            onChange={handleLogoChange}
+            className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm leading-4 font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 dark:focus:ring-offset-gray-800"
           />
-          {state.errors?.address && (
-            <p className="mt-1 text-sm text-red-500">
-              {state.errors.address[0]}
-            </p>
-          )}
         </div>
+        {logoError && <p className="mt-1 text-sm text-red-500">{logoError}</p>}
+      </div>
 
-        <div>
-          <label
-            htmlFor="phone"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-          >
-            Phone
-          </label>
-          <input
-            type="text"
-            id="phone"
-            name="phone"
-            className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
-            defaultValue={state.values?.phone}
-          />
-          {state.errors?.phone && (
-            <p className="mt-1 text-sm text-red-500">{state.errors.phone[0]}</p>
-          )}
-        </div>
+      <div>
+        <label
+          htmlFor="address"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+        >
+          Address
+        </label>
+        <input
+          type="text"
+          id="address"
+          name="address"
+          className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
+          defaultValue={state.values?.address}
+        />
+        {state.errors?.address && (
+          <p className="mt-1 text-sm text-red-500">{state.errors.address[0]}</p>
+        )}
+      </div>
 
-        <SubmitButton />
-      </form>
+      <div>
+        <label
+          htmlFor="phone"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+        >
+          Phone
+        </label>
+        <input
+          type="text"
+          id="phone"
+          name="phone"
+          className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
+          defaultValue={state.values?.phone}
+        />
+        {state.errors?.phone && (
+          <p className="mt-1 text-sm text-red-500">{state.errors.phone[0]}</p>
+        )}
+      </div>
+
+      <SubmitButton />
+    </form>
   )
 }
