@@ -87,6 +87,7 @@ export async function getUserUpdateRequirements(userId: string) {
 
   let passwordRequired = false
   if (user.password) {
+    // Password is required only if current password is the default 'password123'
     passwordRequired = await bcrypt.compare('password123', user.password)
   } else {
     passwordRequired = true // No password exists, so one is required
@@ -109,9 +110,13 @@ export async function updateUser(
     email: formData.get('email')?.toString() || '',
     phone: formData.get('phone')?.toString() || '',
     gender: formData.get('gender') as Gender | null,
-    birthDate: formData.get('birthDate') ? new Date(formData.get('birthDate') as string) : null,
+    birthDate: formData.get('birthDate')
+      ? new Date(formData.get('birthDate') as string)
+      : null,
     birthPlace: formData.get('birthPlace')?.toString() || '',
-    deathDate: formData.get('deathDate') ? new Date(formData.get('deathDate') as string) : null,
+    deathDate: formData.get('deathDate')
+      ? new Date(formData.get('deathDate') as string)
+      : null,
   }
 
   // Get the user to check password requirement
@@ -140,11 +145,13 @@ export async function updateUser(
   }
 
   const password = formData.get('password')?.toString() || ''
-  
+
   // If password is required but not provided, return error
   if (passwordRequired && !password) {
     return {
-      errors: { password: ['Password is required for users with default password.'] },
+      errors: {
+        password: ['Password is required for users with default password.'],
+      },
       message: 'Password is required.',
       values: {
         ...formValues,
@@ -192,7 +199,7 @@ export async function updateUser(
 
   const { photo, birthDate, deathDate, ...userData } = validatedFields.data
   const validatedPassword = validatedFields.data.password
-  
+
   // Parse dates if provided
   const parsedBirthDate = birthDate ? new Date(birthDate) : null
   const parsedDeathDate = deathDate ? new Date(deathDate) : null
