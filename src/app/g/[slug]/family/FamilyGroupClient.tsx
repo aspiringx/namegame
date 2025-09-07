@@ -29,6 +29,7 @@ import {
   FlaskConical,
   Brain,
   Image as Photo,
+  HelpCircle,
 } from 'lucide-react'
 import { ReactFlowProvider } from 'reactflow'
 import FamilyTree from './FamilyTree'
@@ -37,6 +38,10 @@ import { FocalUserSearch } from './FocalUserSearch'
 import { useGroup } from '@/components/GroupProvider'
 import NameQuizIntroModal from '@/components/NameQuizIntroModal'
 import { GuestMessage } from '@/components/GuestMessage'
+import { TourProvider, useTour } from '@reactour/tour'
+import { familyTourSteps } from '@/components/tours/FamilyTour'
+import { familyTourMobileSteps } from '@/components/tours/FamilyTourMobile'
+import { useTheme } from 'next-themes'
 
 const PAGE_SIZE = 10
 
@@ -60,11 +65,12 @@ interface FamilyGroupClientProps {
   initialRelationships: FullRelationship[]
 }
 
-export function FamilyGroupClient({
+function FamilyGroupClientContent({
   initialMembers,
   groupSlug,
   initialRelationships,
 }: FamilyGroupClientProps): React.JSX.Element | null {
+  const { setIsOpen, setCurrentStep } = useTour()
   const [members, setMembers] = useState<MemberWithUser[]>(initialMembers)
   const [isLoading, setIsLoading] = useState(true)
 
@@ -83,9 +89,32 @@ export function FamilyGroupClient({
   const prevIsGuestRef = useRef(isGuest)
 
   const router = useRouter()
-  const treeContainerRef = useRef<HTMLDivElement>(null)
   const familyTreeRef = useRef<FamilyTreeRef>(null)
   const [treeHeight, setTreeHeight] = useState(600) // Default height
+
+  const treeContainerRef = useCallback((node: HTMLDivElement) => {
+    if (node !== null && settings.viewMode === 'tree') {
+      const updateHeight = () => {
+        const rect = node.getBoundingClientRect()
+        const footer = document.querySelector('footer')
+        const footerHeight = footer ? footer.offsetHeight : 0
+        const newHeight = window.innerHeight - rect.top - footerHeight - 20 // 20px margin
+        setTreeHeight(newHeight > 400 ? newHeight : 400) // min height
+      }
+
+      const resizeObserver = new ResizeObserver(() => {
+        updateHeight()
+      })
+
+      resizeObserver.observe(node)
+
+      // Initial update
+      updateHeight()
+
+      // Cleanup
+      return () => resizeObserver.disconnect()
+    }
+  }, [settings.viewMode])
 
   const [isRelateModalOpen, setIsRelateModalOpen] = useState(false)
   const [isLoadingRelations, setIsLoadingRelations] = useState(false)
@@ -106,29 +135,26 @@ export function FamilyGroupClient({
     false,
   )
 
+
   useEffect(() => {
     async function loadMembers() {
       if (!group?.id) return
 
-      // 1. Try to load from IndexedDB first
       const cachedMembers = await getMembersByGroup(group.id)
       if (cachedMembers.length > 0) {
         setMembers(cachedMembers)
         setIsLoading(false)
       }
 
-      // 2. Fetch from server to get the latest data
-      // The initialMembers prop contains the server-fetched data
       if (initialMembers.length > 0) {
         setMembers(initialMembers)
-        await saveMembers(initialMembers) // Update cache
+        await saveMembers(initialMembers)
       }
 
       if (!cachedMembers.length && !initialMembers.length) {
-        // Handle case where there's nothing in cache and server fetch fails
         console.error('Failed to load members.')
       }
-      
+
       setIsLoading(false)
     }
 
@@ -217,7 +243,6 @@ export function FamilyGroupClient({
         return direction === 'asc' ? aDate - bDate : bDate - aDate
       }
 
-      // Handle firstName and lastName sorting
       const aValue = a.user[key] || ''
       const bValue = b.user[key] || ''
 
@@ -225,7 +250,12 @@ export function FamilyGroupClient({
       if (aValue > bValue) return direction === 'asc' ? 1 : -1
       return 0
     })
-  }, [members, settings.sortConfig, settings.filterByRealPhoto, settings.searchQuery])
+  }, [
+    members,
+    settings.sortConfig,
+    settings.filterByRealPhoto,
+    settings.searchQuery,
+  ])
 
   const relationshipMap = useMemo(() => {
     if (!currentUserMember) {
@@ -326,7 +356,7 @@ export function FamilyGroupClient({
       <div className="bg-background border-border sticky top-16 z-10 border-b py-4">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2" data-tour="sort-buttons">
               {settings.viewMode === 'tree' ? (
                 <Button
                   variant="secondary"
@@ -352,7 +382,7 @@ export function FamilyGroupClient({
                         variant={isActive ? 'secondary' : 'ghost'}
                         size="sm"
                         onClick={() => handleSort(key)}
-                        className={`flex items-center gap-1 capitalize ${key !== 'joined' ? 'hidden sm:flex' : ''}`}
+                        className={`hidden items-center gap-1 capitalize sm:flex`}
                       >
                         {key.replace('Name', '')}
                         {isActive && <SortIcon className="h-4 w-4" />}
@@ -373,6 +403,7 @@ export function FamilyGroupClient({
                               filterByRealPhoto: !prev.filterByRealPhoto,
                             }))
                           }
+                          data-tour="filter-by-real-photo-button"
                         >
                           <Photo className="h-4 w-4" />
                         </Button>
@@ -382,10 +413,24 @@ export function FamilyGroupClient({
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setCurrentStep(0)
+                      setIsOpen(true)
+                    }}
+                    data-tour="help-button"
+                  >
+                    <HelpCircle className="h-4 w-4" />
+                  </Button>
                 </>
               ) : null}
             </div>
-            <div className="flex items-center gap-2">
+            <div
+              className="flex items-center gap-2"
+              data-tour="view-mode-buttons"
+            >
               <Button
                 variant={settings.viewMode === 'grid' ? 'secondary' : 'ghost'}
                 size="sm"
@@ -427,13 +472,19 @@ export function FamilyGroupClient({
             {settings.viewMode === 'tree' ? (
               <FocalUserSearch
                 members={allGroupMembers}
-                onSelect={(userId) => familyTreeRef.current?.setFocalUser(userId)}
+                onSelect={(userId) =>
+                  familyTreeRef.current?.setFocalUser(userId)
+                }
               />
             ) : settings.viewMode !== 'quiz' ? (
               <>
                 <input
                   type="text"
-                  placeholder={isLoading ? 'Loading...' : `Search ${members.length} members...`}
+                  placeholder={
+                    isLoading
+                      ? 'Loading...'
+                      : `Search ${members.length} members...`
+                  }
                   value={settings.searchQuery}
                   onChange={(e) =>
                     setSettings((prev) => ({
@@ -442,6 +493,7 @@ export function FamilyGroupClient({
                     }))
                   }
                   className="w-full rounded-md border p-2 pr-10"
+                  data-tour="search-input"
                 />
                 {settings.searchQuery && (
                   <button
@@ -492,7 +544,9 @@ export function FamilyGroupClient({
                       <div
                         className="bg-background/80 absolute top-2 right-2 z-10 flex cursor-pointer items-center gap-1 rounded-full border px-2 py-1 text-xs backdrop-blur-sm sm:gap-1.5 sm:px-3 sm:py-1.5 sm:text-sm"
                         onClick={() =>
-                          setIsExperimentalTooltipOpen(!isExperimentalTooltipOpen)
+                          setIsExperimentalTooltipOpen(
+                            !isExperimentalTooltipOpen,
+                          )
                         }
                       >
                         <FlaskConical className="h-3 w-3 text-lime-400 sm:h-4 sm:w-4" />
@@ -500,10 +554,10 @@ export function FamilyGroupClient({
                     </TooltipTrigger>
                     <TooltipContent>
                       <p>
-                        The family tree view is new and still experimental. If you
-                        find bugs or have suggestions, please share with Joe... cuz
-                        yeah, it's still just our families using this until the
-                        kinks are ironed out.
+                        The family tree view is new and still experimental. If
+                        you find bugs or have suggestions, please share with
+                        Joe... cuz yeah, it's still just our families using this
+                        until the kinks are ironed out.
                       </p>
                     </TooltipContent>
                   </Tooltip>
@@ -576,3 +630,108 @@ export function FamilyGroupClient({
     </>
   )
 }
+
+const FamilyGroupClient: React.FC<FamilyGroupClientProps> = (props) => {
+  const [isMobile, setIsMobile] = useState(false)
+  const { resolvedTheme } = useTheme()
+  const [hasMounted, setHasMounted] = useState(false)
+
+  useEffect(() => {
+    setHasMounted(true)
+  }, [])
+
+  useEffect(() => {
+    const checkIsMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    checkIsMobile()
+    window.addEventListener('resize', checkIsMobile)
+    return () => window.removeEventListener('resize', checkIsMobile)
+  }, [])
+
+  const tourSteps = useMemo(() => {
+    if (isMobile) {
+      return familyTourMobileSteps
+    }
+    return familyTourSteps
+  }, [isMobile])
+
+  if (!hasMounted) {
+    return (
+      <div className="py-8 text-center text-gray-500 dark:text-gray-400">
+        Loading...
+      </div>
+    )
+  }
+
+  return (
+    <TourProvider
+      steps={tourSteps}
+      onClickMask={() => {}}
+      styles={{
+        popover: (base: React.CSSProperties) => {
+          const popoverStyles = isMobile
+            ? {
+                width: 'calc(100vw - 40px)',
+                maxWidth: 'calc(100vw - 40px)',
+              }
+            : {
+                maxWidth: '380px',
+              }
+
+          return {
+            ...base,
+            ...popoverStyles,
+            backgroundColor: 'var(--background)',
+            color: 'var(--foreground)',
+            borderRadius: '0.375rem',
+            boxShadow:
+              '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
+            border: hasMounted
+              ? `3px solid ${
+                  resolvedTheme === 'dark'
+                    ? 'hsl(240 3.7% 25.9%)'
+                    : 'hsl(214.3 31.8% 81.4%)'
+                }`
+              : 'none',
+          }
+        },
+        badge: (base: React.CSSProperties) => ({
+          ...base,
+          backgroundColor: '#4f46e5',
+        }),
+        dot: (
+          base: React.CSSProperties,
+          { current }: { current?: boolean } = {},
+        ) => ({
+          ...base,
+          backgroundColor: current ? '#4f46e5' : '#a5b4fc',
+        }),
+        close: (base: React.CSSProperties) => ({
+          ...base,
+          color: 'var(--foreground)',
+          top: 12,
+          right: 12,
+        }),
+        arrow: (base: React.CSSProperties) => ({
+          ...base,
+          display: 'block',
+          color: 'var(--foreground)',
+        }),
+        maskWrapper: (base: React.CSSProperties) => {
+          if (isMobile) {
+            return { ...base, color: 'transparent' }
+          }
+          return base
+        },
+      }}
+      showNavigation={true}
+      showCloseButton={true}
+      disableInteraction={true}
+    >
+      <FamilyGroupClientContent {...props} />
+    </TourProvider>
+  )
+}
+
+export { FamilyGroupClient }
