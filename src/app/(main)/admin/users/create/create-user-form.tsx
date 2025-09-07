@@ -49,7 +49,6 @@ export default function CreateUserForm() {
       mode="create"
       onSubmit={handleCreateUser}
       initialState={initialState}
-      passwordRequired={true}
       submitButtonText="Create User"
       submitButtonPendingText="Creating..."
     />

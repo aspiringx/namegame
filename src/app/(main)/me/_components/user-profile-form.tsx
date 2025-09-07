@@ -154,7 +154,12 @@ export default function UserProfileForm({
   const [isPasswordTooltipOpen, setIsPasswordTooltipOpen] = useState(false)
   const [isBirthDateTooltipOpen, setIsBirthDateTooltipOpen] = useState(false)
   const [isLoadingRequirements, setIsLoadingRequirements] = useState(true)
-  const { isSupported: isPushSupported } = usePushManager()
+  const { isSupported } = usePushManager()
+  const [isPushSupported, setIsPushSupported] = useState(false)
+
+  useEffect(() => {
+    setIsPushSupported(isSupported)
+  }, [isSupported])
 
   const optionalFields = [birthDate, birthPlace]
   const completedOptionalFields = optionalFields.filter(

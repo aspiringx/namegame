@@ -8,7 +8,7 @@ import { redirect } from 'next/navigation'
 import { uploadFile, deleteFile, getPublicUrl } from '@/lib/storage'
 import { getCodeTable } from '@/lib/codes'
 import { auth } from '@/auth'
-import { Gender, DatePrecision } from '@/generated/prisma/client'
+import { Gender, DatePrecision, User } from '@/generated/prisma/client'
 
 const FormSchema = z.object({
   username: z.string().min(1, 'Username is required.'),
@@ -38,9 +38,20 @@ const FormSchema = z.object({
     }),
   password: z
     .string()
-    .min(6, 'Password must be at least 6 characters.')
     .optional()
-    .or(z.literal('')),
+    .or(z.literal(''))
+    .refine(
+      (val) =>
+        !val ||
+        val.length === 0 ||
+        /^(?=.*[a-zA-Z])(?=.*\d).{6,}$/.test(val),
+      {
+        message: 'Password must have 6+ characters with letters and numbers.',
+      },
+    )
+    .refine((val) => !val || !val.toLowerCase().includes('pass'), {
+      message: 'Password cannot contain the word "pass".',
+    }),
   photoUrl: z.string().optional().nullable(),
 })
 
@@ -69,7 +80,7 @@ export type State = {
     phone: string
     gender?: Gender | null
     birthDate?: Date | null
-    birthPlace?: string
+    birthPlace?: string | null
     deathDate?: Date | null
     password?: string
   }
@@ -204,6 +215,7 @@ export async function updateUser(
   const parsedBirthDate = birthDate ? new Date(birthDate) : null
   const parsedDeathDate = deathDate ? new Date(deathDate) : null
   let photoUrl: string | null = null
+  let updatedUser: User | null = null
 
   try {
     const [photoTypes, entityTypes] = await Promise.all([
@@ -213,8 +225,10 @@ export async function updateUser(
     const primaryPhotoTypeId = photoTypes.primary.id
     const userEntityTypeId = entityTypes.user.id
 
+    const { password, ...userDataWithoutPassword } = userData
+
     const dataToUpdate: any = {
-      ...userData,
+      ...userDataWithoutPassword,
       lastName: userData.lastName || null,
       email: userData.email || null,
       phone: userData.phone || null,
@@ -231,39 +245,48 @@ export async function updateUser(
       dataToUpdate.password = await bcrypt.hash(validatedPassword, 10)
     }
 
-    await prisma.user.update({
+    updatedUser = await prisma.user.update({
       where: { id },
       data: dataToUpdate,
     })
 
     // Handle photo upload if a new photo was provided
     if (photo && photo.size > 0) {
-      // Delete existing photo if it exists
-      const existingUser = await prisma.user.findUnique({
-        where: { id },
-        include: { photos: true },
-      })
+      // Upload the new photo to storage first
+      const newPhotoKey = await uploadFile(photo, 'user-photos', id)
+      photoUrl = await getPublicUrl(newPhotoKey)
 
-      if (existingUser?.photos?.length) {
-        for (const existingPhoto of existingUser.photos) {
-          await deleteFile(existingPhoto.url)
-          await prisma.photo.delete({ where: { id: existingPhoto.id } })
-        }
-      }
-
-      // Upload new photo
-      const fileName = `user-${id}-${Date.now()}.${photo.name.split('.').pop()}`
-      photoUrl = await uploadFile(photo, 'user-photos', id)
-
-      await prisma.photo.create({
-        data: {
-          url: photoUrl!,
-          typeId: primaryPhotoTypeId,
-          entityTypeId: userEntityTypeId,
+      // Check if a primary photo record already exists for the user
+      const existingPhoto = await prisma.photo.findFirst({
+        where: {
           entityId: id,
-          userId: updaterId,
+          entityTypeId: userEntityTypeId,
+          typeId: primaryPhotoTypeId,
         },
       })
+
+      if (existingPhoto) {
+        // If it exists, update the record with the new URL
+        await prisma.photo.update({
+          where: { id: existingPhoto.id },
+          data: { url: newPhotoKey, userId: updaterId }, // Update URL and who updated it
+        })
+        // After successfully updating the DB, delete the old file from storage
+        if (existingPhoto.url) {
+          await deleteFile(existingPhoto.url)
+        }
+      } else {
+        // If no primary photo exists, create a new one
+        await prisma.photo.create({
+          data: {
+            url: newPhotoKey,
+            typeId: primaryPhotoTypeId,
+            entityTypeId: userEntityTypeId,
+            entityId: id,
+            userId: updaterId, // The admin is the one who uploaded the photo
+          },
+        })
+      }
     }
   } catch (error: any) {
     if (error.code === 'P2002' && error.meta?.target?.includes('username')) {
@@ -286,11 +309,31 @@ export async function updateUser(
   revalidatePath(`/admin/users/${id}/edit`)
   revalidateTag('user-photo')
 
+  if (!updatedUser) {
+    return {
+      errors: null,
+      message: 'An unexpected error occurred and user data could not be refreshed.',
+      success: false,
+    }
+  }
+
   return {
     ...prevState,
     message: 'User updated successfully.',
     errors: null,
     success: true,
     photoUrl,
+    values: {
+      username: updatedUser.username,
+      firstName: updatedUser.firstName || '',
+      lastName: updatedUser.lastName || '',
+      email: updatedUser.email || '',
+      phone: updatedUser.phone || '',
+      gender: updatedUser.gender,
+      birthDate: updatedUser.birthDate,
+      birthPlace: updatedUser.birthPlace || '',
+      deathDate: updatedUser.deathDate,
+      password: '', // Always return empty password
+    },
   }
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useState, useRef, useEffect } from 'react'
+import React, { useActionState, useState, useRef, useEffect } from 'react'
 import { useFormStatus } from 'react-dom'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -59,6 +59,10 @@ export type UserFormState = {
     lastName: string
     email: string
     phone: string
+    gender?: Gender | null
+    birthDate?: Date | null
+    birthPlace?: string | null
+    deathDate?: Date | null
     password?: string
   }
 }
@@ -73,7 +77,6 @@ type UserFormProps = {
     formData: FormData,
   ) => Promise<UserFormState>
   initialState: UserFormState
-  passwordRequired?: boolean
   onPasswordRequirementCheck?: (
     userId: string,
   ) => Promise<{ passwordRequired: boolean }>
@@ -108,7 +111,7 @@ function SubmitButton({
     <button
       type="submit"
       disabled={pending || disabled}
-      className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none disabled:bg-indigo-400 dark:focus:ring-offset-gray-800 dark:disabled:bg-indigo-800"
+      className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50 disabled:bg-indigo-400 dark:focus:ring-offset-gray-800 dark:disabled:bg-indigo-800"
     >
       {pending ? pendingText : text}
     </button>
@@ -119,239 +122,78 @@ export default function GlobalUserForm({
   mode,
   user,
   photoUrl,
-  hasPhoto,
   onSubmit,
   initialState,
-  passwordRequired: initialPasswordRequired = true,
   onPasswordRequirementCheck,
   submitButtonText,
   submitButtonPendingText,
 }: UserFormProps) {
-  const [previewUrl, setPreviewUrl] = useState<string | null>(photoUrl || null)
-  const [photoPreview, setPhotoPreview] = useState<string>(photoUrl || '')
-  const [fileSelected, setFileSelected] = useState(false)
-  const [gender, setGender] = useState<Gender | null>(
-    mode === 'edit' ? user?.gender || null : null,
-  )
-  const [birthDate, setBirthDate] = useState(
-    mode === 'edit' && user?.birthDate
+  // --- State Management ---
+  const getInitialFormState = () => ({
+    username: user?.username || '',
+    firstName: user?.firstName || '',
+    lastName: user?.lastName || '',
+    gender: user?.gender || null,
+    email: user?.email || '',
+    phone: user?.phone || '',
+    birthDate: user?.birthDate
       ? new Date(user.birthDate).toISOString().split('T')[0]
       : '',
-  )
-  const [birthPlace, setBirthPlace] = useState(
-    mode === 'edit' ? user?.birthPlace || '' : '',
-  )
-  const [deathDate, setDeathDate] = useState(
-    mode === 'edit' && user?.deathDate
+    birthPlace: user?.birthPlace || '',
+    deathDate: user?.deathDate
       ? new Date(user.deathDate).toISOString().split('T')[0]
       : '',
+    password: '', // Password always starts empty
+  })
+
+  type InternalFormState = ReturnType<typeof getInitialFormState>
+
+  const [formState, setFormState] = useState<InternalFormState>(
+    getInitialFormState(),
   )
+  const initialFormStateRef = useRef(getInitialFormState())
+
+  const [photoPreview, setPhotoPreview] = useState<string>(photoUrl || '')
+  const [fileSelected, setFileSelected] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
   const [showCopySuccess, setShowCopySuccess] = useState(false)
   const [isPasswordTooltipOpen, setIsPasswordTooltipOpen] = useState(false)
   const [isEmailTooltipOpen, setIsEmailTooltipOpen] = useState(false)
-  const [isDirty, setIsDirty] = useState(false)
-  const [passwordRequired, setPasswordRequired] = useState(
-    mode === 'create' ? true : false,
-  )
+  const [passwordRequired, setPasswordRequired] = useState(mode === 'create')
+  const [passwordError, setPasswordError] = useState<string | null>(null)
+  const [usernameError, setUsernameError] = useState<string | null>(null)
+  const [firstNameError, setFirstNameError] = useState<string | null>(null)
+  const [emailError, setEmailError] = useState<string | null>(null)
+
   const fileInputRef = useRef<HTMLInputElement>(null)
-
-  const [state, formAction] = useActionState(onSubmit, initialState)
-
-  // Check password requirement on mount (edit mode only)
-  useEffect(() => {
-    if (mode === 'edit' && user?.id && onPasswordRequirementCheck) {
-      async function fetchRequirements() {
-        try {
-          const { passwordRequired } = await onPasswordRequirementCheck!(
-            user!.id!,
-          )
-          setPasswordRequired(passwordRequired)
-        } catch (error) {
-          console.error('Failed to check password requirement:', error)
-          setPasswordRequired(true)
-        }
-      }
-      fetchRequirements()
-    }
-  }, [mode, user?.id, onPasswordRequirementCheck])
-
-  const formSubmitted = useRef(false)
-
-  useEffect(() => {
-    if (state.success && !formSubmitted.current) {
-      formSubmitted.current = true
-
-      // Re-check password requirement after successful update (edit mode only)
-      if (mode === 'edit' && user?.id && onPasswordRequirementCheck) {
-        async function recheckRequirements() {
-          try {
-            const { passwordRequired } = await onPasswordRequirementCheck!(
-              user!.id!,
-            )
-            setPasswordRequired(passwordRequired)
-            setPassword('')
-          } catch (error) {
-            console.error('Failed to recheck password requirement:', error)
-          }
-        }
-        recheckRequirements()
-      }
-
-      if (state.photoUrl !== undefined) {
-        const channel = new BroadcastChannel('photo_updates')
-        channel.postMessage('photo_updated')
-        channel.close()
-      }
-    }
-  }, [
-    state.success,
-    state.photoUrl,
-    mode,
-    user?.id,
-    onPasswordRequirementCheck,
-  ])
-
-  const [password, setPassword] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
-  const [initialPassword] = useState('')
   const passwordInputRef = useRef<HTMLInputElement>(null)
+  const [state, formAction] = useActionState(onSubmit, initialState)
+  const formSubmittedRef = useRef(false)
 
-  useEffect(() => {
-    if (state.values?.password) {
-      setPassword(state.values.password)
-    }
-  }, [state.values?.password])
+  // --- Event Handlers ---
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+  ) => {
+    const { name, value } = e.target
+    setFormState((prev) => ({ ...prev, [name]: value }))
+  }
 
-  // Detect browser extension password autofill in create mode. This uses
-  // a short-lived polling mechanism because autofill events are inconsistent.
-  useEffect(() => {
-    if (mode === 'create') {
-      let attempts = 0
-      const maxAttempts = 20 // Poll for 2 seconds (20 * 100ms)
-
-      const intervalId = setInterval(() => {
-        const inputElement = passwordInputRef.current
-        if (inputElement && inputElement.value) {
-          // Use functional update to get the latest state and avoid stale closures.
-          setPassword(currentPassword => {
-            if (inputElement.value !== currentPassword) {
-              // A new value was found, so we update the state and stop polling.
-              clearInterval(intervalId)
-              return inputElement.value
-            }
-            // No change, keep the current state.
-            return currentPassword
-          })
-        }
-
-        if (++attempts >= maxAttempts) {
-          clearInterval(intervalId)
-        }
-      }, 100)
-
-      return () => clearInterval(intervalId)
-    }
-    // We only want this to run once on mount in create mode.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode])
-
+  const handleGenderChange = (gender: Gender | null) => {
+    setFormState((prev) => ({ ...prev, gender }))
+  }
 
   const handleGeneratePassword = () => {
-    setPassword(generateRandomPassword(6))
+    setFormState((prev) => ({ ...prev, password: generateRandomPassword(6) }))
   }
 
   const handleCopyPassword = () => {
-    if (password) {
-      navigator.clipboard.writeText(password).then(() => {
+    if (formState.password) {
+      navigator.clipboard.writeText(formState.password).then(() => {
         setShowCopySuccess(true)
-        setTimeout(() => {
-          setShowCopySuccess(false)
-        }, 2000)
+        setTimeout(() => setShowCopySuccess(false), 2000)
       })
     }
   }
-
-  // State for form field values (edit mode uses controlled components)
-  const [formValues, setFormValues] = useState({
-    username: mode === 'edit' ? user?.username || '' : '',
-    firstName: mode === 'edit' ? user?.firstName || '' : '',
-    lastName: mode === 'edit' ? user?.lastName || '' : '',
-    email: mode === 'edit' ? user?.email || '' : '',
-    phone: mode === 'edit' ? user?.phone || '' : '',
-  })
-
-  // Track if form is dirty (edit mode only)
-  useEffect(() => {
-    if (mode === 'edit' && user) {
-      const isUsernameDirty = formValues.username !== (user.username || '')
-      const isFirstNameDirty = formValues.firstName !== (user.firstName || '')
-      const isLastNameDirty = formValues.lastName !== (user.lastName || '')
-      const isEmailDirty = formValues.email !== (user.email || '')
-      const isPhoneDirty = formValues.phone !== (user.phone || '')
-      const isGenderDirty = gender !== user.gender
-      const isBirthDateDirty =
-        birthDate !==
-        (user.birthDate
-          ? new Date(user.birthDate).toISOString().split('T')[0]
-          : '')
-      const isBirthPlaceDirty = birthPlace !== (user.birthPlace || '')
-      const isDeathDateDirty =
-        deathDate !==
-        (user.deathDate
-          ? new Date(user.deathDate).toISOString().split('T')[0]
-          : '')
-      const isPasswordDirty = password !== ''
-      const isPhotoDirty = fileSelected
-
-      const dirty =
-        isUsernameDirty ||
-        isFirstNameDirty ||
-        isLastNameDirty ||
-        isEmailDirty ||
-        isPhoneDirty ||
-        isGenderDirty ||
-        isBirthDateDirty ||
-        isBirthPlaceDirty ||
-        isDeathDateDirty ||
-        isPasswordDirty ||
-        isPhotoDirty
-
-      setIsDirty(dirty)
-    } else if (mode === 'create') {
-      // Create mode: check if password has been changed from initial
-      const isPasswordDirty = password !== initialPassword
-      setIsDirty(isPasswordDirty)
-    }
-  }, [
-    mode,
-    formValues.username,
-    formValues.firstName,
-    formValues.lastName,
-    formValues.email,
-    formValues.phone,
-    gender,
-    birthDate,
-    birthPlace,
-    deathDate,
-    password,
-    initialPassword,
-    fileSelected,
-    user?.username,
-    user?.firstName,
-    user?.lastName,
-    user?.email,
-    user?.phone,
-    user?.gender,
-    user?.birthDate,
-    user?.birthPlace,
-    user?.deathDate,
-  ])
-
-  // Check if all required fields are valid
-  const isFormValid =
-    formValues.username &&
-    formValues.firstName &&
-    (passwordRequired ? password : true)
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -359,19 +201,12 @@ export default function GlobalUserForm({
       setFileSelected(true)
       const reader = new FileReader()
       reader.onloadend = () => {
-        setPreviewUrl(reader.result as string)
         setPhotoPreview(reader.result as string)
       }
       reader.readAsDataURL(file)
     } else {
-      if (photoUrl) {
-        setPreviewUrl(photoUrl)
-        setPhotoPreview(photoUrl)
-      } else {
-        setPreviewUrl(null)
-        setPhotoPreview('')
-      }
       setFileSelected(false)
+      setPhotoPreview(photoUrl || '')
     }
   }
 
@@ -379,8 +214,218 @@ export default function GlobalUserForm({
     fileInputRef.current?.click()
   }
 
+  // --- Validation --- 
+  const validateUsername = (username: string) => {
+    if (!username) {
+      return 'Username is required.'
+    }
+    if (username.length < 2) {
+      return 'Username must be at least 2 characters long.'
+    }
+    return null
+  }
+
+  const validateFirstName = (firstName: string) => {
+    if (!firstName) {
+      return 'First name is required.'
+    }
+    return null
+  }
+
+  const validateEmail = (email: string) => {
+    if (email && !/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(email)) {
+      return 'Invalid email address.'
+    }
+    return null
+  }
+
+  const validatePassword = (password: string) => {
+    if (!password && !passwordRequired) {
+      return null
+    }
+    if (!password && passwordRequired) {
+      return 'Password is required.'
+    }
+    if (!/^(?=.*[a-zA-Z])(?=.*\d).{6,}$/.test(password)) {
+      return 'Password must have 6+ characters with letters and numbers.'
+    }
+    if (password.toLowerCase().includes('pass')) {
+      return 'Password cannot contain the word "pass".'
+    }
+    return null
+  }
+
+  // --- Effects ---
+
+  // Check password requirement on mount (edit mode only)
+  useEffect(() => {
+    if (mode === 'edit' && user?.id && onPasswordRequirementCheck) {
+      onPasswordRequirementCheck(user.id)
+        .then(({ passwordRequired }) => setPasswordRequired(passwordRequired))
+        .catch((error) => {
+          console.error('Failed to check password requirement:', error)
+          setPasswordRequired(true) // Default to required on error
+        })
+    }
+  }, [mode, user?.id, onPasswordRequirementCheck])
+
+  // Handle post-submission logic
+  useEffect(() => {
+    // This effect should only run after a form submission has occurred.
+    // We use a ref to track this, as the `state` from `useActionState` is
+    // the same object on initial render and after submission, making it
+    // unsuitable for a dependency array check alone.
+    if (!formSubmittedRef.current) {
+      return
+    }
+
+    if (state.success) {
+      if (mode === 'edit') {
+        setFileSelected(false)
+
+        // After a successful save, we need to reset the form to a clean state.
+        // The `state.values` from the server action contains the just-saved data,
+        // so we use it as the new source of truth for both the visible form
+        // and the initial state reference used for the 'isDirty' check.
+        if (state.values) {
+          const newCleanState: InternalFormState = {
+            username: state.values.username || '',
+            firstName: state.values.firstName || '',
+            lastName: state.values.lastName || '',
+            gender: state.values.gender || null,
+            email: state.values.email || '',
+            phone: state.values.phone || '',
+            birthDate: state.values.birthDate
+              ? new Date(state.values.birthDate).toISOString().split('T')[0]
+              : '',
+            birthPlace: state.values.birthPlace || '',
+            deathDate: state.values.deathDate
+              ? new Date(state.values.deathDate).toISOString().split('T')[0]
+              : '',
+            password: '', // Always clear password
+          }
+          setFormState(newCleanState)
+          initialFormStateRef.current = newCleanState
+        }
+
+        // Then, re-check if a password is now required (e.g. after setting an email)
+        if (user?.id && onPasswordRequirementCheck) {
+          onPasswordRequirementCheck(user.id).then(({ passwordRequired }) => {
+            setPasswordRequired(passwordRequired)
+          })
+        }
+      }
+
+      // If a new photo was uploaded, broadcast an update
+      if (state.photoUrl !== undefined) {
+        const channel = new BroadcastChannel('photo_updates')
+        channel.postMessage('photo_updated')
+        channel.close()
+      }
+    } else if (state.values) {
+      // If the form submission failed, restore the previous non-password values,
+      // but preserve the password that the user may have been typing.
+      setFormState((prev) => ({
+        ...prev,
+        ...state.values,
+        // The server doesn't return all fields on failure, so we keep the existing ones
+        // to prevent type errors and preserve user input.
+        gender: prev.gender,
+        birthDate: prev.birthDate,
+        birthPlace: prev.birthPlace,
+        deathDate: prev.deathDate,
+        password: prev.password,
+      }))
+    }
+  }, [state, mode, user?.id, onPasswordRequirementCheck])
+
+  // --- Client-Side Validation Effects ---
+  useEffect(() => {
+    setUsernameError(validateUsername(formState.username))
+  }, [formState.username])
+
+  useEffect(() => {
+    setFirstNameError(validateFirstName(formState.firstName))
+  }, [formState.firstName])
+
+  useEffect(() => {
+    setEmailError(validateEmail(formState.email))
+  }, [formState.email])
+
+  // Validate password on change
+  useEffect(() => {
+    if (formState.password) {
+      setPasswordError(validatePassword(formState.password))
+    } else {
+      // Clear error if password field is empty (unless it's required and empty)
+      setPasswordError(passwordRequired ? 'Password is required.' : null)
+    }
+  }, [formState.password, passwordRequired])
+
+  // Detect browser password autofill
+  useEffect(() => {
+    if (mode === 'create') {
+      const intervalId = setInterval(() => {
+        const input = passwordInputRef.current
+        if (input && input.value && input.value !== formState.password) {
+          setFormState((prev) => ({ ...prev, password: input.value }))
+          clearInterval(intervalId)
+        }
+      }, 250)
+
+      // Stop polling after 2 seconds
+      const timeoutId = setTimeout(() => clearInterval(intervalId), 2000)
+
+      return () => {
+        clearInterval(intervalId)
+        clearTimeout(timeoutId)
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode])
+
+  // --- Derived State ---
+
+  // Check if the form is dirty by comparing to the initial state.
+  const isDirty = React.useMemo(() => {
+    // In create mode, any interaction makes it dirty.
+    if (mode === 'create') {
+      return (
+        JSON.stringify(formState) !==
+        JSON.stringify(initialFormStateRef.current)
+      )
+    }
+    // In edit mode, photo selection also counts.
+    return (
+      JSON.stringify(formState) !==
+        JSON.stringify(initialFormStateRef.current) || fileSelected
+    )
+  }, [formState, fileSelected, mode])
+
+  // Check if all required fields are valid.
+  const isFormValid = React.useMemo(() => {
+    const isPasswordValid = !validatePassword(formState.password)
+    const isUsernameValid = !validateUsername(formState.username)
+    const isFirstNameValid = !validateFirstName(formState.firstName)
+    const isEmailValid = !validateEmail(formState.email)
+
+    return isUsernameValid && isFirstNameValid && isPasswordValid && isEmailValid
+  }, [
+    formState.username,
+    formState.firstName,
+    formState.email,
+    formState.password,
+    passwordRequired,
+  ])
+
   return (
-    <form action={formAction} className="space-y-6">
+    <form
+      action={(formData) => {
+        formSubmittedRef.current = true
+        formAction(formData)
+      }}
+      className="space-y-6"
+    >
       {state.message && (
         <div className="space-y-4">
           {state.success ? (
@@ -419,22 +464,12 @@ export default function GlobalUserForm({
           name="username"
           required
           className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
-          {...(mode === 'edit'
-            ? {
-                value: formValues.username,
-                onChange: (e) =>
-                  setFormValues((prev) => ({
-                    ...prev,
-                    username: e.target.value,
-                  })),
-              }
-            : {
-                defaultValue: state.values?.username || '',
-              })}
+          value={formState.username}
+          onChange={handleInputChange}
         />
-        {state.errors?.username && (
+        {(state.errors?.username || usernameError) && (
           <p className="mt-1 text-sm text-red-500">
-            {state.errors.username[0]}
+            {usernameError || state.errors?.username?.[0]}
           </p>
         )}
       </div>
@@ -453,22 +488,12 @@ export default function GlobalUserForm({
           name="firstName"
           required
           className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
-          {...(mode === 'edit'
-            ? {
-                value: formValues.firstName,
-                onChange: (e) =>
-                  setFormValues((prev) => ({
-                    ...prev,
-                    firstName: e.target.value,
-                  })),
-              }
-            : {
-                defaultValue: state.values?.firstName || '',
-              })}
+          value={formState.firstName}
+          onChange={handleInputChange}
         />
-        {state.errors?.firstName && (
+        {(state.errors?.firstName || firstNameError) && (
           <p className="mt-1 text-sm text-red-500">
-            {state.errors.firstName[0]}
+            {firstNameError || state.errors?.firstName?.[0]}
           </p>
         )}
       </div>
@@ -486,18 +511,8 @@ export default function GlobalUserForm({
           id="lastName"
           name="lastName"
           className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
-          {...(mode === 'edit'
-            ? {
-                value: formValues.lastName,
-                onChange: (e) =>
-                  setFormValues((prev) => ({
-                    ...prev,
-                    lastName: e.target.value,
-                  })),
-              }
-            : {
-                defaultValue: state.values?.lastName || '',
-              })}
+          value={formState.lastName}
+          onChange={handleInputChange}
         />
         {state.errors?.lastName && (
           <p className="mt-1 text-sm text-red-500">
@@ -514,9 +529,9 @@ export default function GlobalUserForm({
         <div className="flex gap-3">
           <button
             type="button"
-            onClick={() => setGender(Gender.male)}
+            onClick={() => handleGenderChange(Gender.male)}
             className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-              gender === Gender.male
+              formState.gender === Gender.male
                 ? 'bg-blue-600 text-white'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
             }`}
@@ -525,9 +540,9 @@ export default function GlobalUserForm({
           </button>
           <button
             type="button"
-            onClick={() => setGender(Gender.female)}
+            onClick={() => handleGenderChange(Gender.female)}
             className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-              gender === Gender.female
+              formState.gender === Gender.female
                 ? 'bg-pink-600 text-white'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
             }`}
@@ -536,26 +551,26 @@ export default function GlobalUserForm({
           </button>
           <button
             type="button"
-            onClick={() => setGender(Gender.non_binary)}
+            onClick={() => handleGenderChange(Gender.non_binary)}
             className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-              gender === Gender.non_binary
+              formState.gender === Gender.non_binary
                 ? 'bg-purple-600 text-white'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
             }`}
           >
             They
           </button>
-          {gender && (
+          {formState.gender && (
             <button
               type="button"
-              onClick={() => setGender(null)}
+              onClick={() => handleGenderChange(null)}
               className="rounded-md px-3 py-2 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
             >
               Clear
             </button>
           )}
         </div>
-        <input type="hidden" name="gender" value={gender || ''} />
+        <input type="hidden" name="gender" value={formState.gender || ''} />
         {state.errors?.gender && (
           <p className="mt-1 text-sm text-red-500">{state.errors.gender[0]}</p>
         )}
@@ -575,23 +590,13 @@ export default function GlobalUserForm({
             id="email"
             name="email"
             className="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 pr-10 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
-            {...(mode === 'edit'
-              ? {
-                  value: formValues.email,
-                  onChange: (e) =>
-                    setFormValues((prev) => ({
-                      ...prev,
-                      email: e.target.value,
-                    })),
-                }
-              : {
-                  defaultValue: state.values?.email || '',
-                })}
+            value={formState.email}
+            onChange={handleInputChange}
           />
           {mode === 'edit' && (
             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
               <TooltipProvider>
-                {formValues.email && user?.emailVerified && (
+                {formState.email && user?.emailVerified && (
                   <Tooltip
                     open={isEmailTooltipOpen}
                     onOpenChange={setIsEmailTooltipOpen}
@@ -619,8 +624,10 @@ export default function GlobalUserForm({
             </div>
           )}
         </div>
-        {state.errors?.email && (
-          <p className="mt-1 text-sm text-red-500">{state.errors.email[0]}</p>
+        {(state.errors?.email || emailError) && (
+          <p className="mt-1 text-sm text-red-500">
+            {emailError || state.errors?.email?.[0]}
+          </p>
         )}
       </div>
 
@@ -646,10 +653,10 @@ export default function GlobalUserForm({
                 : 'Leave blank to keep current password'
             }
             required={passwordRequired}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            value={formState.password}
+            onChange={handleInputChange}
           />
-          {password && (
+          {formState.password && (
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
@@ -668,11 +675,13 @@ export default function GlobalUserForm({
               onOpenChange={setIsPasswordTooltipOpen}
             >
               <TooltipTrigger asChild>
-                {password ? (
+                {formState.password ? (
                   <button
                     type="button"
                     onClick={handleCopyPassword}
-                    className={`inline-flex items-center border border-l-0 border-gray-300 bg-gray-50 px-3 text-sm text-gray-500 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 ${password ? 'rounded-r-md' : ''}`}
+                    className={`inline-flex items-center border border-l-0 border-gray-300 bg-gray-50 px-3 text-sm text-gray-500 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 ${
+                      formState.password ? 'rounded-r-md' : ''
+                    }`}
                     aria-label="Copy password to clipboard"
                   >
                     {showCopySuccess ? (
@@ -694,7 +703,7 @@ export default function GlobalUserForm({
               </TooltipTrigger>
               <TooltipContent>
                 <p>
-                  {password
+                  {formState.password
                     ? showCopySuccess
                       ? 'Copied!'
                       : 'Copy Password'
@@ -704,9 +713,9 @@ export default function GlobalUserForm({
             </Tooltip>
           </TooltipProvider>
         </div>
-        {state.errors?.password && (
+        {(state.errors?.password || passwordError) && (
           <p className="mt-1 text-sm text-red-500">
-            {state.errors.password[0]}
+            {passwordError || state.errors?.password?.[0]}
           </p>
         )}
       </div>
@@ -773,15 +782,8 @@ export default function GlobalUserForm({
           id="phone"
           name="phone"
           className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
-          {...(mode === 'edit'
-            ? {
-                value: formValues.phone,
-                onChange: (e) =>
-                  setFormValues((prev) => ({ ...prev, phone: e.target.value })),
-              }
-            : {
-                defaultValue: state.values?.phone || '',
-              })}
+          value={formState.phone}
+          onChange={handleInputChange}
         />
         {state.errors?.phone && (
           <p className="mt-1 text-sm text-red-500">{state.errors.phone[0]}</p>
@@ -801,8 +803,8 @@ export default function GlobalUserForm({
           id="birthDate"
           name="birthDate"
           className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
-          value={birthDate}
-          onChange={(e) => setBirthDate(e.target.value)}
+          value={formState.birthDate}
+          onChange={handleInputChange}
         />
         {state.errors?.birthDate && (
           <p className="mt-1 text-sm text-red-500">
@@ -824,8 +826,8 @@ export default function GlobalUserForm({
           id="birthPlace"
           name="birthPlace"
           className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
-          value={birthPlace}
-          onChange={(e) => setBirthPlace(e.target.value)}
+          value={formState.birthPlace}
+          onChange={handleInputChange}
           placeholder="e.g., New York, NY"
         />
         {state.errors?.birthPlace && (
@@ -848,8 +850,8 @@ export default function GlobalUserForm({
           id="deathDate"
           name="deathDate"
           className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
-          value={deathDate}
-          onChange={(e) => setDeathDate(e.target.value)}
+          value={formState.deathDate}
+          onChange={handleInputChange}
         />
         {state.errors?.deathDate && (
           <p className="mt-1 text-sm text-red-500">
@@ -866,7 +868,7 @@ export default function GlobalUserForm({
           Cancel
         </Link>
         <SubmitButton
-          disabled={!isDirty || !isFormValid}
+          disabled={mode === 'edit' ? !isDirty || !isFormValid : !isFormValid}
           text={submitButtonText}
           pendingText={submitButtonPendingText}
         />

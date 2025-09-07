@@ -53,7 +53,6 @@ export default function EditUserForm({
       hasPhoto={hasPhoto}
       onSubmit={updateUserWithId}
       initialState={initialState}
-      passwordRequired={false} // Will be determined by the component
       onPasswordRequirementCheck={getUserUpdateRequirements}
       submitButtonText="Save Changes"
       submitButtonPendingText="Saving..."
