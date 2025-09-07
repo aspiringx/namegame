@@ -23,7 +23,12 @@ import {
 import { getMemberRelations } from '@/lib/actions'
 import RelateModal from '@/components/RelateModal'
 import { useGroup } from '@/components/GroupProvider'
-import { TooltipProvider } from '@/components/ui/tooltip'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -35,6 +40,7 @@ import {
   X,
   Brain,
   HelpCircle,
+  Image as Photo,
 } from 'lucide-react'
 import NameQuizIntroModal from '@/components/NameQuizIntroModal'
 import { TourProvider, useTour } from '@reactour/tour'
@@ -75,6 +81,7 @@ interface GroupPageSettings {
   viewMode: 'grid' | 'list' | 'quiz'
   searchQueries: { greeted: string; notGreeted: string }
   selectedTabIndex: number
+  filterByRealPhoto: boolean
 }
 
 interface TabInfo {
@@ -95,6 +102,7 @@ interface SearchableMemberListProps {
   onConnect?: (member: MemberWithUser) => void
   currentUserId?: string
   groupSlug?: string
+  filterByRealPhoto: boolean
 }
 
 const SearchableMemberList: React.FC<SearchableMemberListProps> = ({
@@ -108,6 +116,7 @@ const SearchableMemberList: React.FC<SearchableMemberListProps> = ({
   onConnect,
   currentUserId,
   groupSlug,
+  filterByRealPhoto,
 }) => {
   const [members, setMembers] = useState(initialMembers)
   const [page, setPage] = useState(1)
@@ -116,12 +125,21 @@ const SearchableMemberList: React.FC<SearchableMemberListProps> = ({
   const { ref, inView } = useInView({ threshold: 0 })
 
   useEffect(() => {
-    setMembers(
-      initialMembers.filter((member) =>
-        member.user.name.toLowerCase().includes(searchQuery.toLowerCase()),
-      ),
+    let filteredMembers = initialMembers.filter((member) =>
+      member.user.name.toLowerCase().includes(searchQuery.toLowerCase()),
     )
-  }, [searchQuery, initialMembers])
+
+    if (filterByRealPhoto) {
+      filteredMembers = filteredMembers.filter(
+        (member) =>
+          member.user.photoUrl &&
+          !member.user.photoUrl.includes('api.dicebear.com') &&
+          !member.user.photoUrl.endsWith('default-avatar.png'),
+      )
+    }
+
+    setMembers(filteredMembers)
+  }, [searchQuery, initialMembers, filterByRealPhoto])
 
   useEffect(() => {
     if (inView && hasMore && !isLoading && slug) {
@@ -513,6 +531,29 @@ const GroupTabsContent: React.FC<GroupTabsContentProps> = ({
                       )
                     },
                   )}
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant={
+                            settings.filterByRealPhoto ? 'secondary' : 'ghost'
+                          }
+                          size="icon"
+                          onClick={() =>
+                            setSettings((prev) => ({
+                              ...prev,
+                              filterByRealPhoto: !prev.filterByRealPhoto,
+                            }))
+                          }
+                        >
+                          <Photo className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Only show users with real photos</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                   <Button
                     variant="ghost"
                     size="icon"
@@ -601,6 +642,7 @@ const GroupTabsContent: React.FC<GroupTabsContentProps> = ({
                       onConnect={handleOpenConnectModal}
                       currentUserId={ego?.userId}
                       groupSlug={groupSlug}
+                      filterByRealPhoto={settings.filterByRealPhoto}
                     />
                   </Tab.Panel>
                 ))}
@@ -667,6 +709,7 @@ const GroupTabs: React.FC<GroupTabsProps> = (props) => {
       viewMode: 'grid',
       searchQueries: { greeted: '', notGreeted: '' },
       selectedTabIndex: 0,
+      filterByRealPhoto: false,
     },
   )
 
