@@ -178,7 +178,7 @@ export default function MemberCard({
         <div className="relative mt-2">
           <div className="relative text-center">
             <div className="flex items-center justify-center gap-2">
-              <div className="absolute left-0 flex h-full items-center">
+              <div className="absolute top-1 left-0 flex h-full items-center">
                 {listType === 'notGreeted' && onConnect && (
                   <TooltipProvider>
                     <Tooltip>
@@ -232,7 +232,7 @@ export default function MemberCard({
               </>
             )}
           </div>
-          <div className="absolute top-0 right-0">
+          <div className="absolute top-1 right-0">
             <Dropdown
               trigger={<MoreVertical size={16} />}
               triggerClassName="rounded-full p-1 hover:bg-gray-200 dark:hover:bg-gray-700"
