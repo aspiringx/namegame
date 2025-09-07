@@ -182,82 +182,81 @@ export default function MembersTable({
                         </div>
                       </div>
                     </td>
-                    <td className="hidden px-3 py-4 text-sm text-gray-500 sm:table-cell sm:w-1/4">
+                    <td className="hidden px-3 py-4 align-middle text-sm text-gray-500 sm:table-cell sm:w-1/4">
                       {editingMemberUserId === groupUser.userId ? (
-                        <Select
-                          onValueChange={setEditingRoleId}
-                          defaultValue={groupUser.roleId.toString()}
-                        >
-                          <SelectTrigger className="w-full sm:w-auto">
-                            <SelectValue placeholder="Select a role" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {allRoles
-                              .filter((role) => role.code !== 'super')
-                              .map((role) => (
-                                <SelectItem
-                                  key={role.id}
-                                  value={role.id.toString()}
-                                >
-                                  {role.code}
-                                </SelectItem>
-                              ))}
-                          </SelectContent>
-                        </Select>
+                        <div className="flex items-center gap-3 dark:text-white">
+                          <Select
+                            onValueChange={setEditingRoleId}
+                            defaultValue={groupUser.roleId.toString()}
+                          >
+                            <SelectTrigger className="w-full sm:w-auto">
+                              <SelectValue placeholder="Select a role" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {allRoles
+                                .filter((role) => role.code !== 'super')
+                                .map((role) => (
+                                  <SelectItem
+                                    key={role.id}
+                                    value={role.id.toString()}
+                                  >
+                                    {role.code}
+                                  </SelectItem>
+                                ))}
+                            </SelectContent>
+                          </Select>
+                          <form
+                            action={(formData) => {
+                              startUpdateTransition(async () => {
+                                await updateMemberRole(formData)
+                                setEditingMemberUserId(null)
+                              })
+                            }}
+                            className="contents"
+                          >
+                            <input
+                              type="hidden"
+                              name="groupId"
+                              value={groupUser.groupId}
+                            />
+                            <input
+                              type="hidden"
+                              name="userId"
+                              value={groupUser.userId}
+                            />
+                            <input
+                              type="hidden"
+                              name="roleId"
+                              value={editingRoleId ?? groupUser.roleId}
+                            />
+                            <input
+                              type="hidden"
+                              name="groupSlug"
+                              value={slug}
+                            />
+                            <button
+                              type="submit"
+                              disabled={isUpdating}
+                              className="p-2 text-indigo-600 hover:text-indigo-900 disabled:opacity-50 dark:text-indigo-400 dark:hover:text-indigo-200"
+                            >
+                              <Check className="h-6 w-6" />
+                            </button>
+                          </form>
+                          <button
+                            type="button"
+                            onClick={() => setEditingMemberUserId(null)}
+                            className="p-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
+                          >
+                            <X className="h-6 w-6" />
+                          </button>
+                        </div>
                       ) : (
                         <>{groupUser.role.code}</>
                       )}
                     </td>
                     <td className="w-1/6 py-2 text-right text-sm font-medium sm:relative sm:table-cell sm:w-auto sm:py-4 sm:pr-0">
                       <div className="flex flex-col items-end gap-y-3 md:flex-row md:items-center md:justify-end md:gap-4">
-                        {editingMemberUserId === groupUser.userId ? (
-                          <>
-                            <form
-                              action={(formData) => {
-                                startUpdateTransition(async () => {
-                                  await updateMemberRole(formData)
-                                  setEditingMemberUserId(null)
-                                })
-                              }}
-                              className="contents"
-                            >
-                              <input
-                                type="hidden"
-                                name="groupId"
-                                value={groupUser.groupId}
-                              />
-                              <input
-                                type="hidden"
-                                name="userId"
-                                value={groupUser.userId}
-                              />
-                              <input
-                                type="hidden"
-                                name="roleId"
-                                value={editingRoleId ?? groupUser.roleId}
-                              />
-                              <input
-                                type="hidden"
-                                name="groupSlug"
-                                value={slug}
-                              />
-                              <button
-                                type="submit"
-                                disabled={isUpdating}
-                                className="text-indigo-600 hover:text-indigo-900 disabled:opacity-50 dark:text-indigo-400 dark:hover:text-indigo-200"
-                              >
-                                <Check className="h-5 w-5" />
-                              </button>
-                            </form>
-                            <button
-                              type="button"
-                              onClick={() => setEditingMemberUserId(null)}
-                              className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
-                            >
-                              <X className="h-5 w-5" />
-                            </button>
-                          </>
-                        ) : (
+                        {editingMemberUserId !== groupUser.userId && (
                           <>
                             <button
                               onClick={() => {

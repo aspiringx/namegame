@@ -287,12 +287,12 @@ export default function GroupMembers({
           />
         </div>
         <div className="ring-opacity-5 -mx-4 mt-8 overflow-hidden shadow ring-1 ring-black sm:-mx-6 md:mx-0 md:rounded-lg">
-                    <table className="min-w-full divide-y divide-gray-300 dark:divide-gray-700">
+          <table className="w-full divide-y divide-gray-300 lg:table-fixed dark:divide-gray-700">
             <thead className="bg-gray-50 dark:bg-gray-700">
               <tr>
-                                <th
+                <th
                   scope="col"
-                  className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 dark:text-white sm:pl-6"
+                  className="py-3.5 pr-3 pl-4 text-left text-sm font-semibold text-gray-900 sm:pl-6 dark:text-white"
                 >
                   <button
                     onClick={() => requestSort('name')}
@@ -306,7 +306,7 @@ export default function GroupMembers({
                 </th>
                 <th
                   scope="col"
-                  className="hidden w-1/4 px-3 py-3.5 text-left text-sm font-semibold text-gray-900 sm:table-cell"
+                  className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 sm:table-cell dark:text-white"
                 >
                   <button
                     onClick={() => requestSort('email')}
@@ -318,21 +318,21 @@ export default function GroupMembers({
                     </span>
                   </button>
                 </th>
-                                <th
+                <th
                   scope="col"
-                  className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell"
+                  className="hidden w-24 px-3 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell dark:text-gray-200"
                 >
                   Role
                 </th>
-                <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6">
+                <th scope="col" className="relative py-3.5 pr-4 pl-3 sm:pr-6">
                   <span className="sr-only">Edit</span>
                 </th>
               </tr>
             </thead>
-                        <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-800">
+            <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-800">
               {filteredMembers.map((member) => (
                 <tr key={member.userId}>
-                  <td className="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 dark:text-white sm:w-auto sm:max-w-none sm:pl-6">
+                  <td className="w-full max-w-0 py-4 pr-3 pl-4 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6 dark:text-white">
                     <div className="flex items-center gap-4">
                       <Image
                         src={member.user.photoUrl}
@@ -352,7 +352,7 @@ export default function GroupMembers({
                               member.role.code}
                           </dd>
                           <dt className="sr-only sm:hidden">Email</dt>
-                          <dd className="mt-1 truncate text-gray-500 dark:text-gray-400 sm:hidden">
+                          <dd className="mt-1 truncate text-gray-500 sm:hidden dark:text-gray-400">
                             {member.user.email}
                           </dd>
                         </dl>
@@ -431,10 +431,10 @@ export default function GroupMembers({
                       </div>
                     </div>
                   </td>
-                  <td className="hidden px-3 py-4 text-sm text-gray-500 dark:text-gray-400 sm:table-cell">
+                  <td className="hidden min-w-0 truncate px-3 py-4 text-sm text-gray-500 sm:table-cell dark:text-gray-400">
                     {member.user.email}
                   </td>
-                  <td className="hidden px-3 py-4 text-sm text-gray-500 dark:text-gray-400 lg:table-cell">
+                  <td className="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell dark:text-gray-400">
                     {editingMemberUserId === member.userId ? (
                       <Select
                         onValueChange={setEditingRoleId}
@@ -464,7 +464,7 @@ export default function GroupMembers({
                       member.role.code
                     )}
                   </td>
-                  <td className="py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                  <td className="py-4 pr-4 pl-3 text-right text-sm font-medium sm:pr-6">
                     {editingMemberUserId === member.userId ? (
                       <div className="hidden items-center justify-end gap-x-4 lg:flex">
                         <form
