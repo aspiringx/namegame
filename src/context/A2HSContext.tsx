@@ -22,6 +22,12 @@ interface A2HSContextType {
 const A2HSContext = createContext<A2HSContextType | undefined>(undefined)
 
 export const A2HSProvider = ({ children }: { children: ReactNode }) => {
+  useEffect(() => {
+    if ('serviceWorker' in navigator && window.workbox) {
+      window.workbox.register()
+    }
+  }, [])
+
   const [isPromptVisible, setIsPromptVisible] = useState(false)
   const deviceInfo = useDeviceInfoContext()
 
