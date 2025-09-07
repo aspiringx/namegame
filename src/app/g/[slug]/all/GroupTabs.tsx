@@ -122,7 +122,7 @@ const SearchableMemberList: React.FC<SearchableMemberListProps> = ({
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(initialMembers.length > 9)
   const [isLoading, setIsLoading] = useState(false)
-  const { ref, inView } = useInView({ threshold: 0 })
+  const { ref, inView } = useInView({ rootMargin: '200px' })
 
   useEffect(() => {
     let filteredMembers = initialMembers.filter((member) =>

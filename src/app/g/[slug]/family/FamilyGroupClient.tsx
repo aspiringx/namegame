@@ -4,8 +4,9 @@ import { useRouter } from 'next/navigation'
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import useLocalStorage from '@/hooks/useLocalStorage'
 import { useInView } from 'react-intersection-observer'
+import { saveMembers, getMembersByGroup } from '@/lib/db'
 import { MemberWithUser, FullRelationship, User } from '@/types'
-import { getPaginatedMembers, getGroupMembersForRelate } from './actions'
+import { getGroupMembersForRelate } from './actions'
 import dynamic from 'next/dynamic'
 import { getMemberRelations } from '@/lib/actions'
 import FamilyMemberCard from '@/components/FamilyMemberCard'
@@ -27,6 +28,7 @@ import {
   X,
   FlaskConical,
   Brain,
+  Image as Photo,
 } from 'lucide-react'
 import { ReactFlowProvider } from 'reactflow'
 import FamilyTree from './FamilyTree'
@@ -35,6 +37,8 @@ import { FocalUserSearch } from './FocalUserSearch'
 import { useGroup } from '@/components/GroupProvider'
 import NameQuizIntroModal from '@/components/NameQuizIntroModal'
 import { GuestMessage } from '@/components/GuestMessage'
+
+const PAGE_SIZE = 10
 
 type SortKey = 'joined' | 'firstName' | 'lastName'
 type SortDirection = 'asc' | 'desc'
@@ -46,6 +50,7 @@ interface FamilyPageSettings {
     direction: SortDirection
   }
   viewMode: 'grid' | 'list' | 'tree' | 'quiz'
+  filterByRealPhoto: boolean
 }
 
 interface FamilyGroupClientProps {
@@ -58,14 +63,10 @@ interface FamilyGroupClientProps {
 export function FamilyGroupClient({
   initialMembers,
   groupSlug,
-  initialMemberCount,
   initialRelationships,
 }: FamilyGroupClientProps): React.JSX.Element | null {
-  const [members, setMembers] = useState(initialMembers)
-  const [page, setPage] = useState(2)
-  const [hasMore, setHasMore] = useState(
-    initialMembers.length < initialMemberCount,
-  )
+  const [members, setMembers] = useState<MemberWithUser[]>(initialMembers)
+  const [isLoading, setIsLoading] = useState(true)
 
   const { group, isGroupAdmin, currentUserMember } = useGroup()
   const isGuest = !currentUserMember || currentUserMember.role?.code === 'guest'
@@ -76,11 +77,11 @@ export function FamilyGroupClient({
       searchQuery: '',
       sortConfig: { key: 'joined', direction: 'desc' },
       viewMode: 'grid',
+      filterByRealPhoto: false,
     },
   )
   const prevIsGuestRef = useRef(isGuest)
 
-  const { ref, inView } = useInView()
   const router = useRouter()
   const treeContainerRef = useRef<HTMLDivElement>(null)
   const familyTreeRef = useRef<FamilyTreeRef>(null)
@@ -105,35 +106,34 @@ export function FamilyGroupClient({
     false,
   )
 
-  const [isMounted, setIsMounted] = useState(false)
-
-  const handleResetTree = () => {
-    familyTreeRef.current?.reset()
-  }
-
-  const handleSetFocalUser = (userId: string) => {
-    familyTreeRef.current?.setFocalUser(userId)
-  }
-
-  const handleIsFocalUserCurrentUserChange = (isCurrentUser: boolean) => {
-    setIsResetDisabled(isCurrentUser)
-  }
   useEffect(() => {
-    setIsMounted(true)
+    async function loadMembers() {
+      if (!group?.id) return
 
-    // If the user was a guest and is now a registered user, set the default
-    // view back to 'tree'. This handles the case where their last-used view
-    // was 'grid' (the guest default) and we want to switch them to the
-    // registered-user default.
-    if (prevIsGuestRef.current && !isGuest) {
-      setSettings((prev) => ({ ...prev, viewMode: 'tree' }))
+      // 1. Try to load from IndexedDB first
+      const cachedMembers = await getMembersByGroup(group.id)
+      if (cachedMembers.length > 0) {
+        setMembers(cachedMembers)
+        setIsLoading(false)
+      }
+
+      // 2. Fetch from server to get the latest data
+      // The initialMembers prop contains the server-fetched data
+      if (initialMembers.length > 0) {
+        setMembers(initialMembers)
+        await saveMembers(initialMembers) // Update cache
+      }
+
+      if (!cachedMembers.length && !initialMembers.length) {
+        // Handle case where there's nothing in cache and server fetch fails
+        console.error('Failed to load members.')
+      }
+      
+      setIsLoading(false)
     }
-    prevIsGuestRef.current = isGuest
-  }, [isGuest, setSettings])
 
-  useEffect(() => {
-    setMembers(initialMembers)
-  }, [initialMembers])
+    loadMembers()
+  }, [group?.id, initialMembers])
 
   useEffect(() => {
     if (groupSlug) {
@@ -143,11 +143,25 @@ export function FamilyGroupClient({
     }
   }, [groupSlug])
 
+  useEffect(() => {
+    if (members.length > 0 && 'serviceWorker' in navigator) {
+      const imageUrls = members
+        .map((member) => member.user.photoUrl)
+        .filter((url): url is string => !!url)
+
+      navigator.serviceWorker.ready.then((registration) => {
+        registration.active?.postMessage({
+          type: 'CACHE_IMAGES',
+          payload: { imageUrls },
+        })
+      })
+    }
+  }, [members])
+
   const handleOpenRelateModal = useCallback(
     async (member: MemberWithUser) => {
       if (!groupSlug) {
         console.error('groupSlug is not available. Cannot fetch relations.')
-        // Optionally, show a toast to the user
         return
       }
 
@@ -159,7 +173,6 @@ export function FamilyGroupClient({
         setIsRelateModalOpen(true)
       } catch (error) {
         console.error('Failed to get member relations:', error)
-        // Optionally, show a toast notification here
       } finally {
         setIsLoadingRelations(false)
       }
@@ -176,24 +189,62 @@ export function FamilyGroupClient({
     router.refresh()
   }
 
+  const filteredAndSortedMembers = useMemo(() => {
+    let filtered = members
+
+    if (settings.filterByRealPhoto) {
+      filtered = filtered.filter(
+        (member) =>
+          member.user.photoUrl &&
+          !member.user.photoUrl.includes('api.dicebear.com') &&
+          !member.user.photoUrl.includes('default-avatar.png'),
+      )
+    }
+
+    if (settings.searchQuery) {
+      filtered = filtered.filter((member) => {
+        const name = `${member.user.firstName} ${member.user.lastName}`
+        return name.toLowerCase().includes(settings.searchQuery.toLowerCase())
+      })
+    }
+
+    return [...filtered].sort((a, b) => {
+      const { key, direction } = settings.sortConfig
+
+      if (key === 'joined') {
+        const aDate = new Date(a.createdAt).getTime()
+        const bDate = new Date(b.createdAt).getTime()
+        return direction === 'asc' ? aDate - bDate : bDate - aDate
+      }
+
+      // Handle firstName and lastName sorting
+      const aValue = a.user[key] || ''
+      const bValue = b.user[key] || ''
+
+      if (aValue < bValue) return direction === 'asc' ? -1 : 1
+      if (aValue > bValue) return direction === 'asc' ? 1 : -1
+      return 0
+    })
+  }, [members, settings.sortConfig, settings.filterByRealPhoto, settings.searchQuery])
+
   const relationshipMap = useMemo(() => {
     if (!currentUserMember) {
       return new Map<string, { label: string; steps: number }>()
     }
 
     const usersMap = new Map<string, User>()
-    initialMembers.forEach((member) => {
+    members.forEach((member) => {
       usersMap.set(member.user.id, member.user)
     })
 
     const newMap = new Map<string, { label: string; steps: number }>()
-    for (const alter of initialMembers) {
+    for (const alter of members) {
       if (alter.userId === currentUserMember.userId) continue
       const result = getRelationship(
         currentUserMember.userId,
         alter.userId,
         initialRelationships,
-        initialMembers,
+        members,
         usersMap,
       )
       if (result && result.relationship) {
@@ -204,7 +255,7 @@ export function FamilyGroupClient({
       }
     }
     return newMap
-  }, [currentUserMember, initialMembers, initialRelationships])
+  }, [currentUserMember, members, initialRelationships])
 
   const treeRelationshipMap = useMemo(() => {
     const newMap = new Map<string, string>()
@@ -216,57 +267,6 @@ export function FamilyGroupClient({
     }
     return newMap
   }, [relationshipMap, currentUserMember])
-
-  useEffect(() => {
-    const calculateHeight = () => {
-      const footer = document.querySelector('footer')
-      if (treeContainerRef.current && footer) {
-        const topOffset = treeContainerRef.current.getBoundingClientRect().top
-        const footerHeight = footer.offsetHeight
-        const windowHeight = window.innerHeight
-        // The main layout has 4rem (64px) of bottom padding. Subtract 16 of
-        // it so the bottom margin below the family tree is the same as the
-        // gap between the subheader and the family tree.
-        const mainPaddingBottom = 16
-        const finalHeight =
-          windowHeight - topOffset - footerHeight - mainPaddingBottom
-
-        setTreeHeight(finalHeight > 0 ? finalHeight : 0)
-      }
-    }
-
-    const observer = new ResizeObserver(() => {
-      calculateHeight()
-    })
-
-    // Initial calculation, deferred 100ms to allow screen to load before it
-    // tries to know height. 0ms didn't work.
-    const timeoutId = setTimeout(calculateHeight, 100)
-
-    observer.observe(document.body)
-
-    return () => {
-      clearTimeout(timeoutId)
-      observer.disconnect()
-    }
-  }, [])
-
-  useEffect(() => {
-    const loadMoreMembers = async () => {
-      if (inView && hasMore) {
-        if (!groupSlug) return
-        const newMembers = await getPaginatedMembers(groupSlug, page)
-        if (newMembers.length > 0) {
-          setMembers((prevMembers) => [...prevMembers, ...newMembers])
-          setPage((prevPage) => prevPage + 1)
-        } else {
-          setHasMore(false)
-        }
-      }
-    }
-
-    loadMoreMembers()
-  }, [inView, hasMore, page, groupSlug])
 
   const handleSort = (key: SortKey) => {
     setSettings((prev) => ({
@@ -303,40 +303,6 @@ export function FamilyGroupClient({
     setSettings((prev) => ({ ...prev, viewMode: 'list' }))
   }
 
-  const filteredAndSortedMembers = useMemo(() => {
-    let filtered = members
-    if (settings.searchQuery) {
-      filtered = members.filter((member) => {
-        const relationship = relationshipMap.get(member.userId)?.label || ''
-        const name = `${member.user.firstName} ${member.user.lastName}`
-        const searchTerm = settings.searchQuery.toLowerCase()
-
-        return (
-          name.toLowerCase().includes(searchTerm) ||
-          relationship.toLowerCase().includes(searchTerm)
-        )
-      })
-    }
-
-    return [...filtered].sort((a, b) => {
-      const { key, direction } = settings.sortConfig
-      if (key === 'joined') {
-        const aDate = new Date(a.createdAt).getTime()
-        const bDate = new Date(b.createdAt).getTime()
-        return direction === 'asc' ? aDate - bDate : bDate - aDate
-      }
-
-      const aValue =
-        a.user[key === 'firstName' ? 'firstName' : 'lastName'] || ''
-      const bValue =
-        b.user[key === 'firstName' ? 'firstName' : 'lastName'] || ''
-
-      if (aValue < bValue) return direction === 'asc' ? -1 : 1
-      if (aValue > bValue) return direction === 'asc' ? 1 : -1
-      return 0
-    })
-  }, [members, settings.searchQuery, settings.sortConfig])
-
   const NameQuizViewClient = dynamic(
     () => import('@/components/NameQuizViewClient'),
     {
@@ -345,8 +311,8 @@ export function FamilyGroupClient({
     },
   )
 
-  if (!isMounted) {
-    return null // Or a loading spinner
+  if (!members.length) {
+    return null
   }
 
   return (
@@ -365,7 +331,7 @@ export function FamilyGroupClient({
                 <Button
                   variant="secondary"
                   size="sm"
-                  onClick={handleResetTree}
+                  onClick={() => familyTreeRef.current?.reset()}
                   className="flex items-center gap-1"
                   disabled={isResetDisabled}
                   data-tour="reset-tree-button"
@@ -373,25 +339,50 @@ export function FamilyGroupClient({
                   Reset
                 </Button>
               ) : settings.viewMode !== 'quiz' ? (
-                (['joined', 'firstName', 'lastName'] as const).map((key) => {
-                  const isActive = settings.sortConfig.key === key
-                  const SortIcon =
-                    settings.sortConfig.direction === 'asc'
-                      ? ArrowUp
-                      : ArrowDown
-                  return (
-                    <Button
-                      key={key}
-                      variant={isActive ? 'secondary' : 'ghost'}
-                      size="sm"
-                      onClick={() => handleSort(key)}
-                      className={`flex items-center gap-1 capitalize ${key !== 'joined' ? 'hidden sm:flex' : ''}`}
-                    >
-                      {key.replace('Name', '')}
-                      {isActive && <SortIcon className="h-4 w-4" />}
-                    </Button>
-                  )
-                })
+                <>
+                  {(['joined', 'firstName', 'lastName'] as const).map((key) => {
+                    const isActive = settings.sortConfig.key === key
+                    const SortIcon =
+                      settings.sortConfig.direction === 'asc'
+                        ? ArrowUp
+                        : ArrowDown
+                    return (
+                      <Button
+                        key={key}
+                        variant={isActive ? 'secondary' : 'ghost'}
+                        size="sm"
+                        onClick={() => handleSort(key)}
+                        className={`flex items-center gap-1 capitalize ${key !== 'joined' ? 'hidden sm:flex' : ''}`}
+                      >
+                        {key.replace('Name', '')}
+                        {isActive && <SortIcon className="h-4 w-4" />}
+                      </Button>
+                    )
+                  })}
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant={
+                            settings.filterByRealPhoto ? 'secondary' : 'ghost'
+                          }
+                          size="sm"
+                          onClick={() =>
+                            setSettings((prev) => ({
+                              ...prev,
+                              filterByRealPhoto: !prev.filterByRealPhoto,
+                            }))
+                          }
+                        >
+                          <Photo className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Only show users with real photos</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </>
               ) : null}
             </div>
             <div className="flex items-center gap-2">
@@ -436,13 +427,13 @@ export function FamilyGroupClient({
             {settings.viewMode === 'tree' ? (
               <FocalUserSearch
                 members={allGroupMembers}
-                onSelect={handleSetFocalUser}
+                onSelect={(userId) => familyTreeRef.current?.setFocalUser(userId)}
               />
             ) : settings.viewMode !== 'quiz' ? (
               <>
                 <input
                   type="text"
-                  placeholder={`Search ${members.length} members...`}
+                  placeholder={isLoading ? 'Loading...' : `Search ${members.length} members...`}
                   value={settings.searchQuery}
                   onChange={(e) =>
                     setSettings((prev) => ({
@@ -472,89 +463,93 @@ export function FamilyGroupClient({
       </div>
 
       <div className="container mx-auto mt-4 px-4">
-        {isMounted && settings.viewMode === 'quiz' ? (
-          <div className="rounded-xl bg-white p-3 dark:bg-gray-800">
-            <NameQuizViewClient
-              members={allGroupMembers}
-              groupSlug={groupSlug}
-              currentUserId={currentUserMember?.userId}
-              onSwitchToGrid={handleSwitchToGrid}
-              onSwitchToList={handleSwitchToList}
-            />
-          </div>
-        ) : isMounted && settings.viewMode === 'tree' ? (
-          <div
-            ref={treeContainerRef}
-            style={{ height: `${treeHeight}px` }}
-            className="relative rounded-md border"
-          >
-            <TooltipProvider>
-              <Tooltip
-                open={isExperimentalTooltipOpen}
-                onOpenChange={setIsExperimentalTooltipOpen}
-              >
-                <TooltipTrigger asChild>
-                  <div
-                    className="bg-background/80 absolute top-2 right-2 z-10 flex cursor-pointer items-center gap-1 rounded-full border px-2 py-1 text-xs backdrop-blur-sm sm:gap-1.5 sm:px-3 sm:py-1.5 sm:text-sm"
-                    onClick={() =>
-                      setIsExperimentalTooltipOpen(!isExperimentalTooltipOpen)
-                    }
-                  >
-                    <FlaskConical className="h-3 w-3 text-lime-400 sm:h-4 sm:w-4" />
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>
-                    The family tree view is new and still experimental. If you
-                    find bugs or have suggestions, please share with Joe... cuz
-                    yeah, it's still just our families using this until the
-                    kinks are ironed out.
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            <ReactFlowProvider>
-              <FamilyTree
-                ref={familyTreeRef}
-                relationships={initialRelationships}
-                members={members}
-                currentUser={currentUserMember?.user}
-                onIsFocalUserCurrentUserChange={
-                  handleIsFocalUserCurrentUserChange
-                }
-                relationshipMap={treeRelationshipMap}
-              />
-            </ReactFlowProvider>
-          </div>
-        ) : isMounted ? (
+        {isLoading ? (
+          <div className="p-4 text-center">Loading...</div>
+        ) : (
           <>
-            <div
-              className={
-                settings.viewMode === 'list'
-                  ? 'grid grid-cols-1 gap-2'
-                  : 'grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'
-              }
-            >
-              {filteredAndSortedMembers.map((member) => (
-                <FamilyMemberCard
-                  key={member.userId}
-                  member={member}
-                  viewMode={settings.viewMode === 'grid' ? 'grid' : 'list'}
-                  relationship={relationshipMap.get(member.userId)?.label}
-                  onRelate={handleOpenRelateModal}
-                  currentUserId={currentUserMember?.userId}
-                  isGroupAdmin={isGroupAdmin}
+            {settings.viewMode === 'quiz' ? (
+              <div className="rounded-xl bg-white p-3 dark:bg-gray-800">
+                <NameQuizViewClient
+                  members={allGroupMembers}
                   groupSlug={groupSlug}
+                  currentUserId={currentUserMember?.userId}
+                  onSwitchToGrid={handleSwitchToGrid}
+                  onSwitchToList={handleSwitchToList}
                 />
-              ))}
-            </div>
-            {hasMore && (
-              <div ref={ref} className="p-4 text-center">
-                Loading more...
               </div>
+            ) : settings.viewMode === 'tree' ? (
+              <div
+                ref={treeContainerRef}
+                style={{ height: `${treeHeight}px` }}
+                className="relative rounded-md border"
+              >
+                <TooltipProvider>
+                  <Tooltip
+                    open={isExperimentalTooltipOpen}
+                    onOpenChange={setIsExperimentalTooltipOpen}
+                  >
+                    <TooltipTrigger asChild>
+                      <div
+                        className="bg-background/80 absolute top-2 right-2 z-10 flex cursor-pointer items-center gap-1 rounded-full border px-2 py-1 text-xs backdrop-blur-sm sm:gap-1.5 sm:px-3 sm:py-1.5 sm:text-sm"
+                        onClick={() =>
+                          setIsExperimentalTooltipOpen(!isExperimentalTooltipOpen)
+                        }
+                      >
+                        <FlaskConical className="h-3 w-3 text-lime-400 sm:h-4 sm:w-4" />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>
+                        The family tree view is new and still experimental. If you
+                        find bugs or have suggestions, please share with Joe... cuz
+                        yeah, it's still just our families using this until the
+                        kinks are ironed out.
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <ReactFlowProvider>
+                  <FamilyTree
+                    ref={familyTreeRef}
+                    relationships={initialRelationships}
+                    members={members}
+                    currentUser={currentUserMember?.user}
+                    onIsFocalUserCurrentUserChange={(isCurrentUser) =>
+                      setIsResetDisabled(isCurrentUser)
+                    }
+                    relationshipMap={treeRelationshipMap}
+                  />
+                </ReactFlowProvider>
+              </div>
+            ) : (
+              <>
+                <div
+                  className={
+                    settings.viewMode === 'list'
+                      ? 'grid grid-cols-1 gap-2'
+                      : 'grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'
+                  }
+                >
+                  {filteredAndSortedMembers.map((member) => (
+                    <FamilyMemberCard
+                      key={member.userId}
+                      member={member}
+                      viewMode={settings.viewMode === 'grid' ? 'grid' : 'list'}
+                      relationship={relationshipMap.get(member.userId)?.label}
+                      onRelate={handleOpenRelateModal}
+                      currentUserId={currentUserMember?.userId}
+                      isGroupAdmin={isGroupAdmin}
+                      groupSlug={groupSlug}
+                    />
+                  ))}
+                </div>
+                <div className="p-4 text-center">
+                  {isLoading && 'Loading...'}
+                </div>
+              </>
             )}
           </>
-        ) : null}
+        )}
       </div>
 
       {selectedMember && group?.groupType && currentUserMember && (

@@ -218,4 +218,3 @@ export async function createAcquaintanceRelationship(
 
   revalidatePath(`/g/${groupSlug}`)
 }
-

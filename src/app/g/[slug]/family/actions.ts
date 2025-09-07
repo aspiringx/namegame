@@ -8,6 +8,9 @@ import { getCodeTable } from '@/lib/codes'
 
 const PAGE_SIZE = 10
 
+type SortKey = 'joined' | 'firstName' | 'lastName'
+type SortDirection = 'asc' | 'desc'
+
 export async function getPaginatedMembers(
   slug: string,
   page: number,
@@ -37,11 +40,16 @@ export async function getPaginatedMembers(
       role: true,
       user: true,
     },
-    orderBy: {
-      user: {
-        lastName: 'asc',
+    orderBy: [
+      {
+        user: {
+          lastName: 'asc',
+        },
       },
-    },
+      {
+        createdAt: 'asc',
+      },
+    ],
     skip: (page - 1) * PAGE_SIZE,
     take: PAGE_SIZE,
   })
