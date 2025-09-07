@@ -1,7 +1,9 @@
+import { useState } from 'react'
 import Image from 'next/image'
 import type { MemberWithUser as Member } from '@/types/index'
-import { MoreVertical } from 'lucide-react'
+import { MoreVertical, Users, KeyRound } from 'lucide-react'
 import { Dropdown, DropdownItem } from './ui/dropdown'
+import { LoginCodeModal } from './LoginCodeModal'
 
 interface FamilyMemberCardProps {
   member: Member
@@ -10,6 +12,7 @@ interface FamilyMemberCardProps {
   onRelate: (member: Member) => void
   currentUserId?: string
   isGroupAdmin?: boolean
+  groupSlug?: string
 }
 
 export default function FamilyMemberCard({
@@ -19,7 +22,13 @@ export default function FamilyMemberCard({
   onRelate,
   currentUserId,
   isGroupAdmin,
+  groupSlug,
 }: FamilyMemberCardProps) {
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
+
+  const handleLoginLinkClick = () => {
+    setIsLoginModalOpen(true)
+  }
   const isListView = viewMode === 'list'
   const imageUrl = member.user.photoUrl || '/images/default-avatar.png'
 
@@ -73,12 +82,28 @@ export default function FamilyMemberCard({
             triggerClassName="rounded-full p-1 hover:bg-gray-200 dark:hover:bg-gray-700"
           >
             <DropdownItem onClick={() => onRelate && onRelate(member)}>
-              Relate
+              <Users className="mr-2 h-4 w-4" />
+              Relationships
             </DropdownItem>
+            {isGroupAdmin && (
+              <DropdownItem onClick={handleLoginLinkClick}>
+                <KeyRound className="mr-2 h-4 w-4" />
+                Get Login Code
+              </DropdownItem>
+            )}
           </Dropdown>
         </div>
       </div>
     </div>
+    {isGroupAdmin && groupSlug && (
+      <LoginCodeModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+        user={member.user}
+        groupId={member.groupId}
+        groupSlug={groupSlug}
+      />
+    )}
     </>
   )
 }

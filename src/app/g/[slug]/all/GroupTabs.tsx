@@ -58,11 +58,13 @@ interface GroupTabsProps {
   greetedCount: number
   notGreetedCount: number
   currentUserMember: MemberWithUser | undefined
+  groupSlug?: string
 }
 
 interface GroupTabsContentProps extends GroupTabsProps {
   settings: GroupPageSettings
   setSettings: React.Dispatch<React.SetStateAction<GroupPageSettings>>
+  groupSlug?: string
 }
 
 interface GroupPageSettings {
@@ -92,6 +94,7 @@ interface SearchableMemberListProps {
   onRelate: (member: MemberWithUser) => void
   onConnect?: (member: MemberWithUser) => void
   currentUserId?: string
+  groupSlug?: string
 }
 
 const SearchableMemberList: React.FC<SearchableMemberListProps> = ({
@@ -104,6 +107,7 @@ const SearchableMemberList: React.FC<SearchableMemberListProps> = ({
   onRelate,
   onConnect,
   currentUserId,
+  groupSlug,
 }) => {
   const [members, setMembers] = useState(initialMembers)
   const [page, setPage] = useState(1)
@@ -160,6 +164,7 @@ const SearchableMemberList: React.FC<SearchableMemberListProps> = ({
           onRelate={onRelate}
           onConnect={onConnect}
           currentUserId={currentUserId}
+          groupSlug={groupSlug}
         />
       ))}
       {hasMore && (
@@ -182,9 +187,9 @@ const GroupTabsContent: React.FC<GroupTabsContentProps> = ({
   currentUserMember,
   settings,
   setSettings,
+  groupSlug,
 }) => {
-  const isGroupAdmin = currentUserMember?.role?.code === 'admin'
-  const { group, currentUserMember: ego } = useGroup()
+  const { group, currentUserMember: ego, isGroupAdmin } = useGroup()
   const { isOpen, setIsOpen } = useTour()
 
   const handleTabChange = (index: number) => {
@@ -595,6 +600,7 @@ const GroupTabsContent: React.FC<GroupTabsContentProps> = ({
                       onRelate={handleOpenRelateModal}
                       onConnect={handleOpenConnectModal}
                       currentUserId={ego?.userId}
+                      groupSlug={groupSlug}
                     />
                   </Tab.Panel>
                 ))}
@@ -766,6 +772,7 @@ const GroupTabs: React.FC<GroupTabsProps> = (props) => {
         {...props}
         settings={settings}
         setSettings={setSettings}
+        groupSlug={props.groupSlug}
       />
     </TourProvider>
   )
