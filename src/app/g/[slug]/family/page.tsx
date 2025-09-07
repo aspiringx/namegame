@@ -1,8 +1,8 @@
 import { getGroup } from './data'
 import { FamilyGroupClient } from './FamilyGroupClient'
 import { notFound } from 'next/navigation'
-import { getPublicUrl } from '@/lib/storage'
 import { getFamilyRelationships } from './actions'
+import { getPublicUrl } from '@/lib/storage'
 
 // This will be the custom page for family groups.
 // For now, it's a simple placeholder.
@@ -17,6 +17,7 @@ export default async function FamilyGroupPage({
   if (!group) {
     notFound()
   }
+
 
   // Enhance members with pre-signed photo URLs
   const membersWithPhotoUrls = await Promise.all(

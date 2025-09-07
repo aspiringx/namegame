@@ -11,19 +11,23 @@ import useLocalStorage from '@/hooks/useLocalStorage'
 import { useRouter } from 'next/navigation'
 import { Tab } from '@headlessui/react'
 import clsx from 'clsx'
-import { useInView } from 'react-intersection-observer'
+import { saveMembers, getMembersByGroup } from '@/lib/db'
 import type { MemberWithUser, FullRelationship } from '@/types'
 import MemberCard from '@/components/MemberCard'
 import dynamic from 'next/dynamic'
 import {
-  getPaginatedMembers,
   getGroupMembersForRelate,
   createAcquaintanceRelationship,
 } from './actions'
 import { getMemberRelations } from '@/lib/actions'
 import RelateModal from '@/components/RelateModal'
 import { useGroup } from '@/components/GroupProvider'
-import { TooltipProvider } from '@/components/ui/tooltip'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -35,6 +39,7 @@ import {
   X,
   Brain,
   HelpCircle,
+  Image as Photo,
 } from 'lucide-react'
 import NameQuizIntroModal from '@/components/NameQuizIntroModal'
 import { TourProvider, useTour } from '@reactour/tour'
@@ -75,6 +80,7 @@ interface GroupPageSettings {
   viewMode: 'grid' | 'list' | 'quiz'
   searchQueries: { greeted: string; notGreeted: string }
   selectedTabIndex: number
+  filterByRealPhoto: boolean
 }
 
 interface TabInfo {
@@ -84,111 +90,18 @@ interface TabInfo {
   type: 'greeted' | 'notGreeted'
 }
 
-interface SearchableMemberListProps {
-  initialMembers: MemberWithUser[]
-  listType: 'greeted' | 'notGreeted'
-  slug: string
-  searchQuery: string
-  viewMode: 'grid' | 'list' | 'quiz'
-  isGroupAdmin?: boolean
-  onRelate: (member: MemberWithUser) => void
-  onConnect?: (member: MemberWithUser) => void
-  currentUserId?: string
-  groupSlug?: string
-}
-
-const SearchableMemberList: React.FC<SearchableMemberListProps> = ({
-  initialMembers,
-  listType,
-  slug,
-  searchQuery,
-  viewMode,
-  isGroupAdmin,
-  onRelate,
-  onConnect,
-  currentUserId,
-  groupSlug,
-}) => {
-  const [members, setMembers] = useState(initialMembers)
-  const [page, setPage] = useState(1)
-  const [hasMore, setHasMore] = useState(initialMembers.length > 9)
-  const [isLoading, setIsLoading] = useState(false)
-  const { ref, inView } = useInView({ threshold: 0 })
-
-  useEffect(() => {
-    setMembers(
-      initialMembers.filter((member) =>
-        member.user.name.toLowerCase().includes(searchQuery.toLowerCase()),
-      ),
-    )
-  }, [searchQuery, initialMembers])
-
-  useEffect(() => {
-    if (inView && hasMore && !isLoading && slug) {
-      setIsLoading(true)
-      getPaginatedMembers(slug, listType, page).then((newMembers) => {
-        if (newMembers.length > 0) {
-          setMembers((prev) => {
-            const existingUserIds = new Set(prev.map((m) => m.userId))
-            const uniqueNewMembers = newMembers.filter(
-              (m) => !existingUserIds.has(m.userId),
-            )
-            return [...prev, ...uniqueNewMembers]
-          })
-          setPage((prev) => prev + 1)
-        } else {
-          setHasMore(false)
-        }
-        setIsLoading(false)
-      })
-    }
-  }, [inView, hasMore, isLoading, slug, listType, page])
-
-  const isListView = viewMode === 'list'
-
-  return (
-    <div
-      className={
-        isListView
-          ? 'divide-y divide-gray-200 dark:divide-gray-700'
-          : `grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3`
-      }
-    >
-      {members.map((member) => (
-        <MemberCard
-          key={member.userId}
-          member={member}
-          listType={listType}
-          viewMode={viewMode}
-          isGroupAdmin={isGroupAdmin}
-          onRelate={onRelate}
-          onConnect={onConnect}
-          currentUserId={currentUserId}
-          groupSlug={groupSlug}
-        />
-      ))}
-      {hasMore && (
-        <div
-          ref={ref}
-          className="col-span-1 py-4 text-center text-gray-500 dark:text-gray-400"
-        >
-          {isLoading ? 'Loading...' : ''}
-        </div>
-      )}
-    </div>
-  )
-}
-
 const GroupTabsContent: React.FC<GroupTabsContentProps> = ({
-  greetedMembers,
-  notGreetedMembers,
-  greetedCount,
-  notGreetedCount,
+  greetedMembers: initialGreetedMembers,
+  notGreetedMembers: initialNotGreetedMembers,
   currentUserMember,
   settings,
   setSettings,
   groupSlug,
 }) => {
+  const [greetedMembers, setGreetedMembers] = useState(initialGreetedMembers)
+  const [notGreetedMembers, setNotGreetedMembers] = useState(
+    initialNotGreetedMembers,
+  )
   const { group, currentUserMember: ego, isGroupAdmin } = useGroup()
   const { isOpen, setIsOpen } = useTour()
 
@@ -197,7 +110,6 @@ const GroupTabsContent: React.FC<GroupTabsContentProps> = ({
   }
   const router = useRouter()
 
-  const [hasMounted, setHasMounted] = useState(false)
   const [isRelateModalOpen, setIsRelateModalOpen] = useState(false)
   const [selectedMember, setSelectedMember] = useState<MemberWithUser | null>(
     null,
@@ -216,9 +128,53 @@ const GroupTabsContent: React.FC<GroupTabsContentProps> = ({
   )
 
   const allMembers = useMemo(
-    () => [...greetedMembers, ...notGreetedMembers],
-    [greetedMembers, notGreetedMembers],
+    () => [...initialGreetedMembers, ...initialNotGreetedMembers],
+    [initialGreetedMembers, initialNotGreetedMembers],
   )
+
+  useEffect(() => {
+    async function loadMembers() {
+      if (!group?.id) return
+
+      const cachedMembers = await getMembersByGroup(group.id)
+      if (cachedMembers.length > 0) {
+        const greetedIds = new Set(initialGreetedMembers.map((m) => m.userId))
+        const greeted: MemberWithUser[] = []
+        const notGreeted: MemberWithUser[] = []
+
+        for (const member of cachedMembers) {
+          if (greetedIds.has(member.userId)) {
+            greeted.push(member)
+          } else {
+            notGreeted.push(member)
+          }
+        }
+        setGreetedMembers(greeted)
+        setNotGreetedMembers(notGreeted)
+      }
+
+      if (allMembers.length > 0) {
+        await saveMembers(allMembers)
+      }
+    }
+
+    loadMembers()
+  }, [group?.id, initialGreetedMembers, initialNotGreetedMembers, allMembers])
+
+  useEffect(() => {
+    if (allMembers.length > 0 && 'serviceWorker' in navigator) {
+      const imageUrls = allMembers
+        .map((member) => member.user.photoUrl)
+        .filter((url): url is string => !!url)
+
+      navigator.serviceWorker.ready.then((registration) => {
+        registration.active?.postMessage({
+          type: 'CACHE_IMAGES',
+          payload: { imageUrls },
+        })
+      })
+    }
+  }, [allMembers])
 
   useEffect(() => {
     if (group?.slug) {
@@ -229,8 +185,19 @@ const GroupTabsContent: React.FC<GroupTabsContentProps> = ({
   }, [group?.slug])
 
   useEffect(() => {
-    setHasMounted(true)
-  }, [])
+    if (allMembers.length > 0 && 'serviceWorker' in navigator) {
+      const imageUrls = allMembers
+        .map((member) => member.user.photoUrl)
+        .filter((url): url is string => !!url)
+
+      navigator.serviceWorker.ready.then((registration) => {
+        registration.active?.postMessage({
+          type: 'CACHE_IMAGES',
+          payload: { imageUrls },
+        })
+      })
+    }
+  }, [allMembers])
 
   const handleOpenRelateModal = useCallback(
     async (member: MemberWithUser) => {
@@ -366,29 +333,59 @@ const GroupTabsContent: React.FC<GroupTabsContentProps> = ({
       }
     }
 
-    const sortableGreeted = [...greetedMembers].sort(sortFunction)
-    const sortableNotGreeted = [...notGreetedMembers].sort(sortFunction)
+    const filterAndSort = (
+      members: MemberWithUser[],
+      type: 'greeted' | 'notGreeted',
+    ) => {
+      let filtered = members
+
+      if (settings.filterByRealPhoto) {
+        filtered = filtered.filter(
+          (member) =>
+            member.user.photoUrl &&
+            !member.user.photoUrl.includes('api.dicebear.com') &&
+            !member.user.photoUrl.endsWith('default-avatar.png'),
+        )
+      }
+
+      if (settings.searchQueries[type]) {
+        filtered = filtered.filter((member) =>
+          member.user.name
+            .toLowerCase()
+            .includes(settings.searchQueries[type].toLowerCase()),
+        )
+      }
+
+      return filtered.sort(sortFunction)
+    }
+
+    const sortedAndFilteredGreeted = filterAndSort(greetedMembers, 'greeted')
+    const sortedAndFilteredNotGreeted = filterAndSort(
+      notGreetedMembers,
+      'notGreeted',
+    )
 
     return [
       {
         name: 'Greeted',
         type: 'greeted' as const,
-        members: sortableGreeted,
-        count: greetedCount,
+        members: sortedAndFilteredGreeted,
+        count: sortedAndFilteredGreeted.length,
       },
       {
         name: 'Not Greeted',
         type: 'notGreeted' as const,
-        members: sortableNotGreeted,
-        count: notGreetedCount,
+        members: sortedAndFilteredNotGreeted,
+        count: sortedAndFilteredNotGreeted.length,
       },
     ]
   }, [
     greetedMembers,
     notGreetedMembers,
-    greetedCount,
-    notGreetedCount,
     settings.sortConfig,
+    settings.filterByRealPhoto,
+    settings.searchQueries,
+    settings.selectedTabIndex,
   ])
 
   if (!group || group.groupType?.code === 'family') {
@@ -399,7 +396,7 @@ const GroupTabsContent: React.FC<GroupTabsContentProps> = ({
     <>
       <TooltipProvider>
         <div className="w-full px-2 sm:px-0">
-          {hasMounted && settings.viewMode === 'quiz' ? (
+          {settings.viewMode === 'quiz' ? (
             <div className="pt-4">
               <div className="flex justify-end gap-2">
                 <Button
@@ -438,7 +435,7 @@ const GroupTabsContent: React.FC<GroupTabsContentProps> = ({
                 />
               </div>
             </div>
-          ) : hasMounted ? (
+          ) : (
             <Tab.Group
               selectedIndex={settings.selectedTabIndex}
               onChange={handleTabChange}
@@ -513,6 +510,29 @@ const GroupTabsContent: React.FC<GroupTabsContentProps> = ({
                       )
                     },
                   )}
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant={
+                            settings.filterByRealPhoto ? 'secondary' : 'ghost'
+                          }
+                          size="icon"
+                          onClick={() =>
+                            setSettings((prev) => ({
+                              ...prev,
+                              filterByRealPhoto: !prev.filterByRealPhoto,
+                            }))
+                          }
+                        >
+                          <Photo className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Only show users with real photos</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                   <Button
                     variant="ghost"
                     size="icon"
@@ -590,26 +610,31 @@ const GroupTabsContent: React.FC<GroupTabsContentProps> = ({
                         </Button>
                       )}
                     </div>
-                    <SearchableMemberList
-                      initialMembers={tab.members}
-                      listType={tab.type}
-                      slug={group?.slug || ''}
-                      searchQuery={settings.searchQueries[tab.type]}
-                      viewMode={settings.viewMode}
-                      isGroupAdmin={isGroupAdmin}
-                      onRelate={handleOpenRelateModal}
-                      onConnect={handleOpenConnectModal}
-                      currentUserId={ego?.userId}
-                      groupSlug={groupSlug}
-                    />
+                    <div
+                      className={
+                        settings.viewMode === 'list'
+                          ? 'divide-y divide-gray-200 dark:divide-gray-700'
+                          : `grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3`
+                      }
+                    >
+                      {tab.members.map((member) => (
+                        <MemberCard
+                          key={member.userId}
+                          member={member}
+                          listType={tab.type}
+                          viewMode={settings.viewMode}
+                          isGroupAdmin={isGroupAdmin}
+                          onRelate={handleOpenRelateModal}
+                          onConnect={handleOpenConnectModal}
+                          currentUserId={ego?.userId}
+                          groupSlug={groupSlug}
+                        />
+                      ))}
+                    </div>
                   </Tab.Panel>
                 ))}
               </Tab.Panels>
             </Tab.Group>
-          ) : (
-            <div className="py-8 text-center text-gray-500 dark:text-gray-400">
-              Loading...
-            </div>
           )}
         </div>
       </TooltipProvider>
@@ -667,6 +692,7 @@ const GroupTabs: React.FC<GroupTabsProps> = (props) => {
       viewMode: 'grid',
       searchQueries: { greeted: '', notGreeted: '' },
       selectedTabIndex: 0,
+      filterByRealPhoto: false,
     },
   )
 

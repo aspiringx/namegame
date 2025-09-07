@@ -1,4 +1,7 @@
 import { precacheAndRoute, cleanupOutdatedCaches } from 'workbox-precaching'
+import { registerRoute } from 'workbox-routing'
+import { StaleWhileRevalidate, CacheFirst } from 'workbox-strategies'
+import { CacheableResponsePlugin } from 'workbox-cacheable-response'
 import { clientsClaim } from 'workbox-core'
 
 declare const self: ServiceWorkerGlobalScope
@@ -20,6 +23,36 @@ const manifest = (self.__WB_MANIFEST || []).filter((entry) => {
   )
 })
 precacheAndRoute(manifest)
+
+// Cache images with a CacheFirst strategy
+registerRoute(
+  ({ request }) => request.destination === 'image',
+  new CacheFirst({
+    cacheName: 'images',
+    plugins: [
+      new CacheableResponsePlugin({
+        statuses: [0, 200], // Cache opaque and successful responses
+      }),
+    ],
+  }),
+)
+
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'CACHE_IMAGES') {
+    const { imageUrls } = event.data.payload
+    event.waitUntil(
+      caches.open('images').then((cache) => {
+        return Promise.all(
+          imageUrls.map((url: string) => {
+            return cache.add(url).catch((error) => {
+              console.error(`Failed to cache image: ${url}`, error)
+            })
+          }),
+        )
+      }),
+    )
+  }
+})
 
 self.addEventListener('push', (event: PushEvent) => {
   const data = event.data?.json() ?? {}
