@@ -1,13 +1,21 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
 import type { GroupUser, GroupUserRole, User } from '@/generated/prisma'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
+import { updateMemberRole } from './actions'
 import RemoveMemberButton from './remove-member-button'
 import { LoginCodeModal } from '@/components/LoginCodeModal'
-import { KeyRound, Pencil } from 'lucide-react'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { KeyRound, Pencil, Check, X, Trash2 } from 'lucide-react'
 
 type GroupUserWithRelations = GroupUser & {
   user: User & { photoUrl: string }
@@ -16,8 +24,10 @@ type GroupUserWithRelations = GroupUser & {
 
 export default function MembersTable({
   groupUsers,
+  allRoles,
 }: {
   groupUsers: GroupUserWithRelations[]
+  allRoles: GroupUserRole[]
 }) {
   const params = useParams()
   const slug = params.slug as string
@@ -26,6 +36,11 @@ export default function MembersTable({
   const [selectedUserForLogin, setSelectedUserForLogin] = useState<User | null>(
     null,
   )
+  const [isUpdating, startUpdateTransition] = useTransition()
+  const [editingMemberUserId, setEditingMemberUserId] = useState<string | null>(
+    null,
+  )
+  const [editingRoleId, setEditingRoleId] = useState<string | null>(null)
 
   const handleLoginLinkClick = (user: User) => {
     setSelectedUserForLogin(user)
@@ -92,33 +107,182 @@ export default function MembersTable({
                             {groupUser.user.email}
                           </div>
                           <div className="text-sm text-gray-500 sm:hidden dark:text-gray-400">
-                            Role: {groupUser.role.code}
+                            {groupUser.role.code}
                           </div>
+                          {editingMemberUserId === groupUser.userId && (
+                            <div className="mt-3 sm:hidden">
+                              <div className="flex items-center gap-3">
+                                <Select
+                                  onValueChange={setEditingRoleId}
+                                  defaultValue={groupUser.roleId.toString()}
+                                >
+                                  <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="Role" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {allRoles
+                                      .filter((role) => role.code !== 'super')
+                                      .map((role) => (
+                                        <SelectItem
+                                          key={role.id}
+                                          value={role.id.toString()}
+                                        >
+                                          {role.code}
+                                        </SelectItem>
+                                      ))}
+                                  </SelectContent>
+                                </Select>
+                                <form
+                                  action={(formData) => {
+                                    startUpdateTransition(async () => {
+                                      await updateMemberRole(formData)
+                                      setEditingMemberUserId(null)
+                                    })
+                                  }}
+                                  className="contents"
+                                >
+                                  <input
+                                    type="hidden"
+                                    name="groupId"
+                                    value={groupUser.groupId}
+                                  />
+                                  <input
+                                    type="hidden"
+                                    name="userId"
+                                    value={groupUser.userId}
+                                  />
+                                  <input
+                                    type="hidden"
+                                    name="roleId"
+                                    value={editingRoleId ?? groupUser.roleId}
+                                  />
+                                  <input
+                                    type="hidden"
+                                    name="groupSlug"
+                                    value={slug}
+                                  />
+                                  <button
+                                    type="submit"
+                                    disabled={isUpdating}
+                                    className="p-2 text-indigo-600 hover:text-indigo-900 disabled:opacity-50 dark:text-indigo-400 dark:hover:text-indigo-200"
+                                  >
+                                    <Check className="h-6 w-6" />
+                                  </button>
+                                </form>
+                                <button
+                                  type="button"
+                                  onClick={() => setEditingMemberUserId(null)}
+                                  className="p-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
+                                >
+                                  <X className="h-6 w-6" />
+                                </button>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </td>
                     <td className="hidden px-3 py-4 text-sm text-gray-500 sm:table-cell sm:w-1/4">
-                      <span className="font-semibold sm:hidden">Role: </span>
-                      {groupUser.role.code}
+                      {editingMemberUserId === groupUser.userId ? (
+                        <Select
+                          onValueChange={setEditingRoleId}
+                          defaultValue={groupUser.roleId.toString()}
+                        >
+                          <SelectTrigger className="w-full sm:w-auto">
+                            <SelectValue placeholder="Select a role" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {allRoles
+                              .filter((role) => role.code !== 'super')
+                              .map((role) => (
+                                <SelectItem
+                                  key={role.id}
+                                  value={role.id.toString()}
+                                >
+                                  {role.code}
+                                </SelectItem>
+                              ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <>{groupUser.role.code}</>
+                      )}
                     </td>
                     <td className="w-1/6 py-2 text-right text-sm font-medium sm:relative sm:table-cell sm:w-auto sm:py-4 sm:pr-0">
-                      <div className="flex flex-col items-center space-y-4 sm:flex-row sm:space-y-0 sm:space-x-8">
-                        <Link
-                          href={`/g/${slug}/admin/members/${groupUser.userId}/edit`}
-                          className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-200"
-                        >
-                          <Pencil className="h-5 w-5" />
-                        </Link>
-                        <button
-                          onClick={() => handleLoginLinkClick(groupUser.user)}
-                          className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-200"
-                        >
-                          <KeyRound className="h-5 w-5" />
-                        </button>
-                        <RemoveMemberButton
-                          userId={groupUser.userId}
-                          groupId={groupUser.groupId}
-                        />
+                      <div className="flex flex-col items-end gap-y-3 md:flex-row md:items-center md:justify-end md:gap-4">
+                        {editingMemberUserId === groupUser.userId ? (
+                          <>
+                            <form
+                              action={(formData) => {
+                                startUpdateTransition(async () => {
+                                  await updateMemberRole(formData)
+                                  setEditingMemberUserId(null)
+                                })
+                              }}
+                              className="contents"
+                            >
+                              <input
+                                type="hidden"
+                                name="groupId"
+                                value={groupUser.groupId}
+                              />
+                              <input
+                                type="hidden"
+                                name="userId"
+                                value={groupUser.userId}
+                              />
+                              <input
+                                type="hidden"
+                                name="roleId"
+                                value={editingRoleId ?? groupUser.roleId}
+                              />
+                              <input
+                                type="hidden"
+                                name="groupSlug"
+                                value={slug}
+                              />
+                              <button
+                                type="submit"
+                                disabled={isUpdating}
+                                className="text-indigo-600 hover:text-indigo-900 disabled:opacity-50 dark:text-indigo-400 dark:hover:text-indigo-200"
+                              >
+                                <Check className="h-5 w-5" />
+                              </button>
+                            </form>
+                            <button
+                              type="button"
+                              onClick={() => setEditingMemberUserId(null)}
+                              className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
+                            >
+                              <X className="h-5 w-5" />
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => {
+                                setEditingMemberUserId(groupUser.userId)
+                                setEditingRoleId(groupUser.roleId.toString())
+                              }}
+                              className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-200"
+                            >
+                              <Pencil className="h-5 w-5" />
+                            </button>
+                            <button
+                              onClick={() =>
+                                handleLoginLinkClick(groupUser.user)
+                              }
+                              className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-200"
+                            >
+                              <KeyRound className="h-5 w-5" />
+                            </button>
+                            <RemoveMemberButton
+                              userId={groupUser.userId}
+                              groupId={groupUser.groupId}
+                              groupSlug={slug}
+                            />
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>

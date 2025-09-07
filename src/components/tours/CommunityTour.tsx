@@ -105,7 +105,7 @@ export const communityTourSteps: StepType[] = [
     content: (
       <div className="flex flex-col items-center gap-4 text-center">
         <Search size={32} />
-        <p>Or search for anyone by name.</p>
+        <p>Search for anyone by name.</p>
       </div>
     ),
   },
@@ -127,12 +127,11 @@ export const communityTourSteps: StepType[] = [
       <div className="flex flex-col items-center gap-4 text-center">
         <Brain size={32} className="text-orange-500" />
         <p className="text-left">
-          Use the Name Quiz to test your memory of faces and names of people in
-          your Greeted tab.
+          Use the Name Quiz to test your memory of faces and names.
         </p>
         <p className="text-left">
-          Note: only people with real photos (not a random avatar from when they
-          first join) appear in the quiz.
+          Note: only people in your greeted tab with real photos appear in the
+          quiz.
         </p>
       </div>
     ),
@@ -150,14 +149,15 @@ export const communityTourSteps: StepType[] = [
           className="mx-auto h-auto w-auto"
         />
         <p className="text-center text-2xl">Have fun!</p>
+        <p className="text-left">Relationships start with names.</p>
         <p className="text-left">
-          Be sure to <i>Enable Notifications</i> in your profile to learn when
-          new features are available, like:
+          In your profile (tap your pic, then Me), install NameGame and enable
+          notifications to get messages and learn about coming features, like:
         </p>
         <ul className="ml-4 list-outside list-disc space-y-1 text-left">
-          <li>Discovering people with shared interests</li>
-          <li>Games based on stories people share</li>
-          <li>Map view of your group</li>
+          <li>Announcements and reminders</li>
+          <li>Discovering shared interests</li>
+          <li>Group member spotlights</li>
           <li>Sub-groups</li>
           <li>Etc.</li>
         </ul>

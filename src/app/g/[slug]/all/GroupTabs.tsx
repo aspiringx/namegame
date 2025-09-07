@@ -42,6 +42,7 @@ import { communityTourSteps } from '@/components/tours/CommunityTour'
 import { communityTourMobileSteps } from '@/components/tours/CommunityTourMobile'
 import { useTheme } from 'next-themes'
 import { Toaster, toast } from 'sonner'
+import Modal from '@/components/ui/modal'
 
 const NameQuizViewClient = dynamic(
   () => import('@/components/NameQuizViewClient'),
@@ -204,6 +205,10 @@ const GroupTabsContent: React.FC<GroupTabsContentProps> = ({
     `nameQuizIntroSeen-${group?.slug || ''}`,
     false,
   )
+  const [isConnectModalOpen, setIsConnectModalOpen] = useState(false)
+  const [memberToConnect, setMemberToConnect] = useState<MemberWithUser | null>(
+    null,
+  )
 
   const allMembers = useMemo(
     () => [...greetedMembers, ...notGreetedMembers],
@@ -244,23 +249,32 @@ const GroupTabsContent: React.FC<GroupTabsContentProps> = ({
     [group?.slug],
   )
 
-  const handleConnect = useCallback(
-    async (member: MemberWithUser) => {
-      if (!group?.slug) {
-        console.error('groupSlug is not available. Cannot create relationship.')
-        return
-      }
-      try {
-        await createAcquaintanceRelationship(member.userId, group.slug)
-        toast.success(`You are now connected with ${member.user.name}.`)
-        router.refresh()
-      } catch (error) {
-        console.error('Failed to create acquaintance relationship:', error)
-        toast.error('Failed to connect.')
-      }
-    },
-    [group?.slug, router],
-  )
+  const handleOpenConnectModal = (member: MemberWithUser) => {
+    setMemberToConnect(member)
+    setIsConnectModalOpen(true)
+  }
+
+  const handleCloseConnectModal = () => {
+    setIsConnectModalOpen(false)
+    setMemberToConnect(null)
+  }
+
+  const handleConfirmConnect = async () => {
+    if (!memberToConnect || !group?.slug) {
+      toast.error('Could not connect member. Please try again.')
+      return
+    }
+    try {
+      await createAcquaintanceRelationship(memberToConnect.userId, group.slug)
+      toast.success(`You are now connected with ${memberToConnect.user.name}.`)
+      router.refresh()
+    } catch (error) {
+      console.error('Failed to create acquaintance relationship:', error)
+      toast.error('Failed to connect.')
+    } finally {
+      handleCloseConnectModal()
+    }
+  }
 
   const handleCloseRelateModal = () => {
     setIsRelateModalOpen(false)
@@ -579,7 +593,7 @@ const GroupTabsContent: React.FC<GroupTabsContentProps> = ({
                       viewMode={settings.viewMode}
                       isGroupAdmin={isGroupAdmin}
                       onRelate={handleOpenRelateModal}
-                      onConnect={handleConnect}
+                      onConnect={handleOpenConnectModal}
                       currentUserId={ego?.userId}
                     />
                   </Tab.Panel>
@@ -610,6 +624,28 @@ const GroupTabsContent: React.FC<GroupTabsContentProps> = ({
           isReadOnly={!isGroupAdmin && selectedMember?.userId !== ego?.userId}
           loggedInUserId={ego.userId}
         />
+      )}
+
+      {isConnectModalOpen && memberToConnect && (
+        <Modal isOpen={isConnectModalOpen} onClose={handleCloseConnectModal}>
+          <div className="p-6">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
+              Connect with {memberToConnect.user.name}?
+            </h3>
+            <div className="mt-2">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                If you already know {memberToConnect.user.name}, connect to add
+                them to your Greeted tab.
+              </p>
+            </div>
+            <div className="mt-6 flex justify-end space-x-4">
+              <Button variant="outline" onClick={handleCloseConnectModal}>
+                Cancel
+              </Button>
+              <Button onClick={handleConfirmConnect}>Connect</Button>
+            </div>
+          </div>
+        </Modal>
       )}
     </>
   )

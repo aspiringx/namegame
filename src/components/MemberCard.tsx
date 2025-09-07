@@ -104,7 +104,7 @@ export default function MemberCard({
                     </button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>I already know this {member.user.firstName}</p>
+                    <p>I already know {member.user.name}</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -167,7 +167,7 @@ export default function MemberCard({
                         </button>
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p>I already know {member.user.firstName}</p>
+                        <p>I already know {member.user.name}</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>

@@ -8,19 +8,19 @@ import { Trash2 } from 'lucide-react'
 export default function RemoveMemberButton({
   userId,
   groupId,
+  groupSlug,
 }: {
   userId: string
   groupId: number
+  groupSlug: string
 }) {
   const [isPending, startTransition] = useTransition()
   const [showModal, setShowModal] = useState(false)
-  const params = useParams()
-  const slug = params.slug as string
 
   const handleRemove = () => {
     startTransition(async () => {
       try {
-        await removeMember({ userId, groupId }, slug)
+        await removeMember({ userId, groupId }, groupSlug)
         // In a real app, you'd use a toast notification for success
       } catch (error) {
         // In a real app, you'd use a toast notification for error

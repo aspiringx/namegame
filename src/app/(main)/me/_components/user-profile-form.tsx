@@ -168,18 +168,23 @@ export default function UserProfileForm({
   const totalOptionalFields = optionalFields.length
 
   const validatePassword = (password: string) => {
-    if (password && password === 'password123') {
-      setPasswordError('For security, please choose a different password.')
-    } else if (
-      password &&
-      validation.passwordRequired &&
-      (password.length < 6 || !/(?=.*\d)(?=.*[a-zA-Z])/.test(password))
-    ) {
-      // This is a basic check, server has the final say
-      setPasswordError('6+ characters with letters and numbers.')
-    } else {
+    if (!password && !validation.passwordRequired) {
       setPasswordError(null)
+      return
     }
+    if (!password && validation.passwordRequired) {
+      setPasswordError('Password is required.')
+      return
+    }
+    if (!/^(?=.*[a-zA-Z])(?=.*\d).{6,}$/.test(password)) {
+      setPasswordError('6+ characters with letters and numbers.')
+      return
+    }
+    if (password.toLowerCase().includes('pass')) {
+      setPasswordError('Password cannot contain the word "pass".')
+      return
+    }
+    setPasswordError(null)
   }
 
   const initialState: State = {
@@ -658,6 +663,7 @@ export default function UserProfileForm({
               value={password}
               required={validation.passwordRequired}
               className={`block w-full min-w-0 flex-1 scroll-mt-24 rounded-none rounded-l-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 ${
+                passwordError ||
                 (validation.passwordRequired && !password) ||
                 state?.errors?.password
                   ? 'bg-red-100 dark:bg-red-900'
@@ -674,17 +680,19 @@ export default function UserProfileForm({
                 validatePassword(newPassword)
               }}
             />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="inline-flex items-center border border-l-0 border-gray-300 bg-gray-50 px-3 text-sm text-gray-500 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
-            >
-              {showPassword ? (
-                <EyeOff className="h-5 w-5" />
-              ) : (
-                <Eye className="h-5 w-5" />
-              )}
-            </button>
+            {password && (
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="inline-flex items-center border border-l-0 border-gray-300 bg-gray-50 px-3 text-sm text-gray-500 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+              >
+                {showPassword ? (
+                  <EyeOff className="h-5 w-5" />
+                ) : (
+                  <Eye className="h-5 w-5" />
+                )}
+              </button>
+            )}
             <TooltipProvider>
               <Tooltip
                 open={isPasswordTooltipOpen}

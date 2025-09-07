@@ -213,7 +213,7 @@ export default function GroupMembers({
                   key={user.id}
                   className="flex flex-col items-stretch gap-y-4 rounded-md border p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-y-0 sm:p-2 dark:border-gray-600"
                 >
-                  <div className="flex items-center gap-4">
+                  <div className="flex flex-col items-end gap-y-3 md:flex-row md:items-center md:justify-end md:gap-4">
                     <Image
                       src={user.photoUrl}
                       alt={`${user.username}'s profile picture`}
@@ -232,7 +232,7 @@ export default function GroupMembers({
                     <input type="hidden" name="groupId" value={group.id} />
                     <input type="hidden" name="userId" value={user.id} />
                     <input type="hidden" name="roleId" value={addFormRoleId} />
-                    <div className="flex items-center justify-between gap-2">
+                    <div className="flex flex-col items-end gap-y-3 md:flex-row md:items-center md:justify-end md:gap-4">
                       <Select
                         onValueChange={setAddFormRoleId}
                         defaultValue={addFormRoleId}
@@ -286,13 +286,13 @@ export default function GroupMembers({
             className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
           />
         </div>
-        <div className="ring-opacity-5 dark:ring-opacity-10 -mx-4 mt-8 overflow-hidden shadow ring-1 ring-black md:-mx-6 lg:mx-0 lg:rounded-lg dark:ring-white">
-          <table className="w-full table-fixed divide-y divide-gray-300 dark:divide-gray-700">
+        <div className="ring-opacity-5 -mx-4 mt-8 overflow-hidden shadow ring-1 ring-black sm:-mx-6 md:mx-0 md:rounded-lg">
+                    <table className="min-w-full divide-y divide-gray-300 dark:divide-gray-700">
             <thead className="bg-gray-50 dark:bg-gray-700">
               <tr>
-                <th
+                                <th
                   scope="col"
-                  className="w-1/2 py-3.5 pr-3 pl-4 text-left text-sm font-semibold text-gray-900 sm:pl-6 dark:text-white"
+                  className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 dark:text-white sm:pl-6"
                 >
                   <button
                     onClick={() => requestSort('name')}
@@ -306,7 +306,7 @@ export default function GroupMembers({
                 </th>
                 <th
                   scope="col"
-                  className="hidden w-1/4 px-3 py-3.5 text-left text-sm font-semibold text-gray-900 sm:table-cell dark:text-white"
+                  className="hidden w-1/4 px-3 py-3.5 text-left text-sm font-semibold text-gray-900 sm:table-cell"
                 >
                   <button
                     onClick={() => requestSort('email')}
@@ -318,150 +318,129 @@ export default function GroupMembers({
                     </span>
                   </button>
                 </th>
-                <th
+                                <th
                   scope="col"
-                  className="hidden w-24 px-3 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell dark:text-white"
+                  className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell"
                 >
-                  <button
-                    onClick={() => requestSort('role')}
-                    className="group inline-flex"
-                  >
-                    Role
-                    <span className="ml-2 flex-none rounded text-gray-400 group-hover:bg-gray-200 dark:group-hover:bg-gray-600">
-                      {getSortIndicator('role')}
-                    </span>
-                  </button>
+                  Role
                 </th>
-                <th
-                  scope="col"
-                  className="relative w-20 py-3.5 pr-4 pl-3 sm:pr-6"
-                >
+                <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6">
                   <span className="sr-only">Edit</span>
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-600 dark:bg-gray-800">
+                        <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-800">
               {filteredMembers.map((member) => (
                 <tr key={member.userId}>
-                  <td className="w-full max-w-0 py-4 pr-3 pl-4 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6 dark:text-white">
-                    <div className="flex min-w-0 items-center gap-4">
+                  <td className="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 dark:text-white sm:w-auto sm:max-w-none sm:pl-6">
+                    <div className="flex items-center gap-4">
                       <Image
                         src={member.user.photoUrl}
                         alt={`${member.user.username}'s profile picture`}
-                        width={48}
-                        height={48}
-                        className="h-12 w-12 rounded-full object-cover"
+                        width={40}
+                        height={40}
+                        className="h-10 w-10 rounded-full"
                       />
-                      <div className="min-w-0 flex-1">
-                        <span className="block truncate">
+                      <div className="min-w-0 flex-auto">
+                        <p className="font-semibold">
                           {member.user.firstName} {member.user.lastName}
-                        </span>
+                        </p>
                         <dl className="font-normal lg:hidden">
                           <dt className="sr-only">Role</dt>
                           <dd className="mt-1 truncate text-gray-500 dark:text-gray-400">
                             {editingMemberUserId !== member.userId &&
                               member.role.code}
                           </dd>
-                          <dt className="sr-only">Email</dt>
-                          <dd className="mt-1 truncate text-gray-700 dark:text-gray-400">
-                            <span className="block truncate">
-                              {member.user.email}
-                            </span>
+                          <dt className="sr-only sm:hidden">Email</dt>
+                          <dd className="mt-1 truncate text-gray-500 dark:text-gray-400 sm:hidden">
+                            {member.user.email}
                           </dd>
                         </dl>
                         {editingMemberUserId === member.userId && (
-                          <div className="mt-3 lg:hidden">
-                            <div className="flex items-center gap-3">
-                              <Select
-                                onValueChange={setEditingRoleId}
-                                defaultValue={member.roleId.toString()}
-                              >
-                                <SelectTrigger className="min-w-0 flex-1">
-                                  <SelectValue placeholder="Role" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {groupUserRoles
-                                    .filter(
-                                      (role) =>
-                                        (isSuperAdmin && isGlobalAdminGroup) ||
-                                        role.code !== 'super',
-                                    )
-                                    .map((role) => (
-                                      <SelectItem
-                                        key={role.id}
-                                        value={role.id.toString()}
-                                      >
-                                        {role.code}
-                                      </SelectItem>
-                                    ))}
-                                </SelectContent>
-                              </Select>
-                              <form
-                                id={`update-form-${member.userId}-mobile`}
-                                action={(formData) => {
-                                  startUpdateTransition(async () => {
-                                    await updateMember(formData)
-                                    setEditingMemberUserId(null)
-                                  })
-                                }}
-                                className="contents"
-                              >
-                                <input
-                                  type="hidden"
-                                  name="groupId"
-                                  value={member.groupId}
-                                />
-                                <input
-                                  type="hidden"
-                                  name="userId"
-                                  value={member.userId}
-                                />
-                                <input
-                                  type="hidden"
-                                  name="roleId"
-                                  value={editingRoleId ?? member.roleId}
-                                />
-                                <button
-                                  type="submit"
-                                  disabled={isUpdating}
-                                  className="p-2 text-indigo-600 hover:text-indigo-900 disabled:opacity-50 dark:text-indigo-400 dark:hover:text-indigo-200"
-                                >
-                                  <Check className="h-6 w-6" />
-                                  <span className="sr-only">
-                                    {isUpdating ? 'Saving...' : 'Save'}
-                                  </span>
-                                </button>
-                              </form>
+                          <div className="mt-3 flex items-center gap-3 lg:hidden">
+                            <Select
+                              onValueChange={setEditingRoleId}
+                              defaultValue={member.roleId.toString()}
+                            >
+                              <SelectTrigger className="min-w-0 flex-1">
+                                <SelectValue placeholder="Role" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {groupUserRoles
+                                  .filter(
+                                    (role) =>
+                                      (isSuperAdmin && isGlobalAdminGroup) ||
+                                      role.code !== 'super',
+                                  )
+                                  .map((role) => (
+                                    <SelectItem
+                                      key={role.id}
+                                      value={role.id.toString()}
+                                    >
+                                      {role.code}
+                                    </SelectItem>
+                                  ))}
+                              </SelectContent>
+                            </Select>
+                            <form
+                              id={`update-form-${member.userId}-mobile`}
+                              action={(formData) => {
+                                startUpdateTransition(async () => {
+                                  await updateMember(formData)
+                                  setEditingMemberUserId(null)
+                                })
+                              }}
+                              className="contents"
+                            >
+                              <input
+                                type="hidden"
+                                name="groupId"
+                                value={member.groupId}
+                              />
+                              <input
+                                type="hidden"
+                                name="userId"
+                                value={member.userId}
+                              />
+                              <input
+                                type="hidden"
+                                name="roleId"
+                                value={editingRoleId ?? member.roleId}
+                              />
                               <button
-                                type="button"
-                                onClick={() => setEditingMemberUserId(null)}
-                                className="p-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
+                                type="submit"
+                                disabled={isUpdating}
+                                className="p-2 text-indigo-600 hover:text-indigo-900 disabled:opacity-50 dark:text-indigo-400 dark:hover:text-indigo-200"
                               >
-                                <X className="h-6 w-6" />
-                                <span className="sr-only">Cancel</span>
+                                <Check className="h-6 w-6" />
+                                <span className="sr-only">
+                                  {isUpdating ? 'Saving...' : 'Save'}
+                                </span>
                               </button>
-                            </div>
+                            </form>
+                            <button
+                              type="button"
+                              onClick={() => setEditingMemberUserId(null)}
+                              className="p-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
+                            >
+                              <X className="h-6 w-6" />
+                              <span className="sr-only">Cancel</span>
+                            </button>
                           </div>
                         )}
                       </div>
                     </div>
                   </td>
-                  <td className="hidden px-3 py-4 text-sm text-gray-500 sm:table-cell dark:text-gray-400">
-                    <span className="block truncate">{member.user.email}</span>
+                  <td className="hidden px-3 py-4 text-sm text-gray-500 dark:text-gray-400 sm:table-cell">
+                    {member.user.email}
                   </td>
-                  <td
-                    className={`px-3 py-4 text-sm text-gray-500 dark:text-gray-400 ${
-                      editingMemberUserId !== member.userId
-                        ? 'hidden lg:table-cell'
-                        : 'hidden lg:table-cell'
-                    }`}
-                  >
+                  <td className="hidden px-3 py-4 text-sm text-gray-500 dark:text-gray-400 lg:table-cell">
                     {editingMemberUserId === member.userId ? (
                       <Select
                         onValueChange={setEditingRoleId}
                         defaultValue={member.roleId.toString()}
                       >
-                        <SelectTrigger className="w-full sm:w-auto">
+                        <SelectTrigger className="w-full">
                           <SelectValue placeholder="Select a role" />
                         </SelectTrigger>
                         <SelectContent>
@@ -485,9 +464,9 @@ export default function GroupMembers({
                       member.role.code
                     )}
                   </td>
-                  <td className="py-4 pr-4 pl-3 text-right text-sm font-medium sm:pr-6">
+                  <td className="py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
                     {editingMemberUserId === member.userId ? (
-                      <div className="hidden lg:flex lg:items-center lg:justify-end lg:gap-4">
+                      <div className="hidden items-center justify-end gap-x-4 lg:flex">
                         <form
                           id={`update-form-${member.userId}`}
                           action={(formData) => {
@@ -534,7 +513,7 @@ export default function GroupMembers({
                         </button>
                       </div>
                     ) : (
-                      <div className="flex flex-col items-end gap-y-3 md:flex-row md:items-center md:justify-end md:gap-4">
+                      <div className="flex flex-col items-end gap-y-3 sm:flex-row sm:items-center sm:justify-end sm:gap-x-4">
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
