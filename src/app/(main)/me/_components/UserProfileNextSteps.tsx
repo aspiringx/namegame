@@ -127,7 +127,7 @@ export default function UserProfileNextSteps({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, validation]) // Rerunning only when user/validation changes is correct.
 
-  const [isInstallStepDismissed, setIsInstallStepDismissed] = useState(false)
+  const [isInstallStepDismissed, setIsInstallStepDismissed] = useState(true) // Default to dismissed to avoid flash
   const deviceInfo = useDeviceInfoContext()
   const { showPrompt } = useA2HS()
   const {
@@ -137,17 +137,17 @@ export default function UserProfileNextSteps({
     permissionStatus,
     error,
   } = usePushManager()
+  const [hasMounted, setHasMounted] = useState(false)
 
   useEffect(() => {
+    setHasMounted(true)
     const dismissed = localStorage.getItem(
       NAMEGAME_PWA_INSTALL_STEP_DISMISSED_KEY,
     )
-    if (dismissed === 'true') {
-      setIsInstallStepDismissed(true)
-    }
+    setIsInstallStepDismissed(dismissed === 'true')
   }, [])
 
-  if (!deviceInfo) {
+  if (!deviceInfo || !hasMounted) {
     return null
   }
 
