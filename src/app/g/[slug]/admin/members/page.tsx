@@ -12,6 +12,8 @@ export default async function GroupMembersPage(props: {
   const searchParams = await props.searchParams
   const searchTerm = (searchParams?.query as string) || ''
 
+  const allRoles = await prisma.groupUserRole.findMany()
+
   const group = await prisma.group.findUnique({
     where: { slug },
     include: {
@@ -109,7 +111,7 @@ export default async function GroupMembersPage(props: {
         <Search placeholder="Search members..." />
       </div>
       <div className="mt-8">
-        <MembersTable groupUsers={membersWithPhoto} />
+        <MembersTable groupUsers={membersWithPhoto} allRoles={allRoles} />
       </div>
     </div>
   )

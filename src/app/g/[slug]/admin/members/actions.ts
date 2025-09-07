@@ -39,3 +39,42 @@ export async function removeMember(
 
   revalidatePath(`/g/${groupSlug}/admin/members`)
 }
+
+export async function updateMemberRole(formData: FormData) {
+  const session = await auth()
+  if (!session?.user) {
+    throw new Error('Authentication required')
+  }
+
+  const userId = formData.get('userId') as string
+  const groupId = parseInt(formData.get('groupId') as string, 10)
+  const roleId = parseInt(formData.get('roleId') as string, 10)
+  const groupSlug = formData.get('groupSlug') as string
+
+  if (isNaN(groupId) || isNaN(roleId) || !userId || !groupSlug) {
+    throw new Error('Invalid data provided.')
+  }
+
+  if (!(await isAdmin(session.user.id, groupId))) {
+    throw new Error('You do not have permission to edit members in this group.')
+  }
+
+  try {
+    await prisma.groupUser.update({
+      where: {
+        userId_groupId: {
+          userId: userId,
+          groupId: groupId,
+        },
+      },
+      data: {
+        roleId: roleId,
+      },
+    })
+  } catch (error) {
+    console.error('Database Error:', error)
+    throw new Error('Failed to update member roles.')
+  }
+
+  revalidatePath(`/g/${groupSlug}/admin/members`)
+}

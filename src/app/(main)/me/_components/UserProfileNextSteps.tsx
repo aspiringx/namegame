@@ -1,6 +1,9 @@
 'use client'
 
+import { resendVerificationEmail } from '@/app/(main)/me/actions'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { toast } from 'sonner'
 import {
   ArrowRight,
   BellOff,
@@ -113,9 +116,16 @@ export default function UserProfileNextSteps({
   )
   const needsEmailVerification = user.email && !user.emailVerified
 
-  const [isCollapsed, setIsCollapsed] = useState(
-    !incompleteRequired.length && !needsEmailVerification,
-  )
+  const [isCollapsed, setIsCollapsed] = useState(true)
+  const [isResending, setIsResending] = useState(false)
+
+  useEffect(() => {
+    // This now correctly sets the initial and subsequent collapsed state on the client side,
+    // avoiding a hydration mismatch.
+    const shouldBeCollapsed = !incompleteRequired.length && !needsEmailVerification
+    setIsCollapsed(shouldBeCollapsed)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, validation]) // Rerunning only when user/validation changes is correct.
 
   const [isInstallStepDismissed, setIsInstallStepDismissed] = useState(false)
   const deviceInfo = useDeviceInfoContext()
@@ -178,6 +188,20 @@ export default function UserProfileNextSteps({
     }, 100)
   }
 
+  const handleResendVerificationEmail = async () => {
+    setIsResending(true)
+    const result = await resendVerificationEmail()
+    if (result.success) {
+      toast.success('Success', {
+        description: result.message,
+      })
+    } else {
+      toast.error('Error', {
+        description: result.message,
+      })
+    }
+    setIsResending(false)
+  }
 
   const allSteps: {
     id: string
@@ -207,19 +231,31 @@ export default function UserProfileNextSteps({
     allSteps.push({
       id: 'verify-email',
       isComplete: false,
-      title: 'Verify Your Email',
+      title: `Verify Your Email (${user.email})`,
       description: (
         <>
-          <ShieldCheck
-            size={16}
-            className="inline-block text-green-500 dark:text-green-400"
-          />{' '}
-          Click the email verification link we sent to{' '}
-          <strong>{user.email}</strong> to finish unlocking features. Check
-          spam/junk if you don't see it.
+          <p>
+            <ShieldCheck
+              size={16}
+              className="inline-block text-green-500 dark:text-green-400"
+            />{' '}
+            Click the email verification link we sent to{' '}
+            <strong>{user.email}</strong>. Check spam/junk if you don't see it.
+          </p>
+          <ul className="my-4 ml-4 list-outside list-disc">
+            <li>
+              If you misentered your email address, update it below for a new
+              verification message.
+            </li>
+            <li>
+              If your email is correct but you didn't see a verification
+              message, resend it.
+            </li>
+          </ul>
         </>
       ),
-      href: '#email',
+      action: handleResendVerificationEmail,
+      actionLabel: 'Resend Verification Email',
     })
   }
 
@@ -360,9 +396,9 @@ export default function UserProfileNextSteps({
                         <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200">
                           {step.title}
                         </h3>
-                        <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                        <div className="mt-1 text-sm text-gray-600 dark:text-gray-400">
                           {step.description}
-                        </p>
+                        </div>
                         {step.href && (
                           <Link
                             href={step.href}

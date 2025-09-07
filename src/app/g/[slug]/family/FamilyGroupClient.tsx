@@ -544,6 +544,7 @@ export function FamilyGroupClient({
                   onRelate={handleOpenRelateModal}
                   currentUserId={currentUserMember?.userId}
                   isGroupAdmin={isGroupAdmin}
+                  groupSlug={groupSlug}
                 />
               ))}
             </div>

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import Image from 'next/image'
 import type { MemberWithUser as Member } from '@/types/index'
 import { formatDistanceToNow } from 'date-fns'
@@ -7,8 +8,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { MoreVertical, Link } from 'lucide-react'
+import { MoreVertical, Link, KeyRound, Users } from 'lucide-react'
 import { Dropdown, DropdownItem } from './ui/dropdown'
+import { LoginCodeModal } from './LoginCodeModal'
 
 interface MemberCardProps {
   member: Member
@@ -19,6 +21,7 @@ interface MemberCardProps {
   onRelate: (member: Member) => void
   onConnect?: (member: Member) => void
   currentUserId?: string
+  groupSlug?: string
 }
 
 export default function MemberCard({
@@ -30,7 +33,14 @@ export default function MemberCard({
   onRelate,
   onConnect,
   currentUserId,
+  groupSlug,
 }: MemberCardProps) {
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
+
+  const handleLoginLinkClick = () => {
+    setIsLoginModalOpen(true)
+  }
+
   const imageUrl = member.user.photoUrl || '/images/default-avatar.png'
 
   if (listType === 'greeted' && viewMode === 'list') {
@@ -78,8 +88,15 @@ export default function MemberCard({
               triggerClassName="rounded-full p-1 hover:bg-gray-200 dark:hover:bg-gray-700"
             >
               <DropdownItem onClick={() => onRelate(member)}>
-                Relate
+                <Users className="mr-2 h-4 w-4" />
+                Relationships
               </DropdownItem>
+              {isGroupAdmin && (
+                <DropdownItem onClick={handleLoginLinkClick}>
+                  <KeyRound className="mr-2 h-4 w-4" />
+                  Get Login Code
+                </DropdownItem>
+              )}
             </Dropdown>
           </div>
         </div>
@@ -104,7 +121,7 @@ export default function MemberCard({
                     </button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>I already know this {member.user.firstName}</p>
+                    <p>I already know {member.user.name}</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -130,8 +147,15 @@ export default function MemberCard({
               triggerClassName="rounded-full p-1 hover:bg-gray-200 dark:hover:bg-gray-700"
             >
               <DropdownItem onClick={() => onRelate(member)}>
-                Relate
+                <Users className="mr-2 h-4 w-4" />
+                Relationships
               </DropdownItem>
+              {isGroupAdmin && (
+                <DropdownItem onClick={handleLoginLinkClick}>
+                  <KeyRound className="mr-2 h-4 w-4" />
+                  Get Login Code
+                </DropdownItem>
+              )}
             </Dropdown>
           </div>
         </div>
@@ -154,7 +178,7 @@ export default function MemberCard({
         <div className="relative mt-2">
           <div className="relative text-center">
             <div className="flex items-center justify-center gap-2">
-              <div className="absolute left-0 flex h-full items-center">
+              <div className="absolute top-1 left-0 flex h-full items-center">
                 {listType === 'notGreeted' && onConnect && (
                   <TooltipProvider>
                     <Tooltip>
@@ -167,7 +191,7 @@ export default function MemberCard({
                         </button>
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p>I already know {member.user.firstName}</p>
+                        <p>I already know {member.user.name}</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -208,18 +232,34 @@ export default function MemberCard({
               </>
             )}
           </div>
-          <div className="absolute top-0 right-0">
+          <div className="absolute top-1 right-0">
             <Dropdown
               trigger={<MoreVertical size={16} />}
               triggerClassName="rounded-full p-1 hover:bg-gray-200 dark:hover:bg-gray-700"
             >
               <DropdownItem onClick={() => onRelate(member)}>
-                Relate
+                <Users className="mr-2 h-4 w-4" />
+                Relationships
               </DropdownItem>
+              {isGroupAdmin && (
+                <DropdownItem onClick={handleLoginLinkClick}>
+                  <KeyRound className="mr-2 h-4 w-4" />
+                  Get Login Code
+                </DropdownItem>
+              )}
             </Dropdown>
           </div>
         </div>
       </div>
+      {isGroupAdmin && groupSlug && (
+        <LoginCodeModal
+          isOpen={isLoginModalOpen}
+          onClose={() => setIsLoginModalOpen(false)}
+          user={member.user}
+          groupId={member.groupId}
+          groupSlug={groupSlug}
+        />
+      )}
     </>
   )
 }

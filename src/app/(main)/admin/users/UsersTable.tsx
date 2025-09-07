@@ -5,15 +5,9 @@ import { getPublicUrl } from '@/lib/storage'
 import { getCodeTable } from '@/lib/codes'
 import { DeleteUserButton } from './DeleteUserButton'
 import { UndeleteUserButton } from './UndeleteUserButton'
+import { Edit, Trash2, RotateCcw } from 'lucide-react'
 
-type SortableColumn =
-  | 'username'
-  | 'firstName'
-  | 'lastName'
-  | 'email'
-  | 'phone'
-  | 'createdAt'
-  | 'updatedAt'
+type SortableColumn = 'firstName' | 'lastName' | 'email' | 'phone' | 'updatedAt'
 type Order = 'asc' | 'desc'
 
 interface UsersTableProps {
@@ -34,7 +28,6 @@ export default async function UsersTable({
   const where = query
     ? {
         OR: [
-          { username: { contains: query, mode: 'insensitive' as const } },
           { firstName: { contains: query, mode: 'insensitive' as const } },
           { lastName: { contains: query, mode: 'insensitive' as const } },
           { email: { contains: query, mode: 'insensitive' as const } },
@@ -124,44 +117,32 @@ export default async function UsersTable({
   return (
     <>
       <div className="ring-opacity-5 dark:ring-opacity-10 -mx-4 mt-8 overflow-hidden shadow ring-1 ring-black sm:-mx-6 md:mx-0 md:rounded-lg dark:ring-white">
-        <table className="min-w-full divide-y divide-gray-300 dark:divide-gray-700">
+        <table className="w-full table-fixed divide-y divide-gray-300 dark:divide-gray-700">
           <thead>
             <tr>
-              <th scope="col" className="relative py-3.5 pr-3 pl-4 sm:pl-6">
+              <th scope="col" className="w-24 px-4 py-3.5">
                 <span className="sr-only">Photo</span>
               </th>
-              <th
-                scope="col"
-                className="py-3.5 pr-3 pl-4 text-left text-sm font-semibold text-gray-900 sm:pl-6 dark:text-white"
-              >
-                <SortableHeader column="username" title="Username" />
-              </th>
-              <th
-                scope="col"
-                className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 sm:table-cell dark:text-white"
-              >
+              {/* Desktop: Show separate First Name and Last Name columns */}
+              <th className="hidden w-1/4 px-3 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase sm:table-cell">
                 <SortableHeader column="firstName" title="First Name" />
               </th>
-              <th
-                scope="col"
-                className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 md:table-cell dark:text-white"
-              >
+              <th className="hidden w-1/4 px-3 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase sm:table-cell">
                 <SortableHeader column="lastName" title="Last Name" />
               </th>
-
-              <th
-                scope="col"
-                className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 md:table-cell dark:text-white"
-              >
-                <SortableHeader column="createdAt" title="Created" />
+              {/* Mobile: Show combined Name column */}
+              <th className="px-3 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase sm:hidden">
+                <SortableHeader column="firstName" title="Name" />
               </th>
-              <th
-                scope="col"
-                className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 md:table-cell dark:text-white"
-              >
+              {/* Email column - hidden on mobile */}
+              <th className="hidden w-1/4 px-3 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase sm:table-cell">
+                <SortableHeader column="email" title="Email" />
+              </th>
+              {/* Updated column - hidden on mobile */}
+              <th className="hidden w-1/6 px-3 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase sm:table-cell">
                 <SortableHeader column="updatedAt" title="Updated" />
               </th>
-              <th scope="col" className="relative py-3.5 pr-4 pl-3 sm:pr-6">
+              <th className="w-20 px-3 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase">
                 <span className="sr-only">Actions</span>
               </th>
             </tr>
@@ -172,33 +153,49 @@ export default async function UsersTable({
                 key={user.id}
                 className={user.deletedAt ? 'bg-gray-200 dark:bg-gray-700' : ''}
               >
-                <td className="py-4 pr-3 pl-4 text-sm whitespace-nowrap sm:pl-6">
+                <td className="px-4 py-4 text-sm whitespace-nowrap">
                   <div className="flex items-center">
-                    <div className="h-10 w-10 flex-shrink-0">
+                    <div className="h-16 w-16 flex-shrink-0">
                       <Image
-                        className="h-10 w-10 rounded-full"
+                        className="h-16 w-16 rounded-full object-cover"
                         src={user.photoUrl}
-                        alt={`${user.username}'s profile picture`}
-                        width={40}
-                        height={40}
+                        alt={`${user.firstName} ${user.lastName}'s profile picture`}
+                        width={64}
+                        height={64}
                       />
                     </div>
                   </div>
                 </td>
-                <td className="w-full max-w-0 py-4 pr-3 pl-4 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6 dark:text-white">
-                  {user.username}
+                {/* Desktop: Show separate first and last name columns */}
+                <td className="hidden px-3 py-4 text-sm font-medium text-gray-900 sm:table-cell dark:text-white">
+                  <div className="min-w-0">
+                    <span className="block truncate">{user.firstName}</span>
+                  </div>
                 </td>
-                <td className="px-3 py-4 text-sm text-gray-500 sm:table-cell dark:text-gray-400">
-                  {user.firstName}
+                <td className="hidden px-3 py-4 text-sm font-medium text-gray-900 sm:table-cell dark:text-white">
+                  <span className="block truncate">{user.lastName}</span>
                 </td>
-                <td className="hidden px-3 py-4 text-sm text-gray-500 md:table-cell dark:text-gray-400">
-                  {user.lastName}
+                {/* Mobile: Show combined name with email below if exists */}
+                <td className="px-3 py-4 text-sm font-medium text-gray-900 sm:hidden dark:text-white">
+                  <div className="min-w-0">
+                    <span className="block truncate">
+                      {user.firstName} {user.lastName}
+                    </span>
+                    {user.email && (
+                      <span className="mt-1 block truncate text-sm text-gray-500 dark:text-gray-400">
+                        {user.email}
+                      </span>
+                    )}
+                  </div>
                 </td>
-
-                <td className="hidden px-3 py-4 text-sm text-gray-500 md:table-cell dark:text-gray-400">
-                  {new Date(user.createdAt).toLocaleDateString()}
+                {/* Desktop: Show email in separate column */}
+                <td className="hidden px-3 py-4 text-sm text-gray-500 sm:table-cell dark:text-gray-400">
+                  {user.email && (
+                    <span className="block truncate">{user.email}</span>
+                  )}
                 </td>
-                <td className="hidden px-3 py-4 text-sm text-gray-500 md:table-cell dark:text-gray-400">
+                {/* Desktop: Show updated date in separate column */}
+                <td className="hidden px-3 py-4 text-sm text-gray-500 sm:table-cell dark:text-gray-400">
                   {new Date(user.updatedAt).toLocaleDateString()}
                 </td>
                 <td className="relative py-4 pr-4 pl-3 text-right text-sm font-medium whitespace-nowrap sm:pr-6">
@@ -207,9 +204,10 @@ export default async function UsersTable({
                   ) : (
                     <Link
                       href={`/admin/users/${user.id}/edit`}
-                      className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-200"
+                      className="inline-flex items-center text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-200"
+                      title="Edit user"
                     >
-                      Edit
+                      <Edit className="h-4 w-4" />
                     </Link>
                   )}
                   <span className="mx-2 text-gray-300 dark:text-gray-600">

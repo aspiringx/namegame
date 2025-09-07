@@ -42,6 +42,7 @@ export default function GroupPageClient({
         currentUserMember={currentUserMember}
         greetedCount={greetedCount}
         notGreetedCount={notGreetedCount}
+        groupSlug={groupData.slug}
       />
     </div>
   )

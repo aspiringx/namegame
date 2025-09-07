@@ -24,18 +24,9 @@ export default async function UserProfilePage(props: {
     getCodeTable('groupType'),
   ])
 
-  // Get the primary photo for the current user.
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
     include: {
-      photos: {
-        where: {
-          entityTypeId: entityTypes.user.id,
-          entityId: session.user.id,
-          typeId: photoTypes.primary.id,
-        },
-        orderBy: { type: { code: 'asc' } },
-      },
       groupMemberships: {
         orderBy: {
           group: {
@@ -61,21 +52,26 @@ export default async function UserProfilePage(props: {
     redirect('/api/auth/signout-and-redirect')
   }
 
+  // Get the primary photo for the current user, if it exists.
+  const primaryPhoto = await prisma.photo.findFirst({
+    where: {
+      entityId: user.id,
+      entityTypeId: entityTypes.user.id,
+      typeId: photoTypes.primary.id,
+    },
+  })
+
+
   const isInFamilyGroup = user.groupMemberships.some(
     (mem) => mem.group.groupTypeId === groupTypes.family.id,
   )
 
   const userWithPublicUrls = {
     ...user,
-    image: user.photos[0] ? await getPublicUrl(user.photos[0].url) : null,
+    image: primaryPhoto ? await getPublicUrl(primaryPhoto.url) : null,
     emailVerified: user.emailVerified ? user.emailVerified.toISOString() : null,
     birthDate: user.birthDate ? user.birthDate.toISOString() : null,
-    photos: await Promise.all(
-      user.photos.map(async (photo) => ({
-        ...photo,
-        url: await getPublicUrl(photo.url),
-      })),
-    ),
+    photos: primaryPhoto ? [{ url: await getPublicUrl(primaryPhoto.url) }] : [],
   }
 
   return (

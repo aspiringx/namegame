@@ -149,8 +149,11 @@ export async function deleteFile(storagePath: string): Promise<void> {
     }
   } else {
     try {
-      // storagePath is relative to `public`, so we join it directly
-      const filepath = path.join(process.cwd(), 'public', storagePath)
+      // storagePath might be a root-relative URL (/uploads/...), so we normalize it
+      const relativePath = storagePath.startsWith('/')
+        ? storagePath.substring(1)
+        : storagePath
+      const filepath = path.join(process.cwd(), 'public', relativePath)
       await unlink(filepath)
     } catch (e: unknown) {
       const error = e as { code?: string }

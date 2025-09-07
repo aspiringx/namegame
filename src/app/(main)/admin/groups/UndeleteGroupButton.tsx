@@ -2,6 +2,7 @@
 
 import { useTransition } from 'react'
 import { undeleteGroup } from './actions'
+import { RotateCcw } from 'lucide-react'
 
 export function UndeleteGroupButton({ groupId }: { groupId: number }) {
   const [isPending, startTransition] = useTransition()
@@ -20,9 +21,10 @@ export function UndeleteGroupButton({ groupId }: { groupId: number }) {
       type="button"
       onClick={handleClick}
       disabled={isPending}
-      className="font-medium text-green-600 hover:text-green-900 disabled:text-gray-400"
+      className="inline-flex items-center font-medium text-green-600 hover:text-green-900 disabled:text-gray-400 dark:text-green-500 dark:hover:text-green-400"
+      title={isPending ? 'Undeleting...' : 'Undelete group'}
     >
-      {isPending ? 'Undeleting...' : 'Undelete'}
+      <RotateCcw className="h-4 w-4" />
     </button>
   )
 }

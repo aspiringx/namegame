@@ -31,7 +31,15 @@ const FormSchema = z.object({
     .refine((file) => !file || file.size < 10 * 1024 * 1024, {
       message: 'File is too large. Max 10MB.',
     }),
-  password: z.string().min(6, 'Password must be at least 6 characters long.'),
+  password: z
+    .string()
+    .regex(
+      /^(?=.*[a-zA-Z])(?=.*\d).{6,}$/,
+      'Password must have 6+ characters with letters and numbers.',
+    )
+    .refine((val) => !val.toLowerCase().includes('pass'), {
+      message: 'Password cannot contain the word "pass".',
+    }),
 })
 
 export type State = {
