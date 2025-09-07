@@ -7,8 +7,6 @@ import {
   useEffect,
   ReactNode,
 } from 'react'
-import { toast } from 'sonner'
-import { InstallAppPrompt } from '@/components/InstallAppPrompt'
 import { NAMEGAME_PWA_PROMPT_DISMISSED_KEY } from '@/lib/constants'
 import { useDeviceInfoContext } from '@/context/DeviceInfoContext'
 
@@ -23,14 +21,13 @@ const A2HSContext = createContext<A2HSContextType | undefined>(undefined)
 
 export const A2HSProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
-    if ('serviceWorker' in navigator && window.workbox) {
-      window.workbox.register()
+    if ('serviceWorker' in navigator && (window as any).workbox) {
+      (window as any).workbox.register()
     }
   }, [])
 
   const [isPromptVisible, setIsPromptVisible] = useState(false)
   const deviceInfo = useDeviceInfoContext()
-
 
   const showPrompt = () => {
     setIsPromptVisible(true)
@@ -63,7 +60,11 @@ export const A2HSProvider = ({ children }: { children: ReactNode }) => {
         showPrompt()
       }
     }
-  }, [deviceInfo?.isReady, deviceInfo?.a2hs.canInstall, deviceInfo?.pwaPrompt?.isReady])
+  }, [
+    deviceInfo?.isReady,
+    deviceInfo?.a2hs.canInstall,
+    deviceInfo?.pwaPrompt?.isReady,
+  ])
 
   return (
     <A2HSContext.Provider
