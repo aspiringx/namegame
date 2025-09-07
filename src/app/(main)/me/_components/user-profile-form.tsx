@@ -575,6 +575,63 @@ export default function UserProfileForm({
           </div>
         </div>
 
+        {/* Gender */}
+        <div>
+          <label className="mb-3 block text-sm font-medium text-gray-700 dark:text-gray-300">
+            Gender
+          </label>
+          <div className="flex items-center gap-3">
+            <input type="hidden" name="gender" value={gender || ''} />
+            <button
+              type="button"
+              onClick={() => setGender(Gender.male)}
+              className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+                gender === Gender.male
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+              }`}
+            >
+              He
+            </button>
+            <button
+              type="button"
+              onClick={() => setGender(Gender.female)}
+              className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+                gender === Gender.female
+                  ? 'bg-pink-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+              }`}
+            >
+              She
+            </button>
+            <button
+              type="button"
+              onClick={() => setGender(Gender.non_binary)}
+              className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+                gender === Gender.non_binary
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+              }`}
+            >
+              They
+            </button>
+            {gender && (
+              <button
+                type="button"
+                onClick={() => setGender(null)}
+                className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+          {state.errors?.gender && (
+            <p className="mt-1 text-sm text-red-500">
+              {state.errors.gender[0]}
+            </p>
+          )}
+        </div>
+
         <div id="email" className="scroll-mt-24">
           <label
             htmlFor="email"
