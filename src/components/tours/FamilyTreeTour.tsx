@@ -17,6 +17,7 @@ import {
   ZoomIn,
   ZoomOut,
 } from 'lucide-react'
+import Image from 'next/image'
 import Link from 'next/link'
 
 export const steps: StepType[] = [
@@ -65,7 +66,7 @@ export const steps: StepType[] = [
           <li>
             Click your three-dot (
             <EllipsisVertical size={16} className="inline align-middle" />) menu
-            and choose <i>Relate</i>
+            and choose <i>Relationships</i>
           </li>
         </ol>
       </div>
@@ -130,11 +131,14 @@ export const steps: StepType[] = [
           <ChevronDown size={32} />
           <ChevronLeft size={32} />
         </div>
-        <p>
+        <p className="text-left">
           Use arrows to see ancestors (up), spouse/partner and descendents
           (down), and siblings (left).
         </p>
-        <p>Arrows only appear when those relationships are defined.</p>
+        <p className="text-left">
+          Arrows only appear when relationships are defined and they can lead to
+          something.
+        </p>
       </div>
     ),
   },
@@ -142,7 +146,9 @@ export const steps: StepType[] = [
     selector: '[data-tour="family-tree-controls"]',
     content: (
       <div className="flex flex-col items-center gap-4 text-center">
-        <p>Use the view controls to improve your experience:</p>
+        <p className="text-left">
+          Use the view controls to improve your experience:
+        </p>
         <div className="flex flex-col items-start gap-2">
           <div className="flex items-center gap-2">
             <Maximize size={24} />
@@ -182,8 +188,7 @@ export const steps: StepType[] = [
     content: (
       <div className="flex flex-col items-center gap-4 text-center">
         <Lock size={48} />
-        <p>Privacy</p>
-        <p>
+        <p className="text-left">
           NameGame is private. Your personal and family information is never
           shared or sold. No ads.
         </p>
@@ -194,8 +199,17 @@ export const steps: StepType[] = [
     selector: '.react-flow__node',
     content: (
       <div className="flex flex-col items-center gap-4 text-center">
-        <p>Have fun!</p>
-        <p>Invite missing family members to complete your family tree.</p>
+        <Image
+          src="/images/butterflies.png"
+          alt="NameGame social butterflies"
+          width={48}
+          height={48}
+          className="mx-auto h-auto w-auto"
+        />
+        <p className="text-2xl">Have fun!</p>
+        <p className="text-left">
+          Invite missing family members to complete your family tree.
+        </p>
       </div>
     ),
   },

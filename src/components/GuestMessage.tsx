@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { Button } from './ui/button'
 import Modal from './ui/modal'
-import { Brain, X } from 'lucide-react'
+import { Brain, HelpCircle, X } from 'lucide-react'
 import Image from 'next/image'
 
 export function GuestMessage({
@@ -62,18 +62,18 @@ export function GuestMessage({
       </h3>
       <div className="space-y-2">
         <p className="mb-4">You're in the private {groupName} group!</p>
+        <div className="my-4 flex items-center gap-4 rounded-md bg-green-200 p-4 dark:bg-green-900">
+          <HelpCircle size={32} />
+          <p>Click the help icon above for a quick tour.</p>
+        </div>
         <p>
-          Complete your profile to access all features and help others recognize
-          you.
+          Complete your profile to help others recognize you and to stop seeing
+          this reminder.
         </p>
       </div>
       <div className="mt-6 flex w-full justify-center gap-4 sm:w-auto">
         <Button onClick={handleUpdateProfile}>Complete Profile</Button>
       </div>
-      <p className="mt-6 text-sm text-gray-500 dark:text-gray-400">
-        p.s. You can do it now or later from the user menu (Me) on the top
-        right.
-      </p>
     </div>
   )
 
