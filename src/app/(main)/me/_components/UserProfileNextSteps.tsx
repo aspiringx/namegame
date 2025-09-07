@@ -396,9 +396,9 @@ export default function UserProfileNextSteps({
                         <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200">
                           {step.title}
                         </h3>
-                        <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                        <div className="mt-1 text-sm text-gray-600 dark:text-gray-400">
                           {step.description}
-                        </p>
+                        </div>
                         {step.href && (
                           <Link
                             href={step.href}
