@@ -107,8 +107,11 @@ export default async function GroupMembersPage(props: {
 
   return (
     <div className="p-4">
-      <div className="-mx-4 mt-4">
-        <Search placeholder="Search members..." />
+      <div className="-mx-4 mt-8">
+        <Search
+          placeholder="Search members..."
+          count={membersWithPhoto.length}
+        />
       </div>
       <div className="mt-8">
         <MembersTable groupUsers={membersWithPhoto} allRoles={allRoles} />
