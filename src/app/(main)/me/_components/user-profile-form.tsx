@@ -495,6 +495,14 @@ export default function UserProfileForm({
       <form
         ref={formRef}
         action={formAction}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && isFormValid && isDirty) {
+            // Prevent default to avoid any other 'Enter' behavior in some browsers
+            e.preventDefault()
+            // Programmatically submit the form
+            formRef.current?.requestSubmit()
+          }
+        }}
         onSubmit={(e) => {
           // If the submission is happening after confirmation, allow it to proceed.
           if (isSubmittingAfterConfirm) {
