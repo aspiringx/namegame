@@ -92,29 +92,32 @@ function FamilyGroupClientContent({
   const familyTreeRef = useRef<FamilyTreeRef>(null)
   const [treeHeight, setTreeHeight] = useState(600) // Default height
 
-  const treeContainerRef = useCallback((node: HTMLDivElement) => {
-    if (node !== null && settings.viewMode === 'tree') {
-      const updateHeight = () => {
-        const rect = node.getBoundingClientRect()
-        const footer = document.querySelector('footer')
-        const footerHeight = footer ? footer.offsetHeight : 0
-        const newHeight = window.innerHeight - rect.top - footerHeight - 20 // 20px margin
-        setTreeHeight(newHeight > 400 ? newHeight : 400) // min height
-      }
+  const treeContainerRef = useCallback(
+    (node: HTMLDivElement) => {
+      if (node !== null && settings.viewMode === 'tree') {
+        const updateHeight = () => {
+          const rect = node.getBoundingClientRect()
+          const footer = document.querySelector('footer')
+          const footerHeight = footer ? footer.offsetHeight : 0
+          const newHeight = window.innerHeight - rect.top - footerHeight - 20 // 20px margin
+          setTreeHeight(newHeight > 400 ? newHeight : 400) // min height
+        }
 
-      const resizeObserver = new ResizeObserver(() => {
+        const resizeObserver = new ResizeObserver(() => {
+          updateHeight()
+        })
+
+        resizeObserver.observe(node)
+
+        // Initial update
         updateHeight()
-      })
 
-      resizeObserver.observe(node)
-
-      // Initial update
-      updateHeight()
-
-      // Cleanup
-      return () => resizeObserver.disconnect()
-    }
-  }, [settings.viewMode])
+        // Cleanup
+        return () => resizeObserver.disconnect()
+      }
+    },
+    [settings.viewMode],
+  )
 
   const [isRelateModalOpen, setIsRelateModalOpen] = useState(false)
   const [isLoadingRelations, setIsLoadingRelations] = useState(false)
@@ -134,7 +137,6 @@ function FamilyGroupClientContent({
     `nameQuizIntroSeen-${groupSlug}`,
     false,
   )
-
 
   useEffect(() => {
     async function loadMembers() {
@@ -667,6 +669,7 @@ const FamilyGroupClient: React.FC<FamilyGroupClientProps> = (props) => {
   return (
     <TourProvider
       steps={tourSteps}
+      className="custom-tour"
       onClickMask={() => {}}
       styles={{
         popover: (base: React.CSSProperties) => {
@@ -712,11 +715,15 @@ const FamilyGroupClient: React.FC<FamilyGroupClientProps> = (props) => {
           color: 'var(--foreground)',
           top: 12,
           right: 12,
+          width: '1.4rem',
+          height: '1.4rem',
         }),
         arrow: (base: React.CSSProperties) => ({
           ...base,
           display: 'block',
           color: 'var(--foreground)',
+          width: '1.4rem',
+          height: '1.4rem',
         }),
         maskWrapper: (base: React.CSSProperties) => {
           if (isMobile) {
