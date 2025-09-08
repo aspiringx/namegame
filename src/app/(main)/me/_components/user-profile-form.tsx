@@ -2,7 +2,13 @@
 
 import { useSession } from 'next-auth/react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import React, { useActionState, useEffect, useRef, useState } from 'react'
+import React, {
+  useActionState,
+  useEffect,
+  useRef,
+  useState,
+  useCallback,
+} from 'react'
 import { useFormStatus } from 'react-dom'
 import { toast } from 'sonner'
 import { z } from 'zod'
@@ -313,6 +319,7 @@ export default function UserProfileForm({
           router.push(state.redirectUrl)
         } else {
           router.refresh()
+          handleDiscard() // Reset the form fields to match the latest user data
         }
       })
     }
@@ -392,7 +399,7 @@ export default function UserProfileForm({
     }
   }
 
-  const handleDiscard = () => {
+  const handleDiscard = useCallback(() => {
     setFirstName(user.firstName || '')
     setLastName(user.lastName || '')
     setDisplayEmail(user.email || '')
@@ -409,7 +416,17 @@ export default function UserProfileForm({
     setFileSelected(false)
     setIsEmailValid(true)
     setPasswordError(null)
-  }
+  }, [
+    user.firstName,
+    user.lastName,
+    user.email,
+    user.gender,
+    user.birthDate,
+    user.birthDatePrecision,
+    user.birthPlace,
+    user.photos,
+    formatBirthDateForDisplay,
+  ])
 
   const isFormValid = React.useMemo(() => {
     const isFirstNameValid = !!firstName
@@ -1068,7 +1085,6 @@ export default function UserProfileForm({
         {!state?.success && state?.error && (
           <p className="text-red-500">{state.error}</p>
         )}
-
       </form>
 
       <StickySaveBar
