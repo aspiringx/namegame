@@ -14,8 +14,9 @@ export async function GET(request: Request) {
     )
   }
 
-  // Use http for internal health checks, even if the public site is https
-  const protocol = host.startsWith('localhost') ? 'http' : 'https'
+  // Inside the container, the app serves on HTTP. The external proxy handles HTTPS.
+  // We must use http for the internal self-check.
+  const protocol = 'http'
   const baseUrl = `${protocol}://${host}`
 
   try {
