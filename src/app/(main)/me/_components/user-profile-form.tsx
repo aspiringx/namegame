@@ -650,7 +650,7 @@ export default function UserProfileForm({
               onClick={() => setGender(Gender.female)}
               className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
                 gender === Gender.female
-                  ? 'bg-pink-600 text-white'
+                  ? 'bg-blue-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
               }`}
             >
@@ -661,7 +661,7 @@ export default function UserProfileForm({
               onClick={() => setGender(Gender.non_binary)}
               className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
                 gender === Gender.non_binary
-                  ? 'bg-purple-600 text-white'
+                  ? 'bg-blue-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
               }`}
             >
