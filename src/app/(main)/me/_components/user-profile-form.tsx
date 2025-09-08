@@ -2,9 +2,10 @@
 
 import { useSession } from 'next-auth/react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { useActionState, useEffect, useRef, useState } from 'react'
+import React, { useActionState, useEffect, useRef, useState } from 'react'
 import { useFormStatus } from 'react-dom'
 import { toast } from 'sonner'
+import { z } from 'zod'
 import { Badge } from '@/components/ui/badge'
 import Modal from '@/components/ui/modal'
 import { Button } from '@/components/ui/button'
@@ -40,6 +41,7 @@ import { DatePrecision, Gender } from '@/generated/prisma/client'
 import { format } from 'date-fns'
 import Link from 'next/link'
 import UserProfileNextSteps from './UserProfileNextSteps'
+import StickySaveBar from '@/components/ui/StickySaveBar'
 
 export type UserProfile = {
   id: string
@@ -146,7 +148,8 @@ export default function UserProfileForm({
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isOptionalOpen, setIsOptionalOpen] = useState(false)
   const [isConfirmModalOpen, setConfirmModalOpen] = useState(false)
-  const [isSubmittingAfterConfirm, setIsSubmittingAfterConfirm] = useState(false)
+  const [isSubmittingAfterConfirm, setIsSubmittingAfterConfirm] =
+    useState(false)
   const [isEmailValid, setIsEmailValid] = useState(
     !user.email || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(user.email),
   )
@@ -389,6 +392,55 @@ export default function UserProfileForm({
     }
   }
 
+  const handleDiscard = () => {
+    setFirstName(user.firstName || '')
+    setLastName(user.lastName || '')
+    setDisplayEmail(user.email || '')
+    setGender(user.gender || null)
+    setBirthDate(
+      formatBirthDateForDisplay(
+        user.birthDate ?? null,
+        user.birthDatePrecision ?? null,
+      ),
+    )
+    setBirthPlace(user.birthPlace || '')
+    setPassword('')
+    setPreviewUrl(user.photos[0]?.url ?? null)
+    setFileSelected(false)
+    setIsEmailValid(true)
+    setPasswordError(null)
+  }
+
+  const isFormValid = React.useMemo(() => {
+    const isFirstNameValid = !!firstName
+    const isLastNameValid = !!lastName
+    const isPasswordValid =
+      !passwordError && !(validation.passwordRequired && !password)
+    const isPhotoValid = !(
+      validation.photoRequired &&
+      previewUrl?.includes('dicebear.com') &&
+      !fileSelected
+    )
+
+    return (
+      isFirstNameValid &&
+      isLastNameValid &&
+      isEmailValid &&
+      isPasswordValid &&
+      isPhotoValid
+    )
+  }, [
+    firstName,
+    lastName,
+    isEmailValid,
+    password,
+    passwordError,
+    validation.passwordRequired,
+    validation.photoRequired,
+    previewUrl,
+    fileSelected,
+  ])
+
   // The email is considered verified for display purposes only if the original email
   // was verified AND the email in the input hasn't been changed.
   const isVerifiedForDisplay =
@@ -598,7 +650,7 @@ export default function UserProfileForm({
               onClick={() => setGender(Gender.female)}
               className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
                 gender === Gender.female
-                  ? 'bg-pink-600 text-white'
+                  ? 'bg-blue-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
               }`}
             >
@@ -609,7 +661,7 @@ export default function UserProfileForm({
               onClick={() => setGender(Gender.non_binary)}
               className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
                 gender === Gender.non_binary
-                  ? 'bg-purple-600 text-white'
+                  ? 'bg-blue-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
               }`}
             >
@@ -652,8 +704,8 @@ export default function UserProfileForm({
                 if (newEmail === '') {
                   setIsEmailValid(true)
                 } else {
-                  const emailRegex = /^[\s\S]*@[\s\S]*\.[\s\S]*$/
-                  setIsEmailValid(emailRegex.test(newEmail))
+                  const result = z.string().email().safeParse(newEmail)
+                  setIsEmailValid(result.success)
                 }
               }}
               className={`block w-full scroll-mt-24 rounded-md border-gray-300 py-2 pr-10 pl-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 ${
@@ -976,7 +1028,7 @@ export default function UserProfileForm({
                     onChange={(e) => {
                       setBirthDate(e.target.value)
                     }}
-                    className="block w-full rounded-md border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+                    className="block w-full rounded-md border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
                     placeholder="July 9, 1969, 7/9/69, 1969, etc."
                   />
                 </div>
@@ -996,7 +1048,7 @@ export default function UserProfileForm({
                     id="birthPlace"
                     value={birthPlace}
                     onChange={(e) => setBirthPlace(e.target.value)}
-                    className="block w-full rounded-md border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+                    className="block w-full rounded-md border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
                     placeholder="City, State, Country"
                   />
                 </div>
@@ -1009,30 +1061,14 @@ export default function UserProfileForm({
           <p className="text-red-500">{state.error}</p>
         )}
 
-        <div className="flex items-center gap-x-4">
-          <SubmitButton
-            onNewSubmission={handleNewSubmission}
-            disabled={
-              !isDirty ||
-              !firstName ||
-              !lastName ||
-              !isEmailValid ||
-              !!passwordError ||
-              (validation.passwordRequired && !password) ||
-              (validation.photoRequired &&
-                previewUrl?.includes('dicebear.com') &&
-                !fileSelected)
-            }
-          />
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 dark:focus:ring-offset-gray-800"
-          >
-            Cancel
-          </button>
-        </div>
       </form>
+
+      <StickySaveBar
+        isDirty={isDirty}
+        isFormValid={isFormValid}
+        onSave={() => formRef.current?.requestSubmit()}
+        onDiscard={handleDiscard}
+      />
     </>
   )
 }
