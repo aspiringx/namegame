@@ -292,11 +292,15 @@ const FamilyTree = forwardRef<FamilyTreeRef, FamilyTreeProps>((props, ref) => {
             color: 'var(--foreground)',
             top: 12,
             right: 12,
+            width: '1.4rem',
+            height: '1.4rem',
           }),
           arrow: (base: React.CSSProperties) => ({
             ...base,
             display: 'block',
             color: 'var(--foreground)',
+            width: '1.4rem',
+            height: '1.4rem',
           }),
           maskWrapper: (base: React.CSSProperties) => {
             if (isMobile) {
