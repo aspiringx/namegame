@@ -2,7 +2,7 @@
 
 import { useSession } from 'next-auth/react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { useActionState, useEffect, useRef, useState } from 'react'
+import React, { useActionState, useEffect, useRef, useState } from 'react'
 import { useFormStatus } from 'react-dom'
 import { toast } from 'sonner'
 import { z } from 'zod'
@@ -41,6 +41,7 @@ import { DatePrecision, Gender } from '@/generated/prisma/client'
 import { format } from 'date-fns'
 import Link from 'next/link'
 import UserProfileNextSteps from './UserProfileNextSteps'
+import StickySaveBar from '@/components/ui/StickySaveBar'
 
 export type UserProfile = {
   id: string
@@ -390,6 +391,55 @@ export default function UserProfileForm({
       })
     }
   }
+
+  const handleDiscard = () => {
+    setFirstName(user.firstName || '')
+    setLastName(user.lastName || '')
+    setDisplayEmail(user.email || '')
+    setGender(user.gender || null)
+    setBirthDate(
+      formatBirthDateForDisplay(
+        user.birthDate ?? null,
+        user.birthDatePrecision ?? null,
+      ),
+    )
+    setBirthPlace(user.birthPlace || '')
+    setPassword('')
+    setPreviewUrl(user.photos[0]?.url ?? null)
+    setFileSelected(false)
+    setIsEmailValid(true)
+    setPasswordError(null)
+  }
+
+  const isFormValid = React.useMemo(() => {
+    const isFirstNameValid = !!firstName
+    const isLastNameValid = !!lastName
+    const isPasswordValid =
+      !passwordError && !(validation.passwordRequired && !password)
+    const isPhotoValid = !(
+      validation.photoRequired &&
+      previewUrl?.includes('dicebear.com') &&
+      !fileSelected
+    )
+
+    return (
+      isFirstNameValid &&
+      isLastNameValid &&
+      isEmailValid &&
+      isPasswordValid &&
+      isPhotoValid
+    )
+  }, [
+    firstName,
+    lastName,
+    isEmailValid,
+    password,
+    passwordError,
+    validation.passwordRequired,
+    validation.photoRequired,
+    previewUrl,
+    fileSelected,
+  ])
 
   // The email is considered verified for display purposes only if the original email
   // was verified AND the email in the input hasn't been changed.
@@ -1011,30 +1061,14 @@ export default function UserProfileForm({
           <p className="text-red-500">{state.error}</p>
         )}
 
-        <div className="flex items-center gap-x-4">
-          <SubmitButton
-            onNewSubmission={handleNewSubmission}
-            disabled={
-              !isDirty ||
-              !firstName ||
-              !lastName ||
-              !isEmailValid ||
-              !!passwordError ||
-              (validation.passwordRequired && !password) ||
-              (validation.photoRequired &&
-                previewUrl?.includes('dicebear.com') &&
-                !fileSelected)
-            }
-          />
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 dark:focus:ring-offset-gray-800"
-          >
-            Cancel
-          </button>
-        </div>
       </form>
+
+      <StickySaveBar
+        isDirty={isDirty}
+        isFormValid={isFormValid}
+        onSave={() => formRef.current?.requestSubmit()}
+        onDiscard={handleDiscard}
+      />
     </>
   )
 }
