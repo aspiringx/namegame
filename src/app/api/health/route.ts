@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server'
 
 // This route is used by the hosting provider (DigitalOcean) to check if the
-// application is healthy and ready to receive traffic. It helps ensure zero-downtime
-// deployments by verifying that the app can fully render a page, including its
-// static assets like CSS.
+// application is healthy and ready to receive traffic. It helps ensure
+// zero-downtime deployments by verifying that the app can fully render a page,
+// including its static assets like CSS.
 
 export async function GET(request: Request) {
   const host = request.headers.get('host')
