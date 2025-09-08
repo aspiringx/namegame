@@ -20,6 +20,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { Gender } from '@/generated/prisma/client'
+import { z } from 'zod'
 
 export type UserFormData = {
   id?: string
@@ -111,7 +112,7 @@ function SubmitButton({
     <button
       type="submit"
       disabled={pending || disabled}
-      className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50 disabled:bg-indigo-400 dark:focus:ring-offset-gray-800 dark:disabled:bg-indigo-800"
+      className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none disabled:bg-indigo-400 disabled:opacity-50 dark:focus:ring-offset-gray-800 dark:disabled:bg-indigo-800"
     >
       {pending ? pendingText : text}
     </button>
@@ -214,7 +215,7 @@ export default function GlobalUserForm({
     fileInputRef.current?.click()
   }
 
-  // --- Validation --- 
+  // --- Validation ---
   const validateUsername = (username: string) => {
     if (!username) {
       return 'Username is required.'
@@ -233,8 +234,12 @@ export default function GlobalUserForm({
   }
 
   const validateEmail = (email: string) => {
-    if (email && !/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(email)) {
-      return 'Invalid email address.'
+    if (!email) {
+      return null
+    }
+    const result = z.string().email('Invalid email address.').safeParse(email)
+    if (!result.success) {
+      return result.error.issues[0].message
     }
     return null
   }
@@ -409,7 +414,9 @@ export default function GlobalUserForm({
     const isFirstNameValid = !validateFirstName(formState.firstName)
     const isEmailValid = !validateEmail(formState.email)
 
-    return isUsernameValid && isFirstNameValid && isPasswordValid && isEmailValid
+    return (
+      isUsernameValid && isFirstNameValid && isPasswordValid && isEmailValid
+    )
   }, [
     formState.username,
     formState.firstName,

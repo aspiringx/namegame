@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useActionState, useEffect, useRef, useState } from 'react'
 import { useFormStatus } from 'react-dom'
 import { toast } from 'sonner'
+import { z } from 'zod'
 import { Badge } from '@/components/ui/badge'
 import Modal from '@/components/ui/modal'
 import { Button } from '@/components/ui/button'
@@ -146,7 +147,8 @@ export default function UserProfileForm({
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isOptionalOpen, setIsOptionalOpen] = useState(false)
   const [isConfirmModalOpen, setConfirmModalOpen] = useState(false)
-  const [isSubmittingAfterConfirm, setIsSubmittingAfterConfirm] = useState(false)
+  const [isSubmittingAfterConfirm, setIsSubmittingAfterConfirm] =
+    useState(false)
   const [isEmailValid, setIsEmailValid] = useState(
     !user.email || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(user.email),
   )
@@ -652,8 +654,8 @@ export default function UserProfileForm({
                 if (newEmail === '') {
                   setIsEmailValid(true)
                 } else {
-                  const emailRegex = /^[\s\S]*@[\s\S]*\.[\s\S]*$/
-                  setIsEmailValid(emailRegex.test(newEmail))
+                  const result = z.string().email().safeParse(newEmail)
+                  setIsEmailValid(result.success)
                 }
               }}
               className={`block w-full scroll-mt-24 rounded-md border-gray-300 py-2 pr-10 pl-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 ${
@@ -976,7 +978,7 @@ export default function UserProfileForm({
                     onChange={(e) => {
                       setBirthDate(e.target.value)
                     }}
-                    className="block w-full rounded-md border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+                    className="block w-full rounded-md border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
                     placeholder="July 9, 1969, 7/9/69, 1969, etc."
                   />
                 </div>
@@ -996,7 +998,7 @@ export default function UserProfileForm({
                     id="birthPlace"
                     value={birthPlace}
                     onChange={(e) => setBirthPlace(e.target.value)}
-                    className="block w-full rounded-md border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+                    className="block w-full rounded-md border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
                     placeholder="City, State, Country"
                   />
                 </div>
