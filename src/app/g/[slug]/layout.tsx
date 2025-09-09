@@ -3,7 +3,7 @@ import Footer from '@/components/Footer'
 import Header from '@/components/Header'
 import { GroupProvider } from '@/components/GroupProvider'
 import { getGroupTypeBySlug } from './data'
-import { getGroup as getAllGroup } from './all/data'
+import { getGroup as getAllGroup } from './community/data'
 import { getGroup as getFamilyGroup } from './family/data'
 import { GroupData, FamilyGroupData } from '@/types'
 

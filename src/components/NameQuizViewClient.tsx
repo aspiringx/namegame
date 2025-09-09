@@ -9,13 +9,11 @@ interface NameQuizViewClientProps {
   groupSlug: string
   currentUserId?: string
   onSwitchToGrid: () => void
-  onSwitchToList: () => void
   groupType?: string
 }
 
 const NameQuizViewClient: React.FC<NameQuizViewClientProps> = ({
   onSwitchToGrid,
-  onSwitchToList,
   ...props
 }) => {
   const { group } = useGroup()
@@ -24,7 +22,6 @@ const NameQuizViewClient: React.FC<NameQuizViewClientProps> = ({
     <NameQuizView
       {...props}
       onSwitchToGrid={onSwitchToGrid}
-      onSwitchToList={onSwitchToList}
       groupType={group?.groupType?.code}
     />
   )

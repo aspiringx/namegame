@@ -22,7 +22,6 @@ interface NameQuizViewProps {
   groupSlug: string
   currentUserId?: string
   onSwitchToGrid: () => void
-  onSwitchToList: () => void
   groupType?: string
 }
 
@@ -36,7 +35,6 @@ const NameQuizView: React.FC<NameQuizViewProps> = ({
   groupSlug,
   currentUserId,
   onSwitchToGrid,
-  onSwitchToList,
   groupType,
 }) => {
   const [question, setQuestion] = useState<QuizQuestion | null>(null)
@@ -137,12 +135,7 @@ const NameQuizView: React.FC<NameQuizViewProps> = ({
 
   if (eligibleMembers.length === 0) {
     return (
-      <QuizCompleteView
-        groupSlug={groupSlug}
-        onStartOver={handleStartOver}
-        onSwitchToGrid={onSwitchToGrid}
-        onSwitchToList={onSwitchToList}
-      />
+      <QuizCompleteView onStartOver={handleStartOver} onSwitchToGrid={onSwitchToGrid} />
     )
   }
 
