@@ -363,7 +363,6 @@ export default function UserProfileForm({
     }
   }, [state, updateSession, router, password, fileSelected])
 
-
   const handleNewSubmission = () => {
     setValidation((v) => ({ ...v, submitted: true }))
     formSubmitted.current = false

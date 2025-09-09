@@ -35,16 +35,6 @@ learn by being part of this project, contact me (Joe Tippetts) on
   - How people can contribute without the risk of breaking it, accidentally or
     on purpose, etc.
 
-## Roadmap
-
-- Let group admins generate a PDF of photo boards they can print and share.
-  - Include people without phones or who are blind.
-- Use something like [jellyfn](https://jellyfin.org) to let people upload intro
-  videos others in the game can watch or listen to (blind).
-  - Consider cost and limits of hosting and streaming videos.
-  - Simpler and free first step might just be support for embedding videos from
-    YouTube, etc.
-
 ## Default README content from next.js
 
 This is a [Next.js](https://nextjs.org) project bootstrapped with
