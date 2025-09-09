@@ -54,6 +54,7 @@ const UserProfileSchema = z.object({
   gender: z.enum(['male', 'female', 'non_binary']).optional().nullable(),
   birthDate: z.string().optional().nullable(),
   birthPlace: z.string().optional().nullable(),
+  timezone: z.string().optional(),
 })
 
 export async function getUserUpdateRequirements(): Promise<{
@@ -145,6 +146,7 @@ export async function updateUserProfile(
     gender: formData.get('gender') || null,
     birthDate: formData.get('birthDate'),
     birthPlace: formData.get('birthPlace'),
+    timezone: formData.get('timezone'),
   })
 
   if (!validatedFields.success) {
@@ -171,6 +173,7 @@ export async function updateUserProfile(
     gender,
     birthDate,
     birthPlace,
+    timezone,
   } = validatedFields.data
   const userId = session.user.id
 
@@ -210,7 +213,7 @@ export async function updateUserProfile(
     }
 
     if (birthDate) {
-      const parsed = parseDateAndDeterminePrecision(birthDate)
+      const parsed = parseDateAndDeterminePrecision(birthDate, timezone)
       if (parsed) {
         dataToUpdate.birthDate = parsed.date
         dataToUpdate.birthDatePrecision = parsed.precision
@@ -219,6 +222,11 @@ export async function updateUserProfile(
           success: false,
           error:
             'Invalid birth date format. Please use a recognized date format.',
+          errors: {
+            birthDate: [
+              'Invalid format. Please use a recognized date format.',
+            ],
+          },
           message: null,
         }
       }
@@ -510,6 +518,7 @@ export async function updateUserBirthDate(
   userId: string,
   birthDate: string,
   groupSlug: string,
+  timezone?: string,
 ): Promise<{ success: boolean; error?: string }> {
   const session = await auth()
   const requesterId = session?.user?.id
@@ -521,7 +530,7 @@ export async function updateUserBirthDate(
     }
   }
 
-  const parsed = parseDateAndDeterminePrecision(birthDate)
+  const parsed = parseDateAndDeterminePrecision(birthDate, timezone)
   if (!parsed) {
     return { success: false, error: 'Invalid date format.' }
   }

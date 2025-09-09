@@ -49,6 +49,26 @@ import Link from 'next/link'
 import UserProfileNextSteps from './UserProfileNextSteps'
 import StickySaveBar from '@/components/ui/StickySaveBar'
 
+const formatBirthDateForDisplay = (
+  date: string | Date | null,
+  precision: DatePrecision | null,
+): string => {
+  if (!date) return ''
+  const d = new Date(date)
+  switch (precision) {
+    case 'TIME':
+      return format(d, "MMM d, yyyy 'at' h:mm a")
+    case 'DAY':
+      return format(d, 'MMM d, yyyy')
+    case 'MONTH':
+      return format(d, 'MMM yyyy')
+    case 'YEAR':
+      return format(d, 'yyyy')
+    default:
+      return ''
+  }
+}
+
 export type UserProfile = {
   id: string
   username: string | null
@@ -110,25 +130,6 @@ export default function UserProfileForm({
   const [firstName, setFirstName] = useState(user.firstName || '')
   const [lastName, setLastName] = useState(user.lastName || '')
   const [gender, setGender] = useState<Gender | null>(user.gender || null)
-  const formatBirthDateForDisplay = (
-    date: string | Date | null,
-    precision: DatePrecision | null,
-  ): string => {
-    if (!date) return ''
-    const d = new Date(date)
-    switch (precision) {
-      case 'TIME':
-        return format(d, "MMM d, yyyy 'at' h:mm a")
-      case 'DAY':
-        return format(d, 'MMM d, yyyy')
-      case 'MONTH':
-        return format(d, 'MMM yyyy')
-      case 'YEAR':
-        return format(d, 'yyyy')
-      default:
-        return ''
-    }
-  }
 
   const [birthDate, setBirthDate] = useState(
     formatBirthDateForDisplay(
@@ -165,9 +166,11 @@ export default function UserProfileForm({
   const [isLoadingRequirements, setIsLoadingRequirements] = useState(true)
   const { isSupported } = usePushManager()
   const [isPushSupported, setIsPushSupported] = useState(false)
+  const [timezone, setTimezone] = useState('')
 
   useEffect(() => {
     setIsPushSupported(isSupported)
+    setTimezone(Intl.DateTimeFormat().resolvedOptions().timeZone)
   }, [isSupported])
 
   const optionalFields = [birthDate, birthPlace]
@@ -207,7 +210,37 @@ export default function UserProfileForm({
     emailUpdated: false,
   }
 
+  const formRef = useRef<HTMLFormElement>(null)
+
   const [state, formAction] = useActionState(updateUserProfile, initialState)
+
+  const handleDiscard = useCallback(() => {
+    setFirstName(user.firstName || '')
+    setLastName(user.lastName || '')
+    setDisplayEmail(user.email || '')
+    setGender(user.gender || null)
+    setBirthDate(
+      formatBirthDateForDisplay(
+        user.birthDate ?? null,
+        user.birthDatePrecision ?? null,
+      ),
+    )
+    setBirthPlace(user.birthPlace || '')
+    setPassword('')
+    setPreviewUrl(user.photos[0]?.url ?? null)
+    setFileSelected(false)
+    setIsEmailValid(true)
+    setPasswordError(null)
+  }, [
+    user.firstName,
+    user.lastName,
+    user.email,
+    user.gender,
+    user.birthDate,
+    user.birthDatePrecision,
+    user.birthPlace,
+    user.photos,
+  ])
 
   useEffect(() => {
     // Determine if the form is dirty
@@ -285,6 +318,12 @@ export default function UserProfileForm({
     }
   }, [isSubmittingAfterConfirm])
 
+  // This effect runs when the user prop changes, which happens after router.refresh().
+  // It resets the form fields to match the latest user data.
+  useEffect(() => {
+    handleDiscard()
+  }, [user, handleDiscard])
+
   useEffect(() => {
     if (state.success && !formSubmitted.current) {
       formSubmitted.current = true
@@ -318,14 +357,12 @@ export default function UserProfileForm({
         if (state.redirectUrl) {
           router.push(state.redirectUrl)
         } else {
-          router.refresh()
-          handleDiscard() // Reset the form fields to match the latest user data
+          router.refresh() // This will trigger a re-render with the new user prop
         }
       })
     }
   }, [state, updateSession, router, password, fileSelected])
 
-  const formRef = useRef<HTMLFormElement>(null)
 
   const handleNewSubmission = () => {
     setValidation((v) => ({ ...v, submitted: true }))
@@ -398,35 +435,6 @@ export default function UserProfileForm({
       })
     }
   }
-
-  const handleDiscard = useCallback(() => {
-    setFirstName(user.firstName || '')
-    setLastName(user.lastName || '')
-    setDisplayEmail(user.email || '')
-    setGender(user.gender || null)
-    setBirthDate(
-      formatBirthDateForDisplay(
-        user.birthDate ?? null,
-        user.birthDatePrecision ?? null,
-      ),
-    )
-    setBirthPlace(user.birthPlace || '')
-    setPassword('')
-    setPreviewUrl(user.photos[0]?.url ?? null)
-    setFileSelected(false)
-    setIsEmailValid(true)
-    setPasswordError(null)
-  }, [
-    user.firstName,
-    user.lastName,
-    user.email,
-    user.gender,
-    user.birthDate,
-    user.birthDatePrecision,
-    user.birthPlace,
-    user.photos,
-    formatBirthDateForDisplay,
-  ])
 
   const isFormValid = React.useMemo(() => {
     const isFirstNameValid = !!firstName
@@ -595,6 +603,7 @@ export default function UserProfileForm({
             </div>
           </div>
         )}
+        <input type="hidden" name="timezone" value={timezone} />
         <div className="flex">
           <div className="flex-grow">
             <label
@@ -1053,9 +1062,18 @@ export default function UserProfileForm({
                     onChange={(e) => {
                       setBirthDate(e.target.value)
                     }}
-                    className="block w-full rounded-md border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+                    className={`block w-full rounded-md border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 ${
+                      state?.errors?.birthDate
+                        ? 'border-red-500 bg-red-100 dark:bg-red-900'
+                        : ''
+                    }`}
                     placeholder="July 9, 1969, 7/9/69, 1969, etc."
                   />
+                  {state?.errors?.birthDate && (
+                    <p className="mt-1 text-xs text-red-500 dark:text-red-400">
+                      {state.errors.birthDate[0]}
+                    </p>
+                  )}
                 </div>
               </div>
 
