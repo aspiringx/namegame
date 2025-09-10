@@ -135,8 +135,14 @@ export const getGroup = async (
               .join(' ')
           : member.user.firstName
 
+      const relationUpdatedAt =
+        member.userId === currentUserId
+          ? new Date()
+          : relatedUserMap.get(member.userId)
+
       return {
         ...member,
+        relationUpdatedAt,
         user: {
           ...member.user,
           name,
@@ -150,21 +156,12 @@ export const getGroup = async (
 
   const resolvedMembers = await Promise.all(memberPromises)
 
-  const greetedMembers: MemberWithUser[] = []
-  const notGreetedMembers: MemberWithUser[] = []
-
-  resolvedMembers.forEach((member) => {
-    // The current user is always on their own greeted tab.
-    // All other users are on the greeted tab if a relation exists.
-    if (member.userId === currentUserId || relatedUserMap.has(member.userId)) {
-      greetedMembers.push({
-        ...member,
-        relationUpdatedAt: relatedUserMap.get(member.userId),
-      })
-    } else {
-      notGreetedMembers.push(member)
-    }
-  })
+  const greetedMembers = resolvedMembers.filter(
+    (member) => member.userId === currentUserId || relatedUserMap.has(member.userId),
+  )
+  const notGreetedMembers = resolvedMembers.filter(
+    (member) => member.userId !== currentUserId && !relatedUserMap.has(member.userId),
+  )
 
   const currentUserMember = greetedMembers.find(
     (member) => member.userId === currentUserId,

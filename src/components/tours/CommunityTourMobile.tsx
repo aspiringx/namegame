@@ -27,7 +27,7 @@ export const communityTourMobileSteps: StepType[] = [
         />
         <p>Welcome to your NameGame group!</p>
         <p className="text-left">
-          A place to meet, learn names, and get to know people in this group.
+          A fun place to meet, get acquainted, play, and do stuff together.
         </p>
       </div>
     ),

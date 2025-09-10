@@ -16,8 +16,9 @@ import QuizCompleteView from './QuizCompleteView'
 import { Button } from './ui/button'
 import clsx from 'clsx'
 import { truncate } from '@/lib/utils'
+import { Alert, AlertDescription } from './ui/alert'
 
-interface NameQuizViewProps {
+interface GamesViewProps {
   members: MemberWithUser[]
   groupSlug: string
   currentUserId?: string
@@ -30,7 +31,7 @@ interface QuizQuestion {
   options: MemberWithUser[]
 }
 
-const NameQuizView: React.FC<NameQuizViewProps> = ({
+const GamesView: React.FC<GamesViewProps> = ({
   members,
   groupSlug,
   currentUserId,
@@ -135,7 +136,10 @@ const NameQuizView: React.FC<NameQuizViewProps> = ({
 
   if (eligibleMembers.length === 0) {
     return (
-      <QuizCompleteView onStartOver={handleStartOver} onSwitchToGrid={onSwitchToGrid} />
+      <QuizCompleteView
+        onStartOver={handleStartOver}
+        onSwitchToGrid={onSwitchToGrid}
+      />
     )
   }
 
@@ -149,6 +153,20 @@ const NameQuizView: React.FC<NameQuizViewProps> = ({
 
   return (
     <>
+      <div className="m-auto w-80">
+        <h2 className="my-4 text-center text-xl font-bold">Name Quiz</h2>
+        <Alert
+          variant="success"
+          onDismiss={() => {}}
+          flashId="name-quiz-badge-info"
+          className="mb-4"
+        >
+          <AlertDescription>
+            Test your memory of faces and names.
+            {/* LATER: to earn the Name Quiz badge! */}
+          </AlertDescription>
+        </Alert>
+      </div>
       <Modal isOpen={!!modalPerson} onClose={() => setModalPerson(null)}>
         <div className="p-6">
           <h2 className="mb-4 text-xl font-bold">Congratulations!</h2>
@@ -222,4 +240,4 @@ const NameQuizView: React.FC<NameQuizViewProps> = ({
   )
 }
 
-export default NameQuizView
+export default GamesView

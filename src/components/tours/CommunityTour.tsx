@@ -1,14 +1,14 @@
 import { StepType } from '@reactour/tour'
 import {
   Brain,
-  ChevronDown,
-  ChevronUp,
+  Filter,
   HelpCircle,
   LayoutGrid,
   Link,
-  List,
   Plus,
   Search,
+  Image as Photo,
+  ArrowDown,
 } from 'lucide-react'
 import Image from 'next/image'
 
@@ -27,58 +27,27 @@ export const communityTourSteps: StepType[] = [
         />
         <p>Welcome to your NameGame group!</p>
         <p className="text-left">
-          A place to meet, learn names, and get to know people in this group.
+          A fun place to meet, get acquainted, play, and do stuff together.
         </p>
       </div>
     ),
   },
   {
-    selector: '[data-tour="greeted-not-greeted-tabs"]',
+    selector: '[data-tour="filter-buttons"]',
     content: (
       <div className="flex flex-col items-center gap-4 text-center">
-        <Link size={32} />
-        <p className="text-left">
-          You have two tabs on top: Greeted and Not Greeted.
-        </p>
+        <Filter size={32} />
+        <p className="text-left">When you join, you initially see:</p>
         <ul className="ml-4 list-outside list-disc space-y-1 text-left">
-          <li>
-            <b>Greeted</b> shows the people you've already met or know. You can
-            do more with people in this tab.
-          </li>
-          <li>
-            <b>Not Greeted</b> shows people you haven't met or connected with in
-            the game.
-          </li>
+          <li>People you've met</li>
+          <li>People with real photos (not random avatars)</li>
         </ul>
+        <Photo size={32} />
         <p className="text-left">
-          If you already know someone in Not Greeted, just click their{' '}
-          <Link size={16} className="inline-block" /> icon to add them to your
-          Greeted tab.
+          Change the filters to see others. If you already know someone click
+          their link icon <Link size={16} className="inline-block" /> to connect
+          so they're in your "Met" list.
         </p>
-        <p className="text-left">
-          If you don't know them, you can share a greeting code, which we'll see
-          next.
-        </p>
-      </div>
-    ),
-  },
-  {
-    selector: '[data-tour="greet-button"]',
-    content: (
-      <div className="flex flex-col items-center gap-4 text-center">
-        <Plus size={32} />
-        <p className="text-left">
-          The Greet button appears after you've completed your profile.
-        </p>
-        <p className="text-left">
-          Use it to invite people into this group or greet existing members in
-          your Not Greeted tab.
-        </p>
-        <p className="text-left">Click it to create a greeting code.</p>
-        <ul className="ml-4 list-outside list-disc space-y-1 text-left">
-          <li>A QR code others can scan</li>
-          <li>Or a link/URL you can send</li>
-        </ul>
       </div>
     ),
   },
@@ -86,17 +55,19 @@ export const communityTourSteps: StepType[] = [
     selector: '[data-tour="sort-buttons"]',
     content: (
       <div className="flex flex-col items-center gap-4 text-center">
-        <div className="flex items-center gap-2">
-          <ChevronUp size={32} />
-          <ChevronDown size={32} />
-        </div>
-        <p className="text-left">You can sort group members by:</p>
-        <ul className="ml-4 list-outside list-disc space-y-1 text-left">
-          <li>Greeted - when people were added to your Greeted tab</li>
-          <li>First and Last name</li>
-        </ul>
+        <ArrowDown size={32} />
+        <p className="text-left">
+          You can sort by when you met/connected in this game (default) or name.
+        </p>
+      </div>
+    ),
+  },
+  {
+    selector: '[data-tour="tour-button"]',
+    content: (
+      <div className="flex flex-col items-center gap-4 text-center">
         <HelpCircle size={32} />
-        <p>Or click help to see this tour again.</p>
+        <p className="text-left">Click help to watch this tour any time.</p>
       </div>
     ),
   },
@@ -105,7 +76,7 @@ export const communityTourSteps: StepType[] = [
     content: (
       <div className="flex flex-col items-center gap-4 text-center">
         <Search size={32} />
-        <p>Search for anyone by name.</p>
+        <p>Search for anyone within your current filters.</p>
       </div>
     ),
   },
@@ -113,11 +84,8 @@ export const communityTourSteps: StepType[] = [
     selector: '[data-tour="view-mode-buttons"]',
     content: (
       <div className="flex flex-col items-center gap-4 text-center">
-        <div className="flex items-center gap-2">
-          <LayoutGrid size={32} />
-          <List size={32} />
-        </div>
-        <p>View people in a grid (bigger photos) or list.</p>
+        <LayoutGrid size={32} />
+        <p>Album view</p>
       </div>
     ),
   },

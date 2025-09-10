@@ -36,7 +36,7 @@ import FamilyTree from './FamilyTree'
 import type { FamilyTreeRef } from './FamilyTree'
 import { FocalUserSearch } from './FocalUserSearch'
 import { useGroup } from '@/components/GroupProvider'
-import NameQuizIntroModal from '@/components/NameQuizIntroModal'
+import NameQuizIntroModal from '@/components/GamesIntroModal'
 import { GuestMessage } from '@/components/GuestMessage'
 import { TourProvider, useTour } from '@reactour/tour'
 import { familyTourSteps } from '@/components/tours/FamilyTour'
@@ -134,7 +134,7 @@ function FamilyGroupClientContent({
   const [isIntroModalOpen, setIsIntroModalOpen] = useState(false)
 
   const [introSeen, setIntroSeen] = useLocalStorage(
-    `nameQuizIntroSeen-${groupSlug}`,
+    `namegame_games-intro-seen-${groupSlug}`,
     false,
   )
 
@@ -336,7 +336,7 @@ function FamilyGroupClientContent({
   }
 
   const NameQuizViewClient = dynamic(
-    () => import('@/components/NameQuizViewClient'),
+    () => import('@/components/GamesViewClient'),
     {
       loading: () => <div className="p-4 text-center">Loading quiz...</div>,
       ssr: false,
@@ -528,7 +528,6 @@ function FamilyGroupClientContent({
                   groupSlug={groupSlug}
                   currentUserId={currentUserMember?.userId}
                   onSwitchToGrid={handleSwitchToGrid}
-                  onSwitchToList={handleSwitchToList}
                 />
               </div>
             ) : settings.viewMode === 'tree' ? (

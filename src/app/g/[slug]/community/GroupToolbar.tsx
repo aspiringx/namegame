@@ -12,10 +12,10 @@ import {
   ArrowUp,
   ArrowDown,
   LayoutGrid,
-  Brain,
   HelpCircle,
   Image as Photo,
   Filter,
+  Gamepad2,
 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -78,117 +78,119 @@ export default function GroupToolbar({
     )
   }
   if (settings.filterByRealPhoto) {
-    activeFilters.push('Real Photos')
+    activeFilters.push('Real')
   }
 
   return (
-    <div className="md:-pt-0 mt-1 mb-4 flex items-center justify-between pt-2">
+    <div className="my-2 flex items-center justify-between">
       {/* Filter and Sort Buttons */}
-      <div
-        className="flex flex-wrap items-center gap-2"
-        data-tour="sort-buttons"
-      >
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="flex items-center">
-              <Filter className="mr-2 h-4 w-4" />
-              <span>Filter</span>
-              {activeFilters.length > 0 && (
-                <span className="ml-2 hidden rounded-md bg-gray-200 px-2 py-0.5 text-xs font-semibold text-gray-700 md:inline dark:bg-gray-700 dark:text-gray-200">
-                  {activeFilters.join(', ')}
-                </span>
-              )}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuLabel>Filter by met status</DropdownMenuLabel>
-            <DropdownMenuRadioGroup
-              value={settings.filterMetStatus}
-              onValueChange={(value) =>
-                setSettings((prev) => ({
-                  ...prev,
-                  filterMetStatus: value as 'all' | 'met' | 'not_met',
-                }))
-              }
-            >
-              <DropdownMenuRadioItem
-                value="all"
+      <div className="flex flex-wrap items-center gap-1">
+        <div data-tour="filter-buttons">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="flex items-center">
+                <Filter className="mr-2 h-4 w-4" />
+                <span>Filter</span>
+                {activeFilters.length > 0 && (
+                  <span className="ml-2 hidden rounded-md bg-gray-200 px-2 py-0.5 text-xs font-semibold text-gray-700 md:inline dark:bg-gray-700 dark:text-gray-200">
+                    {activeFilters.join(', ')}
+                  </span>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuLabel>Who to see:</DropdownMenuLabel>
+              <DropdownMenuRadioGroup
+                value={settings.filterMetStatus}
+                onValueChange={(value) =>
+                  setSettings((prev) => ({
+                    ...prev,
+                    filterMetStatus: value as 'all' | 'met' | 'not_met',
+                  }))
+                }
+              >
+                <DropdownMenuRadioItem
+                  value="all"
+                  onSelect={(e) => e.preventDefault()}
+                >
+                  Everyone
+                </DropdownMenuRadioItem>
+                <DropdownMenuRadioItem
+                  value="met"
+                  onSelect={(e) => e.preventDefault()}
+                >
+                  Met
+                </DropdownMenuRadioItem>
+                <DropdownMenuRadioItem
+                  value="not_met"
+                  onSelect={(e) => e.preventDefault()}
+                >
+                  Not met
+                </DropdownMenuRadioItem>
+              </DropdownMenuRadioGroup>
+              <DropdownMenuSeparator />
+              <DropdownMenuCheckboxItem
+                checked={settings.filterByRealPhoto}
+                onCheckedChange={(checked) =>
+                  setSettings((prev) => ({
+                    ...prev,
+                    filterByRealPhoto: checked,
+                  }))
+                }
                 onSelect={(e) => e.preventDefault()}
               >
-                All
-              </DropdownMenuRadioItem>
-              <DropdownMenuRadioItem
-                value="met"
-                onSelect={(e) => e.preventDefault()}
-              >
-                Met
-              </DropdownMenuRadioItem>
-              <DropdownMenuRadioItem
-                value="not_met"
-                onSelect={(e) => e.preventDefault()}
-              >
-                Not Met
-              </DropdownMenuRadioItem>
-            </DropdownMenuRadioGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuCheckboxItem
-              checked={settings.filterByRealPhoto}
-              onCheckedChange={(checked) =>
-                setSettings((prev) => ({ ...prev, filterByRealPhoto: checked }))
-              }
-              onSelect={(e) => e.preventDefault()}
-            >
-              <Photo className="mr-2 h-4 w-4" />
-              Real photos only
-            </DropdownMenuCheckboxItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="flex items-center">
-              <ArrowDown className="mr-2 h-4 w-4" />
-              <span>Sort</span>
-              {currentSortLabel && (
-                <span className="ml-2 hidden rounded-md bg-gray-200 px-2 py-0.5 text-xs font-semibold text-gray-700 md:inline dark:bg-gray-700 dark:text-gray-200">
-                  {currentSortLabel}
-                </span>
-              )}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            {sortOptions.map((option) => (
-              <DropdownMenuItem
-                key={option.key}
-                onSelect={(e) => {
-                  e.preventDefault()
-                  handleSort(option.key)
-                }}
-              >
-                {option.label}
-                {settings.sortConfig.key === option.key &&
-                  (settings.sortConfig.direction === 'asc' ? (
-                    <ArrowUp className="ml-auto h-4 w-4" />
-                  ) : (
-                    <ArrowDown className="ml-auto h-4 w-4" />
-                  ))}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-
+                <Photo className="mr-2 h-4 w-4" />
+                Real photos
+              </DropdownMenuCheckboxItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+        <div data-tour="sort-buttons">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="flex items-center">
+                <ArrowDown className="mr-2 h-4 w-4" />
+                <span>Sort</span>
+                {currentSortLabel && (
+                  <span className="ml-2 hidden rounded-md bg-gray-200 px-2 py-0.5 text-xs font-semibold text-gray-700 md:inline dark:bg-gray-700 dark:text-gray-200">
+                    {currentSortLabel}
+                  </span>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              {sortOptions.map((option) => (
+                <DropdownMenuItem
+                  key={option.key}
+                  onSelect={(e) => {
+                    e.preventDefault()
+                    handleSort(option.key)
+                  }}
+                >
+                  {option.label}
+                  {settings.sortConfig.key === option.key &&
+                    (settings.sortConfig.direction === 'asc' ? (
+                      <ArrowUp className="ml-auto h-4 w-4" />
+                    ) : (
+                      <ArrowDown className="ml-auto h-4 w-4" />
+                    ))}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
         <Button
           variant="ghost"
           size="icon"
           onClick={() => setTourOpen(true)}
-          data-tour="help-button"
+          data-tour="tour-button"
         >
           <HelpCircle className="h-4 w-4" />
         </Button>
       </div>
 
       {/* View Mode Buttons */}
-      <div className="flex items-center gap-2" data-tour="view-mode-buttons">
+      <div className="flex items-center gap-1" data-tour="view-mode-buttons">
         <Button
           variant={settings.viewMode === 'grid' ? 'secondary' : 'ghost'}
           size="sm"
@@ -197,7 +199,7 @@ export default function GroupToolbar({
           <LayoutGrid className="h-4 w-4" />
         </Button>
         <Button variant="ghost" size="sm" onClick={handleSwitchToQuiz}>
-          <Brain className="h-4 w-4 text-orange-500" />
+          <Gamepad2 className="h-6 w-6 text-orange-500" />
         </Button>
       </div>
     </div>

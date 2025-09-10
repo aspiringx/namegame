@@ -63,11 +63,10 @@ export default function useGroupMembers(initialMembers: MemberWithUser[], settin
     }
 
     if (settings.filterMetStatus !== 'all') {
-      const metIds = new Set(initialMembers.filter(m => m.relationUpdatedAt !== null).map(m => m.userId));
       if (settings.filterMetStatus === 'met') {
-        filtered = filtered.filter(member => metIds.has(member.userId));
-      } else {
-        filtered = filtered.filter(member => !metIds.has(member.userId));
+        filtered = filtered.filter(member => !!member.relationUpdatedAt);
+      } else { // 'not_met'
+        filtered = filtered.filter(member => !member.relationUpdatedAt);
       }
     }
 

@@ -23,26 +23,11 @@ import {
 import { getMemberRelations } from '@/lib/actions'
 import RelateModal from '@/components/RelateModal'
 import { useGroup } from '@/components/GroupProvider'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
-import { Badge } from '@/components/ui/badge'
+import { TooltipProvider } from '@/components/ui/tooltip'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import {
-  ArrowUp,
-  ArrowDown,
-  LayoutGrid,
-  List,
-  X,
-  Brain,
-  HelpCircle,
-  Image as Photo,
-} from 'lucide-react'
-import NameQuizIntroModal from '@/components/NameQuizIntroModal'
+import { LayoutGrid, X, Gamepad2 } from 'lucide-react'
+import GamesIntroModal from '@/components/GamesIntroModal'
 import { TourProvider, useTour } from '@reactour/tour'
 import { communityTourSteps } from '@/components/tours/CommunityTour'
 import { communityTourMobileSteps } from '@/components/tours/CommunityTourMobile'
@@ -52,13 +37,10 @@ import Modal from '@/components/ui/modal'
 import GroupToolbar from './GroupToolbar'
 import MemberGrid from './MemberGrid'
 
-const NameQuizViewClient = dynamic(
-  () => import('@/components/NameQuizViewClient'),
-  {
-    loading: () => <div className="p-4 text-center">Loading quiz...</div>,
-    ssr: false,
-  },
-)
+const GamesViewClient = dynamic(() => import('@/components/GamesViewClient'), {
+  loading: () => <div className="p-4 text-center">Loading quiz...</div>,
+  ssr: false,
+})
 
 interface CommunityGroupClientProps {
   members: MemberWithUser[]
@@ -107,7 +89,7 @@ const CommunityGroupClientContent: React.FC<
   const [isLoadingRelations, setIsLoadingRelations] = useState(false)
   const [isIntroModalOpen, setIsIntroModalOpen] = useState(false)
   const [introSeen, setIntroSeen] = useLocalStorage(
-    `nameQuizIntroSeen-${group?.slug || ''}`,
+    `namegame_games-intro-seen-${group?.slug || ''}`,
     false,
   )
   const [isConnectModalOpen, setIsConnectModalOpen] = useState(false)
@@ -275,11 +257,11 @@ const CommunityGroupClientContent: React.FC<
                   size="sm"
                   onClick={handleSwitchToQuiz}
                 >
-                  <Brain className="h-4 w-4 text-orange-500" />
+                  <Gamepad2 className="h-6 w-6 text-orange-500" />
                 </Button>
               </div>
               <div className="mt-4 rounded-xl bg-white p-3 dark:bg-gray-800">
-                <NameQuizViewClient
+                <GamesViewClient
                   members={allMembers}
                   groupSlug={group?.slug || ''}
                   currentUserId={ego?.userId}
@@ -297,7 +279,7 @@ const CommunityGroupClientContent: React.FC<
                 setTourOpen={setIsOpen}
               />
 
-              <div className="relative my-4" data-tour="search-input">
+              <div className="relative mb-4" data-tour="search-input">
                 <Input
                   type="text"
                   placeholder="Search by name..."
@@ -328,7 +310,7 @@ const CommunityGroupClientContent: React.FC<
           )}
         </div>
       </TooltipProvider>
-      <NameQuizIntroModal
+      <GamesIntroModal
         isOpen={isIntroModalOpen}
         onClose={handleCloseIntroModal}
       />
@@ -355,8 +337,8 @@ const CommunityGroupClientContent: React.FC<
             </h3>
             <div className="mt-2">
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                If you already know {memberToConnect.user.name}, connect to add
-                them to your Greeted tab.
+                If you already know {memberToConnect.user.name}, connect so
+                they're in your "Met" filter.
               </p>
             </div>
             <div className="mt-6 flex justify-end space-x-4">
@@ -466,8 +448,8 @@ const CommunityGroupClient: React.FC<CommunityGroupClientProps> = (props) => {
           color: 'var(--foreground)',
           top: 12,
           right: 12,
-          width: '1.4rem',
-          height: '1.4rem',
+          width: '1.2rem',
+          height: '1.2rem',
         }),
         arrow: (base: React.CSSProperties) => ({
           ...base,
@@ -492,7 +474,6 @@ const CommunityGroupClient: React.FC<CommunityGroupClientProps> = (props) => {
         {...props}
         settings={settings}
         setSettings={setSettings}
-        groupSlug={props.groupSlug}
       />
     </TourProvider>
   )

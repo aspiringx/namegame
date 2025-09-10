@@ -55,7 +55,7 @@ export default function MemberCard({
           <div className="relative text-center">
             <div className="flex items-center justify-center gap-2">
               <div className="absolute top-1 left-0 flex h-full items-center">
-                {!member.relationUpdatedAt && onConnect && (
+                {!member.relationUpdatedAt && onConnect && member.userId !== currentUserId && (
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>

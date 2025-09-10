@@ -18,18 +18,14 @@ export default function CommunityGroupPageClient({
     return <div>Group not found.</div>
   }
 
-  const {
-    greetedMembers,
-    notGreetedMembers,
-    currentUserMember,
-  } = groupData
+  const { greetedMembers, notGreetedMembers, currentUserMember } = groupData
 
   const members = [...greetedMembers, ...notGreetedMembers]
 
   const isGuest = !currentUserMember || currentUserMember.role?.code === 'guest'
 
   return (
-    <div className="container mx-auto mt-4 px-4 py-0">
+    <div className="container mx-auto mt-2 px-4 py-0">
       <GuestMessage
         isGuest={isGuest}
         firstName={session?.user?.firstName}
