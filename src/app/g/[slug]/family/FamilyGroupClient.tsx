@@ -19,18 +19,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import {
-  ArrowUp,
-  ArrowDown,
-  GitFork,
-  LayoutGrid,
-  List,
-  X,
-  FlaskConical,
-  Brain,
-  Image as Photo,
-  HelpCircle,
-} from 'lucide-react'
+import { GitFork, X, FlaskConical, Gamepad2, LayoutGrid } from 'lucide-react'
+import GroupToolbar from './GroupToolbar'
 import { ReactFlowProvider } from 'reactflow'
 import FamilyTree from './FamilyTree'
 import type { FamilyTreeRef } from './FamilyTree'
@@ -54,8 +44,9 @@ interface FamilyPageSettings {
     key: SortKey
     direction: SortDirection
   }
-  viewMode: 'grid' | 'list' | 'tree' | 'quiz'
+  viewMode: 'grid' | 'tree' | 'quiz'
   filterByRealPhoto: boolean
+  filterConnectedStatus: 'all' | 'connected' | 'not_connected'
 }
 
 interface FamilyGroupClientProps {
@@ -83,7 +74,8 @@ function FamilyGroupClientContent({
       searchQuery: '',
       sortConfig: { key: 'joined', direction: 'desc' },
       viewMode: 'grid',
-      filterByRealPhoto: false,
+      filterByRealPhoto: true,
+      filterConnectedStatus: 'all',
     },
   )
   const prevIsGuestRef = useRef(isGuest)
@@ -217,6 +209,36 @@ function FamilyGroupClientContent({
     router.refresh()
   }
 
+  const relationshipMap = useMemo(() => {
+    if (!currentUserMember) {
+      return new Map<string, { label: string; steps: number }>()
+    }
+
+    const usersMap = new Map<string, User>()
+    members.forEach((member) => {
+      usersMap.set(member.user.id, member.user)
+    })
+
+    const newMap = new Map<string, { label: string; steps: number }>()
+    for (const alter of members) {
+      if (alter.userId === currentUserMember.userId) continue
+      const result = getRelationship(
+        currentUserMember.userId,
+        alter.userId,
+        initialRelationships,
+        members,
+        usersMap,
+      )
+      if (result && result.relationship) {
+        newMap.set(alter.userId, {
+          label: result.relationship,
+          steps: result.steps,
+        })
+      }
+    }
+    return newMap
+  }, [currentUserMember, members, initialRelationships])
+
   const filteredAndSortedMembers = useMemo(() => {
     let filtered = members
 
@@ -226,6 +248,20 @@ function FamilyGroupClientContent({
           member.user.photoUrl &&
           !member.user.photoUrl.includes('api.dicebear.com') &&
           !member.user.photoUrl.includes('default-avatar.png'),
+      )
+    }
+
+    if (settings.filterConnectedStatus === 'connected') {
+      filtered = filtered.filter(
+        (member) =>
+          relationshipMap.has(member.userId) ||
+          member.userId === currentUserMember?.userId,
+      )
+    } else if (settings.filterConnectedStatus === 'not_connected') {
+      filtered = filtered.filter(
+        (member) =>
+          !relationshipMap.has(member.userId) &&
+          member.userId !== currentUserMember?.userId,
       )
     }
 
@@ -257,37 +293,11 @@ function FamilyGroupClientContent({
     settings.sortConfig,
     settings.filterByRealPhoto,
     settings.searchQuery,
+    settings.filterConnectedStatus,
+    relationshipMap,
+    currentUserMember,
+    relationshipMap,
   ])
-
-  const relationshipMap = useMemo(() => {
-    if (!currentUserMember) {
-      return new Map<string, { label: string; steps: number }>()
-    }
-
-    const usersMap = new Map<string, User>()
-    members.forEach((member) => {
-      usersMap.set(member.user.id, member.user)
-    })
-
-    const newMap = new Map<string, { label: string; steps: number }>()
-    for (const alter of members) {
-      if (alter.userId === currentUserMember.userId) continue
-      const result = getRelationship(
-        currentUserMember.userId,
-        alter.userId,
-        initialRelationships,
-        members,
-        usersMap,
-      )
-      if (result && result.relationship) {
-        newMap.set(alter.userId, {
-          label: result.relationship,
-          steps: result.steps,
-        })
-      }
-    }
-    return newMap
-  }, [currentUserMember, members, initialRelationships])
 
   const treeRelationshipMap = useMemo(() => {
     const newMap = new Map<string, string>()
@@ -331,9 +341,6 @@ function FamilyGroupClientContent({
     setSettings((prev) => ({ ...prev, viewMode: 'grid' }))
   }
 
-  const handleSwitchToList = () => {
-    setSettings((prev) => ({ ...prev, viewMode: 'list' }))
-  }
 
   const NameQuizViewClient = dynamic(
     () => import('@/components/GamesViewClient'),
@@ -357,84 +364,20 @@ function FamilyGroupClientContent({
       />
       <div className="bg-background border-border sticky top-16 z-10 border-b py-4">
         <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2" data-tour="sort-buttons">
-              {settings.viewMode === 'tree' ? (
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => familyTreeRef.current?.reset()}
-                  className="flex items-center gap-1"
-                  disabled={isResetDisabled}
-                  data-tour="reset-tree-button"
-                >
-                  Reset
-                </Button>
-              ) : settings.viewMode !== 'quiz' ? (
-                <>
-                  {(['joined', 'firstName', 'lastName'] as const).map((key) => {
-                    const isActive = settings.sortConfig.key === key
-                    const SortIcon =
-                      settings.sortConfig.direction === 'asc'
-                        ? ArrowUp
-                        : ArrowDown
-                    return (
-                      <Button
-                        key={key}
-                        variant={isActive ? 'secondary' : 'ghost'}
-                        size="sm"
-                        onClick={() => handleSort(key)}
-                        className={`hidden items-center gap-1 capitalize sm:flex`}
-                      >
-                        {key.replace('Name', '')}
-                        {isActive && <SortIcon className="h-4 w-4" />}
-                      </Button>
-                    )
-                  })}
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant={
-                            settings.filterByRealPhoto ? 'secondary' : 'ghost'
-                          }
-                          size="sm"
-                          onClick={() =>
-                            setSettings((prev) => ({
-                              ...prev,
-                              filterByRealPhoto: !prev.filterByRealPhoto,
-                            }))
-                          }
-                          data-tour="filter-by-real-photo-button"
-                        >
-                          <Photo className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Only show users with real photos</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setCurrentStep(0)
-                      setIsOpen(true)
-                    }}
-                    data-tour="help-button"
-                  >
-                    <HelpCircle className="h-4 w-4" />
-                  </Button>
-                </>
-              ) : null}
-            </div>
-            <div
-              className="flex items-center gap-2"
-              data-tour="view-mode-buttons"
-            >
+          {settings.viewMode === 'tree' ? (
+            <div className="flex items-center justify-between gap-2">
               <Button
-                variant={settings.viewMode === 'grid' ? 'secondary' : 'ghost'}
+                variant="secondary"
+                size="sm"
+                onClick={() => familyTreeRef.current?.reset()}
+                className="flex items-center gap-1"
+                disabled={isResetDisabled}
+                data-tour="reset-tree-button"
+              >
+                Reset
+              </Button>
+              <Button
+                variant={'ghost'}
                 size="sm"
                 onClick={() =>
                   setSettings((prev) => ({ ...prev, viewMode: 'grid' }))
@@ -443,33 +386,16 @@ function FamilyGroupClientContent({
               >
                 <LayoutGrid className="h-4 w-4" />
               </Button>
-              <Button
-                variant={settings.viewMode === 'list' ? 'secondary' : 'ghost'}
-                size="sm"
-                onClick={() =>
-                  setSettings((prev) => ({ ...prev, viewMode: 'list' }))
-                }
-              >
-                <List className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={settings.viewMode === 'tree' ? 'secondary' : 'ghost'}
-                size="sm"
-                onClick={() =>
-                  setSettings((prev) => ({ ...prev, viewMode: 'tree' }))
-                }
-              >
-                <GitFork className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={settings.viewMode === 'quiz' ? 'secondary' : 'ghost'}
-                size="sm"
-                onClick={handleSwitchToQuiz}
-              >
-                <Brain className="h-4 w-4 text-orange-500" />
-              </Button>
             </div>
-          </div>
+          ) : settings.viewMode !== 'quiz' ? (
+            <GroupToolbar
+              settings={settings}
+              setSettings={setSettings}
+              handleSort={handleSort}
+              handleSwitchToQuiz={handleSwitchToQuiz}
+              setTourOpen={setIsOpen}
+            />
+          ) : null}
           <div className="relative mt-4">
             {settings.viewMode === 'tree' ? (
               <FocalUserSearch
@@ -579,17 +505,12 @@ function FamilyGroupClientContent({
             ) : (
               <>
                 <div
-                  className={
-                    settings.viewMode === 'list'
-                      ? 'grid grid-cols-1 gap-2'
-                      : 'grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'
-                  }
+                  className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'
                 >
                   {filteredAndSortedMembers.map((member) => (
                     <FamilyMemberCard
                       key={member.userId}
                       member={member}
-                      viewMode={settings.viewMode === 'grid' ? 'grid' : 'list'}
                       relationship={relationshipMap.get(member.userId)?.label}
                       onRelate={handleOpenRelateModal}
                       currentUserId={currentUserMember?.userId}
