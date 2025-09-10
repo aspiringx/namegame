@@ -76,7 +76,13 @@ const CommunityGroupClientContent: React.FC<
   groupSlug,
 }) => {
   const { group, currentUserMember: ego, isGroupAdmin } = useGroup()
-  const { isOpen, setIsOpen } = useTour()
+  const { isOpen, setIsOpen, setCurrentStep } = useTour()
+
+  useEffect(() => {
+    if (!isOpen) {
+      setCurrentStep(0)
+    }
+  }, [isOpen, setCurrentStep])
 
   const router = useRouter()
 
@@ -386,10 +392,7 @@ const CommunityGroupClient: React.FC<CommunityGroupClientProps> = (props) => {
   }, [])
 
   const tourSteps = useMemo(() => {
-    if (isMobile) {
-      return communityTourMobileSteps
-    }
-    return communityTourSteps
+    return isMobile ? communityTourMobileSteps : communityTourSteps
   }, [isMobile])
 
   if (!hasMounted) {

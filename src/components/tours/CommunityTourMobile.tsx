@@ -1,15 +1,12 @@
-import { StepType } from '@reactour/tour'
+import { PopoverContentProps, StepType } from '@reactour/tour'
+import { Button } from '@/components/ui/button'
 import {
   ArrowDown,
-  Brain,
-  ChevronDown,
-  ChevronUp,
   Filter,
   Gamepad2,
   HelpCircle,
   LayoutGrid,
   Link,
-  List,
   Plus,
   Search,
 } from 'lucide-react'
@@ -55,11 +52,8 @@ export const communityTourMobileSteps: StepType[] = [
           icon <Link size={16} className="inline-block" /> to connect.
         </p>
         <p className="text-left">
-          Everyone starts with a random cartoon pic until they upload a real
-          one. Use the "real" filter to see only real photos.
-        </p>
-        <p className="text-left">
-          In a sec, we'll see how to connect with people you haven't met.
+          Everyone (including you) starts with a random cartoon pic until they
+          upload a real one.
         </p>
       </div>
     ),
@@ -84,6 +78,10 @@ export const communityTourMobileSteps: StepType[] = [
       <div className="flex flex-col items-center gap-4 text-center">
         <HelpCircle size={32} className="text-orange-500" />
         <p className="text-left">Click help to watch this tour any time.</p>
+        <p className="text-left">
+          You can click on the dots or arrows to quickly move to a specific
+          section.
+        </p>
       </div>
     ),
   },
@@ -123,8 +121,7 @@ export const communityTourMobileSteps: StepType[] = [
           Go here to play games, starting with the Name Quiz.
         </p>
         <p className="text-left">
-          Games makes it easy to meet, remember names, and interact. Just play
-          together.
+          Games makes it easy to meet, remember names, and interact. Just play!
         </p>
       </div>
     ),
@@ -155,7 +152,7 @@ export const communityTourMobileSteps: StepType[] = [
   {
     selector: 'body[data-this-does-not-exist]',
     position: 'center',
-    content: (
+    content: ({ setIsOpen }: PopoverContentProps) => (
       <div className="flex flex-col items-center gap-4 text-center">
         <Image
           src="/images/butterflies.png"
@@ -164,11 +161,18 @@ export const communityTourMobileSteps: StepType[] = [
           height={64}
           className="mx-auto h-auto w-auto"
         />
-        <p className="text-center text-2xl">Have fun!</p>
+        <p className="text-center text-2xl">Have Fun!</p>
         <p className="text-left">
-          Relationships start with names. They're easier when you play and do
-          things together.
+          Relationships start with names. They grow naturally as you do fun and
+          interesting stuff together.
         </p>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setIsOpen(false)}
+        >
+          Close Tour
+        </Button>
       </div>
     ),
   },
