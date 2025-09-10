@@ -190,15 +190,21 @@ export default function GroupToolbar({
       </div>
 
       {/* View Mode Buttons */}
-      <div className="flex items-center gap-1" data-tour="view-mode-buttons">
+      <div className="flex items-center gap-1">
         <Button
           variant={settings.viewMode === 'grid' ? 'secondary' : 'ghost'}
           size="sm"
           onClick={() => setSettings((prev) => ({ ...prev, viewMode: 'grid' }))}
+          data-tour="grid-button"
         >
           <LayoutGrid className="h-4 w-4" />
         </Button>
-        <Button variant="ghost" size="sm" onClick={handleSwitchToQuiz}>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleSwitchToQuiz}
+          data-tour="game-button"
+        >
           <Gamepad2 className="h-6 w-6 text-orange-500" />
         </Button>
       </div>
