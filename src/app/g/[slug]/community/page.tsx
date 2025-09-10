@@ -1,5 +1,5 @@
 import { getGroup } from './data'
-import GroupPageClient from './GroupPageClient'
+import CommunityGroupPageClient from './CommunityGroupPageClient'
 import { notFound } from 'next/navigation'
 
 export default async function Page({
@@ -14,5 +14,5 @@ export default async function Page({
     notFound()
   }
 
-  return <GroupPageClient groupData={groupData} />
+  return <CommunityGroupPageClient groupData={groupData} />
 }

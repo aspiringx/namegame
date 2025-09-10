@@ -1,14 +1,14 @@
-import { StepType } from '@reactour/tour'
+import { PopoverContentProps, StepType } from '@reactour/tour'
+import { Button } from '@/components/ui/button'
 import {
-  Brain,
-  ChevronDown,
-  ChevronUp,
+  Filter,
   HelpCircle,
   LayoutGrid,
   Link,
-  List,
   Plus,
   Search,
+  ArrowDown,
+  Gamepad2,
 } from 'lucide-react'
 import Image from 'next/image'
 
@@ -21,64 +21,39 @@ export const communityTourSteps: StepType[] = [
         <Image
           src="/images/butterflies.png"
           alt="NameGame social butterflies"
-          width={48}
-          height={48}
+          width={64}
+          height={64}
           className="mx-auto h-auto w-auto"
         />
         <p>Welcome to your NameGame group!</p>
         <p className="text-left">
-          A place to meet, learn names, and get to know people in this group.
+          A fun place to meet, get acquainted, play, and do stuff together.
         </p>
       </div>
     ),
   },
   {
-    selector: '[data-tour="greeted-not-greeted-tabs"]',
+    selector: '[data-tour="filter-buttons"]',
     content: (
       <div className="flex flex-col items-center gap-4 text-center">
-        <Link size={32} />
-        <p className="text-left">
-          You have two tabs on top: Greeted and Not Greeted.
-        </p>
+        <Filter size={32} className="text-orange-500" />
+        <p className="text-left">Use filters to see:</p>
         <ul className="ml-4 list-outside list-disc space-y-1 text-left">
-          <li>
-            <b>Greeted</b> shows the people you've already met or know. You can
-            do more with people in this tab.
-          </li>
-          <li>
-            <b>Not Greeted</b> shows people you haven't met or connected with in
-            the game.
-          </li>
+          <li>People you've met or not</li>
+          <li>Only people with real photos</li>
         </ul>
         <p className="text-left">
-          If you already know someone in Not Greeted, just click their{' '}
-          <Link size={16} className="inline-block" /> icon to add them to your
-          Greeted tab.
+          You initially see people you've "met" with a greeting code (QR code or
+          link you used to enter here).
         </p>
         <p className="text-left">
-          If you don't know them, you can share a greeting code, which we'll see
-          next.
-        </p>
-      </div>
-    ),
-  },
-  {
-    selector: '[data-tour="greet-button"]',
-    content: (
-      <div className="flex flex-col items-center gap-4 text-center">
-        <Plus size={32} />
-        <p className="text-left">
-          The Greet button appears after you've completed your profile.
+          If you already know someone in the "not met" list, click their link
+          icon <Link size={16} className="inline-block" /> to connect.
         </p>
         <p className="text-left">
-          Use it to invite people into this group or greet existing members in
-          your Not Greeted tab.
+          Everyone (including you) starts with a random cartoon pic until they
+          upload a real one.
         </p>
-        <p className="text-left">Click it to create a greeting code.</p>
-        <ul className="ml-4 list-outside list-disc space-y-1 text-left">
-          <li>A QR code others can scan</li>
-          <li>Or a link/URL you can send</li>
-        </ul>
       </div>
     ),
   },
@@ -86,17 +61,24 @@ export const communityTourSteps: StepType[] = [
     selector: '[data-tour="sort-buttons"]',
     content: (
       <div className="flex flex-col items-center gap-4 text-center">
-        <div className="flex items-center gap-2">
-          <ChevronUp size={32} />
-          <ChevronDown size={32} />
-        </div>
-        <p className="text-left">You can sort group members by:</p>
-        <ul className="ml-4 list-outside list-disc space-y-1 text-left">
-          <li>Greeted - when people were added to your Greeted tab</li>
-          <li>First and Last name</li>
-        </ul>
-        <HelpCircle size={32} />
-        <p>Or click help to see this tour again.</p>
+        <ArrowDown size={32} className="text-orange-500" />
+        <p className="text-left">
+          You can sort people by when you "met" (in this game) or first and last
+          name.
+        </p>
+      </div>
+    ),
+  },
+  {
+    selector: '[data-tour="tour-button"]',
+    content: (
+      <div className="flex flex-col items-center gap-4 text-center">
+        <HelpCircle size={32} className="text-orange-500" />
+        <p className="text-left">Click help to watch this tour any time.</p>
+        <p className="text-left">
+          You can click on the dots or arrows to quickly move to a specific
+          section.
+        </p>
       </div>
     ),
   },
@@ -104,34 +86,36 @@ export const communityTourSteps: StepType[] = [
     selector: '[data-tour="search-input"]',
     content: (
       <div className="flex flex-col items-center gap-4 text-center">
-        <Search size={32} />
-        <p>Search for anyone by name.</p>
-      </div>
-    ),
-  },
-  {
-    selector: '[data-tour="view-mode-buttons"]',
-    content: (
-      <div className="flex flex-col items-center gap-4 text-center">
-        <div className="flex items-center gap-2">
-          <LayoutGrid size={32} />
-          <List size={32} />
-        </div>
-        <p>View people in a grid (bigger photos) or list.</p>
-      </div>
-    ),
-  },
-  {
-    selector: '[data-tour="view-mode-buttons"]',
-    content: (
-      <div className="flex flex-col items-center gap-4 text-center">
-        <Brain size={32} className="text-orange-500" />
+        <Search size={32} className="text-orange-500" />
         <p className="text-left">
-          Use the Name Quiz to test your memory of faces and names.
+          Search for anyone within your current filters.
+        </p>
+      </div>
+    ),
+  },
+  {
+    selector: '[data-tour="grid-button"]',
+    content: (
+      <div className="flex flex-col items-center gap-4 text-center">
+        <LayoutGrid size={32} className="text-orange-500" />
+        <p className="text-left">
+          This is the photo view. When you play games, click here to return to
+          photos.
+        </p>
+      </div>
+    ),
+  },
+  {
+    selector: '[data-tour="game-button"]',
+    content: (
+      <div className="flex flex-col items-center gap-4 text-center">
+        <Gamepad2 size={32} className="text-orange-500" />
+        <p className="text-left">NameGame is a game!</p>
+        <p className="text-left">
+          Go here to play games, starting with the Name Quiz.
         </p>
         <p className="text-left">
-          Note: only people in your greeted tab with real photos appear in the
-          quiz.
+          Games makes it easy to meet, remember names, and interact. Just play!
         </p>
       </div>
     ),
@@ -141,26 +125,48 @@ export const communityTourSteps: StepType[] = [
     position: 'center',
     content: (
       <div className="flex flex-col items-center gap-4 text-center">
+        <Plus size={32} className="text-orange-500" />
+        <p className="text-left">Greet or Connect!</p>
+        <p className="text-left">
+          When you're profile is complete, you'll see a Greet button below. Use
+          it to make greeting codes.
+        </p>
+        <p className="text-left">
+          A greeting code is both a QR code people can scan with their camera
+          and/or a link you can send.
+        </p>
+        <p className="text-left">When people scan or tap it:</p>
+        <ul className="ml-4 list-outside list-disc space-y-1 text-left">
+          <li>It lets them into this private group and connects you</li>
+          <li>Or just connects you if they're already in the group</li>
+        </ul>
+      </div>
+    ),
+  },
+  {
+    selector: '[data-tour="greet-button"]',
+    position: 'center',
+    content: ({ setIsOpen }: PopoverContentProps) => (
+      <div className="flex flex-col items-center gap-4 text-center">
         <Image
           src="/images/butterflies.png"
           alt="NameGame social butterflies"
-          width={48}
-          height={48}
+          width={64}
+          height={64}
           className="mx-auto h-auto w-auto"
         />
-        <p className="text-center text-2xl">Have fun!</p>
-        <p className="text-left">Relationships start with names.</p>
+        <p className="text-center text-2xl">Have Fun!</p>
         <p className="text-left">
-          In your profile (tap your pic, then Me), install NameGame and enable
-          notifications to get messages and learn about coming features, like:
+          Relationships start with names. They grow naturally as you do fun and
+          interesting stuff together.
         </p>
-        <ul className="ml-4 list-outside list-disc space-y-1 text-left">
-          <li>Announcements and reminders</li>
-          <li>Discovering shared interests</li>
-          <li>Group member spotlights</li>
-          <li>Sub-groups</li>
-          <li>Etc.</li>
-        </ul>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setIsOpen(false)}
+        >
+          Close Tour
+        </Button>
       </div>
     ),
   },

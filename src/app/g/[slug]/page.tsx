@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 import dynamic from 'next/dynamic'
 
 const FamilyPage = dynamic(() => import('./family/page'))
-const AllOtherGroupsPage = dynamic(() => import('./all/page'))
+const CommunityGroupsPage = dynamic(() => import('./community/page'))
 
 export default async function GroupPage({
   params: paramsPromise,
@@ -21,5 +21,5 @@ export default async function GroupPage({
     return <FamilyPage params={paramsPromise} />
   }
 
-  return <AllOtherGroupsPage params={paramsPromise} />
+  return <CommunityGroupsPage params={paramsPromise} />
 }

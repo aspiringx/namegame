@@ -61,14 +61,16 @@ export function GuestMessage({
         Welcome {firstName}!
       </h3>
       <div className="space-y-2">
-        <p className="mb-4">You're in the private {groupName} group!</p>
+        <p className="mb-4 text-center">
+          You're in the private {groupName} group!
+        </p>
         <div className="my-4 flex items-center gap-4 rounded-md bg-green-200 p-4 dark:bg-green-900">
           <HelpCircle size={32} />
           <p>Click the help icon above for a quick tour.</p>
         </div>
-        <p>
-          Complete your profile to help others recognize you and to stop seeing
-          this reminder.
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          Complete your profile to help others recognize you, enable game
+          features, and to stop seeing this reminder.
         </p>
       </div>
       <div className="mt-6 flex w-full justify-center gap-4 sm:w-auto">

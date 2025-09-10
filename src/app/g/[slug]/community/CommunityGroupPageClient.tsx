@@ -3,11 +3,11 @@
 import { GroupData } from '@/types'
 import { GuestMessage } from '@/components/GuestMessage'
 import Link from 'next/link'
-import GroupTabs from './GroupTabs'
+import CommunityGroupClient from './CommunityGroupClient'
 import { useState } from 'react'
 import { useSession } from 'next-auth/react'
 
-export default function GroupPageClient({
+export default function CommunityGroupPageClient({
   groupData,
 }: {
   groupData: GroupData
@@ -18,30 +18,23 @@ export default function GroupPageClient({
     return <div>Group not found.</div>
   }
 
-  const {
-    greetedMembers,
-    notGreetedMembers,
-    currentUserMember,
-    greetedCount,
-    notGreetedCount,
-  } = groupData
+  const { greetedMembers, notGreetedMembers, currentUserMember } = groupData
+
+  const members = [...greetedMembers, ...notGreetedMembers]
 
   const isGuest = !currentUserMember || currentUserMember.role?.code === 'guest'
 
   return (
-    <div className="container mx-auto mt-4 px-4 py-0">
+    <div className="container mx-auto mt-2 px-4 py-0">
       <GuestMessage
         isGuest={isGuest}
         firstName={session?.user?.firstName}
         groupName={groupData.name}
         groupType={groupData.groupType.code}
       />
-      <GroupTabs
-        greetedMembers={greetedMembers}
-        notGreetedMembers={notGreetedMembers}
+      <CommunityGroupClient
+        members={members}
         currentUserMember={currentUserMember}
-        greetedCount={greetedCount}
-        notGreetedCount={notGreetedCount}
         groupSlug={groupData.slug}
       />
     </div>
