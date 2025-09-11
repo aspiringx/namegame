@@ -57,13 +57,13 @@ interface CommunityGroupClientContentProps
 
 interface GroupPageSettings {
   sortConfig: {
-    key: 'when_met' | 'firstName' | 'lastName'
+    key: 'when_connected' | 'firstName' | 'lastName'
     direction: 'asc' | 'desc'
   }
   viewMode: 'grid' | 'quiz'
   searchQuery: string
   filterByRealPhoto: boolean
-  filterMetStatus: 'all' | 'met' | 'not_met'
+  filterConnectedStatus: 'all' | 'connected' | 'not_connected'
 }
 
 const CommunityGroupClientContent: React.FC<
@@ -75,7 +75,13 @@ const CommunityGroupClientContent: React.FC<
   setSettings,
   groupSlug,
 }) => {
-  const { group, currentUserMember: ego, isGroupAdmin } = useGroup()
+  const groupContext = useGroup()
+
+  if (!groupContext) {
+    return null // Should be rendered within GroupProvider
+  }
+
+  const { group, isGroupAdmin, currentUserMember: ego } = groupContext
   const { isOpen, setIsOpen, setCurrentStep } = useTour()
 
   useEffect(() => {
@@ -223,7 +229,7 @@ const CommunityGroupClientContent: React.FC<
     setSettings((prev) => ({ ...prev, searchQuery: query }))
   }
 
-  const handleSort = (key: 'when_met' | 'firstName' | 'lastName') => {
+  const handleSort = (key: 'when_connected' | 'firstName' | 'lastName') => {
     setSettings((prev) => ({
       ...prev,
       sortConfig: {
@@ -344,7 +350,7 @@ const CommunityGroupClientContent: React.FC<
             <div className="mt-2">
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 If you already know {memberToConnect.user.name}, connect so
-                they're in your "Met" filter.
+                they're in your "Connected" filter.
               </p>
             </div>
             <div className="mt-6 flex justify-end space-x-4">
@@ -361,16 +367,22 @@ const CommunityGroupClientContent: React.FC<
 }
 
 const CommunityGroupClient: React.FC<CommunityGroupClientProps> = (props) => {
-  const { group } = useGroup()
+  const groupContext = useGroup()
+
+  if (!groupContext) {
+    return null // Should be rendered within GroupProvider
+  }
+
+  const { group } = groupContext
 
   const [settings, setSettings] = useLocalStorage<GroupPageSettings>(
     `namegame_community-group-settings_${group?.slug || ''}`,
     {
-      sortConfig: { key: 'when_met', direction: 'desc' },
+      sortConfig: { key: 'when_connected', direction: 'desc' },
       viewMode: 'grid',
       searchQuery: '',
       filterByRealPhoto: true,
-      filterMetStatus: 'met',
+      filterConnectedStatus: 'connected',
     },
   )
 

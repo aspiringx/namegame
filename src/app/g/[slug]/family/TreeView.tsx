@@ -5,10 +5,16 @@ import { useGroup } from '@/components/GroupProvider'
 import FamilyTree from './FamilyTree'
 import type { FamilyTreeRef } from './FamilyTree'
 import { FocalUserSearch } from './FocalUserSearch'
+import { useFamilyGroupMembers } from './FamilyGroupClient';
+import { MemberWithUser } from '@/types';
 
 export default function TreeView() {
-  const { group, relatedMembers, isGroupAdmin, currentUserMember, relationships } =
-    useGroup()
+  const members = useFamilyGroupMembers();
+  const groupContext = useGroup();
+  if (!groupContext) {
+    return null;
+  }
+  const { group, isGroupAdmin, currentUserMember, relationships } = groupContext;
   const familyTreeRef = useRef<FamilyTreeRef>(null)
 
   if (!group) return null
@@ -16,13 +22,13 @@ export default function TreeView() {
   return (
     <div className="relative rounded-md border">
       <FocalUserSearch
-        members={relatedMembers}
+        members={members}
         onSelect={(userId) => familyTreeRef.current?.setFocalUser(userId)}
       />
       <FamilyTree
         ref={familyTreeRef}
         relationships={relationships || []}
-        members={relatedMembers}
+        members={members}
         currentUser={currentUserMember?.user}
         onIsFocalUserCurrentUserChange={() => {}}
         relationshipMap={new Map()}

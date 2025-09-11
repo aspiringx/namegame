@@ -33,19 +33,19 @@ import clsx from 'clsx'
 // This should be kept in sync with the one in CommunityGroupClient.tsx
 interface GroupPageSettings {
   sortConfig: {
-    key: 'when_met' | 'firstName' | 'lastName'
+    key: 'when_connected' | 'firstName' | 'lastName'
     direction: 'asc' | 'desc'
   }
   viewMode: 'grid' | 'quiz'
   searchQuery: string
   filterByRealPhoto: boolean
-  filterMetStatus: 'all' | 'met' | 'not_met'
+  filterConnectedStatus: 'all' | 'connected' | 'not_connected'
 }
 
 interface GroupToolbarProps {
   settings: GroupPageSettings
   setSettings: React.Dispatch<React.SetStateAction<GroupPageSettings>>
-  handleSort: (key: 'when_met' | 'firstName' | 'lastName') => void
+  handleSort: (key: 'when_connected' | 'firstName' | 'lastName') => void
   handleSwitchToQuiz: () => void
   setTourOpen: (isOpen: boolean) => void
 }
@@ -58,10 +58,10 @@ export default function GroupToolbar({
   setTourOpen,
 }: GroupToolbarProps) {
   const sortOptions: {
-    key: 'when_met' | 'firstName' | 'lastName'
+    key: 'when_connected' | 'firstName' | 'lastName'
     label: string
   }[] = [
-    { key: 'when_met', label: 'When met' },
+    { key: 'when_connected', label: 'When connected' },
     { key: 'firstName', label: 'First name' },
     { key: 'lastName', label: 'Last name' },
   ]
@@ -71,10 +71,10 @@ export default function GroupToolbar({
   )?.label
 
   const activeFilters = []
-  if (settings.filterMetStatus !== 'all') {
+  if (settings.filterConnectedStatus !== 'all') {
     activeFilters.push(
-      settings.filterMetStatus.charAt(0).toUpperCase() +
-        settings.filterMetStatus.slice(1).replace('_', ' '),
+      settings.filterConnectedStatus.charAt(0).toUpperCase() +
+        settings.filterConnectedStatus.slice(1).replace('_', ' '),
     )
   }
   if (settings.filterByRealPhoto) {
@@ -101,11 +101,11 @@ export default function GroupToolbar({
             <DropdownMenuContent>
               <DropdownMenuLabel>Who to see:</DropdownMenuLabel>
               <DropdownMenuRadioGroup
-                value={settings.filterMetStatus}
+                value={settings.filterConnectedStatus}
                 onValueChange={(value) =>
                   setSettings((prev) => ({
                     ...prev,
-                    filterMetStatus: value as 'all' | 'met' | 'not_met',
+                    filterConnectedStatus: value as 'all' | 'connected' | 'not_connected',
                   }))
                 }
               >
@@ -116,16 +116,16 @@ export default function GroupToolbar({
                   Everyone
                 </DropdownMenuRadioItem>
                 <DropdownMenuRadioItem
-                  value="met"
+                  value="connected"
                   onSelect={(e) => e.preventDefault()}
                 >
-                  Met
+                  Connected
                 </DropdownMenuRadioItem>
                 <DropdownMenuRadioItem
-                  value="not_met"
+                  value="not_connected"
                   onSelect={(e) => e.preventDefault()}
                 >
-                  Not met
+                  Not connected
                 </DropdownMenuRadioItem>
               </DropdownMenuRadioGroup>
               <DropdownMenuSeparator />

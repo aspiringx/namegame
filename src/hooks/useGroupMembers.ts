@@ -3,76 +3,82 @@
 import { useMemo } from 'react'
 import type { MemberWithUser } from '@/types'
 
-// This should be kept in sync with the one in CommunityGroupClient.tsx
-interface GroupPageSettings {
+// A base settings interface that includes common properties
+interface BaseSettings {
   sortConfig: {
-    key: 'when_met' | 'firstName' | 'lastName'
+    key: string
     direction: 'asc' | 'desc'
   }
   searchQuery: string
   filterByRealPhoto: boolean
-  filterMetStatus: 'all' | 'met' | 'not_met'
+  // Allow other potential properties
+  [key: string]: any
 }
 
-export default function useGroupMembers(initialMembers: MemberWithUser[], settings: GroupPageSettings) {
-  const filteredAndSortedMembers = useMemo(() => {
-    const sortFunction = (a: MemberWithUser, b: MemberWithUser) => {
-      if (settings.sortConfig.key === 'when_met') {
-        const aGreeted = a.relationUpdatedAt
-          ? new Date(a.relationUpdatedAt).getTime()
-          : 0
-        const bGreeted = b.relationUpdatedAt
-          ? new Date(b.relationUpdatedAt).getTime()
-          : 0
-        return settings.sortConfig.direction === 'desc'
-          ? bGreeted - aGreeted
-          : aGreeted - bGreeted
-      }
-
-      const aKey = a.user[settings.sortConfig.key as 'firstName' | 'lastName']
-      const bKey = b.user[settings.sortConfig.key as 'firstName' | 'lastName']
-
-      if (!aKey || !bKey) return 0
-
-      if (aKey < bKey) {
-        return settings.sortConfig.direction === 'asc' ? -1 : 1
-      } else if (aKey > bKey) {
-        return settings.sortConfig.direction === 'asc' ? 1 : -1
-      } else {
-        return 0
-      }
+export default function useGroupMembers<T extends BaseSettings>(
+  initialMembers: MemberWithUser[],
+  settings: T,
+) {
+  return useMemo(() => {
+    if (!initialMembers) {
+      return []
     }
 
-    let filtered = initialMembers
+    let filteredMembers = [...initialMembers]
 
+    // --- FILTERS ---
+
+    // Filter by real photo
     if (settings.filterByRealPhoto) {
-      filtered = filtered.filter(
+      filteredMembers = filteredMembers.filter(
         (member) =>
           member.user.photoUrl &&
           !member.user.photoUrl.includes('api.dicebear.com') &&
-          !member.user.photoUrl.endsWith('default-avatar.png'),
+          !member.user.photoUrl.includes('default-avatar.png'),
       )
     }
 
+    // Community-group specific filter
+    if ('filterConnectedStatus' in settings && settings.filterConnectedStatus !== 'all') {
+      filteredMembers = filteredMembers.filter((member) =>
+        settings.filterConnectedStatus === 'connected' ? !!member.connectedAt : !member.connectedAt,
+      )
+    }
+
+    // Filter by search query
     if (settings.searchQuery) {
-      filtered = filtered.filter(member =>
-        member.user.name
-          .toLowerCase()
-          .includes(settings.searchQuery.toLowerCase()),
+      const lowercasedQuery = settings.searchQuery.toLowerCase()
+      filteredMembers = filteredMembers.filter((member) =>
+        (member.user.name || '').toLowerCase().includes(lowercasedQuery),
       )
     }
 
-    if (settings.filterMetStatus !== 'all') {
-      if (settings.filterMetStatus === 'met') {
-        filtered = filtered.filter(member => !!member.relationUpdatedAt);
-      } else { // 'not_met'
-        filtered = filtered.filter(member => !member.relationUpdatedAt);
+    // --- SORTING ---
+
+    const sortedMembers = filteredMembers.sort((a, b) => {
+      const { key, direction } = settings.sortConfig
+      const asc = direction === 'asc'
+
+      switch (key) {
+        case 'when_connected':
+        case 'joined': {
+          const aDate = a.connectedAt ? new Date(a.connectedAt).getTime() : 0
+          const bDate = b.connectedAt ? new Date(b.connectedAt).getTime() : 0
+          return asc ? aDate - bDate : bDate - aDate
+        }
+        case 'firstName':
+        case 'lastName': {
+          const aKey = a.user[key] || ''
+          const bKey = b.user[key] || ''
+          return asc ? aKey.localeCompare(bKey) : bKey.localeCompare(aKey)
+        }
+        // NOTE: 'closest' sort for family groups is complex and handled separately.
+        default:
+          return 0
       }
-    }
+    })
 
-    return filtered.sort(sortFunction)
+    return sortedMembers
   }, [initialMembers, settings])
-
-  return filteredAndSortedMembers
 }
 

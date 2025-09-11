@@ -1,17 +1,17 @@
 import { auth } from '@/auth'
 import Footer from '@/components/Footer'
 import Header from '@/components/Header'
-import { GroupProvider } from '@/components/GroupProvider'
+import { GroupProvider, GroupPageData } from '@/components/GroupProvider'
 import { getGroupTypeBySlug } from './data'
 import { getGroup as getAllGroup } from './community/data'
 import { getGroup as getFamilyGroup } from './family/data'
-import { GroupData, FamilyGroupData } from '@/types'
+import { GroupData, FamilyGroupData, CommunityGroupData } from '@/types'
 
 // Helper to fetch the correct group data based on type
 const getGroupForLayout = async (
   slug: string,
   limit?: number,
-): Promise<GroupData | FamilyGroupData | null> => {
+): Promise<CommunityGroupData | FamilyGroupData | null> => {
   const groupTypeData = await getGroupTypeBySlug(slug)
   if (!groupTypeData) {
     return null
@@ -64,7 +64,7 @@ export default async function GroupLayout(props: {
   const { children } = props
   const { slug } = params
 
-  const data = await getGroupForLayout(slug, 5)
+  const data = await getGroupForLayout(slug)
 
   if (!data) {
     // This can happen if the group doesn't exist, or if the user is not a member
@@ -72,45 +72,44 @@ export default async function GroupLayout(props: {
     notFound()
   }
 
-  // Adapt data for GroupProvider based on group type
   const isFamilyGroup = 'members' in data
 
-  const groupForProvider: GroupData = isFamilyGroup
-    ? {
-        ...(data as FamilyGroupData),
-        relatedMembers: [],
-        notRelatedMembers: (data as FamilyGroupData).members,
-        relatedCount: 0,
-        notRelatedCount: (data as FamilyGroupData).memberCount,
-      }
-    : (data as GroupData)
+  let groupForProvider: GroupPageData
 
-  const { relatedMembers, notRelatedMembers, currentUserMember, isSuperAdmin } =
-    groupForProvider
-
-  const isAuthorizedMember = !!(
-    currentUserMember &&
-    ['admin', 'member', 'super'].includes(currentUserMember.role.code)
-  )
-
-  const isGroupAdmin = currentUserMember?.role.code === 'admin'
+  if (isFamilyGroup) {
+    const familyData = data as FamilyGroupData
+    groupForProvider = {
+      group: familyData,
+      relatedMembers: [], // This will be populated client-side
+      notRelatedMembers: familyData.members, // Initially, all are not related
+      currentUserMember: familyData.currentUserMember,
+      isSuperAdmin: familyData.isSuperAdmin,
+      isGroupAdmin: familyData.currentUserMember?.role.code === 'admin',
+      isAuthorizedMember:
+        !!familyData.currentUserMember &&
+        ['admin', 'member', 'super'].includes(
+          familyData.currentUserMember.role.code,
+        ),
+    }
+  } else {
+    const communityData = data as GroupData
+    groupForProvider = {
+      group: communityData,
+      relatedMembers: [],
+      notRelatedMembers: [],
+      currentUserMember: undefined, // Not applicable for community layout
+      isSuperAdmin: false,
+      isGroupAdmin: false,
+      isAuthorizedMember: false, // Authorization handled differently
+    }
+  }
 
   return (
-    <GroupProvider
-      value={{
-        group: groupForProvider,
-        relatedMembers,
-        notRelatedMembers,
-        currentUserMember,
-        isSuperAdmin,
-        isGroupAdmin,
-        isAuthorizedMember,
-      }}
-    >
+    <GroupProvider value={groupForProvider}>
       <div className="relative flex min-h-screen flex-col">
         <Header
-          group={groupForProvider}
-          isGroupAdmin={currentUserMember?.role.code === 'admin'}
+          group={groupForProvider.group}
+          isGroupAdmin={groupForProvider.isGroupAdmin}
           groupSlug={slug}
         />
         <main className="flex-grow bg-gray-50 pb-16 dark:bg-gray-900">{children}</main>

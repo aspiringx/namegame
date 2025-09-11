@@ -1,8 +1,7 @@
 import 'server-only'
-import { cache } from 'react'
 import prisma from '@/lib/prisma'
 import { getPublicUrl } from '@/lib/storage'
-import { FamilyGroupData, MemberWithUser } from '@/types'
+import { FamilyGroupData, FullRelationship, MemberWithUser } from '@/types'
 import { auth } from '@/auth'
 
 export async function getGroup(
@@ -16,33 +15,11 @@ export async function getGroup(
     return null // Not authenticated
   }
 
-  // Check if the user is a super admin
-  const superAdminMembership = await prisma.groupUser.findFirst({
-    where: {
-      userId: currentUserId,
-      group: { slug: 'global-admin' },
-      role: { code: 'super' },
-    },
-  })
-
-  const whereClause: any = { slug }
-  if (!superAdminMembership) {
-    whereClause.members = {
-      some: {
-        userId: currentUserId,
-      },
-    }
-  }
-
   const group = await prisma.group.findUnique({
     where: { slug },
     include: {
       groupType: true,
-      photos: true,
       members: {
-        orderBy: {
-          updatedAt: 'desc',
-        },
         include: {
           user: true,
           role: true,
@@ -55,25 +32,13 @@ export async function getGroup(
     return null
   }
 
-  // Fetch code table IDs for photo types
-  const [userEntityType, primaryPhotoType, groupEntityType, logoPhotoType] =
-    await Promise.all([
-      prisma.entityType.findFirst({ where: { code: 'user' } }),
-      prisma.photoType.findFirst({ where: { code: 'primary' } }),
-      prisma.entityType.findFirst({ where: { code: 'group' } }),
-      prisma.photoType.findFirst({ where: { code: 'logo' } }),
-    ])
-
-  const logoPhoto = await prisma.photo.findFirst({
-    where: {
-      entityId: group.id.toString(),
-      entityTypeId: groupEntityType?.id,
-      typeId: logoPhotoType?.id,
-    },
-  })
-  const logo = logoPhoto?.url ? await getPublicUrl(logoPhoto.url) : undefined
-
+  // Fetch photos for all members
   const memberUserIds = group.members.map((member) => member.userId)
+  const [userEntityType, primaryPhotoType] = await Promise.all([
+    prisma.entityType.findFirst({ where: { code: 'user' } }),
+    prisma.photoType.findFirst({ where: { code: 'primary' } }),
+  ])
+
   const photos = await prisma.photo.findMany({
     where: {
       entityId: { in: memberUserIds },
@@ -87,67 +52,90 @@ export async function getGroup(
   })
 
   const photoUrlMap = new Map<string, string>()
-  photos.forEach((photo) => {
-    if (photo.entityId) {
-      photoUrlMap.set(photo.entityId, photo.url)
+  for (const photo of photos) {
+    if (photo.entityId && photo.url) {
+      if (photo.url.startsWith('http')) {
+        photoUrlMap.set(photo.entityId, photo.url)
+      } else {
+        photoUrlMap.set(photo.entityId, await getPublicUrl(photo.url))
+      }
     }
-  })
+  }
 
-  const memberPromises = group.members.map(
-    async (member): Promise<MemberWithUser> => {
-      const rawUrl = photoUrlMap.get(member.userId)
-      let photoUrl: string | undefined
-      if (rawUrl) {
-        if (rawUrl.startsWith('http')) {
-          photoUrl = rawUrl
-        } else {
-          photoUrl = await getPublicUrl(rawUrl)
-        }
-      }
+  const groupMemberIds = group.members.map((member) => member.userId)
 
-      // For family groups, we always show the full name.
-      const name = [member.user.firstName, member.user.lastName]
-        .filter(Boolean)
-        .join(' ')
-
-      return {
-        ...member,
-        user: {
-          ...member.user,
-          name,
-          photoUrl,
-        },
-        parents: [],
-        children: [],
-      }
+  const rawRelationships = await prisma.userUser.findMany({
+    where: {
+      OR: [
+        { user1Id: { in: groupMemberIds }, user2Id: { in: groupMemberIds } },
+        { user2Id: { in: groupMemberIds }, user1Id: { in: groupMemberIds } },
+      ],
     },
-  )
-
-  const allMembers = await Promise.all(memberPromises)
-
-  // Sort all members by lastName, then firstName, ascending
-  allMembers.sort((a, b) => {
-    const lastNameComparison = (a.user.lastName || '').localeCompare(
-      b.user.lastName || '',
-    )
-    if (lastNameComparison !== 0) {
-      return lastNameComparison
-    }
-    return (a.user.firstName || '').localeCompare(b.user.firstName || '')
+    include: {
+      relationType: true,
+      user1: true,
+      user2: true,
+    },
   })
+
+  // Construct MemberWithUser objects
+  const memberMap = new Map<string, MemberWithUser>()
+  group.members.forEach((member) => {
+    const name = [member.user.firstName, member.user.lastName]
+      .filter(Boolean)
+      .join(' ')
+
+    memberMap.set(member.userId, {
+      ...member,
+      user: {
+        ...member.user,
+        name,
+        photoUrl: photoUrlMap.get(member.userId),
+      },
+      parents: [],
+      children: [],
+    })
+  })
+
+  // Populate parent/child connections
+  rawRelationships.forEach((rel) => {
+    if (rel.relationType.code === 'parent') {
+      const parent = memberMap.get(rel.user1Id)
+      const child = memberMap.get(rel.user2Id)
+      if (parent && child) {
+        child.parents.push(parent)
+        parent.children.push(child)
+      }
+    } else if (rel.relationType.code === 'child') {
+      const child = memberMap.get(rel.user1Id)
+      const parent = memberMap.get(rel.user2Id)
+      if (parent && child) {
+        child.parents.push(parent)
+        parent.children.push(child)
+      }
+    }
+  })
+
+  const allMembers = Array.from(memberMap.values())
 
   const currentUserMember = allMembers.find(
     (member) => member.userId === currentUserId,
   )
 
-  const limitedMembers = limit ? allMembers.slice(0, limit) : allMembers
+  const isSuperAdmin = await prisma.groupUser.findFirst({
+    where: {
+      userId: currentUserId,
+      group: { slug: 'global-admin' },
+      role: { code: 'super' },
+    },
+  });
 
   return {
     ...group,
-    logo,
-    isSuperAdmin: !!superAdminMembership,
-    members: limitedMembers,
+    isSuperAdmin: !!isSuperAdmin,
+    members: allMembers,
     memberCount: allMembers.length,
     currentUserMember,
+    relationships: rawRelationships as FullRelationship[],
   }
 }

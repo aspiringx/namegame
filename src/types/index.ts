@@ -40,14 +40,15 @@ export type UserWithPhotoUrl = User & { name: string; photoUrl?: string }
 export type MemberWithUser = GroupUser & {
   user: UserWithPhotoUrl;
   role: GroupUserRole;
-  relationUpdatedAt?: Date;
   parents: (GroupUser & { user: UserWithPhotoUrl })[];
   children: (GroupUser & { user: UserWithPhotoUrl })[];
+  connectedAt?: Date | null;
 };
 
 export type GroupData = Group & {
   logo?: string;
   groupType: GroupType;
+  isSuperAdmin?: boolean;
 };
 
 export type FullRelationship = UserUser & {
@@ -57,11 +58,23 @@ export type FullRelationship = UserUser & {
   user2: User;
 };
 
+export type CommunityGroupData = Group & {
+  logo?: string;
+  groupType: GroupType;
+  isSuperAdmin: boolean;
+  relatedMembers: MemberWithUser[];
+  notRelatedMembers: MemberWithUser[];
+  relatedCount: number;
+  notRelatedCount: number;
+  currentUserMember?: MemberWithUser;
+};
+
 export type FamilyGroupData = Group & {
-  logo?: string
-  groupType: GroupType
-  isSuperAdmin: boolean
-  members: MemberWithUser[]
-  memberCount: number
-  currentUserMember: MemberWithUser | undefined
-}
+  logo?: string;
+  groupType: GroupType;
+  isSuperAdmin: boolean;
+  members: MemberWithUser[];
+  memberCount: number;
+  currentUserMember: MemberWithUser | undefined;
+  relationships: FullRelationship[];
+};

@@ -8,7 +8,17 @@ import { Button } from './ui/button'
 import { PlusIcon } from 'lucide-react'
 
 export default function Footer() {
-  const { group, isAuthorizedMember } = useGroup()
+  const groupContext = useGroup()
+
+  if (!groupContext) {
+    return (
+      <footer className="bg-background fixed bottom-0 left-0 h-16 w-full py-4 text-center shadow-[0_-2px_4px_rgba(0,0,0,0.1)] dark:shadow-[0_-2px_4px_rgba(255,255,255,0.1)]">
+        <p className="text-gray-600 dark:text-gray-400">&copy; 2025 NameGame</p>
+      </footer>
+    )
+  }
+
+  const { group, isAuthorizedMember } = groupContext
   const [isLoading, setIsLoading] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [greetingUrl, setGreetingUrl] = useState('')

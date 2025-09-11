@@ -7,6 +7,8 @@ import { useGroup } from '@/components/GroupProvider'
 import { GuestMessage } from '@/components/GuestMessage'
 import GroupToolbar from './GroupToolbar'
 import { TourProvider, useTour } from '@reactour/tour'
+import { FullRelationship, User } from '@/types';
+import { getRelationship } from '@/lib/family-tree';
 import { steps as familyTourSteps } from '@/components/tours/FamilyTour'
 import { steps as familyTourMobileSteps } from '@/components/tours/FamilyTourMobile'
 import { steps as familyTreeSteps } from '@/components/tours/FamilyTreeTour'
@@ -15,6 +17,29 @@ import { useTheme } from 'next-themes'
 import { X } from 'lucide-react'
 import RelateModal from '@/components/RelateModal'
 import { MemberWithUser } from '@/types'
+import { createContext, useContext } from 'react'
+
+const FamilyGroupMembersContext = createContext<MemberWithUser[]>([])
+
+export const useFamilyGroupMembers = () => useContext(FamilyGroupMembersContext);
+
+const FamilyGroupActionsContext = createContext<{
+  onOpenRelateModal: (member: MemberWithUser) => void;
+  handleCloseRelateModal: () => void;
+  isRelateModalOpen: boolean;
+  selectedMember: MemberWithUser | null;
+}>({
+  onOpenRelateModal: () => {},
+  handleCloseRelateModal: () => {},
+  isRelateModalOpen: false,
+  selectedMember: null,
+});
+
+const FamilyGroupDataContext = createContext<{ relationshipMap: Map<string, { label: string; steps: number }> }>({ relationshipMap: new Map() });
+
+export const useFamilyGroupData = () => useContext(FamilyGroupDataContext);
+
+export const useFamilyGroupActions = () => useContext(FamilyGroupActionsContext);
 
 type SortKey = 'joined' | 'firstName' | 'lastName' | 'closest'
 type SortDirection = 'asc' | 'desc'
@@ -42,14 +67,23 @@ function FamilyGroupClientContent({
   children: React.ReactNode
   view: 'grid' | 'tree' | 'games'
 }) {
+  const groupContext = useGroup()
+
+  if (!groupContext) {
+    return null // Should be rendered within GroupProvider
+  }
+
   const {
     group,
     isGroupAdmin,
     currentUserMember,
     relatedMembers,
     notRelatedMembers,
-  } = useGroup()
-  const { setIsOpen } = useTour()
+    relationships,
+  } = groupContext
+
+  const allMembers = useMemo(() => [...relatedMembers, ...notRelatedMembers], [relatedMembers, notRelatedMembers]);
+  const { setIsOpen } = useTour();
   const router = useRouter()
 
   const [settings, setSettings] = useLocalStorage<FamilyPageSettings>(
@@ -88,9 +122,108 @@ function FamilyGroupClientContent({
     setSelectedMember(null)
   }
 
+  const modalRelations = useMemo(() => {
+    if (!selectedMember || !relationships) return [];
+
+    return (relationships as FullRelationship[])
+      .filter(
+        (rel) =>
+          rel.user1Id === selectedMember.userId ||
+          rel.user2Id === selectedMember.userId,
+      )
+      .map((rel) => ({
+        ...rel,
+        relatedUser:
+          rel.user1Id === selectedMember.userId ? rel.user2 : rel.user1,
+      }));
+  }, [selectedMember, relationships]);
+
   const handleRelationshipChange = () => {
     router.refresh()
   }
+
+  const usersMap = useMemo(() => {
+    const map = new Map<string, User>();
+    allMembers.forEach(member => {
+      map.set(member.userId, member.user);
+    });
+    return map;
+  }, [allMembers]);
+
+  const relationshipMap = useMemo(() => {
+    if (!currentUserMember || !relationships || !Array.isArray(relationships)) {
+      return new Map<string, { label: string; steps: number }>();
+    }
+    const newMap = new Map<string, { label: string; steps: number }>();
+    for (const alter of allMembers) {
+      if (alter.userId === currentUserMember.userId) continue;
+      const result = getRelationship(
+        currentUserMember.userId,
+        alter.userId,
+        relationships as FullRelationship[],
+        allMembers,
+        usersMap,
+      );
+      if (result && result.relationship) {
+        newMap.set(alter.userId, {
+          label: result.relationship,
+          steps: result.steps,
+        });
+      }
+    }
+    return newMap;
+  }, [currentUserMember, allMembers, relationships, usersMap]);
+
+  const filteredAndSortedMembers = useMemo(() => {
+    let sortedMembers = [...allMembers];
+
+    if (settings.sortConfig.key === 'closest') {
+      sortedMembers.sort((a, b) => {
+        const aSteps = relationshipMap.get(a.userId)?.steps ?? Infinity;
+        const bSteps = relationshipMap.get(b.userId)?.steps ?? Infinity;
+        if (aSteps === bSteps) {
+          return (a.user.firstName || '').localeCompare(b.user.firstName || '');
+        }
+        return settings.sortConfig.direction === 'asc' ? aSteps - bSteps : bSteps - aSteps;
+      });
+    } else {
+      sortedMembers.sort((a, b) => {
+        const { key, direction } = settings.sortConfig;
+
+        if (key === 'joined') {
+          const aDate = new Date(a.createdAt).getTime();
+          const bDate = new Date(b.createdAt).getTime();
+          return direction === 'asc' ? aDate - bDate : bDate - aDate;
+        }
+
+        const aValue = a.user[key as 'firstName' | 'lastName'] || '';
+        const bValue = b.user[key as 'firstName' | 'lastName'] || '';
+
+        if (aValue < bValue) return direction === 'asc' ? -1 : 1;
+        if (aValue > bValue) return direction === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+
+    if (settings.filterByRealPhoto) {
+      sortedMembers = sortedMembers.filter(
+        (member) =>
+          member.user.photoUrl &&
+          !member.user.photoUrl.includes('api.dicebear.com') &&
+          !member.user.photoUrl.endsWith('default-avatar.png'),
+      )
+    }
+
+    if (settings.searchQuery) {
+      sortedMembers = sortedMembers.filter((member) =>
+        (member.user.name || '')
+          .toLowerCase()
+          .includes(settings.searchQuery.toLowerCase()),
+      )
+    }
+
+    return sortedMembers;
+  }, [allMembers, settings, relationshipMap]);
 
   const handleSort = (key: 'joined' | 'firstName' | 'lastName' | 'closest') => {
     setSettings((prev) => {
@@ -135,7 +268,7 @@ function FamilyGroupClientContent({
               <input
                 type="text"
                 placeholder={`Search ${
-                  relatedMembers.length + notRelatedMembers.length
+                  allMembers.length
                 } members...`}
                 value={settings.searchQuery}
                 onChange={(e) =>
@@ -165,7 +298,15 @@ function FamilyGroupClientContent({
         </div>
       </div>
 
-      <div className="container mx-auto mt-4 px-4">{children}</div>
+      <div className="container mx-auto mt-4 px-4">
+        <FamilyGroupActionsContext.Provider value={{ onOpenRelateModal: handleOpenRelateModal, handleCloseRelateModal, isRelateModalOpen, selectedMember }}>
+          <FamilyGroupDataContext.Provider value={{ relationshipMap }}>
+            <FamilyGroupMembersContext.Provider value={filteredAndSortedMembers}>
+              {children}
+            </FamilyGroupMembersContext.Provider>
+          </FamilyGroupDataContext.Provider>
+        </FamilyGroupActionsContext.Provider>
+      </div>
 
       {selectedMember && group?.groupType && currentUserMember && (
         <RelateModal
@@ -173,9 +314,9 @@ function FamilyGroupClientContent({
           onClose={handleCloseRelateModal}
           member={selectedMember}
           groupType={group.groupType}
-          groupMembers={[...relatedMembers, ...notRelatedMembers]}
+          groupMembers={allMembers}
           groupSlug={group.slug}
-          initialRelations={[]}
+          initialRelations={modalRelations}
           onRelationshipAdded={handleRelationshipChange}
           isReadOnly={
             !isGroupAdmin &&

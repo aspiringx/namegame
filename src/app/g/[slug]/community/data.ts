@@ -1,13 +1,14 @@
 import 'server-only'
 import prisma from '@/lib/prisma'
 import { getPublicUrl } from '@/lib/storage'
-import { GroupData, MemberWithUser } from '@/types'
+import { CommunityGroupData, GroupData, MemberWithUser } from '@/types'
 import { auth } from '@/auth'
 
+// Fetches community group data
 export const getGroup = async (
   slug: string,
   limit?: number,
-): Promise<GroupData | null> => {
+): Promise<CommunityGroupData | null> => {
   const session = await auth()
   const currentUserId = session?.user?.id
 
@@ -135,14 +136,14 @@ export const getGroup = async (
               .join(' ')
           : member.user.firstName
 
-      const relationUpdatedAt =
+      const connectedAt =
         member.userId === currentUserId
           ? new Date()
           : relatedUserMap.get(member.userId)
 
       return {
         ...member,
-        relationUpdatedAt,
+        connectedAt,
         user: {
           ...member.user,
           name,
@@ -177,8 +178,8 @@ export const getGroup = async (
   )
 
   otherRelatedMembers.sort((a, b) => {
-    if (a.relationUpdatedAt && b.relationUpdatedAt) {
-      return b.relationUpdatedAt.getTime() - a.relationUpdatedAt.getTime()
+    if (a.connectedAt && b.connectedAt) {
+      return b.connectedAt.getTime() - a.connectedAt.getTime()
     }
     return 0
   })
