@@ -17,7 +17,6 @@ interface FamilyTreeControlsProps {
   onFullScreen: () => void
   isFullScreen?: boolean
   isMobile?: boolean
-  onStartTour?: () => void
 }
 
 interface StyledControlButtonProps extends ComponentProps<'button'> {
@@ -103,7 +102,6 @@ export function FamilyTreeControls({
   onFullScreen,
   isFullScreen,
   isMobile,
-  onStartTour,
 }: FamilyTreeControlsProps) {
   const { zoomIn, zoomOut, fitView } = useReactFlow()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -154,11 +152,8 @@ export function FamilyTreeControls({
           <StyledControlButton onClick={() => zoomOut()} title="Zoom out">
             <ZoomOut size={24} strokeWidth={1.5} />
           </StyledControlButton>
-          <StyledControlButton onClick={() => fitView()} title="Fit view">
+          <StyledControlButton onClick={() => fitView()} title="Fit view" isLast>
             <Expand size={24} strokeWidth={1.5} />
-          </StyledControlButton>
-          <StyledControlButton onClick={onStartTour} title="Help" isLast>
-            <HelpCircle size={24} strokeWidth={1.5} />
           </StyledControlButton>
         </div>
       </Panel>
@@ -181,14 +176,6 @@ export function FamilyTreeControls({
           className="bg-background rounded-md border shadow-lg"
         >
           <SlidersHorizontal size={24} strokeWidth={1.5} />
-        </StyledControlButton>
-        <StyledControlButton
-          onClick={onStartTour}
-          title="Help"
-          isLast
-          className="bg-background rounded-md border shadow-lg"
-        >
-          <HelpCircle size={24} strokeWidth={1.5} />
         </StyledControlButton>
       </div>
     </Panel>

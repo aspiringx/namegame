@@ -5,10 +5,10 @@ import { getPublicUrl } from '@/lib/storage'
 import { FamilyGroupData, MemberWithUser } from '@/types'
 import { auth } from '@/auth'
 
-export const getGroup = async (
+export async function getGroup(
   slug: string,
   limit?: number,
-): Promise<FamilyGroupData | null> => {
+): Promise<FamilyGroupData | null> {
   const session = await auth()
   const currentUserId = session?.user?.id
 
@@ -139,6 +139,7 @@ export const getGroup = async (
   const currentUserMember = allMembers.find(
     (member) => member.userId === currentUserId,
   )
+
   const limitedMembers = limit ? allMembers.slice(0, limit) : allMembers
 
   return {

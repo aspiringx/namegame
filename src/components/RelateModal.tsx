@@ -421,7 +421,7 @@ function RelateModalContent({
               {member.user.firstName} {member.user.lastName}
             </h3>
             {isReadOnly && (
-              <span className="rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300">
+              <span className="absolute top-6 right-12 rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300">
                 Read-only
               </span>
             )}

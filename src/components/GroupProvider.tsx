@@ -1,27 +1,20 @@
 'use client'
 
 import { createContext, useContext } from 'react'
-import { GroupData, MemberWithUser } from '@/types'
+import { FullRelationship, GroupData, MemberWithUser } from '@/types'
 
 export interface GroupPageData {
-  group: GroupData | null
-  greetedMembers: MemberWithUser[]
-  notGreetedMembers: MemberWithUser[]
-  currentUserMember: MemberWithUser | undefined
-  isSuperAdmin: boolean
-  isGroupAdmin: boolean
-  isAuthorizedMember: boolean
+  group: GroupData;
+  relatedMembers: MemberWithUser[];
+  notRelatedMembers: MemberWithUser[];
+  currentUserMember: MemberWithUser | undefined;
+  isSuperAdmin: boolean;
+  isGroupAdmin: boolean;
+  isAuthorizedMember: boolean;
+  relationships?: FullRelationship[];
 }
 
-const GroupContext = createContext<GroupPageData>({
-  group: null,
-  greetedMembers: [],
-  notGreetedMembers: [],
-  currentUserMember: undefined,
-  isSuperAdmin: false,
-  isGroupAdmin: false,
-  isAuthorizedMember: false,
-})
+const GroupContext = createContext<GroupPageData | null>(null);
 
 export function GroupProvider({
   children,
@@ -35,7 +28,7 @@ export function GroupProvider({
 
 export function useGroup() {
   const context = useContext(GroupContext)
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useGroup must be used within a GroupProvider')
   }
   return context

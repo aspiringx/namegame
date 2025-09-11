@@ -35,6 +35,13 @@ export const steps: StepType[] = [
     selector: 'body .react-flow__node',
     content: (
       <div className="flex flex-col items-center gap-4 text-center">
+        <Image
+          src="/images/butterflies.png"
+          alt="NameGame social butterflies"
+          width={64}
+          height={64}
+          className="mx-auto h-auto w-auto"
+        />
         <GitFork size={32} />
         <p className="text-left">
           Initially, you are the focus. You may not see others until you're

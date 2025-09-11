@@ -26,8 +26,16 @@ import Link from 'next/link'
 export const steps: StepType[] = [
   {
     selector: 'body[data-this-does-not-exist]',
+    position: 'center',
     content: (
       <div className="flex flex-col items-center gap-4 text-center">
+        <Image
+          src="/images/butterflies.png"
+          alt="NameGame social butterflies"
+          width={64}
+          height={64}
+          className="mx-auto h-auto w-auto"
+        />
         <GitFork size={32} strokeWidth={1.5} />
         <p>Welcome to your family tree!</p>
       </div>
@@ -35,6 +43,7 @@ export const steps: StepType[] = [
   },
   {
     selector: 'body[data-this-does-not-exist]',
+    position: 'center',
     content: (
       <div className="flex flex-col items-center gap-4 text-center">
         <GitFork size={32} />
@@ -55,6 +64,7 @@ export const steps: StepType[] = [
   },
   {
     selector: 'body[data-this-does-not-exist]',
+    position: 'center',
     content: (
       <div className="flex flex-col items-center gap-4 text-center">
         <GitFork size={32} />
@@ -76,6 +86,7 @@ export const steps: StepType[] = [
   },
   {
     selector: 'body[data-this-does-not-exist]',
+    position: 'center',
     content: (
       <div className="flex flex-col items-center gap-4 text-center">
         <Plus size={32} />
@@ -99,6 +110,7 @@ export const steps: StepType[] = [
   },
   {
     selector: 'body[data-this-does-not-exist]',
+    position: 'center',
     content: (
       <div className="flex flex-col items-center gap-4 text-center">
         <div className="flex items-center gap-2">
@@ -126,6 +138,7 @@ export const steps: StepType[] = [
   },
   {
     selector: 'body[data-this-does-not-exist]',
+    position: 'center',
     content: (
       <div className="flex flex-col items-center gap-4 text-center">
         <div className="flex items-center gap-2">
@@ -146,6 +159,7 @@ export const steps: StepType[] = [
   },
   {
     selector: 'body[data-this-does-not-exist]',
+    position: 'center',
     content: (
       <div className="flex flex-col items-center gap-4 text-center">
         <SlidersHorizontal size={32} strokeWidth={1.5} />
@@ -159,15 +173,18 @@ export const steps: StepType[] = [
   },
   {
     selector: 'body[data-this-does-not-exist]',
+    position: 'center',
     content:
       'Use the Reset button above to start over with the focus back on you.',
   },
   {
     selector: 'body[data-this-does-not-exist]',
+    position: 'center',
     content: 'Click on any family member to see more details.',
   },
   {
     selector: 'body[data-this-does-not-exist]',
+    position: 'center',
     content: (
       <div className="flex flex-col items-center gap-4 text-center">
         <Lock size={48} />
@@ -180,13 +197,14 @@ export const steps: StepType[] = [
   },
   {
     selector: 'body[data-this-does-not-exist]',
+    position: 'center',
     content: (
       <div className="flex flex-col items-center gap-4 text-center">
         <Image
           src="/images/butterflies.png"
           alt="NameGame social butterflies"
-          width={48}
-          height={48}
+          width={64}
+          height={64}
           className="mx-auto h-auto w-auto"
         />
         <p className="text-2xl">Have fun!</p>

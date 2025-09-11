@@ -4,7 +4,7 @@ import Modal from '@/components/ui/modal'
 import { Button } from '@/components/ui/button'
 import { MemberWithUser } from '@/types'
 import Image from 'next/image'
-import { X } from 'lucide-react'
+import { GitFork, X } from 'lucide-react'
 import { Gender } from '@/generated/prisma'
 
 interface MemberDetailsModalProps {
@@ -12,6 +12,9 @@ interface MemberDetailsModalProps {
   onClose: () => void
   member: MemberWithUser | null
   relationship?: string
+  currentUserId?: string
+  onOpenRelate?: (member: MemberWithUser) => void
+  isGroupAdmin?: boolean
 }
 
 const getGenderPronoun = (gender: Gender | null) => {
@@ -33,6 +36,9 @@ export function MemberDetailsModal({
   onClose,
   member,
   relationship,
+  currentUserId,
+  onOpenRelate,
+  isGroupAdmin,
 }: MemberDetailsModalProps) {
   if (!isOpen || !member) return null
 
@@ -97,7 +103,20 @@ export function MemberDetailsModal({
               </p>
             )}
           </div>
-          <div className="mt-6 flex justify-center">
+          <div className="mt-6 flex items-center justify-center gap-4">
+            {onOpenRelate && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  onClose()
+                  onOpenRelate(member!)
+                }}
+              >
+                <GitFork className="mr-2 h-4 w-4" />
+                Relationships
+              </Button>
+            )}
             <Button type="button" variant="link" onClick={onClose}>
               Close
             </Button>

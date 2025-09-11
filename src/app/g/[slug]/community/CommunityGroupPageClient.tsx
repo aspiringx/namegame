@@ -18,9 +18,9 @@ export default function CommunityGroupPageClient({
     return <div>Group not found.</div>
   }
 
-  const { greetedMembers, notGreetedMembers, currentUserMember } = groupData
+  const { relatedMembers, notRelatedMembers, currentUserMember } = groupData
 
-  const members = [...greetedMembers, ...notGreetedMembers]
+  const members = [...relatedMembers, ...notRelatedMembers]
 
   const isGuest = !currentUserMember || currentUserMember.role?.code === 'guest'
 

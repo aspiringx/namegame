@@ -46,22 +46,16 @@ export type MemberWithUser = GroupUser & {
 };
 
 export type GroupData = Group & {
-  logo?: string
-  groupType: GroupType
-  isSuperAdmin: boolean
-  greetedMembers: MemberWithUser[]
-  notGreetedMembers: MemberWithUser[]
-  greetedCount: number
-  notGreetedCount: number
-  currentUserMember: MemberWithUser | undefined
-}
+  logo?: string;
+  groupType: GroupType;
+};
 
 export type FullRelationship = UserUser & {
-  relationType: UserUserRelationType
-  relatedUser: User
-  user1: User
-  user2: User
-}
+  relationType: UserUserRelationType;
+  relatedUser: User;
+  user1: User;
+  user2: User;
+};
 
 export type FamilyGroupData = Group & {
   logo?: string

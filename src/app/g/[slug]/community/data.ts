@@ -156,40 +156,40 @@ export const getGroup = async (
 
   const resolvedMembers = await Promise.all(memberPromises)
 
-  const greetedMembers = resolvedMembers.filter(
+  const relatedMembers = resolvedMembers.filter(
     (member) => member.userId === currentUserId || relatedUserMap.has(member.userId),
   )
-  const notGreetedMembers = resolvedMembers.filter(
+  const notRelatedMembers = resolvedMembers.filter(
     (member) => member.userId !== currentUserId && !relatedUserMap.has(member.userId),
   )
 
-  const currentUserMember = greetedMembers.find(
+  const currentUserMember = relatedMembers.find(
     (member) => member.userId === currentUserId,
   )
 
-  // Sort greetedMembers by the relation's updatedAt date, descending.
+  // Sort relatedMembers by the relation's updatedAt date, descending.
   // The current user should always be last.
-  const currentUserInList = greetedMembers.find(
+  const currentUserInList = relatedMembers.find(
     (m) => m.userId === currentUserId,
   )
-  const othergreetedMembers = greetedMembers.filter(
+  const otherRelatedMembers = relatedMembers.filter(
     (m) => m.userId !== currentUserId,
   )
 
-  othergreetedMembers.sort((a, b) => {
+  otherRelatedMembers.sort((a, b) => {
     if (a.relationUpdatedAt && b.relationUpdatedAt) {
       return b.relationUpdatedAt.getTime() - a.relationUpdatedAt.getTime()
     }
     return 0
   })
 
-  const sortedgreetedMembers = [...othergreetedMembers]
+  const sortedRelatedMembers = [...otherRelatedMembers]
   if (currentUserInList) {
-    sortedgreetedMembers.push(currentUserInList)
+    sortedRelatedMembers.push(currentUserInList)
   }
 
-  // Sort notGreetedMembers by lastName, then firstName, ascending
-  notGreetedMembers.sort((a, b) => {
+  // Sort notRelatedMembers by lastName, then firstName, ascending
+  notRelatedMembers.sort((a, b) => {
     const lastNameComparison = (a.user.lastName || '').localeCompare(
       b.user.lastName || '',
     )
@@ -199,21 +199,21 @@ export const getGroup = async (
     return (a.user.firstName || '').localeCompare(b.user.firstName || '')
   })
 
-  const limitedgreetedMembers = limit
-    ? sortedgreetedMembers.slice(0, limit)
-    : sortedgreetedMembers
-  const limitednotGreetedMembers = limit
-    ? notGreetedMembers.slice(0, limit)
-    : notGreetedMembers
+  const limitedRelatedMembers = limit
+    ? sortedRelatedMembers.slice(0, limit)
+    : sortedRelatedMembers
+  const limitedNotRelatedMembers = limit
+    ? notRelatedMembers.slice(0, limit)
+    : notRelatedMembers
 
   return {
     ...group,
     logo,
     isSuperAdmin: !!superAdminMembership,
-    greetedMembers: limitedgreetedMembers,
-    notGreetedMembers: limitednotGreetedMembers,
-    greetedCount: sortedgreetedMembers.length,
-    notGreetedCount: notGreetedMembers.length,
+    relatedMembers: limitedRelatedMembers,
+    notRelatedMembers: limitedNotRelatedMembers,
+    relatedCount: sortedRelatedMembers.length,
+    notRelatedCount: notRelatedMembers.length,
     currentUserMember,
   }
 }

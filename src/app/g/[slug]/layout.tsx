@@ -78,14 +78,14 @@ export default async function GroupLayout(props: {
   const groupForProvider: GroupData = isFamilyGroup
     ? {
         ...(data as FamilyGroupData),
-        greetedMembers: [],
-        notGreetedMembers: (data as FamilyGroupData).members,
-        greetedCount: 0,
-        notGreetedCount: (data as FamilyGroupData).memberCount,
+        relatedMembers: [],
+        notRelatedMembers: (data as FamilyGroupData).members,
+        relatedCount: 0,
+        notRelatedCount: (data as FamilyGroupData).memberCount,
       }
     : (data as GroupData)
 
-  const { greetedMembers, notGreetedMembers, currentUserMember, isSuperAdmin } =
+  const { relatedMembers, notRelatedMembers, currentUserMember, isSuperAdmin } =
     groupForProvider
 
   const isAuthorizedMember = !!(
@@ -99,8 +99,8 @@ export default async function GroupLayout(props: {
     <GroupProvider
       value={{
         group: groupForProvider,
-        greetedMembers,
-        notGreetedMembers,
+        relatedMembers,
+        notRelatedMembers,
         currentUserMember,
         isSuperAdmin,
         isGroupAdmin,
