@@ -8,7 +8,7 @@ import { useA2HS } from '@/context/A2HSContext'
 import { useDeviceInfoContext } from '@/context/DeviceInfoContext'
 import { Button } from './ui/button'
 
-const NAMEGAME_PWA_PROMPT_DISMISSED_KEY = 'namegame_pwa_prompt_dismissed'
+const NAMEGAME_PWA_PROMPT_DISMISSED_KEY = 'namegame_pwa-prompt-dismissed'
 
 export function AddToHomescreenPrompt() {
   const { isPromptVisible, hidePrompt } = useA2HS()
@@ -29,7 +29,12 @@ export function AddToHomescreenPrompt() {
   }
 
   // The component is now only controlled by the A2HSContext
-  if (!isPromptVisible || !deviceInfo || deviceInfo.isPWA || !deviceInfo.a2hs.isSupported) {
+  if (
+    !isPromptVisible ||
+    !deviceInfo ||
+    deviceInfo.isPWA ||
+    !deviceInfo.a2hs.isSupported
+  ) {
     return null
   }
 
@@ -85,7 +90,7 @@ export function AddToHomescreenPrompt() {
           </div>
         </div>
         <div className="ml-4 flex flex-shrink-0">
-                    <Button variant="outline" size="sm" onClick={dismiss}>
+          <Button variant="outline" size="sm" onClick={dismiss}>
             Dismiss
           </Button>
           {deviceInfo.pwaPrompt.isReady && (

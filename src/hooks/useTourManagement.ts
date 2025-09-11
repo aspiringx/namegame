@@ -1,7 +1,7 @@
 import { useTour } from '@reactour/tour'
 import { useEffect, useCallback } from 'react'
 
-const getTourSeenKey = (tourId: string) => `namegameHasSeenTour_${tourId}`
+const getTourSeenKey = (tourId: string) => `namegame-has-seen-tour_${tourId}`
 
 export const useTourManagement = (tourId: string) => {
   const { setIsOpen, setCurrentStep } = useTour()

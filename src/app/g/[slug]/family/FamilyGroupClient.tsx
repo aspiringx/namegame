@@ -20,14 +20,14 @@ type SortKey = 'joined' | 'firstName' | 'lastName' | 'closest'
 type SortDirection = 'asc' | 'desc'
 
 interface FamilyPageSettings {
-  searchQuery: string;
+  searchQuery: string
   sortConfig: {
-    key: SortKey;
-    direction: SortDirection;
-  };
-  viewMode: 'grid' | 'tree' | 'games';
-  filterByRealPhoto: boolean;
-  filterConnectedStatus: 'all' | 'connected' | 'not_connected';
+    key: SortKey
+    direction: SortDirection
+  }
+  viewMode: 'grid' | 'tree' | 'games'
+  filterByRealPhoto: boolean
+  filterConnectedStatus: 'all' | 'connected' | 'not_connected'
 }
 
 interface FamilyGroupClientProps {
@@ -53,7 +53,7 @@ function FamilyGroupClientContent({
   const router = useRouter()
 
   const [settings, setSettings] = useLocalStorage<FamilyPageSettings>(
-    `family-group-settings-${group?.slug}`,
+    `namegame_family-group-settings_${group?.slug}`,
     {
       searchQuery: '',
       sortConfig: { key: 'closest', direction: 'asc' },

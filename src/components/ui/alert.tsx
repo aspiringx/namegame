@@ -48,7 +48,7 @@ const Alert = React.forwardRef<
 >(({ className, variant, children, onDismiss, flashId, ...props }, ref) => {
   const [isVisible, setIsVisible] = useState(true)
 
-  const storageKey = flashId ? `flash-alert-${flashId}` : ''
+  const storageKey = flashId ? `namegame_flash-alert_${flashId}` : ''
 
   useEffect(() => {
     if (flashId && sessionStorage.getItem(storageKey) === 'dismissed') {

@@ -95,7 +95,7 @@ const CommunityGroupClientContent: React.FC<
   const [isLoadingRelations, setIsLoadingRelations] = useState(false)
   const [isIntroModalOpen, setIsIntroModalOpen] = useState(false)
   const [introSeen, setIntroSeen] = useLocalStorage(
-    `namegame_games-intro-seen-${group?.slug || ''}`,
+    `namegame_games-intro-seen_${group?.slug || ''}`,
     false,
   )
   const [isConnectModalOpen, setIsConnectModalOpen] = useState(false)
@@ -364,7 +364,7 @@ const CommunityGroupClient: React.FC<CommunityGroupClientProps> = (props) => {
   const { group } = useGroup()
 
   const [settings, setSettings] = useLocalStorage<GroupPageSettings>(
-    `group-settings-${group?.slug || ''}`,
+    `namegame_community-group-settings_${group?.slug || ''}`,
     {
       sortConfig: { key: 'when_met', direction: 'desc' },
       viewMode: 'grid',
