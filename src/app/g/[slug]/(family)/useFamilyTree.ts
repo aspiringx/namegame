@@ -315,53 +315,13 @@ export const useFamilyTree = ({
     }
 
     // --- 3. Create Edges ---
-    const newEdges: Edge[] = []
-    const processedEdges = new Set<string>();
-
-    newNodes.forEach(node => {
-      if (node.id.includes('-union-')) return;
-
-      const relations = adjacencyList.get(node.id) || [];
-      relations.forEach((rel: AdjacencyListRelationship) => {
-        if (!visibleUsers.has(rel.relatedUserId)) return;
-
-        const edgeId = [node.id, rel.relatedUserId].sort().join('-');
-        if (processedEdges.has(edgeId)) return;
-
-        if (rel.type === 'spouse' || rel.type === 'partner') {
-          const sourceNode = newNodes.find(n => n.id === node.id);
-          const targetNode = newNodes.find(n => n.id === rel.relatedUserId);
-
-          if (sourceNode && targetNode) {
-            const sourceIsLeft = sourceNode.position.x < targetNode.position.x;
-            newEdges.push({
-              id: `e-${edgeId}`,
-              source: node.id,
-              target: rel.relatedUserId,
-              type: 'smoothstep',
-              sourceHandle: sourceIsLeft ? 'right-source' : 'left-source',
-              targetHandle: sourceIsLeft ? 'left-target' : 'right-target',
-            });
-            processedEdges.add(edgeId);
-          }
-        } else if (rel.type === 'child') {
-          newEdges.push({
-            id: `e-${edgeId}`,
-            source: node.id,
-            target: rel.relatedUserId,
-            type: 'smoothstep',
-            sourceHandle: 'bottom-source',
-            targetHandle: 'top-target',
-          });
-          processedEdges.add(edgeId);
-        }
-      });
-    });
+    const newEdges: Edge[] = [];
 
     // --- 4. Finalize node data ---
     const finalNodes = newNodes.map((newNode) => {
       if (newNode.id.includes('-union-')) return newNode
-      const user = allUsersMap.get(newNode.id)!
+      const user = allUsersMap.get(newNode.id);
+      if (!user) return newNode; // Should not happen for avatar nodes, but good practice
 
       const hasUnaddedParents = getRelatives(user.id, 'parent').some(
         (p: UserWithPhotoUrl) => !visibleUsers.has(p.id),
