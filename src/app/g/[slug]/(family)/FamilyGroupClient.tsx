@@ -56,14 +56,13 @@ interface FamilyPageSettings {
     key: SortKey
     direction: SortDirection
   }
-  viewMode: 'grid' | 'tree' | 'games'
   filterByRealPhoto: boolean
   filterConnectedStatus: 'all' | 'connected' | 'not_connected'
 }
 
 interface FamilyGroupClientProps {
   children?: React.ReactNode
-  view: 'grid' | 'tree' | 'games'
+  view: 'grid' | 'tree' | 'games',
   initialMembers: MemberWithUser[]
   groupSlug: string
   initialMemberCount: number
@@ -75,7 +74,8 @@ function FamilyGroupClientContent({
   initialRelationships,
   children,
   view,
-}: Omit<FamilyGroupClientProps, 'groupSlug' | 'initialMemberCount'>) {
+  groupSlug,
+}: Omit<FamilyGroupClientProps, 'initialMemberCount'>) {
   const groupContext = useGroup()
 
   if (!groupContext) {
@@ -95,7 +95,6 @@ function FamilyGroupClientContent({
     {
       searchQuery: '',
       sortConfig: { key: 'closest', direction: 'asc' },
-      viewMode: view,
       filterByRealPhoto: true,
       filterConnectedStatus: 'all',
     },
@@ -125,6 +124,7 @@ function FamilyGroupClientContent({
     setIsRelateModalOpen(false)
     setSelectedMember(null)
   }
+
 
   const modalRelations = useMemo(() => {
     if (!selectedMember || !initialRelationships) return []
@@ -273,6 +273,8 @@ function FamilyGroupClientContent({
             isMobile={isMobile}
             familyTreeRef={familyTreeRef}
             isResetDisabled={isResetDisabled}
+            viewMode={view}
+            groupSlug={groupSlug}
           />
           {view === 'tree' ? (
             <div className="relative mt-4">
@@ -451,7 +453,7 @@ export function FamilyGroupClient(props: FamilyGroupClientProps) {
       showCloseButton={true}
       disableInteraction={true}
     >
-      <FamilyGroupClientContent {...props} />
+      <FamilyGroupClientContent {...props} groupSlug={props.groupSlug} />
     </TourProvider>
   )
 }

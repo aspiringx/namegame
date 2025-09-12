@@ -3,7 +3,7 @@
 import React, { RefObject } from 'react'
 import type { FamilyTreeRef } from './FamilyTree'
 import { Button } from '@/components/ui/button'
-import { usePathname, useParams } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import {
   Tooltip,
@@ -39,7 +39,6 @@ interface GroupPageSettings {
     key: 'joined' | 'firstName' | 'lastName' | 'closest'
     direction: 'asc' | 'desc'
   }
-  viewMode: 'grid' | 'tree' | 'games'
   searchQuery: string
   filterByRealPhoto: boolean
   filterConnectedStatus: 'all' | 'connected' | 'not_connected'
@@ -52,7 +51,9 @@ interface GroupToolbarProps {
   setTourOpen: (isOpen: boolean) => void
   isMobile: boolean
   familyTreeRef?: RefObject<FamilyTreeRef | null>
-  isResetDisabled?: boolean
+  isResetDisabled?: boolean;
+  viewMode: 'grid' | 'tree' | 'games';
+  groupSlug: string;
 }
 
 export default function GroupToolbar({
@@ -63,6 +64,8 @@ export default function GroupToolbar({
   isMobile,
   familyTreeRef,
   isResetDisabled,
+  viewMode,
+  groupSlug,
 }: GroupToolbarProps) {
   const sortOptions: {
     key: 'joined' | 'firstName' | 'lastName' | 'closest'
@@ -93,13 +96,12 @@ export default function GroupToolbar({
   }
 
   const pathname = usePathname()
-  const params = useParams()
   const isTreeView = pathname.includes('/tree')
 
   return (
-        <div className="my-2 flex items-center justify-between">
+    <div className="my-2 flex items-center justify-between">
       {/* Left-side controls */}
-      <div className="flex flex-wrap items-center gap-1">
+      <div className="flex flex-wrap items-center gap-2">
         {isTreeView ? (
           <Button
             variant="secondary"
@@ -111,7 +113,7 @@ export default function GroupToolbar({
           >
             Reset
           </Button>
-        ) : (
+        ) : viewMode !== 'games' ? (
           <>
             <div data-tour="filter-buttons">
               <DropdownMenu>
@@ -219,7 +221,7 @@ export default function GroupToolbar({
               </DropdownMenu>
             </div>
           </>
-        )}
+        ) : null}
         <Button
           variant="ghost"
           size="icon"
@@ -231,12 +233,12 @@ export default function GroupToolbar({
       </div>
 
       {/* View Mode Buttons */}
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-2">
         {isMobile ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" data-tour="view-mode-mobile">
-                {settings.viewMode === 'grid' ? (
+                {viewMode === 'grid' ? (
                   <LayoutGrid className="h-4 w-4" />
                 ) : (
                   <GitFork className="h-4 w-4" />
@@ -244,30 +246,36 @@ export default function GroupToolbar({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem
-              >
-                <LayoutGrid className="mr-2 h-4 w-4" />
-                <span>Photos</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-              >
-                <GitFork className="mr-2 h-4 w-4" />
-                <span>Family Tree</span>
-              </DropdownMenuItem>
+              <Link href={`/g/${groupSlug}`}>
+                <DropdownMenuItem>
+                  <LayoutGrid className="mr-2 h-4 w-4" />
+                  <span>Photos</span>
+                </DropdownMenuItem>
+              </Link>
+              <Link href={`/g/${groupSlug}/tree`}>
+                <DropdownMenuItem>
+                  <GitFork className="mr-2 h-4 w-4" />
+                  <span>Family Tree</span>
+                </DropdownMenuItem>
+              </Link>
             </DropdownMenuContent>
           </DropdownMenu>
         ) : (
           <>
-            <Link href={`/g/${params.slug}`}>
+            <Link href={`/g/${groupSlug}`}>
               <Button
-                variant={!pathname.includes('/tree') && !pathname.includes('/games') ? 'secondary' : 'ghost'}
+                variant={
+                  !pathname.includes('/tree') && !pathname.includes('/games')
+                    ? 'secondary'
+                    : 'ghost'
+                }
                 size="sm"
                 data-tour="grid-button"
               >
                 <LayoutGrid className="h-4 w-4" />
               </Button>
             </Link>
-            <Link href={`/g/${params.slug}/tree`}>
+            <Link href={`/g/${groupSlug}/tree`}>
               <Button
                 variant={pathname.includes('/tree') ? 'secondary' : 'ghost'}
                 size="sm"
@@ -279,7 +287,7 @@ export default function GroupToolbar({
           </>
         )}
 
-        <Link href={`/g/${params.slug}/games`}>
+        <Link href={`/g/${groupSlug}/games`}>
           <Button
             variant={pathname.includes('/games') ? 'secondary' : 'ghost'}
             size="sm"

@@ -14,5 +14,5 @@ export default async function CommunityPage({
     notFound()
   }
 
-  return <CommunityGroupPageClient groupData={groupData} />
+  return <CommunityGroupPageClient groupData={groupData} view="grid" />
 }

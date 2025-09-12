@@ -46,6 +46,7 @@ interface CommunityGroupClientProps {
   members: MemberWithUser[]
   currentUserMember: MemberWithUser | undefined
   groupSlug?: string
+  view: 'grid' | 'games'
 }
 
 interface CommunityGroupClientContentProps
@@ -53,6 +54,7 @@ interface CommunityGroupClientContentProps
   settings: GroupPageSettings
   setSettings: React.Dispatch<React.SetStateAction<GroupPageSettings>>
   groupSlug?: string
+  view: 'grid' | 'games'
 }
 
 interface GroupPageSettings {
@@ -60,7 +62,6 @@ interface GroupPageSettings {
     key: 'when_connected' | 'firstName' | 'lastName'
     direction: 'asc' | 'desc'
   }
-  viewMode: 'grid' | 'quiz'
   searchQuery: string
   filterByRealPhoto: boolean
   filterConnectedStatus: 'all' | 'connected' | 'not_connected'
@@ -74,6 +75,7 @@ const CommunityGroupClientContent: React.FC<
   settings,
   setSettings,
   groupSlug,
+  view,
 }) => {
   const groupContext = useGroup()
 
@@ -203,22 +205,10 @@ const CommunityGroupClientContent: React.FC<
     setSelectedMember(null)
   }
 
-  const handleSwitchToGrid = () => {
-    setSettings((prev) => ({ ...prev, viewMode: 'grid' }))
-  }
-
-  const handleSwitchToQuiz = () => {
-    if (!introSeen) {
-      setIsIntroModalOpen(true)
-    } else {
-      setSettings((prev) => ({ ...prev, viewMode: 'quiz' }))
-    }
-  }
-
   const handleCloseIntroModal = () => {
     setIsIntroModalOpen(false)
     setIntroSeen(true)
-    setSettings((prev) => ({ ...prev, viewMode: 'quiz' }))
+    router.push(`/g/${groupSlug}/games`)
   }
 
   const handleRelationshipChange = () => {
@@ -252,43 +242,14 @@ const CommunityGroupClientContent: React.FC<
     <>
       <TooltipProvider>
         <div className="w-full px-2 sm:px-0">
-          {settings.viewMode === 'quiz' ? (
-            <div className="pt-4">
-              <div className="flex justify-end gap-2">
-                <Button
-                  variant={'ghost'}
-                  size="sm"
-                  onClick={() =>
-                    setSettings((prev) => ({ ...prev, viewMode: 'grid' }))
-                  }
-                >
-                  <LayoutGrid className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={'secondary'}
-                  size="sm"
-                  onClick={handleSwitchToQuiz}
-                >
-                  <Gamepad2 className="h-6 w-6 text-orange-500" />
-                </Button>
-              </div>
-              <div className="mt-4 rounded-xl bg-white p-3 dark:bg-gray-800">
-                <GamesViewClient
-                  members={allMembers}
-                  groupSlug={group?.slug || ''}
-                  currentUserId={ego?.userId}
-                  onSwitchToGrid={handleSwitchToGrid}
-                />
-              </div>
-            </div>
-          ) : (
             <div>
               <GroupToolbar
                 settings={settings}
                 setSettings={setSettings}
                 handleSort={handleSort}
-                handleSwitchToQuiz={handleSwitchToQuiz}
                 setTourOpen={setIsOpen}
+                viewMode={view}
+                groupSlug={group.slug}
               />
 
               <div className="relative mb-4" data-tour="search-input">
@@ -319,7 +280,6 @@ const CommunityGroupClientContent: React.FC<
                 groupSlug={groupSlug}
               />
             </div>
-          )}
         </div>
       </TooltipProvider>
       <GamesIntroModal
@@ -366,7 +326,10 @@ const CommunityGroupClientContent: React.FC<
   )
 }
 
-const CommunityGroupClient: React.FC<CommunityGroupClientProps> = (props) => {
+const CommunityGroupClient: React.FC<CommunityGroupClientProps> = ({
+  view,
+  ...props
+}) => {
   const groupContext = useGroup()
 
   if (!groupContext) {
@@ -379,7 +342,6 @@ const CommunityGroupClient: React.FC<CommunityGroupClientProps> = (props) => {
     `namegame_community-group-settings_${group?.slug || ''}`,
     {
       sortConfig: { key: 'when_connected', direction: 'desc' },
-      viewMode: 'grid',
       searchQuery: '',
       filterByRealPhoto: true,
       filterConnectedStatus: 'connected',
@@ -489,6 +451,7 @@ const CommunityGroupClient: React.FC<CommunityGroupClientProps> = (props) => {
         {...props}
         settings={settings}
         setSettings={setSettings}
+        view={view}
       />
     </TourProvider>
   )

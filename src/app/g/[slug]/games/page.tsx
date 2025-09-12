@@ -1,28 +1,17 @@
-'use client'
+import { getGroupForLayout } from '../utils'
+import GamesPageClient from './GamesPageClient'
+import { notFound } from 'next/navigation'
 
-import { FamilyGroupClient } from '../FamilyGroupClient'
-import GamesView from '@/components/GamesView'
-import { useGroup } from '@/components/GroupProvider'
-import { FamilyGroupData } from '@/types'
+export const dynamic = 'force-dynamic'
 
-export default function FamilyGamesPage() {
-  const { group, currentUserMember } = useGroup()
+export default async function GamesPage({ params }: { params: { slug: string } }) {
+  const groupData = await getGroupForLayout(params.slug)
 
-  if (!group || !('members' in group)) {
-    return null // or a loading indicator
+  if (!groupData) {
+    notFound()
   }
 
-  // We've confirmed `members` exists, so we can safely cast to FamilyGroupData.
-  const familyGroup = group as FamilyGroupData
-
-  return (
-    <FamilyGroupClient view="games">
-      <GamesView
-        members={familyGroup.members}
-        groupSlug={familyGroup.slug}
-        currentUserId={currentUserMember?.userId}
-        onSwitchToGrid={() => {}}
-      />
-    </FamilyGroupClient>
-  )
+  return <GamesPageClient group={groupData} />
 }
+
+
