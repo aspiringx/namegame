@@ -7,12 +7,13 @@ import FamilyTree, { FamilyTreeRef } from './FamilyTree'
 import { MemberWithUser } from '@/types'
 
 interface TreeViewProps {
-  onIsFocalUserCurrentUserChange: (isCurrentUser: boolean) => void
-  members: MemberWithUser[]
+  onIsFocalUserCurrentUserChange: (isCurrentUser: boolean) => void;
+  members: MemberWithUser[];
+  onOpenRelate: (member: MemberWithUser) => void;
 }
 
 const TreeView = forwardRef<FamilyTreeRef, TreeViewProps>(
-  ({ onIsFocalUserCurrentUserChange, members }, ref) => {
+  ({ onIsFocalUserCurrentUserChange, members, onOpenRelate }, ref) => {
     const groupContext = useGroup()
     if (!groupContext) {
       return null
@@ -39,7 +40,7 @@ const TreeView = forwardRef<FamilyTreeRef, TreeViewProps>(
           members={members}
           currentUser={currentUserMember?.user}
           relationshipMap={relationshipMap}
-          onOpenRelate={() => {}}
+          onOpenRelate={onOpenRelate}
           isGroupAdmin={isGroupAdmin}
         />
       </div>

@@ -295,7 +295,7 @@ function FamilyGroupClientContent({
                     searchQuery: e.target.value,
                   }))
                 }
-                className="w-full rounded-md border p-2 pr-10"
+                className="w-full rounded-md border p-2 pr-10 text-sm"
                 data-tour="search-input"
               />
               {settings.searchQuery && (
@@ -334,6 +334,7 @@ function FamilyGroupClientContent({
                   ref={familyTreeRef}
                   onIsFocalUserCurrentUserChange={setIsResetDisabled}
                   members={allMembers}
+                  onOpenRelate={handleOpenRelateModal}
                 />
               ) : (
                 children

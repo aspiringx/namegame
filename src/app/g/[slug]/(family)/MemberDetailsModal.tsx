@@ -108,10 +108,7 @@ export function MemberDetailsModal({
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => {
-                  onClose()
-                  onOpenRelate(member!)
-                }}
+                onClick={() => onOpenRelate(member!)}
               >
                 <GitFork className="mr-2 h-4 w-4" />
                 Relationships

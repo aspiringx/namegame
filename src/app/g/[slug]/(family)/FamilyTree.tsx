@@ -13,7 +13,7 @@ import ReactFlow, { Background, ReactFlowProvider, Node } from 'reactflow'
 import 'reactflow/dist/style.css'
 import { MemberWithUser, UserWithPhotoUrl, FullRelationship } from '@/types'
 import AvatarNode from './AvatarNode'
-import SmoothFlowEdge from './SmoothFlowEdge'
+import SmoothFlowEdge from './SmoothFlowEdge';
 import { MemberDetailsModal } from './MemberDetailsModal'
 import { useFamilyTree, AvatarNodeData } from './useFamilyTree'
 import { FamilyTreeControls } from './FamilyTreeControls'
@@ -25,7 +25,7 @@ const nodeTypes = {
 
 const edgeTypes = {
   smoothflow: SmoothFlowEdge,
-}
+};
 
 const fitViewOptions = {
   padding: 0.4,
@@ -149,6 +149,11 @@ const FamilyTreeComponent = forwardRef<
       setFocalUser: setFocalUser,
     }))
 
+    const handleOpenRelate = (member: MemberWithUser) => {
+      setIsModalOpen(false);
+      onOpenRelate?.(member);
+    };
+
     const handleNodeClick = (
       _: React.MouseEvent,
       node: Node<AvatarNodeData>,
@@ -208,7 +213,7 @@ const FamilyTreeComponent = forwardRef<
               : undefined
           }
           currentUserId={currentUser?.id}
-          onOpenRelate={onOpenRelate}
+          onOpenRelate={handleOpenRelate}
           isGroupAdmin={isGroupAdmin}
         />
       </>
