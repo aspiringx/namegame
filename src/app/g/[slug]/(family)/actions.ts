@@ -1,11 +1,9 @@
 'use server'
 
-import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
 import { getPublicUrl } from '@/lib/storage'
 import type { MemberWithUser, FullRelationship } from '@/types'
 import { getCodeTable } from '@/lib/codes'
-
 
 export async function getFamilyRelationships(
   groupSlug: string,
