@@ -10,10 +10,11 @@ import { notFound, redirect } from 'next/navigation'
 import type { Metadata } from 'next'
 
 export async function generateMetadata({
-  params,
+  params: paramsProp,
 }: {
-  params: { slug: string }
+  params: Promise<{ slug: string }>
 }): Promise<Metadata> {
+  const params = await paramsProp
   const data = await getGroupForLayout(params.slug, 5)
 
   if (!data) {
@@ -29,11 +30,12 @@ export async function generateMetadata({
 
 export default async function GroupLayout({
   children,
-  params,
+  params: paramsProp,
 }: {
   children: React.ReactNode
-  params: { slug: string }
+  params: Promise<{ slug: string }>
 }) {
+  const params = await paramsProp
   const session = await auth()
   const headersList = await headers()
   const headerPath = headersList.get('x-invoke-path') || ''

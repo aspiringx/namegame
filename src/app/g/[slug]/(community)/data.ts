@@ -1,12 +1,11 @@
 import 'server-only'
-import { cache } from 'react'
 import prisma from '@/lib/prisma'
 import { getPublicUrl } from '@/lib/storage'
 import { CommunityGroupData, GroupData, MemberWithUser } from '@/types'
 import { auth } from '@/auth'
 
 // Fetches community group data
-export const getGroup = cache(async (
+export const getGroup = async (
   slug: string,
   limit?: number,
 ): Promise<CommunityGroupData | null> => {
@@ -224,4 +223,4 @@ export const getGroup = cache(async (
       notRelatedCount: notRelatedMembers.length,
       currentUserMember,
     }
-})
+}

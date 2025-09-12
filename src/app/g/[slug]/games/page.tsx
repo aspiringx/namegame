@@ -3,7 +3,8 @@ import GamesPageClient from './GamesPageClient'
 import { notFound } from 'next/navigation'
 
 
-export default async function GamesPage({ params }: { params: { slug: string } }) {
+export default async function GamesPage({ params: paramsProp }: { params: Promise<{ slug: string }> }) {
+  const params = await paramsProp
   const groupData = await getGroupForLayout(params.slug)
 
   if (!groupData) {

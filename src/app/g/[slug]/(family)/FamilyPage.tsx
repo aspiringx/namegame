@@ -5,11 +5,12 @@ import { notFound } from 'next/navigation'
 import { FullRelationship } from '@/types'
 
 interface FamilyPageProps {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }
 
-export default async function FamilyPage({ params }: FamilyPageProps) {
-    const groupData = await getGroup(params.slug);
+export default async function FamilyPage({ params: paramsProp }: FamilyPageProps) {
+  const params = await paramsProp;
+  const groupData = await getGroup(params.slug);
   if (!groupData) {
     notFound()
   }

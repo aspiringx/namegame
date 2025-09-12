@@ -1,11 +1,6 @@
-export const dynamic = 'force-dynamic'
-
 import { getManagedUsers } from './actions'
 import UsersList from './users-list'
-import {
-  getUsersManagingMe,
-  getPotentialManagers,
-} from '@/lib/actions'
+import { getUsersManagingMe, getPotentialManagers } from '@/lib/actions'
 
 export default async function UsersPage(props: {
   searchParams?: Promise<{ success?: string }>
