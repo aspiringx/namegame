@@ -3,18 +3,18 @@ import Footer from '@/components/Footer'
 import Header from '@/components/Header'
 import { GroupProvider, GroupPageData } from '@/components/GroupProvider'
 import { getGroupForLayout } from './utils'
-import { GroupData, FamilyGroupData, CommunityGroupData } from '@/types'
+import { FamilyGroupData, CommunityGroupData } from '@/types'
 
 import { headers } from 'next/headers'
 import { notFound, redirect } from 'next/navigation'
 import type { Metadata } from 'next'
 
-export async function generateMetadata(props: {
-  params: Promise<{ slug: string }>
+export async function generateMetadata({
+  params,
+}: {
+  params: { slug: string }
 }): Promise<Metadata> {
-  const params = await props.params
-  const { slug } = params
-  const data = await getGroupForLayout(slug, 5)
+  const data = await getGroupForLayout(params.slug, 5)
 
   if (!data) {
     return {
@@ -27,11 +27,13 @@ export async function generateMetadata(props: {
   }
 }
 
-export default async function GroupLayout(props: {
+export default async function GroupLayout({
+  children,
+  params,
+}: {
   children: React.ReactNode
-  params: Promise<{ slug: string }>
+  params: { slug: string }
 }) {
-  const params = await props.params
   const session = await auth()
   const headersList = await headers()
   const headerPath = headersList.get('x-invoke-path') || ''
@@ -42,10 +44,7 @@ export default async function GroupLayout(props: {
     const pathname = headerPath || `/g/${params.slug}`
     return redirect(`/login?callbackUrl=${encodeURIComponent(pathname)}`)
   }
-  const { children } = props
-  const { slug } = params
-
-  const data = await getGroupForLayout(slug)
+  const data = await getGroupForLayout(params.slug)
 
   if (!data) {
     // This can happen if the group doesn't exist, or if the user is not a member
@@ -73,7 +72,7 @@ export default async function GroupLayout(props: {
         ),
     }
   } else {
-    const communityData = data as GroupData
+    const communityData = data as CommunityGroupData
     groupForProvider = {
       group: communityData,
       relatedMembers: [],
@@ -91,9 +90,11 @@ export default async function GroupLayout(props: {
         <Header
           group={groupForProvider.group}
           isGroupAdmin={groupForProvider.isGroupAdmin}
-          groupSlug={slug}
+          groupSlug={params.slug}
         />
-        <main className="flex-grow bg-gray-50 pb-16 dark:bg-gray-900">{children}</main>
+        <main className="flex-grow bg-gray-50 pb-16 dark:bg-gray-900">
+          {children}
+        </main>
         <Footer />
       </div>
     </GroupProvider>

@@ -69,10 +69,7 @@ export default function GamesPageClient({ group }: GamesPageClientProps) {
 
   const handleSwitchToGrid = () => router.push(`/g/${group.slug}`)
 
-  const members =
-    'members' in group
-      ? group.members
-      : [...group.relatedMembers, ...group.notRelatedMembers]
+  const members = group.members || []
 
   return (
     <div>

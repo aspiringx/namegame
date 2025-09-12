@@ -62,6 +62,8 @@ export type CommunityGroupData = Group & {
   logo?: string;
   groupType: GroupType;
   isSuperAdmin: boolean;
+  members: MemberWithUser[];
+  memberCount: number;
   relatedMembers: MemberWithUser[];
   notRelatedMembers: MemberWithUser[];
   relatedCount: number;
