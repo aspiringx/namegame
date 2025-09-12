@@ -1,11 +1,12 @@
 import 'server-only'
+import { cache } from 'react'
 import prisma from '@/lib/prisma'
 import { getPublicUrl } from '@/lib/storage'
 import { FamilyGroupData, MemberWithUser } from '@/types'
 import { auth } from '@/auth'
 import { FullRelationship } from '@/types'
 
-export const getGroup = async (
+export const getGroup = cache(async (
   slug: string,
   limit?: number,
 ): Promise<FamilyGroupData | null> => {
@@ -148,9 +149,9 @@ export const getGroup = async (
     memberCount: allMembers.length,
     currentUserMember,
   }
-}
+})
 
-export const getFamilyRelationships = async (
+export const getFamilyRelationships = cache(async (
   groupMemberIds: string[],
 ): Promise<FullRelationship[]> => {
   const relationships = await prisma.userUser.findMany({
@@ -169,4 +170,4 @@ export const getFamilyRelationships = async (
     },
   })
   return relationships as FullRelationship[]
-}
+})

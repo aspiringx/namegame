@@ -1,12 +1,13 @@
 'use server'
 
+import { cache } from 'react'
 import prisma from '@/lib/prisma'
 
 /**
  * Fetches a group by its slug, including only the groupType.
  * This is a lightweight query used for routing between different group page layouts.
  */
-export const getGroupTypeBySlug = async (slug: string) => {
+export const getGroupTypeBySlug = cache(async (slug: string) => {
   const group = await prisma.group.findUnique({
     where: {
       slug,
@@ -23,4 +24,4 @@ export const getGroupTypeBySlug = async (slug: string) => {
     },
   })
   return group
-}
+})

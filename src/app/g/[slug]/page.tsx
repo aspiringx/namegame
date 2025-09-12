@@ -15,8 +15,8 @@ export default async function GroupPage({ params: paramsProp }: { params: Promis
 
   // This is a route handler for a specific group.
   if (group.groupType?.code === 'family') {
-      return <FamilyGroupPage params={params} />
+      return <FamilyGroupPage params={paramsProp} />
   }
 
-    return <CommunityGroupPage params={params} />
+    return <CommunityGroupPage params={paramsProp} />
 }
