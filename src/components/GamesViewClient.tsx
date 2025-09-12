@@ -17,7 +17,13 @@ const GamesViewClient: React.FC<GamesViewClientProps> = ({
   onSwitchToGrid,
   ...props
 }) => {
-  const { group } = useGroup()
+  const groupContext = useGroup()
+
+  if (!groupContext) {
+    return <div>Loading...</div> // Or some other loading indicator
+  }
+
+  const { group } = groupContext
 
   return (
     <>
