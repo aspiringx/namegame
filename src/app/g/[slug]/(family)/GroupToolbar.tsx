@@ -1,6 +1,7 @@
 'use client'
 
-import React from 'react'
+import React, { RefObject } from 'react'
+import type { FamilyTreeRef } from './FamilyTree'
 import { Button } from '@/components/ui/button'
 import { usePathname, useParams } from 'next/navigation'
 import Link from 'next/link'
@@ -50,6 +51,8 @@ interface GroupToolbarProps {
   handleSort: (key: 'joined' | 'firstName' | 'lastName' | 'closest') => void
   setTourOpen: (isOpen: boolean) => void
   isMobile: boolean
+  familyTreeRef?: RefObject<FamilyTreeRef | null>
+  isResetDisabled?: boolean
 }
 
 export default function GroupToolbar({
@@ -58,6 +61,8 @@ export default function GroupToolbar({
   handleSort,
   setTourOpen,
   isMobile,
+  familyTreeRef,
+  isResetDisabled,
 }: GroupToolbarProps) {
   const sortOptions: {
     key: 'joined' | 'firstName' | 'lastName' | 'closest'
@@ -89,11 +94,24 @@ export default function GroupToolbar({
 
   const pathname = usePathname()
   const params = useParams()
+  const isTreeView = pathname.includes('/tree')
 
   return (
-    <div className="my-2 flex items-center justify-between">
+        <div className="my-2 flex items-center justify-between">
       {/* Left-side controls */}
       <div className="flex flex-wrap items-center gap-1">
+        {isTreeView ? (
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => familyTreeRef?.current?.reset()}
+            className="flex items-center gap-1"
+            disabled={isResetDisabled}
+            data-tour="reset-tree-button"
+          >
+            Reset
+          </Button>
+        ) : (
           <>
             <div data-tour="filter-buttons">
               <DropdownMenu>
@@ -200,15 +218,16 @@ export default function GroupToolbar({
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setTourOpen(true)}
-              data-tour="tour-button"
-            >
-              <HelpCircle className="h-4 w-4" />
-            </Button>
           </>
+        )}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setTourOpen(true)}
+          data-tour="tour-button"
+        >
+          <HelpCircle className="h-4 w-4" />
+        </Button>
       </div>
 
       {/* View Mode Buttons */}
@@ -239,16 +258,16 @@ export default function GroupToolbar({
           </DropdownMenu>
         ) : (
           <>
-            <Link href={`/g/${params.slug}/family`}>
+            <Link href={`/g/${params.slug}`}>
               <Button
-                variant={pathname.endsWith('/family') ? 'secondary' : 'ghost'}
+                variant={!pathname.includes('/tree') && !pathname.includes('/games') ? 'secondary' : 'ghost'}
                 size="sm"
                 data-tour="grid-button"
               >
                 <LayoutGrid className="h-4 w-4" />
               </Button>
             </Link>
-            <Link href={`/g/${params.slug}/family/tree`}>
+            <Link href={`/g/${params.slug}/tree`}>
               <Button
                 variant={pathname.includes('/tree') ? 'secondary' : 'ghost'}
                 size="sm"
@@ -260,7 +279,7 @@ export default function GroupToolbar({
           </>
         )}
 
-        <Link href={`/g/${params.slug}/family/games`}>
+        <Link href={`/g/${params.slug}/games`}>
           <Button
             variant={pathname.includes('/games') ? 'secondary' : 'ghost'}
             size="sm"

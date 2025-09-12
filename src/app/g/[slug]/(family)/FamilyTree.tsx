@@ -40,7 +40,7 @@ interface FamilyTreeComponentProps {
   members: MemberWithUser[]
   currentUser?: UserWithPhotoUrl
   onIsFocalUserCurrentUserChange?: (isCurrentUser: boolean) => void
-  relationshipMap: Map<string, string>
+  relationshipMap: Map<string, { label: string; steps: number }>
   isMobile: boolean
   onOpenRelate?: (member: MemberWithUser) => void
   isGroupAdmin?: boolean
@@ -112,23 +112,35 @@ const FamilyTreeComponent = forwardRef<
     }, [isFocalUserTheCurrentUser, onIsFocalUserCurrentUserChange])
 
     useEffect(() => {
-      const setHeight = () => {
+      const calculateAndSetHeight = () => {
         if (reactFlowWrapper.current) {
-          reactFlowWrapper.current.style.height = `${window.innerHeight}px`
+          if (isFullScreen) {
+            reactFlowWrapper.current.style.height = `${window.innerHeight}px`
+          } else {
+            const header = document.getElementById('page-header')
+            const toolbar = document.getElementById('group-toolbar-container')
+            const footer = document.getElementById('page-footer')
+            const headerHeight = header ? header.offsetHeight : 0
+            const toolbarHeight = toolbar ? toolbar.offsetHeight : 0
+            const footerHeight = footer ? footer.offsetHeight : 0
+            const availableHeight =
+              window.innerHeight - headerHeight - toolbarHeight - footerHeight
+
+            // Apply a margin, e.g., 1rem (16px) on top and bottom
+            const margin = 36
+            const finalHeight = availableHeight - margin
+
+            reactFlowWrapper.current.style.height = `${finalHeight}px`
+          }
         }
       }
 
-      if (isFullScreen) {
-        setHeight()
-        window.addEventListener('resize', setHeight)
-        return () => {
-          window.removeEventListener('resize', setHeight)
-          if (reactFlowWrapper.current) {
-            reactFlowWrapper.current.style.height = ''
-          }
-        }
-      } else if (reactFlowWrapper.current) {
-        reactFlowWrapper.current.style.height = ''
+      calculateAndSetHeight()
+
+      // Recalculate on resize
+      window.addEventListener('resize', calculateAndSetHeight)
+      return () => {
+        window.removeEventListener('resize', calculateAndSetHeight)
       }
     }, [isFullScreen])
 
@@ -151,7 +163,7 @@ const FamilyTreeComponent = forwardRef<
     return (
       <>
         <div
-          className={`h-full ${isFullScreen ? 'bg-background' : ''}`}
+          className={`${isFullScreen ? 'bg-background' : ''}`}
           style={{
             width: isFullScreen ? '100vw' : '100%',
             position: isFullScreen ? 'fixed' : 'relative',
@@ -192,7 +204,7 @@ const FamilyTreeComponent = forwardRef<
           member={selectedMember}
           relationship={
             selectedMember
-              ? relationshipMap.get(selectedMember.userId)
+              ? relationshipMap.get(selectedMember.userId)?.label
               : undefined
           }
           currentUserId={currentUser?.id}
@@ -210,13 +222,13 @@ export type FamilyTreeRef = {
 }
 
 interface FamilyTreeProps {
-  relationships: FullRelationship[];
-  members: MemberWithUser[];
-  currentUser?: UserWithPhotoUrl;
-  onIsFocalUserCurrentUserChange?: (isCurrentUser: boolean) => void;
-  relationshipMap: Map<string, string>;
-  onOpenRelate?: (member: MemberWithUser) => void;
-  isGroupAdmin?: boolean;
+  relationships: FullRelationship[]
+  members: MemberWithUser[]
+  currentUser?: UserWithPhotoUrl
+  onIsFocalUserCurrentUserChange?: (isCurrentUser: boolean) => void
+  relationshipMap: Map<string, { label: string; steps: number }>
+  onOpenRelate?: (member: MemberWithUser) => void
+  isGroupAdmin?: boolean
 }
 
 const FamilyTree = forwardRef<FamilyTreeRef, FamilyTreeProps>((props, ref) => {

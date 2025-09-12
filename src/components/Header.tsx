@@ -23,7 +23,7 @@ export default function Header({
 
   return (
     <>
-      <header className="bg-background border-border sticky top-0 left-0 z-50 w-full border-b">
+      <header id="page-header" className="bg-background border-border sticky top-0 left-0 z-50 w-full border-b">
         <div className="container mx-auto flex h-full items-center justify-between px-5 py-1">
           {group ? (
             <button

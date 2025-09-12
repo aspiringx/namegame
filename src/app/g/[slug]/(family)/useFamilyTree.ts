@@ -24,7 +24,7 @@ interface FamilyTreeProps {
   relationships: FullRelationship[]
   members: MemberWithUser[]
   currentUser?: UserWithPhotoUrl
-  relationshipMap: Map<string, string>
+  relationshipMap: Map<string, { label: string; steps: number }>
 }
 
 const NODE_WIDTH = 150
@@ -54,7 +54,7 @@ export const useFamilyTree = ({
         map.set(member.userId, {
           ...member.user,
           name: `${member.user.firstName} ${member.user.lastName}`.trim(),
-          photoUrl: member.user.photoUrl || undefined,
+          photoUrl: member.user.photoUrl ? member.user.photoUrl : undefined,
         })
       }
     })
@@ -65,7 +65,7 @@ export const useFamilyTree = ({
           map.set(user.id, {
             ...user,
             name: `${user.firstName} ${user.lastName}`.trim(),
-            photoUrl: userWithPhoto.photoUrl || undefined,
+            photoUrl: userWithPhoto.photoUrl ? userWithPhoto.photoUrl : undefined,
           })
         }
       })
@@ -362,9 +362,10 @@ export const useFamilyTree = ({
       })
     }
 
+
     // Finalize node data with relationship and expansion info
     const finalNodes = newNodes.map((newNode) => {
-      const user = visibleUsers.get(newNode.id)!
+      const user = allUsersMap.get(newNode.id)!
 
       const hasUnaddedParents = getRelatives(user.id, 'parent').some(
         (p: UserWithPhotoUrl) => !visibleUsers.has(p.id),
@@ -380,7 +381,7 @@ export const useFamilyTree = ({
         ...newNode,
         data: {
           ...user,
-          relationship: relationshipMap.get(user.id),
+          relationship: relationshipMap.get(user.id)?.label,
           isCurrentUser: user.id === currentUser?.id,
           isFocalUser: user.id === focalNodeId,
           isFocalUserSpouseOrPartner:

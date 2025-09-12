@@ -3,8 +3,8 @@ import Footer from '@/components/Footer'
 import Header from '@/components/Header'
 import { GroupProvider, GroupPageData } from '@/components/GroupProvider'
 import { getGroupTypeBySlug } from './data'
-import { getGroup as getAllGroup } from './community/data'
-import { getGroup as getFamilyGroup } from './family/data'
+import { getGroup as getAllGroup } from './(community)/data'
+import { getGroup as getFamilyGroup } from './(family)/data'
 import { GroupData, FamilyGroupData, CommunityGroupData } from '@/types'
 
 // Helper to fetch the correct group data based on type

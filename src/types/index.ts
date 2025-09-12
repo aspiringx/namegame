@@ -76,5 +76,5 @@ export type FamilyGroupData = Group & {
   members: MemberWithUser[];
   memberCount: number;
   currentUserMember: MemberWithUser | undefined;
-  relationships: FullRelationship[];
+  relationships?: FullRelationship[];
 };

@@ -26,7 +26,7 @@ export const steps: StepType[] = [
     position: 'center',
     content: (
       <div className="flex flex-col items-center gap-4 text-center">
-        <GitFork size={32} strokeWidth={1.5} />
+        <GitFork size={32} strokeWidth={1.5} className="text-orange-500" />
         <p>Welcome to your family tree!</p>
       </div>
     ),
@@ -42,7 +42,7 @@ export const steps: StepType[] = [
           height={64}
           className="mx-auto h-auto w-auto"
         />
-        <GitFork size={32} />
+        <GitFork size={32} className="text-orange-500" />
         <p className="text-left">
           Initially, you are the focus. You may not see others until you're
           connected.
@@ -62,7 +62,7 @@ export const steps: StepType[] = [
     selector: '[data-tour="family-group-grid-button"]',
     content: (
       <div className="flex flex-col items-center gap-4 text-center">
-        <GitFork size={32} />
+        <GitFork size={32} className="text-orange-500" />
         <p>To add relationships:</p>
         <ol className="ml-8 list-decimal text-left">
           <li>
@@ -83,7 +83,7 @@ export const steps: StepType[] = [
     selector: 'body .react-flow__node',
     content: (
       <div className="flex flex-col items-center gap-4 text-center">
-        <Plus size={32} />
+        <Plus size={32} className="text-orange-500" />
         <p className="text-left">
           If those you're related to aren't here yet, new options appear when
           you've completed your profile.
@@ -107,9 +107,9 @@ export const steps: StepType[] = [
     content: (
       <div className="flex flex-col items-center gap-4 text-center">
         <div className="flex items-center gap-2">
-          <Venus size={32} />
-          <Mars size={32} />
-          <Transgender size={32} />
+          <Venus size={32} className="text-orange-500" />
+          <Mars size={32} className="text-orange-500" />
+          <Transgender size={32} className="text-orange-500" />
         </div>
         <p className="text-left">
           Users may identify as He, She, They, or none (not selected).
@@ -134,9 +134,9 @@ export const steps: StepType[] = [
     content: (
       <div className="flex flex-col items-center gap-4 text-center">
         <div className="flex items-center gap-2">
-          <ChevronUp size={32} />
-          <ChevronDown size={32} />
-          <ChevronLeft size={32} />
+          <ChevronUp size={32} className="text-orange-500" />
+          <ChevronDown size={32} className="text-orange-500" />
+          <ChevronLeft size={32} className="text-orange-500" />
         </div>
         <p className="text-left">
           Use arrows to see ancestors (up), spouse/partner and descendents
@@ -158,24 +158,20 @@ export const steps: StepType[] = [
         </p>
         <div className="flex flex-col items-start gap-2">
           <div className="flex items-center gap-2">
-            <Maximize size={24} />
+            <Maximize size={32} className="text-orange-500" />
             <span>Full screen</span>
           </div>
           <div className="flex items-center gap-2">
-            <ZoomIn size={24} />
+            <ZoomIn size={32} className="text-orange-500" />
             <span>Zoom in</span>
           </div>
           <div className="flex items-center gap-2">
-            <ZoomOut size={24} />
+            <ZoomOut size={32} className="text-orange-500" />
             <span>Zoom out</span>
           </div>
           <div className="flex items-center gap-2">
-            <Expand size={24} />
+            <Expand size={32} className="text-orange-500" />
             <span>Fit view</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <HelpCircle size={24} />
-            <span>Or help to see this tour again.</span>
           </div>
         </div>
       </div>
@@ -194,7 +190,7 @@ export const steps: StepType[] = [
     selector: 'body',
     content: (
       <div className="flex flex-col items-center gap-4 text-center">
-        <Lock size={48} />
+        <Lock size={32} className="text-orange-500" />
         <p className="text-left">
           NameGame is private. Your personal and family information is never
           shared or sold. No ads.

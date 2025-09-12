@@ -12,11 +12,12 @@ import {
 
 export default async function FamilyGroupLayout({
   children,
-  params,
+  params: paramsPromise,
 }: {
   children: React.ReactNode
-  params: { slug: string }
+  params: Promise<{ slug: string }>
 }) {
+  const params = await paramsPromise;
   const familyGroupData = await getGroup(params.slug)
   if (!familyGroupData) {
     notFound()

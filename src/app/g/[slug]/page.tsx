@@ -2,8 +2,8 @@ import { getGroupTypeBySlug as getGroup } from './data'
 import { notFound } from 'next/navigation'
 import dynamic from 'next/dynamic'
 
-const FamilyPage = dynamic(() => import('./family/page'))
-const CommunityGroupsPage = dynamic(() => import('./community/page'))
+const FamilyGroupPage = dynamic(() => import('./(family)/FamilyPage'))
+const CommunityGroupPage = dynamic(() => import('./(community)/CommunityPage'))
 
 export default async function GroupPage({
   params: paramsPromise,
@@ -17,9 +17,10 @@ export default async function GroupPage({
     notFound()
   }
 
+  // This is a route handler for a specific group.
   if (group.groupType?.code === 'family') {
-    return <FamilyPage params={paramsPromise} />
+    return <FamilyGroupPage params={paramsPromise} />
   }
 
-  return <CommunityGroupsPage params={paramsPromise} />
+  return <CommunityGroupPage params={paramsPromise} />
 }

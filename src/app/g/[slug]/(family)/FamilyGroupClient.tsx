@@ -1,14 +1,18 @@
 'use client'
 
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import useLocalStorage from '@/hooks/useLocalStorage'
 import { useGroup } from '@/components/GroupProvider'
 import { GuestMessage } from '@/components/GuestMessage'
 import GroupToolbar from './GroupToolbar'
+import { Button } from '@/components/ui/button'
+import { FocalUserSearch } from './FocalUserSearch'
 import { TourProvider, useTour } from '@reactour/tour'
-import { FullRelationship, User } from '@/types';
-import { getRelationship } from '@/lib/family-tree';
+import type { FamilyTreeRef } from './FamilyTree'
+import TreeView from './TreeView'
+import { FullRelationship, User } from '@/types'
+import { getRelationship } from '@/lib/family-tree'
 import { steps as familyTourSteps } from '@/components/tours/FamilyTour'
 import { steps as familyTourMobileSteps } from '@/components/tours/FamilyTourMobile'
 import { steps as familyTreeSteps } from '@/components/tours/FamilyTreeTour'
@@ -21,25 +25,27 @@ import { createContext, useContext } from 'react'
 
 const FamilyGroupMembersContext = createContext<MemberWithUser[]>([])
 
-export const useFamilyGroupMembers = () => useContext(FamilyGroupMembersContext);
+export const useFamilyGroupMembers = () => useContext(FamilyGroupMembersContext)
 
 const FamilyGroupActionsContext = createContext<{
-  onOpenRelateModal: (member: MemberWithUser) => void;
-  handleCloseRelateModal: () => void;
-  isRelateModalOpen: boolean;
-  selectedMember: MemberWithUser | null;
+  onOpenRelateModal: (member: MemberWithUser) => void
+  handleCloseRelateModal: () => void
+  isRelateModalOpen: boolean
+  selectedMember: MemberWithUser | null
 }>({
   onOpenRelateModal: () => {},
   handleCloseRelateModal: () => {},
   isRelateModalOpen: false,
   selectedMember: null,
-});
+})
 
-const FamilyGroupDataContext = createContext<{ relationshipMap: Map<string, { label: string; steps: number }> }>({ relationshipMap: new Map() });
+const FamilyGroupDataContext = createContext<{
+  relationshipMap: Map<string, { label: string; steps: number }>
+}>({ relationshipMap: new Map() })
 
-export const useFamilyGroupData = () => useContext(FamilyGroupDataContext);
+export const useFamilyGroupData = () => useContext(FamilyGroupDataContext)
 
-export const useFamilyGroupActions = () => useContext(FamilyGroupActionsContext);
+export const useFamilyGroupActions = () => useContext(FamilyGroupActionsContext)
 
 type SortKey = 'joined' | 'firstName' | 'lastName' | 'closest'
 type SortDirection = 'asc' | 'desc'
@@ -56,34 +62,32 @@ interface FamilyPageSettings {
 }
 
 interface FamilyGroupClientProps {
-  children: React.ReactNode
+  children?: React.ReactNode
   view: 'grid' | 'tree' | 'games'
+  initialMembers: MemberWithUser[]
+  groupSlug: string
+  initialMemberCount: number
+  initialRelationships: FullRelationship[]
 }
 
 function FamilyGroupClientContent({
+  initialMembers,
+  initialRelationships,
   children,
   view,
-}: {
-  children: React.ReactNode
-  view: 'grid' | 'tree' | 'games'
-}) {
+}: Omit<FamilyGroupClientProps, 'groupSlug' | 'initialMemberCount'>) {
   const groupContext = useGroup()
 
   if (!groupContext) {
     return null // Should be rendered within GroupProvider
   }
 
-  const {
-    group,
-    isGroupAdmin,
-    currentUserMember,
-    relatedMembers,
-    notRelatedMembers,
-    relationships,
-  } = groupContext
+  const { group, isGroupAdmin, currentUserMember } = groupContext
 
-  const allMembers = useMemo(() => [...relatedMembers, ...notRelatedMembers], [relatedMembers, notRelatedMembers]);
-  const { setIsOpen } = useTour();
+  const allMembers = initialMembers
+  const familyTreeRef = useRef<FamilyTreeRef>(null)
+  const [isResetDisabled, setIsResetDisabled] = useState(true)
+  const { setIsOpen } = useTour()
   const router = useRouter()
 
   const [settings, setSettings] = useLocalStorage<FamilyPageSettings>(
@@ -123,9 +127,9 @@ function FamilyGroupClientContent({
   }
 
   const modalRelations = useMemo(() => {
-    if (!selectedMember || !relationships) return [];
+    if (!selectedMember || !initialRelationships) return []
 
-    return (relationships as FullRelationship[])
+    return (initialRelationships as FullRelationship[])
       .filter(
         (rel) =>
           rel.user1Id === selectedMember.userId ||
@@ -135,74 +139,76 @@ function FamilyGroupClientContent({
         ...rel,
         relatedUser:
           rel.user1Id === selectedMember.userId ? rel.user2 : rel.user1,
-      }));
-  }, [selectedMember, relationships]);
+      }))
+  }, [selectedMember, initialRelationships])
 
   const handleRelationshipChange = () => {
     router.refresh()
   }
 
   const usersMap = useMemo(() => {
-    const map = new Map<string, User>();
-    allMembers.forEach(member => {
-      map.set(member.userId, member.user);
-    });
-    return map;
-  }, [allMembers]);
+    const map = new Map<string, User>()
+    allMembers.forEach((member) => {
+      map.set(member.userId, member.user)
+    })
+    return map
+  }, [allMembers])
 
   const relationshipMap = useMemo(() => {
-    if (!currentUserMember || !relationships || !Array.isArray(relationships)) {
-      return new Map<string, { label: string; steps: number }>();
+    if (!currentUserMember || !initialRelationships) {
+      return new Map<string, { label: string; steps: number }>()
     }
-    const newMap = new Map<string, { label: string; steps: number }>();
+    const newMap = new Map<string, { label: string; steps: number }>()
     for (const alter of allMembers) {
-      if (alter.userId === currentUserMember.userId) continue;
+      if (alter.userId === currentUserMember.userId) continue
       const result = getRelationship(
         currentUserMember.userId,
         alter.userId,
-        relationships as FullRelationship[],
+        initialRelationships,
         allMembers,
         usersMap,
-      );
+      )
       if (result && result.relationship) {
         newMap.set(alter.userId, {
           label: result.relationship,
           steps: result.steps,
-        });
+        })
       }
     }
-    return newMap;
-  }, [currentUserMember, allMembers, relationships, usersMap]);
+    return newMap
+  }, [currentUserMember, allMembers, initialRelationships, usersMap])
 
   const filteredAndSortedMembers = useMemo(() => {
-    let sortedMembers = [...allMembers];
+    let sortedMembers = [...allMembers]
 
     if (settings.sortConfig.key === 'closest') {
       sortedMembers.sort((a, b) => {
-        const aSteps = relationshipMap.get(a.userId)?.steps ?? Infinity;
-        const bSteps = relationshipMap.get(b.userId)?.steps ?? Infinity;
+        const aSteps = relationshipMap.get(a.userId)?.steps ?? Infinity
+        const bSteps = relationshipMap.get(b.userId)?.steps ?? Infinity
         if (aSteps === bSteps) {
-          return (a.user.firstName || '').localeCompare(b.user.firstName || '');
+          return (a.user.firstName || '').localeCompare(b.user.firstName || '')
         }
-        return settings.sortConfig.direction === 'asc' ? aSteps - bSteps : bSteps - aSteps;
-      });
+        return settings.sortConfig.direction === 'asc'
+          ? aSteps - bSteps
+          : bSteps - aSteps
+      })
     } else {
       sortedMembers.sort((a, b) => {
-        const { key, direction } = settings.sortConfig;
+        const { key, direction } = settings.sortConfig
 
         if (key === 'joined') {
-          const aDate = new Date(a.createdAt).getTime();
-          const bDate = new Date(b.createdAt).getTime();
-          return direction === 'asc' ? aDate - bDate : bDate - aDate;
+          const aDate = new Date(a.createdAt).getTime()
+          const bDate = new Date(b.createdAt).getTime()
+          return direction === 'asc' ? aDate - bDate : bDate - aDate
         }
 
-        const aValue = a.user[key as 'firstName' | 'lastName'] || '';
-        const bValue = b.user[key as 'firstName' | 'lastName'] || '';
+        const aValue = a.user[key as 'firstName' | 'lastName'] || ''
+        const bValue = b.user[key as 'firstName' | 'lastName'] || ''
 
-        if (aValue < bValue) return direction === 'asc' ? -1 : 1;
-        if (aValue > bValue) return direction === 'asc' ? 1 : -1;
-        return 0;
-      });
+        if (aValue < bValue) return direction === 'asc' ? -1 : 1
+        if (aValue > bValue) return direction === 'asc' ? 1 : -1
+        return 0
+      })
     }
 
     if (settings.filterByRealPhoto) {
@@ -222,8 +228,8 @@ function FamilyGroupClientContent({
       )
     }
 
-    return sortedMembers;
-  }, [allMembers, settings, relationshipMap]);
+    return sortedMembers
+  }, [allMembers, settings, relationshipMap])
 
   const handleSort = (key: 'joined' | 'firstName' | 'lastName' | 'closest') => {
     setSettings((prev) => {
@@ -254,7 +260,10 @@ function FamilyGroupClientContent({
         groupName={group?.name}
         groupType={group?.groupType.code}
       />
-      <div className="bg-background border-border sticky top-16 z-10 border-b py-4">
+      <div
+        id="group-toolbar-container"
+        className="bg-background border-border sticky top-16 z-10 border-b py-4"
+      >
         <div className="container mx-auto px-4">
           <GroupToolbar
             settings={settings}
@@ -262,14 +271,23 @@ function FamilyGroupClientContent({
             handleSort={handleSort}
             setTourOpen={setIsOpen}
             isMobile={isMobile}
+            familyTreeRef={familyTreeRef}
+            isResetDisabled={isResetDisabled}
           />
-          {view !== 'tree' && view !== 'games' && (
+          {view === 'tree' ? (
+            <div className="relative mt-4">
+              <FocalUserSearch
+                members={allMembers}
+                onSelect={(userId) =>
+                  familyTreeRef.current?.setFocalUser(userId)
+                }
+              />
+            </div>
+          ) : view !== 'games' ? (
             <div className="relative mt-4">
               <input
                 type="text"
-                placeholder={`Search ${
-                  allMembers.length
-                } members...`}
+                placeholder={`Search ${allMembers.length} members...`}
                 value={settings.searchQuery}
                 onChange={(e) =>
                   setSettings((prev) => ({
@@ -294,15 +312,32 @@ function FamilyGroupClientContent({
                 </button>
               )}
             </div>
-          )}
+          ) : null}
         </div>
       </div>
 
       <div className="container mx-auto mt-4 px-4">
-        <FamilyGroupActionsContext.Provider value={{ onOpenRelateModal: handleOpenRelateModal, handleCloseRelateModal, isRelateModalOpen, selectedMember }}>
+        <FamilyGroupActionsContext.Provider
+          value={{
+            onOpenRelateModal: handleOpenRelateModal,
+            handleCloseRelateModal,
+            isRelateModalOpen,
+            selectedMember,
+          }}
+        >
           <FamilyGroupDataContext.Provider value={{ relationshipMap }}>
-            <FamilyGroupMembersContext.Provider value={filteredAndSortedMembers}>
-              {children}
+            <FamilyGroupMembersContext.Provider
+              value={filteredAndSortedMembers}
+            >
+              {view === 'tree' ? (
+                <TreeView
+                  ref={familyTreeRef}
+                  onIsFocalUserCurrentUserChange={setIsResetDisabled}
+                  members={allMembers}
+                />
+              ) : (
+                children
+              )}
             </FamilyGroupMembersContext.Provider>
           </FamilyGroupDataContext.Provider>
         </FamilyGroupActionsContext.Provider>
@@ -329,7 +364,8 @@ function FamilyGroupClientContent({
   )
 }
 
-export function FamilyGroupClient({ children, view }: FamilyGroupClientProps) {
+export function FamilyGroupClient(props: FamilyGroupClientProps) {
+  const { children, view } = props
   const { resolvedTheme } = useTheme()
   const [hasMounted, setHasMounted] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
@@ -414,9 +450,7 @@ export function FamilyGroupClient({ children, view }: FamilyGroupClientProps) {
       showCloseButton={true}
       disableInteraction={true}
     >
-      <FamilyGroupClientContent view={view}>
-        {children}
-      </FamilyGroupClientContent>
+      <FamilyGroupClientContent {...props} />
     </TourProvider>
   )
 }
