@@ -4,7 +4,6 @@ import { z } from 'zod'
 import bcrypt from 'bcrypt'
 import prisma from '@/lib/prisma'
 import { revalidatePath, revalidateTag } from 'next/cache'
-import { redirect } from 'next/navigation'
 import { uploadFile, deleteFile, getPublicUrl } from '@/lib/storage'
 import { getCodeTable } from '@/lib/codes'
 import { auth } from '@/auth'
@@ -225,7 +224,7 @@ export async function updateUser(
     const primaryPhotoTypeId = photoTypes.primary.id
     const userEntityTypeId = entityTypes.user.id
 
-    const { password, ...userDataWithoutPassword } = userData
+    const { password: _password, ...userDataWithoutPassword } = userData
 
     const dataToUpdate: any = {
       ...userDataWithoutPassword,

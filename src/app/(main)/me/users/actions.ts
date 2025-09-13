@@ -1,8 +1,13 @@
 'use server'
 
 import { z } from 'zod'
-import { MemberWithUser } from '@/types'
-import { Gender, ManagedStatus, User, Photo, GroupUser } from '@/generated/prisma/client'
+import {
+  Gender,
+  ManagedStatus,
+  User,
+  Photo,
+  GroupUser,
+} from '@/generated/prisma/client'
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
 import bcrypt from 'bcrypt'
@@ -302,7 +307,9 @@ export async function getRelatedUsers(userId: string): Promise<User[]> {
   })
 
   // Deduplicate users
-  const uniqueUsers = Array.from(new Map(relatedUsers.map((u) => [u.id, u])).values())
+  const uniqueUsers = Array.from(
+    new Map(relatedUsers.map((u) => [u.id, u])).values(),
+  )
 
   return uniqueUsers
 }
@@ -339,7 +346,7 @@ export async function updateManagedUser(
     return { message: 'Forbidden' }
   }
 
-  const userToUpdate = managedUserRelation.managed
+  const _userToUpdate = managedUserRelation.managed
 
   const UpdateUserSchema = z
     .object({
@@ -425,9 +432,6 @@ export async function updateManagedUser(
 
   try {
     await prisma.$transaction(async (tx) => {
-      let photoUrl: string | undefined
-      let photoTypeId: number | undefined
-
       const [photoTypes, entityTypes] = await Promise.all([
         getCodeTable('photoType'),
         getCodeTable('entityType'),
@@ -526,7 +530,11 @@ export async function updateManagedUser(
       },
     })
 
-    if (updatedUser && updatedUser.photos[0] && !updatedUser.photos[0].url.startsWith('https')) {
+    if (
+      updatedUser &&
+      updatedUser.photos[0] &&
+      !updatedUser.photos[0].url.startsWith('https')
+    ) {
       updatedUser.photos[0].url = await getPublicUrl(updatedUser.photos[0].url)
     }
 
@@ -707,7 +715,9 @@ export async function getGroupsForCurrentUser(): Promise<
     return []
   }
 
-  const groupUsers: (GroupUser & { group: Group & { groupType: GroupType } })[] = await prisma.groupUser.findMany({
+  const groupUsers: (GroupUser & {
+    group: Group & { groupType: GroupType }
+  })[] = await prisma.groupUser.findMany({
     where: { userId: session.user.id },
     include: {
       group: {
@@ -727,19 +737,20 @@ export async function getGroupMembers(groupId: number): Promise<User[]> {
     return []
   }
 
-  const groupMembers: (GroupUser & { user: User & { photos: Photo[] } })[] = await prisma.groupUser.findMany({
-    where: { groupId },
-    include: {
-      user: {
-        include: {
-          photos: {
-            where: { type: { code: 'primary' } },
-            take: 1,
+  const groupMembers: (GroupUser & { user: User & { photos: Photo[] } })[] =
+    await prisma.groupUser.findMany({
+      where: { groupId },
+      include: {
+        user: {
+          include: {
+            photos: {
+              where: { type: { code: 'primary' } },
+              take: 1,
+            },
           },
         },
       },
-    },
-  })
+    })
 
   const usersWithPhotoUrls = await Promise.all(
     groupMembers.map(async (member) => {

@@ -32,8 +32,11 @@ export function usePushNotifications() {
 
   const [isSubscribing, setIsSubscribing] = useState(false)
   const [isPushEnabled, setIsPushEnabled] = useState(false)
-  const [subscription, setSubscription] = useState<PushSubscription | null>(null)
-  const [permissionStatus, setPermissionStatus] = useState<NotificationPermission>('default')
+  const [subscription, setSubscription] = useState<PushSubscription | null>(
+    null,
+  )
+  const [permissionStatus, setPermissionStatus] =
+    useState<NotificationPermission>('default')
   const [error, setError] = useState<Error | null>(null)
 
   const isSupported =
@@ -44,17 +47,15 @@ export function usePushNotifications() {
 
   useEffect(() => {
     if (isSupported) {
-      navigator.permissions
-        .query({ name: 'notifications' })
-        .then((status) => {
-          const mapState = (state: PermissionState): NotificationPermission =>
-            state === 'prompt' ? 'default' : state
+      navigator.permissions.query({ name: 'notifications' }).then((status) => {
+        const mapState = (state: PermissionState): NotificationPermission =>
+          state === 'prompt' ? 'default' : state
 
+        setPermissionStatus(mapState(status.state))
+        status.onchange = () => {
           setPermissionStatus(mapState(status.state))
-          status.onchange = () => {
-            setPermissionStatus(mapState(status.state))
-          }
-        })
+        }
+      })
     }
   }, [isSupported])
 
@@ -83,7 +84,9 @@ export function usePushNotifications() {
             setSubscription(browserSub)
           } else if (!browserSub) {
             // This can happen on a hard refresh. The state is still valid.
-            console.log('Browser subscription not immediately available, but server confirmed.')
+            console.log(
+              'Browser subscription not immediately available, but server confirmed.',
+            )
           } else {
             // Browser has a different subscription. This is an edge case.
             // We trust the one in localStorage which is confirmed by the server.
@@ -152,7 +155,10 @@ export function usePushNotifications() {
         })
       }
 
-      console.log('Client-side subscription object:', JSON.stringify(sub, null, 2));
+      console.log(
+        'Client-side subscription object:',
+        JSON.stringify(sub, null, 2),
+      )
 
       const result = await saveSubscription(sub)
       if (result.success) {
@@ -169,7 +175,7 @@ export function usePushNotifications() {
     } finally {
       setIsSubscribing(false)
     }
-  }, [isReady, registration, isSupported])
+  }, [isReady, registration, isSupported, permissionStatus])
 
   const unsubscribe = useCallback(async () => {
     const endpoint = localStorage.getItem(PUSH_SUBSCRIPTION_ENDPOINT_KEY)
@@ -186,7 +192,10 @@ export function usePushNotifications() {
       const result = await deleteSubscription(endpoint)
       if (!result.success) {
         // If server fails, we shouldn't proceed with client-side changes
-        console.error('Failed to delete subscription from server:', result.message)
+        console.error(
+          'Failed to delete subscription from server:',
+          result.message,
+        )
         setError(new Error(result.message || 'Failed to delete subscription.'))
         return
       }
@@ -214,7 +223,10 @@ export function usePushNotifications() {
   useEffect(() => {
     // When permissions change to default or denied, the existing subscription
     // is no longer valid and should be cleaned up.
-    if (isPushEnabled && (permissionStatus === 'default' || permissionStatus === 'denied')) {
+    if (
+      isPushEnabled &&
+      (permissionStatus === 'default' || permissionStatus === 'denied')
+    ) {
       console.log('Permission changed, cleaning up old subscription.')
       unsubscribe()
     }

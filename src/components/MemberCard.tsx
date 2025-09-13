@@ -55,7 +55,7 @@ export default function MemberCard({
           <div className="relative text-center">
             <div className="flex items-center justify-center gap-2">
               <div className="absolute top-1 left-0 flex h-full items-center">
-                {!member.relationUpdatedAt && onConnect && member.userId !== currentUserId && (
+                {!member.connectedAt && onConnect && member.userId !== currentUserId && (
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -82,15 +82,15 @@ export default function MemberCard({
                 {relationship}
               </p>
             )}
-            {member.relationUpdatedAt && (
+            {member.connectedAt && (
               <>
-                {member.relationUpdatedAt ? (
+                {member.connectedAt ? (
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger>
                         <p className="cursor-pointer text-xs text-gray-500 underline decoration-dotted dark:text-gray-400">
                           {formatDistanceToNow(
-                            new Date(member.relationUpdatedAt),
+                            new Date(member.connectedAt),
                             {
                               addSuffix: true,
                             },
@@ -99,7 +99,7 @@ export default function MemberCard({
                       </TooltipTrigger>
                       <TooltipContent>
                         <p>
-                          {new Date(member.relationUpdatedAt).toLocaleString()}
+                          {new Date(member.connectedAt).toLocaleString()}
                         </p>
                       </TooltipContent>
                     </Tooltip>

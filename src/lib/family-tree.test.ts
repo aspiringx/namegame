@@ -2,12 +2,10 @@ import { describe, it, expect, beforeAll } from 'vitest'
 import {
   PrismaClient,
   User,
-  UserUser,
-  UserUserRelationType,
 } from '../generated/prisma'
+import { MemberWithUser } from '@/types'
 import { getRelationship } from './family-tree'
-
-type FullRelationship = UserUser & { relationType: UserUserRelationType }
+import { FullRelationship } from '../types'
 
 const prisma = new PrismaClient()
 
@@ -16,6 +14,7 @@ describe('getRelationship with seeded data', () => {
   let allRelationships: FullRelationship[]
   let egoUser: User
   let usersMap: Map<string, User>
+  let members: MemberWithUser[]
 
   beforeAll(async () => {
     // 1. Fetch all data from the test database
@@ -35,7 +34,8 @@ describe('getRelationship with seeded data', () => {
       throw new Error('Test data not found. Make sure to run the seeder first.')
     }
 
-    allUsers = group.members.map((m) => m.user)
+    members = group.members as MemberWithUser[]
+    allUsers = members.map((m) => m.user)
     const userIds = new Set(allUsers.map((u) => u.id))
 
     const allDbRelationships = await prisma.userUser.findMany({
@@ -293,7 +293,7 @@ describe('getRelationship with seeded data', () => {
         .trim()
         .replace(/\s+/g, ' ')
         .replace(/\s*>\s*/g, ' > ')
-      const normalizedLabel = label.replace(/\s+/g, ' ').trim()
+      const _normalizedLabel = label.replace(/\s+/g, ' ').trim()
 
       const alterName = `Ego > ${normalizedPath}`
       const alterUser = allUsers.find((u) => u.firstName === alterName)
@@ -307,6 +307,7 @@ describe('getRelationship with seeded data', () => {
         egoUser.id,
         alterUser!.id,
         allRelationships,
+        members,
         usersMap,
         false,
       )

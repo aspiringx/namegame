@@ -4,14 +4,14 @@ import { useState, useEffect } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { Button } from './ui/button'
 import Modal from './ui/modal'
-import { Brain, HelpCircle, X } from 'lucide-react'
+import { HelpCircle, X } from 'lucide-react'
 import Image from 'next/image'
 
 export function GuestMessage({
   isGuest,
   firstName,
   groupName,
-  groupType,
+  groupType: _groupType,
 }: {
   isGuest: boolean
   firstName?: string | null
@@ -62,7 +62,7 @@ export function GuestMessage({
       </h3>
       <div className="space-y-2">
         <p className="mb-4 text-center">
-          You're in the private {groupName} group!
+          You&apos;re in the private {groupName} group!
         </p>
         <div className="my-4 flex items-center gap-4 rounded-md bg-green-200 p-4 dark:bg-green-900">
           <HelpCircle size={32} />

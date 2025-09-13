@@ -1,4 +1,4 @@
-import { PrismaClient, GroupUserRole } from '../../src/generated/prisma'
+import { PrismaClient } from '../../src/generated/prisma'
 import { faker } from '@faker-js/faker'
 import bcrypt from 'bcrypt'
 

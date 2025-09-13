@@ -1,6 +1,6 @@
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
-import { notFound, redirect } from 'next/navigation'
+import { redirect } from 'next/navigation'
 import GreetPageClient from './client' // Keep client component separate
 
 // This is the main page component, which is a Server Component.

@@ -5,7 +5,7 @@ import { getPublicUrl } from '@/lib/storage'
 import { getCodeTable } from '@/lib/codes'
 import { DeleteUserButton } from './DeleteUserButton'
 import { UndeleteUserButton } from './UndeleteUserButton'
-import { Edit, Trash2, RotateCcw } from 'lucide-react'
+import { Edit } from 'lucide-react'
 
 type SortableColumn = 'firstName' | 'lastName' | 'email' | 'phone' | 'updatedAt'
 type Order = 'asc' | 'desc'

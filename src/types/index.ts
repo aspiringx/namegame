@@ -12,7 +12,7 @@ import {
 
 // NOTE: It's important to keep this in sync with the `groupWithMembers` query in
 // `src/app/(main)/admin/groups/[slug]/edit/layout.tsx`.
-const groupWithMembers = Prisma.validator<Prisma.GroupDefaultArgs>()({
+const _groupWithMembers = Prisma.validator<Prisma.GroupDefaultArgs>()({
   include: {
     photos: true,
     members: {
@@ -27,7 +27,7 @@ const groupWithMembers = Prisma.validator<Prisma.GroupDefaultArgs>()({
   },
 })
 
-export type GroupPayload = Prisma.GroupGetPayload<typeof groupWithMembers>
+export type GroupPayload = Prisma.GroupGetPayload<typeof _groupWithMembers>
 
 export type GroupWithMembers = Omit<GroupPayload, 'members'> & {
   members: (Omit<GroupPayload['members'][number], 'user'> & {
@@ -40,34 +40,43 @@ export type UserWithPhotoUrl = User & { name: string; photoUrl?: string }
 export type MemberWithUser = GroupUser & {
   user: UserWithPhotoUrl;
   role: GroupUserRole;
-  relationUpdatedAt?: Date;
   parents: (GroupUser & { user: UserWithPhotoUrl })[];
   children: (GroupUser & { user: UserWithPhotoUrl })[];
+  connectedAt?: Date | null;
 };
 
 export type GroupData = Group & {
-  logo?: string
-  groupType: GroupType
-  isSuperAdmin: boolean
-  greetedMembers: MemberWithUser[]
-  notGreetedMembers: MemberWithUser[]
-  greetedCount: number
-  notGreetedCount: number
-  currentUserMember: MemberWithUser | undefined
-}
+  logo?: string;
+  groupType: GroupType;
+  isSuperAdmin?: boolean;
+};
 
 export type FullRelationship = UserUser & {
-  relationType: UserUserRelationType
-  relatedUser: User
-  user1: User
-  user2: User
-}
+  relationType: UserUserRelationType;
+  relatedUser: User;
+  user1: User;
+  user2: User;
+};
+
+export type CommunityGroupData = Group & {
+  logo?: string;
+  groupType: GroupType;
+  isSuperAdmin: boolean;
+  members: MemberWithUser[];
+  memberCount: number;
+  relatedMembers: MemberWithUser[];
+  notRelatedMembers: MemberWithUser[];
+  relatedCount: number;
+  notRelatedCount: number;
+  currentUserMember?: MemberWithUser;
+};
 
 export type FamilyGroupData = Group & {
-  logo?: string
-  groupType: GroupType
-  isSuperAdmin: boolean
-  members: MemberWithUser[]
-  memberCount: number
-  currentUserMember: MemberWithUser | undefined
-}
+  logo?: string;
+  groupType: GroupType;
+  isSuperAdmin: boolean;
+  members: MemberWithUser[];
+  memberCount: number;
+  currentUserMember: MemberWithUser | undefined;
+  relationships?: FullRelationship[];
+};

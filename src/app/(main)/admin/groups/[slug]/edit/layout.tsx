@@ -1,12 +1,8 @@
 import prisma from '@/lib/prisma'
 import { notFound } from 'next/navigation'
-import { getPublicUrl } from '@/lib/storage'
-import { auth } from '@/auth'
-import { Prisma } from '@/generated/prisma'
 import { getCodeTable } from '@/lib/codes'
 import Breadcrumbs from '@/components/Breadcrumbs'
 import EditGroupNav from './edit-group-nav'
-import type { GroupPayload, GroupWithMembers } from '@/types/index'
 
 export default async function EditGroupLayout(props: {
   children: React.ReactNode
@@ -15,12 +11,10 @@ export default async function EditGroupLayout(props: {
   const { children } = props
   const params = await props.params
   const { slug } = params
-  const session = await auth()
 
-  const [photoTypes, entityTypes, roleTypes] = await Promise.all([
+  const [photoTypes, entityTypes] = await Promise.all([
     getCodeTable('photoType'),
     getCodeTable('entityType'),
-    getCodeTable('groupUserRole'),
   ])
 
   const group = await prisma.group.findUnique({
@@ -60,46 +54,6 @@ export default async function EditGroupLayout(props: {
 
   if (!group) {
     notFound()
-  }
-
-  const logo = group?.photos[0]
-  const logoUrl = await getPublicUrl(logo?.url)
-
-  const currentUser = session?.user?.id
-    ? await prisma.user.findUnique({
-        where: { id: session.user.id },
-        include: {
-          groupMemberships: {
-            include: {
-              group: true,
-            },
-          },
-        },
-      })
-    : null
-
-  const isGlobalAdminGroup = group.slug === 'global-admin'
-
-  const groupWithMemberPhotos = {
-    ...group,
-    members: await Promise.all(
-      group.members.map(async (member: GroupPayload['members'][number]) => ({
-        ...member,
-        user: {
-          ...member.user,
-          photoUrl: await (async () => {
-            const rawUrl = member.user.photos?.[0]?.url
-            if (rawUrl) {
-              if (rawUrl.startsWith('http')) {
-                return rawUrl
-              }
-              return getPublicUrl(rawUrl)
-            }
-            return '/images/default-avatar.png'
-          })(),
-        },
-      })),
-    ),
   }
 
   return (

@@ -7,7 +7,6 @@ import { LoginCodeModal } from './LoginCodeModal'
 
 interface FamilyMemberCardProps {
   member: Member
-  viewMode: 'grid' | 'list'
   relationship?: string | null
   onRelate: (member: Member) => void
   currentUserId?: string
@@ -17,10 +16,9 @@ interface FamilyMemberCardProps {
 
 export default function FamilyMemberCard({
   member,
-  viewMode,
   relationship,
   onRelate,
-  currentUserId,
+  currentUserId: _currentUserId,
   isGroupAdmin,
   groupSlug,
 }: FamilyMemberCardProps) {
@@ -29,45 +27,22 @@ export default function FamilyMemberCard({
   const handleLoginLinkClick = () => {
     setIsLoginModalOpen(true)
   }
-  const isListView = viewMode === 'list'
   const imageUrl = member.user.photoUrl || '/images/default-avatar.png'
 
   return (
     <>
-      <div
-        className={
-          isListView
-            ? 'flex items-center gap-4 border-b py-0'
-            : 'text-center transition-transform duration-300 ease-in-out'
-        }
-      >
-        <div
-          className={
-            isListView
-              ? 'relative h-36 w-36 flex-shrink-0'
-              : 'border-border relative aspect-square w-full overflow-hidden rounded-md border shadow-lg dark:shadow-lg dark:shadow-white/10'
-          }
-        >
+      <div className="text-center transition-transform duration-300 ease-in-out">
+        <div className="border-border relative aspect-square w-full overflow-hidden rounded-md border shadow-lg dark:shadow-lg dark:shadow-white/10">
           <Image
             src={imageUrl}
             alt={member.user.name || 'User avatar'}
             fill
-            sizes={
-              isListView
-                ? '96px'
-                : '(max-width: 767px) 100vw, (max-width: 1023px) 50vw, 33vw'
-            }
+            sizes={'(max-width: 767px) 100vw, (max-width: 1023px) 50vw, 33vw'}
             className="rounded object-cover p-4"
           />
         </div>
-        <div
-          className={
-            isListView
-              ? 'flex w-full items-center justify-between'
-              : 'relative mt-2'
-          }
-        >
-          <div className={isListView ? 'text-left' : 'text-center'}>
+        <div className="relative mt-2">
+          <div className={'text-center'}>
             <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
               {member.user.name}
             </p>
@@ -80,9 +55,7 @@ export default function FamilyMemberCard({
               </button>
             )}
           </div>
-          <div
-            className={isListView ? 'relative' : 'absolute top-0 right-0 -mt-1'}
-          >
+          <div className={'absolute top-0 right-0 -mt-1'}>
             <Dropdown
               trigger={<MoreVertical size={16} />}
               triggerClassName="rounded-full p-1 hover:bg-gray-200 dark:hover:bg-gray-700"

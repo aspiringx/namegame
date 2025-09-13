@@ -4,7 +4,7 @@ import Modal from '@/components/ui/modal'
 import { Button } from '@/components/ui/button'
 import { MemberWithUser } from '@/types'
 import Image from 'next/image'
-import { X } from 'lucide-react'
+import { GitFork, X } from 'lucide-react'
 import { Gender } from '@/generated/prisma'
 
 interface MemberDetailsModalProps {
@@ -12,6 +12,9 @@ interface MemberDetailsModalProps {
   onClose: () => void
   member: MemberWithUser | null
   relationship?: string
+  currentUserId?: string
+  onOpenRelate?: (member: MemberWithUser) => void
+  isGroupAdmin?: boolean
 }
 
 const getGenderPronoun = (gender: Gender | null) => {
@@ -33,6 +36,9 @@ export function MemberDetailsModal({
   onClose,
   member,
   relationship,
+  currentUserId: _currentUserId,
+  onOpenRelate,
+  isGroupAdmin: _isGroupAdmin,
 }: MemberDetailsModalProps) {
   if (!isOpen || !member) return null
 
@@ -50,8 +56,8 @@ export function MemberDetailsModal({
             <span className="sr-only">Close</span>
           </button>
         </div>
-        <div className="flex flex-col items-center gap-4 mt-2">
-          <div className="relative w-full aspect-square sm:w-96">
+        <div className="mt-2 flex flex-col items-center gap-4">
+          <div className="relative aspect-square w-full sm:w-96">
             <Image
               src={member.user.photoUrl || '/default-avatar.png'}
               alt={`${member.user.firstName} ${member.user.lastName}`}
@@ -97,7 +103,17 @@ export function MemberDetailsModal({
               </p>
             )}
           </div>
-          <div className="mt-6 flex justify-center">
+          <div className="mt-6 flex items-center justify-center gap-4">
+            {onOpenRelate && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenRelate(member!)}
+              >
+                <GitFork className="mr-2 h-4 w-4" />
+                Relationships
+              </Button>
+            )}
             <Button type="button" variant="link" onClick={onClose}>
               Close
             </Button>

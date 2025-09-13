@@ -4,10 +4,7 @@ import type { User } from '@/generated/prisma'
 import { auth } from '@/auth'
 import { revalidatePath } from 'next/cache'
 import prisma from '@/lib/prisma'
-import type {
-  FullRelationship,
-  UserUserRelationType,
-} from '@/types'
+import type { FullRelationship, UserUserRelationType } from '@/types'
 import { getCodeTable } from '@/lib/codes'
 import { getPublicUrl } from './storage'
 
@@ -84,7 +81,7 @@ export async function getUsersManagingMe() {
     },
   })
 
-  return managers.map(m => m.manager)
+  return managers.map((m) => m.manager)
 }
 
 export async function getPotentialManagers() {
@@ -98,7 +95,7 @@ export async function getPotentialManagers() {
     where: { managedId: userId },
     select: { managerId: true },
   })
-  const existingManagerIds = existingManagers.map(m => m.managerId)
+  const existingManagerIds = existingManagers.map((m) => m.managerId)
 
   const userRelations = await prisma.userUser.findMany({
     where: {
@@ -111,7 +108,7 @@ export async function getPotentialManagers() {
   })
 
   const relatedUsers = new Map<string, User>()
-  userRelations.forEach(rel => {
+  userRelations.forEach((rel) => {
     const otherUser = rel.user1Id === userId ? rel.user2 : rel.user1
     if (!existingManagerIds.includes(otherUser.id)) {
       relatedUsers.set(otherUser.id, otherUser)
@@ -121,7 +118,9 @@ export async function getPotentialManagers() {
   return Array.from(relatedUsers.values())
 }
 
-export async function allowUserToManageMe(managerId: string): Promise<{ success: boolean; message?: string }> {
+export async function allowUserToManageMe(
+  managerId: string,
+): Promise<{ success: boolean; message?: string }> {
   const session = await auth()
   if (!session?.user?.id) {
     return { success: false, message: 'Not authenticated' }
@@ -143,7 +142,9 @@ export async function allowUserToManageMe(managerId: string): Promise<{ success:
   }
 }
 
-export async function revokeManagementPermission(managerId: string): Promise<{ success: boolean; message?: string }> {
+export async function revokeManagementPermission(
+  managerId: string,
+): Promise<{ success: boolean; message?: string }> {
   const session = await auth()
   if (!session?.user?.id) {
     return { success: false, message: 'Not authenticated' }
@@ -232,7 +233,10 @@ export async function addUserRelation(
       if (relationType.code === 'parent' && relationTypeIdValue !== 'child') {
         u1 = user2Id
         u2 = user1Id
-      } else if (relationType.code === 'spouse' || relationType.code === 'partner') {
+      } else if (
+        relationType.code === 'spouse' ||
+        relationType.code === 'partner'
+      ) {
         // Canonicalize user IDs for symmetrical relationships
         u1 = user1Id < user2Id ? user1Id : user2Id
         u2 = user1Id < user2Id ? user2Id : user1Id
@@ -392,9 +396,10 @@ export async function updateUserRelation(
         return { success: false, message: 'Relationship not found.' }
       }
 
-      const isUserInRelation = [oldRelation.user1Id, oldRelation.user2Id].includes(
-        loggedInUserId,
-      )
+      const isUserInRelation = [
+        oldRelation.user1Id,
+        oldRelation.user2Id,
+      ].includes(loggedInUserId)
       const isAdmin = userInGroup.role.code === 'admin'
 
       if (!isUserInRelation && !isAdmin) {
@@ -405,18 +410,20 @@ export async function updateUserRelation(
       let newRelationType: UserUserRelationType | null
 
       // Determine the code of the new relationship type to handle directional logic
-      let newRelationTypeCode: string | undefined;
+      let newRelationTypeCode: string | undefined
       if (newRelationTypeId === 'parent' || newRelationTypeId === 'child') {
-        newRelationTypeCode = newRelationTypeId;
+        newRelationTypeCode = newRelationTypeId
       } else {
-        const relationId = parseInt(newRelationTypeId as string, 10);
+        const relationId = parseInt(newRelationTypeId as string, 10)
         if (isNaN(relationId)) {
-          return { success: false, message: 'Invalid relation type ID.' };
+          return { success: false, message: 'Invalid relation type ID.' }
         }
-        newRelationTypeCode = (await tx.userUserRelationType.findUnique({
-          where: { id: relationId },
-          select: { code: true },
-        }))?.code;
+        newRelationTypeCode = (
+          await tx.userUserRelationType.findUnique({
+            where: { id: relationId },
+            select: { code: true },
+          })
+        )?.code
       }
 
       const relatedUserId =
@@ -424,38 +431,47 @@ export async function updateUserRelation(
           ? oldRelation.user2Id
           : oldRelation.user1Id
 
-
       if (newRelationTypeCode === 'parent' || newRelationTypeCode === 'child') {
         newRelationType = await tx.userUserRelationType.findFirst({
           where: { code: 'parent' },
-        });
+        })
 
         if (newRelationTypeCode === 'parent') {
           // The related user is the PARENT of the main user.
-          u1 = relatedUserId;
-          u2 = mainUserId;
-        } else { // newRelationTypeCode === 'child'
+          u1 = relatedUserId
+          u2 = mainUserId
+        } else {
+          // newRelationTypeCode === 'child'
           // The related user is the CHILD of the main user.
-          u1 = mainUserId;
-          u2 = relatedUserId;
+          u1 = mainUserId
+          u2 = relatedUserId
         }
       } else {
-        const relationId = parseInt(newRelationTypeId as string, 10);
+        const relationId = parseInt(newRelationTypeId as string, 10)
         if (isNaN(relationId)) {
-          return { success: false, message: 'Invalid relation type ID.' };
+          return { success: false, message: 'Invalid relation type ID.' }
         }
         newRelationType = await tx.userUserRelationType.findUnique({
           where: { id: relationId },
-        });
+        })
 
         // For symmetrical relationships, canonicalize user IDs to prevent duplicates.
-        if (newRelationType?.code === 'spouse' || newRelationType?.code === 'partner') {
-          u1 = oldRelation.user1Id < oldRelation.user2Id ? oldRelation.user1Id : oldRelation.user2Id;
-          u2 = oldRelation.user1Id < oldRelation.user2Id ? oldRelation.user2Id : oldRelation.user1Id;
+        if (
+          newRelationType?.code === 'spouse' ||
+          newRelationType?.code === 'partner'
+        ) {
+          u1 =
+            oldRelation.user1Id < oldRelation.user2Id
+              ? oldRelation.user1Id
+              : oldRelation.user2Id
+          u2 =
+            oldRelation.user1Id < oldRelation.user2Id
+              ? oldRelation.user2Id
+              : oldRelation.user1Id
         } else {
           // For other non-directional relationships, keep the original user order.
-          u1 = oldRelation.user1Id;
-          u2 = oldRelation.user2Id;
+          u1 = oldRelation.user1Id
+          u2 = oldRelation.user2Id
         }
       }
 
@@ -485,7 +501,7 @@ export async function updateUserRelation(
         },
       })
 
-      const newRelation = await tx.userUser.create({
+      const _newRelation = await tx.userUser.create({
         data: {
           user1Id: u1,
           user2Id: u2,

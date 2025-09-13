@@ -216,7 +216,7 @@ export default function GlobalUserForm({
   }
 
   // --- Validation ---
-  const validateUsername = (username: string) => {
+  const validateUsername = React.useCallback((username: string) => {
     if (!username) {
       return 'Username is required.'
     }
@@ -224,16 +224,16 @@ export default function GlobalUserForm({
       return 'Username must be at least 2 characters long.'
     }
     return null
-  }
+  }, [])
 
-  const validateFirstName = (firstName: string) => {
+  const validateFirstName = React.useCallback((firstName: string) => {
     if (!firstName) {
       return 'First name is required.'
     }
     return null
-  }
+  }, [])
 
-  const validateEmail = (email: string) => {
+  const validateEmail = React.useCallback((email: string) => {
     if (!email) {
       return null
     }
@@ -242,23 +242,26 @@ export default function GlobalUserForm({
       return result.error.issues[0].message
     }
     return null
-  }
+  }, [])
 
-  const validatePassword = (password: string) => {
-    if (!password && !passwordRequired) {
+  const validatePassword = React.useCallback(
+    (password: string) => {
+      if (!password && !passwordRequired) {
+        return null
+      }
+      if (!password && passwordRequired) {
+        return 'Password is required.'
+      }
+      if (!/^(?=.*[a-zA-Z])(?=.*\d).{6,}$/.test(password)) {
+        return 'Password must have 6+ characters with letters and numbers.'
+      }
+      if (password.toLowerCase().includes('pass')) {
+        return 'Password cannot contain the word "pass".'
+      }
       return null
-    }
-    if (!password && passwordRequired) {
-      return 'Password is required.'
-    }
-    if (!/^(?=.*[a-zA-Z])(?=.*\d).{6,}$/.test(password)) {
-      return 'Password must have 6+ characters with letters and numbers.'
-    }
-    if (password.toLowerCase().includes('pass')) {
-      return 'Password cannot contain the word "pass".'
-    }
-    return null
-  }
+    },
+    [passwordRequired],
+  )
 
   // --- Effects ---
 
@@ -347,15 +350,15 @@ export default function GlobalUserForm({
   // --- Client-Side Validation Effects ---
   useEffect(() => {
     setUsernameError(validateUsername(formState.username))
-  }, [formState.username])
+  }, [formState.username, validateUsername])
 
   useEffect(() => {
     setFirstNameError(validateFirstName(formState.firstName))
-  }, [formState.firstName])
+  }, [formState.firstName, validateFirstName])
 
   useEffect(() => {
     setEmailError(validateEmail(formState.email))
-  }, [formState.email])
+  }, [formState.email, validateEmail])
 
   // Validate password on change
   useEffect(() => {
@@ -365,7 +368,7 @@ export default function GlobalUserForm({
       // Clear error if password field is empty (unless it's required and empty)
       setPasswordError(passwordRequired ? 'Password is required.' : null)
     }
-  }, [formState.password, passwordRequired])
+  }, [formState.password, passwordRequired, validatePassword])
 
   // Detect browser password autofill
   useEffect(() => {
@@ -422,7 +425,10 @@ export default function GlobalUserForm({
     formState.firstName,
     formState.email,
     formState.password,
-    passwordRequired,
+    validatePassword,
+    validateUsername,
+    validateFirstName,
+    validateEmail,
   ])
 
   return (

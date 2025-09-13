@@ -106,7 +106,7 @@ export async function signup(
     if (newUser && newUser.email) {
       await sendVerificationEmail(newUser.email, newUser.id, newUser.firstName)
     }
-  } catch (error) {
+  } catch {
     return {
       message: 'Database Error: Failed to create user.',
     }

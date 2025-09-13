@@ -24,12 +24,6 @@ export function ServiceWorkerProvider({ children }: { children: ReactNode }) {
     _setIsReady: setIsReady,
   }
 
-  // This is a hack to allow internal setters while keeping the public context clean.
-  const publicValue = {
-    registration,
-    isReady,
-  }
-
   return (
     <ServiceWorkerContext.Provider value={value as any}>
       {children}

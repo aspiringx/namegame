@@ -1,67 +1,33 @@
 'use client'
 
-import React, { memo } from 'react'
+import React, { memo, useState, useEffect } from 'react'
 import { Handle, Position, NodeProps } from 'reactflow'
 import Image from 'next/image'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Avatar } from '@/components/ui/avatar'
 import { cn, truncate } from '@/lib/utils'
 import { AvatarNodeData } from './useFamilyTree'
 import { ChevronUp, ChevronDown, ChevronLeft } from 'lucide-react'
-import { format } from 'date-fns'
 
 const AvatarNode = ({ data, selected }: NodeProps<AvatarNodeData>) => {
+  const [imgSrc, setImgSrc] = useState(data.photoUrl || '/images/default-avatar.png');
+
+  useEffect(() => {
+    setImgSrc(data.photoUrl || '/images/default-avatar.png');
+  }, [data.photoUrl]);
   const {
-    firstName,
-    photoUrl,
     relationship,
     isCurrentUser,
     isFocalUser,
     isFocalUserSpouseOrPartner,
-    birthDate,
-    birthPlace,
-    deathDate,
-    deathPlace,
-    birthDatePrecision,
-    deathDatePrecision,
     canExpandUp,
     canExpandDown,
     canExpandHorizontal,
     onExpand,
   } = data
 
-
   const fullName = [data.firstName, data.lastName].filter(Boolean).join(' ')
 
-  const formatDate = (
-    date: Date | string | null | undefined,
-    precision: string | null | undefined,
-  ) => {
-    if (!date) return null
-    let formatString = 'P' // Default to day precision, e.g., 07/09/1974
-    switch (precision) {
-      case 'YEAR':
-        formatString = 'yyyy'
-        break
-      case 'MONTH':
-        formatString = 'LLLL yyyy' // e.g., July 1974
-        break
-      case 'DAY':
-        formatString = 'P' // e.g., 07/09/1974 (locale-sensitive)
-        break
-      case 'TIME':
-        formatString = 'P p' // e.g., 07/09/1974, 5:00 PM (locale-sensitive)
-        break
-    }
-    try {
-      return format(new Date(date), formatString)
-    } catch (error) {
-      return 'Invalid Date'
-    }
-  }
-
-  const formattedBirthDate = formatDate(birthDate, birthDatePrecision)
-  const formattedDeathDate = formatDate(deathDate, deathDatePrecision)
-
+  
   return (
     <div className="relative">
       <Handle
@@ -99,19 +65,17 @@ const AvatarNode = ({ data, selected }: NodeProps<AvatarNodeData>) => {
             selected && 'ring-ring ring-offset-background ring-2 ring-offset-2',
           )}
         >
-                    {photoUrl && (
-              <Image
-              src={photoUrl}
-              alt={fullName}
-              fill
-              sizes={isFocalUser || isFocalUserSpouseOrPartner ? '128px' : '96px'}
-              priority={isFocalUser}
-              className="object-cover"
-            />
-          )}
-          {
-            !photoUrl && <AvatarFallback>{firstName?.charAt(0)}</AvatarFallback>
-          }
+          <Image
+            src={imgSrc}
+            onError={() => {
+              setImgSrc('/images/default-avatar.png');
+            }}
+            alt={fullName}
+            fill
+            sizes={isFocalUser || isFocalUserSpouseOrPartner ? '128px' : '96px'}
+            priority={isFocalUser}
+            className="object-cover"
+          />
         </Avatar>
         <div className="text-center">
           <div

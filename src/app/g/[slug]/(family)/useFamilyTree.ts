@@ -1,5 +1,5 @@
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
-import { Node, Edge, Position, useReactFlow } from 'reactflow'
+import { useState, useMemo, useCallback, useEffect } from 'react'
+import { Node, Edge, useReactFlow } from 'reactflow'
 import {
   User,
   FullRelationship,
@@ -7,7 +7,6 @@ import {
   UserWithPhotoUrl,
 } from '@/types'
 import { buildAdjacencyList } from '@/lib/family-tree'
-import { getRelationship as getComplexRelationship } from '@/lib/family-tree'
 
 export interface AvatarNodeData extends UserWithPhotoUrl {
   isCurrentUser: boolean
@@ -24,7 +23,7 @@ interface FamilyTreeProps {
   relationships: FullRelationship[]
   members: MemberWithUser[]
   currentUser?: UserWithPhotoUrl
-  relationshipMap: Map<string, string>
+  relationshipMap: Map<string, { label: string; steps: number }>
 }
 
 const NODE_WIDTH = 150
@@ -45,7 +44,7 @@ export const useFamilyTree = ({
     currentUser?.id || null,
   )
   const [mode, setMode] = useState<'vertical' | 'horizontal'>('vertical')
-  const { setCenter, getNodes, getViewport, fitView } = useReactFlow()
+  const { fitView } = useReactFlow()
 
   const allUsersMap = useMemo(() => {
     const map = new Map<string, UserWithPhotoUrl>()
@@ -145,53 +144,67 @@ export const useFamilyTree = ({
         .map((rel: AdjacencyListRelationship) => rel.relatedUserId),
     )
 
+    // --- 1. Define visible users based on mode ---
     const visibleUsers = new Map<string, UserWithPhotoUrl>()
     visibleUsers.set(focalUser.id, focalUser)
 
-    const parents = getRelatives(focalNodeId, 'parent')
+    const directParents = getRelatives(focalNodeId, 'parent')
+    const parents = [...directParents]
+    directParents.forEach((p: UserWithPhotoUrl) => {
+      const spousesOfParent = [
+        ...getRelatives(p.id, 'spouse'),
+        ...getRelatives(p.id, 'partner'),
+      ]
+      spousesOfParent.forEach((s) => {
+        if (!parents.some((parent) => parent.id === s.id)) {
+          parents.push(s)
+        }
+      })
+    })
     parents.forEach((p: UserWithPhotoUrl) => visibleUsers.set(p.id, p))
 
+    let spouses: UserWithPhotoUrl[] = []
+    let children: UserWithPhotoUrl[] = []
+
     if (mode === 'vertical') {
-      const spouses = [
+      spouses = [
         ...getRelatives(focalNodeId, 'spouse'),
         ...getRelatives(focalNodeId, 'partner'),
       ]
       spouses.forEach((s: UserWithPhotoUrl) => visibleUsers.set(s.id, s))
 
-      // Add children from focal user
-      const focalUserChildren = getRelatives(focalNodeId, 'child')
-      focalUserChildren.forEach((c: UserWithPhotoUrl) =>
-        visibleUsers.set(c.id, c),
+      const allChildren = new Map<string, UserWithPhotoUrl>()
+      getRelatives(focalNodeId, 'child').forEach((c: UserWithPhotoUrl) =>
+        allChildren.set(c.id, c),
       )
-
-      // Add children from spouses (step-children)
       spouses.forEach((spouse) => {
-        const spouseChildren = getRelatives(spouse.id, 'child')
-        spouseChildren.forEach((c: UserWithPhotoUrl) =>
-          visibleUsers.set(c.id, c),
+        getRelatives(spouse.id, 'child').forEach((c: UserWithPhotoUrl) =>
+          allChildren.set(c.id, c),
         )
       })
+      children = Array.from(allChildren.values())
+      children.forEach((c) => visibleUsers.set(c.id, c))
     } else if (mode === 'horizontal') {
       const siblings = getSiblings(focalNodeId)
       siblings.forEach((s: UserWithPhotoUrl) => visibleUsers.set(s.id, s))
     }
 
+    // --- 2. Create Nodes ---
     const newNodes: Node[] = []
-    const newEdges: Edge[] = []
     const addedIds = new Set<string>()
 
-    // 1. Add focal user
+    //  Focal user
+    const focalUserX =
+      mode === 'vertical' && spouses.length > 0 ? -NODE_WIDTH * 0.75 : 0
     newNodes.push({
       id: focalUser.id,
       type: 'avatar',
-      position: { x: 0, y: 0 },
-      data: { ...focalUser }, // Temp data
-      sourcePosition: Position.Bottom,
-      targetPosition: Position.Top,
+      position: { x: focalUserX, y: 0 },
+      data: { ...focalUser },
     })
     addedIds.add(focalUser.id)
 
-    // 2. Add parents
+    // Parents
     parents.forEach((parent: UserWithPhotoUrl, index: number) => {
       if (addedIds.has(parent.id)) return
       const x = (index - (parents.length - 1) / 2) * NODE_WIDTH * 1.5
@@ -200,68 +213,32 @@ export const useFamilyTree = ({
         type: 'avatar',
         position: { x, y: -NODE_HEIGHT },
         data: { ...parent },
-        sourcePosition: Position.Bottom,
-        targetPosition: Position.Top,
       })
       addedIds.add(parent.id)
-      newEdges.push({
-        id: `e-${parent.id}-${focalUser.id}`,
-        source: parent.id,
-        target: focalUser.id,
-        type: 'smoothstep',
-        sourceHandle: 'bottom-source',
-        targetHandle: 'top-target',
-      })
     })
 
     if (mode === 'vertical') {
-      // The focal user is already added at {0,0}, which is correct for vertical
-
-      // 3a. Add spouses/partners
-      const spouses = [
-        ...getRelatives(focalNodeId, 'spouse'),
-        ...getRelatives(focalNodeId, 'partner'),
-      ].filter((s: UserWithPhotoUrl) => visibleUsers.has(s.id))
-
-      spouses.forEach((spouse: UserWithPhotoUrl, index: number) => {
+      // Spouses
+      spouses.forEach((spouse: UserWithPhotoUrl) => {
         if (addedIds.has(spouse.id)) return
-        const x = (index + 1) * NODE_WIDTH * 1.2
+        const x = NODE_WIDTH * 0.75
         newNodes.push({
           id: spouse.id,
           type: 'avatar',
           position: { x, y: 0 },
           data: { ...spouse },
-          sourcePosition: Position.Bottom,
-          targetPosition: Position.Top,
         })
         addedIds.add(spouse.id)
-        newEdges.push({
-          id: `e-${focalUser.id}-${spouse.id}`,
-          source: focalUser.id,
-          target: spouse.id,
-          type: 'smoothstep',
-          sourceHandle: 'right-source',
-          targetHandle: 'left-target',
-        })
       })
 
-      // 4a. Add all children of the focal user and their spouse(s)
-      const allChildren = new Map<string, UserWithPhotoUrl>()
-      const focalUserChildren = getRelatives(focalNodeId, 'child')
-      focalUserChildren.forEach((child: UserWithPhotoUrl) =>
-        allChildren.set(child.id, child),
-      )
-      spouses.forEach((spouse) => {
-        const spouseChildren = getRelatives(spouse.id, 'child')
-        spouseChildren.forEach((child: UserWithPhotoUrl) =>
-          allChildren.set(child.id, child),
-        )
-      })
-      const children = Array.from(allChildren.values())
+      // Children
+      const sortedChildren = children
         .filter((c) => visibleUsers.has(c.id))
         .sort((a, b) => {
           if (a.birthDate && b.birthDate) {
-            return a.birthDate.getTime() - b.birthDate.getTime()
+            return (
+              new Date(a.birthDate).getTime() - new Date(b.birthDate).getTime()
+            )
           } else if (a.birthDate) {
             return -1
           } else if (b.birthDate) {
@@ -275,28 +252,27 @@ export const useFamilyTree = ({
       const spouseNodes = newNodes.filter((n) =>
         spouses.some((s) => s.id === n.id),
       )
-      const parentNodes = [focalUserNode, ...spouseNodes]
-      const minX = Math.min(...parentNodes.map((n) => n.position.x))
-      const maxX = Math.max(...parentNodes.map((n) => n.position.x))
+      const childParentNodes = [focalUserNode, ...spouseNodes].filter(
+        (n): n is Node => !!n,
+      )
+      const minX = Math.min(...childParentNodes.map((n) => n.position.x))
+      const maxX = Math.max(...childParentNodes.map((n) => n.position.x))
       const parentMidpointX = (minX + maxX) / 2
 
-      children.forEach((child: UserWithPhotoUrl, index: number) => {
+      sortedChildren.forEach((child: UserWithPhotoUrl, index: number) => {
         if (addedIds.has(child.id)) return
-        const xOffset = (index - (children.length - 1) / 2) * NODE_WIDTH * 1.5
+        const xOffset =
+          (index - (sortedChildren.length - 1) / 2) * NODE_WIDTH * 1.5
         const x = parentMidpointX + xOffset
         newNodes.push({
           id: child.id,
           type: 'avatar',
           position: { x, y: NODE_HEIGHT },
           data: { ...child },
-          sourcePosition: Position.Bottom,
-          targetPosition: Position.Top,
         })
         addedIds.add(child.id)
       })
     } else if (mode === 'horizontal') {
-      // In horizontal mode, we remove the pre-added focal user and re-add all siblings (including focal)
-      // in the correct sorted order.
       const initialFocalNodeIndex = newNodes.findIndex(
         (n) => n.id === focalNodeId,
       )
@@ -309,7 +285,9 @@ export const useFamilyTree = ({
         .filter((s: UserWithPhotoUrl) => visibleUsers.has(s.id))
         .sort((a, b) => {
           if (a.birthDate && b.birthDate) {
-            return a.birthDate.getTime() - b.birthDate.getTime()
+            return (
+              new Date(a.birthDate).getTime() - new Date(b.birthDate).getTime()
+            )
           } else if (a.birthDate) {
             return -1
           } else if (b.birthDate) {
@@ -331,40 +309,19 @@ export const useFamilyTree = ({
           type: 'avatar',
           position: { x, y: 0 },
           data: { ...sibling },
-          sourcePosition: Position.Bottom,
-          targetPosition: Position.Top,
         })
         addedIds.add(sibling.id)
-
-        const parentIds = (
-          adjacencyList
-            .get(sibling.id)
-            ?.filter((r: AdjacencyListRelationship) => r.type === 'parent') ||
-          []
-        ).map((r: AdjacencyListRelationship) => r.relatedUserId)
-        const commonParent = parents.find((p: UserWithPhotoUrl) =>
-          parentIds.includes(p.id),
-        )
-
-        if (commonParent) {
-          const edgeId = `e-${commonParent.id}-${sibling.id}`
-          if (!newEdges.find((e) => e.id === edgeId)) {
-            newEdges.push({
-              id: edgeId,
-              source: commonParent.id,
-              target: sibling.id,
-              type: 'smoothstep',
-              sourceHandle: 'bottom-source',
-              targetHandle: 'top-target',
-            })
-          }
-        }
       })
     }
 
-    // Finalize node data with relationship and expansion info
+    // --- 3. Create Edges ---
+    const newEdges: Edge[] = []
+
+    // --- 4. Finalize node data ---
     const finalNodes = newNodes.map((newNode) => {
-      const user = visibleUsers.get(newNode.id)!
+      if (newNode.id.includes('-union-')) return newNode
+      const user = allUsersMap.get(newNode.id)
+      if (!user) return newNode // Should not happen for avatar nodes, but good practice
 
       const hasUnaddedParents = getRelatives(user.id, 'parent').some(
         (p: UserWithPhotoUrl) => !visibleUsers.has(p.id),
@@ -380,7 +337,7 @@ export const useFamilyTree = ({
         ...newNode,
         data: {
           ...user,
-          relationship: relationshipMap.get(user.id),
+          relationship: relationshipMap.get(user.id)?.label,
           isCurrentUser: user.id === currentUser?.id,
           isFocalUser: user.id === focalNodeId,
           isFocalUserSpouseOrPartner:
@@ -404,6 +361,7 @@ export const useFamilyTree = ({
     getSiblings,
     handleNodeExpand,
     currentUser?.id,
+    relationshipMap,
   ])
 
   useEffect(() => {

@@ -3,7 +3,7 @@
 import { useSession } from 'next-auth/react'
 import type { User } from '@/generated/prisma'
 import GlobalUserForm, { type UserFormData, type UserFormState } from '@/components/GlobalUserForm'
-import { updateUser, getUserUpdateRequirements, type State } from './actions'
+import { updateUser, getUserUpdateRequirements } from './actions'
 
 export default function EditUserForm({
   user,
@@ -14,7 +14,7 @@ export default function EditUserForm({
   photoUrl: string
   hasPhoto: boolean
 }) {
-  const { data: session, update } = useSession()
+  useSession()
 
   const initialState: UserFormState = {
     message: null,

@@ -9,7 +9,6 @@ import React, {
   useState,
   useCallback,
 } from 'react'
-import { useFormStatus } from 'react-dom'
 import { toast } from 'sonner'
 import { z } from 'zod'
 import { Badge } from '@/components/ui/badge'
@@ -28,11 +27,9 @@ import {
   Eye,
   EyeOff,
   RefreshCw,
-  ShieldAlert,
   ShieldCheck,
   Copy,
   Check,
-  Upload,
   ChevronDown,
   XCircle as XCircleIcon,
   CheckCircle as CheckCircleIcon,
@@ -45,7 +42,6 @@ import {
 } from '@/components/ui/tooltip'
 import { DatePrecision, Gender } from '@/generated/prisma/client'
 import { format } from 'date-fns'
-import Link from 'next/link'
 import UserProfileNextSteps from './UserProfileNextSteps'
 import StickySaveBar from '@/components/ui/StickySaveBar'
 
@@ -83,44 +79,17 @@ export type UserProfile = {
   birthPlace: string | null
 }
 
-type Group = {
-  id: number
-  name: string
-  slug: string
-}
 
-function SubmitButton({
-  onNewSubmission,
-  disabled,
-}: {
-  onNewSubmission: () => void
-  disabled?: boolean
-}) {
-  const { pending } = useFormStatus()
-
-  return (
-    <button
-      type="submit"
-      disabled={pending || disabled}
-      onClick={onNewSubmission}
-      className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:bg-indigo-400 disabled:opacity-50 dark:focus:ring-offset-gray-800 dark:disabled:bg-indigo-800"
-    >
-      {pending ? 'Saving...' : 'Save'}
-    </button>
-  )
-}
 
 export default function UserProfileForm({
   user,
-  groups,
   isInFamilyGroup,
 }: {
   user: UserProfile
-  groups: Group[]
   isInFamilyGroup: boolean
 }) {
   const [displayEmail, setDisplayEmail] = useState(user.email || '')
-  const { data: session, update: updateSession } = useSession()
+  const { update: updateSession } = useSession()
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -363,17 +332,7 @@ export default function UserProfileForm({
     }
   }, [state, updateSession, router, password, fileSelected])
 
-  const handleNewSubmission = () => {
-    setValidation((v) => ({ ...v, submitted: true }))
-    formSubmitted.current = false
-    const params = new URLSearchParams(searchParams)
-    if (params.has('welcome')) {
-      params.delete('welcome')
-      const queryString = params.toString()
-      router.push(`${pathname}${queryString ? `?${queryString}` : ''}`)
-    }
-  }
-
+  
   const handleGeneratePassword = () => {
     const letters = 'abcdefghijklmnopqrstuvwxyz'
     const numbers = '123456789'

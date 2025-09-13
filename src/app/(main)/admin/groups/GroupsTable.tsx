@@ -2,7 +2,7 @@ import prisma from '@/lib/prisma'
 import Link from 'next/link'
 import { DeleteGroupButton } from './DeleteGroupButton'
 import { UndeleteGroupButton } from './UndeleteGroupButton'
-import { Edit, Trash2, RotateCcw } from 'lucide-react'
+import { Edit } from 'lucide-react'
 
 type SortableColumn =
   | 'name'

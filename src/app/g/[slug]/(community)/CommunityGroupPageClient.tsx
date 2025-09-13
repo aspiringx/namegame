@@ -1,26 +1,25 @@
 'use client'
 
-import { GroupData } from '@/types'
+import { CommunityGroupData } from '@/types'
 import { GuestMessage } from '@/components/GuestMessage'
-import Link from 'next/link'
 import CommunityGroupClient from './CommunityGroupClient'
-import { useState } from 'react'
 import { useSession } from 'next-auth/react'
 
 export default function CommunityGroupPageClient({
   groupData,
+  view,
 }: {
-  groupData: GroupData
+  groupData: CommunityGroupData
+  view: 'grid' | 'games'
 }) {
   const { data: session } = useSession()
-  const [isExpanded, setIsExpanded] = useState(false)
   if (!groupData) {
     return <div>Group not found.</div>
   }
 
-  const { greetedMembers, notGreetedMembers, currentUserMember } = groupData
+  const { relatedMembers, notRelatedMembers, currentUserMember } = groupData
 
-  const members = [...greetedMembers, ...notGreetedMembers]
+  const members = [...relatedMembers, ...notRelatedMembers]
 
   const isGuest = !currentUserMember || currentUserMember.role?.code === 'guest'
 
@@ -36,6 +35,7 @@ export default function CommunityGroupPageClient({
         members={members}
         currentUserMember={currentUserMember}
         groupSlug={groupData.slug}
+        view={view}
       />
     </div>
   )

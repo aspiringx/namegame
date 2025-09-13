@@ -1,0 +1,47 @@
+'use client'
+
+import { forwardRef } from 'react'
+import { useGroup } from '@/components/GroupProvider'
+import { useFamilyGroupData } from './FamilyGroupClient'
+import FamilyTree, { FamilyTreeRef } from './FamilyTree'
+import { MemberWithUser } from '@/types'
+
+interface TreeViewProps {
+  onIsFocalUserCurrentUserChange: (isCurrentUser: boolean) => void
+  members: MemberWithUser[]
+  onOpenRelate: (member: MemberWithUser) => void
+}
+
+const TreeView = forwardRef<FamilyTreeRef, TreeViewProps>(
+  ({ onIsFocalUserCurrentUserChange, members, onOpenRelate }, ref) => {
+    const groupContext = useGroup()
+    const { relationshipMap } = useFamilyGroupData()
+
+    if (!groupContext) {
+      return null
+    }
+    const { group, isGroupAdmin, currentUserMember, relationships } =
+      groupContext
+
+    if (!group) return null
+
+    return (
+      <div className="relative border">
+        <FamilyTree
+          ref={ref}
+          onIsFocalUserCurrentUserChange={onIsFocalUserCurrentUserChange}
+          relationships={relationships || []}
+          members={members}
+          currentUser={currentUserMember?.user}
+          relationshipMap={relationshipMap}
+          onOpenRelate={onOpenRelate}
+          isGroupAdmin={isGroupAdmin}
+        />
+      </div>
+    )
+  },
+)
+
+TreeView.displayName = 'TreeView'
+
+export default TreeView

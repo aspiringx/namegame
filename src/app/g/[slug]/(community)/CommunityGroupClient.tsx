@@ -10,12 +10,7 @@ import React, {
 import useLocalStorage from '@/hooks/useLocalStorage'
 import useGroupMembers from '@/hooks/useGroupMembers'
 import { useRouter } from 'next/navigation'
-import { Tab } from '@headlessui/react'
-import clsx from 'clsx'
-import { saveMembers, getMembersByGroup } from '@/lib/db'
 import type { MemberWithUser, FullRelationship } from '@/types'
-import MemberCard from '@/components/MemberCard'
-import dynamic from 'next/dynamic'
 import {
   getGroupMembersForRelate,
   createAcquaintanceRelationship,
@@ -26,7 +21,7 @@ import { useGroup } from '@/components/GroupProvider'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { LayoutGrid, X, Gamepad2 } from 'lucide-react'
+import { X } from 'lucide-react'
 import GamesIntroModal from '@/components/GamesIntroModal'
 import { TourProvider, useTour } from '@reactour/tour'
 import { communityTourSteps } from '@/components/tours/CommunityTour'
@@ -37,15 +32,11 @@ import Modal from '@/components/ui/modal'
 import GroupToolbar from './GroupToolbar'
 import MemberGrid from './MemberGrid'
 
-const GamesViewClient = dynamic(() => import('@/components/GamesViewClient'), {
-  loading: () => <div className="p-4 text-center">Loading quiz...</div>,
-  ssr: false,
-})
-
 interface CommunityGroupClientProps {
   members: MemberWithUser[]
   currentUserMember: MemberWithUser | undefined
   groupSlug?: string
+  view: 'grid' | 'games'
 }
 
 interface CommunityGroupClientContentProps
@@ -53,37 +44,24 @@ interface CommunityGroupClientContentProps
   settings: GroupPageSettings
   setSettings: React.Dispatch<React.SetStateAction<GroupPageSettings>>
   groupSlug?: string
+  view: 'grid' | 'games'
 }
 
 interface GroupPageSettings {
   sortConfig: {
-    key: 'when_met' | 'firstName' | 'lastName'
+    key: 'when_connected' | 'firstName' | 'lastName'
     direction: 'asc' | 'desc'
   }
-  viewMode: 'grid' | 'quiz'
   searchQuery: string
   filterByRealPhoto: boolean
-  filterMetStatus: 'all' | 'met' | 'not_met'
+  filterConnectedStatus: 'all' | 'connected' | 'not_connected'
 }
 
 const CommunityGroupClientContent: React.FC<
   CommunityGroupClientContentProps
-> = ({
-  members: initialMembers,
-  currentUserMember,
-  settings,
-  setSettings,
-  groupSlug,
-}) => {
-  const { group, currentUserMember: ego, isGroupAdmin } = useGroup()
+> = ({ members: initialMembers, settings, setSettings, groupSlug, view }) => {
+  const groupContext = useGroup()
   const { isOpen, setIsOpen, setCurrentStep } = useTour()
-
-  useEffect(() => {
-    if (!isOpen) {
-      setCurrentStep(0)
-    }
-  }, [isOpen, setCurrentStep])
-
   const router = useRouter()
 
   const [isRelateModalOpen, setIsRelateModalOpen] = useState(false)
@@ -92,18 +70,27 @@ const CommunityGroupClientContent: React.FC<
   )
   const [memberRelations, setMemberRelations] = useState<FullRelationship[]>([])
   const [allGroupMembers, setAllGroupMembers] = useState<MemberWithUser[]>([])
-  const [isLoadingRelations, setIsLoadingRelations] = useState(false)
+  const [_isLoadingRelations, setIsLoadingRelations] = useState(false)
   const [isIntroModalOpen, setIsIntroModalOpen] = useState(false)
-  const [introSeen, setIntroSeen] = useLocalStorage(
-    `namegame_games-intro-seen-${group?.slug || ''}`,
-    false,
-  )
   const [isConnectModalOpen, setIsConnectModalOpen] = useState(false)
   const [memberToConnect, setMemberToConnect] = useState<MemberWithUser | null>(
     null,
   )
 
+  const group = groupContext?.group
+  const [_introSeen, setIntroSeen] = useLocalStorage(
+    `namegame_games-intro-seen_${group?.slug || ''}`,
+    false,
+  )
+
   const allMembers = useMemo(() => initialMembers, [initialMembers])
+  const filteredAndSortedMembers = useGroupMembers(allMembers, settings)
+
+  useEffect(() => {
+    if (!isOpen) {
+      setCurrentStep(0)
+    }
+  }, [isOpen, setCurrentStep])
 
   useEffect(() => {
     if (allMembers.length > 0 && 'serviceWorker' in navigator) {
@@ -127,21 +114,6 @@ const CommunityGroupClientContent: React.FC<
       )
     }
   }, [group?.slug])
-
-  useEffect(() => {
-    if (allMembers.length > 0 && 'serviceWorker' in navigator) {
-      const imageUrls = allMembers
-        .map((member) => member.user.photoUrl)
-        .filter((url): url is string => !!url)
-
-      navigator.serviceWorker.ready.then((registration) => {
-        registration.active?.postMessage({
-          type: 'CACHE_IMAGES',
-          payload: { imageUrls },
-        })
-      })
-    }
-  }, [allMembers])
 
   const handleOpenRelateModal = useCallback(
     async (member: MemberWithUser) => {
@@ -197,22 +169,10 @@ const CommunityGroupClientContent: React.FC<
     setSelectedMember(null)
   }
 
-  const handleSwitchToGrid = () => {
-    setSettings((prev) => ({ ...prev, viewMode: 'grid' }))
-  }
-
-  const handleSwitchToQuiz = () => {
-    if (!introSeen) {
-      setIsIntroModalOpen(true)
-    } else {
-      setSettings((prev) => ({ ...prev, viewMode: 'quiz' }))
-    }
-  }
-
   const handleCloseIntroModal = () => {
     setIsIntroModalOpen(false)
     setIntroSeen(true)
-    setSettings((prev) => ({ ...prev, viewMode: 'quiz' }))
+    router.push(`/g/${groupSlug}/games`)
   }
 
   const handleRelationshipChange = () => {
@@ -223,7 +183,7 @@ const CommunityGroupClientContent: React.FC<
     setSettings((prev) => ({ ...prev, searchQuery: query }))
   }
 
-  const handleSort = (key: 'when_met' | 'firstName' | 'lastName') => {
+  const handleSort = (key: 'when_connected' | 'firstName' | 'lastName') => {
     setSettings((prev) => ({
       ...prev,
       sortConfig: {
@@ -236,84 +196,54 @@ const CommunityGroupClientContent: React.FC<
     }))
   }
 
-  const filteredAndSortedMembers = useGroupMembers(allMembers, settings)
-
-  if (!group || group.groupType?.code === 'family') {
+  if (!groupContext || !group || group.groupType?.code === 'family') {
     return null
   }
+
+  const { isGroupAdmin, currentUserMember: ego } = groupContext
 
   return (
     <>
       <TooltipProvider>
         <div className="w-full px-2 sm:px-0">
-          {settings.viewMode === 'quiz' ? (
-            <div className="pt-4">
-              <div className="flex justify-end gap-2">
-                <Button
-                  variant={'ghost'}
-                  size="sm"
-                  onClick={() =>
-                    setSettings((prev) => ({ ...prev, viewMode: 'grid' }))
-                  }
-                >
-                  <LayoutGrid className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={'secondary'}
-                  size="sm"
-                  onClick={handleSwitchToQuiz}
-                >
-                  <Gamepad2 className="h-6 w-6 text-orange-500" />
-                </Button>
-              </div>
-              <div className="mt-4 rounded-xl bg-white p-3 dark:bg-gray-800">
-                <GamesViewClient
-                  members={allMembers}
-                  groupSlug={group?.slug || ''}
-                  currentUserId={ego?.userId}
-                  onSwitchToGrid={handleSwitchToGrid}
-                />
-              </div>
-            </div>
-          ) : (
-            <div>
-              <GroupToolbar
-                settings={settings}
-                setSettings={setSettings}
-                handleSort={handleSort}
-                handleSwitchToQuiz={handleSwitchToQuiz}
-                setTourOpen={setIsOpen}
-              />
+          <div>
+            <GroupToolbar
+              settings={settings}
+              setSettings={setSettings}
+              handleSort={handleSort}
+              setTourOpen={setIsOpen}
+              viewMode={view}
+              groupSlug={group.slug}
+            />
 
-              <div className="relative mb-4" data-tour="search-input">
-                <Input
-                  type="text"
-                  placeholder="Search by name..."
-                  value={settings.searchQuery}
-                  onChange={(e) => handleSearchChange(e.target.value)}
-                  className="pr-10 pl-4"
-                />
-                {settings.searchQuery && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute top-1/2 right-1 h-8 w-8 -translate-y-1/2"
-                    onClick={() => handleSearchChange('')}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-              <MemberGrid
-                members={filteredAndSortedMembers}
-                isGroupAdmin={isGroupAdmin}
-                onRelate={handleOpenRelateModal}
-                onConnect={handleOpenConnectModal}
-                currentUserId={ego?.userId}
-                groupSlug={groupSlug}
+            <div className="relative mb-4" data-tour="search-input">
+              <Input
+                type="text"
+                placeholder="Search by name..."
+                value={settings.searchQuery}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                className="pr-10 pl-4"
               />
+              {settings.searchQuery && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute top-1/2 right-1 h-8 w-8 -translate-y-1/2"
+                  onClick={() => handleSearchChange('')}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
             </div>
-          )}
+            <MemberGrid
+              members={filteredAndSortedMembers}
+              isGroupAdmin={isGroupAdmin}
+              onRelate={handleOpenRelateModal}
+              onConnect={handleOpenConnectModal}
+              currentUserId={ego?.userId}
+              groupSlug={groupSlug}
+            />
+          </div>
         </div>
       </TooltipProvider>
       <GamesIntroModal
@@ -344,7 +274,7 @@ const CommunityGroupClientContent: React.FC<
             <div className="mt-2">
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 If you already know {memberToConnect.user.name}, connect so
-                they're in your "Met" filter.
+                they&apos;re in your &quot;Connected&quot; filter.
               </p>
             </div>
             <div className="mt-6 flex justify-end space-x-4">
@@ -360,17 +290,20 @@ const CommunityGroupClientContent: React.FC<
   )
 }
 
-const CommunityGroupClient: React.FC<CommunityGroupClientProps> = (props) => {
-  const { group } = useGroup()
+const CommunityGroupClient: React.FC<CommunityGroupClientProps> = ({
+  view,
+  ...props
+}) => {
+  const groupContext = useGroup()
+  const { group } = groupContext || {}
 
   const [settings, setSettings] = useLocalStorage<GroupPageSettings>(
-    `group-settings-${group?.slug || ''}`,
+    `namegame_community-group-settings_${group?.slug || ''}`,
     {
-      sortConfig: { key: 'when_met', direction: 'desc' },
-      viewMode: 'grid',
+      sortConfig: { key: 'when_connected', direction: 'desc' },
       searchQuery: '',
       filterByRealPhoto: true,
-      filterMetStatus: 'met',
+      filterConnectedStatus: 'connected',
     },
   )
 
@@ -394,6 +327,10 @@ const CommunityGroupClient: React.FC<CommunityGroupClientProps> = (props) => {
   const tourSteps = useMemo(() => {
     return isMobile ? communityTourMobileSteps : communityTourSteps
   }, [isMobile])
+
+  if (!groupContext) {
+    return null // Should be rendered within GroupProvider
+  }
 
   if (!hasMounted) {
     return (
@@ -477,6 +414,7 @@ const CommunityGroupClient: React.FC<CommunityGroupClientProps> = (props) => {
         {...props}
         settings={settings}
         setSettings={setSettings}
+        view={view}
       />
     </TourProvider>
   )

@@ -1,4 +1,4 @@
-import { PrismaClient, UserUserRelationCategory } from '../src/generated/prisma'
+import { PrismaClient } from '../src/generated/prisma'
 import bcrypt from 'bcrypt'
 
 const prisma = new PrismaClient()
@@ -86,7 +86,7 @@ async function main() {
   })
   console.log(`  - Upserted 'gadmin' user.`)
 
-  const joeUser = await prisma.user.upsert({
+  await prisma.user.upsert({
     where: { username: 'joe' },
     update: {},
     create: {

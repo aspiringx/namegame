@@ -31,7 +31,7 @@ export default function NewPasswordForm() {
       const data = await newPassword(password, token)
       setError(data.error)
       setSuccess(data.success)
-    } catch (err) {
+    } catch {
       setError('Something went wrong. Please try again.')
     } finally {
       setIsPending(false)

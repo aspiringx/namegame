@@ -41,7 +41,7 @@ export type RelationshipResult = {
 export const buildAdjacencyList = (
   relationships: FullRelationship[],
   members: MemberWithUser[],
-  currentUser?: UserWithPhotoUrl,
+  _currentUser?: UserWithPhotoUrl,
 ): Map<
   string,
   { relatedUserId: string; type: 'parent' | 'child' | 'partner' | 'spouse' }[]
@@ -66,14 +66,14 @@ export const buildAdjacencyList = (
   for (const member of members) {
     if (member.parents) {
       for (const parent of member.parents) {
-        addEdge(member.userId, parent.userId, 'parent');
-        addEdge(parent.userId, member.userId, 'child');
+        addEdge(member.userId, parent.userId, 'parent')
+        addEdge(parent.userId, member.userId, 'child')
       }
     }
     if (member.children) {
       for (const child of member.children) {
-        addEdge(member.userId, child.userId, 'child');
-        addEdge(child.userId, member.userId, 'parent');
+        addEdge(member.userId, child.userId, 'child')
+        addEdge(child.userId, member.userId, 'parent')
       }
     }
   }
@@ -88,12 +88,12 @@ export const buildAdjacencyList = (
       addEdge(rel.user2Id, rel.user1Id, 'partner')
     } else if (rel.relationType.code === 'parent') {
       // user1 is the parent of user2
-      addEdge(rel.user2Id, rel.user1Id, 'parent');
-      addEdge(rel.user1Id, rel.user2Id, 'child');
+      addEdge(rel.user2Id, rel.user1Id, 'parent')
+      addEdge(rel.user1Id, rel.user2Id, 'child')
     } else if (rel.relationType.code === 'child') {
       // user1 is the child of user2
-      addEdge(rel.user1Id, rel.user2Id, 'parent');
-      addEdge(rel.user2Id, rel.user1Id, 'child');
+      addEdge(rel.user1Id, rel.user2Id, 'parent')
+      addEdge(rel.user2Id, rel.user1Id, 'child')
     }
   }
 
@@ -155,7 +155,6 @@ export function getRelationship(
         } else if (egoParents.size === alterParents.size) {
           const parentsMatch = [...alterParents].every((p) => egoParents.has(p))
           if (parentsMatch) {
-            const alterUser = usersMap.get(alterUserId)
             return {
               relationship: getGenderedLabel(
                 'Sibling',
@@ -172,7 +171,6 @@ export function getRelationship(
         const commonParents = [...alterParents].filter((p) => egoParents.has(p))
 
         if (commonParents.length > 0) {
-          const alterUser = usersMap.get(alterUserId)
           return {
             relationship: getGenderedLabel(
               'Half-sibling',

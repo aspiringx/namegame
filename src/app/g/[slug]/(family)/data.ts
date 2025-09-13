@@ -4,8 +4,9 @@ import prisma from '@/lib/prisma'
 import { getPublicUrl } from '@/lib/storage'
 import { FamilyGroupData, MemberWithUser } from '@/types'
 import { auth } from '@/auth'
+import { FullRelationship } from '@/types'
 
-export const getGroup = async (
+export const getGroup = cache(async (
   slug: string,
   limit?: number,
 ): Promise<FamilyGroupData | null> => {
@@ -103,18 +104,17 @@ export const getGroup = async (
         } else {
           photoUrl = await getPublicUrl(rawUrl)
         }
+      } else {
+        photoUrl = '/images/default-avatar.png' // fallback image
       }
-
-      // For family groups, we always show the full name.
-      const name = [member.user.firstName, member.user.lastName]
-        .filter(Boolean)
-        .join(' ')
 
       return {
         ...member,
         user: {
           ...member.user,
-          name,
+          name: [member.user.firstName, member.user.lastName]
+            .filter(Boolean)
+            .join(' '),
           photoUrl,
         },
         parents: [],
@@ -149,4 +149,25 @@ export const getGroup = async (
     memberCount: allMembers.length,
     currentUserMember,
   }
-}
+})
+
+export const getFamilyRelationships = cache(async (
+  groupMemberIds: string[],
+): Promise<FullRelationship[]> => {
+  const relationships = await prisma.userUser.findMany({
+    where: {
+      user1Id: {
+        in: groupMemberIds,
+      },
+      user2Id: {
+        in: groupMemberIds,
+      },
+    },
+    include: {
+      relationType: true,
+      user1: true,
+      user2: true,
+    },
+  })
+  return relationships as FullRelationship[]
+})

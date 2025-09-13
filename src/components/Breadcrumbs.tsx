@@ -36,19 +36,24 @@ const Breadcrumbs = ({
 
   return (
     <nav aria-label="Breadcrumb" className="mb-4 text-sm text-gray-500">
-      <ol className="flex flex-wrap items-center list-none p-0">
+      <ol className="flex list-none flex-wrap items-center p-0">
         <li className="flex items-center">
           <Link href="/" className="hover:text-blue-500">
             Home
           </Link>
         </li>
-        {breadcrumbs.map((breadcrumb, index) => (
+        {breadcrumbs.map((breadcrumb, _index) => (
           <li key={breadcrumb.href} className="flex items-center">
             <span className="mx-2">/</span>
             {breadcrumb.isLast ? (
-              <span className="text-gray-700 truncate max-w-[120px] sm:max-w-none">{breadcrumb.label}</span>
+              <span className="max-w-[120px] truncate text-gray-700 sm:max-w-none">
+                {breadcrumb.label}
+              </span>
             ) : (
-              <Link href={breadcrumb.href} className="hover:text-blue-500 truncate max-w-[120px] sm:max-w-none">
+              <Link
+                href={breadcrumb.href}
+                className="max-w-[120px] truncate hover:text-blue-500 sm:max-w-none"
+              >
                 {breadcrumb.label}
               </Link>
             )}

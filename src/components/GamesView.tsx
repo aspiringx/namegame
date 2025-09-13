@@ -36,7 +36,7 @@ const GamesView: React.FC<GamesViewProps> = ({
   groupSlug,
   currentUserId,
   onSwitchToGrid,
-  groupType,
+  groupType: _groupType,
 }) => {
   const [question, setQuestion] = useState<QuizQuestion | null>(null)
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null)
@@ -64,10 +64,10 @@ const GamesView: React.FC<GamesViewProps> = ({
     [quizPoolMembers, scores],
   )
 
-  const loadNextQuestion = () => {
+  const loadNextQuestion = (currentEligibleMembers: MemberWithUser[]) => {
     setSelectedAnswer(null)
     setIsCorrect(null)
-    const nextQuestion = generateQuizQuestion(eligibleMembers, members)
+    const nextQuestion = generateQuizQuestion(currentEligibleMembers, members)
     setQuestion(nextQuestion)
   }
 
@@ -75,14 +75,20 @@ const GamesView: React.FC<GamesViewProps> = ({
   useEffect(() => {
     // Do not run on initial mount if members aren't loaded yet.
     if (quizPoolMembers.length > 0) {
-      loadNextQuestion()
+      loadNextQuestion(eligibleMembers)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scores, quizPoolMembers])
+  }, [scores, quizPoolMembers, eligibleMembers.length])
 
   const handleStartOver = () => {
     clearQuizScores(groupSlug)
-    setScores({})
+    const newScores = {}
+    setScores(newScores)
+    const newEligibleMembers = getEligibleQuizMembers(
+      quizPoolMembers,
+      newScores,
+    )
+    loadNextQuestion(newEligibleMembers)
   }
 
   const handleAnswer = (selectedUserId: string) => {
@@ -116,14 +122,14 @@ const GamesView: React.FC<GamesViewProps> = ({
     const newScores = getQuizScores(groupSlug)
     setScores(newScores)
     setModalPerson(null)
-    loadNextQuestion()
+    loadNextQuestion(eligibleMembers)
   }
 
   const handleGotIt = () => {
     if (!modalPerson) return
     setModalPerson(null)
     setScores(getQuizScores(groupSlug))
-    loadNextQuestion()
+    loadNextQuestion(eligibleMembers)
   }
 
   if (members.length === 0) {
@@ -171,7 +177,7 @@ const GamesView: React.FC<GamesViewProps> = ({
         <div className="p-6">
           <h2 className="mb-4 text-xl font-bold">Congratulations!</h2>
           <p className="mb-4">
-            You've remembered {modalPerson?.user.name} three times!
+            You&apos;ve remembered {modalPerson?.user.name} three times!
           </p>
           <div className="mb-4 text-sm text-gray-600 dark:text-gray-400">
             <p>
@@ -179,8 +185,8 @@ const GamesView: React.FC<GamesViewProps> = ({
               three more tries.
             </p>
             <p>
-              <strong>Got It:</strong> You're confident you remember them. We'll
-              add them back after three months to keep you sharp.
+              <strong>Got It:</strong> You&apos;re confident you remember them.
+              We&apos;ll add them back after three months to keep you sharp.
             </p>
           </div>
           <div className="flex justify-end space-x-4">

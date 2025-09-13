@@ -17,8 +17,8 @@ export const VerificationEmail = ({
         {'Hi ' + firstName + ',' || 'Hi,'}
       </Text>
       <Text style={text} className="text">
-        You've joined a NameGame group! Please click this link to verify your
-        email address and unlock features.
+        You&apos;ve joined a NameGame group! Please click this link to verify
+        your email address and unlock features.
       </Text>
       <Button style={button} href={confirmLink} className="button text-center">
         Verify Email
@@ -34,12 +34,14 @@ export const VerificationEmail = ({
   </EmailTemplate>
 )
 
-export default () => (
+const VerificationEmailPreview = () => (
   <VerificationEmail
     firstName="Test Joe"
     confirmLink="https://example.com/verify-email?token=mock_token"
   />
 )
+
+export default VerificationEmailPreview
 
 // Helper function to generate plain text version
 export const getVerificationEmailText = (

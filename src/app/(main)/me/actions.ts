@@ -196,14 +196,14 @@ export async function updateUserProfile(
     }
 
     // Handle photo upload first
-    let photoUrlForCheck: string | null = null
+    let _photoUrlForCheck: string | null = null
 
     if (photo && photo.size > 0) {
       newPhotoKey = await uploadFile(photo, 'user-photos', userId)
     }
 
-    let birthDateObj: Date | undefined
-    let birthDatePrecision: DatePrecision | undefined
+    let _birthDateObj: Date | undefined
+    let _birthDatePrecision: DatePrecision | undefined
 
     const dataToUpdate: any = {
       firstName,
@@ -223,9 +223,7 @@ export async function updateUserProfile(
           error:
             'Invalid birth date format. Please use a recognized date format.',
           errors: {
-            birthDate: [
-              'Invalid format. Please use a recognized date format.',
-            ],
+            birthDate: ['Invalid format. Please use a recognized date format.'],
           },
           message: null,
         }
@@ -296,7 +294,7 @@ export async function updateUserProfile(
     const {
       firstName: formFirstName,
       lastName: formLastName,
-      email: formEmail,
+      email: _formEmail,
     } = validatedFields.data
 
     const profileIsNowComplete = Boolean(
@@ -415,10 +413,10 @@ export async function updateUserProfile(
   //   redirectUrl = `/g/${userGroups[0].group.slug}`;
   // }
 
-  let cacheBustedUrl: string | null = null
+  let _cacheBustedUrl: string | null = null
   if (newPhotoKey) {
     const newPhotoPublicUrl = await getPublicUrl(newPhotoKey)
-    cacheBustedUrl = `${newPhotoPublicUrl}?v=${Date.now()}`
+    _cacheBustedUrl = `${newPhotoPublicUrl}?v=${Date.now()}`
   }
 
   return {

@@ -34,7 +34,7 @@ const GamesIntroModal: React.FC<GamesIntroModalProps> = ({
             <b>Sync:</b> Games you play together at the same time
           </li>
           <li>
-            <b>Async:</b> Games you play together over time, when it's
+            <b>Async:</b> Games you play together over time, when it&apos;s
             convenient
           </li>
         </ul>

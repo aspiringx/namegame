@@ -4,7 +4,6 @@ import UsersTable from './UsersTable'
 import { Suspense } from 'react'
 import Breadcrumbs from '@/components/Breadcrumbs'
 
-export const dynamic = 'force-dynamic'
 
 type SortableColumn =
   | 'firstName'

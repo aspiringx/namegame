@@ -1,13 +1,10 @@
 import { StepType } from '@reactour/tour'
 import {
   Brain,
-  ChevronDown,
-  ChevronUp,
   GitFork,
   HelpCircle,
   Image as Photo,
   LayoutGrid,
-  Link,
   List,
   Plus,
   Search,
@@ -16,7 +13,7 @@ import {
 } from 'lucide-react'
 import Image from 'next/image'
 
-export const familyTourSteps: StepType[] = [
+export const steps: StepType[] = [
   {
     selector: '[data-tour="group-name"]',
     position: 'center',
@@ -59,8 +56,9 @@ export const familyTourSteps: StepType[] = [
       <div className="flex flex-col items-center gap-4 text-center">
         <Photo size={32} />
         <p className="text-left">
-          Use the "real photos" filter to only see real pics (new members get a
-          fake image until they upload a real photo in their profile).
+          Use the &quot;real photos&quot; filter to only see real pics (new
+          members get a fake image until they upload a real photo in their
+          profile).
         </p>
         <p className="text-left">
           If you see someone without a real pic, they might be unsure how to do
@@ -75,8 +73,8 @@ export const familyTourSteps: StepType[] = [
       <div className="flex flex-col items-center gap-4 text-center">
         <Search size={32} />
         <p className="text-left">
-          Search for anyone by name. If your "real photos" filter is on, it will
-          only search those people.
+          Search for anyone by name. If your &quot;real photos&quot; filter is
+          on, it will only search those people.
         </p>
       </div>
     ),
@@ -123,8 +121,8 @@ export const familyTourSteps: StepType[] = [
       <div className="flex flex-col items-center gap-4 text-center">
         <Plus size={32} />
         <p className="text-left">
-          The Invite button appears below after you've completed your profile.
-          Use it to invite family members into this private group.
+          The Invite button appears below after you&apos;ve completed your
+          profile. Use it to invite family members into this private group.
         </p>
         <p className="text-left">Click it to create a greeting code.</p>
         <ul className="ml-4 list-outside list-disc space-y-1 text-left">

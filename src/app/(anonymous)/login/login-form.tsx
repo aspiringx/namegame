@@ -57,7 +57,7 @@ export default function LoginForm() {
     }
 
     attemptAutoLogin()
-  }, [])
+  }, [rememberMe])
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -149,7 +149,7 @@ export default function LoginForm() {
               />
               <label
                 htmlFor="remember-me"
-                className="ml-2 block text-sm text-foreground"
+                className="text-foreground ml-2 block text-sm"
               >
                 Remember me
               </label>

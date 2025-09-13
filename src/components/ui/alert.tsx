@@ -4,9 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 import {
-  CheckCircle as CheckCircleIcon,
   XCircle as XCircleIcon,
-  AlertTriangle as AlertTriangleIcon,
 } from 'lucide-react'
 
 const alertVariants = cva('rounded-md p-4', {
@@ -48,7 +46,7 @@ const Alert = React.forwardRef<
 >(({ className, variant, children, onDismiss, flashId, ...props }, ref) => {
   const [isVisible, setIsVisible] = useState(true)
 
-  const storageKey = flashId ? `flash-alert-${flashId}` : ''
+  const storageKey = flashId ? `namegame_flash-alert_${flashId}` : ''
 
   useEffect(() => {
     if (flashId && sessionStorage.getItem(storageKey) === 'dismissed') {

@@ -1,4 +1,4 @@
-import { PrismaClient, User, GroupUserRole, UserUserRelationType } from '../../src/generated/prisma'
+import { PrismaClient, User, UserUserRelationType } from '../../src/generated/prisma'
 import * as bcrypt from 'bcrypt'
 
 const prisma = new PrismaClient()

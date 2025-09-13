@@ -13,7 +13,7 @@ function UnsupportedBrowser({ onCopy }: { onCopy: () => void }) {
       <h2 className="text-2xl font-bold">Unsupported Browser Detected</h2>
       <p className="text-muted-foreground mt-2">
         For the best experience, please copy this link and open it in your
-        phone's main browser (like Safari or Chrome).
+        phone&apos;s main browser (like Safari or Chrome).
       </p>
       <button
         onClick={onCopy}
@@ -147,7 +147,7 @@ export default function GreetPageClient({
                   <h2 className="text-2xl font-bold">Connection Issue</h2>
                   <p className="text-left">
                     It looks like your internet connection is slow or sporadic.
-                    We've created your account and will attempt to proceed when
+                    We&apos;ve created your account and will attempt to proceed when
                     this improves. If you have access to WiFi, consider enabling
                     it and tap Refresh.
                   </p>
