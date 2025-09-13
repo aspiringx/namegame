@@ -14,8 +14,8 @@ import {
 
 interface FamilyTreeControlsProps {
   onFullScreen: () => void
-  isFullScreen?: boolean
-  isMobile?: boolean
+  isFullScreen: boolean
+  isMobile: boolean
 }
 
 interface StyledControlButtonProps extends ComponentProps<'button'> {
@@ -99,7 +99,7 @@ const Controls = ({
 
 export function FamilyTreeControls({
   onFullScreen,
-  isFullScreen,
+  isFullScreen: _isFullScreen,
   isMobile,
 }: FamilyTreeControlsProps) {
   const { zoomIn, zoomOut, fitView } = useReactFlow()
@@ -136,9 +136,9 @@ export function FamilyTreeControls({
     return (
       <Panel position="bottom-center">
         <div
-            className="bg-background flex items-center overflow-hidden rounded-md border shadow-lg"
-            data-tour="family-tree-controls"
-          >
+          className="bg-background flex items-center overflow-hidden rounded-md border shadow-lg"
+          data-tour="family-tree-controls"
+        >
           <StyledControlButton
             onClick={handleFullScreenClick}
             title="Full screen"
@@ -151,7 +151,11 @@ export function FamilyTreeControls({
           <StyledControlButton onClick={() => zoomOut()} title="Zoom out">
             <ZoomOut size={24} strokeWidth={1.5} />
           </StyledControlButton>
-          <StyledControlButton onClick={() => fitView()} title="Fit view" isLast>
+          <StyledControlButton
+            onClick={() => fitView()}
+            title="Fit view"
+            isLast
+          >
             <Expand size={24} strokeWidth={1.5} />
           </StyledControlButton>
         </div>

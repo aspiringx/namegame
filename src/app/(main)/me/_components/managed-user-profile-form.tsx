@@ -671,14 +671,14 @@ export default function ManagedUserProfileForm({
                       </TooltipTrigger>
                       <TooltipContent className="max-w-xs bg-gray-800 text-white">
                         <p>
-                          <b>Full:</b> For users who won't log in (e.g., a
+                          <b>Full:</b> For users who won&apos;t log in (e.g., a
                           child).
                           <br />
                           <b>Partial:</b> For users who can log in under your
                           supervision.
                           <br />
-                          <b>Unselected:</b> Don't select Full or Partial if
-                          you're a Backup manager for an active user.
+                          <b>Unselected:</b> Don&apos;t select Full or Partial if
+                          you&apos;re a Backup manager for an active user.
                         </p>
                       </TooltipContent>
                     </Tooltip>

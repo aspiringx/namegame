@@ -36,9 +36,9 @@ export function MemberDetailsModal({
   onClose,
   member,
   relationship,
-  currentUserId,
+  currentUserId: _currentUserId,
   onOpenRelate,
-  isGroupAdmin,
+  isGroupAdmin: _isGroupAdmin,
 }: MemberDetailsModalProps) {
   if (!isOpen || !member) return null
 
@@ -56,8 +56,8 @@ export function MemberDetailsModal({
             <span className="sr-only">Close</span>
           </button>
         </div>
-        <div className="flex flex-col items-center gap-4 mt-2">
-          <div className="relative w-full aspect-square sm:w-96">
+        <div className="mt-2 flex flex-col items-center gap-4">
+          <div className="relative aspect-square w-full sm:w-96">
             <Image
               src={member.user.photoUrl || '/default-avatar.png'}
               alt={`${member.user.firstName} ${member.user.lastName}`}

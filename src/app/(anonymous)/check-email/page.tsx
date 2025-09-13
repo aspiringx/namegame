@@ -9,11 +9,11 @@ export default function CheckEmailPage() {
         </div>
         <h1 className="text-3xl font-bold">Check Your Email</h1>
         <p className="text-muted-foreground">
-          We've sent a verification link to your email address. Please click the
+          We&apos;ve sent a verification link to your email address. Please click the
           link to complete your registration.
         </p>
         <p className="text-muted-foreground text-sm">
-          (Don't forget to check your spam folder!)
+          (Don&apos;t forget to check your spam folder!)
         </p>
       </div>
     </div>

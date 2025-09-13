@@ -315,13 +315,13 @@ export const useFamilyTree = ({
     }
 
     // --- 3. Create Edges ---
-    const newEdges: Edge[] = [];
+    const newEdges: Edge[] = []
 
     // --- 4. Finalize node data ---
     const finalNodes = newNodes.map((newNode) => {
       if (newNode.id.includes('-union-')) return newNode
-      const user = allUsersMap.get(newNode.id);
-      if (!user) return newNode; // Should not happen for avatar nodes, but good practice
+      const user = allUsersMap.get(newNode.id)
+      if (!user) return newNode // Should not happen for avatar nodes, but good practice
 
       const hasUnaddedParents = getRelatives(user.id, 'parent').some(
         (p: UserWithPhotoUrl) => !visibleUsers.has(p.id),
@@ -361,6 +361,7 @@ export const useFamilyTree = ({
     getSiblings,
     handleNodeExpand,
     currentUser?.id,
+    relationshipMap,
   ])
 
   useEffect(() => {

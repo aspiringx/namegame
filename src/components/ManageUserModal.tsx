@@ -130,7 +130,7 @@ export default function ManageUserModal({
         setManagers((prev) => prev.filter((m) => m.id !== managerToDelete.id))
         toast.success('Manager removed successfully.')
         setManagerToDelete(null)
-      } catch (error) {
+      } catch {
         toast.error('Failed to remove manager.')
       }
     })

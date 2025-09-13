@@ -116,12 +116,13 @@ export default function UserProfileNextSteps({
   const needsEmailVerification = user.email && !user.emailVerified
 
   const [isCollapsed, setIsCollapsed] = useState(true)
-  const [isResending, setIsResending] = useState(false)
+  const [, setIsResending] = useState(false)
 
   useEffect(() => {
     // This now correctly sets the initial and subsequent collapsed state on the client side,
     // avoiding a hydration mismatch.
-    const shouldBeCollapsed = !incompleteRequired.length && !needsEmailVerification
+    const shouldBeCollapsed =
+      !incompleteRequired.length && !needsEmailVerification
     setIsCollapsed(shouldBeCollapsed)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, validation]) // Rerunning only when user/validation changes is correct.
@@ -239,7 +240,8 @@ export default function UserProfileNextSteps({
               className="inline-block text-green-500 dark:text-green-400"
             />{' '}
             Click the email verification link we sent to{' '}
-            <strong>{user.email}</strong>. Check spam/junk if you don't see it.
+            <strong>{user.email}</strong>. Check spam/junk if you don&apos;t see
+            it.
           </p>
           <ul className="my-4 ml-4 list-outside list-disc">
             <li>
@@ -247,7 +249,7 @@ export default function UserProfileNextSteps({
               verification message.
             </li>
             <li>
-              If your email is correct but you didn't see a verification
+              If your email is correct but you didn&apos;t see a verification
               message, resend it.
             </li>
           </ul>

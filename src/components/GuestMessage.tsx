@@ -11,7 +11,7 @@ export function GuestMessage({
   isGuest,
   firstName,
   groupName,
-  groupType,
+  groupType: _groupType,
 }: {
   isGuest: boolean
   firstName?: string | null
@@ -62,7 +62,7 @@ export function GuestMessage({
       </h3>
       <div className="space-y-2">
         <p className="mb-4 text-center">
-          You're in the private {groupName} group!
+          You&apos;re in the private {groupName} group!
         </p>
         <div className="my-4 flex items-center gap-4 rounded-md bg-green-200 p-4 dark:bg-green-900">
           <HelpCircle size={32} />

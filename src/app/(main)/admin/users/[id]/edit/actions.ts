@@ -224,7 +224,7 @@ export async function updateUser(
     const primaryPhotoTypeId = photoTypes.primary.id
     const userEntityTypeId = entityTypes.user.id
 
-    const { password, ...userDataWithoutPassword } = userData
+    const { password: _password, ...userDataWithoutPassword } = userData
 
     const dataToUpdate: any = {
       ...userDataWithoutPassword,

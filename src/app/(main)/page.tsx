@@ -37,7 +37,7 @@ export default function Home() {
             <li>Do stuff together</li>
           </ul>
           <p>
-            You don't have to be a social butterfly to break the ice or get to
+            You don&apos;t have to be a social butterfly to break the ice or get to
             know people. Just play.
           </p>
         </section>
@@ -88,7 +88,7 @@ export default function Home() {
           </ul>
           <p>A greeting code is both a QR code and a link/URL.</p>
           <ul className="ml-8 list-outside list-disc">
-            <li>If you're together, they scan your code with their camera</li>
+            <li>If you&apos;re together, they scan your code with their camera</li>
             <li>If not, they open your link via text or email</li>
           </ul>
           <p>

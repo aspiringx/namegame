@@ -7,14 +7,16 @@ import FamilyTree, { FamilyTreeRef } from './FamilyTree'
 import { MemberWithUser } from '@/types'
 
 interface TreeViewProps {
-  onIsFocalUserCurrentUserChange: (isCurrentUser: boolean) => void;
-  members: MemberWithUser[];
-  onOpenRelate: (member: MemberWithUser) => void;
+  onIsFocalUserCurrentUserChange: (isCurrentUser: boolean) => void
+  members: MemberWithUser[]
+  onOpenRelate: (member: MemberWithUser) => void
 }
 
 const TreeView = forwardRef<FamilyTreeRef, TreeViewProps>(
   ({ onIsFocalUserCurrentUserChange, members, onOpenRelate }, ref) => {
     const groupContext = useGroup()
+    const { relationshipMap } = useFamilyGroupData()
+
     if (!groupContext) {
       return null
     }
@@ -22,14 +24,6 @@ const TreeView = forwardRef<FamilyTreeRef, TreeViewProps>(
       groupContext
 
     if (!group) return null
-
-    const { relationshipMap } = useFamilyGroupData()
-
-    const handleSelect = (userId: string) => {
-      if (typeof ref === 'object' && ref?.current) {
-        ref.current.setFocalUser(userId)
-      }
-    }
 
     return (
       <div className="relative border">

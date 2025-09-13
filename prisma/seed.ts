@@ -86,7 +86,7 @@ async function main() {
   })
   console.log(`  - Upserted 'gadmin' user.`)
 
-  const joeUser = await prisma.user.upsert({
+  await prisma.user.upsert({
     where: { username: 'joe' },
     update: {},
     create: {

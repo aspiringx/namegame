@@ -3,14 +3,7 @@
 import React, { useState, useTransition, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import {
-  Info,
-  ChevronUp,
-  CheckCircle,
-  X,
-  Edit,
-  Trash2,
-} from 'lucide-react'
+import { Info, ChevronUp, CheckCircle, X, Edit, Trash2 } from 'lucide-react'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,7 +14,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-
 
 import { toast } from 'sonner'
 
@@ -87,7 +79,6 @@ export default function UsersList({
   const [userToDelete, setUserToDelete] = useState<ManagedUserWithPhoto | null>(
     null,
   )
-  const [isTooltipOpen, setIsTooltipOpen] = useState(false)
 
   const handleAllow = () => {
     if (!selectedManagerId) return
@@ -182,8 +173,8 @@ export default function UsersList({
           className="mb-6 rounded-md border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800"
         >
           <p className="mb-4 text-sm text-gray-700 dark:text-gray-300">
-            Create and manage users who can't or shouldn't yet have their own
-            accounts.
+            Create and manage users who can&apos;t or shouldn&apos;t yet have
+            their own accounts.
           </p>
           <p className="mb-4 text-sm text-gray-700 dark:text-gray-300">
             Examples: Minor children, deceased relatives, disabled individuals,
@@ -199,8 +190,8 @@ export default function UsersList({
           </p>
           <p className="mb-4 text-sm text-red-700 italic dark:text-red-400">
             You must have permission or authority to create managed users, such
-            as being a child's parent, direct descendent of a deceased person,
-            permission from a living adult, etc.
+            as being a child&apos;s parent, direct descendent of a deceased
+            person, permission from a living adult, etc.
           </p>
           {hasAgreed ? (
             <button

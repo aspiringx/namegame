@@ -18,7 +18,7 @@ export default function FamilyMemberCard({
   member,
   relationship,
   onRelate,
-  currentUserId,
+  currentUserId: _currentUserId,
   isGroupAdmin,
   groupSlug,
 }: FamilyMemberCardProps) {

@@ -14,7 +14,7 @@ export default function EditUserForm({
   photoUrl: string
   hasPhoto: boolean
 }) {
-  const { data: session, update } = useSession()
+  useSession()
 
   const initialState: UserFormState = {
     message: null,

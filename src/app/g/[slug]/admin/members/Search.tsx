@@ -25,8 +25,6 @@ export function Search({
     replace(`${pathname}?${params.toString()}`)
   }, 300)
 
-  const hasQuery = searchParams.has('query') && searchParams.get('query')
-
   return (
     <div className="relative flex flex-1 flex-shrink-0">
       <label htmlFor="search" className="sr-only">

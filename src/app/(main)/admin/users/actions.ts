@@ -17,7 +17,7 @@ export interface FormState {
   }
 }
 
-const UserSchema = z.object({
+const _UserSchema = z.object({
   username: z.string().min(3, 'Username must be at least 3 characters long.'),
   firstName: z.string().min(1, 'First name is required.'),
   lastName: z.string().optional(),
@@ -31,8 +31,8 @@ const UserSchema = z.object({
 
 // Placeholder for createUser
 export async function createUser(
-  prevState: FormState,
-  formData: FormData,
+  _prevState: FormState,
+  _formData: FormData,
 ): Promise<FormState> {
   // Implementation to come
   return { message: 'User creation not yet implemented.' }
@@ -40,9 +40,9 @@ export async function createUser(
 
 // Placeholder for updateUser
 export async function updateUser(
-  userId: string,
-  prevState: FormState,
-  formData: FormData,
+  _userId: string,
+  _prevState: FormState,
+  _formData: FormData,
 ): Promise<FormState> {
   // Implementation to come
   return { message: 'User update not yet implemented.' }

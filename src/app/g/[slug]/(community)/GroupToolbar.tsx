@@ -51,8 +51,8 @@ interface GroupToolbarProps {
 export default function GroupToolbar({
   settings,
   setSettings,
-  handleSort,
-  setTourOpen,
+  handleSort: _handleSort,
+  setTourOpen: _setTourOpen,
   viewMode,
   groupSlug,
 }: GroupToolbarProps) {
@@ -65,7 +65,7 @@ export default function GroupToolbar({
     { key: 'lastName', label: 'Last name' },
   ]
 
-  const { setIsOpen } = useTour()
+  const { setIsOpen: _setIsOpen } = useTour()
   const pathname = usePathname()
   const currentSortLabel = sortOptions.find(
     (o) => o.key === settings.sortConfig.key,

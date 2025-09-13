@@ -2,7 +2,11 @@
 
 import { useGroup } from '@/components/GroupProvider'
 import FamilyMemberCard from '@/components/FamilyMemberCard'
-import { useFamilyGroupMembers, useFamilyGroupActions, useFamilyGroupData } from './FamilyGroupClient'
+import {
+  useFamilyGroupMembers,
+  useFamilyGroupActions,
+  useFamilyGroupData,
+} from './FamilyGroupClient'
 
 export default function GridView() {
   const members = useFamilyGroupMembers()
@@ -14,14 +18,7 @@ export default function GridView() {
     return null
   }
 
-  const {
-    group,
-    isGroupAdmin,
-    currentUserMember,
-    relationships,
-    relatedMembers,
-    notRelatedMembers,
-  } = groupContext
+  const { group, isGroupAdmin, currentUserMember } = groupContext
 
   if (!group) return null
 

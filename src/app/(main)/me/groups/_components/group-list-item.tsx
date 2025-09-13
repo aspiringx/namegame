@@ -86,7 +86,7 @@ export function GroupListItem({ group }: GroupListItemProps) {
             <h3 className="text-lg font-medium leading-6 text-gray-900 dark:text-gray-100 mb-4">
               Confirm Leaving Group
             </h3>
-            <p>Are you sure you want to leave the group "{group.name}"?</p>
+            <p>Are you sure you want to leave the group &quot;{group.name}&quot;?</p>
           </div>
           <div className="flex justify-end space-x-2 p-6 pt-0">
             <Button

@@ -220,6 +220,8 @@ const FamilyTreeComponent = forwardRef<
   },
 )
 
+FamilyTreeComponent.displayName = 'FamilyTreeComponent'
+
 export type FamilyTreeRef = {
   reset: () => void
   setFocalUser: (userId: string) => void
@@ -236,6 +238,7 @@ interface FamilyTreeProps {
 }
 
 const FamilyTree = forwardRef<FamilyTreeRef, FamilyTreeProps>((props, ref) => {
+  FamilyTree.displayName = 'FamilyTree'
   const [mounted, setMounted] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
 

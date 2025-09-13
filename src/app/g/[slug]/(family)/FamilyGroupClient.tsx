@@ -61,7 +61,7 @@ interface FamilyPageSettings {
 
 interface FamilyGroupClientProps {
   children?: React.ReactNode
-  view: 'grid' | 'tree' | 'games',
+  view: 'grid' | 'tree' | 'games'
   initialMembers: MemberWithUser[]
   groupSlug: string
   initialMemberCount: number
@@ -76,21 +76,18 @@ function FamilyGroupClientContent({
   groupSlug,
 }: Omit<FamilyGroupClientProps, 'initialMemberCount'>) {
   const groupContext = useGroup()
-
-  if (!groupContext) {
-    return null // Should be rendered within GroupProvider
-  }
-
-  const { group, isGroupAdmin, currentUserMember } = groupContext
-
-  const allMembers = initialMembers
   const familyTreeRef = useRef<FamilyTreeRef>(null)
   const [isResetDisabled, setIsResetDisabled] = useState(true)
   const { setIsOpen } = useTour()
   const router = useRouter()
+  const [isMobile, setIsMobile] = useState(false)
+  const [isRelateModalOpen, setIsRelateModalOpen] = useState(false)
+  const [selectedMember, setSelectedMember] = useState<MemberWithUser | null>(
+    null,
+  )
 
   const [settings, setSettings] = useLocalStorage<FamilyPageSettings>(
-    `namegame_family-group-settings_${group?.slug}`,
+    `namegame_family-group-settings_${groupContext?.group?.slug}`,
     {
       searchQuery: '',
       sortConfig: { key: 'closest', direction: 'asc' },
@@ -99,7 +96,6 @@ function FamilyGroupClientContent({
     },
   )
 
-  const [isMobile, setIsMobile] = useState(false)
   useEffect(() => {
     const checkIsMobile = () => {
       setIsMobile(window.innerWidth < 768)
@@ -108,11 +104,6 @@ function FamilyGroupClientContent({
     window.addEventListener('resize', checkIsMobile)
     return () => window.removeEventListener('resize', checkIsMobile)
   }, [])
-
-  const [isRelateModalOpen, setIsRelateModalOpen] = useState(false)
-  const [selectedMember, setSelectedMember] = useState<MemberWithUser | null>(
-    null,
-  )
 
   const handleOpenRelateModal = (member: MemberWithUser) => {
     setSelectedMember(member)
@@ -123,7 +114,6 @@ function FamilyGroupClientContent({
     setIsRelateModalOpen(false)
     setSelectedMember(null)
   }
-
 
   const modalRelations = useMemo(() => {
     if (!selectedMember || !initialRelationships) return []
@@ -147,24 +137,24 @@ function FamilyGroupClientContent({
 
   const usersMap = useMemo(() => {
     const map = new Map<string, User>()
-    allMembers.forEach((member) => {
+    initialMembers.forEach((member) => {
       map.set(member.userId, member.user)
     })
     return map
-  }, [allMembers])
+  }, [initialMembers])
 
   const relationshipMap = useMemo(() => {
-    if (!currentUserMember || !initialRelationships) {
+    if (!groupContext?.currentUserMember || !initialRelationships) {
       return new Map<string, { label: string; steps: number }>()
     }
     const newMap = new Map<string, { label: string; steps: number }>()
-    for (const alter of allMembers) {
-      if (alter.userId === currentUserMember.userId) continue
+    for (const alter of initialMembers) {
+      if (alter.userId === groupContext.currentUserMember.userId) continue
       const result = getRelationship(
-        currentUserMember.userId,
+        groupContext.currentUserMember.userId,
         alter.userId,
         initialRelationships,
-        allMembers,
+        initialMembers,
         usersMap,
       )
       if (result && result.relationship) {
@@ -175,10 +165,15 @@ function FamilyGroupClientContent({
       }
     }
     return newMap
-  }, [currentUserMember, allMembers, initialRelationships, usersMap])
+  }, [
+    groupContext?.currentUserMember,
+    initialMembers,
+    initialRelationships,
+    usersMap,
+  ])
 
   const filteredAndSortedMembers = useMemo(() => {
-    let sortedMembers = [...allMembers]
+    let sortedMembers = [...initialMembers]
 
     if (settings.sortConfig.key === 'closest') {
       sortedMembers.sort((a, b) => {
@@ -228,7 +223,7 @@ function FamilyGroupClientContent({
     }
 
     return sortedMembers
-  }, [allMembers, settings, relationshipMap])
+  }, [initialMembers, settings, relationshipMap])
 
   const handleSort = (key: 'joined' | 'firstName' | 'lastName' | 'closest') => {
     setSettings((prev) => {
@@ -250,6 +245,12 @@ function FamilyGroupClientContent({
       }
     })
   }
+
+  if (!groupContext) {
+    return null // Should be rendered within GroupProvider
+  }
+
+  const { group, isGroupAdmin, currentUserMember } = groupContext
 
   return (
     <>
@@ -278,7 +279,7 @@ function FamilyGroupClientContent({
           {view === 'tree' ? (
             <div className="relative mt-4">
               <FocalUserSearch
-                members={allMembers}
+                members={initialMembers}
                 onSelect={(userId) =>
                   familyTreeRef.current?.setFocalUser(userId)
                 }
@@ -288,7 +289,7 @@ function FamilyGroupClientContent({
             <div className="relative mt-4">
               <input
                 type="text"
-                placeholder={`Search ${allMembers.length} members...`}
+                placeholder={`Search ${initialMembers.length} members...`}
                 value={settings.searchQuery}
                 onChange={(e) =>
                   setSettings((prev) => ({
@@ -334,7 +335,7 @@ function FamilyGroupClientContent({
                 <TreeView
                   ref={familyTreeRef}
                   onIsFocalUserCurrentUserChange={setIsResetDisabled}
-                  members={allMembers}
+                  members={initialMembers}
                   onOpenRelate={handleOpenRelateModal}
                 />
               ) : (
@@ -351,7 +352,7 @@ function FamilyGroupClientContent({
           onClose={handleCloseRelateModal}
           member={selectedMember}
           groupType={group.groupType}
-          groupMembers={allMembers}
+          groupMembers={initialMembers}
           groupSlug={group.slug}
           initialRelations={modalRelations}
           onRelationshipAdded={handleRelationshipChange}
@@ -367,7 +368,7 @@ function FamilyGroupClientContent({
 }
 
 export function FamilyGroupClient(props: FamilyGroupClientProps) {
-  const { children, view } = props
+  const { view } = props
   const { resolvedTheme } = useTheme()
   const [hasMounted, setHasMounted] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
