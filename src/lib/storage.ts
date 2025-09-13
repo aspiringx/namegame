@@ -17,7 +17,6 @@ const STORAGE_PROVIDER =
 const BUCKET_NAME = env.DO_SPACES_BUCKET || ''
 
 const ALLOWED_FORMATS = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
-const MAX_WIDTH_HEIGHT = 3840
 
 let s3Client: S3Client | null = null
 
@@ -46,7 +45,46 @@ if (STORAGE_PROVIDER === 'do_spaces') {
   })
 }
 
-async function validateAndResizeImage(file: File): Promise<Buffer> {
+const IMAGE_SIZES = {
+  thumb: { width: 150, height: 150, quality: 80 },
+  small: { width: 400, height: 400, quality: 85 },
+  medium: { width: 800, height: 800, quality: 90 },
+  large: { width: 1200, height: 1200, quality: 90 },
+} as const
+
+interface UploadedUrls {
+  url: string
+  url_thumb?: string
+  url_small?: string
+  url_medium?: string
+  url_large?: string
+}
+
+async function uploadToStorage(key: string, body: Buffer, contentType: string) {
+  if (STORAGE_PROVIDER === 'do_spaces' && s3Client) {
+    const command = new PutObjectCommand({
+      Bucket: BUCKET_NAME,
+      Key: key,
+      Body: body,
+      ACL: 'private',
+      ContentType: contentType,
+    })
+    await s3Client.send(command)
+  } else {
+    // For local storage, key is expected to be 'prefix/filename'
+    const [prefix, filename] = key.split('/')
+    const uploadsDir = path.join(process.cwd(), 'public/uploads', prefix)
+    const filepath = path.join(uploadsDir, filename)
+    await mkdir(uploadsDir, { recursive: true })
+    await writeFile(filepath, body)
+  }
+}
+
+export async function uploadFile(
+  file: File,
+  prefix: string,
+  entityId: string | number,
+): Promise<UploadedUrls> {
   if (!file || file.size === 0) {
     throw new Error('No file provided.')
   }
@@ -57,48 +95,73 @@ async function validateAndResizeImage(file: File): Promise<Buffer> {
     )
   }
 
-  const bytes = await file.arrayBuffer()
-  const buffer = Buffer.from(bytes)
-
-  return sharp(buffer)
-    .rotate()
-    .resize({
-      width: MAX_WIDTH_HEIGHT,
-      height: MAX_WIDTH_HEIGHT,
-      fit: 'inside',
-      withoutEnlargement: true,
-    })
-    .toBuffer()
-}
-
-export async function uploadFile(
-  file: File,
-  prefix: string,
-  entityId: string | number,
-): Promise<string> {
-  const processedBuffer = await validateAndResizeImage(file)
-  const extension = file.type.split('/')[1]
-  const filename = `${entityId}.${Date.now()}.${extension}`
-  const key = `${prefix}/${filename}`
-
-  if (STORAGE_PROVIDER === 'do_spaces' && s3Client) {
-    const command = new PutObjectCommand({
-      Bucket: BUCKET_NAME,
-      Key: key,
-      Body: processedBuffer,
-      ACL: 'private',
-      ContentType: file.type,
-    })
-    await s3Client.send(command)
-    return key
-  } else {
-    const uploadsDir = path.join(process.cwd(), 'public/uploads', prefix)
-    const filepath = path.join(uploadsDir, filename)
-    await mkdir(uploadsDir, { recursive: true })
-    await writeFile(filepath, processedBuffer)
-    // Return a path relative to the `public`// For local storage, ensure the path is a valid root-relative URL
-    return `uploads/${key}`
+  const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
+  if (file.size > MAX_FILE_SIZE) {
+    throw new Error(
+      `File is too large. Maximum size is ${MAX_FILE_SIZE / 1024 / 1024}MB.`,
+    )
   }
+
+  const originalBuffer = Buffer.from(await file.arrayBuffer())
+  const timestamp = Date.now()
+
+  const sharpInstance = sharp(originalBuffer).rotate()
+
+  // 1. Handle the original image
+  const originalExtension = file.type.split('/')[1]
+  const originalFilename = `${entityId}.${timestamp}.original.${originalExtension}`
+  const originalKey = `${prefix}/${originalFilename}`
+
+  // 2. Prepare resized WebP versions
+  const uploadPromises = Object.entries(IMAGE_SIZES).map(
+    async ([size, config]) => {
+      const webpBuffer = await sharpInstance
+        .clone()
+        .resize({
+          width: config.width,
+          height: config.height,
+          fit: 'inside',
+          withoutEnlargement: true,
+        })
+        .webp({ quality: config.quality })
+        .toBuffer()
+
+      const webpFilename = `${entityId}.${timestamp}.${size}.webp`
+      const webpKey = `${prefix}/${webpFilename}`
+
+      // Upload is awaited here to ensure it completes before returning the key
+      await uploadToStorage(webpKey, webpBuffer, 'image/webp')
+      return { size: `url_${size}`, key: webpKey }
+    },
+  )
+
+  // 3. Upload original and resized versions concurrently
+  await Promise.all([
+    uploadToStorage(originalKey, originalBuffer, file.type),
+    ...uploadPromises.map((p) =>
+      p.catch((e) => console.error('Resize failed', e)),
+    ), // Handle individual resize failures
+  ])
+
+  const resizedResults = await Promise.all(uploadPromises)
+
+  // 4. Construct the result object
+  const uploadedUrls: UploadedUrls = { url: originalKey }
+  resizedResults.forEach(({ size, key }) => {
+    uploadedUrls[size as keyof UploadedUrls] = key
+  })
+
+  // For local dev, we need to adjust the keys to be valid paths
+  if (STORAGE_PROVIDER === 'local') {
+    for (const key in uploadedUrls) {
+      const urlKey = key as keyof UploadedUrls
+      if (uploadedUrls[urlKey]) {
+        uploadedUrls[urlKey] = `uploads/${uploadedUrls[urlKey]}`
+      }
+    }
+  }
+
+  return uploadedUrls
 }
 
 export async function getPublicUrl(
