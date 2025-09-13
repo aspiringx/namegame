@@ -206,7 +206,7 @@ const GamesView: React.FC<GamesViewProps> = ({
         </div>
       </Modal>
       <div className="flex flex-col items-center gap-4 p-4 pt-0">
-        <div className="relative h-64 w-64 overflow-hidden rounded-full shadow-lg">
+        <div className="relative h-48 w-48 overflow-hidden rounded shadow-lg lg:h-128 lg:w-128">
           <Image
             src={
               question.correctMember.user.photoUrl ||
