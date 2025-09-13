@@ -185,6 +185,10 @@ model Photo {
   entityTypeId Int
   entityId     String
   url          String
+  url_thumb    String?
+  url_small    String?
+  url_medium   String?
+  url_large    String?
   typeId       Int
   isBlocked    Boolean    @default(false)
   uploadedAt   DateTime   @default(now())
