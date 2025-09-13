@@ -85,7 +85,6 @@ export default async function UserProfilePage(props: {
 
       <UserProfileForm
         user={userWithPublicUrls}
-        groups={user.groupMemberships.map((mem) => mem.group)}
         isInFamilyGroup={isInFamilyGroup}
       />
     </>
