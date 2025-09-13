@@ -1,7 +1,6 @@
 'use server'
 
 import { z } from 'zod'
-import { MemberWithUser } from '@/types'
 import { Gender, ManagedStatus, User, Photo, GroupUser } from '@/generated/prisma/client'
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'

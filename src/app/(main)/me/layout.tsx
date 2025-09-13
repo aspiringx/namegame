@@ -1,7 +1,6 @@
 import { auth } from '@/auth'
 import { redirect } from 'next/navigation'
 import prisma from '@/lib/prisma'
-import { GuestMessage } from '@/components/GuestMessage'
 import MeTabs from './_components/me-tabs'
 import { getPublicUrl } from '@/lib/storage'
 

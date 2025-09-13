@@ -5,7 +5,6 @@ import {
   ChevronLeft,
   GitFork,
   SlidersHorizontal,
-  HelpCircle,
   Mars,
   Venus,
   Transgender,
@@ -44,7 +43,7 @@ export const steps: StepType[] = [
       <div className="flex flex-col items-center gap-4 text-center">
         <GitFork size={32} className="text-orange-500" />
         <p className="text-left">
-          Initially, you are the focus. You may not see others until you're
+          Initially, you are the focus. You may not see others until you&apos;re
           connected.
         </p>
         <p className="text-left">
@@ -87,8 +86,9 @@ export const steps: StepType[] = [
       <div className="flex flex-col items-center gap-4 text-center">
         <Plus size={32} className="text-orange-500" />
         <p className="text-left">
-          If those you're related to aren't here yet, there are options you only
-          see if you've completed your profile (photo, last name, etc.).
+          If those you&apos;re related to aren&apos;t here yet, there are
+          options you only see if you&apos;ve completed your profile (photo,
+          last name, etc.).
         </p>
         <ol className="ml-8 list-decimal text-left">
           <li>
@@ -121,11 +121,11 @@ export const steps: StepType[] = [
           <li>If known, we use gendered labels (e.g. Mother/Father)</li>
           <li>If not, we use neutral labels (e.g. Parent)</li>
           <li>
-            <i>Pibling</i> is gender-neutral for aunt or uncle (parent's
+            <i>Pibling</i> is gender-neutral for aunt or uncle (parent&apos;s
             sibling)
           </li>
           <li>
-            <i>Nibling</i> is gender-neutral for niece or nephew (sibling's
+            <i>Nibling</i> is gender-neutral for niece or nephew (sibling&apos;s
             children)
           </li>
         </ul>

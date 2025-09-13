@@ -3,7 +3,6 @@
 import { useGroup } from '@/components/GroupProvider'
 import FamilyMemberCard from '@/components/FamilyMemberCard'
 import { useFamilyGroupMembers, useFamilyGroupActions, useFamilyGroupData } from './FamilyGroupClient'
-import { User } from '@/generated/prisma'
 
 export default function GridView() {
   const members = useFamilyGroupMembers()

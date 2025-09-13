@@ -8,7 +8,6 @@ import useLocalStorage from '@/hooks/useLocalStorage'
 import FamilyGroupToolbar from '../(family)/GroupToolbar'
 import CommunityGroupToolbar from '../(community)/GroupToolbar'
 import type {
-  MemberWithUser,
   FamilyGroupData,
   CommunityGroupData,
 } from '@/types'

@@ -39,16 +39,17 @@ export const communityTourSteps: StepType[] = [
         <Filter size={32} className="text-orange-500" />
         <p className="text-left">Use filters to see:</p>
         <ul className="ml-4 list-outside list-disc space-y-1 text-left">
-          <li>People you've met or not</li>
+          <li>People you&apos;ve met or not</li>
           <li>Only people with real photos</li>
         </ul>
         <p className="text-left">
-          You initially see people you've "met" with a greeting code (QR code or
-          link you used to enter here).
+          You initially see people you&apos;ve &quot;met&quot; with a greeting
+          code (QR code or link you used to enter here).
         </p>
         <p className="text-left">
-          If you already know someone in the "not met" list, click their link
-          icon <Link size={16} className="inline-block" /> to connect.
+          If you already know someone in the &quot;not met&quot; list, click
+          their link icon <Link size={16} className="inline-block" /> to
+          connect.
         </p>
         <p className="text-left">
           Everyone (including you) starts with a random cartoon pic until they
@@ -63,8 +64,8 @@ export const communityTourSteps: StepType[] = [
       <div className="flex flex-col items-center gap-4 text-center">
         <ArrowDown size={32} className="text-orange-500" />
         <p className="text-left">
-          You can sort people by when you "met" (in this game) or first and last
-          name.
+          You can sort people by when you &quot;met&quot; (in this game) or
+          first and last name.
         </p>
       </div>
     ),
@@ -128,8 +129,8 @@ export const communityTourSteps: StepType[] = [
         <Plus size={32} className="text-orange-500" />
         <p className="text-left">Greet or Connect!</p>
         <p className="text-left">
-          When you're profile is complete, you'll see a Greet button below. Use
-          it to make greeting codes.
+          When you&apos;re profile is complete, you&apos;ll see a Greet button
+          below. Use it to make greeting codes.
         </p>
         <p className="text-left">
           A greeting code is both a QR code people can scan with their camera
@@ -138,7 +139,7 @@ export const communityTourSteps: StepType[] = [
         <p className="text-left">When people scan or tap it:</p>
         <ul className="ml-4 list-outside list-disc space-y-1 text-left">
           <li>It lets them into this private group and connects you</li>
-          <li>Or just connects you if they're already in the group</li>
+          <li>Or just connects you if they&apos;re already in the group</li>
         </ul>
       </div>
     ),
@@ -160,11 +161,7 @@ export const communityTourSteps: StepType[] = [
           Relationships start with names. They grow naturally as you do fun and
           interesting stuff together.
         </p>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setIsOpen(false)}
-        >
+        <Button variant="outline" size="sm" onClick={() => setIsOpen(false)}>
           Close Tour
         </Button>
       </div>

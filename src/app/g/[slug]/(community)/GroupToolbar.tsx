@@ -5,12 +5,8 @@ import { useTour } from '@reactour/tour'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
+
+
 import {
   ArrowUp,
   ArrowDown,
@@ -31,7 +27,6 @@ import {
   DropdownMenuTrigger,
   DropdownMenuCheckboxItem,
 } from '@/components/ui/dropdown-menu'
-import clsx from 'clsx'
 
 // This should be kept in sync with the one in CommunityGroupClient.tsx
 interface GroupPageSettings {

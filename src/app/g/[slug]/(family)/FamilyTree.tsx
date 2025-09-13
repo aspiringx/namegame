@@ -9,7 +9,7 @@ import {
 } from 'react'
 import { X } from 'lucide-react'
 import { useReactFlow } from 'reactflow'
-import ReactFlow, { Background, ReactFlowProvider, Node } from 'reactflow'
+import ReactFlow, { ReactFlowProvider, Node } from 'reactflow'
 import 'reactflow/dist/style.css'
 import { MemberWithUser, UserWithPhotoUrl, FullRelationship } from '@/types'
 import AvatarNode from './AvatarNode'
@@ -17,7 +17,6 @@ import SmoothFlowEdge from './SmoothFlowEdge';
 import { MemberDetailsModal } from './MemberDetailsModal'
 import { useFamilyTree, AvatarNodeData } from './useFamilyTree'
 import { FamilyTreeControls } from './FamilyTreeControls'
-import { useTheme } from 'next-themes'
 
 const nodeTypes = {
   avatar: AvatarNode,

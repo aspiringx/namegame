@@ -2,7 +2,6 @@ import { notFound } from 'next/navigation'
 import { FullRelationship } from '@/types'
 import { getGroup, getFamilyRelationships } from '../data'
 import { FamilyGroupClient } from '../FamilyGroupClient'
-import TreeView from '../TreeView'
 
 interface FamilyTreePageProps {
   params: Promise<{ slug: string }>

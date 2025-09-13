@@ -8,10 +8,8 @@ import {
   ChevronUp,
   CheckCircle,
   X,
-  MoreVertical,
   Edit,
   Trash2,
-  AlertTriangle,
 } from 'lucide-react'
 import {
   AlertDialog,
@@ -22,14 +20,9 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
+
+
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'

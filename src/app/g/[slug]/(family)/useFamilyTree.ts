@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useEffect } from 'react'
-import { Node, Edge, Position, useReactFlow } from 'reactflow'
+import { Node, Edge, useReactFlow } from 'reactflow'
 import {
   User,
   FullRelationship,

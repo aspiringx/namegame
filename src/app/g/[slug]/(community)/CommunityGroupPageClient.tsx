@@ -2,7 +2,6 @@
 
 import { CommunityGroupData } from '@/types'
 import { GuestMessage } from '@/components/GuestMessage'
-import Link from 'next/link'
 import CommunityGroupClient from './CommunityGroupClient'
 import { useState } from 'react'
 import { useSession } from 'next-auth/react'

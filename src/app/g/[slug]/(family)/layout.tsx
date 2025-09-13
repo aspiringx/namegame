@@ -6,8 +6,6 @@ import { notFound } from 'next/navigation'
 import {
   MemberWithUser,
   GroupData,
-  FamilyGroupData,
-  FullRelationship,
 } from '@/types'
 
 export default async function FamilyGroupLayout({

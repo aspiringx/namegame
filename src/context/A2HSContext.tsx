@@ -6,6 +6,7 @@ import {
   useState,
   useEffect,
   ReactNode,
+  useCallback,
 } from 'react'
 import { NAMEGAME_PWA_PROMPT_DISMISSED_KEY } from '@/lib/constants'
 import { useDeviceInfoContext } from '@/context/DeviceInfoContext'
@@ -22,30 +23,30 @@ const A2HSContext = createContext<A2HSContextType | undefined>(undefined)
 export const A2HSProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if ('serviceWorker' in navigator && (window as any).workbox) {
-      (window as any).workbox.register()
+      ;(window as any).workbox.register()
     }
   }, [])
 
   const [isPromptVisible, setIsPromptVisible] = useState(false)
   const deviceInfo = useDeviceInfoContext()
 
-  const showPrompt = () => {
+  const showPrompt = useCallback(() => {
     setIsPromptVisible(true)
-  }
+  }, [])
 
-  const hidePrompt = (userInitiated = true) => {
+  const hidePrompt = useCallback((userInitiated = true) => {
     if (userInitiated) {
       localStorage.setItem(NAMEGAME_PWA_PROMPT_DISMISSED_KEY, 'true')
     }
     setIsPromptVisible(false)
-  }
+  }, [])
 
-  const promptToInstall = async () => {
+  const promptToInstall = useCallback(async () => {
     if (deviceInfo?.pwaPrompt.canInstall) {
       await deviceInfo.pwaPrompt.prompt()
     }
     return Promise.resolve()
-  }
+  }, [deviceInfo?.pwaPrompt])
 
   useEffect(() => {
     if (!deviceInfo?.isReady) return
@@ -64,6 +65,8 @@ export const A2HSProvider = ({ children }: { children: ReactNode }) => {
     deviceInfo?.isReady,
     deviceInfo?.a2hs.canInstall,
     deviceInfo?.pwaPrompt?.isReady,
+    deviceInfo?.isPWAInstalled,
+    showPrompt,
   ])
 
   return (

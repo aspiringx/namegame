@@ -28,11 +28,9 @@ import {
   Eye,
   EyeOff,
   RefreshCw,
-  ShieldAlert,
   ShieldCheck,
   Copy,
   Check,
-  Upload,
   ChevronDown,
   XCircle as XCircleIcon,
   CheckCircle as CheckCircleIcon,
@@ -45,7 +43,6 @@ import {
 } from '@/components/ui/tooltip'
 import { DatePrecision, Gender } from '@/generated/prisma/client'
 import { format } from 'date-fns'
-import Link from 'next/link'
 import UserProfileNextSteps from './UserProfileNextSteps'
 import StickySaveBar from '@/components/ui/StickySaveBar'
 

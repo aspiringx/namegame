@@ -12,7 +12,7 @@ import {
 
 // NOTE: It's important to keep this in sync with the `groupWithMembers` query in
 // `src/app/(main)/admin/groups/[slug]/edit/layout.tsx`.
-const groupWithMembers = Prisma.validator<Prisma.GroupDefaultArgs>()({
+const _groupWithMembers = Prisma.validator<Prisma.GroupDefaultArgs>()({
   include: {
     photos: true,
     members: {
@@ -27,7 +27,7 @@ const groupWithMembers = Prisma.validator<Prisma.GroupDefaultArgs>()({
   },
 })
 
-export type GroupPayload = Prisma.GroupGetPayload<typeof groupWithMembers>
+export type GroupPayload = Prisma.GroupGetPayload<typeof _groupWithMembers>
 
 export type GroupWithMembers = Omit<GroupPayload, 'members'> & {
   members: (Omit<GroupPayload['members'][number], 'user'> & {

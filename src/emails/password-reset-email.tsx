@@ -24,22 +24,25 @@ export const PasswordResetEmail = ({
         Reset Password
       </Button>
       <Text style={text} className="text">
-        If you don't want to change your password or didn't request this, just
-        ignore and delete this message.
+        If you don&apos;t want to change your password or didn&apos;t request
+        this, just ignore and delete this message.
       </Text>
       <Text style={text} className="text">
-        To keep your account secure, please don't forward this email to anyone.
+        To keep your account secure, please don&apos;t forward this email to
+        anyone.
       </Text>
     </Section>
   </EmailTemplate>
 )
 
-export default () => (
+const PasswordResetEmailPreview = () => (
   <PasswordResetEmail
     firstName="Test Joe"
     resetLink="https://example.com/reset/new-password?token=mock_token"
   />
 )
+
+export default PasswordResetEmailPreview
 
 // Helper function to generate plain text version
 export const getPasswordResetEmailText = (

@@ -2,7 +2,6 @@
 
 import { resendVerificationEmail } from '@/app/(main)/me/actions'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import {
   ArrowRight,

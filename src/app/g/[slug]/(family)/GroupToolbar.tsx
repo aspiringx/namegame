@@ -5,12 +5,8 @@ import type { FamilyTreeRef } from './FamilyTree'
 import { Button } from '@/components/ui/button'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
+
+
 import {
   ArrowUp,
   ArrowDown,

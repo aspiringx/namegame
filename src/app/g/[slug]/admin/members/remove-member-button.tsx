@@ -2,7 +2,6 @@
 
 import { removeMember } from './actions'
 import { useState, useTransition } from 'react'
-import { useParams } from 'next/navigation'
 import { Trash2 } from 'lucide-react'
 
 export default function RemoveMemberButton({

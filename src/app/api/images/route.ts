@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server'
-import { auth } from '@/auth'
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3'
 import { env } from 'process'
 

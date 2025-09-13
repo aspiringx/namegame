@@ -1,4 +1,4 @@
-import { PrismaClient, UserUserRelationCategory } from '../src/generated/prisma'
+import { PrismaClient } from '../src/generated/prisma'
 import bcrypt from 'bcrypt'
 
 const prisma = new PrismaClient()

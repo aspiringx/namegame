@@ -1,6 +1,13 @@
 'use client'
 
-import { useState, useEffect, useTransition, useRef, useMemo } from 'react'
+import {
+  useState,
+  useEffect,
+  useTransition,
+  useRef,
+  useMemo,
+  useCallback,
+} from 'react'
 import { X } from 'lucide-react'
 import Modal from './ui/modal'
 import {
@@ -28,7 +35,10 @@ import type {
 } from '@/generated/prisma'
 
 // Determines the correct display label (e.g., 'child' vs 'parent').
-function getRelationLabel(relation: RelationWithUser, mainUserId: string): string {
+function getRelationLabel(
+  relation: RelationWithUser,
+  mainUserId: string,
+): string {
   if (relation.relationType.code === 'parent') {
     return relation.user1Id === mainUserId ? 'child' : 'parent'
   }
@@ -86,7 +96,7 @@ function RelationshipEditor({
   relationTypes,
   groupSlug,
   onUpdate,
-  loggedInUserId,
+  loggedInUserId: _loggedInUserId,
   mainUserId,
 }: {
   relation: RelationWithUser
@@ -104,7 +114,7 @@ function RelationshipEditor({
 
   if (isReadOnly) {
     return (
-      <span className="text-sm text-gray-500 dark:text-gray-400 capitalize">
+      <span className="text-sm text-gray-500 capitalize dark:text-gray-400">
         {currentLabel}
       </span>
     )
@@ -130,13 +140,12 @@ function RelationshipEditor({
     })
   }
 
-
   return (
     <select
       value={currentValue}
       onChange={handleRelationChange}
       disabled={isUpdating}
-      className="rounded-md border border-gray-300 bg-white px-2 py-1 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 disabled:cursor-not-allowed disabled:opacity-50"
+      className="rounded-md border border-gray-300 bg-white px-2 py-1 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
       aria-label={`Edit relationship with ${relation.relatedUser.firstName}`}
     >
       {relationTypes.map((rt) => (
@@ -160,7 +169,6 @@ function RelateModalContent({
   isReadOnly,
   loggedInUserId,
 }: RelateModalProps) {
-  if (!member) return null
   const [isPending, startTransition] = useTransition()
   const [isDeleting, startDeletingTransition] = useTransition()
   const formRef = useRef<HTMLFormElement>(null)
@@ -185,6 +193,84 @@ function RelateModalContent({
   const [showMemberGenderEditor, setShowMemberGenderEditor] = useState(false)
   const [isFamilyExpanded, setIsFamilyExpanded] = useState(true)
   const [isFriendsExpanded, setIsFriendsExpanded] = useState(true)
+
+  const relationTypeOptions = useMemo(() => {
+    const capitalize = (s: string) =>
+      s.charAt(0).toUpperCase() + s.slice(1)
+
+    if (groupType.code === 'community') {
+      const sortedTypes = [...relationTypes].sort((a, b) => {
+        if (a.category === 'other' && b.category !== 'other') return -1
+        if (a.category !== 'other' && b.category === 'other') return 1
+        return a.code.localeCompare(b.code)
+      })
+
+      const otherTypes = sortedTypes.filter(
+        (rt) => rt.category === 'other',
+      )
+      const familyTypes = sortedTypes.filter(
+        (rt) => rt.category === 'family',
+      )
+
+      if (otherTypes.length > 0 && familyTypes.length > 0) {
+        const options: (ComboboxOption | ComboboxOptionDivider)[] = []
+        otherTypes.forEach((rt) => {
+          options.push({
+            value: rt.id.toString(),
+            label: capitalize(rt.code),
+          })
+        })
+        options.push({ isDivider: true })
+        familyTypes.forEach((rt) => {
+          options.push({
+            value: rt.id.toString(),
+            label: capitalize(rt.code),
+          })
+        })
+        return options
+      }
+    }
+
+    if (groupType.code === 'family') {
+      const directFamilyTypes = relationTypes.filter(
+        (rt) => rt.category === 'family',
+      )
+      const otherFamilyTypes = relationTypes.filter(
+        (rt) => rt.category === 'other',
+      )
+
+      const options: (ComboboxOption | ComboboxOptionDivider)[] = []
+
+      if (directFamilyTypes.length > 0) {
+        options.push({ isDivider: true, label: 'Direct Family Relationships' })
+        directFamilyTypes
+          .sort((a, b) => a.code.localeCompare(b.code))
+          .forEach((rt) => {
+            options.push({
+              value: rt.id.toString(),
+              label: capitalize(rt.code),
+            })
+          })
+      }
+
+      if (otherFamilyTypes.length > 0) {
+        options.push({ isDivider: true, label: 'Other Family Relationships' })
+        otherFamilyTypes.forEach((rt) => {
+          options.push({
+            value: rt.id.toString(),
+            label: capitalize(rt.code),
+          })
+        })
+      }
+      return options
+    }
+
+    // Fallback for other group types or if no sorting is needed
+    return relationTypes.map((rt) => ({
+      value: rt.id.toString(),
+      label: capitalize(rt.code),
+    }))
+  }, [relationTypes, groupType.code])
 
   const { familyRelations, friendRelations } = useMemo(() => {
     const family: RelationWithUser[] = []
@@ -221,14 +307,12 @@ function RelateModalContent({
     return { familyRelations: family, friendRelations: friends }
   }, [relations])
 
-  const refreshRelations = async () => {
+  const refreshRelations = useCallback(async () => {
     if (!member) return
     const updatedRelations = await getMemberRelations(member.userId, groupSlug)
     setRelations(updatedRelations)
-
-    // Propagate the update to the parent component
     onRelationshipAdded()
-  }
+  }, [member, groupSlug, onRelationshipAdded])
 
   // Reset state when the user (member) or initial relations change
   useEffect(() => {
@@ -259,7 +343,6 @@ function RelateModalContent({
         fetchedTypes = allTypes // For community, use all types
       }
 
-      // Add virtual child relation. This is not in the DB.
       if (!fetchedTypes.some((t) => t.id === 'child')) {
         fetchedTypes.push({ id: 'child', code: 'child', category: 'family' })
       }
@@ -281,22 +364,19 @@ function RelateModalContent({
   const handleMemberGenderChange = async (newGender: Gender | null) => {
     if (!member) return
 
-    // Optimistically update the UI
     setMemberGender(newGender)
-
     startTransition(async () => {
       const result = await updateUserGender(
         member.userId,
         newGender,
         groupSlug,
-        member.userId, // updatingUserId
+        member.userId,
       )
       if (result.success) {
         toast.success(`${member.user.firstName}'s gender updated.`)
         onRelationshipAdded()
       } else {
         toast.error(result.error || 'Failed to update gender.')
-        // Revert on failure
         setMemberGender(member.user.gender || null)
       }
     })
@@ -313,11 +393,11 @@ function RelateModalContent({
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (!member) return
     const formData = new FormData(event.currentTarget)
 
     startTransition(async () => {
       try {
-        // Handle birth date updates first
         if (memberBirthDate) {
           await updateUserBirthDate(member.userId, memberBirthDate, groupSlug)
         }
@@ -327,36 +407,29 @@ function RelateModalContent({
           await updateUserBirthDate(user2Id, relatedPersonBirthDate, groupSlug)
         }
 
-        // Handle gender update for related person
         const selectedGenderValue = selectedGender
         if (user2Id && selectedGenderValue) {
           await updateUserGender(
             user2Id,
             selectedGenderValue,
             groupSlug,
-            member.userId, // updatingUserId
+            member.userId,
           )
         }
 
-        // Finally, add the relationship
         const result = await addUserRelation(formData, groupSlug)
         if (result.success && result.relation) {
           toast.success('Relationship added!')
-          // The server action now returns the full relationship object, including the relationType and both users.
-          // We determine which user is the 'relatedUser' from the perspective of the current member.
-          const relatedUser = member.userId === result.relation.user1Id ? result.relation.user2 : result.relation.user1;
-
+          const relatedUser =
+            member.userId === result.relation.user1Id
+              ? result.relation.user2
+              : result.relation.user1
           const newRelation: RelationWithUser = {
             ...result.relation,
             relatedUser: relatedUser,
-          };
-
+          }
           setRelations((prev) => [...prev, newRelation])
-
-          // Notify the parent component that an update happened.
           onRelationshipAdded(result.relation)
-
-          // Reset form for potentially adding another relationship.
           resetForm()
         } else {
           toast.error(result.message || 'Failed to add relationship.')
@@ -372,12 +445,10 @@ function RelateModalContent({
 
   const handleDelete = async () => {
     if (!relationToDelete) return
-
     startDeletingTransition(async () => {
       try {
         const result = await deleteUserRelation(relationToDelete.id, groupSlug)
         if (result.success) {
-          // Optimistically remove the relation from the list
           setRelations((prev) =>
             prev.filter((r) => r.id !== relationToDelete.id),
           )
@@ -404,8 +475,10 @@ function RelateModalContent({
 
   const selectedMember = groupMembers.find((m) => m.userId === selectedMemberId)
 
+  if (!member) return null
+
   return (
-        <Modal isOpen={isOpen} onClose={onClose} title="">
+    <Modal isOpen={isOpen} onClose={onClose} title="">
       <button
         type="button"
         className="absolute top-4 right-4 z-10 text-gray-400 hover:text-gray-500 dark:text-gray-400 dark:hover:text-gray-300"
@@ -479,90 +552,11 @@ function RelateModalContent({
                 htmlFor="relationTypeId"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300"
               >
-                {member.user.firstName}'s
+                {member.user.firstName}&apos;s
               </label>
               <Combobox
                 name="relationTypeId"
-                options={useMemo(() => {
-                  const capitalize = (s: string) =>
-                    s.charAt(0).toUpperCase() + s.slice(1)
-
-                  if (groupType.code === 'community') {
-                    const sortedTypes = [...relationTypes].sort((a, b) => {
-                      if (a.category === 'other' && b.category !== 'other')
-                        return -1
-                      if (a.category !== 'other' && b.category === 'other') return 1
-                      return a.code.localeCompare(b.code)
-                    })
-
-                    const otherTypes = sortedTypes.filter(
-                      (rt) => rt.category === 'other',
-                    )
-                    const familyTypes = sortedTypes.filter(
-                      (rt) => rt.category === 'family',
-                    )
-
-                    if (otherTypes.length > 0 && familyTypes.length > 0) {
-                      const options: (ComboboxOption | ComboboxOptionDivider)[] =
-                        []
-                      otherTypes.forEach((rt) => {
-                        options.push({
-                          value: rt.id.toString(),
-                          label: capitalize(rt.code),
-                        })
-                      })
-                      options.push({ isDivider: true })
-                      familyTypes.forEach((rt) => {
-                        options.push({
-                          value: rt.id.toString(),
-                          label: capitalize(rt.code),
-                        })
-                      })
-                      return options
-                    }
-                  }
-
-                  if (groupType.code === 'family') {
-                    const directFamilyTypes = relationTypes.filter(
-                      (rt) => rt.category === 'family',
-                    )
-                    const otherFamilyTypes = relationTypes.filter(
-                      (rt) => rt.category === 'other',
-                    )
-
-                    const options: (ComboboxOption | ComboboxOptionDivider)[] = []
-
-                    if (directFamilyTypes.length > 0) {
-                      options.push({ isDivider: true, label: 'Direct Family Relationships' })
-                      directFamilyTypes
-                        .sort((a, b) => a.code.localeCompare(b.code))
-                        .forEach((rt) => {
-                        options.push({
-                          value: rt.id.toString(),
-                          label: capitalize(rt.code),
-                        })
-                      })
-                    }
-
-                    if (otherFamilyTypes.length > 0) {
-                      options.push({ isDivider: true, label: 'Other Family Relationships' })
-                      otherFamilyTypes.forEach((rt) => {
-                        options.push({
-                          value: rt.id.toString(),
-                          label: capitalize(rt.code),
-                        })
-                      })
-                    }
-                    return options
-
-                  }
-
-                  // Fallback for other group types or if no sorting is needed
-                  return relationTypes.map((rt) => ({
-                    value: rt.id.toString(),
-                    label: capitalize(rt.code),
-                  }))
-                }, [relationTypes, groupType.code])}
+                options={relationTypeOptions}
                 selectedValue={selectedRelationTypeId}
                 onSelectValue={setSelectedRelationTypeId}
                 placeholder="Select a relationship"
@@ -837,32 +831,29 @@ function RelateModalContent({
           title=""
         >
           <div className="p-6">
-            <h3 className="text-lg font-medium leading-6 text-gray-900 dark:text-gray-100">
+            <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100">
               Confirm Deletion
             </h3>
             <div className="mt-4">
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Are you sure you want to delete the relationship with{' '}
-                <strong>
-                  {relationToDelete.relatedUser.firstName}{' '}
-                  {relationToDelete.relatedUser.lastName}
-                </strong>
-                ?
+                Are you sure you want to delete this relationship? This action
+                cannot be undone.
               </p>
             </div>
-            <div className="mt-6 flex justify-end space-x-2">
+            <div className="mt-6 flex justify-end space-x-3">
               <button
                 type="button"
-                className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+                className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
                 onClick={() => setRelationToDelete(null)}
+                disabled={isDeleting}
               >
                 Cancel
               </button>
               <button
                 type="button"
-                disabled={isDeleting}
-                className="inline-flex justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                 onClick={handleDelete}
+                disabled={isDeleting}
               >
                 {isDeleting ? 'Deleting...' : 'Delete'}
               </button>

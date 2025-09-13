@@ -2,7 +2,7 @@ import 'server-only'
 import { cache } from 'react'
 import prisma from '@/lib/prisma'
 import { getPublicUrl } from '@/lib/storage'
-import { CommunityGroupData, GroupData, MemberWithUser } from '@/types'
+import { CommunityGroupData, MemberWithUser } from '@/types'
 import { auth } from '@/auth'
 
 // Fetches community group data

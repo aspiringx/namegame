@@ -2,11 +2,10 @@ import prisma from '@/lib/prisma'
 import { notFound } from 'next/navigation'
 import { getPublicUrl } from '@/lib/storage'
 import { auth } from '@/auth'
-import { Prisma } from '@/generated/prisma'
 import { getCodeTable } from '@/lib/codes'
 import Breadcrumbs from '@/components/Breadcrumbs'
 import EditGroupNav from './edit-group-nav'
-import type { GroupPayload, GroupWithMembers } from '@/types/index'
+import type { GroupPayload } from '@/types/index'
 
 export default async function EditGroupLayout(props: {
   children: React.ReactNode

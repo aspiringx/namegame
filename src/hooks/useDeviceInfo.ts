@@ -2,14 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { Session } from 'next-auth'
-import { NAMEGAME_PWA_PROMPT_DISMISSED_KEY } from '@/lib/constants'
-
-// Re-defining this interface locally to avoid dependency on the old hook.
-interface RelatedApp {
-  platform: string
-  url: string
-  id?: string
-}
 
 interface IBeforeInstallPromptEvent extends Event {
   readonly platforms: string[]
@@ -267,18 +259,7 @@ function getA2hsConfig(os: string, browser: string) {
   return rule || A2HS_FALLBACK_RULE
 }
 
-export function useDeviceInfo(session: Session | null): DeviceInfo {
-  // HACK: This is a hack to get around the fact that BeforeInstallPromptEvent is not in the default TS lib
-  // See https://developer.mozilla.org/en-US/docs/Web/API/BeforeInstallPromptEvent
-  interface BeforeInstallPromptEvent extends Event {
-    readonly platforms: string[]
-    readonly userChoice: Promise<{
-      outcome: 'accepted' | 'dismissed'
-      platform: string
-    }>
-    prompt(): Promise<void>
-  }
-
+export function useDeviceInfo(_session: Session | null): DeviceInfo {
   const [deviceInfo, setDeviceInfo] = useState<DeviceInfo>({
     isReady: false,
     os: 'unknown',
@@ -335,8 +316,6 @@ export function useDeviceInfo(session: Session | null): DeviceInfo {
       window.matchMedia('(display-mode: standalone)').matches ||
       (window.navigator as any).standalone === true
     const wasInstalled = localStorage.getItem('isPWAInstalled') === 'true'
-    const promptDismissed =
-      localStorage.getItem(NAMEGAME_PWA_PROMPT_DISMISSED_KEY) === 'true'
 
     const initialInfo: DeviceInfo = {
       isReady: false,

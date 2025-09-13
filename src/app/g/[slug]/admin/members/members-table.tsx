@@ -3,7 +3,6 @@
 import { useState, useTransition } from 'react'
 import type { GroupUser, GroupUserRole, User } from '@/generated/prisma'
 import Image from 'next/image'
-import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { updateMemberRole } from './actions'
 import RemoveMemberButton from './remove-member-button'
@@ -15,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { KeyRound, Pencil, Check, X, Trash2 } from 'lucide-react'
+import { KeyRound, Pencil, Check, X } from 'lucide-react'
 
 type GroupUserWithRelations = GroupUser & {
   user: User & { photoUrl: string }

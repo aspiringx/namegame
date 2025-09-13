@@ -9,7 +9,7 @@ export const useTourManagement = (tourId: string) => {
   const startTour = useCallback(() => {
     setCurrentStep(0)
     setIsOpen(true)
-  }, [setIsOpen])
+  }, [setIsOpen, setCurrentStep])
 
   useEffect(() => {
     const tourSeenKey = getTourSeenKey(tourId)

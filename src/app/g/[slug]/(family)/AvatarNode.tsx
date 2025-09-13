@@ -3,7 +3,7 @@
 import React, { memo, useState, useEffect } from 'react'
 import { Handle, Position, NodeProps } from 'reactflow'
 import Image from 'next/image'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Avatar } from '@/components/ui/avatar'
 import { cn, truncate } from '@/lib/utils'
 import { AvatarNodeData } from './useFamilyTree'
 import { ChevronUp, ChevronDown, ChevronLeft } from 'lucide-react'

@@ -9,7 +9,6 @@ import {
   ZoomOut,
   Expand,
   Maximize,
-  HelpCircle,
   SlidersHorizontal,
 } from 'lucide-react'
 

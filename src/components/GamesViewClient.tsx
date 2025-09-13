@@ -3,7 +3,6 @@
 import type { MemberWithUser } from '@/types'
 import GamesView from './GamesView'
 import { useGroup } from '@/components/GroupProvider'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 
 interface GamesViewClientProps {
   members: MemberWithUser[]

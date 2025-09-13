@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { Button } from './ui/button'
 import Modal from './ui/modal'
-import { Brain, HelpCircle, X } from 'lucide-react'
+import { HelpCircle, X } from 'lucide-react'
 import Image from 'next/image'
 
 export function GuestMessage({
