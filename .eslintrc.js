@@ -1,6 +1,7 @@
 module.exports = {
   extends: ['next/core-web-vitals', 'prettier'],
   plugins: ['unused-imports'],
+  ignorePatterns: ['src/generated/**'],
   rules: {
     'unused-imports/no-unused-imports': 'error',
     'unused-imports/no-unused-vars': [
