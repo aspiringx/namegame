@@ -134,24 +134,31 @@ export async function createUser(
           getCodeTable('entityType'),
         ])
 
-        let photoUrl: string
         if (photo && photo.size > 0) {
           console.log('Photo provided, uploading...')
-          photoUrl = await uploadFile(photo, 'user-photos', newUser.id)
+          const photoKeys = await uploadFile(photo, 'user-photos', newUser.id)
+          await tx.photo.create({
+            data: {
+              ...photoKeys,
+              entityId: newUser.id,
+              typeId: photoTypes.primary.id,
+              entityTypeId: entityTypes.user.id,
+              userId: creatorId,
+            },
+          })
         } else {
           console.log('No photo provided, generating default avatar...')
-          photoUrl = `https://api.dicebear.com/8.x/personas/png?seed=${newUser.id}`
+          const photoUrl = `https://api.dicebear.com/8.x/personas/png?seed=${newUser.id}`
+          await tx.photo.create({
+            data: {
+              url: photoUrl,
+              entityId: newUser.id,
+              typeId: photoTypes.primary.id,
+              entityTypeId: entityTypes.user.id,
+              userId: creatorId,
+            },
+          })
         }
-
-        await tx.photo.create({
-          data: {
-            url: photoUrl,
-            entityId: newUser.id,
-            typeId: photoTypes.primary.id,
-            entityTypeId: entityTypes.user.id,
-            userId: creatorId,
-          },
-        })
 
         console.log('Photo record created successfully.')
       } catch (photoError) {

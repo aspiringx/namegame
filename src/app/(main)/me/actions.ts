@@ -4,11 +4,15 @@ import { z } from 'zod'
 import bcrypt from 'bcrypt'
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
-import { DatePrecision } from '@/generated/prisma/client'
 import { revalidatePath, revalidateTag } from 'next/cache'
 import { getCodeTable } from '@/lib/codes'
 import { parseDateAndDeterminePrecision } from '@/lib/utils'
-import { uploadFile, deleteFile, getPublicUrl } from '@/lib/storage'
+import {
+  uploadFile,
+  deleteFile,
+  getPublicUrl,
+  UploadedUrls,
+} from '@/lib/storage'
 import { sendVerificationEmail } from '@/lib/mail'
 import { disposableEmailDomains } from '@/lib/disposable-email-domains'
 
@@ -104,6 +108,10 @@ export async function getUserUpdateRequirements(): Promise<{
   return { passwordRequired, photoRequired }
 }
 
+// Update the user.
+// FYI: We call this with useActionState in the UserProfileForm component, which
+// requires prevState, but we don't use it since we load the user from the
+// database.
 export async function updateUserProfile(
   prevState: State,
   formData: FormData,
@@ -137,7 +145,6 @@ export async function updateUserProfile(
   }
 
   const validatedFields = UserProfileSchema.safeParse({
-    // username: formData.get('username'),
     firstName: formData.get('firstName'),
     lastName: formData.get('lastName'),
     email: emailFromForm,
@@ -150,20 +157,16 @@ export async function updateUserProfile(
   })
 
   if (!validatedFields.success) {
-    const errorPayload = {
-      ...validatedFields.error.flatten().fieldErrors,
-    }
-
-    // The server action returns a generic error message, but the client can use the detailed errors.
+    // The server action returns a generic error message, but the client can
+    // use the detailed errors.
     return {
       success: false,
       error: 'Invalid data provided. Please check the form and try again.',
-      errors: errorPayload,
+      errors: validatedFields.error.flatten().fieldErrors,
       message: null,
     }
   }
 
-  // const { username, firstName, lastName, photo, password } = validatedFields.data;
   const {
     firstName,
     lastName,
@@ -177,7 +180,7 @@ export async function updateUserProfile(
   } = validatedFields.data
   const userId = session.user.id
 
-  let newPhotoKey: string | null = null
+  let newPhotoKeys: UploadedUrls | null = null
   let updatedUser
   let emailChanged = false
 
@@ -196,14 +199,9 @@ export async function updateUserProfile(
     }
 
     // Handle photo upload first
-    let _photoUrlForCheck: string | null = null
-
     if (photo && photo.size > 0) {
-      newPhotoKey = await uploadFile(photo, 'user-photos', userId)
+      newPhotoKeys = await uploadFile(photo, 'user-photos', userId)
     }
-
-    let _birthDateObj: Date | undefined
-    let _birthDatePrecision: DatePrecision | undefined
 
     const dataToUpdate: any = {
       firstName,
@@ -236,14 +234,10 @@ export async function updateUserProfile(
     const lowercasedEmail = email ? email.toLowerCase() : null
 
     // Handle cases where email is changed or removed
-    if (lowercasedEmail !== user.email) {
+    if (lowercasedEmail !== user.email?.toLowerCase()) {
       dataToUpdate.email = lowercasedEmail
       dataToUpdate.emailVerified = null // Always nullify verification on change/removal
       emailChanged = true
-
-      if (user.username === user.email) {
-        dataToUpdate.username = lowercasedEmail
-      }
 
       // Check for existing user only if a new email is provided
       if (lowercasedEmail) {
@@ -291,17 +285,14 @@ export async function updateUserProfile(
       dataToUpdate.password = await bcrypt.hash(password, 10)
     }
 
-    const {
-      firstName: formFirstName,
-      lastName: formLastName,
-      email: _formEmail,
-    } = validatedFields.data
+    const { firstName: formFirstName, lastName: formLastName } =
+      validatedFields.data
 
     const profileIsNowComplete = Boolean(
       formFirstName &&
         formLastName &&
         user.emailVerified &&
-        (newPhotoKey || user.photos.length > 0),
+        (newPhotoKeys || user.photos.length > 0),
     )
 
     updatedUser = await prisma.user.update({
@@ -309,43 +300,41 @@ export async function updateUserProfile(
       data: dataToUpdate,
     })
 
-    // Now handle photo update in the database after user is updated
-    if (newPhotoKey) {
-      const photoTypes = await getCodeTable('photoType')
+    if (newPhotoKeys) {
+      const [photoTypes, entityTypes] = await Promise.all([
+        getCodeTable('photoType'),
+        getCodeTable('entityType'),
+      ])
       const primaryPhotoTypeId = photoTypes.primary.id
+      const userEntityTypeId = entityTypes.user.id
 
-      if (primaryPhotoTypeId) {
-        const entityTypes = await getCodeTable('entityType')
-        const userEntityTypeId = entityTypes.user.id
+      if (primaryPhotoTypeId && userEntityTypeId) {
+        const existingPhoto = await prisma.photo.findFirst({
+          where: {
+            entityId: user.id,
+            entityTypeId: userEntityTypeId,
+            typeId: primaryPhotoTypeId,
+          },
+        })
 
-        if (userEntityTypeId) {
-          const existingPhoto = await prisma.photo.findFirst({
-            where: {
-              entityId: user.id,
+        if (existingPhoto) {
+          await prisma.photo.update({
+            where: { id: existingPhoto.id },
+            data: { ...newPhotoKeys },
+          })
+          if (existingPhoto.url) {
+            await deleteFile(existingPhoto.url)
+          }
+        } else {
+          await prisma.photo.create({
+            data: {
               entityTypeId: userEntityTypeId,
+              entityId: user.id,
               typeId: primaryPhotoTypeId,
+              userId: user.id,
+              ...newPhotoKeys,
             },
           })
-
-          if (existingPhoto) {
-            await prisma.photo.update({
-              where: { id: existingPhoto.id },
-              data: { url: newPhotoKey },
-            })
-            if (existingPhoto.url) {
-              await deleteFile(existingPhoto.url)
-            }
-          } else {
-            await prisma.photo.create({
-              data: {
-                url: newPhotoKey,
-                entityTypeId: entityTypes.user.id,
-                entityId: user.id,
-                typeId: photoTypes.primary.id,
-                userId: user.id,
-              },
-            })
-          }
         }
       }
     }
@@ -409,21 +398,18 @@ export async function updateUserProfile(
   }
 
   let redirectUrl: string | null = null
-  // if (userGroups.length === 1 && userGroups[0].group.slug) {
-  //   redirectUrl = `/g/${userGroups[0].group.slug}`;
-  // }
 
-  let _cacheBustedUrl: string | null = null
-  if (newPhotoKey) {
-    const newPhotoPublicUrl = await getPublicUrl(newPhotoKey)
-    _cacheBustedUrl = `${newPhotoPublicUrl}?v=${Date.now()}`
+  let newPhotoPublicUrl: string | null = null
+  if (newPhotoKeys) {
+    const publicUrl = await getPublicUrl(newPhotoKeys.url)
+    newPhotoPublicUrl = `${publicUrl}?v=${Date.now()}`
   }
 
   return {
     success: true,
     message: 'Profile updated successfully!',
     error: null,
-    newPhotoUrl: newPhotoKey ? await getPublicUrl(newPhotoKey) : null,
+    newPhotoUrl: newPhotoPublicUrl,
     newFirstName: updatedUser.firstName,
     redirectUrl,
     emailUpdated: emailChanged,

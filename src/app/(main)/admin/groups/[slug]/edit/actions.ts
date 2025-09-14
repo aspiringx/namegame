@@ -77,7 +77,7 @@ export async function updateGroup(formData: FormData) {
         },
       })
 
-      const logoPath = await uploadFile(
+      const logoPaths = await uploadFile(
         logo,
         'groups',
         updatedGroup.id.toString(),
@@ -87,7 +87,7 @@ export async function updateGroup(formData: FormData) {
         await prisma.photo.update({
           where: { id: existingLogo.id },
           data: {
-            url: logoPath,
+            ...logoPaths,
             userId: userId,
           },
         })
@@ -96,7 +96,7 @@ export async function updateGroup(formData: FormData) {
       } else {
         await prisma.photo.create({
           data: {
-            url: logoPath,
+            ...logoPaths,
             typeId: logoPhotoType.id,
             entityTypeId: groupEntityType.id,
             entityId: updatedGroup.id.toString(),

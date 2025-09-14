@@ -252,8 +252,8 @@ export async function updateUser(
     // Handle photo upload if a new photo was provided
     if (photo && photo.size > 0) {
       // Upload the new photo to storage first
-      const newPhotoKey = await uploadFile(photo, 'user-photos', id)
-      photoUrl = await getPublicUrl(newPhotoKey)
+      const newPhotoKeys = await uploadFile(photo, 'user-photos', id)
+      photoUrl = await getPublicUrl(newPhotoKeys.url)
 
       // Check if a primary photo record already exists for the user
       const existingPhoto = await prisma.photo.findFirst({
@@ -268,7 +268,7 @@ export async function updateUser(
         // If it exists, update the record with the new URL
         await prisma.photo.update({
           where: { id: existingPhoto.id },
-          data: { url: newPhotoKey, userId: updaterId }, // Update URL and who updated it
+          data: { ...newPhotoKeys, userId: updaterId }, // Update URLs and who updated it
         })
         // After successfully updating the DB, delete the old file from storage
         if (existingPhoto.url) {
@@ -278,7 +278,7 @@ export async function updateUser(
         // If no primary photo exists, create a new one
         await prisma.photo.create({
           data: {
-            url: newPhotoKey,
+            ...newPhotoKeys,
             typeId: primaryPhotoTypeId,
             entityTypeId: userEntityTypeId,
             entityId: id,

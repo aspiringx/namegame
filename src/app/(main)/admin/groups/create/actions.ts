@@ -154,7 +154,7 @@ export async function createGroup(
         const buffer = Buffer.from(base64Data, 'base64')
         const file = new File([buffer], 'logo.jpg', { type: mimeType })
 
-        const logoPath = await uploadFile(
+        const logoPaths = await uploadFile(
           file,
           'groups',
           newGroup.id.toString(),
@@ -162,7 +162,7 @@ export async function createGroup(
 
         await prisma.photo.create({
           data: {
-            url: logoPath,
+            ...logoPaths,
             entityId: newGroup.id.toString(),
             entityTypeId: groupEntityType.id,
             typeId: logoPhotoType.id,

@@ -185,7 +185,7 @@ export async function createManagedUser(
         },
       })
 
-      const photoKey = await uploadFile(photo, 'user-photos', newUser.id)
+      const photoKeys = await uploadFile(photo, 'user-photos', newUser.id)
 
       await tx.managedUser.create({
         data: {
@@ -201,7 +201,7 @@ export async function createManagedUser(
 
       await tx.photo.create({
         data: {
-          url: photoKey,
+          ...photoKeys,
           entityId: newUser.id,
           entityTypeId: entityTypes.user.id,
           typeId: photoTypes.primary.id,
@@ -452,10 +452,10 @@ export async function updateManagedUser(
           await tx.photo.delete({ where: { id: existingPrimaryPhoto.id } })
         }
 
-        const newPhotoKey = await uploadFile(newPhoto, 'user-photos', userId)
+        const newPhotoKeys = await uploadFile(newPhoto, 'user-photos', userId)
         await tx.photo.create({
           data: {
-            url: newPhotoKey,
+            ...newPhotoKeys,
             entityTypeId: entityTypes.user.id,
             entityId: userId,
             typeId: photoTypes.primary.id,

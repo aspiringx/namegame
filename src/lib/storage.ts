@@ -52,7 +52,7 @@ const IMAGE_SIZES = {
   large: { width: 1200, height: 1200, quality: 90 },
 } as const
 
-interface UploadedUrls {
+export interface UploadedUrls {
   url: string
   url_thumb?: string
   url_small?: string
@@ -71,7 +71,7 @@ async function uploadToStorage(key: string, body: Buffer, contentType: string) {
     })
     await s3Client.send(command)
   } else {
-    // For local storage, key is expected to be 'prefix/filename'
+    // Key is expected as 'prefix/filename'
     const [prefix, filename] = key.split('/')
     const uploadsDir = path.join(process.cwd(), 'public/uploads', prefix)
     const filepath = path.join(uploadsDir, filename)
@@ -135,20 +135,22 @@ export async function uploadFile(
     },
   )
 
-  // 3. Upload original and resized versions concurrently
-  await Promise.all([
+  // 3. Concurrently execute all uploads and gather results
+  const allUploads = await Promise.allSettled([
     uploadToStorage(originalKey, originalBuffer, file.type),
-    ...uploadPromises.map((p) =>
-      p.catch((e) => console.error('Resize failed', e)),
-    ), // Handle individual resize failures
+    ...uploadPromises,
   ])
 
-  const resizedResults = await Promise.all(uploadPromises)
+  // 4. Construct the result object from successful uploads
+  const uploadedUrls: UploadedUrls = { url: originalKey } // Assume original always works for now
 
-  // 4. Construct the result object
-  const uploadedUrls: UploadedUrls = { url: originalKey }
-  resizedResults.forEach(({ size, key }) => {
-    uploadedUrls[size as keyof UploadedUrls] = key
+  allUploads.slice(1).forEach((result) => {
+    if (result.status === 'fulfilled' && result.value) {
+      const { size, key } = result.value
+      uploadedUrls[size as keyof UploadedUrls] = key
+    } else if (result.status === 'rejected') {
+      console.error('A resize operation failed:', result.reason)
+    }
   })
 
   // For local dev, we need to adjust the keys to be valid paths
