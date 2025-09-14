@@ -42,6 +42,10 @@ registerRoute(
         statuses: [0, 200], // Cache opaque and successful responses
       }),
     ],
+    fetchOptions: {
+      mode: 'cors',
+      credentials: 'omit',
+    },
   }),
 )
 
@@ -61,10 +65,15 @@ self.addEventListener('message', (event) => {
     )
   } else if (event.data && event.data.type === 'CACHE_IMAGES') {
     const { imageUrls } = event.data.payload
+    const filteredUrls = imageUrls.filter(
+      (url: string) =>
+        url.includes('.thumb.webp') || url.includes('.small.webp'),
+    )
+
     event.waitUntil(
       caches.open('images').then((cache) => {
         return Promise.all(
-          imageUrls.map((url: string) => {
+          filteredUrls.map((url: string) => {
             return cache.add(url).catch((error) => {
               console.error(`Failed to cache image: ${url}`, error)
             })

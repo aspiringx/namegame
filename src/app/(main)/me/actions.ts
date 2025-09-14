@@ -85,6 +85,23 @@ export async function getUserUpdateRequirements(): Promise<{
       entityTypeId: entityTypes.user.id,
       typeId: photoTypes.primary.id,
     },
+    select: {
+      id: true,
+      url: true,
+      url_thumb: true,
+      url_small: true,
+      url_medium: true,
+      url_large: true,
+      entityId: true,
+      entityTypeId: true,
+      typeId: true,
+      isBlocked: true,
+      uploadedAt: true,
+      createdAt: true,
+      deletedAt: true,
+      userId: true,
+      groupId: true,
+    },
   })
 
   let passwordRequired = false

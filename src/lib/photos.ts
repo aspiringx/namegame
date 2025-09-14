@@ -61,7 +61,7 @@ async function processLegacyPhoto(photo: Photo): Promise<Photo> {
 
 export async function getPhotoUrl(
   photo: Photo | null,
-  preferredSize: 'thumb' | 'small' | 'medium' | 'large' | 'original' = 'original',
+  preferredSize: 'thumb' | 'small' | 'medium' | 'large' | 'original' = 'small',
 ): Promise<string> {
   if (!photo) {
     return '/images/default-avatar.png'

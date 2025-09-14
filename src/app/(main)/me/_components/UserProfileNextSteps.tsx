@@ -25,11 +25,6 @@ import {
   NAMEGAME_PWA_INSTALL_STEP_DISMISSED_KEY,
 } from '@/lib/constants'
 
-type ValidationRequirements = {
-  passwordRequired: boolean
-  photoRequired: boolean
-}
-
 type ProfileCompletionStep = {
   id: string
   isComplete: boolean
@@ -40,15 +35,17 @@ type ProfileCompletionStep = {
 
 type UserProfileNextStepsProps = {
   user: UserProfile
-  validation: ValidationRequirements
+  passwordRequired: boolean
+  photoRequired: boolean
   isInFamilyGroup: boolean
   setIsOptionalOpen?: Dispatch<SetStateAction<boolean>>
-  isLoading?: boolean
+  isLoading: boolean
 }
 
 export default function UserProfileNextSteps({
   user,
-  validation,
+  passwordRequired,
+  photoRequired,
   isInFamilyGroup,
   setIsOptionalOpen,
   isLoading,
@@ -78,15 +75,14 @@ export default function UserProfileNextSteps({
     },
     {
       id: 'password',
-      isComplete: !validation.passwordRequired,
+      isComplete: !passwordRequired,
       title: 'Password',
       description: 'A new password is required to secure your account.',
       href: '#password',
     },
     {
       id: 'photo',
-      isComplete:
-        !!user.photos?.[0]?.url && !user.photos[0].url.includes('dicebear.com'),
+      isComplete: !photoRequired,
       title: 'Profile Photo',
       description: 'A real profile photo is required.',
       href: '#profile-photo-section',
@@ -119,13 +115,10 @@ export default function UserProfileNextSteps({
   const [, setIsResending] = useState(false)
 
   useEffect(() => {
-    // This now correctly sets the initial and subsequent collapsed state on the client side,
-    // avoiding a hydration mismatch.
     const shouldBeCollapsed =
       !incompleteRequired.length && !needsEmailVerification
     setIsCollapsed(shouldBeCollapsed)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, validation]) // Rerunning only when user/validation changes is correct.
+  }, [incompleteRequired.length, needsEmailVerification])
 
   const [isInstallStepDismissed, setIsInstallStepDismissed] = useState(true) // Default to dismissed to avoid flash
   const deviceInfo = useDeviceInfoContext()

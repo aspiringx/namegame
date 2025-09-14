@@ -501,7 +501,8 @@ export default function UserProfileForm({
       <div className="mb-6">
         <UserProfileNextSteps
           user={user}
-          validation={validation}
+          passwordRequired={validation.passwordRequired}
+          photoRequired={validation.photoRequired}
           isInFamilyGroup={isInFamilyGroup}
           setIsOptionalOpen={setIsOptionalOpen}
           isLoading={isLoadingRequirements}
@@ -781,7 +782,6 @@ export default function UserProfileForm({
             Saving an email is your consent to receive messages.
           </p>
         </div>
-
         <div id="password" className="scroll-mt-24">
           <label
             htmlFor="password"
