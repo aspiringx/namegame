@@ -2,7 +2,7 @@
 
 import { z } from 'zod'
 import prisma from '@/lib/prisma'
-import { deleteFile } from '@/lib/storage'
+import { deleteFile } from '@/lib/actions/storage'
 import { getCodeTable } from '@/lib/codes'
 import { revalidatePath } from 'next/cache'
 import { auth } from '@/auth'

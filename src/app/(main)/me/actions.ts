@@ -7,12 +7,8 @@ import prisma from '@/lib/prisma'
 import { revalidatePath, revalidateTag } from 'next/cache'
 import { getCodeTable } from '@/lib/codes'
 import { parseDateAndDeterminePrecision } from '@/lib/utils'
-import {
-  uploadFile,
-  deleteFile,
-  getPublicUrl,
-  UploadedUrls,
-} from '@/lib/storage'
+import { getPublicUrl } from '@/lib/storage'
+import { uploadFile, deleteFile, UploadedUrls } from '@/lib/actions/storage'
 import { sendVerificationEmail } from '@/lib/mail'
 import { disposableEmailDomains } from '@/lib/disposable-email-domains'
 

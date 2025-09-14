@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { z } from 'zod'
 
-import { deleteFile, uploadFile } from '@/lib/storage'
+import { deleteFile, uploadFile } from '@/lib/actions/storage'
 import { auth } from '@/auth'
 import { getCodeTable } from '@/lib/codes'
 
