@@ -65,26 +65,24 @@ export default async function UsersTable({
     select: {
       entityId: true,
       url: true,
+      url_thumb: true,
     },
   })
 
-  const photoUrlMap = new Map<string, string>()
+  const photoMap = new Map<string, { url: string; url_thumb: string | null }>()
   for (const photo of photos) {
     if (photo.entityId) {
-      photoUrlMap.set(photo.entityId, photo.url)
+      photoMap.set(photo.entityId, photo)
     }
   }
 
   const usersWithPhotos = await Promise.all(
     users.map(async (user) => {
-      const rawUrl = photoUrlMap.get(user.id)
+      const photo = photoMap.get(user.id)
+      const preferredUrl = photo?.url_thumb ?? photo?.url
       let photoUrl: string
-      if (rawUrl) {
-        if (rawUrl.startsWith('http')) {
-          photoUrl = rawUrl
-        } else {
-          photoUrl = await getPublicUrl(rawUrl)
-        }
+      if (preferredUrl) {
+        photoUrl = await getPublicUrl(preferredUrl)
       } else {
         photoUrl = '/images/default-avatar.png'
       }

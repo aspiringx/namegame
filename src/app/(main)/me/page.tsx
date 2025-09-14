@@ -66,12 +66,21 @@ export default async function UserProfilePage(props: {
     (mem) => mem.group.groupTypeId === groupTypes.family.id,
   )
 
-  const userWithPublicUrls = {
+    const userWithPublicUrls = {
     ...user,
-    image: primaryPhoto ? await getPublicUrl(primaryPhoto.url) : null,
     emailVerified: user.emailVerified ? user.emailVerified.toISOString() : null,
     birthDate: user.birthDate ? user.birthDate.toISOString() : null,
-    photos: primaryPhoto ? [{ url: await getPublicUrl(primaryPhoto.url) }] : [],
+    primaryPhoto: primaryPhoto
+      ? {
+          url: await getPublicUrl(primaryPhoto.url),
+          url_thumb: primaryPhoto.url_thumb
+            ? await getPublicUrl(primaryPhoto.url_thumb)
+            : null,
+          url_small: primaryPhoto.url_small
+            ? await getPublicUrl(primaryPhoto.url_small)
+            : null,
+        }
+      : null,
   }
 
   return (

@@ -34,11 +34,15 @@ export default async function EditUserPage(props: {
       entityTypeId: entityTypes.user.id,
       typeId: photoTypes.primary.id,
     },
+    select: { url: true, url_thumb: true },
   })
 
   const hasPhoto = !!primaryPhoto
-  const photoUrl = primaryPhoto?.url
-  const publicPhotoUrl = await getPublicUrl(photoUrl)
+  let publicPhotoUrl = null
+  if (primaryPhoto) {
+    const urlToFetch = primaryPhoto.url_thumb ?? primaryPhoto.url
+    publicPhotoUrl = await getPublicUrl(urlToFetch)
+  }
 
   const breadcrumbs = [
     { label: 'Users', href: '/admin/users' },
@@ -53,7 +57,11 @@ export default async function EditUserPage(props: {
     <div className="mx-auto max-w-2xl space-y-6 p-8 dark:bg-gray-900">
       <Breadcrumbs breadcrumbs={breadcrumbs} />
       <h1 className="mb-6 text-2xl font-bold dark:text-white">Edit User</h1>
-      <EditUserForm user={user} photoUrl={publicPhotoUrl} hasPhoto={hasPhoto} />
+      <EditUserForm
+        user={user}
+        photoUrl={publicPhotoUrl || '/images/default-avatar.png'}
+        hasPhoto={hasPhoto}
+      />
     </div>
   )
 }

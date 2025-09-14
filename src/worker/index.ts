@@ -26,7 +26,10 @@ precacheAndRoute(manifest)
 
 // Cache images with a CacheFirst strategy
 registerRoute(
-  ({ request }) => request.destination === 'image',
+  ({ request, url }) =>
+    request.destination === 'image' &&
+    (url.pathname.includes('.thumb.webp') ||
+      url.pathname.includes('.small.webp')),
   new CacheFirst({
     cacheName: 'images',
     plugins: [
@@ -38,7 +41,20 @@ registerRoute(
 )
 
 self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'CACHE_IMAGES') {
+  if (event.data && event.data.type === 'DELETE_IMAGES') {
+    const { imageUrls } = event.data.payload
+    event.waitUntil(
+      caches.open('images').then((cache) => {
+        return Promise.all(
+          imageUrls.map((url: string) => {
+            return cache.delete(url).catch((error) => {
+              console.error(`Failed to delete cached image: ${url}`, error)
+            })
+          }),
+        )
+      }),
+    )
+  } else if (event.data && event.data.type === 'CACHE_IMAGES') {
     const { imageUrls } = event.data.payload
     event.waitUntil(
       caches.open('images').then((cache) => {

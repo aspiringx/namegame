@@ -25,7 +25,7 @@ import { Combobox } from '@/components/ui/combobox'
 import Modal from '@/components/ui/modal'
 
 export type ManagedUserWithPhoto = User & {
-  photos: Photo[]
+  primaryPhoto: Photo | null
   managedStatus: ManagedStatus
 }
 
@@ -42,7 +42,7 @@ const getManagedStatusText = (status: ManagedStatus | null) => {
 
 export type UsersListProps = {
   managedUsers: ManagedUserWithPhoto[]
-  usersManagingMe: (User & { photos: Photo[] })[]
+  usersManagingMe: (User & { primaryPhoto: Photo | null })[]
   potentialManagers: User[]
   successMessage?: string | null
 }
@@ -225,7 +225,7 @@ export default function UsersList({
                   <li key={user.id} className="flex items-center gap-x-6 py-5">
                     <Image
                       className="h-12 w-12 flex-none rounded-full bg-gray-50 dark:bg-gray-800"
-                      src={user.photos[0]?.url || '/images/default-avatar.png'}
+                      src={user.primaryPhoto?.url_thumb || user.primaryPhoto?.url || '/images/default-avatar.png'}
                       alt=""
                       width={48}
                       height={48}

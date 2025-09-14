@@ -72,7 +72,11 @@ export type UserProfile = {
   lastName: string | null
   email: string | null
   emailVerified: string | null // Pass date as ISO string
-  photos: { url: string }[]
+  primaryPhoto: {
+    url: string
+    url_thumb: string | null
+    url_small: string | null
+  } | null
   gender: 'male' | 'female' | 'non_binary' | null
   birthDate: string | null
   birthDatePrecision: DatePrecision | null
@@ -92,7 +96,7 @@ export default function UserProfileForm({
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const [previewUrl, setPreviewUrl] = useState<string | null>(
-    user.photos[0]?.url ?? null,
+    user.primaryPhoto?.url_thumb ?? user.primaryPhoto?.url ?? null,
   )
   const [firstName, setFirstName] = useState(user.firstName || '')
   const [lastName, setLastName] = useState(user.lastName || '')
@@ -124,6 +128,18 @@ export default function UserProfileForm({
   const [isConfirmModalOpen, setConfirmModalOpen] = useState(false)
   const [isSubmittingAfterConfirm, setIsSubmittingAfterConfirm] =
     useState(false)
+
+  const deleteImagesFromCache = (urls: (string | null)[]) => {
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      const validUrls = urls.filter((url): url is string => !!url)
+      if (validUrls.length > 0) {
+        navigator.serviceWorker.controller.postMessage({
+          type: 'DELETE_IMAGES',
+          payload: { imageUrls: validUrls },
+        })
+      }
+    }
+  }
   const [isEmailValid, setIsEmailValid] = useState(
     !user.email || z.string().email().safeParse(user.email).success,
   )
@@ -194,7 +210,9 @@ export default function UserProfileForm({
     )
     setBirthPlace(user.birthPlace || '')
     setPassword('')
-    setPreviewUrl(user.photos[0]?.url ?? null)
+    setPreviewUrl(
+      user.primaryPhoto?.url_thumb ?? user.primaryPhoto?.url ?? null,
+    )
     setFileSelected(false)
     setIsEmailValid(true)
     setPasswordError(null)
@@ -206,7 +224,7 @@ export default function UserProfileForm({
     user.birthDate,
     user.birthDatePrecision,
     user.birthPlace,
-    user.photos,
+    user.primaryPhoto,
   ])
 
   useEffect(() => {
@@ -298,7 +316,15 @@ export default function UserProfileForm({
       setShowSuccessMessage(true)
 
       if (state.newPhotoUrl) {
-        setPreviewUrl(state.newPhotoUrl)
+        const oldPhoto = user.primaryPhoto
+        if (oldPhoto) {
+          deleteImagesFromCache([
+            oldPhoto.url,
+            oldPhoto.url_thumb,
+            oldPhoto.url_small,
+          ])
+        }
+        setPreviewUrl(state.newPhotoUrl) // This is the new thumb URL
       }
 
       // Clear the password field on successful submission
@@ -371,7 +397,9 @@ export default function UserProfileForm({
       reader.readAsDataURL(file)
     } else {
       // If the user cancels file selection, revert to the original photo if it exists
-      setPreviewUrl(user.photos[0]?.url ?? null)
+      setPreviewUrl(
+        user.primaryPhoto?.url_thumb ?? user.primaryPhoto?.url ?? null,
+      )
       setFileSelected(false)
     }
   }

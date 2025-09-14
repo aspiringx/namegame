@@ -73,31 +73,28 @@ export async function getUserUpdateRequirements(): Promise<{
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: {
-      password: true,
-      photos: {
-        where: {
-          typeId: photoTypes.primary.id,
-          entityId: session.user.id,
-          entityTypeId: entityTypes.user.id,
-        },
-        select: { url: true },
-      },
-    },
+    select: { password: true },
   })
 
   if (!user) {
     throw new Error('User not found')
   }
 
+  const primaryPhoto = await prisma.photo.findFirst({
+    where: {
+      entityId: session.user.id,
+      entityTypeId: entityTypes.user.id,
+      typeId: photoTypes.primary.id,
+    },
+    select: { url: true },
+  })
+
   let passwordRequired = false
   if (user.password) {
     passwordRequired = await bcrypt.compare('password123', user.password)
   }
 
-  const photoRequired = user.photos.some((photo) =>
-    photo.url.includes('dicebear.com'),
-  )
+  const photoRequired = !primaryPhoto || primaryPhoto.url.includes('dicebear.com')
 
   revalidatePath('/me')
 
@@ -201,7 +198,7 @@ export async function updateUserProfile(
     updatedUser = await prisma.$transaction(async (tx) => {
       const user = await tx.user.findUnique({
         where: { id: userId },
-        include: { photos: true, groupMemberships: true },
+        include: { groupMemberships: true },
       })
 
       if (!user) {
@@ -315,11 +312,20 @@ export async function updateUserProfile(
 
       const { firstName: formFirstName, lastName: formLastName } =
         validatedFields.data
+      const primaryPhoto = await tx.photo.findFirst({
+        where: {
+          entityId: user.id,
+          entityTypeId: (await getCodeTable('entityType')).user.id,
+          typeId: (await getCodeTable('photoType')).primary.id,
+        },
+        select: { id: true },
+      })
+
       const profileIsNowComplete = Boolean(
         formFirstName &&
           formLastName &&
           user.emailVerified &&
-          (newPhotoKeys || user.photos.length > 0),
+          (newPhotoKeys || primaryPhoto),
       )
 
       if (profileIsNowComplete) {
@@ -391,17 +397,26 @@ export async function updateUserProfile(
 
   let redirectUrl: string | null = null
 
-  let newPhotoPublicUrl: string | null = null
-  if (newPhotoKeys) {
-    const publicUrl = await getPublicUrl(newPhotoKeys.url)
-    newPhotoPublicUrl = `${publicUrl}?v=${Date.now()}`
+  const primaryPhoto = await prisma.photo.findFirst({
+    where: {
+      entityId: userId,
+      entityTypeId: (await getCodeTable('entityType')).user.id,
+      typeId: (await getCodeTable('photoType')).primary.id,
+    },
+  })
+
+  let currentPhotoUrl: string | null = null
+  if (primaryPhoto) {
+    const urlToFetch = primaryPhoto.url_thumb ?? primaryPhoto.url
+    const publicUrl = await getPublicUrl(urlToFetch)
+    currentPhotoUrl = newPhotoKeys ? `${publicUrl}?v=${Date.now()}` : publicUrl
   }
 
   return {
     success: true,
     message: 'Profile updated successfully!',
     error: null,
-    newPhotoUrl: newPhotoPublicUrl,
+    newPhotoUrl: currentPhotoUrl,
     newFirstName: updatedUser.firstName,
     redirectUrl,
     emailUpdated: emailChanged,

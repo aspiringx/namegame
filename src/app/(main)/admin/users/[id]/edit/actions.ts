@@ -311,9 +311,21 @@ export async function updateUser(
     }
   }
 
-  const photoUrl = newPhotoKeys
-    ? await getPublicUrl(newPhotoKeys.url)
-    : prevState.photoUrl
+  const primaryPhoto = await prisma.photo.findFirst({
+    where: {
+      entityId: id,
+      entityTypeId: (await getCodeTable('entityType')).user.id,
+      typeId: (await getCodeTable('photoType')).primary.id,
+    },
+    select: { url: true, url_thumb: true },
+  })
+
+  let photoUrl: string | null = null
+  if (primaryPhoto) {
+    const urlToFetch = primaryPhoto.url_thumb ?? primaryPhoto.url
+    const publicUrl = await getPublicUrl(urlToFetch)
+    photoUrl = newPhotoKeys ? `${publicUrl}?v=${Date.now()}` : publicUrl
+  }
 
   return {
     ...prevState,

@@ -84,13 +84,14 @@ export const getGroup = cache(async (
       select: {
         entityId: true,
         url: true,
+        url_thumb: true,
       },
     })
 
-    const photoUrlMap = new Map<string, string>()
+        const photoMap = new Map<string, { url: string; url_thumb: string | null }>()
     photos.forEach((photo) => {
       if (photo.entityId) {
-        photoUrlMap.set(photo.entityId, photo.url)
+        photoMap.set(photo.entityId, photo)
       }
     })
 
@@ -120,14 +121,11 @@ export const getGroup = cache(async (
 
     const memberPromises = group.members.map(
       async (member): Promise<MemberWithUser> => {
-        const rawUrl = photoUrlMap.get(member.userId)
+                const photo = photoMap.get(member.userId)
+        const preferredUrl = photo?.url_thumb ?? photo?.url
         let photoUrl: string | undefined
-        if (rawUrl) {
-          if (rawUrl.startsWith('http')) {
-            photoUrl = rawUrl
-          } else {
-            photoUrl = await getPublicUrl(rawUrl)
-          }
+        if (preferredUrl) {
+          photoUrl = await getPublicUrl(preferredUrl)
         }
 
         // Show full name only for the current user or for users they have greeted.

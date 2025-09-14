@@ -50,7 +50,6 @@ export async function handleAuthenticatedGreeting(
 
   const currentUser = await prisma.user.findUnique({
     where: { id: currentUserId },
-    include: { photos: true },
   })
 
   if (!currentUser) {
@@ -58,12 +57,13 @@ export async function handleAuthenticatedGreeting(
     throw new Error('Current user not found during authenticated greeting.')
   }
 
-  const primaryPhoto = currentUser.photos.find(
-    (p) =>
-      p.typeId === photoTypes.primary.id &&
-      p.entityTypeId === entityTypes.user.id &&
-      p.entityId === currentUser.id,
-  )
+  const primaryPhoto = await prisma.photo.findFirst({
+    where: {
+      entityId: currentUser.id,
+      entityTypeId: entityTypes.user.id,
+      typeId: photoTypes.primary.id,
+    },
+  })
 
   const isGuest =
     !currentUser.firstName ||
