@@ -5,7 +5,8 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { z } from 'zod'
 
-import { uploadFile, deleteFile, getPublicUrl } from '@/lib/storage'
+import { getPublicUrl } from '@/lib/storage'
+import { uploadFile, deleteFile } from '@/lib/actions/storage'
 import { auth } from '@/auth'
 import { getCodeTable } from '@/lib/codes'
 
@@ -25,7 +26,7 @@ export async function updateGroup(formData: FormData) {
     throw new Error('You must be logged in to update a group.')
   }
   const userId = session.user.id
-  // Extract and validate data
+
   const validatedFields = GroupSchema.safeParse({
     name: formData.get('name'),
     slug: formData.get('slug'),
@@ -36,77 +37,106 @@ export async function updateGroup(formData: FormData) {
   })
 
   if (!validatedFields.success) {
-    // Handle validation errors
     console.error(validatedFields.error)
     throw new Error('Invalid form data.')
   }
 
   const { logo, ...groupData } = validatedFields.data
+  const groupId = Number(formData.get('groupId'))
+
+  let newLogoKeys = null
+  if (logo && logo.size > 0) {
+    try {
+      newLogoKeys = await uploadFile(logo, 'groups', groupId.toString())
+    } catch (uploadError) {
+      console.error('Logo upload failed:', uploadError)
+      throw new Error('Failed to upload logo.')
+    }
+  }
+
+  let logoToDelete = null
 
   try {
-    const groupId = Number(formData.get('groupId'))
-
-    const updatedGroup = await prisma.group.update({
-      where: { id: groupId },
-      data: {
-        ...groupData,
-        updatedById: userId,
-      },
-    })
-
-    if (logo && logo.size > 0) {
-      const [entityTypes, photoTypes] = await Promise.all([
-        getCodeTable('entityType'),
-        getCodeTable('photoType'),
-      ])
-
-      const groupEntityType = entityTypes.group
-      const logoPhotoType = photoTypes.logo
-
-      if (!groupEntityType || !logoPhotoType) {
-        throw new Error(
-          'Database Error: Could not find required code table entries.',
-        )
-      }
-
-      const existingLogo = await prisma.photo.findFirst({
-        where: {
-          entityTypeId: groupEntityType.id,
-          entityId: updatedGroup.id.toString(),
-          typeId: logoPhotoType.id,
+    await prisma.$transaction(async (tx) => {
+      await tx.group.update({
+        where: { id: groupId },
+        data: {
+          ...groupData,
+          updatedById: userId,
         },
       })
 
-      const logoPath = await uploadFile(
-        logo,
-        'groups',
-        updatedGroup.id.toString(),
-      )
+      if (newLogoKeys) {
+        const [entityTypes, photoTypes] = await Promise.all([
+          getCodeTable('entityType'),
+          getCodeTable('photoType'),
+        ])
 
-      if (existingLogo) {
-        await prisma.photo.update({
-          where: { id: existingLogo.id },
-          data: {
-            url: logoPath,
-            userId: userId,
-          },
-        })
-        // After successfully updating the DB, delete the old image.
-        await deleteFile(existingLogo.url)
-      } else {
-        await prisma.photo.create({
-          data: {
-            url: logoPath,
-            typeId: logoPhotoType.id,
+        const groupEntityType = entityTypes.group
+        const logoPhotoType = photoTypes.logo
+
+        if (!groupEntityType || !logoPhotoType) {
+          throw new Error(
+            'Database Error: Could not find required code table entries.',
+          )
+        }
+
+        const existingLogo = await tx.photo.findFirst({
+          where: {
             entityTypeId: groupEntityType.id,
-            entityId: updatedGroup.id.toString(),
-            groupId: updatedGroup.id,
-            userId: userId,
+            entityId: groupId.toString(),
+            typeId: logoPhotoType.id,
           },
         })
+
+        if (existingLogo) {
+          logoToDelete = existingLogo
+          await tx.photo.update({
+            where: { id: existingLogo.id },
+            data: {
+              ...newLogoKeys,
+              userId: userId,
+            },
+          })
+        } else {
+          await tx.photo.create({
+            data: {
+              ...newLogoKeys,
+              typeId: logoPhotoType.id,
+              entityTypeId: groupEntityType.id,
+              entityId: groupId.toString(),
+              groupId: groupId,
+              userId: userId,
+            },
+          })
+        }
       }
+    })
+
+    if (logoToDelete) {
+      await deleteFile(logoToDelete)
     }
   } catch (error) {
+    if (newLogoKeys) {
+      const orphanedPhoto = {
+        ...newLogoKeys,
+        url_thumb: newLogoKeys.url_thumb ?? null,
+        url_small: newLogoKeys.url_small ?? null,
+        url_medium: newLogoKeys.url_medium ?? null,
+        url_large: newLogoKeys.url_large ?? null,
+        id: 0,
+        entityId: '',
+        entityTypeId: 0,
+        typeId: 0,
+        isBlocked: false,
+        uploadedAt: new Date(),
+        createdAt: new Date(),
+        deletedAt: null,
+        userId: null,
+        groupId: null,
+      }
+      await deleteFile(orphanedPhoto)
+    }
     console.error('Database Error:', error)
     throw new Error('Failed to update group.')
   }
@@ -174,20 +204,20 @@ const AddMemberSchema = z.object({
   groupId: z.coerce.number(),
   userId: z.string(),
   roleId: z.coerce.number(),
-});
+})
 
 export async function addMember(formData: FormData) {
   const validatedFields = AddMemberSchema.safeParse({
     groupId: formData.get('groupId'),
     userId: formData.get('userId'),
     roleId: formData.get('roleId'),
-  });
+  })
 
   if (!validatedFields.success) {
-    throw new Error('Invalid form data.');
+    throw new Error('Invalid form data.')
   }
 
-  const { groupId, userId, roleId } = validatedFields.data;
+  const { groupId, userId, roleId } = validatedFields.data
 
   await prisma.groupUser.create({
     data: {
@@ -196,7 +226,7 @@ export async function addMember(formData: FormData) {
       roleId,
       memberSince: new Date().getFullYear(), // Set current year by default
     },
-  });
+  })
 
   const group = await prisma.group.findUnique({ where: { id: groupId } })
   revalidatePath(`/admin/groups/${group?.slug}/edit`)
@@ -236,14 +266,14 @@ const UpdateMemberSchema = z.object({
   groupId: z.coerce.number(),
   userId: z.string(),
   roleId: z.coerce.number(),
-});
+})
 
 export async function updateMember(formData: FormData) {
   const validatedFields = UpdateMemberSchema.safeParse({
     groupId: formData.get('groupId'),
     userId: formData.get('userId'),
     roleId: formData.get('roleId'),
-  });
+  })
 
   if (!validatedFields.success) {
     console.error(validatedFields.error)
@@ -262,7 +292,7 @@ export async function updateMember(formData: FormData) {
     data: {
       roleId,
     },
-  });
+  })
 
   const group = await prisma.group.findUnique({ where: { id: groupId } })
   revalidatePath(`/admin/groups/${group?.slug}/edit`)

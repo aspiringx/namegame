@@ -4,11 +4,11 @@ import { z } from 'zod'
 import bcrypt from 'bcrypt'
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
-import { DatePrecision } from '@/generated/prisma/client'
 import { revalidatePath, revalidateTag } from 'next/cache'
 import { getCodeTable } from '@/lib/codes'
 import { parseDateAndDeterminePrecision } from '@/lib/utils'
-import { uploadFile, deleteFile, getPublicUrl } from '@/lib/storage'
+import { getPublicUrl } from '@/lib/storage'
+import { uploadFile, deleteFile, UploadedUrls } from '@/lib/actions/storage'
 import { sendVerificationEmail } from '@/lib/mail'
 import { disposableEmailDomains } from '@/lib/disposable-email-domains'
 
@@ -104,6 +104,10 @@ export async function getUserUpdateRequirements(): Promise<{
   return { passwordRequired, photoRequired }
 }
 
+// Update the user.
+// FYI: We call this with useActionState in the UserProfileForm component, which
+// requires prevState, but we don't use it since we load the user from the
+// database.
 export async function updateUserProfile(
   prevState: State,
   formData: FormData,
@@ -137,7 +141,6 @@ export async function updateUserProfile(
   }
 
   const validatedFields = UserProfileSchema.safeParse({
-    // username: formData.get('username'),
     firstName: formData.get('firstName'),
     lastName: formData.get('lastName'),
     email: emailFromForm,
@@ -150,20 +153,16 @@ export async function updateUserProfile(
   })
 
   if (!validatedFields.success) {
-    const errorPayload = {
-      ...validatedFields.error.flatten().fieldErrors,
-    }
-
-    // The server action returns a generic error message, but the client can use the detailed errors.
+    // The server action returns a generic error message, but the client can
+    // use the detailed errors.
     return {
       success: false,
       error: 'Invalid data provided. Please check the form and try again.',
-      errors: errorPayload,
+      errors: validatedFields.error.flatten().fieldErrors,
       message: null,
     }
   }
 
-  // const { username, firstName, lastName, photo, password } = validatedFields.data;
   const {
     firstName,
     lastName,
@@ -177,149 +176,108 @@ export async function updateUserProfile(
   } = validatedFields.data
   const userId = session.user.id
 
-  let newPhotoKey: string | null = null
+  let newPhotoKeys: UploadedUrls | null = null
   let updatedUser
   let emailChanged = false
 
-  // This needs to happen before the try to be available in the try and after.
-  // Unlike the other getCodeTable calls below.
+  // Handle photo upload first, outside of the transaction
+  if (photo && photo.size > 0) {
+    try {
+      newPhotoKeys = await uploadFile(photo, 'user-photos', userId)
+    } catch (uploadError) {
+      console.error('Photo upload failed:', uploadError)
+      return {
+        success: false,
+        error: 'Failed to upload photo. Please try again.',
+        message: null,
+      }
+    }
+  }
+
   const groupUserRoles = await getCodeTable('groupUserRole')
+  let photoToDelete = null
 
   try {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      include: { photos: true, groupMemberships: true },
-    })
+    updatedUser = await prisma.$transaction(async (tx) => {
+      const user = await tx.user.findUnique({
+        where: { id: userId },
+        include: { photos: true, groupMemberships: true },
+      })
 
-    if (!user) {
-      return { success: false, error: 'User not found.', message: null }
-    }
+      if (!user) {
+        throw new Error('User not found.')
+      }
 
-    // Handle photo upload first
-    let _photoUrlForCheck: string | null = null
+      const dataToUpdate: any = {
+        firstName,
+        lastName,
+        gender,
+        birthPlace,
+      }
 
-    if (photo && photo.size > 0) {
-      newPhotoKey = await uploadFile(photo, 'user-photos', userId)
-    }
-
-    let _birthDateObj: Date | undefined
-    let _birthDatePrecision: DatePrecision | undefined
-
-    const dataToUpdate: any = {
-      firstName,
-      lastName,
-      gender,
-      birthPlace,
-    }
-
-    if (birthDate) {
-      const parsed = parseDateAndDeterminePrecision(birthDate, timezone)
-      if (parsed) {
-        dataToUpdate.birthDate = parsed.date
-        dataToUpdate.birthDatePrecision = parsed.precision
+      if (birthDate) {
+        const parsed = parseDateAndDeterminePrecision(birthDate, timezone)
+        if (parsed) {
+          dataToUpdate.birthDate = parsed.date
+          dataToUpdate.birthDatePrecision = parsed.precision
+        } else {
+          throw new Error('Invalid birth date format.')
+        }
       } else {
-        return {
-          success: false,
-          error:
-            'Invalid birth date format. Please use a recognized date format.',
-          errors: {
-            birthDate: ['Invalid format. Please use a recognized date format.'],
-          },
-          message: null,
-        }
-      }
-    } else {
-      dataToUpdate.birthDate = null
-      dataToUpdate.birthDatePrecision = null
-    }
-
-    const lowercasedEmail = email ? email.toLowerCase() : null
-
-    // Handle cases where email is changed or removed
-    if (lowercasedEmail !== user.email) {
-      dataToUpdate.email = lowercasedEmail
-      dataToUpdate.emailVerified = null // Always nullify verification on change/removal
-      emailChanged = true
-
-      if (user.username === user.email) {
-        dataToUpdate.username = lowercasedEmail
+        dataToUpdate.birthDate = null
+        dataToUpdate.birthDatePrecision = null
       }
 
-      // Check for existing user only if a new email is provided
-      if (lowercasedEmail) {
-        const existingUser = await prisma.user.findFirst({
-          where: {
-            email: {
-              equals: lowercasedEmail,
-              mode: 'insensitive',
+      const lowercasedEmail = email ? email.toLowerCase() : null
+
+      if (lowercasedEmail !== user.email?.toLowerCase()) {
+        dataToUpdate.email = lowercasedEmail
+        dataToUpdate.emailVerified = null
+        emailChanged = true
+
+        if (lowercasedEmail) {
+          const existingUser = await tx.user.findFirst({
+            where: {
+              email: { equals: lowercasedEmail, mode: 'insensitive' },
+              id: { not: userId },
             },
-            id: { not: userId },
-          },
-        })
-
-        if (existingUser) {
-          return {
-            success: false,
-            error: 'This email is already in use by another account.',
-            message: null,
-            errors: { email: ['This email is already in use.'] },
-          }
-        }
-      }
-    }
-
-    if (password) {
-      if (password === 'password123') {
-        return {
-          success: false,
-          error: 'Please choose a more secure password.',
-          message: null,
-        }
-      }
-
-      if (user.password) {
-        const isSamePassword = await bcrypt.compare(password, user.password)
-        if (isSamePassword) {
-          return {
-            success: false,
-            error: 'New password cannot be the same as your current password.',
-            message: null,
+          })
+          if (existingUser) {
+            throw new Error('This email is already in use by another account.')
           }
         }
       }
 
-      dataToUpdate.password = await bcrypt.hash(password, 10)
-    }
+      if (password) {
+        if (password === 'password123') {
+          throw new Error('Please choose a more secure password.')
+        }
+        if (user.password) {
+          const isSamePassword = await bcrypt.compare(password, user.password)
+          if (isSamePassword) {
+            throw new Error(
+              'New password cannot be the same as your current password.',
+            )
+          }
+        }
+        dataToUpdate.password = await bcrypt.hash(password, 10)
+      }
 
-    const {
-      firstName: formFirstName,
-      lastName: formLastName,
-      email: _formEmail,
-    } = validatedFields.data
+      const internalUpdatedUser = await tx.user.update({
+        where: { id: userId },
+        data: dataToUpdate,
+      })
 
-    const profileIsNowComplete = Boolean(
-      formFirstName &&
-        formLastName &&
-        user.emailVerified &&
-        (newPhotoKey || user.photos.length > 0),
-    )
-
-    updatedUser = await prisma.user.update({
-      where: { id: userId },
-      data: dataToUpdate,
-    })
-
-    // Now handle photo update in the database after user is updated
-    if (newPhotoKey) {
-      const photoTypes = await getCodeTable('photoType')
-      const primaryPhotoTypeId = photoTypes.primary.id
-
-      if (primaryPhotoTypeId) {
-        const entityTypes = await getCodeTable('entityType')
+      if (newPhotoKeys) {
+        const [photoTypes, entityTypes] = await Promise.all([
+          getCodeTable('photoType'),
+          getCodeTable('entityType'),
+        ])
+        const primaryPhotoTypeId = photoTypes.primary.id
         const userEntityTypeId = entityTypes.user.id
 
-        if (userEntityTypeId) {
-          const existingPhoto = await prisma.photo.findFirst({
+        if (primaryPhotoTypeId && userEntityTypeId) {
+          const existingPhoto = await tx.photo.findFirst({
             where: {
               entityId: user.id,
               entityTypeId: userEntityTypeId,
@@ -328,65 +286,88 @@ export async function updateUserProfile(
           })
 
           if (existingPhoto) {
-            await prisma.photo.update({
+            photoToDelete = existingPhoto
+            await tx.photo.update({
               where: { id: existingPhoto.id },
-              data: { url: newPhotoKey },
+              data: { ...newPhotoKeys },
             })
-            if (existingPhoto.url) {
-              await deleteFile(existingPhoto.url)
-            }
           } else {
-            await prisma.photo.create({
+            await tx.photo.create({
               data: {
-                url: newPhotoKey,
-                entityTypeId: entityTypes.user.id,
+                ...newPhotoKeys,
+                entityTypeId: userEntityTypeId,
                 entityId: user.id,
-                typeId: photoTypes.primary.id,
+                typeId: primaryPhotoTypeId,
                 userId: user.id,
               },
             })
           }
         }
       }
-    }
 
-    if (emailChanged && updatedUser.email) {
-      await sendVerificationEmail(
-        updatedUser.email,
-        userId,
-        updatedUser.firstName,
-      )
-    }
-
-    if (profileIsNowComplete) {
-      const memberRoleId = groupUserRoles.member?.id
-      const guestRoleId = groupUserRoles.guest?.id
-      if (memberRoleId && guestRoleId && user.groupMemberships.length > 0) {
-        // Only update roles that are currently 'guest'
-        await prisma.groupUser.updateMany({
-          where: {
-            userId: user.id,
-            roleId: guestRoleId,
-          },
-          data: { roleId: memberRoleId },
-        })
+      if (emailChanged && internalUpdatedUser.email) {
+        await sendVerificationEmail(
+          internalUpdatedUser.email,
+          userId,
+          internalUpdatedUser.firstName,
+        )
       }
-    }
-  } catch (error) {
-    console.error('Failed to update user profile:', error)
-    if ((error as any).code === 'P2002') {
-      const target = (error as any).meta?.target
-      if (target?.includes('username')) {
-        return {
-          success: false,
-          error: 'This username is already taken.',
-          message: null,
+
+      const { firstName: formFirstName, lastName: formLastName } =
+        validatedFields.data
+      const profileIsNowComplete = Boolean(
+        formFirstName &&
+          formLastName &&
+          user.emailVerified &&
+          (newPhotoKeys || user.photos.length > 0),
+      )
+
+      if (profileIsNowComplete) {
+        const memberRoleId = groupUserRoles.member?.id
+        const guestRoleId = groupUserRoles.guest?.id
+        if (memberRoleId && guestRoleId && user.groupMemberships.length > 0) {
+          await tx.groupUser.updateMany({
+            where: { userId: user.id, roleId: guestRoleId },
+            data: { roleId: memberRoleId },
+          })
         }
       }
+
+      return internalUpdatedUser
+    })
+
+    // If transaction is successful, delete the old photo
+    if (photoToDelete) {
+      await deleteFile(photoToDelete)
     }
+  } catch (error: any) {
+    // If transaction fails, delete the newly uploaded photo if it exists
+    if (newPhotoKeys) {
+      // We need to construct an object that satisfies the Photo type for deleteFile
+      const orphanedPhoto = {
+        ...newPhotoKeys,
+        url_thumb: newPhotoKeys.url_thumb ?? null,
+        url_small: newPhotoKeys.url_small ?? null,
+        url_medium: newPhotoKeys.url_medium ?? null,
+        url_large: newPhotoKeys.url_large ?? null,
+        id: 0, // Dummy data, not used by deleteFile
+        entityId: '',
+        entityTypeId: 0,
+        typeId: 0,
+        isBlocked: false,
+        uploadedAt: new Date(),
+        createdAt: new Date(),
+        deletedAt: null,
+        userId: null,
+        groupId: null,
+      }
+      await deleteFile(orphanedPhoto)
+    }
+
+    console.error('Failed to update user profile:', error)
     return {
       success: false,
-      error: 'An unexpected error occurred. Please try again.',
+      error: error.message || 'An unexpected error occurred. Please try again.',
       message: null,
     }
   }
@@ -409,21 +390,18 @@ export async function updateUserProfile(
   }
 
   let redirectUrl: string | null = null
-  // if (userGroups.length === 1 && userGroups[0].group.slug) {
-  //   redirectUrl = `/g/${userGroups[0].group.slug}`;
-  // }
 
-  let _cacheBustedUrl: string | null = null
-  if (newPhotoKey) {
-    const newPhotoPublicUrl = await getPublicUrl(newPhotoKey)
-    _cacheBustedUrl = `${newPhotoPublicUrl}?v=${Date.now()}`
+  let newPhotoPublicUrl: string | null = null
+  if (newPhotoKeys) {
+    const publicUrl = await getPublicUrl(newPhotoKeys.url)
+    newPhotoPublicUrl = `${publicUrl}?v=${Date.now()}`
   }
 
   return {
     success: true,
     message: 'Profile updated successfully!',
     error: null,
-    newPhotoUrl: newPhotoKey ? await getPublicUrl(newPhotoKey) : null,
+    newPhotoUrl: newPhotoPublicUrl,
     newFirstName: updatedUser.firstName,
     redirectUrl,
     emailUpdated: emailChanged,

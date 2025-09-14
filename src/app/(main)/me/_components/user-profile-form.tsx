@@ -79,8 +79,6 @@ export type UserProfile = {
   birthPlace: string | null
 }
 
-
-
 export default function UserProfileForm({
   user,
   isInFamilyGroup,
@@ -127,7 +125,7 @@ export default function UserProfileForm({
   const [isSubmittingAfterConfirm, setIsSubmittingAfterConfirm] =
     useState(false)
   const [isEmailValid, setIsEmailValid] = useState(
-    !user.email || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(user.email),
+    !user.email || z.string().email().safeParse(user.email).success,
   )
   const [isEmailTooltipOpen, setIsEmailTooltipOpen] = useState(false)
   const [isPasswordTooltipOpen, setIsPasswordTooltipOpen] = useState(false)
@@ -332,7 +330,6 @@ export default function UserProfileForm({
     }
   }, [state, updateSession, router, password, fileSelected])
 
-  
   const handleGeneratePassword = () => {
     const letters = 'abcdefghijklmnopqrstuvwxyz'
     const numbers = '123456789'

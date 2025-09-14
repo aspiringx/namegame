@@ -2,7 +2,8 @@
 
 import { z } from 'zod'
 import prisma from '@/lib/prisma'
-import { deleteFile } from '@/lib/storage'
+import { deleteFile } from '@/lib/actions/storage'
+import { getCodeTable } from '@/lib/codes'
 import { revalidatePath } from 'next/cache'
 import { auth } from '@/auth'
 
@@ -114,15 +115,18 @@ export async function hardDeleteUser(userId: string) {
   }
 
   try {
-    // First, get all photos of the user to delete files from storage
+    const entityTypes = await getCodeTable('entityType')
+    const userEntityTypeId = entityTypes.user.id
+
+    // First, get all photos of the user to delete files from storage. Here, we
+    // don't use the photo's typeId cuz we're deleting all photos of the user.
     const photos = await prisma.photo.findMany({
-      where: { userId: userId },
+      where: { entityId: userId, entityTypeId: userEntityTypeId },
     })
 
+    // This deletes all versions/sizes of a photo.
     for (const photo of photos) {
-      if (photo.url) {
-        await deleteFile(photo.url) // Assuming deleteFile is an async operation that deletes from storage
-      }
+      await deleteFile(photo)
     }
 
     await prisma.$transaction(async (tx) => {
@@ -138,9 +142,11 @@ export async function hardDeleteUser(userId: string) {
         where: { userId: userId },
       })
 
-      // Delete all photos from the database
+      // Delete all photos for this user from the database. Here, we don't use
+      // photo.userId because that may be an admin or managing user whose photos
+      // we don't want to delete.
       await tx.photo.deleteMany({
-        where: { userId: userId },
+        where: { entityId: userId, entityTypeId: userEntityTypeId },
       })
 
       // Delete all codes

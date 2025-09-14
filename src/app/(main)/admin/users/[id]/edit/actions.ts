@@ -4,7 +4,8 @@ import { z } from 'zod'
 import bcrypt from 'bcrypt'
 import prisma from '@/lib/prisma'
 import { revalidatePath, revalidateTag } from 'next/cache'
-import { uploadFile, deleteFile, getPublicUrl } from '@/lib/storage'
+import { getPublicUrl } from '@/lib/storage'
+import { uploadFile, deleteFile } from '@/lib/actions/storage'
 import { getCodeTable } from '@/lib/codes'
 import { auth } from '@/auth'
 import { Gender, DatePrecision, User } from '@/generated/prisma/client'
@@ -41,9 +42,7 @@ const FormSchema = z.object({
     .or(z.literal(''))
     .refine(
       (val) =>
-        !val ||
-        val.length === 0 ||
-        /^(?=.*[a-zA-Z])(?=.*\d).{6,}$/.test(val),
+        !val || val.length === 0 || /^(?=.*[a-zA-Z])(?=.*\d).{6,}$/.test(val),
       {
         message: 'Password must have 6+ characters with letters and numbers.',
       },
@@ -129,47 +128,6 @@ export async function updateUser(
       : null,
   }
 
-  // Get the user to check password requirement
-  const user = await prisma.user.findUnique({
-    where: { id },
-    select: { password: true },
-  })
-
-  if (!user) {
-    return {
-      errors: null,
-      message: 'User not found.',
-      values: {
-        ...formValues,
-        password: formData.get('password')?.toString() || '',
-      },
-    }
-  }
-
-  // Check if password is required (only if current password is 'password123')
-  let passwordRequired = false
-  if (user.password) {
-    passwordRequired = await bcrypt.compare('password123', user.password)
-  } else {
-    passwordRequired = true // No password exists, so one is required
-  }
-
-  const password = formData.get('password')?.toString() || ''
-
-  // If password is required but not provided, return error
-  if (passwordRequired && !password) {
-    return {
-      errors: {
-        password: ['Password is required for users with default password.'],
-      },
-      message: 'Password is required.',
-      values: {
-        ...formValues,
-        password: '',
-      },
-    }
-  }
-
   const session = await auth()
   if (!session?.user?.id) {
     return {
@@ -182,6 +140,7 @@ export async function updateUser(
     }
   }
   const updaterId = session.user.id
+
   const validatedFields = FormSchema.safeParse({
     username: formData.get('username'),
     firstName: formData.get('firstName'),
@@ -210,96 +169,131 @@ export async function updateUser(
   const { photo, birthDate, deathDate, ...userData } = validatedFields.data
   const validatedPassword = validatedFields.data.password
 
-  // Parse dates if provided
-  const parsedBirthDate = birthDate ? new Date(birthDate) : null
-  const parsedDeathDate = deathDate ? new Date(deathDate) : null
-  let photoUrl: string | null = null
+  let newPhotoKeys = null
+  if (photo && photo.size > 0) {
+    try {
+      newPhotoKeys = await uploadFile(photo, 'user-photos', id)
+    } catch (uploadError) {
+      console.error('Photo upload failed:', uploadError)
+      return {
+        success: false,
+        message: 'Failed to upload photo. Please try again.',
+        errors: { photo: ['Upload failed.'] },
+      }
+    }
+  }
+
+  let photoToDelete = null
   let updatedUser: User | null = null
 
   try {
-    const [photoTypes, entityTypes] = await Promise.all([
-      getCodeTable('photoType'),
-      getCodeTable('entityType'),
-    ])
-    const primaryPhotoTypeId = photoTypes.primary.id
-    const userEntityTypeId = entityTypes.user.id
+    updatedUser = await prisma.$transaction(async (tx) => {
+      const user = await tx.user.findUnique({ where: { id } })
+      if (!user) {
+        throw new Error('User not found.')
+      }
 
-    const { password: _password, ...userDataWithoutPassword } = userData
+      const parsedBirthDate = birthDate ? new Date(birthDate) : null
+      const parsedDeathDate = deathDate ? new Date(deathDate) : null
 
-    const dataToUpdate: any = {
-      ...userDataWithoutPassword,
-      lastName: userData.lastName || null,
-      email: userData.email || null,
-      phone: userData.phone || null,
-      gender: userData.gender || null,
-      birthDate: parsedBirthDate,
-      birthPlace: userData.birthPlace || null,
-      deathDate: parsedDeathDate,
-      birthDatePrecision: parsedBirthDate ? DatePrecision.DAY : null,
-      deathDatePrecision: parsedDeathDate ? DatePrecision.DAY : null,
-      updatedBy: { connect: { id: updaterId } },
-    }
+      const dataToUpdate: any = {
+        ...userData,
+        lastName: userData.lastName || null,
+        email: userData.email || null,
+        phone: userData.phone || null,
+        gender: userData.gender || null,
+        birthDate: parsedBirthDate,
+        birthPlace: userData.birthPlace || null,
+        deathDate: parsedDeathDate,
+        birthDatePrecision: parsedBirthDate ? DatePrecision.DAY : null,
+        deathDatePrecision: parsedDeathDate ? DatePrecision.DAY : null,
+        updatedBy: { connect: { id: updaterId } },
+      }
 
-    if (validatedPassword) {
-      dataToUpdate.password = await bcrypt.hash(validatedPassword, 10)
-    }
+      if (validatedPassword) {
+        dataToUpdate.password = await bcrypt.hash(validatedPassword, 10)
+      }
 
-    updatedUser = await prisma.user.update({
-      where: { id },
-      data: dataToUpdate,
-    })
-
-    // Handle photo upload if a new photo was provided
-    if (photo && photo.size > 0) {
-      // Upload the new photo to storage first
-      const newPhotoKey = await uploadFile(photo, 'user-photos', id)
-      photoUrl = await getPublicUrl(newPhotoKey)
-
-      // Check if a primary photo record already exists for the user
-      const existingPhoto = await prisma.photo.findFirst({
-        where: {
-          entityId: id,
-          entityTypeId: userEntityTypeId,
-          typeId: primaryPhotoTypeId,
-        },
+      const internalUpdatedUser = await tx.user.update({
+        where: { id },
+        data: dataToUpdate,
       })
 
-      if (existingPhoto) {
-        // If it exists, update the record with the new URL
-        await prisma.photo.update({
-          where: { id: existingPhoto.id },
-          data: { url: newPhotoKey, userId: updaterId }, // Update URL and who updated it
-        })
-        // After successfully updating the DB, delete the old file from storage
-        if (existingPhoto.url) {
-          await deleteFile(existingPhoto.url)
-        }
-      } else {
-        // If no primary photo exists, create a new one
-        await prisma.photo.create({
-          data: {
-            url: newPhotoKey,
-            typeId: primaryPhotoTypeId,
-            entityTypeId: userEntityTypeId,
+      if (newPhotoKeys) {
+        const [photoTypes, entityTypes] = await Promise.all([
+          getCodeTable('photoType'),
+          getCodeTable('entityType'),
+        ])
+        const primaryPhotoTypeId = photoTypes.primary.id
+        const userEntityTypeId = entityTypes.user.id
+
+        const existingPhoto = await tx.photo.findFirst({
+          where: {
             entityId: id,
-            userId: updaterId, // The admin is the one who uploaded the photo
+            entityTypeId: userEntityTypeId,
+            typeId: primaryPhotoTypeId,
           },
         })
+
+        if (existingPhoto) {
+          photoToDelete = existingPhoto
+          await tx.photo.update({
+            where: { id: existingPhoto.id },
+            data: { ...newPhotoKeys, userId: updaterId },
+          })
+        } else {
+          await tx.photo.create({
+            data: {
+              ...newPhotoKeys,
+              typeId: primaryPhotoTypeId,
+              entityTypeId: userEntityTypeId,
+              entityId: id,
+              userId: updaterId,
+            },
+          })
+        }
       }
+      return internalUpdatedUser
+    })
+
+    if (photoToDelete) {
+      await deleteFile(photoToDelete)
     }
   } catch (error: any) {
+    if (newPhotoKeys) {
+      const orphanedPhoto = {
+        ...newPhotoKeys,
+        url_thumb: newPhotoKeys.url_thumb ?? null,
+        url_small: newPhotoKeys.url_small ?? null,
+        url_medium: newPhotoKeys.url_medium ?? null,
+        url_large: newPhotoKeys.url_large ?? null,
+        id: 0,
+        entityId: '',
+        entityTypeId: 0,
+        typeId: 0,
+        isBlocked: false,
+        uploadedAt: new Date(),
+        createdAt: new Date(),
+        deletedAt: null,
+        userId: null,
+        groupId: null,
+      }
+      await deleteFile(orphanedPhoto)
+    }
+
     if (error.code === 'P2002' && error.meta?.target?.includes('username')) {
       return {
         message: 'This username is already taken.',
         errors: { username: ['Username must be unique.'] },
-        values: { ...formValues, password: password || '' },
+        values: { ...formValues, password: validatedPassword || '' },
       }
     }
     console.error('Update user error:', error)
     return {
       errors: null,
-      message: 'An unexpected error occurred. Please try again.',
-      values: { ...formValues, password: password || '' },
+      message:
+        error.message || 'An unexpected error occurred. Please try again.',
+      values: { ...formValues, password: validatedPassword || '' },
     }
   }
 
@@ -311,10 +305,15 @@ export async function updateUser(
   if (!updatedUser) {
     return {
       errors: null,
-      message: 'An unexpected error occurred and user data could not be refreshed.',
+      message:
+        'An unexpected error occurred and user data could not be refreshed.',
       success: false,
     }
   }
+
+  const photoUrl = newPhotoKeys
+    ? await getPublicUrl(newPhotoKeys.url)
+    : prevState.photoUrl
 
   return {
     ...prevState,

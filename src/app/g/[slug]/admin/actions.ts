@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { z } from 'zod'
 
-import { uploadFile, deleteFile } from '@/lib/storage'
+import { uploadFile, deleteFile } from '@/lib/actions/storage'
 import { auth } from '@/auth'
 import { getCodeTable } from '@/lib/codes'
 import { isAdmin } from '@/lib/auth-utils'
@@ -51,70 +51,99 @@ export async function updateGroup(formData: FormData) {
 
   const { logo, ...groupData } = validatedFields.data
 
+  let newLogoKeys = null
+  if (logo && logo.size > 0) {
+    try {
+      newLogoKeys = await uploadFile(logo, 'groups', groupId.toString())
+    } catch (uploadError) {
+      console.error('Logo upload failed:', uploadError)
+      throw new Error('Failed to upload logo.')
+    }
+  }
+
+  let logoToDelete = null
+
   try {
-    const updatedGroup = await prisma.group.update({
-      where: { id: groupId },
-      data: {
-        ...groupData,
-        updatedById: userId,
-      },
-    })
-
-    if (logo && logo.size > 0) {
-      const [entityTypes, photoTypes] = await Promise.all([
-        getCodeTable('entityType'),
-        getCodeTable('photoType'),
-      ])
-
-      const groupEntityType = entityTypes.group
-      const logoPhotoType = photoTypes.logo
-
-      if (!groupEntityType || !logoPhotoType) {
-        throw new Error(
-          'Database Error: Could not find required code table entries.',
-        )
-      }
-
-      const existingLogo = await prisma.photo.findFirst({
-        where: {
-          entityTypeId: groupEntityType.id,
-          entityId: updatedGroup.id.toString(),
-          typeId: logoPhotoType.id,
+    await prisma.$transaction(async (tx) => {
+      await tx.group.update({
+        where: { id: groupId },
+        data: {
+          ...groupData,
+          updatedById: userId,
         },
       })
 
-      const logoPath = await uploadFile(
-        logo,
-        'groups',
-        updatedGroup.id.toString(),
-      )
+      if (newLogoKeys) {
+        const [entityTypes, photoTypes] = await Promise.all([
+          getCodeTable('entityType'),
+          getCodeTable('photoType'),
+        ])
 
-      if (existingLogo) {
-        await prisma.photo.update({
-          where: { id: existingLogo.id },
-          data: {
-            url: logoPath,
-            userId: userId,
-          },
-        })
-        // After successfully updating the DB, delete the old image.
-        if (existingLogo.url) {
-          await deleteFile(existingLogo.url)
+        const groupEntityType = entityTypes.group
+        const logoPhotoType = photoTypes.logo
+
+        if (!groupEntityType || !logoPhotoType) {
+          throw new Error(
+            'Database Error: Could not find required code table entries.',
+          )
         }
-      } else {
-        await prisma.photo.create({
-          data: {
-            url: logoPath,
-            typeId: logoPhotoType.id,
+
+        const existingLogo = await tx.photo.findFirst({
+          where: {
             entityTypeId: groupEntityType.id,
-            entityId: updatedGroup.id.toString(),
-            groupId: updatedGroup.id,
-            userId: userId,
+            entityId: groupId.toString(),
+            typeId: logoPhotoType.id,
           },
         })
+
+        if (existingLogo) {
+          logoToDelete = existingLogo
+          await tx.photo.update({
+            where: { id: existingLogo.id },
+            data: {
+              ...newLogoKeys,
+              userId: userId,
+            },
+          })
+        } else {
+          await tx.photo.create({
+            data: {
+              ...newLogoKeys,
+              typeId: logoPhotoType.id,
+              entityTypeId: groupEntityType.id,
+              entityId: groupId.toString(),
+              groupId: groupId,
+              userId: userId,
+            },
+          })
+        }
       }
+    })
+
+    if (logoToDelete) {
+      await deleteFile(logoToDelete)
     }
   } catch (error) {
+    if (newLogoKeys) {
+      const orphanedPhoto = {
+        ...newLogoKeys,
+        url_thumb: newLogoKeys.url_thumb ?? null,
+        url_small: newLogoKeys.url_small ?? null,
+        url_medium: newLogoKeys.url_medium ?? null,
+        url_large: newLogoKeys.url_large ?? null,
+        id: 0,
+        entityId: '',
+        entityTypeId: 0,
+        typeId: 0,
+        isBlocked: false,
+        uploadedAt: new Date(),
+        createdAt: new Date(),
+        deletedAt: null,
+        userId: null,
+        groupId: null,
+      }
+      await deleteFile(orphanedPhoto)
+    }
     console.error('Database Error:', error)
     throw new Error('Failed to update group.')
   }
