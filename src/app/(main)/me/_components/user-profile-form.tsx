@@ -23,7 +23,7 @@ import {
   type State,
 } from '../actions'
 import { Info } from 'lucide-react'
-import Image from 'next/image'
+import { CacheableImage as Image } from '@/components/CacheableImage'
 import {
   Eye,
   EyeOff,
