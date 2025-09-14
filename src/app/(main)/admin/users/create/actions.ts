@@ -4,7 +4,7 @@ import { z } from 'zod'
 import prisma from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
-import { uploadFile } from '@/lib/storage'
+import { deleteFile, uploadFile } from '@/lib/storage'
 import { getCodeTable } from '@/lib/codes'
 import { auth } from '@/auth'
 import bcrypt from 'bcrypt'
@@ -112,6 +112,20 @@ export async function createUser(
 
   const { photo, password, ...userData } = validatedFields.data
 
+  let photoKeys = null
+  if (photo && photo.size > 0) {
+    try {
+      photoKeys = await uploadFile(photo, 'user-photos', `temp-${Date.now()}`)
+    } catch (uploadError) {
+      console.error('Photo upload failed:', uploadError)
+      return {
+        errors: { photo: ['Failed to upload photo.'] },
+        message: 'Photo upload failed. Please try again.',
+        values: formValues,
+      }
+    }
+  }
+
   try {
     await prisma.$transaction(async (tx) => {
       const hashedPassword = await bcrypt.hash(password, 10)
@@ -128,46 +142,56 @@ export async function createUser(
         },
       })
 
-      try {
-        const [photoTypes, entityTypes] = await Promise.all([
-          getCodeTable('photoType'),
-          getCodeTable('entityType'),
-        ])
+      const [photoTypes, entityTypes] = await Promise.all([
+        getCodeTable('photoType'),
+        getCodeTable('entityType'),
+      ])
 
-        if (photo && photo.size > 0) {
-          console.log('Photo provided, uploading...')
-          const photoKeys = await uploadFile(photo, 'user-photos', newUser.id)
-          await tx.photo.create({
-            data: {
-              ...photoKeys,
-              entityId: newUser.id,
-              typeId: photoTypes.primary.id,
-              entityTypeId: entityTypes.user.id,
-              userId: creatorId,
-            },
-          })
-        } else {
-          console.log('No photo provided, generating default avatar...')
-          const photoUrl = `https://api.dicebear.com/8.x/personas/png?seed=${newUser.id}`
-          await tx.photo.create({
-            data: {
-              url: photoUrl,
-              entityId: newUser.id,
-              typeId: photoTypes.primary.id,
-              entityTypeId: entityTypes.user.id,
-              userId: creatorId,
-            },
-          })
-        }
-
-        console.log('Photo record created successfully.')
-      } catch (photoError) {
-        console.error('Error creating or uploading photo:', photoError)
-        // Throw an error to ensure the transaction is rolled back
-        throw new Error('Failed to create photo for user.')
+      if (photoKeys) {
+        await tx.photo.create({
+          data: {
+            ...photoKeys,
+            entityId: newUser.id,
+            typeId: photoTypes.primary.id,
+            entityTypeId: entityTypes.user.id,
+            userId: creatorId,
+          },
+        })
+      } else {
+        const photoUrl = `https://api.dicebear.com/8.x/personas/png?seed=${newUser.id}`
+        await tx.photo.create({
+          data: {
+            url: photoUrl,
+            entityId: newUser.id,
+            typeId: photoTypes.primary.id,
+            entityTypeId: entityTypes.user.id,
+            userId: creatorId,
+          },
+        })
       }
     })
   } catch (error: any) {
+    if (photoKeys) {
+      const orphanedPhoto = {
+        ...photoKeys,
+        url_thumb: photoKeys.url_thumb ?? null,
+        url_small: photoKeys.url_small ?? null,
+        url_medium: photoKeys.url_medium ?? null,
+        url_large: photoKeys.url_large ?? null,
+        id: 0,
+        entityId: '',
+        entityTypeId: 0,
+        typeId: 0,
+        isBlocked: false,
+        uploadedAt: new Date(),
+        createdAt: new Date(),
+        deletedAt: null,
+        userId: null,
+        groupId: null,
+      }
+      await deleteFile(orphanedPhoto)
+    }
+
     if (error.code === 'P2002' && error.meta?.target?.includes('username')) {
       return {
         message: 'This username is already taken.',

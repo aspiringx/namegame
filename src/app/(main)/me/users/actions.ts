@@ -135,8 +135,15 @@ export async function createManagedUser(
   } = validatedFields.data
   const managerId = session.user.id
 
+  let photoKeys = null
   try {
-    // For fully managed users, if no password is provided, generate a secure random one.
+    photoKeys = await uploadFile(photo, 'user-photos', `temp-${Date.now()}`)
+  } catch (uploadError) {
+    console.error('Photo upload failed:', uploadError)
+    return { error: 'Failed to upload photo. Please try again.' }
+  }
+
+  try {
     const finalPassword = password || crypto.randomBytes(16).toString('hex')
     const hashedPassword = await bcrypt.hash(finalPassword, 10)
     const username = `${firstName.toLowerCase()}${Date.now()}`.slice(0, 15)
@@ -185,8 +192,6 @@ export async function createManagedUser(
         },
       })
 
-      const photoKeys = await uploadFile(photo, 'user-photos', newUser.id)
-
       await tx.managedUser.create({
         data: {
           managerId: managerId,
@@ -217,6 +222,27 @@ export async function createManagedUser(
       redirectUrl: '/me/users?success=Managed user created successfully!',
     }
   } catch (error: any) {
+    if (photoKeys) {
+      const orphanedPhoto = {
+        ...photoKeys,
+        url_thumb: photoKeys.url_thumb ?? null,
+        url_small: photoKeys.url_small ?? null,
+        url_medium: photoKeys.url_medium ?? null,
+        url_large: photoKeys.url_large ?? null,
+        id: 0,
+        entityId: '',
+        entityTypeId: 0,
+        typeId: 0,
+        isBlocked: false,
+        uploadedAt: new Date(),
+        createdAt: new Date(),
+        deletedAt: null,
+        userId: null,
+        groupId: null,
+      }
+      await deleteFile(orphanedPhoto)
+    }
+
     console.error('Failed to create managed user:', error)
     if (error.code === 'P2002' && error.meta?.target?.includes('email')) {
       return { errors: { email: ['This email is already in use.'] } }
@@ -325,7 +351,6 @@ export async function updateManagedUser(
   }
   const managerId = session.user.id
 
-  // Verify that the current user is the manager of the user being updated
   const managedUserRelation = await prisma.managedUser.findUnique({
     where: {
       managerId_managedId: {
@@ -333,20 +358,11 @@ export async function updateManagedUser(
         managerId: managerId,
       },
     },
-    include: {
-      managed: true,
-    },
   })
 
   if (!managedUserRelation) {
     return { message: 'Forbidden' }
   }
-
-  if (!managedUserRelation || !managedUserRelation.managed) {
-    return { message: 'Forbidden' }
-  }
-
-  const _userToUpdate = managedUserRelation.managed
 
   const UpdateUserSchema = z
     .object({
@@ -430,6 +446,18 @@ export async function updateManagedUser(
     managedStatus,
   } = validatedFields.data
 
+  let newPhotoKeys = null
+  if (newPhoto && newPhoto.size > 0) {
+    try {
+      newPhotoKeys = await uploadFile(newPhoto, 'user-photos', userId)
+    } catch (uploadError) {
+      console.error('Photo upload failed:', uploadError)
+      return { error: 'Failed to upload photo. Please try again.' }
+    }
+  }
+
+  let photoToDelete: Photo | null = null
+
   try {
     await prisma.$transaction(async (tx) => {
       const [photoTypes, entityTypes] = await Promise.all([
@@ -437,8 +465,7 @@ export async function updateManagedUser(
         getCodeTable('entityType'),
       ])
 
-      if (newPhoto && newPhoto.size > 0) {
-        // Handle photo upload: delete old, upload new
+      if (newPhotoKeys) {
         const existingPrimaryPhoto = await tx.photo.findFirst({
           where: {
             entityId: userId,
@@ -447,33 +474,21 @@ export async function updateManagedUser(
           },
         })
 
-        if (existingPrimaryPhoto?.url) {
-          await deleteFile(existingPrimaryPhoto.url)
-          await tx.photo.delete({ where: { id: existingPrimaryPhoto.id } })
-        }
-
-        const newPhotoKeys = await uploadFile(newPhoto, 'user-photos', userId)
-        await tx.photo.create({
-          data: {
-            ...newPhotoKeys,
-            entityTypeId: entityTypes.user.id,
-            entityId: userId,
-            typeId: photoTypes.primary.id,
-            userId: managerId,
-          },
-        })
-      } else {
-        // If no new photo, ensure the latest existing photo is primary
-        const latestPhoto = await tx.photo.findFirst({
-          where: { entityId: userId, entityTypeId: entityTypes.user.id },
-          orderBy: { createdAt: 'desc' },
-        })
-
-        if (latestPhoto && latestPhoto.typeId !== photoTypes.primary.id) {
-          // Set this photo as primary
+        if (existingPrimaryPhoto) {
+          photoToDelete = existingPrimaryPhoto
           await tx.photo.update({
-            where: { id: latestPhoto.id },
-            data: { typeId: photoTypes.primary.id },
+            where: { id: existingPrimaryPhoto.id },
+            data: { ...newPhotoKeys },
+          })
+        } else {
+          await tx.photo.create({
+            data: {
+              ...newPhotoKeys,
+              entityTypeId: entityTypes.user.id,
+              entityId: userId,
+              typeId: photoTypes.primary.id,
+              userId: managerId,
+            },
           })
         }
       }
@@ -486,7 +501,6 @@ export async function updateManagedUser(
       const birthDateInfo = birthDate
         ? parseDateAndDeterminePrecision(birthDate)
         : null
-
       const deathDateInfo = deathDate
         ? parseDateAndDeterminePrecision(deathDate)
         : null
@@ -517,9 +531,12 @@ export async function updateManagedUser(
       })
     })
 
+    if (photoToDelete) {
+      await deleteFile(photoToDelete)
+    }
+
     revalidatePath('/me/users')
 
-    // After the transaction, fetch the updated user with the new photo URL
     const updatedUser = await prisma.user.findUnique({
       where: { id: userId },
       include: {
@@ -545,6 +562,27 @@ export async function updateManagedUser(
       updatedUser: updatedUser as User & { photos: Photo[] },
     }
   } catch (error: any) {
+    if (newPhotoKeys) {
+      const orphanedPhoto = {
+        ...newPhotoKeys,
+        url_thumb: newPhotoKeys.url_thumb ?? null,
+        url_small: newPhotoKeys.url_small ?? null,
+        url_medium: newPhotoKeys.url_medium ?? null,
+        url_large: newPhotoKeys.url_large ?? null,
+        id: 0,
+        entityId: '',
+        entityTypeId: 0,
+        typeId: 0,
+        isBlocked: false,
+        uploadedAt: new Date(),
+        createdAt: new Date(),
+        deletedAt: null,
+        userId: null,
+        groupId: null,
+      }
+      await deleteFile(orphanedPhoto)
+    }
+
     console.error('Failed to update user:', error)
     if (error.code === 'P2002' && error.meta?.target?.includes('email')) {
       return { errors: { email: ['This email is already in use.'] } }
@@ -585,7 +623,7 @@ export async function deleteManagedUser(userId: string) {
       where: { entityId: userId, entityTypeId: userEntityTypeId },
     })
     if (photos.length > 0) {
-      const photoDeletePromises = photos.map((photo) => deleteFile(photo.url))
+      const photoDeletePromises = photos.map((photo) => deleteFile(photo))
       await Promise.all(photoDeletePromises)
       await tx.photo.deleteMany({
         where: { entityId: userId, entityTypeId: userEntityTypeId },

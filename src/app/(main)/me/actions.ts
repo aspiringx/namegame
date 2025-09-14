@@ -184,198 +184,194 @@ export async function updateUserProfile(
   let updatedUser
   let emailChanged = false
 
-  // This needs to happen before the try to be available in the try and after.
-  // Unlike the other getCodeTable calls below.
+  // Handle photo upload first, outside of the transaction
+  if (photo && photo.size > 0) {
+    try {
+      newPhotoKeys = await uploadFile(photo, 'user-photos', userId)
+    } catch (uploadError) {
+      console.error('Photo upload failed:', uploadError)
+      return {
+        success: false,
+        error: 'Failed to upload photo. Please try again.',
+        message: null,
+      }
+    }
+  }
+
   const groupUserRoles = await getCodeTable('groupUserRole')
+  let photoToDelete = null
 
   try {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      include: { photos: true, groupMemberships: true },
-    })
+    updatedUser = await prisma.$transaction(async (tx) => {
+      const user = await tx.user.findUnique({
+        where: { id: userId },
+        include: { photos: true, groupMemberships: true },
+      })
 
-    if (!user) {
-      return { success: false, error: 'User not found.', message: null }
-    }
-
-    // Handle photo upload first
-    if (photo && photo.size > 0) {
-      newPhotoKeys = await uploadFile(photo, 'user-photos', userId)
-    }
-
-    const dataToUpdate: any = {
-      firstName,
-      lastName,
-      gender,
-      birthPlace,
-    }
-
-    if (birthDate) {
-      const parsed = parseDateAndDeterminePrecision(birthDate, timezone)
-      if (parsed) {
-        dataToUpdate.birthDate = parsed.date
-        dataToUpdate.birthDatePrecision = parsed.precision
-      } else {
-        return {
-          success: false,
-          error:
-            'Invalid birth date format. Please use a recognized date format.',
-          errors: {
-            birthDate: ['Invalid format. Please use a recognized date format.'],
-          },
-          message: null,
-        }
-      }
-    } else {
-      dataToUpdate.birthDate = null
-      dataToUpdate.birthDatePrecision = null
-    }
-
-    const lowercasedEmail = email ? email.toLowerCase() : null
-
-    // Handle cases where email is changed or removed
-    if (lowercasedEmail !== user.email?.toLowerCase()) {
-      dataToUpdate.email = lowercasedEmail
-      dataToUpdate.emailVerified = null // Always nullify verification on change/removal
-      emailChanged = true
-
-      // Check for existing user only if a new email is provided
-      if (lowercasedEmail) {
-        const existingUser = await prisma.user.findFirst({
-          where: {
-            email: {
-              equals: lowercasedEmail,
-              mode: 'insensitive',
-            },
-            id: { not: userId },
-          },
-        })
-
-        if (existingUser) {
-          return {
-            success: false,
-            error: 'This email is already in use by another account.',
-            message: null,
-            errors: { email: ['This email is already in use.'] },
-          }
-        }
-      }
-    }
-
-    if (password) {
-      if (password === 'password123') {
-        return {
-          success: false,
-          error: 'Please choose a more secure password.',
-          message: null,
-        }
+      if (!user) {
+        throw new Error('User not found.')
       }
 
-      if (user.password) {
-        const isSamePassword = await bcrypt.compare(password, user.password)
-        if (isSamePassword) {
-          return {
-            success: false,
-            error: 'New password cannot be the same as your current password.',
-            message: null,
-          }
-        }
+      const dataToUpdate: any = {
+        firstName,
+        lastName,
+        gender,
+        birthPlace,
       }
 
-      dataToUpdate.password = await bcrypt.hash(password, 10)
-    }
-
-    const { firstName: formFirstName, lastName: formLastName } =
-      validatedFields.data
-
-    const profileIsNowComplete = Boolean(
-      formFirstName &&
-        formLastName &&
-        user.emailVerified &&
-        (newPhotoKeys || user.photos.length > 0),
-    )
-
-    updatedUser = await prisma.user.update({
-      where: { id: userId },
-      data: dataToUpdate,
-    })
-
-    if (newPhotoKeys) {
-      const [photoTypes, entityTypes] = await Promise.all([
-        getCodeTable('photoType'),
-        getCodeTable('entityType'),
-      ])
-      const primaryPhotoTypeId = photoTypes.primary.id
-      const userEntityTypeId = entityTypes.user.id
-
-      if (primaryPhotoTypeId && userEntityTypeId) {
-        const existingPhoto = await prisma.photo.findFirst({
-          where: {
-            entityId: user.id,
-            entityTypeId: userEntityTypeId,
-            typeId: primaryPhotoTypeId,
-          },
-        })
-
-        if (existingPhoto) {
-          await prisma.photo.update({
-            where: { id: existingPhoto.id },
-            data: { ...newPhotoKeys },
-          })
-          if (existingPhoto.url) {
-            await deleteFile(existingPhoto.url)
-          }
+      if (birthDate) {
+        const parsed = parseDateAndDeterminePrecision(birthDate, timezone)
+        if (parsed) {
+          dataToUpdate.birthDate = parsed.date
+          dataToUpdate.birthDatePrecision = parsed.precision
         } else {
-          await prisma.photo.create({
-            data: {
-              entityTypeId: userEntityTypeId,
-              entityId: user.id,
-              typeId: primaryPhotoTypeId,
-              userId: user.id,
-              ...newPhotoKeys,
+          throw new Error('Invalid birth date format.')
+        }
+      } else {
+        dataToUpdate.birthDate = null
+        dataToUpdate.birthDatePrecision = null
+      }
+
+      const lowercasedEmail = email ? email.toLowerCase() : null
+
+      if (lowercasedEmail !== user.email?.toLowerCase()) {
+        dataToUpdate.email = lowercasedEmail
+        dataToUpdate.emailVerified = null
+        emailChanged = true
+
+        if (lowercasedEmail) {
+          const existingUser = await tx.user.findFirst({
+            where: {
+              email: { equals: lowercasedEmail, mode: 'insensitive' },
+              id: { not: userId },
             },
+          })
+          if (existingUser) {
+            throw new Error('This email is already in use by another account.')
+          }
+        }
+      }
+
+      if (password) {
+        if (password === 'password123') {
+          throw new Error('Please choose a more secure password.')
+        }
+        if (user.password) {
+          const isSamePassword = await bcrypt.compare(password, user.password)
+          if (isSamePassword) {
+            throw new Error(
+              'New password cannot be the same as your current password.',
+            )
+          }
+        }
+        dataToUpdate.password = await bcrypt.hash(password, 10)
+      }
+
+      const internalUpdatedUser = await tx.user.update({
+        where: { id: userId },
+        data: dataToUpdate,
+      })
+
+      if (newPhotoKeys) {
+        const [photoTypes, entityTypes] = await Promise.all([
+          getCodeTable('photoType'),
+          getCodeTable('entityType'),
+        ])
+        const primaryPhotoTypeId = photoTypes.primary.id
+        const userEntityTypeId = entityTypes.user.id
+
+        if (primaryPhotoTypeId && userEntityTypeId) {
+          const existingPhoto = await tx.photo.findFirst({
+            where: {
+              entityId: user.id,
+              entityTypeId: userEntityTypeId,
+              typeId: primaryPhotoTypeId,
+            },
+          })
+
+          if (existingPhoto) {
+            photoToDelete = existingPhoto
+            await tx.photo.update({
+              where: { id: existingPhoto.id },
+              data: { ...newPhotoKeys },
+            })
+          } else {
+            await tx.photo.create({
+              data: {
+                ...newPhotoKeys,
+                entityTypeId: userEntityTypeId,
+                entityId: user.id,
+                typeId: primaryPhotoTypeId,
+                userId: user.id,
+              },
+            })
+          }
+        }
+      }
+
+      if (emailChanged && internalUpdatedUser.email) {
+        await sendVerificationEmail(
+          internalUpdatedUser.email,
+          userId,
+          internalUpdatedUser.firstName,
+        )
+      }
+
+      const { firstName: formFirstName, lastName: formLastName } =
+        validatedFields.data
+      const profileIsNowComplete = Boolean(
+        formFirstName &&
+          formLastName &&
+          user.emailVerified &&
+          (newPhotoKeys || user.photos.length > 0),
+      )
+
+      if (profileIsNowComplete) {
+        const memberRoleId = groupUserRoles.member?.id
+        const guestRoleId = groupUserRoles.guest?.id
+        if (memberRoleId && guestRoleId && user.groupMemberships.length > 0) {
+          await tx.groupUser.updateMany({
+            where: { userId: user.id, roleId: guestRoleId },
+            data: { roleId: memberRoleId },
           })
         }
       }
-    }
 
-    if (emailChanged && updatedUser.email) {
-      await sendVerificationEmail(
-        updatedUser.email,
-        userId,
-        updatedUser.firstName,
-      )
-    }
+      return internalUpdatedUser
+    })
 
-    if (profileIsNowComplete) {
-      const memberRoleId = groupUserRoles.member?.id
-      const guestRoleId = groupUserRoles.guest?.id
-      if (memberRoleId && guestRoleId && user.groupMemberships.length > 0) {
-        // Only update roles that are currently 'guest'
-        await prisma.groupUser.updateMany({
-          where: {
-            userId: user.id,
-            roleId: guestRoleId,
-          },
-          data: { roleId: memberRoleId },
-        })
+    // If transaction is successful, delete the old photo
+    if (photoToDelete) {
+      await deleteFile(photoToDelete)
+    }
+  } catch (error: any) {
+    // If transaction fails, delete the newly uploaded photo if it exists
+    if (newPhotoKeys) {
+      // We need to construct an object that satisfies the Photo type for deleteFile
+      const orphanedPhoto = {
+        ...newPhotoKeys,
+        url_thumb: newPhotoKeys.url_thumb ?? null,
+        url_small: newPhotoKeys.url_small ?? null,
+        url_medium: newPhotoKeys.url_medium ?? null,
+        url_large: newPhotoKeys.url_large ?? null,
+        id: 0, // Dummy data, not used by deleteFile
+        entityId: '',
+        entityTypeId: 0,
+        typeId: 0,
+        isBlocked: false,
+        uploadedAt: new Date(),
+        createdAt: new Date(),
+        deletedAt: null,
+        userId: null,
+        groupId: null,
       }
+      await deleteFile(orphanedPhoto)
     }
-  } catch (error) {
+
     console.error('Failed to update user profile:', error)
-    if ((error as any).code === 'P2002') {
-      const target = (error as any).meta?.target
-      if (target?.includes('username')) {
-        return {
-          success: false,
-          error: 'This username is already taken.',
-          message: null,
-        }
-      }
-    }
     return {
       success: false,
-      error: 'An unexpected error occurred. Please try again.',
+      error: error.message || 'An unexpected error occurred. Please try again.',
       message: null,
     }
   }
