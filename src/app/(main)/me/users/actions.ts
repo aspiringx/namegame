@@ -11,16 +11,16 @@ import {
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
 import bcrypt from 'bcrypt'
-import { uploadFile, deleteFile } from '@/lib/actions/storage'
+import { uploadFile, deleteFile, UploadedUrls } from '@/lib/actions/storage'
 import { revalidatePath } from 'next/cache'
 import crypto from 'crypto'
 import { parseDateAndDeterminePrecision } from '@/lib/utils'
 import { getCodeTable } from '@/lib/codes'
-import { getPublicPhoto } from '@/lib/photos'
+import { getPhotoUrl } from '@/lib/photos'
 import { Group, GroupType } from '@/generated/prisma/client'
 
 export type ManagedUserWithPhoto = User & {
-  primaryPhoto: Photo | null
+  primaryPhoto: (Photo & { url: string }) | null
   managedStatus: ManagedStatus
 }
 
@@ -40,7 +40,7 @@ export type State = {
   } | null
   success?: boolean
   redirectUrl?: string
-  updatedUser?: User & { photos: Photo[] }
+  updatedUser?: User & { photos: (Photo & { url: string })[] }
 }
 
 const CreateUserSchema = z
@@ -136,7 +136,7 @@ export async function createManagedUser(
   } = validatedFields.data
   const managerId = session.user.id
 
-  let photoKeys = null
+  let photoKeys: UploadedUrls | null = null
   try {
     photoKeys = await uploadFile(photo, 'user-photos', `temp-${Date.now()}`)
   } catch (uploadError) {
@@ -294,12 +294,12 @@ export async function getManagedUsers(): Promise<ManagedUserWithPhoto[]> {
     managedUserRelations.map(async (rel) => {
       const user = rel.managed
       const photo = photoMap.get(user.id)
-      const publicPhoto = await getPublicPhoto(photo || null)
+      const photoUrl = await getPhotoUrl(photo || null, 'thumb')
 
       return {
         ...user,
         managedStatus: user.managed as ManagedStatus,
-        primaryPhoto: publicPhoto,
+        primaryPhoto: photo ? { ...photo, url: photoUrl } : null,
       }
     }),
   )
@@ -440,7 +440,7 @@ export async function updateManagedUser(
     managedStatus,
   } = validatedFields.data
 
-  let newPhotoKeys = null
+  let newPhotoKeys: UploadedUrls | null = null
   if (newPhoto && newPhoto.size > 0) {
     try {
       newPhotoKeys = await uploadFile(newPhoto, 'user-photos', userId)
@@ -550,11 +550,11 @@ export async function updateManagedUser(
       },
     })
 
-    const publicPhoto = await getPublicPhoto(primaryPhoto)
+    const photoUrl = await getPhotoUrl(primaryPhoto, 'thumb')
 
     const updatedUserWithPhoto = {
       ...updatedUser,
-      photos: publicPhoto ? [publicPhoto] : [],
+      photos: primaryPhoto ? [{ ...primaryPhoto, url: photoUrl }] : [],
     }
 
     return {
@@ -704,10 +704,10 @@ export async function getManagers(userId: string) {
   const managersWithPhotoUrls = await Promise.all(
     managers.map(async (manager) => {
       const photo = photoMap.get(manager.id)
-      const publicPhoto = await getPublicPhoto(photo || null)
+      const photoUrl = await getPhotoUrl(photo || null, 'thumb')
       return {
         ...manager,
-        photoUrl: publicPhoto?.url_thumb,
+        photoUrl: photoUrl,
       }
     }),
   )
@@ -788,7 +788,9 @@ export async function getGroupsForCurrentUser(): Promise<
   return groupUsers.map((gu) => gu.group)
 }
 
-export async function getGroupMembers(groupId: number): Promise<User[]> {
+export async function getGroupMembers(
+  groupId: number,
+): Promise<(User & { photos: (Photo & { url: string })[] })[]> {
   const session = await auth()
   if (!session?.user?.id) {
     return []
@@ -824,13 +826,13 @@ export async function getGroupMembers(groupId: number): Promise<User[]> {
   const usersWithPhotoUrls = await Promise.all(
     users.map(async (user) => {
       const photo = photoMap.get(user.id)
-      const publicPhoto = await getPublicPhoto(photo || null)
+      const photoUrl = await getPhotoUrl(photo || null, 'thumb')
       return {
         ...user,
-        photos: publicPhoto ? [publicPhoto] : [],
+        photos: photo ? [{ ...photo, url: photoUrl }] : [],
       }
     }),
   )
 
-  return usersWithPhotoUrls as (User & { photos: Photo[] })[]
+  return usersWithPhotoUrls
 }

@@ -7,7 +7,7 @@ import prisma from '@/lib/prisma'
 import { revalidatePath, revalidateTag } from 'next/cache'
 import { getCodeTable } from '@/lib/codes'
 import { parseDateAndDeterminePrecision } from '@/lib/utils'
-import { getPublicPhoto } from '@/lib/photos'
+import { getPhotoUrl } from '@/lib/photos'
 import { uploadFile, deleteFile, UploadedUrls } from '@/lib/actions/storage'
 import { sendVerificationEmail } from '@/lib/mail'
 import { disposableEmailDomains } from '@/lib/disposable-email-domains'
@@ -43,7 +43,6 @@ const UserProfileSchema = z.object({
         password.length >= 6 && /[a-zA-Z]/.test(password) && /\d/.test(password)
       )
     }, 'Password must be at least 6 characters and include both letters and numbers.'),
-  // username: z.string().min(3, 'Username must be at least 3 characters long.'),
   firstName: z.string().min(1, 'First name is required'),
   lastName: z.string().min(1, 'Last name is required'),
   email: z.preprocess(
@@ -86,7 +85,6 @@ export async function getUserUpdateRequirements(): Promise<{
       entityTypeId: entityTypes.user.id,
       typeId: photoTypes.primary.id,
     },
-    select: { url: true },
   })
 
   let passwordRequired = false
@@ -94,24 +92,20 @@ export async function getUserUpdateRequirements(): Promise<{
     passwordRequired = await bcrypt.compare('password123', user.password)
   }
 
-  const photoRequired = !primaryPhoto || primaryPhoto.url.includes('dicebear.com')
+  const photoRequired =
+    !primaryPhoto || primaryPhoto.url.includes('dicebear.com')
 
   revalidatePath('/me')
 
   return { passwordRequired, photoRequired }
 }
 
-// Update the user.
-// FYI: We call this with useActionState in the UserProfileForm component, which
-// requires prevState, but we don't use it since we load the user from the
-// database.
 export async function updateUserProfile(
   prevState: State,
   formData: FormData,
 ): Promise<State> {
   const emailFromForm = formData.get('email') as string | null
 
-  // Check for disposable email domain
   if (emailFromForm) {
     const domain = emailFromForm.split('@')[1]
     if (domain && disposableEmailDomains.has(domain.toLowerCase())) {
@@ -150,8 +144,6 @@ export async function updateUserProfile(
   })
 
   if (!validatedFields.success) {
-    // The server action returns a generic error message, but the client can
-    // use the detailed errors.
     return {
       success: false,
       error: 'Invalid data provided. Please check the form and try again.',
@@ -177,7 +169,6 @@ export async function updateUserProfile(
   let updatedUser
   let emailChanged = false
 
-  // Handle photo upload first, outside of the transaction
   if (photo && photo.size > 0) {
     try {
       newPhotoKeys = await uploadFile(photo, 'user-photos', userId)
@@ -342,21 +333,18 @@ export async function updateUserProfile(
       return internalUpdatedUser
     })
 
-    // If transaction is successful, delete the old photo
     if (photoToDelete) {
       await deleteFile(photoToDelete)
     }
   } catch (error: any) {
-    // If transaction fails, delete the newly uploaded photo if it exists
     if (newPhotoKeys) {
-      // We need to construct an object that satisfies the Photo type for deleteFile
       const orphanedPhoto = {
         ...newPhotoKeys,
         url_thumb: newPhotoKeys.url_thumb ?? null,
         url_small: newPhotoKeys.url_small ?? null,
         url_medium: newPhotoKeys.url_medium ?? null,
         url_large: newPhotoKeys.url_large ?? null,
-        id: 0, // Dummy data, not used by deleteFile
+        id: 0,
         entityId: '',
         entityTypeId: 0,
         typeId: 0,
@@ -379,7 +367,7 @@ export async function updateUserProfile(
   }
 
   revalidatePath('/me')
-  revalidatePath('/', 'layout') // Revalidate header
+  revalidatePath('/', 'layout')
   revalidateTag('user-photo')
 
   const userGroups = await prisma.groupUser.findMany({
@@ -387,8 +375,6 @@ export async function updateUserProfile(
     select: { group: { select: { slug: true } } },
   })
 
-  // Revalidate the layout for each group the user is in.
-  // This is crucial for the GuestMessage to disappear immediately after role upgrade.
   for (const userGroup of userGroups) {
     if (userGroup.group.slug) {
       revalidatePath(`/g/${userGroup.group.slug}`, 'layout')
@@ -405,18 +391,15 @@ export async function updateUserProfile(
     },
   })
 
-  const publicPhoto = await getPublicPhoto(primaryPhoto)
-  let currentPhotoUrl: string | null = null
-  if (publicPhoto) {
-    const urlToUse = publicPhoto.url_thumb
-    currentPhotoUrl = newPhotoKeys ? `${urlToUse}?v=${Date.now()}` : urlToUse
-  }
+  const currentPhotoUrl = await getPhotoUrl(primaryPhoto, 'thumb')
 
   return {
     success: true,
     message: 'Profile updated successfully!',
     error: null,
-    newPhotoUrl: currentPhotoUrl,
+    newPhotoUrl: newPhotoKeys
+      ? `${currentPhotoUrl}?v=${Date.now()}`
+      : currentPhotoUrl,
     newFirstName: updatedUser.firstName,
     redirectUrl,
     emailUpdated: emailChanged,
@@ -451,10 +434,6 @@ export async function updateUserGender(
 
   const isAdmin = requesterGroupUser?.roleId === groupUserRoles.admin.id
 
-  // Allow update if the requester is an admin or is the user in context
-  // The client ensures that a non-admin can only operate on their own relationships.
-  // This server check verifies that the requester is at least a member of the group
-  // and has a valid role.
   if (!isAdmin && requesterId !== updatingUserId) {
     return {
       success: false,
@@ -462,10 +441,6 @@ export async function updateUserGender(
     }
   }
 
-  // A non-admin can only set the gender of another user
-  // if they are adding them to a relationship for the first time.
-  // In this case, no existing relationship would be found.
-  // If a relationship exists, they must be an admin.
   if (!isAdmin) {
     const existingRelationship = await prisma.userUser.findFirst({
       where: {
@@ -476,10 +451,6 @@ export async function updateUserGender(
       },
     })
 
-    // A non-admin can only set the gender of another user
-    // if they are adding them to a relationship for the first time.
-    // In this case, no existing relationship would be found.
-    // If a relationship exists, they must be an admin.
     if (existingRelationship) {
       return {
         success: false,
@@ -489,7 +460,6 @@ export async function updateUserGender(
   }
 
   try {
-    // Note: No validation needed for a simple gender update from a trusted component
     await prisma.user.update({
       where: { id: userId },
       data: { gender },

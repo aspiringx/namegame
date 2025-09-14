@@ -14,6 +14,7 @@ import { z } from 'zod'
 import { Badge } from '@/components/ui/badge'
 import Modal from '@/components/ui/modal'
 import { Button } from '@/components/ui/button'
+import { getPhotoUrl } from '@/lib/photos'
 import { PushManager } from '@/components/PushManager'
 import { usePushManager } from '@/hooks/use-push-manager'
 import {
@@ -40,7 +41,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { DatePrecision, Gender } from '@/generated/prisma/client'
+import { DatePrecision, Gender, Photo } from '@/generated/prisma/client'
 import { format } from 'date-fns'
 import UserProfileNextSteps from './UserProfileNextSteps'
 import StickySaveBar from '@/components/ui/StickySaveBar'
@@ -72,11 +73,7 @@ export type UserProfile = {
   lastName: string | null
   email: string | null
   emailVerified: string | null // Pass date as ISO string
-  primaryPhoto: {
-    url: string
-    url_thumb: string | null
-    url_small: string | null
-  } | null
+  primaryPhoto: Photo | null
   gender: 'male' | 'female' | 'non_binary' | null
   birthDate: string | null
   birthDatePrecision: DatePrecision | null
@@ -95,12 +92,16 @@ export default function UserProfileForm({
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const [previewUrl, setPreviewUrl] = useState<string | null>(
-    user.primaryPhoto?.url_small ??
-      user.primaryPhoto?.url_thumb ??
-      user.primaryPhoto?.url ??
-      null,
-  )
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    async function setInitialPhoto() {
+      const url = await getPhotoUrl(user.primaryPhoto, 'small')
+      setPreviewUrl(url)
+    }
+    setInitialPhoto()
+  }, [user.primaryPhoto])
+
   const [firstName, setFirstName] = useState(user.firstName || '')
   const [lastName, setLastName] = useState(user.lastName || '')
   const [gender, setGender] = useState<Gender | null>(user.gender || null)
@@ -143,6 +144,7 @@ export default function UserProfileForm({
       }
     }
   }
+
   const [isEmailValid, setIsEmailValid] = useState(
     !user.email || z.string().email().safeParse(user.email).success,
   )
@@ -213,12 +215,11 @@ export default function UserProfileForm({
     )
     setBirthPlace(user.birthPlace || '')
     setPassword('')
-    setPreviewUrl(
-      user.primaryPhoto?.url_small ??
-        user.primaryPhoto?.url_thumb ??
-        user.primaryPhoto?.url ??
-        null,
-    )
+    async function resetPreview() {
+      const url = await getPhotoUrl(user.primaryPhoto, 'small')
+      setPreviewUrl(url)
+    }
+    resetPreview()
     setFileSelected(false)
     setIsEmailValid(true)
     setPasswordError(null)
@@ -403,12 +404,11 @@ export default function UserProfileForm({
       reader.readAsDataURL(file)
     } else {
       // If the user cancels file selection, revert to the original photo if it exists
-      setPreviewUrl(
-        user.primaryPhoto?.url_small ??
-          user.primaryPhoto?.url_thumb ??
-          user.primaryPhoto?.url ??
-          null,
-      )
+      async function resetPreview() {
+        const url = await getPhotoUrl(user.primaryPhoto, 'small')
+        setPreviewUrl(url)
+      }
+      resetPreview()
       setFileSelected(false)
     }
   }

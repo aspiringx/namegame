@@ -2,7 +2,7 @@ import { auth } from '@/auth'
 import { redirect } from 'next/navigation'
 import prisma from '@/lib/prisma'
 import MeTabs from './_components/me-tabs'
-import { getPublicPhoto } from '@/lib/photos'
+import { getPhotoUrl } from '@/lib/photos'
 import { getCodeTable } from '@/lib/codes'
 
 export default async function MeLayout({
@@ -37,8 +37,7 @@ export default async function MeLayout({
     },
   })
 
-  const publicPhoto = await getPublicPhoto(primaryPhoto)
-  const userImage = publicPhoto?.url_thumb
+  const userImage = await getPhotoUrl(primaryPhoto, 'thumb')
 
   const isGuest =
     !user.firstName ||

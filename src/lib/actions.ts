@@ -7,7 +7,7 @@ import prisma from '@/lib/prisma'
 import type { FullRelationship, UserUserRelationType } from '@/types'
 import { getCodeTable } from '@/lib/codes'
 import { getPublicUrl } from './storage'
-import { getPublicPhoto } from './photos'
+import { getPhotoUrl } from './photos'
 
 export async function getSecureImageUrl(
   storagePath: string | null | undefined,
@@ -100,10 +100,10 @@ export async function getUsersManagingMe() {
   const managersWithPhotos = await Promise.all(
     managers.map(async (manager) => {
       const photo = photoMap.get(manager.id)
-      const publicPhoto = await getPublicPhoto(photo || null)
+      const photoUrl = await getPhotoUrl(photo || null, 'thumb')
       return {
         ...manager,
-        primaryPhoto: publicPhoto,
+        primaryPhoto: photo ? { ...photo, url: photoUrl } : null,
       }
     }),
   )

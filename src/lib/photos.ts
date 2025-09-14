@@ -3,19 +3,13 @@
 import { Photo } from '@/generated/prisma/client'
 import {
   getFileFromStorage,
-  IMAGE_SIZES,
   uploadToStorage,
 } from '@/lib/actions/storage'
+import { IMAGE_SIZES } from '@/config/photos'
 import { getPublicUrl } from './storage'
 import prisma from './prisma'
 
-type PublicPhoto = Photo & {
-  url: string
-  url_thumb: string
-  url_small: string
-  url_medium: string
-  url_large: string
-}
+const sizeOrder: (keyof typeof IMAGE_SIZES)[] = ['thumb', 'small', 'medium', 'large']
 
 async function processLegacyPhoto(photo: Photo): Promise<Photo> {
   try {
@@ -65,25 +59,33 @@ async function processLegacyPhoto(photo: Photo): Promise<Photo> {
   }
 }
 
-export async function getPublicPhoto(
+export async function getPhotoUrl(
   photo: Photo | null,
-): Promise<PublicPhoto | null> {
+  preferredSize: 'thumb' | 'small' | 'medium' | 'large' | 'original' = 'original',
+): Promise<string> {
   if (!photo) {
-    return null
+    return '/images/default-avatar.png'
   }
 
   let processedPhoto = photo
-  // If only the original URL exists, it's a legacy photo that needs processing.
   if (photo.url && !photo.url_thumb) {
     processedPhoto = await processLegacyPhoto(photo)
   }
 
-  return {
-    ...processedPhoto,
-    url: await getPublicUrl(processedPhoto.url),
-    url_thumb: await getPublicUrl(processedPhoto.url_thumb),
-    url_small: await getPublicUrl(processedPhoto.url_small),
-    url_medium: await getPublicUrl(processedPhoto.url_medium),
-    url_large: await getPublicUrl(processedPhoto.url_large),
+  if (preferredSize === 'original') {
+    return getPublicUrl(processedPhoto.url)
   }
+
+  const startIndex = sizeOrder.indexOf(preferredSize)
+  for (let i = startIndex; i < sizeOrder.length; i++) {
+    const size = sizeOrder[i]
+    const urlKey = `url_${size}` as keyof Photo
+    const url = processedPhoto[urlKey] as string | null
+    if (url) {
+      return getPublicUrl(url)
+    }
+  }
+
+  // Final fallback to the original URL if no other sizes are found
+  return getPublicUrl(processedPhoto.url)
 }

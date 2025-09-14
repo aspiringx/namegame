@@ -10,6 +10,7 @@ import { writeFile, unlink, mkdir } from 'fs/promises'
 import { env } from 'process'
 import { Photo } from '@/generated/prisma'
 import { Readable } from 'stream'
+import { IMAGE_SIZES } from '@/config/photos'
 
 const STORAGE_PROVIDER =
   process.env.NEXT_PUBLIC_STORAGE_PROVIDER === 'do_spaces'
@@ -17,12 +18,6 @@ const STORAGE_PROVIDER =
     : 'local'
 const BUCKET_NAME = env.DO_SPACES_BUCKET || ''
 
-export const IMAGE_SIZES = {
-  thumb: { width: 150, height: 150, quality: 80 },
-  small: { width: 400, height: 400, quality: 85 },
-  medium: { width: 800, height: 800, quality: 90 },
-  large: { width: 1200, height: 1200, quality: 90 },
-} as const
 
 const ALLOWED_FORMATS = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
 
