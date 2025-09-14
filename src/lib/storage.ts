@@ -9,6 +9,7 @@ import path from 'path'
 import { writeFile, unlink, mkdir } from 'fs/promises'
 import sharp from 'sharp'
 import { env } from 'process'
+import { Photo } from '@/generated/prisma'
 
 const STORAGE_PROVIDER =
   process.env.NEXT_PUBLIC_STORAGE_PROVIDER === 'do_spaces'
@@ -197,7 +198,7 @@ export async function getPublicUrl(
   return `/api/images?key=${storagePath}`
 }
 
-export async function deleteFile(storagePath: string): Promise<void> {
+async function deleteFromStorage(storagePath: string): Promise<void> {
   if (!storagePath) return
 
   if (STORAGE_PROVIDER === 'do_spaces' && s3Client) {
@@ -212,11 +213,16 @@ export async function deleteFile(storagePath: string): Promise<void> {
     }
   } else {
     try {
-      // storagePath might be a root-relative URL (/uploads/...), so we normalize it
-      const relativePath = storagePath.startsWith('/')
-        ? storagePath.substring(1)
-        : storagePath
-      const filepath = path.join(process.cwd(), 'public', relativePath)
+      // For local testing, storagePath is relative to the public directory of
+      // our project root (e.g. /uploads/...). To delete/unlink it from our
+      // local filesystem, we need it's full path:
+      // - process.cwd() returns the current working directory
+      //   e.g. /Users/joetippetts/Projects/namegame/namegame
+      // - path.join(process.cwd(), 'public', storagePath) returns the full path
+      //   ensuring just one / between segments.
+      //   e.g. /Users/joetippetts/Projects/namegame/namegame/public/uploads/...
+      //   So "/uploads/..." or "uploads/..." will both work.
+      const filepath = path.join(process.cwd(), 'public', storagePath)
       await unlink(filepath)
     } catch (e: unknown) {
       const error = e as { code?: string }
@@ -226,4 +232,20 @@ export async function deleteFile(storagePath: string): Promise<void> {
       }
     }
   }
+}
+
+export async function deleteFile(photo: Photo): Promise<void> {
+  const urlsToDelete: (string | null)[] = [
+    photo.url,
+    photo.url_thumb,
+    photo.url_small,
+    photo.url_medium,
+    photo.url_large,
+  ]
+
+  const deletionPromises = urlsToDelete
+    .filter((url): url is string => !!url)
+    .map((url) => deleteFromStorage(url))
+
+  await Promise.all(deletionPromises)
 }
