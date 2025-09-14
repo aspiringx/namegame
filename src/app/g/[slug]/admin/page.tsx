@@ -1,6 +1,6 @@
 import prisma from '@/lib/prisma'
 import { notFound } from 'next/navigation'
-import { getPublicUrl } from '@/lib/storage'
+import { getPublicPhoto } from '@/lib/photos'
 import EditGroupForm from './edit-group-form'
 import { getCodeTable } from '@/lib/codes'
 
@@ -32,7 +32,8 @@ export default async function GroupAdminSettingsPage(props: {
       typeId: photoTypes.logo.id,
     },
   })
-  const logoUrl = await getPublicUrl(logo?.url)
+  const publicLogo = await getPublicPhoto(logo)
+  const logoUrl = publicLogo?.url_small
 
   return (
     <div className="px-2 py-8">

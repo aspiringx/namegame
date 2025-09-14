@@ -7,6 +7,7 @@ import prisma from '@/lib/prisma'
 import type { FullRelationship, UserUserRelationType } from '@/types'
 import { getCodeTable } from '@/lib/codes'
 import { getPublicUrl } from './storage'
+import { getPublicPhoto } from './photos'
 
 export async function getSecureImageUrl(
   storagePath: string | null | undefined,
@@ -94,20 +95,18 @@ export async function getUsersManagingMe() {
     },
   })
 
-  for (const photo of photos) {
-    photo.url = await getPublicUrl(photo.url)
-    if (photo.url_thumb) photo.url_thumb = await getPublicUrl(photo.url_thumb)
-    if (photo.url_small) photo.url_small = await getPublicUrl(photo.url_small)
-    if (photo.url_medium) photo.url_medium = await getPublicUrl(photo.url_medium)
-    if (photo.url_large) photo.url_large = await getPublicUrl(photo.url_large)
-  }
-
   const photoMap = new Map(photos.map((p) => [p.entityId, p]))
 
-  const managersWithPhotos = managers.map((manager) => ({
-    ...manager,
-    primaryPhoto: photoMap.get(manager.id) || null,
-  }))
+  const managersWithPhotos = await Promise.all(
+    managers.map(async (manager) => {
+      const photo = photoMap.get(manager.id)
+      const publicPhoto = await getPublicPhoto(photo || null)
+      return {
+        ...manager,
+        primaryPhoto: publicPhoto,
+      }
+    }),
+  )
 
   return managersWithPhotos
 }

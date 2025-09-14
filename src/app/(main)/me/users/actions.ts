@@ -11,12 +11,12 @@ import {
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
 import bcrypt from 'bcrypt'
-import { getPublicUrl } from '@/lib/storage'
 import { uploadFile, deleteFile } from '@/lib/actions/storage'
 import { revalidatePath } from 'next/cache'
 import crypto from 'crypto'
 import { parseDateAndDeterminePrecision } from '@/lib/utils'
 import { getCodeTable } from '@/lib/codes'
+import { getPublicPhoto } from '@/lib/photos'
 import { Group, GroupType } from '@/generated/prisma/client'
 
 export type ManagedUserWithPhoto = User & {
@@ -288,27 +288,21 @@ export async function getManagedUsers(): Promise<ManagedUserWithPhoto[]> {
     },
   })
 
-  for (const photo of photos) {
-    photo.url = await getPublicUrl(photo.url)
-    if (photo.url_thumb) photo.url_thumb = await getPublicUrl(photo.url_thumb)
-    if (photo.url_small) photo.url_small = await getPublicUrl(photo.url_small)
-    if (photo.url_medium)
-      photo.url_medium = await getPublicUrl(photo.url_medium)
-    if (photo.url_large) photo.url_large = await getPublicUrl(photo.url_large)
-  }
-
   const photoMap = new Map(photos.map((p) => [p.entityId, p]))
 
-  const usersWithPhotos = managedUserRelations.map((rel) => {
-    const user = rel.managed
-    const photo = photoMap.get(user.id)
+  const usersWithPhotos = await Promise.all(
+    managedUserRelations.map(async (rel) => {
+      const user = rel.managed
+      const photo = photoMap.get(user.id)
+      const publicPhoto = await getPublicPhoto(photo || null)
 
-    return {
-      ...user,
-      managedStatus: user.managed as ManagedStatus,
-      primaryPhoto: photo || null,
-    }
-  })
+      return {
+        ...user,
+        managedStatus: user.managed as ManagedStatus,
+        primaryPhoto: publicPhoto,
+      }
+    }),
+  )
 
   return usersWithPhotos
 }
@@ -556,15 +550,11 @@ export async function updateManagedUser(
       },
     })
 
-    let photoUrl: string | null = null
-    if (primaryPhoto) {
-      const urlToUse = primaryPhoto.url_thumb ?? primaryPhoto.url
-      photoUrl = await getPublicUrl(urlToUse)
-    }
+    const publicPhoto = await getPublicPhoto(primaryPhoto)
 
     const updatedUserWithPhoto = {
       ...updatedUser,
-      photos: primaryPhoto ? [{ ...primaryPhoto, url: photoUrl! }] : [],
+      photos: publicPhoto ? [publicPhoto] : [],
     }
 
     return {
@@ -707,19 +697,20 @@ export async function getManagers(userId: string) {
       entityTypeId: entityTypes.user.id,
       typeId: photoTypes.primary.id,
     },
-    select: { entityId: true, url: true, url_thumb: true },
   })
 
-  const photoUrlMap = new Map<string, string>()
-  for (const photo of photos) {
-    const urlToUse = photo.url_thumb ?? photo.url
-    photoUrlMap.set(photo.entityId, await getPublicUrl(urlToUse))
-  }
+  const photoMap = new Map(photos.map((p) => [p.entityId, p]))
 
-  const managersWithPhotoUrls = managers.map((manager) => ({
-    ...manager,
-    photoUrl: photoUrlMap.get(manager.id) || null,
-  }))
+  const managersWithPhotoUrls = await Promise.all(
+    managers.map(async (manager) => {
+      const photo = photoMap.get(manager.id)
+      const publicPhoto = await getPublicPhoto(photo || null)
+      return {
+        ...manager,
+        photoUrl: publicPhoto?.url_thumb,
+      }
+    }),
+  )
 
   return managersWithPhotoUrls
 }
@@ -826,21 +817,20 @@ export async function getGroupMembers(groupId: number): Promise<User[]> {
       entityTypeId: entityTypes.user.id,
       typeId: photoTypes.primary.id,
     },
-    select: { entityId: true, url: true, url_thumb: true },
   })
 
-  const photoUrlMap = new Map<string, string>()
-  for (const photo of photos) {
-    const urlToUse = photo.url_thumb ?? photo.url
-    photoUrlMap.set(photo.entityId, await getPublicUrl(urlToUse))
-  }
+  const photoMap = new Map(photos.map((p) => [p.entityId, p]))
 
-  const usersWithPhotoUrls = users.map((user) => ({
-    ...user,
-    photos: photoUrlMap.has(user.id)
-      ? [{ url: photoUrlMap.get(user.id) }]
-      : [],
-  }))
+  const usersWithPhotoUrls = await Promise.all(
+    users.map(async (user) => {
+      const photo = photoMap.get(user.id)
+      const publicPhoto = await getPublicPhoto(photo || null)
+      return {
+        ...user,
+        photos: publicPhoto ? [publicPhoto] : [],
+      }
+    }),
+  )
 
   return usersWithPhotoUrls as (User & { photos: Photo[] })[]
 }

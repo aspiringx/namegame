@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { z } from 'zod'
 
-import { getPublicUrl } from '@/lib/storage'
+import { getPublicPhoto } from '@/lib/photos'
 import { uploadFile, deleteFile } from '@/lib/actions/storage'
 import { auth } from '@/auth'
 import { getCodeTable } from '@/lib/codes'
@@ -192,16 +192,10 @@ export async function searchUsers(groupId: number, query: string) {
   return Promise.all(
     users.map(async (user) => {
       const photo = photoMap.get(user.id)
-      let photoUrl = '/images/default-avatar.png'
-      if (photo) {
-        photoUrl = await getPublicUrl(
-          photo.url_thumb || photo.url_small || photo.url,
-        )
-      }
-
+      const publicPhoto = await getPublicPhoto(photo || null)
       return {
         ...user,
-        photoUrl,
+        photoUrl: publicPhoto?.url_thumb || '/images/default-avatar.png',
       }
     }),
   )

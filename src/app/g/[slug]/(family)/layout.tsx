@@ -1,9 +1,8 @@
 import { getGroup } from './data'
 import { getFamilyRelationships } from './actions'
 import { GroupProvider, GroupPageData } from '@/components/GroupProvider'
-import { getPublicUrl } from '@/lib/storage'
 import { notFound } from 'next/navigation'
-import { MemberWithUser, GroupData } from '@/types'
+import { GroupData } from '@/types'
 
 export default async function FamilyGroupLayout({
   children,
@@ -18,31 +17,21 @@ export default async function FamilyGroupLayout({
     notFound()
   }
 
-  const membersWithPhotoUrls = await Promise.all(
-    familyGroupData.members.map(async (member: MemberWithUser) => ({
-      ...member,
-      user: {
-        ...member.user,
-        photoUrl: await getPublicUrl(member.user.photoUrl),
-      },
-    })),
-  )
-
   const relationships = await getFamilyRelationships(params.slug)
 
   const { ...restOfFamilyGroupData } = familyGroupData
 
-  const currentUserMember = membersWithPhotoUrls.find(
+  const currentUserMember = familyGroupData.members.find(
     (m) => m.userId === familyGroupData.currentUserMember?.userId,
   )
 
   const relatedMemberIds = new Set(
     relationships.flatMap((r) => [r.user1Id, r.user2Id]),
   )
-  const relatedMembers = membersWithPhotoUrls.filter((m) =>
+  const relatedMembers = familyGroupData.members.filter((m) =>
     relatedMemberIds.has(m.userId),
   )
-  const notRelatedMembers = membersWithPhotoUrls.filter(
+  const notRelatedMembers = familyGroupData.members.filter(
     (m) => !relatedMemberIds.has(m.userId),
   )
 

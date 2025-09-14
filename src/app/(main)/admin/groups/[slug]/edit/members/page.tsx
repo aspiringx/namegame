@@ -1,7 +1,7 @@
 import prisma from '@/lib/prisma'
 import { notFound } from 'next/navigation'
 import { auth } from '@/auth'
-import { getPublicUrl } from '@/lib/storage'
+import { getPublicPhoto } from '@/lib/photos'
 import GroupMembers, { GroupMember } from '../group-members'
 
 import type { GroupWithMembers } from '@/types/index'
@@ -64,28 +64,18 @@ export default async function ManageMembersPage({
       entityTypeId: userEntityType?.id,
       typeId: primaryPhotoType?.id,
     },
-    select: {
-      entityId: true,
-      url: true,
-    },
   })
 
-  const photoUrlMap = new Map<string, string>()
-  for (const photo of photos) {
-    if (photo.entityId) {
-      photoUrlMap.set(photo.entityId, photo.url)
-    }
-  }
+  const photoMap = new Map(photos.map((p) => [p.entityId, p]))
 
   const totalPages = Math.ceil(totalMembers / MEMBERS_PER_PAGE)
   const isGlobalAdminGroup = group.slug === 'global-admin'
 
   const membersWithPhoto = await Promise.all(
     members.map(async (member) => {
-      const rawUrl = photoUrlMap.get(member.userId)
-      const photoUrl = rawUrl
-        ? await getPublicUrl(rawUrl)
-        : `https://api.dicebear.com/8.x/personas/png?seed=${member.user.id}`
+      const photo = photoMap.get(member.userId)
+      const publicPhoto = await getPublicPhoto(photo || null)
+      const photoUrl = publicPhoto?.url_thumb || `https://api.dicebear.com/8.x/personas/png?seed=${member.user.id}`
       return {
         ...member,
         user: {

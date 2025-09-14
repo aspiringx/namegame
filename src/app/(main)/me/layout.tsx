@@ -2,7 +2,7 @@ import { auth } from '@/auth'
 import { redirect } from 'next/navigation'
 import prisma from '@/lib/prisma'
 import MeTabs from './_components/me-tabs'
-import { getPublicUrl } from '@/lib/storage'
+import { getPublicPhoto } from '@/lib/photos'
 import { getCodeTable } from '@/lib/codes'
 
 export default async function MeLayout({
@@ -35,12 +35,10 @@ export default async function MeLayout({
       entityTypeId: entityTypes.user.id,
       typeId: photoTypes.primary.id,
     },
-    select: { url: true, url_thumb: true },
   })
 
-  const userImage = primaryPhoto
-    ? await getPublicUrl(primaryPhoto.url_thumb ?? primaryPhoto.url)
-    : null
+  const publicPhoto = await getPublicPhoto(primaryPhoto)
+  const userImage = publicPhoto?.url_thumb
 
   const isGuest =
     !user.firstName ||

@@ -7,7 +7,7 @@ import prisma from '@/lib/prisma'
 import { revalidatePath, revalidateTag } from 'next/cache'
 import { getCodeTable } from '@/lib/codes'
 import { parseDateAndDeterminePrecision } from '@/lib/utils'
-import { getPublicUrl } from '@/lib/storage'
+import { getPublicPhoto } from '@/lib/photos'
 import { uploadFile, deleteFile, UploadedUrls } from '@/lib/actions/storage'
 import { sendVerificationEmail } from '@/lib/mail'
 import { disposableEmailDomains } from '@/lib/disposable-email-domains'
@@ -405,11 +405,11 @@ export async function updateUserProfile(
     },
   })
 
+  const publicPhoto = await getPublicPhoto(primaryPhoto)
   let currentPhotoUrl: string | null = null
-  if (primaryPhoto) {
-    const urlToFetch = primaryPhoto.url_thumb ?? primaryPhoto.url
-    const publicUrl = await getPublicUrl(urlToFetch)
-    currentPhotoUrl = newPhotoKeys ? `${publicUrl}?v=${Date.now()}` : publicUrl
+  if (publicPhoto) {
+    const urlToUse = publicPhoto.url_thumb
+    currentPhotoUrl = newPhotoKeys ? `${urlToUse}?v=${Date.now()}` : urlToUse
   }
 
   return {

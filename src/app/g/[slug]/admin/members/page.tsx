@@ -2,7 +2,8 @@ import prisma from '@/lib/prisma'
 import { notFound } from 'next/navigation'
 import { Search } from './Search'
 import MembersTable from './members-table'
-import { getPublicUrl } from '@/lib/storage'
+import { getPublicPhoto } from '@/lib/photos'
+import { getCodeTable } from '@/lib/codes'
 
 export default async function GroupMembersPage(props: {
   params: Promise<{ slug: string }>
@@ -12,7 +13,11 @@ export default async function GroupMembersPage(props: {
   const searchParams = await props.searchParams
   const searchTerm = (searchParams?.query as string) || ''
 
-  const allRoles = await prisma.groupUserRole.findMany()
+  const [allRoles, photoTypes, entityTypes] = await Promise.all([
+    prisma.groupUserRole.findMany(),
+    getCodeTable('photoType'),
+    getCodeTable('entityType'),
+  ])
 
   const group = await prisma.group.findUnique({
     where: { slug },
@@ -65,36 +70,18 @@ export default async function GroupMembersPage(props: {
   const photos = await prisma.photo.findMany({
     where: {
       entityId: { in: userIds },
-      // Assuming you have a way to identify primary photos, e.g., a specific photoTypeId or a flag
-      // This part might need adjustment based on your exact schema for primary photos
-    },
-    select: {
-      entityId: true,
-      url: true,
+      entityTypeId: entityTypes.user.id,
+      typeId: photoTypes.primary.id,
     },
   })
 
-  const photoUrlMap = new Map<string, string>()
-  for (const photo of photos) {
-    if (photo.entityId) {
-      photoUrlMap.set(photo.entityId, photo.url)
-    }
-  }
+  const photoMap = new Map(photos.map((p) => [p.entityId, p]))
 
   const membersWithPhoto = await Promise.all(
     groupUsers.map(async (member) => {
-      const rawUrl = photoUrlMap.get(member.userId)
-      let photoUrl: string
-      if (rawUrl) {
-        if (rawUrl.startsWith('http')) {
-          photoUrl = rawUrl
-        } else {
-          photoUrl = await getPublicUrl(rawUrl)
-        }
-      } else {
-        // Fallback to the default avatar
-        photoUrl = '/images/default-avatar.png'
-      }
+      const photo = photoMap.get(member.userId)
+      const publicPhoto = await getPublicPhoto(photo || null)
+      const photoUrl = publicPhoto?.url_thumb || '/images/default-avatar.png'
       return {
         ...member,
         user: {

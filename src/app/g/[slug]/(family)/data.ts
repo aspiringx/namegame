@@ -1,6 +1,7 @@
 import 'server-only'
 import { cache } from 'react'
 import prisma from '@/lib/prisma'
+import { getPublicPhoto } from '@/lib/photos'
 import { getPublicUrl } from '@/lib/storage'
 import { FamilyGroupData, MemberWithUser } from '@/types'
 import { auth } from '@/auth'
@@ -81,30 +82,15 @@ export const getGroup = cache(async (
       entityTypeId: userEntityType?.id,
       typeId: primaryPhotoType?.id,
     },
-    select: {
-      entityId: true,
-      url: true,
-      url_thumb: true,
-    },
   })
 
-    const photoMap = new Map<string, { url: string; url_thumb: string | null }>()
-  photos.forEach((photo) => {
-    if (photo.entityId) {
-      photoMap.set(photo.entityId, photo)
-    }
-  })
+  const photoMap = new Map(photos.map((photo) => [photo.entityId, photo]))
 
   const memberPromises = group.members.map(
     async (member): Promise<MemberWithUser> => {
-            const photo = photoMap.get(member.userId)
-      const preferredUrl = photo?.url_thumb ?? photo?.url
-      let photoUrl: string | undefined
-      if (preferredUrl) {
-        photoUrl = await getPublicUrl(preferredUrl)
-      } else {
-        photoUrl = '/images/default-avatar.png' // fallback image
-      }
+      const photo = photoMap.get(member.userId)
+      const publicPhoto = await getPublicPhoto(photo || null)
+      const photoUrl = publicPhoto?.url_thumb || '/images/default-avatar.png'
 
       return {
         ...member,
