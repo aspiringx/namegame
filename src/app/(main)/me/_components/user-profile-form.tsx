@@ -96,7 +96,10 @@ export default function UserProfileForm({
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const [previewUrl, setPreviewUrl] = useState<string | null>(
-    user.primaryPhoto?.url_thumb ?? user.primaryPhoto?.url ?? null,
+    user.primaryPhoto?.url_small ??
+      user.primaryPhoto?.url_thumb ??
+      user.primaryPhoto?.url ??
+      null,
   )
   const [firstName, setFirstName] = useState(user.firstName || '')
   const [lastName, setLastName] = useState(user.lastName || '')
@@ -211,7 +214,10 @@ export default function UserProfileForm({
     setBirthPlace(user.birthPlace || '')
     setPassword('')
     setPreviewUrl(
-      user.primaryPhoto?.url_thumb ?? user.primaryPhoto?.url ?? null,
+      user.primaryPhoto?.url_small ??
+        user.primaryPhoto?.url_thumb ??
+        user.primaryPhoto?.url ??
+        null,
     )
     setFileSelected(false)
     setIsEmailValid(true)
@@ -354,7 +360,7 @@ export default function UserProfileForm({
         }
       })
     }
-  }, [state, updateSession, router, password, fileSelected])
+  }, [state, updateSession, router, password, fileSelected, user.primaryPhoto])
 
   const handleGeneratePassword = () => {
     const letters = 'abcdefghijklmnopqrstuvwxyz'
@@ -398,7 +404,10 @@ export default function UserProfileForm({
     } else {
       // If the user cancels file selection, revert to the original photo if it exists
       setPreviewUrl(
-        user.primaryPhoto?.url_thumb ?? user.primaryPhoto?.url ?? null,
+        user.primaryPhoto?.url_small ??
+          user.primaryPhoto?.url_thumb ??
+          user.primaryPhoto?.url ??
+          null,
       )
       setFileSelected(false)
     }

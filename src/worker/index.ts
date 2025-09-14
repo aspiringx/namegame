@@ -15,7 +15,13 @@ cleanupOutdatedCaches()
 // Filter out problematic manifests and precache the rest.
 const manifest = (self.__WB_MANIFEST || []).filter((entry) => {
   const url = typeof entry === 'string' ? entry : entry.url
-  // The _buildManifest.js file is not needed for precaching and can cause issues.
+
+  // Don't precache images; we'll cache them at runtime with our own strategy.
+  if (url.match(/\.(?:png|gif|jpg|jpeg|svg|webp)$/)) {
+    return false
+  }
+
+  // Filter out other problematic files.
   return (
     !url.endsWith('.map') &&
     !url.endsWith('app-build-manifest.json') &&
@@ -28,8 +34,7 @@ precacheAndRoute(manifest)
 registerRoute(
   ({ request, url }) =>
     request.destination === 'image' &&
-    (url.pathname.includes('.thumb.webp') ||
-      url.pathname.includes('.small.webp')),
+    (url.href.includes('.thumb.webp') || url.href.includes('.small.webp')),
   new CacheFirst({
     cacheName: 'images',
     plugins: [

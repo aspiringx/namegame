@@ -194,7 +194,9 @@ export async function searchUsers(groupId: number, query: string) {
       const photo = photoMap.get(user.id)
       let photoUrl = '/images/default-avatar.png'
       if (photo) {
-        photoUrl = await getPublicUrl(photo.url_thumb || photo.url)
+        photoUrl = await getPublicUrl(
+          photo.url_thumb || photo.url_small || photo.url,
+        )
       }
 
       return {

@@ -83,16 +83,9 @@ export default async function ManageMembersPage({
   const membersWithPhoto = await Promise.all(
     members.map(async (member) => {
       const rawUrl = photoUrlMap.get(member.userId)
-      let photoUrl: string
-      if (rawUrl) {
-        if (rawUrl.startsWith('http')) {
-          photoUrl = rawUrl
-        } else {
-          photoUrl = await getPublicUrl(rawUrl)
-        }
-      } else {
-        photoUrl = `https://api.dicebear.com/8.x/personas/png?seed=${member.user.id}`
-      }
+      const photoUrl = rawUrl
+        ? await getPublicUrl(rawUrl)
+        : `https://api.dicebear.com/8.x/personas/png?seed=${member.user.id}`
       return {
         ...member,
         user: {
