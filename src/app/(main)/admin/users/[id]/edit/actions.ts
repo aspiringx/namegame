@@ -4,7 +4,7 @@ import { z } from 'zod'
 import bcrypt from 'bcrypt'
 import prisma from '@/lib/prisma'
 import { revalidatePath, revalidateTag } from 'next/cache'
-import { getPublicPhoto } from '@/lib/photos'
+import { getPhotoUrl } from '@/lib/photos'
 import { uploadFile, deleteFile } from '@/lib/actions/storage'
 import { getCodeTable } from '@/lib/codes'
 import { auth } from '@/auth'
@@ -319,11 +319,9 @@ export async function updateUser(
     },
   })
 
-  const publicPhoto = await getPublicPhoto(primaryPhoto)
-  let photoUrl: string | null = null
-  if (publicPhoto) {
-    const urlToUse = publicPhoto.url_thumb
-    photoUrl = newPhotoKeys ? `${urlToUse}?v=${Date.now()}` : urlToUse
+  let photoUrl = await getPhotoUrl(primaryPhoto, 'thumb')
+  if (photoUrl && newPhotoKeys) {
+    photoUrl = `${photoUrl}?v=${Date.now()}`
   }
 
   return {

@@ -1,7 +1,7 @@
 import 'server-only'
 import { cache } from 'react'
 import prisma from '@/lib/prisma'
-import { getPublicPhoto } from '@/lib/photos'
+import { getPhotoUrl } from '@/lib/photos'
 import { getPublicUrl } from '@/lib/storage'
 import { FamilyGroupData, MemberWithUser } from '@/types'
 import { auth } from '@/auth'
@@ -89,8 +89,7 @@ export const getGroup = cache(async (
   const memberPromises = group.members.map(
     async (member): Promise<MemberWithUser> => {
       const photo = photoMap.get(member.userId)
-      const publicPhoto = await getPublicPhoto(photo || null)
-      const photoUrl = publicPhoto?.url_thumb || '/images/default-avatar.png'
+      const photoUrl = await getPhotoUrl(photo || null, 'thumb') || '/images/default-avatar.png'
 
       return {
         ...member,

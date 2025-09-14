@@ -1,7 +1,7 @@
 import prisma from '@/lib/prisma'
 import { notFound } from 'next/navigation'
 import { auth } from '@/auth'
-import { getPublicPhoto } from '@/lib/photos'
+import { getPhotoUrl } from '@/lib/photos'
 import GroupMembers, { GroupMember } from '../group-members'
 
 import type { GroupWithMembers } from '@/types/index'
@@ -74,8 +74,7 @@ export default async function ManageMembersPage({
   const membersWithPhoto = await Promise.all(
     members.map(async (member) => {
       const photo = photoMap.get(member.userId)
-      const publicPhoto = await getPublicPhoto(photo || null)
-      const photoUrl = publicPhoto?.url_thumb || `https://api.dicebear.com/8.x/personas/png?seed=${member.user.id}`
+      const photoUrl = await getPhotoUrl(photo || null, 'thumb') || `https://api.dicebear.com/8.x/personas/png?seed=${member.user.id}`
       return {
         ...member,
         user: {

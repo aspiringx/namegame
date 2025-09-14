@@ -2,7 +2,7 @@
 
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
-import { getPublicPhoto } from '@/lib/photos'
+import { getPhotoUrl } from '@/lib/photos'
 
 export async function getGroupDataForEditPage(managedUserId: string) {
   const session = await auth()
@@ -57,8 +57,7 @@ export async function getGroupDataForEditPage(managedUserId: string) {
   // Attach the photo to the user object to match the expected type.
   const userWithPhoto = { ...managedUser, photos: photo ? [photo] : [] }
 
-  const publicPhoto = await getPublicPhoto(photo)
-  const publicPhotoUrl = publicPhoto?.url_thumb
+  const publicPhotoUrl = await getPhotoUrl(photo, 'thumb')
 
   const authdUserGroups = await prisma.group.findMany({
     where: {

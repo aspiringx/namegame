@@ -1,7 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import prisma from '@/lib/prisma'
-import { getPublicPhoto } from '@/lib/photos'
+import { getPhotoUrl } from '@/lib/photos'
 import { getCodeTable } from '@/lib/codes'
 import { DeleteUserButton } from './DeleteUserButton'
 import { UndeleteUserButton } from './UndeleteUserButton'
@@ -69,8 +69,8 @@ export default async function UsersTable({
   const usersWithPhotos = await Promise.all(
     users.map(async (user) => {
       const photo = photoMap.get(user.id)
-      const publicPhoto = await getPublicPhoto(photo || null)
-      return { ...user, photoUrl: publicPhoto?.url_thumb || '/images/default-avatar.png' }
+      const photoUrl = await getPhotoUrl(photo || null, 'thumb')
+      return { ...user, photoUrl: photoUrl || '/images/default-avatar.png' }
     }),
   )
 

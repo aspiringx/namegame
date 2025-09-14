@@ -2,7 +2,7 @@ import prisma from '@/lib/prisma'
 import { notFound } from 'next/navigation'
 import { Search } from './Search'
 import MembersTable from './members-table'
-import { getPublicPhoto } from '@/lib/photos'
+import { getPhotoUrl } from '@/lib/photos'
 import { getCodeTable } from '@/lib/codes'
 
 export default async function GroupMembersPage(props: {
@@ -80,8 +80,7 @@ export default async function GroupMembersPage(props: {
   const membersWithPhoto = await Promise.all(
     groupUsers.map(async (member) => {
       const photo = photoMap.get(member.userId)
-      const publicPhoto = await getPublicPhoto(photo || null)
-      const photoUrl = publicPhoto?.url_thumb || '/images/default-avatar.png'
+      const photoUrl = await getPhotoUrl(photo || null, 'thumb') || '/images/default-avatar.png'
       return {
         ...member,
         user: {

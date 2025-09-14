@@ -2,7 +2,7 @@
 
 import * as React from 'react'
 import * as AvatarPrimitive from '@radix-ui/react-avatar'
-import Image from 'next/image'
+import { CacheableImage as Image } from '@/components/CacheableImage'
 
 import { cn } from '@/lib/utils'
 

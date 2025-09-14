@@ -1,6 +1,6 @@
 import prisma from '@/lib/prisma'
 import { notFound } from 'next/navigation'
-import { getPublicPhoto } from '@/lib/photos'
+import { getPhotoUrl } from '@/lib/photos'
 import EditGroupForm from './edit-group-form'
 import { getCodeTable } from '@/lib/codes'
 
@@ -32,8 +32,7 @@ export default async function EditGroupDetailsPage(props: {
       typeId: photoTypes.logo.id,
     },
   })
-  const publicLogo = await getPublicPhoto(logo)
-  const logoUrl = publicLogo?.url_small
+  const logoUrl = await getPhotoUrl(logo, 'small')
 
   return <EditGroupForm group={group} logoUrl={logoUrl} />
 }

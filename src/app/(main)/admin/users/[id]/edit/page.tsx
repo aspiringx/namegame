@@ -2,7 +2,7 @@ import prisma from '@/lib/prisma'
 import { notFound } from 'next/navigation'
 import EditUserForm from './edit-user-form'
 import Breadcrumbs from '@/components/Breadcrumbs'
-import { getPublicPhoto } from '@/lib/photos'
+import { getPhotoUrl } from '@/lib/photos'
 import { getCodeTable } from '@/lib/codes'
 
 export default async function EditUserPage(props: {
@@ -36,9 +36,8 @@ export default async function EditUserPage(props: {
     },
   })
 
-  const publicPhoto = await getPublicPhoto(primaryPhoto)
-  const hasPhoto = !!publicPhoto
-  const publicPhotoUrl = publicPhoto?.url_thumb
+  const publicPhotoUrl = await getPhotoUrl(primaryPhoto, 'thumb')
+  const hasPhoto = !!publicPhotoUrl && !publicPhotoUrl.includes('default-avatar')
 
   const breadcrumbs = [
     { label: 'Users', href: '/admin/users' },
