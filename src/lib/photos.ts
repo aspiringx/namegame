@@ -76,13 +76,10 @@ export async function getPhotoUrl(
   }
 
   let processedPhoto = photo
-  console.log('before processing', processedPhoto)
   // If the photo is local and hasn't been processed, process it now.
   if (photo.url && !photo.url.startsWith('http') && !photo.url_thumb) {
     processedPhoto = await processLegacyPhoto(photo)
   }
-
-  console.log('after processing', processedPhoto)
 
   // After processing, re-fetch the photo data to ensure we have the latest URLs
   if (processedPhoto.id !== photo.id || !processedPhoto.url_thumb) {
