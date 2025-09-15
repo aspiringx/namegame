@@ -91,9 +91,7 @@ export const getGroup = cache(
     const memberPromises = group.members.map(
       async (member): Promise<MemberWithUser> => {
         const photo = photoMap.get(member.userId)
-        const photoUrl =
-          (await getPhotoUrl(photo || null, { deviceType })) ||
-          '/images/default-avatar.png'
+        const photoUrl = await getPhotoUrl(photo || null, { deviceType })
 
         return {
           ...member,
