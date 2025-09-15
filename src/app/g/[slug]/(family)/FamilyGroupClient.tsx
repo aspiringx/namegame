@@ -68,19 +68,24 @@ interface FamilyGroupClientProps {
   initialRelationships: FullRelationship[]
 }
 
+interface FamilyGroupClientContentProps
+  extends Omit<FamilyGroupClientProps, 'initialMemberCount'> {
+  isMobile: boolean
+}
+
 function FamilyGroupClientContent({
   initialMembers,
   initialRelationships,
   children,
   view,
   groupSlug,
-}: Omit<FamilyGroupClientProps, 'initialMemberCount'>) {
+  isMobile,
+}: FamilyGroupClientContentProps) {
   const groupContext = useGroup()
   const familyTreeRef = useRef<FamilyTreeRef>(null)
   const [isResetDisabled, setIsResetDisabled] = useState(true)
   const { setIsOpen } = useTour()
   const router = useRouter()
-  const [isMobile, setIsMobile] = useState(false)
   const [isRelateModalOpen, setIsRelateModalOpen] = useState(false)
   const [selectedMember, setSelectedMember] = useState<MemberWithUser | null>(
     null,
@@ -438,7 +443,7 @@ export function FamilyGroupClient(props: FamilyGroupClientProps) {
       showCloseButton={true}
       disableInteraction={true}
     >
-      <FamilyGroupClientContent {...props} groupSlug={props.groupSlug} />
+      <FamilyGroupClientContent {...props} groupSlug={props.groupSlug} isMobile={isMobile} />
     </TourProvider>
   )
 }
