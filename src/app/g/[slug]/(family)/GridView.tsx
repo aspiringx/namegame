@@ -37,7 +37,7 @@ export default function GridView() {
             key={member.userId}
             member={member}
             relationship={relationship}
-            onRelate={() => onOpenRelateModal(member)}
+            onRelate={onOpenRelateModal}
             currentUserId={currentUserMember?.userId}
             isGroupAdmin={isGroupAdmin}
             groupSlug={group.slug}

@@ -40,7 +40,9 @@ const FamilyGroupActionsContext = createContext<{
 
 const FamilyGroupDataContext = createContext<{
   relationshipMap: Map<string, { label: string; steps: number }>
-}>({ relationshipMap: new Map() })
+}>({
+  relationshipMap: new Map(),
+})
 
 export const useFamilyGroupData = () => useContext(FamilyGroupDataContext)
 
@@ -92,7 +94,10 @@ function FamilyGroupClientContent({
   )
 
   // Create a stable version of the relationships prop to prevent re-renders
-  const relationships = useMemo(() => initialRelationships, [initialRelationships])
+  const relationships = useMemo(
+    () => initialRelationships,
+    [initialRelationships],
+  )
 
   const [settings, setSettings] = useLocalStorage<FamilyPageSettings>(
     `namegame_family-group-settings_${groupContext?.group?.slug}`,
@@ -305,7 +310,10 @@ function FamilyGroupClientContent({
       <div className="container mx-auto mt-4 px-4">
         <FamilyGroupActionsContext.Provider
           value={{
-            onOpenRelateModal: (member) => setSelectedMember(member),
+            onOpenRelateModal: (member) => {
+              setSelectedMember(member)
+              setIsRelateModalOpen(true)
+            },
             handleCloseRelateModal: () => {
               setIsRelateModalOpen(false)
               setSelectedMember(null)
@@ -323,7 +331,10 @@ function FamilyGroupClientContent({
                   ref={familyTreeRef}
                   onIsFocalUserCurrentUserChange={setIsResetDisabled}
                   members={initialMembers}
-                  onOpenRelate={(member) => setSelectedMember(member)}
+                  onOpenRelate={(member) => {
+                    setSelectedMember(member)
+                    setIsRelateModalOpen(true)
+                  }}
                 />
               ) : (
                 children
@@ -443,7 +454,11 @@ export function FamilyGroupClient(props: FamilyGroupClientProps) {
       showCloseButton={true}
       disableInteraction={true}
     >
-      <FamilyGroupClientContent {...props} groupSlug={props.groupSlug} isMobile={isMobile} />
+      <FamilyGroupClientContent
+        {...props}
+        groupSlug={props.groupSlug}
+        isMobile={isMobile}
+      />
     </TourProvider>
   )
 }
