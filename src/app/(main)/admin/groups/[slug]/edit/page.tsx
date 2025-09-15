@@ -32,7 +32,7 @@ export default async function EditGroupDetailsPage(props: {
       typeId: photoTypes.logo.id,
     },
   })
-  const logoUrl = await getPhotoUrl(logo, 'small')
+  const logoUrl = await getPhotoUrl(logo, { size: 'small' })
 
   return <EditGroupForm group={group} logoUrl={logoUrl} />
 }

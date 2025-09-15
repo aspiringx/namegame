@@ -37,7 +37,7 @@ export default async function MeLayout({
     },
   })
 
-  const userImage = await getPhotoUrl(primaryPhoto, 'thumb')
+  const userImage = await getPhotoUrl(primaryPhoto, { size: 'thumb' })
 
   const isGuest =
     !user.firstName ||

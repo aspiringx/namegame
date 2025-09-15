@@ -80,7 +80,7 @@ export default async function GroupMembersPage(props: {
   const membersWithPhoto = await Promise.all(
     groupUsers.map(async (member) => {
       const photo = photoMap.get(member.userId)
-      const photoUrl = await getPhotoUrl(photo || null, 'thumb') || '/images/default-avatar.png'
+      const photoUrl = (await getPhotoUrl(photo || null, { size: 'thumb' })) || '/images/default-avatar.png'
       return {
         ...member,
         user: {

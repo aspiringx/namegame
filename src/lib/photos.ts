@@ -27,28 +27,23 @@ async function processLegacyPhoto(photo: Photo): Promise<Photo> {
 
     const newUrls: { [key: string]: string } = {}
 
-    const processingPromises = Object.entries(IMAGE_SIZES).map(
-      async ([size, config]) => {
-        const webpBuffer = await sharpInstance
-          .clone()
-          .resize({
-            width: config.width,
-            height: config.height,
-            fit: 'inside',
-            withoutEnlargement: true,
-          })
-          .webp({ quality: config.quality })
-          .toBuffer()
+    for (const [size, config] of Object.entries(IMAGE_SIZES)) {
+      const webpBuffer = await sharpInstance
+        .clone()
+        .resize({
+          width: config.width,
+          height: config.height,
+          fit: 'inside',
+          withoutEnlargement: true,
+        })
+        .webp({ quality: config.quality })
+        .toBuffer()
 
-        const webpFilename = `${entityId}.${timestamp}.${size}.webp`
-        const storageKey = `${prefix}/${webpFilename}`
-        await uploadToStorage(storageKey, webpBuffer, 'image/webp')
-        newUrls[`url_${size}`] = storageKey
-      },
-    )
-
-    await Promise.all(processingPromises)
-
+      const webpFilename = `${entityId}.${timestamp}.${size}.webp`
+      const storageKey = `${prefix}/${webpFilename}`
+      await uploadToStorage(storageKey, webpBuffer, 'image/webp')
+      newUrls[`url_${size}`] = storageKey
+    }
     return prisma.photo.update({
       where: { id: photo.id },
       data: newUrls,
@@ -61,7 +56,10 @@ async function processLegacyPhoto(photo: Photo): Promise<Photo> {
 
 export async function getPhotoUrl(
   photo: Photo | null,
-  preferredSize: 'thumb' | 'small' | 'medium' | 'large' | 'original' = 'small',
+  options: {
+    size?: 'thumb' | 'small' | 'medium' | 'large' | 'original'
+    deviceType?: 'mobile' | 'desktop'
+  } = {},
 ): Promise<string> {
   if (!photo) {
     return '/images/default-avatar.png'
@@ -72,9 +70,17 @@ export async function getPhotoUrl(
     processedPhoto = await processLegacyPhoto(photo)
   }
 
-  if (preferredSize === 'original') {
+    const { size, deviceType } = options
+
+  if (size === 'original') {
     return getPublicUrl(processedPhoto.url)
   }
+
+    const preferredSize = size
+    ? size
+    : deviceType === 'mobile'
+    ? 'small'
+    : 'medium'
 
   const startIndex = sizeOrder.indexOf(preferredSize)
   for (let i = startIndex; i < sizeOrder.length; i++) {

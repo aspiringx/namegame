@@ -294,7 +294,7 @@ export async function getManagedUsers(): Promise<ManagedUserWithPhoto[]> {
     managedUserRelations.map(async (rel) => {
       const user = rel.managed
       const photo = photoMap.get(user.id)
-      const photoUrl = await getPhotoUrl(photo || null, 'thumb')
+      const photoUrl = await getPhotoUrl(photo || null, { size: 'thumb' })
 
       return {
         ...user,
@@ -550,7 +550,7 @@ export async function updateManagedUser(
       },
     })
 
-    const photoUrl = await getPhotoUrl(primaryPhoto, 'thumb')
+    const photoUrl = await getPhotoUrl(primaryPhoto, { size: 'thumb' })
 
     const updatedUserWithPhoto = {
       ...updatedUser,
@@ -704,7 +704,7 @@ export async function getManagers(userId: string) {
   const managersWithPhotoUrls = await Promise.all(
     managers.map(async (manager) => {
       const photo = photoMap.get(manager.id)
-      const photoUrl = await getPhotoUrl(photo || null, 'thumb')
+      const photoUrl = await getPhotoUrl(photo || null, { size: 'thumb' })
       return {
         ...manager,
         photoUrl: photoUrl,
@@ -826,7 +826,7 @@ export async function getGroupMembers(
   const usersWithPhotoUrls = await Promise.all(
     users.map(async (user) => {
       const photo = photoMap.get(user.id)
-      const photoUrl = await getPhotoUrl(photo || null, 'thumb')
+      const photoUrl = await getPhotoUrl(photo || null, { size: 'thumb' })
       return {
         ...user,
         photos: photo ? [{ ...photo, url: photoUrl }] : [],

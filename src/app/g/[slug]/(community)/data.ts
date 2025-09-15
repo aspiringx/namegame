@@ -10,6 +10,7 @@ import { auth } from '@/auth'
 export const getGroup = cache(async (
   slug: string,
   limit?: number,
+  deviceType: 'mobile' | 'desktop' = 'desktop',
 ): Promise<CommunityGroupData | null> => {
     const session = await auth()
     const currentUserId = session?.user?.id
@@ -113,7 +114,7 @@ export const getGroup = cache(async (
     const memberPromises = group.members.map(
       async (member): Promise<MemberWithUser> => {
                 const photo = photoMap.get(member.userId)
-        const photoUrl = await getPhotoUrl(photo || null, 'thumb')
+        const photoUrl = await getPhotoUrl(photo || null, { deviceType })
 
         // Show full name only for the current user or for users they have greeted.
         const isGreeted = relatedUserMap.has(member.userId)

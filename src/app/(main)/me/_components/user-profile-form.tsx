@@ -96,7 +96,7 @@ export default function UserProfileForm({
 
   useEffect(() => {
     async function setInitialPhoto() {
-      const url = await getPhotoUrl(user.primaryPhoto, 'small')
+      const url = await getPhotoUrl(user.primaryPhoto, { size: 'small' })
       setPreviewUrl(url)
     }
     setInitialPhoto()
@@ -216,7 +216,7 @@ export default function UserProfileForm({
     setBirthPlace(user.birthPlace || '')
     setPassword('')
     async function resetPreview() {
-      const url = await getPhotoUrl(user.primaryPhoto, 'small')
+      const url = await getPhotoUrl(user.primaryPhoto, { size: 'small' })
       setPreviewUrl(url)
     }
     resetPreview()
@@ -405,7 +405,7 @@ export default function UserProfileForm({
     } else {
       // If the user cancels file selection, revert to the original photo if it exists
       async function resetPreview() {
-        const url = await getPhotoUrl(user.primaryPhoto, 'small')
+        const url = await getPhotoUrl(user.primaryPhoto, { size: 'small' })
         setPreviewUrl(url)
       }
       resetPreview()

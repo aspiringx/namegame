@@ -319,7 +319,7 @@ export async function updateUser(
     },
   })
 
-  let photoUrl = await getPhotoUrl(primaryPhoto, 'thumb')
+  let photoUrl = await getPhotoUrl(primaryPhoto, { size: 'thumb' })
   if (photoUrl && newPhotoKeys) {
     photoUrl = `${photoUrl}?v=${Date.now()}`
   }

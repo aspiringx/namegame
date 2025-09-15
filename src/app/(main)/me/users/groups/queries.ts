@@ -57,7 +57,7 @@ export async function getGroupDataForEditPage(managedUserId: string) {
   // Attach the photo to the user object to match the expected type.
   const userWithPhoto = { ...managedUser, photos: photo ? [photo] : [] }
 
-  const publicPhotoUrl = await getPhotoUrl(photo, 'thumb')
+  const publicPhotoUrl = await getPhotoUrl(photo, { size: 'thumb' })
 
   const authdUserGroups = await prisma.group.findMany({
     where: {

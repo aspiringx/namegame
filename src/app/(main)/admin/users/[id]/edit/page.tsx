@@ -36,7 +36,7 @@ export default async function EditUserPage(props: {
     },
   })
 
-  const publicPhotoUrl = await getPhotoUrl(primaryPhoto, 'thumb')
+  const publicPhotoUrl = await getPhotoUrl(primaryPhoto, { size: 'thumb' })
   const hasPhoto = !!publicPhotoUrl && !publicPhotoUrl.includes('default-avatar')
 
   const breadcrumbs = [

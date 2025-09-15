@@ -408,7 +408,7 @@ export async function updateUserProfile(
     },
   })
 
-  const currentPhotoUrl = await getPhotoUrl(primaryPhoto, 'thumb')
+  const currentPhotoUrl = await getPhotoUrl(primaryPhoto, { size: 'thumb' })
 
   return {
     success: true,

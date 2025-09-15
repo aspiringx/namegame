@@ -32,7 +32,7 @@ export default async function GroupAdminSettingsPage(props: {
       typeId: photoTypes.logo.id,
     },
   })
-  const logoUrl = await getPhotoUrl(logo, 'small')
+  const logoUrl = await getPhotoUrl(logo, { size: 'small' })
 
   return (
     <div className="px-2 py-8">

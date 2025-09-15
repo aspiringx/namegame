@@ -100,7 +100,7 @@ export async function getUsersManagingMe() {
   const managersWithPhotos = await Promise.all(
     managers.map(async (manager) => {
       const photo = photoMap.get(manager.id)
-      const photoUrl = await getPhotoUrl(photo || null, 'thumb')
+      const photoUrl = await getPhotoUrl(photo || null, { size: 'thumb' })
       return {
         ...manager,
         primaryPhoto: photo ? { ...photo, url: photoUrl } : null,

@@ -69,7 +69,7 @@ export default async function UsersTable({
   const usersWithPhotos = await Promise.all(
     users.map(async (user) => {
       const photo = photoMap.get(user.id)
-      const photoUrl = await getPhotoUrl(photo || null, 'thumb')
+      const photoUrl = await getPhotoUrl(photo || null, { size: 'thumb' })
       return { ...user, photoUrl: photoUrl || '/images/default-avatar.png' }
     }),
   )

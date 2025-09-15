@@ -192,7 +192,7 @@ export async function searchUsers(groupId: number, query: string) {
   return Promise.all(
     users.map(async (user) => {
       const photo = photoMap.get(user.id)
-      const photoUrl = await getPhotoUrl(photo || null, 'thumb')
+      const photoUrl = await getPhotoUrl(photo || null, { size: 'thumb' })
       return {
         ...user,
         photoUrl: photoUrl || '/images/default-avatar.png',

@@ -85,7 +85,7 @@ export async function getGroupMembersForRelate(
 
   const memberPromises = membersWithoutPhotos.map(async (member) => {
     const primaryPhoto = photosByUserId.get(member.userId)
-    const photoUrl = await getPhotoUrl(primaryPhoto || null, 'thumb')
+    const photoUrl = await getPhotoUrl(primaryPhoto || null, { size: 'thumb' })
 
     const name = [member.user.firstName, member.user.lastName]
       .filter(Boolean)
