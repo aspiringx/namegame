@@ -27,8 +27,6 @@ export async function getPublicUrl(
     return storagePath
   }
 
-  // 5. For all other cases (assumed to be S3 keys), construct the public URL.
-  const bucket = process.env.DO_SPACES_BUCKET
-  const endpoint = process.env.DO_SPACES_ENDPOINT
-  return `https://${bucket}.${endpoint}/${storagePath}`
+  // 5. For all other cases (assumed to be S3 keys), route them through the proxy.
+  return `/api/images?key=${storagePath}`
 }
