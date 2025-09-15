@@ -34,7 +34,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               },
           include: {
             groupMemberships: { include: { group: true, role: true } },
-            photos: true, // We'll filter photos manually after getting code tables
           },
         })
 
@@ -66,12 +65,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           getCodeTable('entityType'),
         ])
 
-        const primaryPhoto = dbUser.photos.find(
-          (p) =>
-            p.typeId === photoTypes.primary.id &&
-            p.entityTypeId === entityTypes.user.id &&
-            p.entityId === dbUser.id,
-        )
+        const primaryPhoto = await prisma.photo.findFirst({
+          where: {
+            entityId: dbUser.id,
+            entityTypeId: entityTypes.user.id,
+            typeId: photoTypes.primary.id,
+          },
+        })
 
         const photoUrl = primaryPhoto?.url || null
 
@@ -107,7 +107,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           where: { id: loginCode.userId },
           include: {
             groupMemberships: { include: { group: true, role: true } },
-            photos: true,
           },
         });
 
@@ -134,12 +133,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           getCodeTable('entityType'),
         ]);
 
-        const primaryPhoto = dbUser.photos.find(
-          (p) =>
-            p.typeId === photoTypes.primary.id &&
-            p.entityTypeId === entityTypes.user.id &&
-            p.entityId === dbUser.id,
-        );
+        const primaryPhoto = await prisma.photo.findFirst({
+          where: {
+            entityId: dbUser.id,
+            entityTypeId: entityTypes.user.id,
+            typeId: photoTypes.primary.id,
+          },
+        });
 
         const photoUrl = primaryPhoto?.url || null;
 

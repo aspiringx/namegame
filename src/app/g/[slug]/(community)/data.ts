@@ -1,6 +1,7 @@
 import 'server-only'
 import { cache } from 'react'
 import prisma from '@/lib/prisma'
+import { getPhotoUrl } from '@/lib/photos'
 import { getPublicUrl } from '@/lib/storage'
 import { CommunityGroupData, MemberWithUser } from '@/types'
 import { auth } from '@/auth'
@@ -9,6 +10,7 @@ import { auth } from '@/auth'
 export const getGroup = cache(async (
   slug: string,
   limit?: number,
+  deviceType: 'mobile' | 'desktop' = 'desktop',
 ): Promise<CommunityGroupData | null> => {
     const session = await auth()
     const currentUserId = session?.user?.id
@@ -81,18 +83,9 @@ export const getGroup = cache(async (
         entityTypeId: userEntityType?.id,
         typeId: primaryPhotoType?.id,
       },
-      select: {
-        entityId: true,
-        url: true,
-      },
     })
 
-    const photoUrlMap = new Map<string, string>()
-    photos.forEach((photo) => {
-      if (photo.entityId) {
-        photoUrlMap.set(photo.entityId, photo.url)
-      }
-    })
+    const photoMap = new Map(photos.map((photo) => [photo.entityId, photo]))
 
     // Fetch UserUser relations for the current user in this group first to
     // determine who has been greeted.
@@ -120,15 +113,8 @@ export const getGroup = cache(async (
 
     const memberPromises = group.members.map(
       async (member): Promise<MemberWithUser> => {
-        const rawUrl = photoUrlMap.get(member.userId)
-        let photoUrl: string | undefined
-        if (rawUrl) {
-          if (rawUrl.startsWith('http')) {
-            photoUrl = rawUrl
-          } else {
-            photoUrl = await getPublicUrl(rawUrl)
-          }
-        }
+                const photo = photoMap.get(member.userId)
+        const photoUrl = await getPhotoUrl(photo || null, { deviceType })
 
         // Show full name only for the current user or for users they have greeted.
         const isGreeted = relatedUserMap.has(member.userId)

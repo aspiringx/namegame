@@ -1,5 +1,4 @@
 import { auth } from '@/auth'
-import { getPublicUrl } from '@/lib/storage'
 import { redirect } from 'next/navigation'
 import prisma from '@/lib/prisma'
 import UserProfileForm from './_components/user-profile-form'
@@ -68,10 +67,9 @@ export default async function UserProfilePage(props: {
 
   const userWithPublicUrls = {
     ...user,
-    image: primaryPhoto ? await getPublicUrl(primaryPhoto.url) : null,
     emailVerified: user.emailVerified ? user.emailVerified.toISOString() : null,
     birthDate: user.birthDate ? user.birthDate.toISOString() : null,
-    photos: primaryPhoto ? [{ url: await getPublicUrl(primaryPhoto.url) }] : [],
+    primaryPhoto: primaryPhoto,
   }
 
   return (

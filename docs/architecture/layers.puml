@@ -1,0 +1,48 @@
+@startuml NameGameArchitecture
+
+title NameGame Application Architecture
+
+actor User
+
+package "Presentation Layer (Next.js Frontend)" {
+  [React Server Components] as RSC
+  [Client Components] as CC
+}
+
+package "Application Layer (Next.js Backend)" {
+  [Server Actions] as Actions
+  [API Routes] as API
+}
+
+package "Services" {
+  [Authentication (Auth.js)] as Auth
+  [Image Processing] as ImageService
+  [File Storage (S3)] as Storage
+}
+
+package "Data Access Layer" {
+  [Prisma ORM] as Prisma
+}
+
+database "PostgreSQL Database" as DB
+
+User --> RSC: Makes initial request
+User --> CC: Interacts with UI (e.g., forms, buttons)
+
+RSC --> Actions: Calls Server Actions for data mutations
+RSC --> Prisma: Fetches data for initial render
+CC --> Actions: Calls Server Actions for data mutations
+CC --> API: Fetches data on client-side
+
+Actions --> Prisma: Reads from and writes to database
+API --> Prisma: Reads from database
+
+Actions --> Auth: Verifies user session
+API --> Auth: Verifies user session
+
+Actions --> ImageService: Triggers image uploads and processing
+ImageService --> Storage: Stores/retrieves image files
+
+Prisma --> DB: Executes SQL queries
+
+@enduml

@@ -15,7 +15,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>
 }): Promise<Metadata> {
   const params = await paramsProp
-  const data = await getGroupForLayout(params.slug, 5)
+  const data = await getGroupForLayout(params.slug, 5, 'desktop') // Metadata is always fetched server-side
 
   if (!data) {
     return {
@@ -46,7 +46,14 @@ export default async function GroupLayout({
     const pathname = headerPath || `/g/${params.slug}`
     return redirect(`/login?callbackUrl=${encodeURIComponent(pathname)}`)
   }
-  const data = await getGroupForLayout(params.slug)
+  const userAgent = headersList.get('user-agent')
+  const deviceType = userAgent?.match(
+    /Android|BlackBerry|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i,
+  )
+    ? 'mobile'
+    : 'desktop'
+
+  const data = await getGroupForLayout(params.slug, undefined, deviceType)
 
   if (!data) {
     // This can happen if the group doesn't exist, or if the user is not a member

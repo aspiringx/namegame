@@ -68,23 +68,31 @@ interface FamilyGroupClientProps {
   initialRelationships: FullRelationship[]
 }
 
+interface FamilyGroupClientContentProps
+  extends Omit<FamilyGroupClientProps, 'initialMemberCount'> {
+  isMobile: boolean
+}
+
 function FamilyGroupClientContent({
   initialMembers,
   initialRelationships,
   children,
   view,
   groupSlug,
-}: Omit<FamilyGroupClientProps, 'initialMemberCount'>) {
+  isMobile,
+}: FamilyGroupClientContentProps) {
   const groupContext = useGroup()
   const familyTreeRef = useRef<FamilyTreeRef>(null)
   const [isResetDisabled, setIsResetDisabled] = useState(true)
   const { setIsOpen } = useTour()
   const router = useRouter()
-  const [isMobile, setIsMobile] = useState(false)
   const [isRelateModalOpen, setIsRelateModalOpen] = useState(false)
   const [selectedMember, setSelectedMember] = useState<MemberWithUser | null>(
     null,
   )
+
+  // Create a stable version of the relationships prop to prevent re-renders
+  const relationships = useMemo(() => initialRelationships, [initialRelationships])
 
   const [settings, setSettings] = useLocalStorage<FamilyPageSettings>(
     `namegame_family-group-settings_${groupContext?.group?.slug}`,
@@ -96,29 +104,10 @@ function FamilyGroupClientContent({
     },
   )
 
-  useEffect(() => {
-    const checkIsMobile = () => {
-      setIsMobile(window.innerWidth < 768)
-    }
-    checkIsMobile()
-    window.addEventListener('resize', checkIsMobile)
-    return () => window.removeEventListener('resize', checkIsMobile)
-  }, [])
-
-  const handleOpenRelateModal = (member: MemberWithUser) => {
-    setSelectedMember(member)
-    setIsRelateModalOpen(true)
-  }
-
-  const handleCloseRelateModal = () => {
-    setIsRelateModalOpen(false)
-    setSelectedMember(null)
-  }
-
   const modalRelations = useMemo(() => {
-    if (!selectedMember || !initialRelationships) return []
+    if (!selectedMember || !relationships) return []
 
-    return (initialRelationships as FullRelationship[])
+    return (relationships as FullRelationship[])
       .filter(
         (rel) =>
           rel.user1Id === selectedMember.userId ||
@@ -129,7 +118,7 @@ function FamilyGroupClientContent({
         relatedUser:
           rel.user1Id === selectedMember.userId ? rel.user2 : rel.user1,
       }))
-  }, [selectedMember, initialRelationships])
+  }, [selectedMember, relationships])
 
   const handleRelationshipChange = () => {
     router.refresh()
@@ -144,7 +133,7 @@ function FamilyGroupClientContent({
   }, [initialMembers])
 
   const relationshipMap = useMemo(() => {
-    if (!groupContext?.currentUserMember || !initialRelationships) {
+    if (!groupContext?.currentUserMember || !relationships) {
       return new Map<string, { label: string; steps: number }>()
     }
     const newMap = new Map<string, { label: string; steps: number }>()
@@ -153,7 +142,7 @@ function FamilyGroupClientContent({
       const result = getRelationship(
         groupContext.currentUserMember.userId,
         alter.userId,
-        initialRelationships,
+        relationships,
         initialMembers,
         usersMap,
       )
@@ -165,12 +154,7 @@ function FamilyGroupClientContent({
       }
     }
     return newMap
-  }, [
-    groupContext?.currentUserMember,
-    initialMembers,
-    initialRelationships,
-    usersMap,
-  ])
+  }, [groupContext?.currentUserMember, initialMembers, relationships, usersMap])
 
   const filteredAndSortedMembers = useMemo(() => {
     let sortedMembers = [...initialMembers]
@@ -321,8 +305,11 @@ function FamilyGroupClientContent({
       <div className="container mx-auto mt-4 px-4">
         <FamilyGroupActionsContext.Provider
           value={{
-            onOpenRelateModal: handleOpenRelateModal,
-            handleCloseRelateModal,
+            onOpenRelateModal: (member) => setSelectedMember(member),
+            handleCloseRelateModal: () => {
+              setIsRelateModalOpen(false)
+              setSelectedMember(null)
+            },
             isRelateModalOpen,
             selectedMember,
           }}
@@ -336,7 +323,7 @@ function FamilyGroupClientContent({
                   ref={familyTreeRef}
                   onIsFocalUserCurrentUserChange={setIsResetDisabled}
                   members={initialMembers}
-                  onOpenRelate={handleOpenRelateModal}
+                  onOpenRelate={(member) => setSelectedMember(member)}
                 />
               ) : (
                 children
@@ -349,7 +336,10 @@ function FamilyGroupClientContent({
       {selectedMember && group?.groupType && currentUserMember && (
         <RelateModal
           isOpen={isRelateModalOpen}
-          onClose={handleCloseRelateModal}
+          onClose={() => {
+            setIsRelateModalOpen(false)
+            setSelectedMember(null)
+          }}
           member={selectedMember}
           groupType={group.groupType}
           groupMembers={initialMembers}
@@ -453,7 +443,7 @@ export function FamilyGroupClient(props: FamilyGroupClientProps) {
       showCloseButton={true}
       disableInteraction={true}
     >
-      <FamilyGroupClientContent {...props} groupSlug={props.groupSlug} />
+      <FamilyGroupClientContent {...props} groupSlug={props.groupSlug} isMobile={isMobile} />
     </TourProvider>
   )
 }

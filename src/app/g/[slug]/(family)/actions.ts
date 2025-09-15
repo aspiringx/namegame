@@ -1,7 +1,7 @@
 'use server'
 
 import prisma from '@/lib/prisma'
-import { getPublicUrl } from '@/lib/storage'
+import { getPhotoUrl } from '@/lib/photos'
 import type { MemberWithUser, FullRelationship } from '@/types'
 import { getCodeTable } from '@/lib/codes'
 
@@ -85,9 +85,7 @@ export async function getGroupMembersForRelate(
 
   const memberPromises = membersWithoutPhotos.map(async (member) => {
     const primaryPhoto = photosByUserId.get(member.userId)
-    const photoUrl = primaryPhoto
-      ? await getPublicUrl(primaryPhoto.url)
-      : undefined
+    const photoUrl = await getPhotoUrl(primaryPhoto || null, { size: 'thumb' })
 
     const name = [member.user.firstName, member.user.lastName]
       .filter(Boolean)

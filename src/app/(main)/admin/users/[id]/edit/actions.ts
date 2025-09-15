@@ -4,7 +4,7 @@ import { z } from 'zod'
 import bcrypt from 'bcrypt'
 import prisma from '@/lib/prisma'
 import { revalidatePath, revalidateTag } from 'next/cache'
-import { getPublicUrl } from '@/lib/storage'
+import { getPhotoUrl } from '@/lib/photos'
 import { uploadFile, deleteFile } from '@/lib/actions/storage'
 import { getCodeTable } from '@/lib/codes'
 import { auth } from '@/auth'
@@ -311,9 +311,18 @@ export async function updateUser(
     }
   }
 
-  const photoUrl = newPhotoKeys
-    ? await getPublicUrl(newPhotoKeys.url)
-    : prevState.photoUrl
+  const primaryPhoto = await prisma.photo.findFirst({
+    where: {
+      entityId: id,
+      entityTypeId: (await getCodeTable('entityType')).user.id,
+      typeId: (await getCodeTable('photoType')).primary.id,
+    },
+  })
+
+  let photoUrl = await getPhotoUrl(primaryPhoto, { size: 'thumb' })
+  if (photoUrl && newPhotoKeys) {
+    photoUrl = `${photoUrl}?v=${Date.now()}`
+  }
 
   return {
     ...prevState,

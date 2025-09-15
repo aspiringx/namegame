@@ -1,8 +1,10 @@
-import prisma from '@/lib/prisma'
+'use client'
+
 import Link from 'next/link'
 import { DeleteGroupButton } from './DeleteGroupButton'
 import { UndeleteGroupButton } from './UndeleteGroupButton'
 import { Edit } from 'lucide-react'
+import type { Group } from '@/generated/prisma'
 
 type SortableColumn =
   | 'name'
@@ -13,33 +15,16 @@ type SortableColumn =
 type Order = 'asc' | 'desc'
 
 interface GroupsTableProps {
-  query: string
-  sort: SortableColumn
-  order: Order
+  groups: Group[]
+  sort: { column: SortableColumn; order: Order }
+  onSort: (column: SortableColumn) => void
 }
 
-export default async function GroupsTable({
-  query,
+export default function GroupsTable({
+  groups,
   sort,
-  order,
+  onSort,
 }: GroupsTableProps) {
-  const where = query
-    ? {
-        OR: [
-          { name: { contains: query, mode: 'insensitive' as const } },
-          { slug: { contains: query, mode: 'insensitive' as const } },
-          { description: { contains: query, mode: 'insensitive' as const } },
-        ],
-      }
-    : {}
-
-  const groups = await prisma.group.findMany({
-    where,
-    orderBy: {
-      [sort]: order,
-    },
-  })
-
   const SortableHeader = ({
     column,
     title,
@@ -47,18 +32,17 @@ export default async function GroupsTable({
     column: SortableColumn
     title: string
   }) => {
-    const isCurrentSort = sort === column
-    const newOrder = isCurrentSort && order === 'asc' ? 'desc' : 'asc'
-    const arrow = isCurrentSort ? (order === 'asc' ? '↑' : '↓') : ''
+    const isCurrentSort = sort.column === column
+    const arrow = isCurrentSort ? (sort.order === 'asc' ? '↑' : '↓') : ''
 
     return (
-      <Link
-        href={`/admin/groups?sort=${column}&order=${newOrder}&query=${query}`}
+      <button
+        onClick={() => onSort(column)}
         className="flex items-center gap-2 whitespace-nowrap"
       >
         {title}
         {arrow && <span>{arrow}</span>}
-      </Link>
+      </button>
     )
   }
 

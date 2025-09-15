@@ -11,16 +11,16 @@ import {
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
 import bcrypt from 'bcrypt'
-import { getPublicUrl } from '@/lib/storage'
-import { uploadFile, deleteFile } from '@/lib/actions/storage'
+import { uploadFile, deleteFile, UploadedUrls } from '@/lib/actions/storage'
 import { revalidatePath } from 'next/cache'
 import crypto from 'crypto'
 import { parseDateAndDeterminePrecision } from '@/lib/utils'
 import { getCodeTable } from '@/lib/codes'
+import { getPhotoUrl } from '@/lib/photos'
 import { Group, GroupType } from '@/generated/prisma/client'
 
 export type ManagedUserWithPhoto = User & {
-  photos: Photo[]
+  primaryPhoto: (Photo & { url: string }) | null
   managedStatus: ManagedStatus
 }
 
@@ -40,7 +40,7 @@ export type State = {
   } | null
   success?: boolean
   redirectUrl?: string
-  updatedUser?: User & { photos: Photo[] }
+  updatedUser?: User & { photos: (Photo & { url: string })[] }
 }
 
 const CreateUserSchema = z
@@ -136,7 +136,7 @@ export async function createManagedUser(
   } = validatedFields.data
   const managerId = session.user.id
 
-  let photoKeys = null
+  let photoKeys: UploadedUrls | null = null
   try {
     photoKeys = await uploadFile(photo, 'user-photos', `temp-${Date.now()}`)
   } catch (uploadError) {
@@ -288,28 +288,21 @@ export async function getManagedUsers(): Promise<ManagedUserWithPhoto[]> {
     },
   })
 
-  const photosWithPublicUrls = await Promise.all(
-    photos.map(async (photo) => {
-      if (photo.url.startsWith('https')) {
-        return photo
+  const photoMap = new Map(photos.map((p) => [p.entityId, p]))
+
+  const usersWithPhotos = await Promise.all(
+    managedUserRelations.map(async (rel) => {
+      const user = rel.managed
+      const photo = photoMap.get(user.id)
+      const photoUrl = await getPhotoUrl(photo || null, { size: 'thumb' })
+
+      return {
+        ...user,
+        managedStatus: user.managed as ManagedStatus,
+        primaryPhoto: photo ? { ...photo, url: photoUrl } : null,
       }
-      const publicUrl = await getPublicUrl(photo.url)
-      return { ...photo, url: publicUrl }
     }),
   )
-
-  const photoMap = new Map(photosWithPublicUrls.map((p) => [p.entityId, p]))
-
-  const usersWithPhotos = managedUserRelations.map((rel) => {
-    const user = rel.managed
-    const photo = photoMap.get(user.id)
-
-    return {
-      ...user,
-      managedStatus: user.managed as ManagedStatus,
-      photos: photo ? [photo] : [],
-    }
-  })
 
   return usersWithPhotos
 }
@@ -447,7 +440,7 @@ export async function updateManagedUser(
     managedStatus,
   } = validatedFields.data
 
-  let newPhotoKeys = null
+  let newPhotoKeys: UploadedUrls | null = null
   if (newPhoto && newPhoto.size > 0) {
     try {
       newPhotoKeys = await uploadFile(newPhoto, 'user-photos', userId)
@@ -538,29 +531,37 @@ export async function updateManagedUser(
 
     revalidatePath('/me/users')
 
-    const updatedUser = await prisma.user.findUnique({
-      where: { id: userId },
-      include: {
-        photos: {
-          where: { type: { code: 'primary' } },
-          take: 1,
-        },
+    const updatedUser = await prisma.user.findUnique({ where: { id: userId } })
+
+    if (!updatedUser) {
+      return { error: 'Could not find updated user.' }
+    }
+
+    const [photoTypes, entityTypes] = await Promise.all([
+      getCodeTable('photoType'),
+      getCodeTable('entityType'),
+    ])
+
+    const primaryPhoto = await prisma.photo.findFirst({
+      where: {
+        entityId: userId,
+        entityTypeId: entityTypes.user.id,
+        typeId: photoTypes.primary.id,
       },
     })
 
-    if (
-      updatedUser &&
-      updatedUser.photos[0] &&
-      !updatedUser.photos[0].url.startsWith('https')
-    ) {
-      updatedUser.photos[0].url = await getPublicUrl(updatedUser.photos[0].url)
+    const photoUrl = await getPhotoUrl(primaryPhoto, { size: 'thumb' })
+
+    const updatedUserWithPhoto = {
+      ...updatedUser,
+      photos: primaryPhoto ? [{ ...primaryPhoto, url: photoUrl }] : [],
     }
 
     return {
       success: true,
       message: 'User updated successfully.',
       redirectUrl: '/me/users',
-      updatedUser: updatedUser as User & { photos: Photo[] },
+      updatedUser: updatedUserWithPhoto,
     }
   } catch (error: any) {
     if (newPhotoKeys) {
@@ -665,7 +666,7 @@ export async function getManagers(userId: string) {
     return []
   }
 
-  const managers = await prisma.managedUser.findMany({
+  const managedUserRelations = await prisma.managedUser.findMany({
     where: { managedId: userId },
     include: {
       manager: {
@@ -673,23 +674,40 @@ export async function getManagers(userId: string) {
           id: true,
           firstName: true,
           lastName: true,
-          photos: {
-            where: { type: { code: 'primary' } },
-            take: 1,
-          },
         },
       },
     },
   })
 
+  const managers = managedUserRelations.map((rel) => rel.manager)
+  if (managers.length === 0) {
+    return []
+  }
+
+  const managerIds = managers.map((m) => m.id)
+
+  const [photoTypes, entityTypes] = await Promise.all([
+    getCodeTable('photoType'),
+    getCodeTable('entityType'),
+  ])
+
+  const photos = await prisma.photo.findMany({
+    where: {
+      entityId: { in: managerIds },
+      entityTypeId: entityTypes.user.id,
+      typeId: photoTypes.primary.id,
+    },
+  })
+
+  const photoMap = new Map(photos.map((p) => [p.entityId, p]))
+
   const managersWithPhotoUrls = await Promise.all(
-    managers.map(async (m) => {
-      const photoUrl = m.manager.photos[0]?.url
-        ? await getPublicUrl(m.manager.photos[0].url)
-        : null
+    managers.map(async (manager) => {
+      const photo = photoMap.get(manager.id)
+      const photoUrl = await getPhotoUrl(photo || null, { size: 'thumb' })
       return {
-        ...m.manager,
-        photoUrl,
+        ...manager,
+        photoUrl: photoUrl,
       }
     }),
   )
@@ -770,34 +788,49 @@ export async function getGroupsForCurrentUser(): Promise<
   return groupUsers.map((gu) => gu.group)
 }
 
-export async function getGroupMembers(groupId: number): Promise<User[]> {
+export async function getGroupMembers(
+  groupId: number,
+): Promise<(User & { photos: (Photo & { url: string })[] })[]> {
   const session = await auth()
   if (!session?.user?.id) {
     return []
   }
 
-  const groupMembers: (GroupUser & { user: User & { photos: Photo[] } })[] =
-    await prisma.groupUser.findMany({
-      where: { groupId },
-      include: {
-        user: {
-          include: {
-            photos: {
-              where: { type: { code: 'primary' } },
-              take: 1,
-            },
-          },
-        },
-      },
-    })
+  const groupMembers = await prisma.groupUser.findMany({
+    where: { groupId },
+    include: { user: true },
+  })
+
+  const users = groupMembers.map((gm) => gm.user)
+  if (users.length === 0) {
+    return []
+  }
+
+  const userIds = users.map((u) => u.id)
+
+  const [photoTypes, entityTypes] = await Promise.all([
+    getCodeTable('photoType'),
+    getCodeTable('entityType'),
+  ])
+
+  const photos = await prisma.photo.findMany({
+    where: {
+      entityId: { in: userIds },
+      entityTypeId: entityTypes.user.id,
+      typeId: photoTypes.primary.id,
+    },
+  })
+
+  const photoMap = new Map(photos.map((p) => [p.entityId, p]))
 
   const usersWithPhotoUrls = await Promise.all(
-    groupMembers.map(async (member) => {
-      const user = member.user
-      if (user.photos[0]?.url && !user.photos[0].url.startsWith('https')) {
-        user.photos[0].url = await getPublicUrl(user.photos[0].url)
+    users.map(async (user) => {
+      const photo = photoMap.get(user.id)
+      const photoUrl = await getPhotoUrl(photo || null, { size: 'thumb' })
+      return {
+        ...user,
+        photos: photo ? [{ ...photo, url: photoUrl }] : [],
       }
-      return user
     }),
   )
 

@@ -1,31 +1,15 @@
 import Link from 'next/link'
-import { Search } from './Search'
-import GroupsTable from './GroupsTable'
 import { Suspense } from 'react'
 import Breadcrumbs from '@/components/Breadcrumbs'
+import prisma from '@/lib/prisma'
+import GroupsClient from './GroupsClient'
 
-
-type SortableColumn =
-  | 'name'
-  | 'slug'
-  | 'description'
-  | 'createdAt'
-  | 'updatedAt'
-type Order = 'asc' | 'desc'
-
-export default async function AdminGroupsPage({
-  searchParams: searchParamsProp,
-}: {
-  searchParams?: Promise<{
-    query?: string
-    sort?: SortableColumn
-    order?: Order
-  }>
-}) {
-  const searchParams = await searchParamsProp
-  const query = searchParams?.query || ''
-  const sort = searchParams?.sort || 'createdAt'
-  const order = searchParams?.order || 'desc'
+export default async function AdminGroupsPage() {
+  const groups = await prisma.group.findMany({
+    orderBy: {
+      createdAt: 'desc',
+    },
+  })
 
   return (
     <div className="mx-auto max-w-4xl p-8">
@@ -42,11 +26,8 @@ export default async function AdminGroupsPage({
           Create
         </Link>
       </div>
-      <div className="mt-4">
-        <Search placeholder="Search groups..." />
-      </div>
       <Suspense fallback={<div>Loading...</div>}>
-        <GroupsTable query={query} sort={sort} order={order} />
+        <GroupsClient initialGroups={groups} />
       </Suspense>
     </div>
   )

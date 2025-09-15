@@ -7,6 +7,7 @@ import prisma from '@/lib/prisma'
 import type { FullRelationship, UserUserRelationType } from '@/types'
 import { getCodeTable } from '@/lib/codes'
 import { getPublicUrl } from './storage'
+import { getPhotoUrl } from './photos'
 
 export async function getSecureImageUrl(
   storagePath: string | null | undefined,
@@ -65,23 +66,49 @@ export async function getUsersManagingMe() {
     return []
   }
 
-  const managers = await prisma.managedUser.findMany({
+  const managerRelations = await prisma.managedUser.findMany({
     where: {
       managedId: session.user.id,
     },
     include: {
-      manager: {
-        include: {
-          photos: {
-            where: { type: { code: 'primary' } },
-            take: 1,
-          },
-        },
-      },
+      manager: true,
     },
   })
 
-  return managers.map((m) => m.manager)
+  const managers = managerRelations.map((rel) => rel.manager)
+  if (managers.length === 0) {
+    return []
+  }
+
+  const managerIds = managers.map((m) => m.id)
+
+  const [photoTypes, entityTypes] = await Promise.all([
+    getCodeTable('photoType'),
+    getCodeTable('entityType'),
+  ])
+
+  const photos = await prisma.photo.findMany({
+    where: {
+      entityId: { in: managerIds },
+      entityTypeId: entityTypes.user.id,
+      typeId: photoTypes.primary.id,
+    },
+  })
+
+  const photoMap = new Map(photos.map((p) => [p.entityId, p]))
+
+  const managersWithPhotos = await Promise.all(
+    managers.map(async (manager) => {
+      const photo = photoMap.get(manager.id)
+      const photoUrl = await getPhotoUrl(photo || null, { size: 'thumb' })
+      return {
+        ...manager,
+        primaryPhoto: photo ? { ...photo, url: photoUrl } : null,
+      }
+    }),
+  )
+
+  return managersWithPhotos
 }
 
 export async function getPotentialManagers() {

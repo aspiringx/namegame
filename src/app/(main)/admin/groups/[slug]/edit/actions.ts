@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { z } from 'zod'
 
-import { getPublicUrl } from '@/lib/storage'
+import { getPhotoUrl } from '@/lib/photos'
 import { uploadFile, deleteFile } from '@/lib/actions/storage'
 import { auth } from '@/auth'
 import { getCodeTable } from '@/lib/codes'
@@ -172,31 +172,32 @@ export async function searchUsers(groupId: number, query: string) {
       ],
     },
     take: 10,
-    include: {
-      photos: {
-        where: {
-          typeId: photoTypes.primary.id,
-          entityTypeId: entityTypes.user.id,
-        },
-        take: 1,
-      },
+  })
+
+  if (users.length === 0) {
+    return []
+  }
+
+  const userIds = users.map((u) => u.id)
+  const photos = await prisma.photo.findMany({
+    where: {
+      entityId: { in: userIds },
+      entityTypeId: entityTypes.user.id,
+      typeId: photoTypes.primary.id,
     },
   })
 
+  const photoMap = new Map(photos.map((p) => [p.entityId, p]))
+
   return Promise.all(
-    users.map(async (user) => ({
-      ...user,
-      photoUrl: await (async () => {
-        const rawUrl = user.photos[0]?.url
-        if (rawUrl) {
-          if (rawUrl.startsWith('http')) {
-            return rawUrl
-          }
-          return getPublicUrl(rawUrl)
-        }
-        return '/images/default-avatar.png'
-      })(),
-    })),
+    users.map(async (user) => {
+      const photo = photoMap.get(user.id)
+      const photoUrl = await getPhotoUrl(photo || null, { size: 'thumb' })
+      return {
+        ...user,
+        photoUrl: photoUrl || '/images/default-avatar.png',
+      }
+    }),
   )
 }
 

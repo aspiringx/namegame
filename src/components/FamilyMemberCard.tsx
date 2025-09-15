@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import Image from 'next/image'
+import { CacheableImage as Image } from '@/components/CacheableImage'
 import type { MemberWithUser as Member } from '@/types/index'
 import { MoreVertical, Users, KeyRound } from 'lucide-react'
 import { Dropdown, DropdownItem } from './ui/dropdown'

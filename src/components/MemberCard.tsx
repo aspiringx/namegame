@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import Image from 'next/image'
+import { CacheableImage as Image } from '@/components/CacheableImage'
 import type { MemberWithUser as Member } from '@/types/index'
 import { formatDistanceToNow } from 'date-fns'
 import {

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import Image from 'next/image'
+import { CacheableImage as Image } from '@/components/CacheableImage'
 import Link from 'next/link'
 import { signOut, useSession } from 'next-auth/react'
 import { useUserSession } from '@/context/UserSessionContext'

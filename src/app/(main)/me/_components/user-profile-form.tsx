@@ -14,6 +14,7 @@ import { z } from 'zod'
 import { Badge } from '@/components/ui/badge'
 import Modal from '@/components/ui/modal'
 import { Button } from '@/components/ui/button'
+import { getPhotoUrl } from '@/lib/photos'
 import { PushManager } from '@/components/PushManager'
 import { usePushManager } from '@/hooks/use-push-manager'
 import {
@@ -22,7 +23,7 @@ import {
   type State,
 } from '../actions'
 import { Info } from 'lucide-react'
-import Image from 'next/image'
+import { CacheableImage as Image } from '@/components/CacheableImage'
 import {
   Eye,
   EyeOff,
@@ -40,7 +41,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { DatePrecision, Gender } from '@/generated/prisma/client'
+import { DatePrecision, Gender, Photo } from '@/generated/prisma/client'
 import { format } from 'date-fns'
 import UserProfileNextSteps from './UserProfileNextSteps'
 import StickySaveBar from '@/components/ui/StickySaveBar'
@@ -72,7 +73,7 @@ export type UserProfile = {
   lastName: string | null
   email: string | null
   emailVerified: string | null // Pass date as ISO string
-  photos: { url: string }[]
+  primaryPhoto: Photo | null
   gender: 'male' | 'female' | 'non_binary' | null
   birthDate: string | null
   birthDatePrecision: DatePrecision | null
@@ -91,9 +92,16 @@ export default function UserProfileForm({
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const [previewUrl, setPreviewUrl] = useState<string | null>(
-    user.photos[0]?.url ?? null,
-  )
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    async function setInitialPhoto() {
+      const url = await getPhotoUrl(user.primaryPhoto, { size: 'small' })
+      setPreviewUrl(url)
+    }
+    setInitialPhoto()
+  }, [user.primaryPhoto])
+
   const [firstName, setFirstName] = useState(user.firstName || '')
   const [lastName, setLastName] = useState(user.lastName || '')
   const [gender, setGender] = useState<Gender | null>(user.gender || null)
@@ -124,6 +132,19 @@ export default function UserProfileForm({
   const [isConfirmModalOpen, setConfirmModalOpen] = useState(false)
   const [isSubmittingAfterConfirm, setIsSubmittingAfterConfirm] =
     useState(false)
+
+  const deleteImagesFromCache = (urls: (string | null)[]) => {
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      const validUrls = urls.filter((url): url is string => !!url)
+      if (validUrls.length > 0) {
+        navigator.serviceWorker.controller.postMessage({
+          type: 'DELETE_IMAGES',
+          payload: { imageUrls: validUrls },
+        })
+      }
+    }
+  }
+
   const [isEmailValid, setIsEmailValid] = useState(
     !user.email || z.string().email().safeParse(user.email).success,
   )
@@ -194,7 +215,11 @@ export default function UserProfileForm({
     )
     setBirthPlace(user.birthPlace || '')
     setPassword('')
-    setPreviewUrl(user.photos[0]?.url ?? null)
+    async function resetPreview() {
+      const url = await getPhotoUrl(user.primaryPhoto, { size: 'small' })
+      setPreviewUrl(url)
+    }
+    resetPreview()
     setFileSelected(false)
     setIsEmailValid(true)
     setPasswordError(null)
@@ -206,7 +231,7 @@ export default function UserProfileForm({
     user.birthDate,
     user.birthDatePrecision,
     user.birthPlace,
-    user.photos,
+    user.primaryPhoto,
   ])
 
   useEffect(() => {
@@ -298,7 +323,15 @@ export default function UserProfileForm({
       setShowSuccessMessage(true)
 
       if (state.newPhotoUrl) {
-        setPreviewUrl(state.newPhotoUrl)
+        const oldPhoto = user.primaryPhoto
+        if (oldPhoto) {
+          deleteImagesFromCache([
+            oldPhoto.url,
+            oldPhoto.url_thumb,
+            oldPhoto.url_small,
+          ])
+        }
+        setPreviewUrl(state.newPhotoUrl) // This is the new thumb URL
       }
 
       // Clear the password field on successful submission
@@ -328,7 +361,7 @@ export default function UserProfileForm({
         }
       })
     }
-  }, [state, updateSession, router, password, fileSelected])
+  }, [state, updateSession, router, password, fileSelected, user.primaryPhoto])
 
   const handleGeneratePassword = () => {
     const letters = 'abcdefghijklmnopqrstuvwxyz'
@@ -371,7 +404,11 @@ export default function UserProfileForm({
       reader.readAsDataURL(file)
     } else {
       // If the user cancels file selection, revert to the original photo if it exists
-      setPreviewUrl(user.photos[0]?.url ?? null)
+      async function resetPreview() {
+        const url = await getPhotoUrl(user.primaryPhoto, { size: 'small' })
+        setPreviewUrl(url)
+      }
+      resetPreview()
       setFileSelected(false)
     }
   }
@@ -464,7 +501,8 @@ export default function UserProfileForm({
       <div className="mb-6">
         <UserProfileNextSteps
           user={user}
-          validation={validation}
+          passwordRequired={validation.passwordRequired}
+          photoRequired={validation.photoRequired}
           isInFamilyGroup={isInFamilyGroup}
           setIsOptionalOpen={setIsOptionalOpen}
           isLoading={isLoadingRequirements}
@@ -744,7 +782,6 @@ export default function UserProfileForm({
             Saving an email is your consent to receive messages.
           </p>
         </div>
-
         <div id="password" className="scroll-mt-24">
           <label
             htmlFor="password"
