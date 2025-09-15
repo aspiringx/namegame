@@ -1,17 +1,24 @@
 'use server'
 
 import { Photo } from '@/generated/prisma/client'
-import {
-  getFileFromStorage,
-  uploadToStorage,
-} from '@/lib/actions/storage'
+import { getFileFromStorage, uploadToStorage } from '@/lib/actions/storage'
 import { IMAGE_SIZES } from '@/config/photos'
 import { getPublicUrl } from './storage'
 import prisma from './prisma'
 
-const sizeOrder: (keyof typeof IMAGE_SIZES)[] = ['thumb', 'small', 'medium', 'large']
+const sizeOrder: (keyof typeof IMAGE_SIZES)[] = [
+  'thumb',
+  'small',
+  'medium',
+  'large',
+]
 
 async function processLegacyPhoto(photo: Photo): Promise<Photo> {
+  // Do not process external URLs
+  if (photo.url.startsWith('http')) {
+    return photo
+  }
+
   try {
     console.log(`Processing legacy photo: ${photo.id}`)
     const originalBuffer = await getFileFromStorage(photo.url)
@@ -19,7 +26,7 @@ async function processLegacyPhoto(photo: Photo): Promise<Photo> {
     const sharpInstance = sharp(originalBuffer).rotate()
 
     const urlParts = photo.url.split('/')
-    const prefix = urlParts.slice(0, -1).join('/')
+    const subfolder = urlParts.slice(-2, -1)[0] // e.g., 'user-photos'
     const originalFilename = urlParts[urlParts.length - 1]
     const nameParts = originalFilename.split('.')
     const entityId = nameParts[0]
@@ -40,10 +47,13 @@ async function processLegacyPhoto(photo: Photo): Promise<Photo> {
         .toBuffer()
 
       const webpFilename = `${entityId}.${timestamp}.${size}.webp`
-      const storageKey = `${prefix}/${webpFilename}`
+      // The `uploadToStorage` function constructs the full path, so we only need
+      // to provide the subfolder and the filename.
+      const storageKey = `${subfolder}/${webpFilename}`
       await uploadToStorage(storageKey, webpBuffer, 'image/webp')
-      newUrls[`url_${size}`] = storageKey
+      newUrls[`url_${size}`] = `uploads/${subfolder}/${webpFilename}`
     }
+
     return prisma.photo.update({
       where: { id: photo.id },
       data: newUrls,
@@ -66,32 +76,49 @@ export async function getPhotoUrl(
   }
 
   let processedPhoto = photo
-  if (photo.url && !photo.url_thumb) {
+  console.log('before processing', processedPhoto)
+  // If the photo is local and hasn't been processed, process it now.
+  if (photo.url && !photo.url.startsWith('http') && !photo.url_thumb) {
     processedPhoto = await processLegacyPhoto(photo)
   }
 
-    const { size, deviceType } = options
+  console.log('after processing', processedPhoto)
+
+  // After processing, re-fetch the photo data to ensure we have the latest URLs
+  if (processedPhoto.id !== photo.id || !processedPhoto.url_thumb) {
+    const updatedPhoto = await prisma.photo.findUnique({
+      where: { id: photo.id },
+    })
+    if (updatedPhoto) {
+      processedPhoto = updatedPhoto
+    }
+  }
+
+  // If the URL is external (like Dicebear), return it directly.
+  if (processedPhoto.url.startsWith('http')) {
+    return processedPhoto.url
+  }
+
+  const { size, deviceType } = options
 
   if (size === 'original') {
     return getPublicUrl(processedPhoto.url)
   }
 
-    const preferredSize = size
-    ? size
-    : deviceType === 'mobile'
-    ? 'small'
-    : 'medium'
+  const preferredSize = size || (deviceType === 'mobile' ? 'small' : 'medium')
 
   const startIndex = sizeOrder.indexOf(preferredSize)
+
+  // Find the best available size, starting from the preferred one.
   for (let i = startIndex; i < sizeOrder.length; i++) {
-    const size = sizeOrder[i]
-    const urlKey = `url_${size}` as keyof Photo
+    const currentSize = sizeOrder[i]
+    const urlKey = `url_${currentSize}` as keyof Photo
     const url = processedPhoto[urlKey] as string | null
     if (url) {
       return getPublicUrl(url)
     }
   }
 
-  // Final fallback to the original URL if no other sizes are found
+  // If no pre-processed image is found, fall back to the original URL
   return getPublicUrl(processedPhoto.url)
 }
