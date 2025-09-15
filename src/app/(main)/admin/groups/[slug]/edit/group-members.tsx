@@ -3,7 +3,6 @@
 import { useState, useTransition, ChangeEvent, useMemo } from 'react'
 import type { GroupWithMembers } from '@/types/index'
 import Image from 'next/image'
-import Link from 'next/link'
 import { LoginCodeModal } from '@/components/LoginCodeModal'
 import { searchUsers, addMember, removeMember, updateMember } from './actions'
 import { GroupUser, User } from '@/generated/prisma'
@@ -21,6 +20,9 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { KeyRound, Pencil, Trash2, Check, X } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+
+const MEMBERS_PER_PAGE = 25
 
 type UserWithPhotoUrl = Awaited<ReturnType<typeof searchUsers>>[0]
 
@@ -37,22 +39,16 @@ export type GroupMember = Omit<GroupUser, 'role'> & {
 interface GroupMembersProps {
   group: GroupWithMembers
   members: GroupMember[]
-  totalMembers: number
   isSuperAdmin: boolean
   isGlobalAdminGroup: boolean
-  page: number
-  totalPages: number
   groupUserRoles: GroupUserRoleType[]
 }
 
 export default function GroupMembers({
   group,
   members,
-  totalMembers,
   isSuperAdmin,
   isGlobalAdminGroup,
-  page,
-  totalPages,
   groupUserRoles,
 }: GroupMembersProps) {
   const [searchQuery, setSearchQuery] = useState('')
@@ -72,6 +68,7 @@ export default function GroupMembers({
     groupUserRoles.find((r) => r.code === 'member')?.id.toString() || '',
   )
   const [editingRoleId, setEditingRoleId] = useState<string | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
 
   type SortableKey = 'email' | 'name' | 'role' | 'createdAt'
   const [sortConfig, setSortConfig] = useState<{
@@ -163,6 +160,14 @@ export default function GroupMembers({
       return nameMatch || emailMatch || usernameMatch
     })
   }, [sortedMembers, memberSearchQuery])
+
+  const totalPages = Math.ceil(filteredMembers.length / MEMBERS_PER_PAGE)
+
+  const paginatedMembers = useMemo(() => {
+    const start = (currentPage - 1) * MEMBERS_PER_PAGE
+    const end = start + MEMBERS_PER_PAGE
+    return filteredMembers.slice(start, end)
+  }, [filteredMembers, currentPage])
 
   const requestSort = (key: SortableKey) => {
     let direction: 'ascending' | 'descending' = 'ascending'
@@ -275,7 +280,7 @@ export default function GroupMembers({
 
       <div>
         <h2 className="mb-4 text-xl font-semibold">
-          Current Members ({totalMembers})
+          Current Members ({filteredMembers.length})
         </h2>
         <div className="mb-4 max-w-lg">
           <input
@@ -330,7 +335,7 @@ export default function GroupMembers({
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-800">
-              {filteredMembers.map((member) => (
+              {paginatedMembers.map((member) => (
                 <tr key={member.userId}>
                   <td className="w-full max-w-0 py-4 pr-3 pl-4 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6 dark:text-white">
                     <div className="flex items-center gap-4">
@@ -591,23 +596,21 @@ export default function GroupMembers({
 
         <div className="mt-4 flex items-center justify-between">
           <span className="text-sm text-gray-700 dark:text-gray-400">
-            Page {page} of {totalPages}
+            Page {currentPage} of {totalPages}
           </span>
           <div className="flex items-center gap-2">
-            <Link
-              href={`?page=${page - 1}`}
-              className={`rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 ${
-                page <= 1 ? 'pointer-events-none opacity-50' : ''
-              }`}
+            <Button
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage <= 1}
             >
               Previous
-            </Link>
-            <Link
-              href={`?page=${page + 1}`}
-              className={`rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 ${page >= totalPages ? 'pointer-events-none opacity-50' : ''}`}
+            </Button>
+            <Button
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage >= totalPages}
             >
               Next
-            </Link>
+            </Button>
           </div>
         </div>
       </div>

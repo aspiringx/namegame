@@ -6,18 +6,12 @@ import GroupMembers, { GroupMember } from '../group-members'
 
 import type { GroupWithMembers } from '@/types/index'
 
-const MEMBERS_PER_PAGE = 25
-
 export default async function ManageMembersPage({
   params: paramsProp,
-  searchParams: searchParamsProp,
 }: {
   params: Promise<{ slug: string }>
-  searchParams?: Promise<{ page?: string }>
 }) {
   const params = await paramsProp
-  const searchParams = await searchParamsProp
-  const page = Number(searchParams?.page) || 1
 
   const session = await auth()
   const isSuperAdmin = session?.user?.isSuperAdmin
@@ -34,17 +28,14 @@ export default async function ManageMembersPage({
     notFound()
   }
 
-  const [totalMembers, members, groupUserRoles, entityTypes, photoTypes] =
+  const [members, groupUserRoles, entityTypes, photoTypes] =
     await prisma.$transaction([
-      prisma.groupUser.count({ where: { groupId: group.id } }),
       prisma.groupUser.findMany({
         where: { groupId: group.id },
         include: {
           role: true,
           user: true,
         },
-        take: MEMBERS_PER_PAGE,
-        skip: (page - 1) * MEMBERS_PER_PAGE,
         orderBy: {
           createdAt: 'desc',
         },
@@ -68,13 +59,14 @@ export default async function ManageMembersPage({
 
   const photoMap = new Map(photos.map((p) => [p.entityId, p]))
 
-  const totalPages = Math.ceil(totalMembers / MEMBERS_PER_PAGE)
   const isGlobalAdminGroup = group.slug === 'global-admin'
 
   const membersWithPhoto = await Promise.all(
     members.map(async (member) => {
       const photo = photoMap.get(member.userId)
-      const photoUrl = (await getPhotoUrl(photo || null, { size: 'thumb' })) || `https://api.dicebear.com/8.x/personas/png?seed=${member.user.id}`
+      const photoUrl =
+        (await getPhotoUrl(photo || null, { size: 'thumb' })) ||
+        `https://api.dicebear.com/8.x/personas/png?seed=${member.user.id}`
       return {
         ...member,
         user: {
@@ -93,11 +85,8 @@ export default async function ManageMembersPage({
       <GroupMembers
         group={group as GroupWithMembers}
         members={membersWithPhoto as GroupMember[]}
-        totalMembers={totalMembers}
         isSuperAdmin={isSuperAdmin}
         isGlobalAdminGroup={isGlobalAdminGroup}
-        page={page}
-        totalPages={totalPages}
         groupUserRoles={groupUserRoles}
       />
     </div>
