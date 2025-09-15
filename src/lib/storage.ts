@@ -14,11 +14,7 @@ export async function getPublicUrl(
   }
 
   // 3. If it's a legacy local path or a new local path, make it a root-relative URL.
-  if (
-    STORAGE_PROVIDER === 'local' ||
-    storagePath.startsWith('uploads/') ||
-    storagePath.startsWith('/uploads/')
-  ) {
+  if (STORAGE_PROVIDER === 'local') {
     return `/${storagePath.replace(/^\/?uploads\//, 'uploads/')}`
   }
 
@@ -28,5 +24,6 @@ export async function getPublicUrl(
   }
 
   // 5. For all other cases (assumed to be S3 keys), route them through the proxy.
-  return `/api/images?key=${storagePath}`
+  const key = storagePath.replace(/^uploads\//, '')
+  return `/api/images?key=${key}`
 }
