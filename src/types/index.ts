@@ -31,7 +31,7 @@ export type GroupPayload = Prisma.GroupGetPayload<typeof _groupWithMembers>
 
 export type GroupWithMembers = Omit<GroupPayload, 'members'> & {
   members: (Omit<GroupPayload['members'][number], 'user'> & {
-    user: GroupPayload['members'][number]['user'] & { photoUrl?: string }
+    user: GroupPayload['members'][number]['user'] & { name: string; photoUrl?: string }
   })[]
 }
 

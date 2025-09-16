@@ -12,7 +12,7 @@ import {
 } from 'lucide-react'
 import Image from 'next/image'
 
-export const communityTourSteps: StepType[] = [
+export const steps: StepType[] = [
   {
     selector: '[data-tour="group-name"]',
     position: 'center',

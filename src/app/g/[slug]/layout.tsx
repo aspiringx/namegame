@@ -5,7 +5,7 @@ import { GroupProvider, GroupPageData } from '@/components/GroupProvider'
 import { getGroupForLayout } from './utils'
 import { FamilyGroupData, CommunityGroupData } from '@/types'
 
-import { headers } from 'next/headers'
+import { headers, cookies } from 'next/headers'
 import { notFound, redirect } from 'next/navigation'
 import type { Metadata } from 'next'
 
@@ -39,6 +39,7 @@ export default async function GroupLayout({
   const session = await auth()
   const headersList = await headers()
   const headerPath = headersList.get('x-invoke-path') || ''
+  const deviceType = (await cookies()).get('device_type')?.value || 'mobile'
 
   // The /greet page is public and should not be protected by this authorization.
   if (!headerPath.includes('/greet') && !session?.user) {
@@ -46,14 +47,12 @@ export default async function GroupLayout({
     const pathname = headerPath || `/g/${params.slug}`
     return redirect(`/login?callbackUrl=${encodeURIComponent(pathname)}`)
   }
-  const userAgent = headersList.get('user-agent')
-  const deviceType = userAgent?.match(
-    /Android|BlackBerry|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i,
-  )
-    ? 'mobile'
-    : 'desktop'
 
-  const data = await getGroupForLayout(params.slug, undefined, deviceType)
+  const data = await getGroupForLayout(
+    params.slug,
+    undefined,
+    deviceType as 'mobile' | 'desktop',
+  )
 
   if (!data) {
     // This can happen if the group doesn't exist, or if the user is not a member
@@ -61,7 +60,7 @@ export default async function GroupLayout({
     notFound()
   }
 
-  const isFamilyGroup = 'members' in data
+  const isFamilyGroup = data.groupType.code === 'family'
 
   let groupForProvider: GroupPageData
 

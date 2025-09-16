@@ -10,6 +10,7 @@ import { FocalUserSearch } from './FocalUserSearch'
 import { TourProvider, useTour } from '@reactour/tour'
 import type { FamilyTreeRef } from './FamilyTree'
 import TreeView from './TreeView'
+import GridView from './GridView'
 import { FullRelationship, User } from '@/types'
 import { getRelationship } from '@/lib/family-tree'
 import { steps as familyTourSteps } from '@/components/tours/FamilyTour'
@@ -62,7 +63,6 @@ interface FamilyPageSettings {
 }
 
 interface FamilyGroupClientProps {
-  children?: React.ReactNode
   view: 'grid' | 'tree' | 'games'
   initialMembers: MemberWithUser[]
   groupSlug: string
@@ -78,7 +78,6 @@ interface FamilyGroupClientContentProps
 function FamilyGroupClientContent({
   initialMembers,
   initialRelationships,
-  children,
   view,
   groupSlug,
   isMobile,
@@ -337,7 +336,7 @@ function FamilyGroupClientContent({
                   }}
                 />
               ) : (
-                children
+                <GridView />
               )}
             </FamilyGroupMembersContext.Provider>
           </FamilyGroupDataContext.Provider>

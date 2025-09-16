@@ -11,7 +11,7 @@ export const getGroup = cache(
   async (
     slug: string,
     limit?: number,
-    deviceType: 'mobile' | 'desktop' = 'desktop',
+    deviceType: 'mobile' | 'desktop' = 'mobile',
   ): Promise<FamilyGroupData | null> => {
     const session = await auth()
     const currentUserId = session?.user?.id

@@ -12,7 +12,7 @@ import {
 } from 'lucide-react'
 import Image from 'next/image'
 
-export const communityTourMobileSteps: StepType[] = [
+export const steps: StepType[] = [
   {
     selector: 'body[data-this-does-not-exist]',
     position: 'center',

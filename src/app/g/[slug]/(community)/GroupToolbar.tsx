@@ -6,7 +6,6 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 
-
 import {
   ArrowUp,
   ArrowDown,
@@ -51,8 +50,8 @@ interface GroupToolbarProps {
 export default function GroupToolbar({
   settings,
   setSettings,
-  handleSort: _handleSort,
-  setTourOpen: _setTourOpen,
+  handleSort,
+  setTourOpen,
   viewMode,
   groupSlug,
 }: GroupToolbarProps) {
@@ -174,31 +173,35 @@ export default function GroupToolbar({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
                   {sortOptions.map((option) => (
-                    <Link
+                    <DropdownMenuItem
                       key={option.key}
-                      href={`/g/${groupSlug}?sort=${option.key}`}
+                      onSelect={(e) => {
+                        e.preventDefault()
+                        handleSort(option.key)
+                      }}
                     >
-                      <DropdownMenuItem>
-                        {option.label}
-                        {settings.sortConfig.key === option.key &&
-                          (settings.sortConfig.direction === 'asc' ? (
-                            <ArrowUp className="ml-auto h-4 w-4" />
-                          ) : (
-                            <ArrowDown className="ml-auto h-4 w-4" />
-                          ))}
-                      </DropdownMenuItem>
-                    </Link>
+                      {option.label}
+                      {settings.sortConfig.key === option.key &&
+                        (settings.sortConfig.direction === 'asc' ? (
+                          <ArrowUp className="ml-auto h-4 w-4" />
+                        ) : (
+                          <ArrowDown className="ml-auto h-4 w-4" />
+                        ))}
+                    </DropdownMenuItem>
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
           </>
         )}
-        <Link href={`/g/${groupSlug}`} data-tour="tour-button">
-          <Button variant="ghost" size="icon">
-            <HelpCircle className="h-4 w-4" />
-          </Button>
-        </Link>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setTourOpen(true)}
+          data-tour="tour-button"
+        >
+          <HelpCircle className="h-4 w-4" />
+        </Button>
       </div>
 
       {/* View Mode Buttons */}
