@@ -9,7 +9,7 @@ export const getGroupForLayout = cache(
   async (
     slug: string,
     limit?: number,
-    deviceType: 'mobile' | 'desktop' = 'desktop',
+    deviceType: 'mobile' | 'desktop' = 'mobile',
   ): Promise<CommunityGroupData | FamilyGroupData | null> => {
     const groupTypeData = await getGroupTypeBySlug(slug)
     if (!groupTypeData) {
@@ -17,9 +17,9 @@ export const getGroupForLayout = cache(
     }
 
     if (groupTypeData.groupType.code === 'family') {
-            return getFamilyGroup(slug, limit, deviceType)
+      return getFamilyGroup(slug, limit, deviceType)
     }
 
-        return getCommunityGroup(slug, limit, deviceType)
+    return getCommunityGroup(slug, limit, deviceType)
   },
 )

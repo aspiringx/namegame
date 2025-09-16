@@ -34,7 +34,9 @@ precacheAndRoute(manifest)
 registerRoute(
   ({ request, url }) =>
     request.destination === 'image' &&
-    (url.href.includes('.thumb.webp') || url.href.includes('.small.webp')),
+    (url.href.includes('.thumb.webp') ||
+      url.href.includes('.small.webp') ||
+      url.href.includes('.medium.webp')),
   new CacheFirst({
     cacheName: 'images',
     plugins: [
@@ -67,7 +69,9 @@ self.addEventListener('message', (event) => {
     const { imageUrls } = event.data.payload
     const filteredUrls = imageUrls.filter(
       (url: string) =>
-        url.includes('.thumb.webp') || url.includes('.small.webp'),
+        url.includes('.thumb.webp') ||
+        url.includes('.small.webp') ||
+        url.includes('.medium.webp'),
     )
 
     event.waitUntil(

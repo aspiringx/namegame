@@ -1,12 +1,6 @@
 'use client'
 
-import React, {
-  useState,
-  useEffect,
-  Fragment,
-  useMemo,
-  useCallback,
-} from 'react'
+import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import useLocalStorage from '@/hooks/useLocalStorage'
 import useGroupMembers from '@/hooks/useGroupMembers'
 import { useRouter } from 'next/navigation'
@@ -24,13 +18,13 @@ import { Input } from '@/components/ui/input'
 import { X } from 'lucide-react'
 import GamesIntroModal from '@/components/GamesIntroModal'
 import { TourProvider, useTour } from '@reactour/tour'
-import { communityTourSteps } from '@/components/tours/CommunityTour'
-import { communityTourMobileSteps } from '@/components/tours/CommunityTourMobile'
 import { useTheme } from 'next-themes'
 import { Toaster, toast } from 'sonner'
 import Modal from '@/components/ui/modal'
 import GroupToolbar from './GroupToolbar'
 import MemberGrid from './MemberGrid'
+import { steps as communityTourSteps } from '@/components/tours/CommunityTour'
+import { steps as communityTourMobileSteps } from '@/components/tours/CommunityTourMobile'
 
 interface CommunityGroupClientProps {
   members: MemberWithUser[]
@@ -296,6 +290,7 @@ const CommunityGroupClient: React.FC<CommunityGroupClientProps> = ({
 }) => {
   const groupContext = useGroup()
   const { group } = groupContext || {}
+  const [isMobile, setIsMobile] = useState(false)
 
   const [settings, setSettings] = useLocalStorage<GroupPageSettings>(
     `namegame_community-group-settings_${group?.slug || ''}`,
@@ -303,12 +298,11 @@ const CommunityGroupClient: React.FC<CommunityGroupClientProps> = ({
       sortConfig: { key: 'when_connected', direction: 'desc' },
       searchQuery: '',
       filterByRealPhoto: true,
-      filterConnectedStatus: 'connected',
+      filterConnectedStatus: 'all',
     },
   )
 
   const [hasMounted, setHasMounted] = useState(false)
-  const [isMobile, setIsMobile] = useState(false)
   const { resolvedTheme } = useTheme()
 
   useEffect(() => {
@@ -316,6 +310,7 @@ const CommunityGroupClient: React.FC<CommunityGroupClientProps> = ({
   }, [])
 
   useEffect(() => {
+    setHasMounted(true)
     const checkIsMobile = () => {
       setIsMobile(window.innerWidth < 768)
     }
@@ -398,12 +393,7 @@ const CommunityGroupClient: React.FC<CommunityGroupClientProps> = ({
           width: '1.4rem',
           height: '1.4rem',
         }),
-        maskWrapper: (base: React.CSSProperties) => {
-          if (isMobile) {
-            return { ...base, color: 'transparent' }
-          }
-          return base
-        },
+        maskWrapper: (base: React.CSSProperties) => base,
       }}
       showNavigation={true}
       showCloseButton={true}
