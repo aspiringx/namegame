@@ -13,11 +13,20 @@ interface MemberGridProps {
   groupSlug?: string
 }
 
-export default function MemberGrid({ members, ...props }: MemberGridProps) {
+export default function MemberGrid({
+  members,
+  onRelate,
+  ...props
+}: MemberGridProps) {
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
       {members.map((member) => (
-        <MemberCard key={member.userId} member={member} {...props} />
+        <MemberCard
+          key={member.userId}
+          member={member}
+          onRelate={onRelate}
+          {...props}
+        />
       ))}
     </div>
   )
