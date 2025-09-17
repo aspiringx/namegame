@@ -10,6 +10,9 @@ import { A2HSProvider } from '@/context/A2HSContext'
 import { InstallAppPrompt } from '@/components/InstallAppPrompt'
 import { ClientOnly } from '@/components/ClientOnly'
 import AuthProvider from '@/components/AuthProvider'
+import { ServiceWorkerRegistrar } from '@/components/ServiceWorkerRegistrar'
+import { ServiceWorkerProvider } from '@/context/ServiceWorkerContext'
+import { PushNotificationsProvider } from '@/context/PushNotificationsContext'
 
 import './globals.css'
 
@@ -302,11 +305,16 @@ export default async function RootLayout({
             <DeviceInfoProvider>
               <UserSessionProvider>
                 <A2HSProvider>
-                  <div className="relative min-h-screen">{children}</div>
-                  <ClientOnly>
-                    <InstallAppPrompt />
-                  </ClientOnly>
-                  <Toaster />
+                  <ServiceWorkerProvider>
+                    <PushNotificationsProvider>
+                      <div className="relative min-h-screen">{children}</div>
+                      <ClientOnly>
+                        <InstallAppPrompt />
+                        <ServiceWorkerRegistrar />
+                      </ClientOnly>
+                      <Toaster />
+                    </PushNotificationsProvider>
+                  </ServiceWorkerProvider>
                 </A2HSProvider>
               </UserSessionProvider>
             </DeviceInfoProvider>

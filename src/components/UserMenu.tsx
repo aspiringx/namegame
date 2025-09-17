@@ -1,14 +1,13 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { CacheableImage as Image } from '@/components/CacheableImage'
+import Image from 'next/image'
 import Link from 'next/link'
 import { signOut, useSession } from 'next-auth/react'
 import { useUserSession } from '@/context/UserSessionContext'
 import { useA2HS } from '@/context/A2HSContext'
 import { useDeviceInfoContext } from '@/context/DeviceInfoContext'
 import { NAMEGAME_PWA_PROMPT_DISMISSED_KEY } from '@/lib/constants'
-
 
 export default function UserMenu() {
   const { data: session, update } = useSession()
@@ -33,7 +32,6 @@ export default function UserMenu() {
         setDropdownOpen(false)
       }
     }
-
 
     document.addEventListener('mousedown', handleClickOutside)
 

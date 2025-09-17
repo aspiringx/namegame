@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { CacheableImage as Image } from '@/components/CacheableImage'
+import Image from 'next/image'
 import type { MemberWithUser as Member } from '@/types/index'
 import { formatDistanceToNow } from 'date-fns'
 import {
@@ -55,23 +55,25 @@ export default function MemberCard({
           <div className="relative text-center">
             <div className="flex items-center justify-center gap-2">
               <div className="absolute top-1 left-0 flex h-full items-center">
-                {!member.connectedAt && onConnect && member.userId !== currentUserId && (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button
-                          onClick={() => onConnect(member)}
-                          className="flex-shrink-0 rounded-full p-1 hover:bg-gray-200 dark:hover:bg-gray-600"
-                        >
-                          <Link className="h-4 w-4" />
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>I already know {member.user.name}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                )}
+                {!member.connectedAt &&
+                  onConnect &&
+                  member.userId !== currentUserId && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            onClick={() => onConnect(member)}
+                            className="flex-shrink-0 rounded-full p-1 hover:bg-gray-200 dark:hover:bg-gray-600"
+                          >
+                            <Link className="h-4 w-4" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>I already know {member.user.name}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
               </div>
               <p className="mt-2 truncate text-sm font-medium text-gray-800 dark:text-gray-200">
                 {member.user.name}
@@ -89,18 +91,13 @@ export default function MemberCard({
                     <Tooltip>
                       <TooltipTrigger>
                         <p className="cursor-pointer text-xs text-gray-500 underline decoration-dotted dark:text-gray-400">
-                          {formatDistanceToNow(
-                            new Date(member.connectedAt),
-                            {
-                              addSuffix: true,
-                            },
-                          )}
+                          {formatDistanceToNow(new Date(member.connectedAt), {
+                            addSuffix: true,
+                          })}
                         </p>
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p>
-                          {new Date(member.connectedAt).toLocaleString()}
-                        </p>
+                        <p>{new Date(member.connectedAt).toLocaleString()}</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>

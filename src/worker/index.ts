@@ -1,7 +1,4 @@
 import { precacheAndRoute, cleanupOutdatedCaches } from 'workbox-precaching'
-import { registerRoute } from 'workbox-routing'
-import { CacheFirst } from 'workbox-strategies'
-import { CacheableResponsePlugin } from 'workbox-cacheable-response'
 import { clientsClaim } from 'workbox-core'
 
 declare const self: ServiceWorkerGlobalScope
@@ -16,7 +13,7 @@ cleanupOutdatedCaches()
 const manifest = (self.__WB_MANIFEST || []).filter((entry) => {
   const url = typeof entry === 'string' ? entry : entry.url
 
-  // Don't precache images; we'll cache them at runtime with our own strategy.
+  // Don't precache images
   if (url.match(/\.(?:png|gif|jpg|jpeg|svg|webp)$/)) {
     return false
   }
@@ -29,64 +26,6 @@ const manifest = (self.__WB_MANIFEST || []).filter((entry) => {
   )
 })
 precacheAndRoute(manifest)
-
-// Cache images with a CacheFirst strategy
-registerRoute(
-  ({ request, url }) =>
-    request.destination === 'image' &&
-    (url.href.includes('.thumb.webp') ||
-      url.href.includes('.small.webp') ||
-      url.href.includes('.medium.webp')),
-  new CacheFirst({
-    cacheName: 'images',
-    plugins: [
-      new CacheableResponsePlugin({
-        statuses: [0, 200], // Cache opaque and successful responses
-      }),
-    ],
-    fetchOptions: {
-      mode: 'cors',
-      credentials: 'omit',
-    },
-  }),
-)
-
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'DELETE_IMAGES') {
-    const { imageUrls } = event.data.payload
-    event.waitUntil(
-      caches.open('images').then((cache) => {
-        return Promise.all(
-          imageUrls.map((url: string) => {
-            return cache.delete(url).catch((error) => {
-              console.error(`Failed to delete cached image: ${url}`, error)
-            })
-          }),
-        )
-      }),
-    )
-  } else if (event.data && event.data.type === 'CACHE_IMAGES') {
-    const { imageUrls } = event.data.payload
-    const filteredUrls = imageUrls.filter(
-      (url: string) =>
-        url.includes('.thumb.webp') ||
-        url.includes('.small.webp') ||
-        url.includes('.medium.webp'),
-    )
-
-    event.waitUntil(
-      caches.open('images').then((cache) => {
-        return Promise.all(
-          filteredUrls.map((url: string) => {
-            return cache.add(url).catch((error) => {
-              console.error(`Failed to cache image: ${url}`, error)
-            })
-          }),
-        )
-      }),
-    )
-  }
-})
 
 self.addEventListener('push', (event: PushEvent) => {
   const data = event.data?.json() ?? {}

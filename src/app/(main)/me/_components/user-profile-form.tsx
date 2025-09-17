@@ -23,7 +23,7 @@ import {
   type State,
 } from '../actions'
 import { Info } from 'lucide-react'
-import { CacheableImage as Image } from '@/components/CacheableImage'
+import Image from 'next/image'
 import {
   Eye,
   EyeOff,
@@ -132,18 +132,6 @@ export default function UserProfileForm({
   const [isConfirmModalOpen, setConfirmModalOpen] = useState(false)
   const [isSubmittingAfterConfirm, setIsSubmittingAfterConfirm] =
     useState(false)
-
-  const deleteImagesFromCache = (urls: (string | null)[]) => {
-    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-      const validUrls = urls.filter((url): url is string => !!url)
-      if (validUrls.length > 0) {
-        navigator.serviceWorker.controller.postMessage({
-          type: 'DELETE_IMAGES',
-          payload: { imageUrls: validUrls },
-        })
-      }
-    }
-  }
 
   const [isEmailValid, setIsEmailValid] = useState(
     !user.email || z.string().email().safeParse(user.email).success,
@@ -323,14 +311,6 @@ export default function UserProfileForm({
       setShowSuccessMessage(true)
 
       if (state.newPhotoUrl) {
-        const oldPhoto = user.primaryPhoto
-        if (oldPhoto) {
-          deleteImagesFromCache([
-            oldPhoto.url,
-            oldPhoto.url_thumb,
-            oldPhoto.url_small,
-          ])
-        }
         setPreviewUrl(state.newPhotoUrl) // This is the new thumb URL
       }
 
