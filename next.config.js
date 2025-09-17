@@ -1,15 +1,10 @@
 const nextBuildId = require('next-build-id')
-const withPWA = require('next-pwa')({
-  dest: 'public',
-  register: false,
-  skipWaiting: true,
-  swSrc: 'src/worker/index.ts',
-  disable: process.env.NODE_ENV === 'development',
-})
+const withPWA = require('next-pwa')
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
+    minimumCacheTTL: 7776000, // 90 days
     deviceSizes: [320, 480, 640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     remotePatterns: [
@@ -31,7 +26,7 @@ const nextConfig = {
     return [
       {
         source:
-          '/((?!api$|api/|_next/static|_next/image|favicon.ico|sw.js|worker.*.js).*)',
+          '/((?!_next/static|_next/image|favicon.ico|sw.js|worker.*.js|uploads/user-photos/.*|api/images).*)',
         headers: [
           {
             key: 'Cache-Control',
@@ -48,6 +43,15 @@ const nextConfig = {
           },
         ],
       },
+      {
+        source: '/_next/image(.*)|/uploads/user-photos/:path*|/api/images',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=7776000, immutable', // 90 days
+          },
+        ],
+      },
     ]
   },
   generateBuildId: () => nextBuildId({ dir: __dirname }),
@@ -58,4 +62,10 @@ const nextConfig = {
   },
 }
 
-module.exports = withPWA(nextConfig)
+module.exports = withPWA({
+  dest: 'public',
+  register: false,
+  skipWaiting: true,
+  swSrc: 'src/worker/index.ts',
+  disable: process.env.NODE_ENV === 'development',
+})(nextConfig)

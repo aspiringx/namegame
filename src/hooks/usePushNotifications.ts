@@ -155,11 +155,6 @@ export function usePushNotifications() {
         })
       }
 
-      console.log(
-        'Client-side subscription object:',
-        JSON.stringify(sub, null, 2),
-      )
-
       const result = await saveSubscription(sub)
       if (result.success) {
         setSubscription(sub)

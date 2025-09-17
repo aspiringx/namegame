@@ -17,15 +17,14 @@ export function ServiceWorkerRegistrar() {
     const setupServiceWorker = async () => {
       try {
         // Unregister any existing service workers to ensure a clean slate.
-        const oldRegistrations = await navigator.serviceWorker.getRegistrations()
+        const oldRegistrations =
+          await navigator.serviceWorker.getRegistrations()
         for (const reg of oldRegistrations) {
           await reg.unregister()
-          console.log('Old service worker unregistered:', reg.scope)
         }
 
         // Register the new service worker.
         const newRegistration = await navigator.serviceWorker.register('/sw.js')
-        console.log('New service worker registered:', newRegistration.scope)
 
         // Wait for the new service worker to become active.
         await new Promise<void>((resolve) => {
@@ -33,7 +32,6 @@ export function ServiceWorkerRegistrar() {
             newRegistration.installing?.addEventListener('statechange', (e) => {
               const worker = e.target as ServiceWorker
               if (worker.state === 'activated') {
-                console.log('Service worker is active.')
                 resolve()
               }
             })
@@ -46,18 +44,15 @@ export function ServiceWorkerRegistrar() {
             // This path is less common with our unregister logic but is a safeguard.
             const worker = newRegistration.waiting
             if (worker.state === 'installed') {
-              console.log('Waiting worker is installed, waiting for activation.')
               worker.addEventListener('statechange', (e) => {
                 const updatedWorker = e.target as ServiceWorker
                 if (updatedWorker.state === 'activated') {
-                  console.log('Service worker is active.')
                   resolve()
                 }
               })
             }
           } else if (newRegistration.active) {
             // If a worker is already active, we're good to go.
-            console.log('Service worker is already active.')
             resolve()
           }
         })
@@ -66,7 +61,6 @@ export function ServiceWorkerRegistrar() {
         const readyRegistration = await navigator.serviceWorker.ready
         _setRegistration(readyRegistration)
         _setIsReady(true)
-        console.log('Service worker context updated to ready state.')
       } catch (error) {
         console.error('Service Worker setup failed:', error)
         _setIsReady(false)
