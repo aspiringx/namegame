@@ -11,6 +11,7 @@ import {
 import { MoreVertical, Link, KeyRound, Users } from 'lucide-react'
 import { Dropdown, DropdownItem } from './ui/dropdown'
 import { LoginCodeModal } from './LoginCodeModal'
+import PhotoGalleryModal from './PhotoGalleryModal'
 
 interface MemberCardProps {
   member: Member
@@ -20,6 +21,9 @@ interface MemberCardProps {
   onConnect?: (member: Member) => void
   currentUserId?: string
   groupSlug?: string
+  // Photo gallery props
+  allMembers?: Member[]
+  memberIndex?: number
 }
 
 export default function MemberCard({
@@ -30,11 +34,18 @@ export default function MemberCard({
   onConnect,
   currentUserId,
   groupSlug,
+  allMembers = [],
+  memberIndex = 0,
 }: MemberCardProps) {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
+  const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false)
 
   const handleLoginLinkClick = () => {
     setIsLoginModalOpen(true)
+  }
+
+  const handlePhotoClick = () => {
+    setIsPhotoModalOpen(true)
   }
 
   const imageUrl = member.user.photoUrl || '/images/default-avatar.png'
@@ -42,7 +53,10 @@ export default function MemberCard({
   return (
     <>
       <div className="text-center transition-transform duration-300 ease-in-out">
-        <div className="relative aspect-square w-full overflow-hidden rounded-lg shadow-lg">
+        <div 
+          className="relative aspect-square w-full overflow-hidden rounded-lg shadow-lg cursor-pointer hover:shadow-xl transition-shadow duration-200"
+          onClick={handlePhotoClick}
+        >
           <Image
             src={imageUrl}
             alt={member.user.name || 'User avatar'}
@@ -133,6 +147,14 @@ export default function MemberCard({
           groupSlug={groupSlug}
         />
       )}
+      <PhotoGalleryModal
+        isOpen={isPhotoModalOpen}
+        onClose={() => setIsPhotoModalOpen(false)}
+        photoUrl={imageUrl}
+        memberName={member.user.name || 'Unknown'}
+        photoIndex={memberIndex}
+        totalPhotos={allMembers.length || 1}
+      />
     </>
   )
 }
