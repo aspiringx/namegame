@@ -4,8 +4,9 @@ import Header from '@/components/Header'
 import { GroupProvider, GroupPageData } from '@/components/GroupProvider'
 import { getGroupForLayout } from './utils'
 import { FamilyGroupData, CommunityGroupData } from '@/types'
+import { getDeviceTypeFromHeaders } from '@/lib/device'
 
-import { headers, cookies } from 'next/headers'
+import { headers } from 'next/headers'
 import { notFound, redirect } from 'next/navigation'
 import type { Metadata } from 'next'
 
@@ -15,7 +16,9 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>
 }): Promise<Metadata> {
   const params = await paramsProp
-  const data = await getGroupForLayout(params.slug, 5, 'desktop') // Metadata is always fetched server-side
+  const headersList = await headers()
+  const deviceType = getDeviceTypeFromHeaders(headersList)
+  const data = await getGroupForLayout(params.slug, deviceType)
 
   if (!data) {
     return {
@@ -39,7 +42,7 @@ export default async function GroupLayout({
   const session = await auth()
   const headersList = await headers()
   const headerPath = headersList.get('x-invoke-path') || ''
-  const deviceType = (await cookies()).get('device_type')?.value || 'mobile'
+  const deviceType = getDeviceTypeFromHeaders(headersList)
 
   // The /greet page is public and should not be protected by this authorization.
   if (!headerPath.includes('/greet') && !session?.user) {
@@ -48,11 +51,7 @@ export default async function GroupLayout({
     return redirect(`/login?callbackUrl=${encodeURIComponent(pathname)}`)
   }
 
-  const data = await getGroupForLayout(
-    params.slug,
-    undefined,
-    deviceType as 'mobile' | 'desktop',
-  )
+  const data = await getGroupForLayout(params.slug, deviceType)
 
   if (!data) {
     // This can happen if the group doesn't exist, or if the user is not a member

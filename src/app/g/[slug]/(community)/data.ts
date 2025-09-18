@@ -2,16 +2,15 @@ import 'server-only'
 import { cache } from 'react'
 import prisma from '@/lib/prisma'
 import { getPhotoUrl } from '@/lib/photos'
-import { getPublicUrl } from '@/lib/storage'
 import { CommunityGroupData, MemberWithUser } from '@/types'
 import { auth } from '@/auth'
 
 // Fetches community group data
-export const getGroup = cache(async (
-  slug: string,
-  limit?: number,
-  deviceType: 'mobile' | 'desktop' = 'mobile',
-): Promise<CommunityGroupData | null> => {
+export const getGroup = cache(
+  async (
+    slug: string,
+    deviceType: 'mobile' | 'desktop' = 'mobile',
+  ): Promise<CommunityGroupData | null> => {
     const session = await auth()
     const currentUserId = session?.user?.id
 
@@ -74,7 +73,9 @@ export const getGroup = cache(async (
         typeId: logoPhotoType?.id,
       },
     })
-    const logo = logoPhoto?.url ? await getPublicUrl(logoPhoto.url) : undefined
+    const logo = logoPhoto?.url
+      ? await getPhotoUrl(logoPhoto, { deviceType })
+      : undefined
 
     const memberUserIds = group.members.map((member) => member.userId)
     const photos = await prisma.photo.findMany({
@@ -129,11 +130,12 @@ export const getGroup = cache(async (
           connectedAt,
           user: {
             ...member.user,
-            name: currentUserId === member.userId || isGreeted
-              ? [member.user.firstName, member.user.lastName]
-                  .filter(Boolean)
-                  .join(' ')
-              : member.user.firstName || '',
+            name:
+              currentUserId === member.userId || isGreeted
+                ? [member.user.firstName, member.user.lastName]
+                    .filter(Boolean)
+                    .join(' ')
+                : member.user.firstName || '',
             photoUrl: photoUrl || '/images/default-avatar.png',
           },
           parents: [],
@@ -189,23 +191,19 @@ export const getGroup = cache(async (
       return (a.user.firstName || '').localeCompare(b.user.firstName || '')
     })
 
-    const limitedRelatedMembers = limit
-      ? sortedRelatedMembers.slice(0, limit)
-      : sortedRelatedMembers
-    const limitedNotRelatedMembers = limit
-      ? notRelatedMembers.slice(0, limit)
-      : notRelatedMembers
-
+    // Related members are sorted differently. Hence the confusing naming since
+    // not related members are also sorted. Leaving for now.
     return {
       ...group,
       logo,
       isSuperAdmin: !!superAdminMembership,
       members,
       memberCount: members.length,
-      relatedMembers: limitedRelatedMembers,
-      notRelatedMembers: limitedNotRelatedMembers,
+      relatedMembers: sortedRelatedMembers,
+      notRelatedMembers: notRelatedMembers,
       relatedCount: sortedRelatedMembers.length,
       notRelatedCount: notRelatedMembers.length,
       currentUserMember,
     }
-})
+  },
+)

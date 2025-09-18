@@ -1,8 +1,10 @@
 import { auth } from '@/auth'
 import { redirect } from 'next/navigation'
 import prisma from '@/lib/prisma'
-import { getPublicUrl } from '@/lib/storage'
 import { getCodeTable } from '@/lib/codes'
+import { getPhotoUrl } from '@/lib/photos'
+import { headers } from 'next/headers'
+import { getDeviceTypeFromHeaders } from '@/lib/device'
 
 export default async function MeUsersLayout({
   children,
@@ -11,9 +13,12 @@ export default async function MeUsersLayout({
 }) {
   const session = await auth()
 
-  if (!session?.user?.id) {
+  if (!session?.user) {
     redirect('/login?callbackUrl=/me/users')
   }
+
+  const headersList = await headers()
+  const deviceType = getDeviceTypeFromHeaders(headersList)
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
@@ -34,11 +39,12 @@ export default async function MeUsersLayout({
       entityTypeId: entityTypes.user.id,
       typeId: photoTypes.primary.id,
     },
-    select: { url: true, url_thumb: true },
   })
 
   const userImage = primaryPhoto
-    ? await getPublicUrl(primaryPhoto.url_thumb ?? primaryPhoto.url)
+    ? await getPhotoUrl(primaryPhoto, {
+        deviceType: deviceType as 'mobile' | 'desktop',
+      })
     : null
 
   const isGuest =

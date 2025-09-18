@@ -20,7 +20,6 @@ async function processLegacyPhoto(photo: Photo): Promise<Photo> {
   }
 
   try {
-    console.log(`Processing legacy photo: ${photo.id}`)
     const originalBuffer = await getFileFromStorage(photo.url)
     const sharp = (await import('sharp')).default
     const sharpInstance = sharp(originalBuffer).rotate()
@@ -82,7 +81,7 @@ export async function getPhotoUrl(
   }
 
   // After processing, re-fetch the photo data to ensure we have the latest URLs
-  if (processedPhoto.id !== photo.id || !processedPhoto.url_thumb) {
+  if (processedPhoto !== photo) {
     const updatedPhoto = await prisma.photo.findUnique({
       where: { id: photo.id },
     })
@@ -93,10 +92,10 @@ export async function getPhotoUrl(
 
   // If the URL is external (like Dicebear), return it directly.
   if (processedPhoto.url.startsWith('http')) {
-    return processedPhoto.url
+    return getPublicUrl(processedPhoto.url)
   }
 
-  const { size, deviceType } = options
+  const { size, deviceType = 'mobile' } = options
 
   if (size === 'original') {
     return getPublicUrl(processedPhoto.url)
