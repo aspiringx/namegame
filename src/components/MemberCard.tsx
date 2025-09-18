@@ -39,15 +39,22 @@ export default function MemberCard({
 }: MemberCardProps) {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
   const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false)
+  const [currentPhotoIndex, setCurrentPhotoIndex] = useState(memberIndex)
 
   const handleLoginLinkClick = () => {
     setIsLoginModalOpen(true)
   }
 
   const handlePhotoClick = () => {
+    setCurrentPhotoIndex(memberIndex)
     setIsPhotoModalOpen(true)
   }
 
+  const handleNavigate = (newIndex: number) => {
+    setCurrentPhotoIndex(newIndex)
+  }
+
+  const currentMember = allMembers[currentPhotoIndex] || member
   const imageUrl = member.user.photoUrl || '/images/default-avatar.png'
 
   return (
@@ -150,10 +157,12 @@ export default function MemberCard({
       <PhotoGalleryModal
         isOpen={isPhotoModalOpen}
         onClose={() => setIsPhotoModalOpen(false)}
-        photoUrl={imageUrl}
-        memberName={member.user.name || 'Unknown'}
-        photoIndex={memberIndex}
+        photoUrl={currentMember.user.photoUrl || '/images/default-avatar.png'}
+        memberName={currentMember.user.name || 'Unknown'}
+        photoIndex={currentPhotoIndex}
         totalPhotos={allMembers.length || 1}
+        allMembers={allMembers}
+        onNavigate={handleNavigate}
       />
     </>
   )
