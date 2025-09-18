@@ -20,11 +20,13 @@ export default function MemberGrid({
 }: MemberGridProps) {
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-      {members.map((member) => (
+      {members.map((member, index) => (
         <MemberCard
           key={member.userId}
           member={member}
           onRelate={onRelate}
+          allMembers={members}
+          memberIndex={index}
           {...props}
         />
       ))}

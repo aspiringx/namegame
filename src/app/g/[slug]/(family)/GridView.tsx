@@ -24,7 +24,7 @@ export default function GridView() {
 
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-      {members.map((member) => {
+      {members.map((member, index) => {
         if (!currentUserMember) return null
 
         const isCurrentUser = member.userId === currentUserMember.userId
@@ -41,6 +41,8 @@ export default function GridView() {
             currentUserId={currentUserMember?.userId}
             isGroupAdmin={isGroupAdmin}
             groupSlug={group.slug}
+            allMembers={members}
+            memberIndex={index}
           />
         )
       })}

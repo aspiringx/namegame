@@ -4,6 +4,7 @@ import type { MemberWithUser as Member } from '@/types/index'
 import { MoreVertical, Users, KeyRound } from 'lucide-react'
 import { Dropdown, DropdownItem } from './ui/dropdown'
 import { LoginCodeModal } from './LoginCodeModal'
+import PhotoGalleryModal from './PhotoGalleryModal'
 
 interface FamilyMemberCardProps {
   member: Member
@@ -12,6 +13,9 @@ interface FamilyMemberCardProps {
   currentUserId?: string
   isGroupAdmin?: boolean
   groupSlug?: string
+  // Photo gallery props
+  allMembers?: Member[]
+  memberIndex?: number
 }
 
 export default function FamilyMemberCard({
@@ -21,18 +25,36 @@ export default function FamilyMemberCard({
   currentUserId: _currentUserId,
   isGroupAdmin,
   groupSlug,
+  allMembers = [],
+  memberIndex = 0,
 }: FamilyMemberCardProps) {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
+  const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false)
+  const [currentPhotoIndex, setCurrentPhotoIndex] = useState(memberIndex)
 
   const handleLoginLinkClick = () => {
     setIsLoginModalOpen(true)
   }
+
+  const handlePhotoClick = () => {
+    setCurrentPhotoIndex(memberIndex)
+    setIsPhotoModalOpen(true)
+  }
+
+  const handleNavigate = (newIndex: number) => {
+    setCurrentPhotoIndex(newIndex)
+  }
+
+  const currentMember = allMembers[currentPhotoIndex] || member
   const imageUrl = member.user.photoUrl || '/images/default-avatar.png'
 
   return (
     <>
       <div className="text-center transition-transform duration-300 ease-in-out">
-        <div className="border-border relative aspect-square w-full overflow-hidden rounded-md border shadow-lg dark:shadow-lg dark:shadow-white/10">
+        <div 
+          className="border-border relative aspect-square w-full overflow-hidden rounded-md border shadow-lg cursor-pointer hover:shadow-xl transition-shadow duration-200 dark:shadow-lg dark:shadow-white/10"
+          onClick={handlePhotoClick}
+        >
           <Image
             src={imageUrl}
             alt={member.user.name || 'User avatar'}
@@ -83,6 +105,16 @@ export default function FamilyMemberCard({
           groupSlug={groupSlug}
         />
       )}
+      <PhotoGalleryModal
+        isOpen={isPhotoModalOpen}
+        onClose={() => setIsPhotoModalOpen(false)}
+        photoUrl={currentMember.user.photoUrl || '/images/default-avatar.png'}
+        memberName={currentMember.user.name || 'Unknown'}
+        photoIndex={currentPhotoIndex}
+        totalPhotos={allMembers.length || 1}
+        allMembers={allMembers}
+        onNavigate={handleNavigate}
+      />
     </>
   )
 }
