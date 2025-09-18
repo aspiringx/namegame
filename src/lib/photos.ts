@@ -118,3 +118,4 @@ export async function getPhotoUrl(
   // If no pre-processed image is found, fall back to the original URL
   return getPublicUrl(processedPhoto.url)
 }
+
