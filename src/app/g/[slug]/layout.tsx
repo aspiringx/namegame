@@ -84,10 +84,14 @@ export default async function GroupLayout({
       group: communityData,
       relatedMembers: [],
       notRelatedMembers: [],
-      currentUserMember: undefined, // Not applicable for community layout
-      isSuperAdmin: false,
-      isGroupAdmin: false,
-      isAuthorizedMember: false, // Authorization handled differently
+      currentUserMember: communityData.currentUserMember,
+      isSuperAdmin: communityData.isSuperAdmin,
+      isGroupAdmin: communityData.currentUserMember?.role.code === 'admin',
+      isAuthorizedMember:
+        !!communityData.currentUserMember &&
+        ['admin', 'member', 'super'].includes(
+          communityData.currentUserMember.role.code,
+        ),
     }
   }
 
