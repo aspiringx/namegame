@@ -25,6 +25,11 @@ const UserSessionContext = createContext<UserSessionContextType | undefined>(
   undefined,
 )
 
+// This is used to reload user session after the initial load where we worry
+// about the device type and photo URLs, sizes, etc. So here we just use
+// the getSecureImageUrl function to get the URL which should already be
+// correct. This is a fallback.
+
 export function UserSessionProvider({ children }: { children: ReactNode }) {
   const { data: session, status } = useSession()
   const [imageUrl, setImageUrl] = useState<string | null>(null)

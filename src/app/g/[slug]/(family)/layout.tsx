@@ -2,6 +2,8 @@ import { getGroup } from './data'
 import { getFamilyRelationships } from './actions'
 import { GroupProvider, GroupPageData } from '@/components/GroupProvider'
 import { notFound } from 'next/navigation'
+import { headers } from 'next/headers'
+import { getDeviceTypeFromHeaders } from '@/lib/device'
 import { GroupData } from '@/types'
 
 export default async function FamilyGroupLayout({
@@ -12,7 +14,9 @@ export default async function FamilyGroupLayout({
   params: Promise<{ slug: string }>
 }) {
   const params = await paramsPromise
-  const familyGroupData = await getGroup(params.slug)
+  const headersList = await headers()
+  const deviceType = getDeviceTypeFromHeaders(headersList)
+  const familyGroupData = await getGroup(params.slug, deviceType)
   if (!familyGroupData) {
     notFound()
   }

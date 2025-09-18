@@ -2,7 +2,6 @@ import 'server-only'
 import { cache } from 'react'
 import prisma from '@/lib/prisma'
 import { getPhotoUrl } from '@/lib/photos'
-import { getPublicUrl } from '@/lib/storage'
 import { FamilyGroupData, MemberWithUser } from '@/types'
 import { auth } from '@/auth'
 import { FullRelationship } from '@/types'
@@ -10,7 +9,6 @@ import { FullRelationship } from '@/types'
 export const getGroup = cache(
   async (
     slug: string,
-    limit?: number,
     deviceType: 'mobile' | 'desktop' = 'mobile',
   ): Promise<FamilyGroupData | null> => {
     const session = await auth()
@@ -75,7 +73,9 @@ export const getGroup = cache(
         typeId: logoPhotoType?.id,
       },
     })
-    const logo = logoPhoto?.url ? await getPublicUrl(logoPhoto.url) : undefined
+    const logo = logoPhoto?.url
+      ? await getPhotoUrl(logoPhoto, { deviceType })
+      : undefined
 
     const memberUserIds = group.members.map((member) => member.userId)
     const photos = await prisma.photo.findMany({
@@ -124,13 +124,12 @@ export const getGroup = cache(
     const currentUserMember = allMembers.find(
       (member) => member.userId === currentUserId,
     )
-    const limitedMembers = limit ? allMembers.slice(0, limit) : allMembers
 
     return {
       ...group,
       logo,
       isSuperAdmin: !!superAdminMembership,
-      members: limitedMembers,
+      members: allMembers,
       memberCount: allMembers.length,
       currentUserMember,
     }

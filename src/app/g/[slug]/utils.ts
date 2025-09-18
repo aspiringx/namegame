@@ -8,7 +8,6 @@ import { FamilyGroupData, CommunityGroupData } from '@/types'
 export const getGroupForLayout = cache(
   async (
     slug: string,
-    limit?: number,
     deviceType: 'mobile' | 'desktop' = 'mobile',
   ): Promise<CommunityGroupData | FamilyGroupData | null> => {
     const groupTypeData = await getGroupTypeBySlug(slug)
@@ -17,9 +16,9 @@ export const getGroupForLayout = cache(
     }
 
     if (groupTypeData.groupType.code === 'family') {
-      return getFamilyGroup(slug, limit, deviceType)
+      return getFamilyGroup(slug, deviceType)
     }
 
-    return getCommunityGroup(slug, limit, deviceType)
+    return getCommunityGroup(slug, deviceType)
   },
 )
