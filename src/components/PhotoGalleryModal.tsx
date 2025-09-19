@@ -177,7 +177,7 @@ export default function PhotoGalleryModal({
 
   // Preload adjacent photos for smooth navigation
   useEffect(() => {
-    if (!allMembers || allMembers.length <= 1) return
+    if (!allMembers || allMembers.length <= 1 || typeof window === 'undefined') return
 
     const preloadImage = (url: string) => {
       const img = new window.Image()
@@ -309,7 +309,7 @@ export default function PhotoGalleryModal({
     setTouchEnd(null)
   }
 
-  if (!isOpen) return null
+  if (!isOpen || typeof window === 'undefined') return null
 
   const modalContent = (
     <div
