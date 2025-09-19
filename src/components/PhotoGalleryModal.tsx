@@ -410,7 +410,7 @@ export default function PhotoGalleryModal({
         {/* Member name overlay - positioned relative to viewport */}
         <div 
           id="member-name"
-          className="fixed bottom-6 left-1/2 z-20 -translate-x-1/2 rounded-full bg-black/60 px-4 py-2 text-sm text-white border border-white/20 backdrop-blur-sm"
+          className="fixed bottom-6 left-1/2 z-20 -translate-x-1/2 rounded-full bg-black/60 px-4 py-2 text-sm text-white border border-white/20 backdrop-blur-sm text-center whitespace-nowrap max-w-[calc(100vw-2rem)]"
         >
           {memberName}
         </div>
