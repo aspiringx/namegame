@@ -391,7 +391,7 @@ export default function PhotoGalleryModal({
           alt={`Photo of ${memberName}, image ${photoIndex + 1} of ${totalPhotos}`}
           width={800}
           height={800}
-          className={`h-[90vh] w-[90vw] md:h-[90vh] md:w-[90vw] lg:h-[95vh] lg:w-[95vw] rounded-lg object-cover transition-all duration-300 ease-out ${
+          className={`h-[90vh] w-[90vw] md:h-[90vh] md:w-[90vw] lg:h-[95vh] lg:w-[95vw] max-w-[1920px] rounded-lg object-cover transition-all duration-300 ease-out ${
             scale > 1 ? 'cursor-grab' : 'cursor-pointer'
           } ${isDragging ? 'cursor-grabbing' : ''}`}
           style={{
