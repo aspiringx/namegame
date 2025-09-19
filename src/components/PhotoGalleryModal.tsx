@@ -56,13 +56,13 @@ export default function PhotoGalleryModal({
 }: PhotoGalleryModalProps) {
   const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null)
   const [touchEnd, setTouchEnd] = useState<{ x: number; y: number } | null>(null)
-  
-  // Zoom state
+  const [isPanning, setIsPanning] = useState(false)
+  const [panStartTranslate, setPanStartTranslate] = useState<{ x: number; y: number }>({ x: 0, y: 0 })
   const [scale, setScale] = useState(1)
   const [translateX, setTranslateX] = useState(0)
   const [translateY, setTranslateY] = useState(0)
   const [lastTap, setLastTap] = useState(0)
-  const [isPanning, setIsPanning] = useState(false)
+  const [isTransitioning, setIsTransitioning] = useState(false)
 
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
@@ -70,37 +70,64 @@ export default function PhotoGalleryModal({
     }
   }
 
-  // Add keyboard listener when modal opens
+  // Zoom functions
+  const handleDoubleTap = () => {
+    if (scale === 1) {
+      setScale(2)
+    } else {
+      setScale(1)
+      setTranslateX(0)
+      setTranslateY(0)
+    }
+  }
+
+  // Enhanced keyboard accessibility when modal opens
   useEffect(() => {
-    const handlePrevious = () => {
-      if (onNavigate) {
-        const newIndex = photoIndex === 0 ? totalPhotos - 1 : photoIndex - 1
-        onNavigate(newIndex)
-      }
-    }
-
-    const handleNext = () => {
-      if (onNavigate) {
-        const newIndex = photoIndex === totalPhotos - 1 ? 0 : photoIndex + 1
-        onNavigate(newIndex)
-      }
-    }
-
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose()
-      } else if (e.key === 'ArrowLeft') {
-        handlePrevious()
-      } else if (e.key === 'ArrowRight') {
-        handleNext()
+      if (!isOpen) return
+      
+      switch (e.key) {
+        case 'Escape':
+          onClose()
+          break
+        case 'ArrowLeft':
+          e.preventDefault()
+          if (onNavigate && !isTransitioning && totalPhotos > 1) {
+            setIsTransitioning(true)
+            const newIndex = photoIndex === 0 ? totalPhotos - 1 : photoIndex - 1
+            onNavigate(newIndex)
+            setTimeout(() => setIsTransitioning(false), 300)
+          }
+          break
+        case 'ArrowRight':
+          e.preventDefault()
+          if (onNavigate && !isTransitioning && totalPhotos > 1) {
+            setIsTransitioning(true)
+            const newIndex = photoIndex === totalPhotos - 1 ? 0 : photoIndex + 1
+            onNavigate(newIndex)
+            setTimeout(() => setIsTransitioning(false), 300)
+          }
+          break
+        case ' ':
+        case 'Enter':
+          e.preventDefault()
+          // Space or Enter toggles zoom
+          handleDoubleTap()
+          break
       }
     }
 
     if (isOpen) {
       document.addEventListener('keydown', handleKeyDown)
-      return () => document.removeEventListener('keydown', handleKeyDown)
+      // Focus management - trap focus in modal
+      document.body.style.overflow = 'hidden'
+      
+      return () => {
+        document.removeEventListener('keydown', handleKeyDown)
+        document.body.style.overflow = 'unset'
+      }
     }
-  }, [isOpen, onClose, photoIndex, totalPhotos, onNavigate])
+  }, [isOpen, onClose, photoIndex, totalPhotos, onNavigate, isTransitioning, handleDoubleTap])
 
   // Reset zoom when photo changes
   useEffect(() => {
@@ -136,27 +163,22 @@ export default function PhotoGalleryModal({
   const canNavigateNext = totalPhotos > 1
 
   const handlePreviousClick = () => {
-    if (onNavigate) {
+    if (onNavigate && !isTransitioning) {
+      setIsTransitioning(true)
       const newIndex = photoIndex === 0 ? totalPhotos - 1 : photoIndex - 1
       onNavigate(newIndex)
+      // Reset transition state after animation
+      setTimeout(() => setIsTransitioning(false), 300)
     }
   }
 
   const handleNextClick = () => {
-    if (onNavigate) {
+    if (onNavigate && !isTransitioning) {
+      setIsTransitioning(true)
       const newIndex = photoIndex === totalPhotos - 1 ? 0 : photoIndex + 1
       onNavigate(newIndex)
-    }
-  }
-
-  // Zoom functions
-  const handleDoubleTap = () => {
-    if (scale === 1) {
-      setScale(2)
-    } else {
-      setScale(1)
-      setTranslateX(0)
-      setTranslateY(0)
+      // Reset transition state after animation
+      setTimeout(() => setIsTransitioning(false), 300)
     }
   }
 
@@ -176,9 +198,10 @@ export default function PhotoGalleryModal({
       setLastTap(now)
     }
     
-    // If already zoomed, enable panning
+    // If already zoomed, enable panning and store current translate values
     if (scale > 1) {
       setIsPanning(true)
+      setPanStartTranslate({ x: translateX, y: translateY })
     }
   }
 
@@ -191,19 +214,18 @@ export default function PhotoGalleryModal({
       const deltaX = touch.clientX - touchStart.x
       const deltaY = touch.clientY - touchStart.y
       
-      // Calculate new positions
-      let newTranslateX = translateX + deltaX
-      let newTranslateY = translateY + deltaY
+      // Calculate new positions based on cumulative movement from original touch start
+      let newTranslateX = panStartTranslate.x + deltaX
+      let newTranslateY = panStartTranslate.y + deltaY
       
       // Constrain panning to keep photo visible
-      // When scaled 2x, the image is twice as large, so we can pan up to 50% in each direction
-      const maxTranslate = (scale - 1) * 200 // Adjust based on image size
+      const maxTranslate = (scale - 1) * 200
       newTranslateX = Math.max(-maxTranslate, Math.min(maxTranslate, newTranslateX))
       newTranslateY = Math.max(-maxTranslate, Math.min(maxTranslate, newTranslateY))
       
       setTranslateX(newTranslateX)
       setTranslateY(newTranslateY)
-      setTouchStart({ x: touch.clientX, y: touch.clientY })
+      // Don't update touchStart during move - this was causing the jitter
     }
   }
 
@@ -298,18 +320,18 @@ export default function PhotoGalleryModal({
           </>
         )}
 
-        {/* Close button */}
+        {/* Close button - positioned relative to viewport, aligned with counter */}
         <Button
           variant="ghost"
           size="icon"
-          className="absolute right-2 top-2 z-10 h-10 w-10 rounded-full bg-black/25 text-white hover:bg-black/40"
+          className="fixed right-4 top-4 z-20 h-8 w-8 rounded-full bg-black/25 text-white hover:bg-black/40"
           onClick={onClose}
         >
           <X className="h-4 w-4" />
         </Button>
 
-        {/* Photo counter */}
-        <div className="absolute left-1/2 top-3 z-10 -translate-x-1/2 rounded-full bg-black/25 px-2 py-1 text-xs text-white">
+        {/* Photo counter - positioned relative to viewport */}
+        <div className="fixed left-1/2 top-4 z-20 -translate-x-1/2 rounded-full bg-black/60 px-3 py-1 text-xs text-white border border-white/20 backdrop-blur-sm">
           {photoIndex + 1} of {totalPhotos}
         </div>
 
@@ -319,7 +341,7 @@ export default function PhotoGalleryModal({
           alt={`${memberName}'s photo`}
           width={800}
           height={800}
-          className="h-[90vh] w-[90vw] md:h-[90vh] md:w-[90vw] lg:h-[95vh] lg:w-[95vw] rounded-lg object-cover transition-transform duration-200"
+          className="h-[90vh] w-[90vw] md:h-[90vh] md:w-[90vw] lg:h-[95vh] lg:w-[95vw] rounded-lg object-cover transition-all duration-300 ease-out"
           style={{
             transform: `scale(${scale}) translate(${translateX}px, ${translateY}px)`,
             transformOrigin: 'center center',
@@ -328,8 +350,8 @@ export default function PhotoGalleryModal({
           sizes="100vw"
         />
 
-        {/* Member name overlay */}
-        <div className="absolute bottom-3 left-1/2 z-10 -translate-x-1/2 rounded-full bg-black/25 px-3 py-1 text-sm text-white">
+        {/* Member name overlay - positioned relative to viewport */}
+        <div className="fixed bottom-6 left-1/2 z-20 -translate-x-1/2 rounded-full bg-black/60 px-4 py-2 text-sm text-white border border-white/20 backdrop-blur-sm">
           {memberName}
         </div>
       </div>
