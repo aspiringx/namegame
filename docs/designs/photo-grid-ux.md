@@ -1,5 +1,7 @@
 # Photo Grid UX Enhancement
 
+Completed on 9/19/2025.
+
 ## Overview
 
 Enhance the member grid view to support intuitive photo interaction patterns,
