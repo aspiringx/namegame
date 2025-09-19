@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import Image from 'next/image'
 import { X, ChevronLeft, ChevronRight } from 'lucide-react'
@@ -63,6 +63,8 @@ export default function PhotoGalleryModal({
   const [translateY, setTranslateY] = useState(0)
   const [lastTap, setLastTap] = useState(0)
   const [isTransitioning, setIsTransitioning] = useState(false)
+  const [mouseStart, setMouseStart] = useState<{ x: number; y: number } | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
 
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
@@ -71,7 +73,7 @@ export default function PhotoGalleryModal({
   }
 
   // Zoom functions
-  const handleDoubleTap = () => {
+  const handleDoubleTap = useCallback(() => {
     if (scale === 1) {
       setScale(2)
     } else {
@@ -79,6 +81,40 @@ export default function PhotoGalleryModal({
       setTranslateX(0)
       setTranslateY(0)
     }
+  }, [scale])
+
+  // Mouse handlers for desktop panning
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (scale > 1) {
+      setIsDragging(true)
+      setMouseStart({ x: e.clientX, y: e.clientY })
+      setPanStartTranslate({ x: translateX, y: translateY })
+      e.preventDefault()
+    }
+  }
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (isDragging && mouseStart && scale > 1) {
+      const deltaX = e.clientX - mouseStart.x
+      const deltaY = e.clientY - mouseStart.y
+      
+      // Calculate new positions based on cumulative movement from original mouse start
+      let newTranslateX = panStartTranslate.x + deltaX
+      let newTranslateY = panStartTranslate.y + deltaY
+      
+      // Constrain panning to keep photo visible
+      const maxTranslate = (scale - 1) * 200
+      newTranslateX = Math.max(-maxTranslate, Math.min(maxTranslate, newTranslateX))
+      newTranslateY = Math.max(-maxTranslate, Math.min(maxTranslate, newTranslateY))
+      
+      setTranslateX(newTranslateX)
+      setTranslateY(newTranslateY)
+    }
+  }
+
+  const handleMouseUp = () => {
+    setIsDragging(false)
+    setMouseStart(null)
   }
 
   // Enhanced keyboard accessibility when modal opens
@@ -119,11 +155,13 @@ export default function PhotoGalleryModal({
 
     if (isOpen) {
       document.addEventListener('keydown', handleKeyDown)
+      document.addEventListener('mouseup', handleMouseUp)
       // Focus management - trap focus in modal
       document.body.style.overflow = 'hidden'
       
       return () => {
         document.removeEventListener('keydown', handleKeyDown)
+        document.removeEventListener('mouseup', handleMouseUp)
         document.body.style.overflow = 'unset'
       }
     }
@@ -278,6 +316,10 @@ export default function PhotoGalleryModal({
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 dark:bg-black/90"
       style={{ left: 0, right: 0, top: 0, bottom: 0, width: '100vw', height: '100vh' }}
       onClick={handleBackdropClick}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Photo gallery"
+      aria-describedby="photo-counter"
     >
       <div 
         className="relative max-h-[90vh] max-w-[90vw] md:max-h-[90vh] md:max-w-[90vw] lg:max-h-[95vh] lg:max-w-[95vw]"
@@ -297,6 +339,7 @@ export default function PhotoGalleryModal({
               }`}
               onClick={handlePreviousClick}
               disabled={!canNavigatePrevious}
+              aria-label="Previous photo"
             >
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-black/25">
                 <ChevronLeft className="h-4 w-4" />
@@ -312,6 +355,7 @@ export default function PhotoGalleryModal({
               }`}
               onClick={handleNextClick}
               disabled={!canNavigateNext}
+              aria-label="Next photo"
             >
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-black/25">
                 <ChevronRight className="h-4 w-4" />
@@ -326,32 +370,48 @@ export default function PhotoGalleryModal({
           size="icon"
           className="fixed right-4 top-4 z-20 h-8 w-8 rounded-full bg-black/25 text-white hover:bg-black/40"
           onClick={onClose}
+          aria-label="Close photo gallery"
         >
           <X className="h-4 w-4" />
         </Button>
 
         {/* Photo counter - positioned relative to viewport */}
-        <div className="fixed left-1/2 top-4 z-20 -translate-x-1/2 rounded-full bg-black/60 px-3 py-1 text-xs text-white border border-white/20 backdrop-blur-sm">
+        <div 
+          id="photo-counter"
+          className="fixed left-1/2 top-4 z-20 -translate-x-1/2 rounded-full bg-black/60 px-3 py-1 text-xs text-white border border-white/20 backdrop-blur-sm"
+          aria-live="polite"
+          aria-atomic="true"
+        >
           {photoIndex + 1} of {totalPhotos}
         </div>
 
         {/* Photo */}
         <Image
           src={getNextSizeUrl(photoUrl)}
-          alt={`${memberName}'s photo`}
+          alt={`Photo of ${memberName}, image ${photoIndex + 1} of ${totalPhotos}`}
           width={800}
           height={800}
-          className="h-[90vh] w-[90vw] md:h-[90vh] md:w-[90vw] lg:h-[95vh] lg:w-[95vw] rounded-lg object-cover transition-all duration-300 ease-out"
+          className={`h-[90vh] w-[90vw] md:h-[90vh] md:w-[90vw] lg:h-[95vh] lg:w-[95vw] rounded-lg object-cover transition-all duration-300 ease-out ${
+            scale > 1 ? 'cursor-grab' : 'cursor-pointer'
+          } ${isDragging ? 'cursor-grabbing' : ''}`}
           style={{
             transform: `scale(${scale}) translate(${translateX}px, ${translateY}px)`,
             transformOrigin: 'center center',
             objectFit: 'contain',
           }}
           sizes="100vw"
+          role="img"
+          aria-describedby="member-name"
+          onDoubleClick={handleDoubleTap}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
         />
 
         {/* Member name overlay - positioned relative to viewport */}
-        <div className="fixed bottom-6 left-1/2 z-20 -translate-x-1/2 rounded-full bg-black/60 px-4 py-2 text-sm text-white border border-white/20 backdrop-blur-sm">
+        <div 
+          id="member-name"
+          className="fixed bottom-6 left-1/2 z-20 -translate-x-1/2 rounded-full bg-black/60 px-4 py-2 text-sm text-white border border-white/20 backdrop-blur-sm"
+        >
           {memberName}
         </div>
       </div>
