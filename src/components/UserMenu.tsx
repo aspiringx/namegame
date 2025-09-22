@@ -106,7 +106,7 @@ export default function UserMenu() {
                     <Link
                       key={group.slug}
                       href={`/g/${group.slug}`}
-                      className="block py-2 pr-4 pl-8 text-sm text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
+                      className="block py-3 pr-4 pl-8 text-sm text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
                       onClick={closeDropdown}
                     >
                       {group.name}
@@ -126,14 +126,14 @@ export default function UserMenu() {
                   </Link>
                   <Link
                     href="/admin/groups"
-                    className="block py-2 pr-4 pl-8 text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
+                    className="block py-3 pr-4 pl-8 text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
                     onClick={closeDropdown}
                   >
                     Groups
                   </Link>
                   <Link
                     href="/admin/users"
-                    className="block py-2 pr-4 pl-8 text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
+                    className="block py-3 pr-4 pl-8 text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
                     onClick={closeDropdown}
                   >
                     Users
