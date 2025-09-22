@@ -51,23 +51,25 @@ export default function FamilyMemberCard({
   return (
     <>
       <div className="text-center transition-transform duration-300 ease-in-out">
-        <div 
-          className="border-border relative aspect-square w-full overflow-hidden rounded-md border shadow-lg cursor-pointer hover:shadow-xl transition-shadow duration-200 dark:shadow-lg dark:shadow-white/10"
+        <div
+          className="relative aspect-square w-full cursor-pointer overflow-hidden rounded-lg shadow-lg transition-shadow duration-200 hover:shadow-xl"
+          // className="border-border relative aspect-square w-full overflow-hidden rounded-md border shadow-lg cursor-pointer hover:shadow-xl transition-shadow duration-200 dark:shadow-lg dark:shadow-white/10"
           onClick={handlePhotoClick}
         >
           <Image
             src={imageUrl}
             alt={member.user.name || 'User avatar'}
             fill
-            sizes={'(max-width: 767px) 100vw, (max-width: 1023px) 50vw, 33vw'}
-            className="rounded object-cover p-4"
+            sizes="(max-width: 767px) 100vw, (max-width: 1023px) 50vw, 33vw"
+            className="rounded object-cover"
           />
         </div>
-        <div className="relative mt-2">
-          <div className={'text-center'}>
-            <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
+        <div className="items-top mt-2 flex justify-between gap-2">
+          <div className="w-8">&nbsp;</div>
+          <div className="w-7/10">
+            <div className="truncate text-xs text-gray-800 dark:text-gray-200">
               {member.user.name}
-            </p>
+            </div>
             {relationship && (
               <button
                 onClick={() => onRelate && onRelate(member)}
@@ -77,7 +79,7 @@ export default function FamilyMemberCard({
               </button>
             )}
           </div>
-          <div className={'absolute top-0 right-0 -mt-1'}>
+          <div className="vertical-align-top">
             <Dropdown
               trigger={<MoreVertical size={16} />}
               triggerClassName="rounded-full p-1 hover:bg-gray-200 dark:hover:bg-gray-700"

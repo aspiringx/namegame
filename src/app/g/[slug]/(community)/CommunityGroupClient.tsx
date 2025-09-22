@@ -263,12 +263,11 @@ const CommunityGroupClientContent: React.FC<
         <Modal isOpen={isConnectModalOpen} onClose={handleCloseConnectModal}>
           <div className="p-6">
             <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
-              Connect with {memberToConnect.user.name}?
+              Connect
             </h3>
             <div className="mt-2">
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                If you already know {memberToConnect.user.name}, connect so
-                they&apos;re in your &quot;Connected&quot; filter.
+                If you already know {memberToConnect.user.name}, connect.
               </p>
             </div>
             <div className="mt-6 flex justify-end space-x-4">

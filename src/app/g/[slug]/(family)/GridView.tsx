@@ -23,7 +23,9 @@ export default function GridView() {
   if (!group) return null
 
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+    // <div className="grid grid-cols-3 gap-4 md:grid-cols-6 md:gap-6 lg:grid-cols-9">
+    // <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6 lg:grid-cols-6">
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
       {members.map((member, index) => {
         if (!currentUserMember) return null
 
