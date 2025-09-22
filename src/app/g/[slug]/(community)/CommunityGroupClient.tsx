@@ -39,6 +39,8 @@ interface CommunityGroupClientContentProps
   setSettings: React.Dispatch<React.SetStateAction<GroupPageSettings>>
   groupSlug?: string
   view: 'grid' | 'games'
+  isMobile: boolean
+  gridSizeConfig: { min: number; max: number; default: number }
 }
 
 interface GroupPageSettings {
@@ -49,11 +51,12 @@ interface GroupPageSettings {
   searchQuery: string
   filterByRealPhoto: boolean
   filterConnectedStatus: 'all' | 'connected' | 'not_connected'
+  gridSize: number
 }
 
 const CommunityGroupClientContent: React.FC<
   CommunityGroupClientContentProps
-> = ({ members: initialMembers, settings, setSettings, groupSlug, view }) => {
+> = ({ members: initialMembers, settings, setSettings, groupSlug, view, isMobile, gridSizeConfig }) => {
   const groupContext = useGroup()
   const { isOpen, setIsOpen, setCurrentStep } = useTour()
   const router = useRouter()
@@ -208,6 +211,8 @@ const CommunityGroupClientContent: React.FC<
               setTourOpen={setIsOpen}
               viewMode={view}
               groupSlug={group.slug}
+              isMobile={isMobile}
+              gridSizeConfig={getGridSizeConfig(isMobile)}
             />
 
             <div className="relative mb-4" data-tour="search-input">
@@ -236,6 +241,7 @@ const CommunityGroupClientContent: React.FC<
               onConnect={handleOpenConnectModal}
               currentUserId={ego?.userId}
               groupSlug={groupSlug}
+              gridSize={settings.gridSize}
             />
           </div>
         </div>
@@ -283,6 +289,15 @@ const CommunityGroupClientContent: React.FC<
   )
 }
 
+// Helper function to get responsive grid size ranges and defaults
+const getGridSizeConfig = (isMobile: boolean) => {
+  if (isMobile) {
+    return { min: 1, max: 3, default: 2 }
+  } else {
+    return { min: 2, max: 9, default: 6 }
+  }
+}
+
 const CommunityGroupClient: React.FC<CommunityGroupClientProps> = ({
   view,
   ...props
@@ -298,15 +313,12 @@ const CommunityGroupClient: React.FC<CommunityGroupClientProps> = ({
       searchQuery: '',
       filterByRealPhoto: true,
       filterConnectedStatus: 'all',
+      gridSize: 4, // Safe middle-ground default for SSR
     },
   )
 
   const [hasMounted, setHasMounted] = useState(false)
   const { resolvedTheme } = useTheme()
-
-  useEffect(() => {
-    setHasMounted(true)
-  }, [])
 
   useEffect(() => {
     setHasMounted(true)
@@ -317,6 +329,17 @@ const CommunityGroupClient: React.FC<CommunityGroupClientProps> = ({
     window.addEventListener('resize', checkIsMobile)
     return () => window.removeEventListener('resize', checkIsMobile)
   }, [])
+
+  // Auto-adjust gridSize based on screen size after mount (prevent hydration mismatch)
+  useEffect(() => {
+    if (hasMounted) {
+      const config = getGridSizeConfig(isMobile)
+      // Only update if current gridSize is outside the valid range for this screen size
+      if (settings.gridSize < config.min || settings.gridSize > config.max) {
+        setSettings(prev => ({ ...prev, gridSize: config.default }))
+      }
+    }
+  }, [hasMounted, isMobile, settings.gridSize, setSettings])
 
   const tourSteps = useMemo(() => {
     return isMobile ? communityTourMobileSteps : communityTourSteps
@@ -404,6 +427,8 @@ const CommunityGroupClient: React.FC<CommunityGroupClientProps> = ({
         settings={settings}
         setSettings={setSettings}
         view={view}
+        isMobile={isMobile}
+        gridSizeConfig={getGridSizeConfig(isMobile)}
       />
     </TourProvider>
   )
