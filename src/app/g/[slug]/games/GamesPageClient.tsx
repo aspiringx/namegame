@@ -12,6 +12,15 @@ import type {
   CommunityGroupData,
 } from '@/types'
 
+// Helper function to get responsive grid size ranges and defaults
+const getGridSizeConfig = (isMobile: boolean) => {
+  if (isMobile) {
+    return { min: 1, max: 3, default: 2 }
+  } else {
+    return { min: 2, max: 9, default: 6 }
+  }
+}
+
 // Define a unified settings type that can accommodate both toolbars
 interface GamesPageSettings {
   sortConfig: {
@@ -21,6 +30,7 @@ interface GamesPageSettings {
   searchQuery: string
   filterByRealPhoto: boolean
   filterConnectedStatus: 'all' | 'connected' | 'not_connected'
+  gridSize: number
 }
 
 interface GamesPageClientProps {
@@ -43,6 +53,7 @@ export default function GamesPageClient({ group }: GamesPageClientProps) {
       },
       filterByRealPhoto: true,
       filterConnectedStatus: 'all',
+      gridSize: 4, // Safe middle-ground default for SSR
     },
   )
 
@@ -83,6 +94,7 @@ export default function GamesPageClient({ group }: GamesPageClientProps) {
               isMobile={isMobile}
               viewMode="games"
               groupSlug={group.slug}
+              gridSizeConfig={getGridSizeConfig(isMobile)}
             />
           ) : (
             <CommunityGroupToolbar
@@ -92,6 +104,8 @@ export default function GamesPageClient({ group }: GamesPageClientProps) {
               setTourOpen={() => {}} // Tour not implemented on this page
               viewMode="games"
               groupSlug={group.slug}
+              isMobile={isMobile}
+              gridSizeConfig={getGridSizeConfig(isMobile)}
             />
           )}
         </div>

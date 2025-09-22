@@ -28,7 +28,7 @@ interface MemberCardProps {
 
 export default function MemberCard({
   member,
-  relationship,
+  // relationship,
   isGroupAdmin,
   onRelate,
   onConnect,
@@ -60,8 +60,8 @@ export default function MemberCard({
   return (
     <>
       <div className="text-center transition-transform duration-300 ease-in-out">
-        <div 
-          className="relative aspect-square w-full overflow-hidden rounded-lg shadow-lg cursor-pointer hover:shadow-xl transition-shadow duration-200"
+        <div
+          className="relative aspect-square w-full cursor-pointer overflow-hidden rounded-lg shadow-lg transition-shadow duration-200 hover:shadow-xl"
           onClick={handlePhotoClick}
         >
           <Image
@@ -69,49 +69,22 @@ export default function MemberCard({
             alt={member.user.name || 'User avatar'}
             fill
             sizes="(max-width: 767px) 100vw, (max-width: 1023px) 50vw, 33vw"
-            className={`object-cover`}
+            className="rounded object-cover"
           />
         </div>
-        <div className="relative mt-2">
-          <div className="relative text-center">
-            <div className="flex items-center justify-center gap-2">
-              <div className="absolute top-1 left-0 flex h-full items-center">
-                {!member.connectedAt &&
-                  onConnect &&
-                  member.userId !== currentUserId && (
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button
-                            onClick={() => onConnect(member)}
-                            className="flex-shrink-0 rounded-full p-1 hover:bg-gray-200 dark:hover:bg-gray-600"
-                          >
-                            <Link className="h-4 w-4" />
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>I already know {member.user.name}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  )}
-              </div>
-              <p className="mt-2 truncate text-sm font-medium text-gray-800 dark:text-gray-200">
-                {member.user.name}
-              </p>
+        <div className="items-top mt-2 flex justify-between gap-2">
+          <div className="w-8">&nbsp;</div>
+          <div className="w-7/10">
+            <div className="truncate text-xs text-gray-800 md:text-sm dark:text-gray-200">
+              {member.user.name}
             </div>
-            {relationship && (
-              <p className="truncate text-xs text-blue-500 dark:text-blue-400">
-                {relationship}
-              </p>
-            )}
             {member.connectedAt && (
-              <>
+              <div>
                 {member.connectedAt ? (
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger>
-                        <p className="cursor-pointer text-xs text-gray-500 underline decoration-dotted dark:text-gray-400">
+                        <p className="cursor-pointer text-xs text-gray-500 dark:text-gray-400">
                           {formatDistanceToNow(new Date(member.connectedAt), {
                             addSuffix: true,
                           })}
@@ -123,10 +96,11 @@ export default function MemberCard({
                     </Tooltip>
                   </TooltipProvider>
                 ) : null}
-              </>
+              </div>
             )}
           </div>
-          <div className="absolute top-1 right-0">
+
+          <div className="vertical-align-top">
             <Dropdown
               trigger={<MoreVertical size={16} />}
               triggerClassName="rounded-full p-1 hover:bg-gray-200 dark:hover:bg-gray-700"
@@ -135,6 +109,14 @@ export default function MemberCard({
                 <Users className="mr-2 h-4 w-4" />
                 Relationships
               </DropdownItem>
+              {!member.connectedAt &&
+                onConnect &&
+                member.userId !== currentUserId && (
+                  <DropdownItem onClick={() => onConnect(member)}>
+                    <Link className="mr-2 h-4 w-4" />
+                    Connect
+                  </DropdownItem>
+                )}
               {isGroupAdmin && (
                 <DropdownItem onClick={handleLoginLinkClick}>
                   <KeyRound className="mr-2 h-4 w-4" />
@@ -145,6 +127,13 @@ export default function MemberCard({
           </div>
         </div>
       </div>
+      {/* I believe we only show relationship in family groups. */}
+      {/* {relationship && (
+              <p className="truncate text-xs text-blue-500 dark:text-blue-400">
+                {relationship}
+              </p>
+            )} */}
+
       {isGroupAdmin && groupSlug && (
         <LoginCodeModal
           isOpen={isLoginModalOpen}
