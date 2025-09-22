@@ -64,7 +64,7 @@ export default function GroupToolbar({
   setTourOpen,
   viewMode,
   groupSlug,
-  isMobile,
+  isMobile: _isMobile,
   gridSizeConfig,
 }: GroupToolbarProps) {
   const sortOptions: {
@@ -243,7 +243,7 @@ export default function GroupToolbar({
                 </span>
               </div>
               <Slider
-                value={[settings.gridSize]}
+                value={[settings.gridSize || gridSizeConfig.default]}
                 onValueChange={(value) =>
                   setSettings(prev => ({ ...prev, gridSize: value[0] }))
                 }

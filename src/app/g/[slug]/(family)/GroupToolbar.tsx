@@ -3,9 +3,9 @@
 import React, { RefObject } from 'react'
 import type { FamilyTreeRef } from './FamilyTree'
 import { Button } from '@/components/ui/button'
+import { Slider } from '@/components/ui/slider'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-
 
 import {
   ArrowUp,
@@ -38,6 +38,13 @@ interface GroupPageSettings {
   searchQuery: string
   filterByRealPhoto: boolean
   filterConnectedStatus: 'all' | 'connected' | 'not_connected'
+  gridSize: number
+}
+
+interface GridSizeConfig {
+  min: number
+  max: number
+  default: number
 }
 
 interface GroupToolbarProps {
@@ -47,9 +54,10 @@ interface GroupToolbarProps {
   setTourOpen: (isOpen: boolean) => void
   isMobile: boolean
   familyTreeRef?: RefObject<FamilyTreeRef | null>
-  isResetDisabled?: boolean;
-  viewMode: 'grid' | 'tree' | 'games';
-  groupSlug: string;
+  isResetDisabled?: boolean
+  viewMode: 'grid' | 'tree' | 'games'
+  groupSlug: string
+  gridSizeConfig: GridSizeConfig
 }
 
 export default function GroupToolbar({
@@ -62,6 +70,7 @@ export default function GroupToolbar({
   isResetDisabled,
   viewMode,
   groupSlug,
+  gridSizeConfig,
 }: GroupToolbarProps) {
   const sortOptions: {
     key: 'joined' | 'firstName' | 'lastName' | 'closest'
@@ -248,6 +257,35 @@ export default function GroupToolbar({
                   <span>Photos</span>
                 </DropdownMenuItem>
               </Link>
+              {viewMode === 'grid' && (
+                <div className="px-3 py-2">
+                  <DropdownMenuLabel className="px-0 pb-2">
+                    Grid Size
+                  </DropdownMenuLabel>
+                  <div className="mb-2 flex items-center justify-between">
+                    <span className="text-muted-foreground text-sm">
+                      {gridSizeConfig.min}
+                    </span>
+                    <span className="text-sm font-medium">
+                      {settings.gridSize} per row
+                    </span>
+                    <span className="text-muted-foreground text-sm">
+                      {gridSizeConfig.max}
+                    </span>
+                  </div>
+                  <Slider
+                    value={[settings.gridSize || gridSizeConfig.default]}
+                    onValueChange={(value) =>
+                      setSettings((prev) => ({ ...prev, gridSize: value[0] }))
+                    }
+                    min={gridSizeConfig.min}
+                    max={gridSizeConfig.max}
+                    step={1}
+                    className="w-32"
+                  />
+                </div>
+              )}
+              <DropdownMenuSeparator />
               <Link href={`/g/${groupSlug}/tree`}>
                 <DropdownMenuItem>
                   <GitFork className="mr-2 h-4 w-4" />
@@ -258,19 +296,54 @@ export default function GroupToolbar({
           </DropdownMenu>
         ) : (
           <>
-            <Link href={`/g/${groupSlug}`}>
-              <Button
-                variant={
-                  !pathname.includes('/tree') && !pathname.includes('/games')
-                    ? 'secondary'
-                    : 'ghost'
-                }
-                size="sm"
-                data-tour="grid-button"
-              >
-                <LayoutGrid className="h-4 w-4" />
-              </Button>
-            </Link>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant={
+                    !pathname.includes('/tree') && !pathname.includes('/games')
+                      ? 'secondary'
+                      : 'ghost'
+                  }
+                  size="sm"
+                  data-tour="grid-button"
+                >
+                  <LayoutGrid className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuLabel>Grid Size</DropdownMenuLabel>
+                <div className="px-3 py-2">
+                  <div className="mb-2 flex items-center justify-between">
+                    <span className="text-muted-foreground text-sm">
+                      {gridSizeConfig.min}
+                    </span>
+                    <span className="text-sm font-medium">
+                      {settings.gridSize} per row
+                    </span>
+                    <span className="text-muted-foreground text-sm">
+                      {gridSizeConfig.max}
+                    </span>
+                  </div>
+                  <Slider
+                    value={[settings.gridSize || gridSizeConfig.default]}
+                    onValueChange={(value) => {
+                      setSettings((prev) => ({ ...prev, gridSize: value[0] }))
+                    }}
+                    min={gridSizeConfig.min}
+                    max={gridSizeConfig.max}
+                    step={1}
+                    className="w-32"
+                  />
+                </div>
+                <DropdownMenuSeparator />
+                <Link href={`/g/${groupSlug}`}>
+                  <DropdownMenuItem>
+                    <LayoutGrid className="mr-2 h-4 w-4" />
+                    <span>View Photos</span>
+                  </DropdownMenuItem>
+                </Link>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Link href={`/g/${groupSlug}/tree`}>
               <Button
                 variant={pathname.includes('/tree') ? 'secondary' : 'ghost'}

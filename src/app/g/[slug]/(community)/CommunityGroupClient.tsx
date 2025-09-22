@@ -56,7 +56,7 @@ interface GroupPageSettings {
 
 const CommunityGroupClientContent: React.FC<
   CommunityGroupClientContentProps
-> = ({ members: initialMembers, settings, setSettings, groupSlug, view, isMobile, gridSizeConfig }) => {
+> = ({ members: initialMembers, settings, setSettings, groupSlug, view, isMobile, gridSizeConfig: _gridSizeConfig }) => {
   const groupContext = useGroup()
   const { isOpen, setIsOpen, setCurrentStep } = useTour()
   const router = useRouter()

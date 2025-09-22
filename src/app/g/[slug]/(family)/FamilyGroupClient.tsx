@@ -49,6 +49,15 @@ export const useFamilyGroupData = () => useContext(FamilyGroupDataContext)
 
 export const useFamilyGroupActions = () => useContext(FamilyGroupActionsContext)
 
+// Helper function to get responsive grid size ranges and defaults
+const getGridSizeConfig = (isMobile: boolean) => {
+  if (isMobile) {
+    return { min: 1, max: 3, default: 2 }
+  } else {
+    return { min: 2, max: 9, default: 6 }
+  }
+}
+
 type SortKey = 'joined' | 'firstName' | 'lastName' | 'closest'
 type SortDirection = 'asc' | 'desc'
 
@@ -60,6 +69,7 @@ interface FamilyPageSettings {
   }
   filterByRealPhoto: boolean
   filterConnectedStatus: 'all' | 'connected' | 'not_connected'
+  gridSize: number
 }
 
 interface FamilyGroupClientProps {
@@ -105,8 +115,18 @@ function FamilyGroupClientContent({
       sortConfig: { key: 'closest', direction: 'asc' },
       filterByRealPhoto: true,
       filterConnectedStatus: 'all',
+      gridSize: 4, // Safe middle-ground default for SSR
     },
   )
+
+  // Auto-adjust gridSize based on screen size (prevent hydration mismatch)
+  useEffect(() => {
+    const config = getGridSizeConfig(isMobile)
+    // Only update if current gridSize is outside the valid range for this screen size
+    if (settings.gridSize < config.min || settings.gridSize > config.max) {
+      setSettings(prev => ({ ...prev, gridSize: config.default }))
+    }
+  }, [isMobile, settings.gridSize, setSettings])
 
   const modalRelations = useMemo(() => {
     if (!selectedMember || !relationships) return []
@@ -263,6 +283,7 @@ function FamilyGroupClientContent({
             isResetDisabled={isResetDisabled}
             viewMode={view}
             groupSlug={groupSlug}
+            gridSizeConfig={getGridSizeConfig(isMobile)}
           />
           {view === 'tree' ? (
             <div className="relative mt-4">
@@ -336,7 +357,7 @@ function FamilyGroupClientContent({
                   }}
                 />
               ) : (
-                <GridView />
+                <GridView gridSize={settings.gridSize} />
               )}
             </FamilyGroupMembersContext.Provider>
           </FamilyGroupDataContext.Provider>
