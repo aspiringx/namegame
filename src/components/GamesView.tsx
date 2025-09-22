@@ -165,6 +165,7 @@ const GamesView: React.FC<GamesViewProps> = ({
           variant="success"
           onDismiss={() => {}}
           flashId="name-quiz-badge-info"
+          autoCloseAfter={5000}
           className="mb-4"
         >
           <AlertDescription>
