@@ -56,7 +56,15 @@ interface GroupPageSettings {
 
 const CommunityGroupClientContent: React.FC<
   CommunityGroupClientContentProps
-> = ({ members: initialMembers, settings, setSettings, groupSlug, view, isMobile, gridSizeConfig: _gridSizeConfig }) => {
+> = ({
+  members: initialMembers,
+  settings,
+  setSettings,
+  groupSlug,
+  view,
+  isMobile,
+  gridSizeConfig: _gridSizeConfig,
+}) => {
   const groupContext = useGroup()
   const { isOpen, setIsOpen, setCurrentStep } = useTour()
   const router = useRouter()
@@ -201,9 +209,12 @@ const CommunityGroupClientContent: React.FC<
 
   return (
     <>
-      <TooltipProvider>
-        <div className="w-full px-2 sm:px-0">
-          <div>
+      <div
+        id="group-toolbar-container"
+        className="bg-background border-border sticky top-16 z-10 border-b py-1"
+      >
+        <div className="container mx-auto px-4">
+          <div className="my-1">
             <GroupToolbar
               settings={settings}
               setSettings={setSettings}
@@ -214,36 +225,41 @@ const CommunityGroupClientContent: React.FC<
               isMobile={isMobile}
               gridSizeConfig={getGridSizeConfig(isMobile)}
             />
-
-            <div className="relative mb-4" data-tour="search-input">
-              <Input
-                type="text"
-                placeholder="Search by name..."
-                value={settings.searchQuery}
-                onChange={(e) => handleSearchChange(e.target.value)}
-                className="pr-10 pl-4"
-              />
-              {settings.searchQuery && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute top-1/2 right-1 h-8 w-8 -translate-y-1/2"
-                  onClick={() => handleSearchChange('')}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
-            <MemberGrid
-              members={filteredAndSortedMembers}
-              isGroupAdmin={isGroupAdmin}
-              onRelate={handleOpenRelateModal}
-              onConnect={handleOpenConnectModal}
-              currentUserId={ego?.userId}
-              groupSlug={groupSlug}
-              gridSize={settings.gridSize}
-            />
           </div>
+
+          <div className="relative mb-[8px]" data-tour="search-input">
+            <Input
+              type="text"
+              placeholder="Search by name..."
+              value={settings.searchQuery}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              className="pr-10 pl-4"
+            />
+            {settings.searchQuery && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute top-1/2 right-1 h-8 w-8 -translate-y-1/2"
+                onClick={() => handleSearchChange('')}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <TooltipProvider>
+        <div className="container mx-auto px-4 pt-3 pb-6">
+          <MemberGrid
+            members={filteredAndSortedMembers}
+            isGroupAdmin={isGroupAdmin}
+            onRelate={handleOpenRelateModal}
+            onConnect={handleOpenConnectModal}
+            currentUserId={ego?.userId}
+            groupSlug={groupSlug}
+            gridSize={settings.gridSize}
+          />
         </div>
       </TooltipProvider>
       <GamesIntroModal
@@ -336,7 +352,7 @@ const CommunityGroupClient: React.FC<CommunityGroupClientProps> = ({
       const config = getGridSizeConfig(isMobile)
       // Only update if current gridSize is outside the valid range for this screen size
       if (settings.gridSize < config.min || settings.gridSize > config.max) {
-        setSettings(prev => ({ ...prev, gridSize: config.default }))
+        setSettings((prev) => ({ ...prev, gridSize: config.default }))
       }
     }
   }, [hasMounted, isMobile, settings.gridSize, setSettings])

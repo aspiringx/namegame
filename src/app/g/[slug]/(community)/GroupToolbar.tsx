@@ -94,7 +94,9 @@ export default function GroupToolbar({
   }
 
   return (
-    <div className="my-2 flex items-center justify-between">
+    <div
+      className={`flex items-center justify-between ${viewMode === 'games' ? 'my-2' : ''}`}
+    >
       {/* Filter and Sort Buttons */}
       <div className="flex flex-wrap items-center gap-2">
         {viewMode !== 'games' && (
@@ -231,21 +233,21 @@ export default function GroupToolbar({
           <DropdownMenuContent>
             <DropdownMenuLabel>Grid Size</DropdownMenuLabel>
             <div className="px-3 py-2">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-muted-foreground">
+              <div className="mb-2 flex items-center justify-between">
+                <span className="text-muted-foreground text-sm">
                   {gridSizeConfig.min}
                 </span>
                 <span className="text-sm font-medium">
                   {settings.gridSize} per row
                 </span>
-                <span className="text-sm text-muted-foreground">
+                <span className="text-muted-foreground text-sm">
                   {gridSizeConfig.max}
                 </span>
               </div>
               <Slider
                 value={[settings.gridSize || gridSizeConfig.default]}
                 onValueChange={(value) =>
-                  setSettings(prev => ({ ...prev, gridSize: value[0] }))
+                  setSettings((prev) => ({ ...prev, gridSize: value[0] }))
                 }
                 min={gridSizeConfig.min}
                 max={gridSizeConfig.max}
