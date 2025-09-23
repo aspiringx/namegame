@@ -124,7 +124,7 @@ function FamilyGroupClientContent({
     const config = getGridSizeConfig(isMobile)
     // Only update if current gridSize is outside the valid range for this screen size
     if (settings.gridSize < config.min || settings.gridSize > config.max) {
-      setSettings(prev => ({ ...prev, gridSize: config.default }))
+      setSettings((prev) => ({ ...prev, gridSize: config.default }))
     }
   }, [isMobile, settings.gridSize, setSettings])
 
@@ -270,7 +270,7 @@ function FamilyGroupClientContent({
       />
       <div
         id="group-toolbar-container"
-        className="bg-background border-border sticky top-16 z-10 border-b py-4"
+        className="bg-background border-border sticky top-16 z-10 border-b pt-1 pb-3"
       >
         <div className="container mx-auto px-4">
           <GroupToolbar
@@ -286,7 +286,7 @@ function FamilyGroupClientContent({
             gridSizeConfig={getGridSizeConfig(isMobile)}
           />
           {view === 'tree' ? (
-            <div className="relative mt-4">
+            <div className="relative">
               <FocalUserSearch
                 members={initialMembers}
                 onSelect={(userId) =>
@@ -295,7 +295,7 @@ function FamilyGroupClientContent({
               />
             </div>
           ) : view !== 'games' ? (
-            <div className="relative mt-4">
+            <div className="relative">
               <input
                 type="text"
                 placeholder={`Search ${initialMembers.length} members...`}
@@ -327,7 +327,7 @@ function FamilyGroupClientContent({
         </div>
       </div>
 
-      <div className="container mx-auto mt-4 px-4">
+      <div className="container mx-auto mt-2 px-2 md:px-4">
         <FamilyGroupActionsContext.Provider
           value={{
             onOpenRelateModal: (member) => {
