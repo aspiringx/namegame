@@ -24,7 +24,7 @@ export default function CommunityGroupPageClient({
   const isGuest = !currentUserMember || currentUserMember.role?.code === 'guest'
 
   return (
-    <div className="container mx-auto mt-2 px-4 py-0">
+    <>
       <GuestMessage
         isGuest={isGuest}
         firstName={session?.user?.firstName}
@@ -37,6 +37,6 @@ export default function CommunityGroupPageClient({
         groupSlug={groupData.slug}
         view={view}
       />
-    </div>
+    </>
   )
 }

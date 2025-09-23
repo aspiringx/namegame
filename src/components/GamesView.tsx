@@ -165,6 +165,7 @@ const GamesView: React.FC<GamesViewProps> = ({
           variant="success"
           onDismiss={() => {}}
           flashId="name-quiz-badge-info"
+          autoCloseAfter={5000}
           className="mb-4"
         >
           <AlertDescription>
@@ -206,7 +207,7 @@ const GamesView: React.FC<GamesViewProps> = ({
         </div>
       </Modal>
       <div className="flex flex-col items-center gap-4 p-4 pt-0">
-        <div className="relative h-48 w-48 overflow-hidden rounded shadow-lg lg:h-128 lg:w-128">
+        <div className="relative h-48 w-48 overflow-hidden rounded shadow-lg lg:h-96 lg:w-96">
           <Image
             src={
               question.correctMember.user.photoUrl ||

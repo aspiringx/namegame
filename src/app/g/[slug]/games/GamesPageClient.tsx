@@ -7,10 +7,7 @@ import { useGroup } from '@/components/GroupProvider'
 import useLocalStorage from '@/hooks/useLocalStorage'
 import FamilyGroupToolbar from '../(family)/GroupToolbar'
 import CommunityGroupToolbar from '../(community)/GroupToolbar'
-import type {
-  FamilyGroupData,
-  CommunityGroupData,
-} from '@/types'
+import type { FamilyGroupData, CommunityGroupData } from '@/types'
 
 // Helper function to get responsive grid size ranges and defaults
 const getGridSizeConfig = (isMobile: boolean) => {
@@ -83,7 +80,7 @@ export default function GamesPageClient({ group }: GamesPageClientProps) {
 
   return (
     <div>
-      <div className="bg-background border-border sticky top-16 z-10 border-b py-4">
+      <div className="bg-background border-border sticky top-16 z-10 border-b py-1">
         <div className="container mx-auto px-4">
           {isFamilyGroup ? (
             <FamilyGroupToolbar

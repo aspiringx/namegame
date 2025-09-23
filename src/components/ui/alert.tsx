@@ -1,11 +1,9 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
-import {
-  XCircle as XCircleIcon,
-} from 'lucide-react'
+import { XCircle as XCircleIcon } from 'lucide-react'
 
 const alertVariants = cva('rounded-md p-4', {
   variants: {
@@ -42,57 +40,82 @@ const Alert = React.forwardRef<
     VariantProps<typeof alertVariants> & {
       onDismiss?: () => void
       flashId?: string
+      autoCloseAfter?: number // Duration in milliseconds
     }
->(({ className, variant, children, onDismiss, flashId, ...props }, ref) => {
-  const [isVisible, setIsVisible] = useState(true)
+>(
+  (
+    {
+      className,
+      variant,
+      children,
+      onDismiss,
+      flashId,
+      autoCloseAfter,
+      ...props
+    },
+    ref,
+  ) => {
+    const [isVisible, setIsVisible] = useState(true)
 
-  const storageKey = flashId ? `namegame_flash-alert_${flashId}` : ''
+    const storageKey = flashId ? `namegame_flash-alert_${flashId}` : ''
 
-  useEffect(() => {
-    if (flashId && sessionStorage.getItem(storageKey) === 'dismissed') {
+    useEffect(() => {
+      if (flashId && sessionStorage.getItem(storageKey) === 'dismissed') {
+        setIsVisible(false)
+      }
+    }, [flashId, storageKey])
+
+    const handleDismiss = useCallback(() => {
+      if (flashId) {
+        sessionStorage.setItem(storageKey, 'dismissed')
+      }
       setIsVisible(false)
-    }
-  }, [flashId, storageKey])
+      if (onDismiss) {
+        onDismiss()
+      }
+    }, [flashId, storageKey, onDismiss])
 
-  const handleDismiss = () => {
-    if (flashId) {
-      sessionStorage.setItem(storageKey, 'dismissed')
-    }
-    setIsVisible(false)
-    if (onDismiss) {
-      onDismiss()
-    }
-  }
+    // Auto-close functionality
+    useEffect(() => {
+      if (autoCloseAfter && autoCloseAfter > 0) {
+        const timer = setTimeout(() => {
+          handleDismiss()
+        }, autoCloseAfter)
 
-  if (!isVisible) {
-    return null
-  }
+        return () => clearTimeout(timer)
+      }
+    }, [autoCloseAfter, handleDismiss])
 
-  return (
-    <div
-      ref={ref}
-      role="alert"
-      className={cn('relative', alertVariants({ variant }), className)}
-      {...props}
-    >
-      <div>{children}</div>
-      {onDismiss && (
-        <button
-          type="button"
-          onClick={handleDismiss}
-          className={cn(
-            'absolute top-1 right-1 inline-flex rounded-md p-1.5 focus:ring-2 focus:ring-offset-2 focus:outline-none',
-            dismissButtonColorVariants[variant || 'default'],
-            'focus:ring-offset-gray-50 dark:focus:ring-offset-gray-900',
-          )}
-        >
-          <span className="sr-only">Dismiss</span>
-          <XCircleIcon className="h-5 w-5" aria-hidden="true" />
-        </button>
-      )}
-    </div>
-  )
-})
+    if (!isVisible) {
+      return null
+    }
+
+    return (
+      <div
+        ref={ref}
+        role="alert"
+        className={cn('relative', alertVariants({ variant }), className)}
+        {...props}
+      >
+        <div>{children}</div>
+        {onDismiss && (
+          <button
+            type="button"
+            onClick={handleDismiss}
+            className={cn(
+              'absolute top-1 right-1 inline-flex rounded-md p-1.5 focus:ring-2 focus:ring-offset-2 focus:outline-none',
+              dismissButtonColorVariants[variant || 'default'],
+              'focus:ring-offset-gray-50 dark:focus:ring-offset-gray-900',
+            )}
+          >
+            <span className="sr-only">Dismiss</span>
+            <XCircleIcon className="h-5 w-5" aria-hidden="true" />
+          </button>
+        )}
+      </div>
+    )
+  },
+)
 Alert.displayName = 'Alert'
 
 const AlertTitle = React.forwardRef<
