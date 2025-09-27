@@ -180,14 +180,13 @@ const GamesView: React.FC<GamesViewProps> = ({
           <p className="mb-4">
             You&apos;ve remembered {modalPerson?.user.name} three times!
           </p>
-          <div className="mb-4 text-sm text-gray-600 dark:text-gray-400">
+          <div className="mb-8 space-y-1 text-sm text-gray-600 dark:text-gray-400">
             <p>
-              <strong>Keep at It:</strong> Keep this person in the quiz for
-              three more tries.
+              Keep at It: Keep {modalPerson?.user.firstName} here to remember.
             </p>
             <p>
-              <strong>Got It:</strong> You&apos;re confident you remember them.
-              We&apos;ll add them back after three months to keep you sharp.
+              Got It: You confidently know and remember{' '}
+              {modalPerson?.user.firstName}.
             </p>
           </div>
           <div className="flex justify-end space-x-4">
@@ -207,7 +206,7 @@ const GamesView: React.FC<GamesViewProps> = ({
         </div>
       </Modal>
       <div className="flex flex-col items-center gap-4 p-4 pt-0">
-        <div className="relative h-48 w-48 overflow-hidden rounded shadow-lg lg:h-96 lg:w-96">
+        <div className="relative h-48 w-48 overflow-hidden rounded shadow-lg lg:h-128 lg:w-128">
           <Image
             src={
               question.correctMember.user.photoUrl ||
@@ -215,7 +214,7 @@ const GamesView: React.FC<GamesViewProps> = ({
             }
             alt="Who is this?"
             fill
-            sizes="224px"
+            // sizes="224px"
             className="object-cover"
           />
         </div>

@@ -2,7 +2,12 @@ import { useState } from 'react'
 import Image from 'next/image'
 import type { MemberWithUser as Member } from '@/types/index'
 import { MoreVertical, Users, KeyRound } from 'lucide-react'
-import { Dropdown, DropdownItem } from './ui/dropdown'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { LoginCodeModal } from './LoginCodeModal'
 import PhotoGalleryModal from './PhotoGalleryModal'
 
@@ -80,21 +85,25 @@ export default function FamilyMemberCard({
             )}
           </div>
           <div className="vertical-align-top">
-            <Dropdown
-              trigger={<MoreVertical size={16} />}
-              triggerClassName="rounded-full p-1 hover:bg-gray-200 dark:hover:bg-gray-700"
-            >
-              <DropdownItem onClick={() => onRelate && onRelate(member)}>
-                <Users className="mr-2 h-4 w-4" />
-                Relationships
-              </DropdownItem>
-              {isGroupAdmin && (
-                <DropdownItem onClick={handleLoginLinkClick}>
-                  <KeyRound className="mr-2 h-4 w-4" />
-                  Get Login Code
-                </DropdownItem>
-              )}
-            </Dropdown>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="rounded-full p-1 hover:bg-gray-200 dark:hover:bg-gray-700">
+                  <MoreVertical size={16} />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => onRelate && onRelate(member)}>
+                  <Users className="mr-2 h-4 w-4" />
+                  Relationships
+                </DropdownMenuItem>
+                {isGroupAdmin && (
+                  <DropdownMenuItem onClick={handleLoginLinkClick}>
+                    <KeyRound className="mr-2 h-4 w-4" />
+                    Get Login Code
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>
