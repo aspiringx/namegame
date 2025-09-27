@@ -9,11 +9,14 @@ import { AvatarNodeData } from './useFamilyTree'
 import { ChevronUp, ChevronDown, ChevronLeft } from 'lucide-react'
 
 const AvatarNode = ({ data, selected }: NodeProps<AvatarNodeData>) => {
-  const [imgSrc, setImgSrc] = useState(data.photoUrl || '/images/default-avatar.png');
+  const [imgSrc, setImgSrc] = useState(
+    data.photoUrl || '/images/default-avatar.png',
+  )
 
   useEffect(() => {
-    setImgSrc(data.photoUrl || '/images/default-avatar.png');
-  }, [data.photoUrl]);
+    setImgSrc(data.photoUrl || '/images/default-avatar.png')
+  }, [data.photoUrl])
+
   const {
     relationship,
     isCurrentUser,
@@ -27,7 +30,6 @@ const AvatarNode = ({ data, selected }: NodeProps<AvatarNodeData>) => {
 
   const fullName = [data.firstName, data.lastName].filter(Boolean).join(' ')
 
-  
   return (
     <div className="relative">
       <Handle
@@ -59,20 +61,26 @@ const AvatarNode = ({ data, selected }: NodeProps<AvatarNodeData>) => {
           className={cn(
             'border-2 transition-all',
             isFocalUser || isFocalUserSpouseOrPartner
-              ? 'h-32 w-32'
-              : 'h-24 w-24',
-            isCurrentUser ? 'border-primary' : 'border-transparent',
+              ? 'h-48 w-48'
+              : 'h-32 w-32',
+            isFocalUser
+              ? 'border-yellow-400 shadow-md ring-1 shadow-yellow-400/30 ring-yellow-400/50 dark:border-yellow-500 dark:shadow-yellow-500/30 dark:ring-yellow-500/50'
+              : isCurrentUser
+                ? 'border-primary'
+                : 'border-transparent',
             selected && 'ring-ring ring-offset-background ring-2 ring-offset-2',
           )}
         >
           <Image
             src={imgSrc}
             onError={() => {
-              setImgSrc('/images/default-avatar.png');
+              setImgSrc('/images/default-avatar.png')
             }}
             alt={fullName}
             fill
-            sizes={isFocalUser || isFocalUserSpouseOrPartner ? '128px' : '96px'}
+            sizes={
+              isFocalUser || isFocalUserSpouseOrPartner ? '192px' : '128px'
+            }
             priority={isFocalUser}
             className="object-cover"
           />

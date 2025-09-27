@@ -9,7 +9,12 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { MoreVertical, Link, KeyRound, Users } from 'lucide-react'
-import { Dropdown, DropdownItem } from './ui/dropdown'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { LoginCodeModal } from './LoginCodeModal'
 import PhotoGalleryModal from './PhotoGalleryModal'
 
@@ -101,29 +106,33 @@ export default function MemberCard({
           </div>
 
           <div className="vertical-align-top">
-            <Dropdown
-              trigger={<MoreVertical size={16} />}
-              triggerClassName="rounded-full p-1 hover:bg-gray-200 dark:hover:bg-gray-700"
-            >
-              <DropdownItem onClick={() => onRelate(member)}>
-                <Users className="mr-2 h-4 w-4" />
-                Relationships
-              </DropdownItem>
-              {!member.connectedAt &&
-                onConnect &&
-                member.userId !== currentUserId && (
-                  <DropdownItem onClick={() => onConnect(member)}>
-                    <Link className="mr-2 h-4 w-4" />
-                    Connect
-                  </DropdownItem>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="rounded-full p-1 hover:bg-gray-200 dark:hover:bg-gray-700">
+                  <MoreVertical size={16} />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => onRelate(member)}>
+                  <Users className="mr-2 h-4 w-4" />
+                  Relationships
+                </DropdownMenuItem>
+                {!member.connectedAt &&
+                  onConnect &&
+                  member.userId !== currentUserId && (
+                    <DropdownMenuItem onClick={() => onConnect(member)}>
+                      <Link className="mr-2 h-4 w-4" />
+                      Connect
+                    </DropdownMenuItem>
+                  )}
+                {isGroupAdmin && (
+                  <DropdownMenuItem onClick={handleLoginLinkClick}>
+                    <KeyRound className="mr-2 h-4 w-4" />
+                    Get Login Code
+                  </DropdownMenuItem>
                 )}
-              {isGroupAdmin && (
-                <DropdownItem onClick={handleLoginLinkClick}>
-                  <KeyRound className="mr-2 h-4 w-4" />
-                  Get Login Code
-                </DropdownItem>
-              )}
-            </Dropdown>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>

@@ -185,6 +185,13 @@ const FamilyTreeComponent = forwardRef<
             proOptions={{ hideAttribution: true }}
             onNodeClick={handleNodeClick}
             className="bg-background"
+            nodesDraggable={false}
+            panOnDrag={true}
+            panOnScroll={false}
+            zoomOnScroll={true}
+            zoomOnPinch={true}
+            zoomOnDoubleClick={false}
+            preventScrolling={true}
           >
             <FamilyTreeControls
               onFullScreen={() => setIsFullScreen(true)}

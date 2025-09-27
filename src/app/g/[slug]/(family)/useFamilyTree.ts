@@ -27,7 +27,7 @@ interface FamilyTreeProps {
 }
 
 const NODE_WIDTH = 150
-const NODE_HEIGHT = 230
+const NODE_HEIGHT = 300
 
 type AdjacencyListRelationship = {
   relatedUserId: string
