@@ -14,7 +14,7 @@ export function FocalUserSearch({ members, onSelect }: FocalUserSearchProps) {
 
   const options = members.map((member) => ({
     value: member.userId,
-    label: `${member.user.firstName} ${member.user.lastName}`,
+    label: `${member.user.firstName}${member.user.lastName ? ` ${member.user.lastName}` : ''}`,
   }))
 
   const handleSelect = (value: string) => {
