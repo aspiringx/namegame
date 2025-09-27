@@ -291,7 +291,7 @@ export default function GroupToolbar({
                   <DropdownMenuSeparator />
                   <div className="px-3 pt-2 pb-4">
                     <DropdownMenuLabel className="px-0 pb-2">
-                      Grid Size
+                      Photo Size
                     </DropdownMenuLabel>
                     <div className="mb-2 flex items-center justify-between">
                       <span className="text-muted-foreground text-sm">
@@ -331,7 +331,7 @@ export default function GroupToolbar({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
-                  <DropdownMenuLabel>Grid Size</DropdownMenuLabel>
+                  <DropdownMenuLabel>Photo Size</DropdownMenuLabel>
                   <div className="px-3 pt-2 pb-4">
                     <div className="mb-2 flex items-center justify-between">
                       <span className="text-muted-foreground text-sm">

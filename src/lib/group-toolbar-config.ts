@@ -19,7 +19,9 @@ export interface GroupToolbarConfig {
   }>
 }
 
-export function getFamilyGroupToolbarConfig(groupSlug: string): GroupToolbarConfig {
+export function getFamilyGroupToolbarConfig(
+  groupSlug: string,
+): GroupToolbarConfig {
   return {
     sortOptions: [
       { key: 'closest', label: 'Closest relation' },
@@ -35,7 +37,7 @@ export function getFamilyGroupToolbarConfig(groupSlug: string): GroupToolbarConf
     viewModes: [
       {
         key: 'grid',
-        label: 'Photos',
+        label: 'Photo Album',
         icon: LayoutGrid,
         href: `/g/${groupSlug}`,
       },
@@ -55,7 +57,9 @@ export function getFamilyGroupToolbarConfig(groupSlug: string): GroupToolbarConf
   }
 }
 
-export function getCommunityGroupToolbarConfig(groupSlug: string): GroupToolbarConfig {
+export function getCommunityGroupToolbarConfig(
+  groupSlug: string,
+): GroupToolbarConfig {
   return {
     sortOptions: [
       { key: 'when_connected', label: 'When connected' },
@@ -70,7 +74,7 @@ export function getCommunityGroupToolbarConfig(groupSlug: string): GroupToolbarC
     viewModes: [
       {
         key: 'grid',
-        label: 'View Grid',
+        label: 'Photo Album',
         icon: LayoutGrid,
         href: `/g/${groupSlug}`,
       },
