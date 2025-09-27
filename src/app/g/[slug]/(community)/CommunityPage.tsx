@@ -1,5 +1,5 @@
 import { getGroup } from './data'
-import CommunityGroupPageClient from './CommunityGroupPageClient'
+import CommunityClient from './CommunityClient'
 import { notFound } from 'next/navigation'
 import { headers } from 'next/headers'
 import { getDeviceTypeFromHeaders } from '@/lib/device'
@@ -18,5 +18,5 @@ export default async function CommunityPage({
     notFound()
   }
 
-  return <CommunityGroupPageClient groupData={groupData} view="grid" />
+  return <CommunityClient groupData={groupData} view="grid" />
 }

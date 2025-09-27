@@ -1,6 +1,6 @@
 import { headers } from 'next/headers'
 import { getGroupForLayout } from '../utils'
-import GamesPageClient from './GamesPageClient'
+import GamesClient from './GamesClient'
 import { notFound } from 'next/navigation'
 import { getDeviceTypeFromHeaders } from '@/lib/device'
 
@@ -18,5 +18,5 @@ export default async function GamesPage({
     notFound()
   }
 
-  return <GamesPageClient group={groupData} />
+  return <GamesClient group={groupData} />
 }
