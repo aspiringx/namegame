@@ -78,7 +78,9 @@ const AvatarNode = ({ data, selected }: NodeProps<AvatarNodeData>) => {
             }}
             alt={fullName}
             fill
-            sizes={isFocalUser || isFocalUserSpouseOrPartner ? '128px' : '96px'}
+            sizes={
+              isFocalUser || isFocalUserSpouseOrPartner ? '192px' : '128px'
+            }
             priority={isFocalUser}
             className="object-cover"
           />
