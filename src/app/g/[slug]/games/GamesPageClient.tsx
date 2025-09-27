@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation'
 import GamesView from '@/components/GamesView'
 import { useGroup } from '@/components/GroupProvider'
 import useLocalStorage from '@/hooks/useLocalStorage'
-import FamilyGroupToolbar from '../(family)/GroupToolbar'
-import CommunityGroupToolbar from '../(community)/GroupToolbar'
+import GroupToolbar from '@/components/GroupToolbar'
+import { getFamilyGroupToolbarConfig, getCommunityGroupToolbarConfig } from '@/lib/group-toolbar-config'
 import type { FamilyGroupData, CommunityGroupData } from '@/types'
 
 // Helper function to get responsive grid size ranges and defaults
@@ -82,29 +82,20 @@ export default function GamesPageClient({ group }: GamesPageClientProps) {
     <div>
       <div className="bg-background border-border sticky top-16 z-10 border-b py-1">
         <div className="container mx-auto px-4">
-          {isFamilyGroup ? (
-            <FamilyGroupToolbar
-              settings={settings as any} // Cast because the union is complex
-              setSettings={setSettings as any}
-              handleSort={handleSort as any}
-              setTourOpen={() => {}} // Tour not implemented on this page
-              isMobile={isMobile}
-              viewMode="games"
-              groupSlug={group.slug}
-              gridSizeConfig={getGridSizeConfig(isMobile)}
-            />
-          ) : (
-            <CommunityGroupToolbar
-              settings={settings as any} // Cast because the union is complex
-              setSettings={setSettings as any}
-              handleSort={handleSort as any}
-              setTourOpen={() => {}} // Tour not implemented on this page
-              viewMode="games"
-              groupSlug={group.slug}
-              isMobile={isMobile}
-              gridSizeConfig={getGridSizeConfig(isMobile)}
-            />
-          )}
+          <GroupToolbar
+            settings={settings as any} // Cast because the union is complex
+            setSettings={setSettings as any}
+            handleSort={handleSort as any}
+            setTourOpen={() => {}} // Tour not implemented on this page
+            isMobile={isMobile}
+            viewMode="games"
+            groupSlug={group.slug}
+            gridSizeConfig={getGridSizeConfig(isMobile)}
+            config={isFamilyGroup 
+              ? getFamilyGroupToolbarConfig(group.slug)
+              : getCommunityGroupToolbarConfig(group.slug)
+            }
+          />
         </div>
       </div>
       <div className="container mx-auto mt-4 px-4">

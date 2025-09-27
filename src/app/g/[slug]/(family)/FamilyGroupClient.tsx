@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation'
 import useLocalStorage from '@/hooks/useLocalStorage'
 import { useGroup } from '@/components/GroupProvider'
 import { GuestMessage } from '@/components/GuestMessage'
-import GroupToolbar from './GroupToolbar'
+import GroupToolbar from '@/components/GroupToolbar'
+import { getFamilyGroupToolbarConfig } from '@/lib/group-toolbar-config'
 import { FocalUserSearch } from './FocalUserSearch'
 import { TourProvider, useTour } from '@reactour/tour'
 import type { FamilyTreeRef } from './FamilyTree'
@@ -58,13 +59,12 @@ const getGridSizeConfig = (isMobile: boolean) => {
   }
 }
 
-type SortKey = 'joined' | 'firstName' | 'lastName' | 'closest'
 type SortDirection = 'asc' | 'desc'
 
 interface FamilyPageSettings {
   searchQuery: string
   sortConfig: {
-    key: SortKey
+    key: string // Changed to string to match UniversalGroupSettings
     direction: SortDirection
   }
   filterByRealPhoto: boolean
@@ -233,7 +233,7 @@ function FamilyGroupClientContent({
     return sortedMembers
   }, [initialMembers, settings, relationshipMap])
 
-  const handleSort = (key: 'joined' | 'firstName' | 'lastName' | 'closest') => {
+  const handleSort = (key: string) => {
     setSettings((prev) => {
       const isSameKey = prev.sortConfig.key === key
       let newDirection: 'asc' | 'desc'
@@ -284,6 +284,7 @@ function FamilyGroupClientContent({
             viewMode={view}
             groupSlug={groupSlug}
             gridSizeConfig={getGridSizeConfig(isMobile)}
+            config={getFamilyGroupToolbarConfig(groupSlug)}
           />
           {view === 'tree' ? (
             <div className="relative">

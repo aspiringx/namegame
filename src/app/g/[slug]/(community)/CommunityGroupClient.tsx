@@ -21,7 +21,8 @@ import { TourProvider, useTour } from '@reactour/tour'
 import { useTheme } from 'next-themes'
 import { Toaster, toast } from 'sonner'
 import Modal from '@/components/ui/modal'
-import GroupToolbar from './GroupToolbar'
+import GroupToolbar from '@/components/GroupToolbar'
+import { getCommunityGroupToolbarConfig } from '@/lib/group-toolbar-config'
 import MemberGrid from './MemberGrid'
 import { steps as communityTourSteps } from '@/components/tours/CommunityTour'
 import { steps as communityTourMobileSteps } from '@/components/tours/CommunityTourMobile'
@@ -45,7 +46,7 @@ interface CommunityGroupClientContentProps
 
 interface GroupPageSettings {
   sortConfig: {
-    key: 'when_connected' | 'firstName' | 'lastName'
+    key: string // Changed to string to match UniversalGroupSettings
     direction: 'asc' | 'desc'
   }
   searchQuery: string
@@ -188,7 +189,7 @@ const CommunityGroupClientContent: React.FC<
     setSettings((prev) => ({ ...prev, searchQuery: query }))
   }
 
-  const handleSort = (key: 'when_connected' | 'firstName' | 'lastName') => {
+  const handleSort = (key: string) => {
     setSettings((prev) => ({
       ...prev,
       sortConfig: {
@@ -224,6 +225,7 @@ const CommunityGroupClientContent: React.FC<
               groupSlug={group.slug}
               isMobile={isMobile}
               gridSizeConfig={getGridSizeConfig(isMobile)}
+              config={getCommunityGroupToolbarConfig(group.slug)}
             />
           </div>
 
