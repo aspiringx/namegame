@@ -16,6 +16,7 @@ const AvatarNode = ({ data, selected }: NodeProps<AvatarNodeData>) => {
   useEffect(() => {
     setImgSrc(data.photoUrl || '/images/default-avatar.png')
   }, [data.photoUrl])
+
   const {
     relationship,
     isCurrentUser,
