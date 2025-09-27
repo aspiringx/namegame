@@ -5,7 +5,13 @@ import { useRouter } from 'next/navigation'
 import useLocalStorage from '@/hooks/useLocalStorage'
 import { useGroup } from '@/components/GroupProvider'
 import { GuestMessage } from '@/components/GuestMessage'
-import GroupToolbar from './GroupToolbar'
+import GroupToolbar from '@/components/GroupToolbar'
+import { getFamilyGroupToolbarConfig } from '@/lib/group-toolbar-config'
+import {
+  getGridSizeConfig,
+  getTourStyles,
+  GroupPageSettings,
+} from '@/lib/group-utils'
 import { FocalUserSearch } from './FocalUserSearch'
 import { TourProvider, useTour } from '@reactour/tour'
 import type { FamilyTreeRef } from './FamilyTree'
@@ -23,11 +29,11 @@ import RelateModal from '@/components/RelateModal'
 import { MemberWithUser } from '@/types'
 import { createContext, useContext } from 'react'
 
-const FamilyGroupMembersContext = createContext<MemberWithUser[]>([])
+const FamilyMembersContext = createContext<MemberWithUser[]>([])
 
-export const useFamilyGroupMembers = () => useContext(FamilyGroupMembersContext)
+export const useFamilyMembers = () => useContext(FamilyMembersContext)
 
-const FamilyGroupActionsContext = createContext<{
+const FamilyActionsContext = createContext<{
   onOpenRelateModal: (member: MemberWithUser) => void
   handleCloseRelateModal: () => void
   isRelateModalOpen: boolean
@@ -39,40 +45,17 @@ const FamilyGroupActionsContext = createContext<{
   selectedMember: null,
 })
 
-const FamilyGroupDataContext = createContext<{
+const FamilyDataContext = createContext<{
   relationshipMap: Map<string, { label: string; steps: number }>
 }>({
   relationshipMap: new Map(),
 })
 
-export const useFamilyGroupData = () => useContext(FamilyGroupDataContext)
+export const useFamilyData = () => useContext(FamilyDataContext)
 
-export const useFamilyGroupActions = () => useContext(FamilyGroupActionsContext)
+export const useFamilyActions = () => useContext(FamilyActionsContext)
 
-// Helper function to get responsive grid size ranges and defaults
-const getGridSizeConfig = (isMobile: boolean) => {
-  if (isMobile) {
-    return { min: 1, max: 3, default: 2 }
-  } else {
-    return { min: 2, max: 9, default: 6 }
-  }
-}
-
-type SortKey = 'joined' | 'firstName' | 'lastName' | 'closest'
-type SortDirection = 'asc' | 'desc'
-
-interface FamilyPageSettings {
-  searchQuery: string
-  sortConfig: {
-    key: SortKey
-    direction: SortDirection
-  }
-  filterByRealPhoto: boolean
-  filterConnectedStatus: 'all' | 'connected' | 'not_connected'
-  gridSize: number
-}
-
-interface FamilyGroupClientProps {
+interface FamilyClientProps {
   view: 'grid' | 'tree' | 'games'
   initialMembers: MemberWithUser[]
   groupSlug: string
@@ -80,18 +63,18 @@ interface FamilyGroupClientProps {
   initialRelationships: FullRelationship[]
 }
 
-interface FamilyGroupClientContentProps
-  extends Omit<FamilyGroupClientProps, 'initialMemberCount'> {
+interface FamilyClientContentProps
+  extends Omit<FamilyClientProps, 'initialMemberCount'> {
   isMobile: boolean
 }
 
-function FamilyGroupClientContent({
+function FamilyClientContent({
   initialMembers,
   initialRelationships,
   view,
   groupSlug,
   isMobile,
-}: FamilyGroupClientContentProps) {
+}: FamilyClientContentProps) {
   const groupContext = useGroup()
   const familyTreeRef = useRef<FamilyTreeRef>(null)
   const [isResetDisabled, setIsResetDisabled] = useState(true)
@@ -108,7 +91,7 @@ function FamilyGroupClientContent({
     [initialRelationships],
   )
 
-  const [settings, setSettings] = useLocalStorage<FamilyPageSettings>(
+  const [settings, setSettings] = useLocalStorage<GroupPageSettings>(
     `namegame_family-group-settings_${groupContext?.group?.slug}`,
     {
       searchQuery: '',
@@ -233,7 +216,7 @@ function FamilyGroupClientContent({
     return sortedMembers
   }, [initialMembers, settings, relationshipMap])
 
-  const handleSort = (key: 'joined' | 'firstName' | 'lastName' | 'closest') => {
+  const handleSort = (key: string) => {
     setSettings((prev) => {
       const isSameKey = prev.sortConfig.key === key
       let newDirection: 'asc' | 'desc'
@@ -284,6 +267,7 @@ function FamilyGroupClientContent({
             viewMode={view}
             groupSlug={groupSlug}
             gridSizeConfig={getGridSizeConfig(isMobile)}
+            config={getFamilyGroupToolbarConfig(groupSlug)}
           />
           {view === 'tree' ? (
             <div className="relative">
@@ -328,7 +312,7 @@ function FamilyGroupClientContent({
       </div>
 
       <div className="container mx-auto mt-2 px-2 md:px-4">
-        <FamilyGroupActionsContext.Provider
+        <FamilyActionsContext.Provider
           value={{
             onOpenRelateModal: (member) => {
               setSelectedMember(member)
@@ -342,10 +326,8 @@ function FamilyGroupClientContent({
             selectedMember,
           }}
         >
-          <FamilyGroupDataContext.Provider value={{ relationshipMap }}>
-            <FamilyGroupMembersContext.Provider
-              value={filteredAndSortedMembers}
-            >
+          <FamilyDataContext.Provider value={{ relationshipMap }}>
+            <FamilyMembersContext.Provider value={filteredAndSortedMembers}>
               {view === 'tree' ? (
                 <TreeView
                   ref={familyTreeRef}
@@ -359,9 +341,9 @@ function FamilyGroupClientContent({
               ) : (
                 <GridView gridSize={settings.gridSize} />
               )}
-            </FamilyGroupMembersContext.Provider>
-          </FamilyGroupDataContext.Provider>
-        </FamilyGroupActionsContext.Provider>
+            </FamilyMembersContext.Provider>
+          </FamilyDataContext.Provider>
+        </FamilyActionsContext.Provider>
       </div>
 
       {selectedMember && group?.groupType && currentUserMember && (
@@ -388,7 +370,7 @@ function FamilyGroupClientContent({
   )
 }
 
-export function FamilyGroupClient(props: FamilyGroupClientProps) {
+export function FamilyClient(props: FamilyClientProps) {
   const { view } = props
   const { resolvedTheme } = useTheme()
   const [hasMounted, setHasMounted] = useState(false)
@@ -425,56 +407,12 @@ export function FamilyGroupClient(props: FamilyGroupClientProps) {
       steps={tourSteps}
       className="custom-tour"
       onClickMask={() => {}}
-      styles={{
-        popover: (base: React.CSSProperties) => ({
-          ...base,
-          maxWidth: isMobile ? 'calc(100vw - 40px)' : '380px',
-          width: isMobile ? 'calc(100vw - 40px)' : undefined,
-          backgroundColor: 'var(--background)',
-          color: 'var(--foreground)',
-          borderRadius: '0.375rem',
-          boxShadow:
-            '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
-          border: `3px solid ${
-            resolvedTheme === 'dark'
-              ? 'hsl(240 3.7% 25.9%)'
-              : 'hsl(214.3 31.8% 81.4%)'
-          }`,
-        }),
-        badge: (base: React.CSSProperties) => ({
-          ...base,
-          backgroundColor: '#4f46e5',
-        }),
-        dot: (
-          base: React.CSSProperties,
-          { current }: { current?: boolean } = {},
-        ) => ({
-          ...base,
-          backgroundColor: current ? '#4f46e5' : '#a5b4fc',
-        }),
-        close: (base: React.CSSProperties) => ({
-          ...base,
-          color: 'var(--foreground)',
-          top: 12,
-          right: 12,
-          width: '1.4rem',
-          height: '1.4rem',
-        }),
-        arrow: (base: React.CSSProperties) => ({
-          ...base,
-          display: 'block',
-          color: 'var(--foreground)',
-          width: '1.4rem',
-          height: '1.4rem',
-        }),
-        maskWrapper: (base: React.CSSProperties) =>
-          isMobile ? { ...base, color: 'transparent' } : base,
-      }}
+      styles={getTourStyles(isMobile, resolvedTheme)}
       showNavigation={true}
       showCloseButton={true}
       disableInteraction={true}
     >
-      <FamilyGroupClientContent
+      <FamilyClientContent
         {...props}
         groupSlug={props.groupSlug}
         isMobile={isMobile}

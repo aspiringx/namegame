@@ -2,41 +2,21 @@
 
 import { useGroup } from '@/components/GroupProvider'
 import FamilyMemberCard from '@/components/FamilyMemberCard'
+import { getGridClasses } from '@/lib/group-utils'
 import {
-  useFamilyGroupMembers,
-  useFamilyGroupActions,
-  useFamilyGroupData,
-} from './FamilyGroupClient'
-
-// Helper function to generate dynamic grid classes
-const getGridClasses = (gridSize: number) => {
-  const baseClasses = 'grid gap-4 md:gap-6'
-  
-  // Map gridSize to Tailwind grid-cols classes
-  const gridColsMap: { [key: number]: string } = {
-    1: 'grid-cols-1',
-    2: 'grid-cols-2',
-    3: 'grid-cols-3',
-    4: 'grid-cols-4',
-    5: 'grid-cols-5',
-    6: 'grid-cols-6',
-    7: 'grid-cols-7',
-    8: 'grid-cols-8',
-    9: 'grid-cols-9',
-  }
-  
-  const gridClass = gridColsMap[gridSize] || 'grid-cols-3' // fallback
-  return `${baseClasses} ${gridClass}`
-}
+  useFamilyMembers,
+  useFamilyActions,
+  useFamilyData,
+} from './FamilyClient'
 
 interface GridViewProps {
   gridSize: number
 }
 
 export default function GridView({ gridSize }: GridViewProps) {
-  const members = useFamilyGroupMembers()
-  const { onOpenRelateModal } = useFamilyGroupActions()
-  const { relationshipMap } = useFamilyGroupData()
+  const members = useFamilyMembers()
+  const { onOpenRelateModal } = useFamilyActions()
+  const { relationshipMap } = useFamilyData()
   const groupContext = useGroup()
 
   if (!groupContext) {

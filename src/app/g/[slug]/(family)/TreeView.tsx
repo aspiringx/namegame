@@ -2,7 +2,7 @@
 
 import { forwardRef } from 'react'
 import { useGroup } from '@/components/GroupProvider'
-import { useFamilyGroupData } from './FamilyGroupClient'
+import { useFamilyData } from './FamilyClient'
 import FamilyTree, { FamilyTreeRef } from './FamilyTree'
 import { MemberWithUser } from '@/types'
 
@@ -15,7 +15,7 @@ interface TreeViewProps {
 const TreeView = forwardRef<FamilyTreeRef, TreeViewProps>(
   ({ onIsFocalUserCurrentUserChange, members, onOpenRelate }, ref) => {
     const groupContext = useGroup()
-    const { relationshipMap } = useFamilyGroupData()
+    const { relationshipMap } = useFamilyData()
 
     if (!groupContext) {
       return null

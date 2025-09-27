@@ -3,8 +3,14 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import useLocalStorage from '@/hooks/useLocalStorage'
 import useGroupMembers from '@/hooks/useGroupMembers'
+import { getGridSizeConfig, GroupPageSettings } from '@/lib/group-utils'
 import { useRouter } from 'next/navigation'
-import type { MemberWithUser, FullRelationship } from '@/types'
+import { useSession } from 'next-auth/react'
+import type {
+  MemberWithUser,
+  FullRelationship,
+  CommunityGroupData,
+} from '@/types'
 import {
   getGroupMembersForRelate,
   createAcquaintanceRelationship,
@@ -12,6 +18,7 @@ import {
 import { getMemberRelations } from '@/lib/actions'
 import RelateModal from '@/components/RelateModal'
 import { useGroup } from '@/components/GroupProvider'
+import { GuestMessage } from '@/components/GuestMessage'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -21,46 +28,32 @@ import { TourProvider, useTour } from '@reactour/tour'
 import { useTheme } from 'next-themes'
 import { Toaster, toast } from 'sonner'
 import Modal from '@/components/ui/modal'
-import GroupToolbar from './GroupToolbar'
+import GroupToolbar from '@/components/GroupToolbar'
+import { getCommunityGroupToolbarConfig } from '@/lib/group-toolbar-config'
 import MemberGrid from './MemberGrid'
 import { steps as communityTourSteps } from '@/components/tours/CommunityTour'
 import { steps as communityTourMobileSteps } from '@/components/tours/CommunityTourMobile'
 
-interface CommunityGroupClientProps {
-  members: MemberWithUser[]
-  currentUserMember: MemberWithUser | undefined
-  groupSlug?: string
+interface CommunityClientProps {
+  groupData: CommunityGroupData
   view: 'grid' | 'games'
 }
 
-interface CommunityGroupClientContentProps
-  extends Omit<CommunityGroupClientProps, 'greetedCount' | 'notGreetedCount'> {
+interface CommunityClientContentProps {
+  members: MemberWithUser[]
+  groupSlug: string
   settings: GroupPageSettings
   setSettings: React.Dispatch<React.SetStateAction<GroupPageSettings>>
-  groupSlug?: string
   view: 'grid' | 'games'
   isMobile: boolean
   gridSizeConfig: { min: number; max: number; default: number }
 }
 
-interface GroupPageSettings {
-  sortConfig: {
-    key: 'when_connected' | 'firstName' | 'lastName'
-    direction: 'asc' | 'desc'
-  }
-  searchQuery: string
-  filterByRealPhoto: boolean
-  filterConnectedStatus: 'all' | 'connected' | 'not_connected'
-  gridSize: number
-}
-
-const CommunityGroupClientContent: React.FC<
-  CommunityGroupClientContentProps
-> = ({
+const CommunityClientContent: React.FC<CommunityClientContentProps> = ({
   members: initialMembers,
+  groupSlug,
   settings,
   setSettings,
-  groupSlug,
   view,
   isMobile,
   gridSizeConfig: _gridSizeConfig,
@@ -188,7 +181,7 @@ const CommunityGroupClientContent: React.FC<
     setSettings((prev) => ({ ...prev, searchQuery: query }))
   }
 
-  const handleSort = (key: 'when_connected' | 'firstName' | 'lastName') => {
+  const handleSort = (key: string) => {
     setSettings((prev) => ({
       ...prev,
       sortConfig: {
@@ -224,6 +217,7 @@ const CommunityGroupClientContent: React.FC<
               groupSlug={group.slug}
               isMobile={isMobile}
               gridSizeConfig={getGridSizeConfig(isMobile)}
+              config={getCommunityGroupToolbarConfig(group.slug)}
             />
           </div>
 
@@ -305,25 +299,16 @@ const CommunityGroupClientContent: React.FC<
   )
 }
 
-// Helper function to get responsive grid size ranges and defaults
-const getGridSizeConfig = (isMobile: boolean) => {
-  if (isMobile) {
-    return { min: 1, max: 3, default: 2 }
-  } else {
-    return { min: 2, max: 9, default: 6 }
-  }
-}
-
-const CommunityGroupClient: React.FC<CommunityGroupClientProps> = ({
+const CommunityClient: React.FC<CommunityClientProps> = ({
+  groupData,
   view,
-  ...props
 }) => {
+  const { data: session } = useSession()
   const groupContext = useGroup()
-  const { group } = groupContext || {}
   const [isMobile, setIsMobile] = useState(false)
 
   const [settings, setSettings] = useLocalStorage<GroupPageSettings>(
-    `namegame_community-group-settings_${group?.slug || ''}`,
+    `namegame_community-group-settings_${groupData?.slug || ''}`,
     {
       sortConfig: { key: 'when_connected', direction: 'desc' },
       searchQuery: '',
@@ -360,6 +345,15 @@ const CommunityGroupClient: React.FC<CommunityGroupClientProps> = ({
   const tourSteps = useMemo(() => {
     return isMobile ? communityTourMobileSteps : communityTourSteps
   }, [isMobile])
+
+  // Extract member data and guest status after all hooks
+  if (!groupData) {
+    return <div>Group not found.</div>
+  }
+
+  const { relatedMembers, notRelatedMembers, currentUserMember } = groupData
+  const members = [...relatedMembers, ...notRelatedMembers]
+  const isGuest = !currentUserMember || currentUserMember.role?.code === 'guest'
 
   if (!groupContext) {
     return null // Should be rendered within GroupProvider
@@ -438,8 +432,15 @@ const CommunityGroupClient: React.FC<CommunityGroupClientProps> = ({
       disableInteraction={true}
     >
       <Toaster />
-      <CommunityGroupClientContent
-        {...props}
+      <GuestMessage
+        isGuest={isGuest}
+        firstName={session?.user?.firstName}
+        groupName={groupData.name}
+        groupType={groupData.groupType.code}
+      />
+      <CommunityClientContent
+        members={members}
+        groupSlug={groupData.slug}
         settings={settings}
         setSettings={setSettings}
         view={view}
@@ -450,4 +451,4 @@ const CommunityGroupClient: React.FC<CommunityGroupClientProps> = ({
   )
 }
 
-export default CommunityGroupClient
+export default CommunityClient

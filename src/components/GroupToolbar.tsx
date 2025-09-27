@@ -1,7 +1,6 @@
 'use client'
 
 import React, { RefObject } from 'react'
-import type { FamilyTreeRef } from './FamilyTree'
 import { Button } from '@/components/ui/button'
 import { Slider } from '@/components/ui/slider'
 import { usePathname } from 'next/navigation'
@@ -29,10 +28,16 @@ import {
   DropdownMenuCheckboxItem,
 } from '@/components/ui/dropdown-menu'
 
-// This should be kept in sync with the one in FamilyGroupClient.tsx
-interface GroupPageSettings {
+// Universal sort option type
+interface SortOption {
+  key: string
+  label: string
+}
+
+// Universal settings interface
+interface UniversalGroupSettings {
   sortConfig: {
-    key: 'joined' | 'firstName' | 'lastName' | 'closest'
+    key: string
     direction: 'asc' | 'desc'
   }
   searchQuery: string
@@ -47,17 +52,35 @@ interface GridSizeConfig {
   default: number
 }
 
+// Group-specific configuration
+interface GroupToolbarConfig {
+  sortOptions: SortOption[]
+  features: {
+    familyTree?: boolean
+    games?: boolean
+    resetButton?: boolean
+  }
+  viewModes: Array<{
+    key: string
+    label: string
+    icon: React.ComponentType<{ className?: string }>
+    href: string
+  }>
+}
+
 interface GroupToolbarProps {
-  settings: GroupPageSettings
-  setSettings: React.Dispatch<React.SetStateAction<GroupPageSettings>>
-  handleSort: (key: 'joined' | 'firstName' | 'lastName' | 'closest') => void
+  settings: UniversalGroupSettings
+  setSettings: React.Dispatch<React.SetStateAction<UniversalGroupSettings>>
+  handleSort: (key: string) => void
   setTourOpen: (isOpen: boolean) => void
   isMobile: boolean
-  familyTreeRef?: RefObject<FamilyTreeRef | null>
-  isResetDisabled?: boolean
-  viewMode: 'grid' | 'tree' | 'games'
+  viewMode: string
   groupSlug: string
   gridSizeConfig: GridSizeConfig
+  config: GroupToolbarConfig
+  // Family-specific props (optional)
+  familyTreeRef?: RefObject<any>
+  isResetDisabled?: boolean
 }
 
 export default function GroupToolbar({
@@ -66,23 +89,16 @@ export default function GroupToolbar({
   handleSort,
   setTourOpen,
   isMobile,
-  familyTreeRef,
-  isResetDisabled,
   viewMode,
   groupSlug,
   gridSizeConfig,
+  config,
+  familyTreeRef,
+  isResetDisabled = false,
 }: GroupToolbarProps) {
-  const sortOptions: {
-    key: 'joined' | 'firstName' | 'lastName' | 'closest'
-    label: string
-  }[] = [
-    { key: 'closest', label: 'Closest relation' },
-    { key: 'joined', label: 'When joined' },
-    { key: 'firstName', label: 'First name' },
-    { key: 'lastName', label: 'Last name' },
-  ]
+  const pathname = usePathname()
 
-  const currentSortLabel = sortOptions.find(
+  const currentSortLabel = config.sortOptions.find(
     (o) => o.key === settings.sortConfig.key,
   )?.label
 
@@ -100,14 +116,16 @@ export default function GroupToolbar({
     activeFilters.push('Real')
   }
 
-  const pathname = usePathname()
   const isTreeView = pathname.includes('/tree')
+  const isGamesView = pathname.includes('/games')
+  const isGridView = !isTreeView && !isGamesView
 
   return (
     <div className="my-2 flex items-center justify-between">
       {/* Left-side controls */}
       <div className="flex flex-wrap items-center gap-2">
-        {isTreeView ? (
+        {/* Family tree reset button */}
+        {isTreeView && config.features.resetButton && (
           <Button
             variant="secondary"
             size="sm"
@@ -118,7 +136,10 @@ export default function GroupToolbar({
           >
             Reset
           </Button>
-        ) : viewMode !== 'games' ? (
+        )}
+
+        {/* Filter and Sort (not shown in games or tree view) */}
+        {!isTreeView && !isGamesView && (
           <>
             <div data-tour="filter-buttons">
               <DropdownMenu>
@@ -187,6 +208,7 @@ export default function GroupToolbar({
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
+
             <div data-tour="sort-buttons">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -205,7 +227,7 @@ export default function GroupToolbar({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
-                  {sortOptions.map((option) => (
+                  {config.sortOptions.map((option) => (
                     <DropdownMenuItem
                       key={option.key}
                       onSelect={(e) => {
@@ -226,7 +248,9 @@ export default function GroupToolbar({
               </DropdownMenu>
             </div>
           </>
-        ) : null}
+        )}
+
+        {/* Help/Tour button */}
         <Button
           variant="ghost"
           size="icon"
@@ -240,131 +264,134 @@ export default function GroupToolbar({
       {/* View Mode Buttons */}
       <div className="flex items-center gap-2">
         {isMobile ? (
+          /* Mobile dropdown for all view modes */
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" data-tour="view-mode-mobile">
                 {viewMode === 'grid' ? (
                   <LayoutGrid className="h-4 w-4" />
-                ) : (
+                ) : viewMode === 'tree' ? (
                   <GitFork className="h-4 w-4" />
+                ) : (
+                  <Gamepad2 className="h-4 w-4" />
                 )}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <Link href={`/g/${groupSlug}`}>
-                <DropdownMenuItem>
-                  <LayoutGrid className="mr-2 h-4 w-4" />
-                  <span>Photos</span>
-                </DropdownMenuItem>
-              </Link>
-              {viewMode === 'grid' && (
-                <div className="px-3 py-2">
-                  <DropdownMenuLabel className="px-0 pb-2">
-                    Grid Size
-                  </DropdownMenuLabel>
-                  <div className="mb-2 flex items-center justify-between">
-                    <span className="text-muted-foreground text-sm">
-                      {gridSizeConfig.min}
-                    </span>
-                    <span className="text-sm font-medium">
-                      {settings.gridSize} per row
-                    </span>
-                    <span className="text-muted-foreground text-sm">
-                      {gridSizeConfig.max}
-                    </span>
+              {config.viewModes.map((mode) => (
+                <Link key={mode.key} href={mode.href}>
+                  <DropdownMenuItem>
+                    <mode.icon className="mr-2 h-4 w-4" />
+                    <span>{mode.label}</span>
+                  </DropdownMenuItem>
+                </Link>
+              ))}
+              {isGridView && (
+                <>
+                  <DropdownMenuSeparator />
+                  <div className="px-3 pt-2 pb-4">
+                    <DropdownMenuLabel className="px-0 pb-2">
+                      Photo Size
+                    </DropdownMenuLabel>
+                    <div className="mb-2 flex items-center justify-between">
+                      <span className="text-muted-foreground text-sm">
+                        {gridSizeConfig.min}
+                      </span>
+                      <span className="text-sm font-medium">
+                        {settings.gridSize} per row
+                      </span>
+                      <span className="text-muted-foreground text-sm">
+                        {gridSizeConfig.max}
+                      </span>
+                    </div>
+                    <Slider
+                      value={[settings.gridSize || gridSizeConfig.default]}
+                      onValueChange={(value) =>
+                        setSettings((prev) => ({ ...prev, gridSize: value[0] }))
+                      }
+                      min={gridSizeConfig.min}
+                      max={gridSizeConfig.max}
+                      step={1}
+                      className="w-32"
+                    />
                   </div>
-                  <Slider
-                    value={[settings.gridSize || gridSizeConfig.default]}
-                    onValueChange={(value) =>
-                      setSettings((prev) => ({ ...prev, gridSize: value[0] }))
-                    }
-                    min={gridSizeConfig.min}
-                    max={gridSizeConfig.max}
-                    step={1}
-                    className="w-32"
-                  />
-                </div>
+                </>
               )}
-              <DropdownMenuSeparator />
-              <Link href={`/g/${groupSlug}/tree`}>
-                <DropdownMenuItem>
-                  <GitFork className="mr-2 h-4 w-4" />
-                  <span>Family Tree</span>
-                </DropdownMenuItem>
-              </Link>
             </DropdownMenuContent>
           </DropdownMenu>
         ) : (
+          /* Desktop individual buttons */
           <>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant={
-                    !pathname.includes('/tree') && !pathname.includes('/games')
-                      ? 'secondary'
-                      : 'ghost'
-                  }
-                  size="sm"
-                  data-tour="grid-button"
-                >
+            {/* Grid view button - dropdown with size control if on grid view, direct link otherwise */}
+            {isGridView ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="secondary" size="sm" data-tour="grid-button">
+                    <LayoutGrid className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuLabel>Photo Size</DropdownMenuLabel>
+                  <div className="px-3 pt-2 pb-4">
+                    <div className="mb-2 flex items-center justify-between">
+                      <span className="text-muted-foreground text-sm">
+                        {gridSizeConfig.min}
+                      </span>
+                      <span className="text-sm font-medium">
+                        {settings.gridSize} per row
+                      </span>
+                      <span className="text-muted-foreground text-sm">
+                        {gridSizeConfig.max}
+                      </span>
+                    </div>
+                    <Slider
+                      value={[settings.gridSize || gridSizeConfig.default]}
+                      onValueChange={(value) => {
+                        setSettings((prev) => ({ ...prev, gridSize: value[0] }))
+                      }}
+                      min={gridSizeConfig.min}
+                      max={gridSizeConfig.max}
+                      step={1}
+                      className="w-32"
+                    />
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Link href={`/g/${groupSlug}`}>
+                <Button variant="ghost" size="sm" data-tour="grid-button">
                   <LayoutGrid className="h-4 w-4" />
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuLabel>Grid Size</DropdownMenuLabel>
-                <div className="px-3 py-2">
-                  <div className="mb-2 flex items-center justify-between">
-                    <span className="text-muted-foreground text-sm">
-                      {gridSizeConfig.min}
-                    </span>
-                    <span className="text-sm font-medium">
-                      {settings.gridSize} per row
-                    </span>
-                    <span className="text-muted-foreground text-sm">
-                      {gridSizeConfig.max}
-                    </span>
-                  </div>
-                  <Slider
-                    value={[settings.gridSize || gridSizeConfig.default]}
-                    onValueChange={(value) => {
-                      setSettings((prev) => ({ ...prev, gridSize: value[0] }))
-                    }}
-                    min={gridSizeConfig.min}
-                    max={gridSizeConfig.max}
-                    step={1}
-                    className="w-32"
-                  />
-                </div>
-                <DropdownMenuSeparator />
-                <Link href={`/g/${groupSlug}`}>
-                  <DropdownMenuItem>
-                    <LayoutGrid className="mr-2 h-4 w-4" />
-                    <span>View Photos</span>
-                  </DropdownMenuItem>
-                </Link>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <Link href={`/g/${groupSlug}/tree`}>
-              <Button
-                variant={pathname.includes('/tree') ? 'secondary' : 'ghost'}
-                size="sm"
-                data-tour="tree-button"
-              >
-                <GitFork className="h-4 w-4" />
-              </Button>
-            </Link>
+              </Link>
+            )}
+
+            {/* Family tree button (if enabled) */}
+            {config.features.familyTree && (
+              <Link href={`/g/${groupSlug}/tree`}>
+                <Button
+                  variant={pathname.includes('/tree') ? 'secondary' : 'ghost'}
+                  size="sm"
+                  data-tour="tree-button"
+                >
+                  <GitFork className="h-4 w-4" />
+                </Button>
+              </Link>
+            )}
           </>
         )}
 
-        <Link href={`/g/${groupSlug}/games`}>
-          <Button
-            variant={pathname.includes('/games') ? 'secondary' : 'ghost'}
-            size="sm"
-            data-tour="game-button"
-          >
-            <Gamepad2 className="h-6 w-6 text-orange-500" />
-          </Button>
-        </Link>
+        {/* Games button (desktop only - mobile has it in dropdown) */}
+        {!isMobile && config.features.games && (
+          <Link href={`/g/${groupSlug}/games`}>
+            <Button
+              variant={pathname.includes('/games') ? 'secondary' : 'ghost'}
+              size="sm"
+              data-tour="game-button"
+            >
+              <Gamepad2 className="h-4 w-4" />
+            </Button>
+          </Link>
+        )}
       </div>
     </div>
   )
