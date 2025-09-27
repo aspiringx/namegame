@@ -2,7 +2,7 @@
 
 import { CommunityGroupData } from '@/types'
 import { GuestMessage } from '@/components/GuestMessage'
-import CommunityGroupClient from './CommunityGroupClient'
+import { UniversalGroupClient } from '@/components/UniversalGroupClient'
 import { useSession } from 'next-auth/react'
 
 export default function CommunityGroupPageClient({
@@ -31,10 +31,11 @@ export default function CommunityGroupPageClient({
         groupName={groupData.name}
         groupType={groupData.groupType.code}
       />
-      <CommunityGroupClient
+      <UniversalGroupClient
         members={members}
         currentUserMember={currentUserMember}
         groupSlug={groupData.slug}
+        groupType="community"
         view={view}
       />
     </>

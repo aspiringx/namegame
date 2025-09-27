@@ -1,5 +1,5 @@
 import { getGroup, getFamilyRelationships } from './data'
-import { FamilyGroupClient } from './FamilyGroupClient'
+import { UniversalGroupClient } from '@/components/UniversalGroupClient'
 import { notFound } from 'next/navigation'
 import { FullRelationship } from '@/types'
 import { headers } from 'next/headers'
@@ -24,11 +24,12 @@ export default async function FamilyPage({
   const relationships = await getFamilyRelationships(groupMemberIds)
 
   return (
-    <FamilyGroupClient
-      initialMembers={groupData.members}
+    <UniversalGroupClient
+      members={groupData.members}
       groupSlug={params.slug}
-      initialMemberCount={groupData.memberCount}
+      groupType="family"
       initialRelationships={relationships as FullRelationship[]}
+      initialMemberCount={groupData.memberCount}
       view="grid"
     />
   )
