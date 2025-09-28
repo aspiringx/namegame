@@ -1,7 +1,19 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import type { MemberWithUser as Member } from '@/types/index'
-import { MoreVertical, KeyRound, Users, Link } from 'lucide-react'
+import { formatDistanceToNow } from 'date-fns'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
+import {
+  MoreVertical,
+  Link,
+  KeyRound,
+  Users,
+} from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -105,6 +117,24 @@ export default function BaseMemberCard({
               >
                 {relationship}
               </button>
+            )}
+            
+            {/* Strategy-specific connected time rendering (community groups) */}
+            {strategy.showConnectedTime && member.connectedAt && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <p className={strategy.connectedTimeClassName}>
+                      {formatDistanceToNow(new Date(member.connectedAt), {
+                        addSuffix: true,
+                      })}
+                    </p>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{new Date(member.connectedAt).toLocaleString()}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             )}
           </div>
           <div className="vertical-align-top">

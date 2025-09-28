@@ -17,6 +17,10 @@ export interface MemberCardStrategy {
   relationshipClassName?: string
   relationshipClickable?: boolean
   
+  // Configuration for connected time display (community groups)
+  showConnectedTime?: boolean
+  connectedTimeClassName?: string
+  
   // Configuration for available actions
   availableActions: Array<'relate' | 'connect' | 'admin'>
   
@@ -40,8 +44,8 @@ export interface DataFetcher {
 
 // Group-specific actions interface
 export interface GroupActions {
-  handleSort: (key: string, settings: GroupPageSettings, setSettings: (settings: GroupPageSettings) => void) => void
-  handleSearch: (query: string, setSettings: (settings: GroupPageSettings) => void) => void
+  handleSort: (key: string, settings: GroupPageSettings, setSettings: (settings: GroupPageSettings | ((prev: GroupPageSettings) => GroupPageSettings)) => void) => void
+  handleSearch: (query: string, setSettings: (settings: GroupPageSettings | ((prev: GroupPageSettings) => GroupPageSettings)) => void) => void
   handleMemberAction: (action: string, member: MemberWithUser) => void
 }
 

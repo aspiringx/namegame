@@ -16,6 +16,12 @@ import BaseMemberCard from '@/components/BaseMemberCard'
 import { getGridClasses } from '@/lib/group-utils'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { getRelationship } from '@/lib/family-tree'
+import RelateModal from '@/components/RelateModal'
+import { getMemberRelations } from '@/lib/actions'
+import { createAcquaintanceRelationship } from '@/app/g/[slug]/(community)/actions'
+import Modal from '@/components/ui/modal'
+import { Button } from '@/components/ui/button'
+import { toast } from 'sonner'
 
 interface UniversalClientProps {
   view: 'grid' | 'tree' | 'games'
@@ -46,6 +52,15 @@ function UniversalClientContent({
   const groupContext = useGroup()
   const { setIsOpen } = useTour()
   const router = useRouter()
+
+  // Modal state
+  const [isRelateModalOpen, setIsRelateModalOpen] = useState(false)
+  const [selectedMember, setSelectedMember] = useState<MemberWithUser | null>(null)
+  const [memberRelations, setMemberRelations] = useState<any[]>([])
+  
+  // Connect modal state
+  const [isConnectModalOpen, setIsConnectModalOpen] = useState(false)
+  const [memberToConnect, setMemberToConnect] = useState<MemberWithUser | null>(null)
 
   // Get adapter-specific default settings
   const [settings, setSettings] = useLocalStorage<GroupPageSettings>(
@@ -100,7 +115,7 @@ function UniversalClientContent({
     actions.handleSearch(query, setSettings)
   }
 
-  // Filter and sort members (simplified version - would need full logic from original clients)
+  // Filter and sort members with multi-level sorting
   const filteredAndSortedMembers = useMemo(() => {
     let sortedMembers = [...initialMembers]
 
@@ -145,6 +160,14 @@ function UniversalClientContent({
         }
       }
       
+      else if (key === 'when_connected') {
+        const aConnected = a.connectedAt ? new Date(a.connectedAt).getTime() : 0
+        const bConnected = b.connectedAt ? new Date(b.connectedAt).getTime() : 0
+        if (aConnected !== bConnected) {
+          primaryResult = direction === 'asc' ? aConnected - bConnected : bConnected - aConnected
+        }
+      }
+      
       // If primary sort is tied, apply secondary sorts
       if (primaryResult === 0) {
         // Secondary sort: lastName (ascending)
@@ -166,15 +189,56 @@ function UniversalClientContent({
     return sortedMembers
   }, [initialMembers, settings, relationshipMap])
 
-  // Placeholder handlers - would need full implementation
-  const handleOpenRelateModal = (member: MemberWithUser) => {
-    console.log('Open relate modal for:', member.user.name)
-    // This would trigger the appropriate modal based on group type
+  // Relationship modal handler with permission logic
+  const handleOpenRelateModal = async (member: MemberWithUser) => {
+    setSelectedMember(member)
+    setIsRelateModalOpen(true)
+    
+    // Fetch the member's relations
+    try {
+      const relations = await getMemberRelations(member.userId, groupSlug)
+      setMemberRelations(relations)
+    } catch (error) {
+      console.error('Failed to fetch member relations:', error)
+      setMemberRelations([])
+    }
+  }
+
+  const handleCloseRelateModal = () => {
+    setIsRelateModalOpen(false)
+    setSelectedMember(null)
+  }
+
+  const handleRelationshipAdded = () => {
+    // Refresh the page to show updated relationship data
+    router.refresh()
   }
 
   const handleOpenConnectModal = (member: MemberWithUser) => {
-    console.log('Open connect modal for:', member.user.name)
-    // This would trigger connection logic for community groups
+    setMemberToConnect(member)
+    setIsConnectModalOpen(true)
+  }
+
+  const handleCloseConnectModal = () => {
+    setIsConnectModalOpen(false)
+    setMemberToConnect(null)
+  }
+
+  const handleConfirmConnect = async () => {
+    if (!memberToConnect || !groupSlug) {
+      toast.error('Could not connect member. Please try again.')
+      return
+    }
+    try {
+      await createAcquaintanceRelationship(memberToConnect.userId, groupSlug)
+      toast.success(`You are now connected with ${memberToConnect.user.name}.`)
+      router.refresh()
+    } catch (error) {
+      console.error('Failed to create acquaintance relationship:', error)
+      toast.error('Failed to connect.')
+    } finally {
+      handleCloseConnectModal()
+    }
   }
 
   if (!groupContext) {
@@ -240,14 +304,17 @@ function UniversalClientContent({
           {view === 'grid' && (
             <div className={getGridClasses(settings.gridSize)}>
               {filteredAndSortedMembers.map((member, index) => {
-                const relationship = relationshipMap?.get(member.userId)?.label
-                
                 return (
                   <BaseMemberCard
                     key={member.userId}
                     member={member}
                     strategy={strategy}
-                    relationship={relationship}
+                    relationship={
+                      member.userId === currentUserMember?.userId
+                        ? 'Me'
+                        : relationshipMap.get(member.userId)?.label || 
+                          (groupContext.group.groupType.code === 'family' ? 'Relative' : undefined)
+                    }
                     isGroupAdmin={isGroupAdmin}
                     currentUserId={currentUserMember?.userId}
                     groupSlug={groupSlug}
@@ -278,6 +345,44 @@ function UniversalClientContent({
 
       {/* Adapter-specific additional content */}
       {adapter.renderAdditionalContent?.()}
+
+      {/* RelateModal */}
+      {selectedMember && (
+        <RelateModal
+          isOpen={isRelateModalOpen}
+          onClose={handleCloseRelateModal}
+          member={selectedMember}
+          groupType={groupContext.group.groupType}
+          groupMembers={initialMembers}
+          groupSlug={groupSlug}
+          initialRelations={memberRelations}
+          onRelationshipAdded={handleRelationshipAdded}
+          isReadOnly={!groupContext.isGroupAdmin && !groupContext.isSuperAdmin && selectedMember.userId !== groupContext.currentUserMember?.userId}
+          loggedInUserId={groupContext.currentUserMember?.userId || ''}
+        />
+      )}
+
+      {/* Connect Modal */}
+      {isConnectModalOpen && memberToConnect && (
+        <Modal isOpen={isConnectModalOpen} onClose={handleCloseConnectModal}>
+          <div className="p-6">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
+              Connect
+            </h3>
+            <div className="mt-2">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                If you already know {memberToConnect.user.name}, connect.
+              </p>
+            </div>
+            <div className="mt-6 flex justify-end space-x-4">
+              <Button variant="outline" onClick={handleCloseConnectModal}>
+                Cancel
+              </Button>
+              <Button onClick={handleConfirmConnect}>Connect</Button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </>
   )
 }

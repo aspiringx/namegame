@@ -65,9 +65,9 @@ export class FamilyAdapter implements GroupAdapter {
       },
       handleSearch: (
         query: string,
-        setSettings: (settings: GroupPageSettings) => void,
+        setSettings: (settings: GroupPageSettings | ((prev: GroupPageSettings) => GroupPageSettings)) => void,
       ) => {
-        setSettings((prev) => ({ ...prev, searchQuery: query }))
+        setSettings((prev: GroupPageSettings) => ({ ...prev, searchQuery: query }))
       },
       handleMemberAction: (action: string, member: MemberWithUser) => {
         // Family-specific member actions
