@@ -14,7 +14,7 @@ interface UseGroupModalsProps {
   groupType: 'family' | 'community'
 }
 
-export function useGroupModals({ groupSlug, groupType }: UseGroupModalsProps) {
+export function useGroupModals({ groupSlug, groupType: _groupType }: UseGroupModalsProps) {
   const router = useRouter()
   
   // Modal state

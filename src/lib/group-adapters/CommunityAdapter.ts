@@ -1,6 +1,14 @@
 import { ReactNode } from 'react'
-import { GroupAdapter, MemberCardStrategy, GroupActions, DataFetcher } from './types'
-import { GroupToolbarConfig, getCommunityGroupToolbarConfig } from '@/lib/group-toolbar-config'
+import {
+  GroupAdapter,
+  MemberCardStrategy,
+  GroupActions,
+  DataFetcher,
+} from './types'
+import {
+  GroupToolbarConfig,
+  getCommunityGroupToolbarConfig,
+} from '@/lib/group-toolbar-config'
 import { GroupPageSettings, getDefaultSettings } from '@/lib/group-utils'
 import { CommunityCardStrategy } from './strategies/CommunityCardStrategy'
 import { MemberWithUser } from '@/types'
@@ -30,20 +38,28 @@ export class CommunityAdapter implements GroupAdapter {
 
   getActions(): GroupActions {
     return {
-      handleSort: (key: string, settings: GroupPageSettings, setSettings: (settings: GroupPageSettings) => void) => {
+      handleSort: (
+        key: string,
+        settings: GroupPageSettings,
+        setSettings: (settings: GroupPageSettings) => void,
+      ) => {
         setSettings({
           ...settings,
           sortConfig: {
             key,
             direction:
-              settings.sortConfig.key === key && settings.sortConfig.direction === 'asc'
+              settings.sortConfig.key === key &&
+              settings.sortConfig.direction === 'asc'
                 ? 'desc'
                 : 'asc',
           },
         })
       },
-      handleSearch: (query: string, setSettings: (settings: GroupPageSettings) => void) => {
-        setSettings((prev) => ({ ...prev, searchQuery: query }))
+      handleSearch: (
+        query: string,
+        setSettings: (settings: GroupPageSettings | ((prev: GroupPageSettings) => GroupPageSettings)) => void,
+      ) => {
+        setSettings((prev: GroupPageSettings) => ({ ...prev, searchQuery: query }))
       },
       handleMemberAction: (action: string, member: MemberWithUser) => {
         // Community-specific member actions
@@ -67,14 +83,14 @@ export class CommunityAdapter implements GroupAdapter {
     return getDefaultSettings('community')
   }
 
-  getTourSteps(isMobile: boolean, view: string): any[] {
+  getTourSteps(isMobile: boolean): any[] {
     return isMobile ? communityTourMobileSteps : communityTourSteps
   }
 
   renderSearchInput(
     _settings: GroupPageSettings,
     _setSettings: (settings: GroupPageSettings) => void,
-    _memberCount: number
+    _memberCount: number,
   ): ReactNode {
     // Search input will be rendered by the parent component
     return null

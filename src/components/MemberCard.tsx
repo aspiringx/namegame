@@ -62,6 +62,10 @@ export default function MemberCard({
   const currentMember = allMembers[currentPhotoIndex] || member
   const imageUrl = member.user.photoUrl || '/images/default-avatar.png'
 
+  // Apply grayscale for non-connected users in community groups
+  const isConnected = member.connectedAt
+  const photoClassName = `rounded object-cover${isConnected ? '' : ' grayscale'}`
+
   return (
     <>
       <div className="text-center transition-transform duration-300 ease-in-out">
@@ -74,13 +78,13 @@ export default function MemberCard({
             alt={member.user.name || 'User avatar'}
             fill
             sizes="(max-width: 767px) 100vw, (max-width: 1023px) 50vw, 33vw"
-            className="rounded object-cover"
+            className={photoClassName}
           />
         </div>
         <div className="items-top mt-2 flex justify-between gap-2">
           <div className="w-8">&nbsp;</div>
           <div className="w-7/10">
-            <div className="truncate text-xs text-gray-800 md:text-sm dark:text-gray-200">
+            <div className="truncate text-xs text-gray-800 dark:text-gray-200">
               {member.user.name}
             </div>
             {member.connectedAt && (

@@ -8,12 +8,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import {
-  MoreVertical,
-  Link,
-  KeyRound,
-  Users,
-} from 'lucide-react'
+import { MoreVertical, Link, KeyRound, Users } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -43,8 +38,9 @@ interface BaseMemberCardProps {
  * Universal member card component that uses strategy pattern
  * to handle group-specific rendering and behavior.
  *
- * This replaces both MemberCard and FamilyMemberCard with a single,
- * configurable component that eliminates duplication.
+ * Used by UniversalClient to provide consistent member card rendering
+ * across all group types. Legacy MemberCard and FamilyMemberCard
+ * components are still used by older parts of the codebase.
  */
 export default function BaseMemberCard({
   member,
@@ -78,6 +74,10 @@ export default function BaseMemberCard({
   const currentMember = allMembers[currentPhotoIndex] || member
   const imageUrl = member.user.photoUrl || '/images/default-avatar.png'
 
+  // Determine if user is connected (for community groups)
+  const isConnected = !strategy.showConnectedTime || member.connectedAt
+  const photoClassName = `rounded object-cover${isConnected ? '' : ' grayscale'}`
+
   // Note: actionProps removed since we're using strategy configuration directly
 
   // Get strategy-specific CSS classes
@@ -97,7 +97,7 @@ export default function BaseMemberCard({
             alt={member.user.name || 'User avatar'}
             fill
             sizes="(max-width: 767px) 100vw, (max-width: 1023px) 50vw, 33vw"
-            className="rounded object-cover"
+            className={photoClassName}
           />
         </div>
         <div className="items-top mt-2 flex justify-between gap-2">
@@ -118,7 +118,7 @@ export default function BaseMemberCard({
                 {relationship}
               </button>
             )}
-            
+
             {/* Strategy-specific connected time rendering (community groups) */}
             {strategy.showConnectedTime && member.connectedAt && (
               <TooltipProvider>

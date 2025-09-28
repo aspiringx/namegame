@@ -81,7 +81,7 @@ export class FamilyAdapter implements GroupAdapter {
 
   getDataFetcher(): DataFetcher {
     return {
-      getInitialData: async (groupSlug: string) => {
+      getInitialData: async (_groupSlug: string) => {
         // Family-specific data fetching logic would go here
         // This would include relationship data fetching
         return {}

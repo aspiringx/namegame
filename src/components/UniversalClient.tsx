@@ -6,11 +6,18 @@ import useLocalStorage from '@/hooks/useLocalStorage'
 import { useGroup } from '@/components/GroupProvider'
 import { GuestMessage } from '@/components/GuestMessage'
 import GroupToolbar from '@/components/GroupToolbar'
-import { getGridSizeConfig, getTourStyles, GroupPageSettings } from '@/lib/group-utils'
+import {
+  getGridSizeConfig,
+  getTourStyles,
+  GroupPageSettings,
+} from '@/lib/group-utils'
 import { TourProvider, useTour } from '@reactour/tour'
 import { useTheme } from 'next-themes'
 import { MemberWithUser } from '@/types'
-import { getGroupAdapter, getGroupTypeFromCode } from '@/lib/group-adapters/factory'
+import {
+  getGroupAdapter,
+  getGroupTypeFromCode,
+} from '@/lib/group-adapters/factory'
 import { GroupAdapter } from '@/lib/group-adapters/types'
 import BaseMemberCard from '@/components/BaseMemberCard'
 import { getGridClasses } from '@/lib/group-utils'
@@ -34,7 +41,8 @@ interface UniversalClientProps {
   initialRelationships?: any[]
 }
 
-interface UniversalClientContentProps extends Omit<UniversalClientProps, 'initialMemberCount'> {
+interface UniversalClientContentProps
+  extends Omit<UniversalClientProps, 'initialMemberCount'> {
   isMobile: boolean
   adapter: GroupAdapter
 }
@@ -57,13 +65,17 @@ function UniversalClientContent({
 
   // Modal state
   const [isRelateModalOpen, setIsRelateModalOpen] = useState(false)
-  const [selectedMember, setSelectedMember] = useState<MemberWithUser | null>(null)
+  const [selectedMember, setSelectedMember] = useState<MemberWithUser | null>(
+    null,
+  )
   const [memberRelations, setMemberRelations] = useState<any[]>([])
-  
+
   // Connect modal state
   const [isConnectModalOpen, setIsConnectModalOpen] = useState(false)
-  const [memberToConnect, setMemberToConnect] = useState<MemberWithUser | null>(null)
-  
+  const [memberToConnect, setMemberToConnect] = useState<MemberWithUser | null>(
+    null,
+  )
+
   // Tree view state
   const [isResetDisabled, setIsResetDisabled] = useState(true)
   const treeRef = useRef<any>(null)
@@ -71,7 +83,7 @@ function UniversalClientContent({
   // Get adapter-specific default settings
   const [settings, setSettings] = useLocalStorage<GroupPageSettings>(
     `namegame_universal-group-settings_${groupSlug}`,
-    adapter.getDefaultSettings()
+    adapter.getDefaultSettings(),
   )
 
   // Auto-adjust gridSize based on screen size (prevent hydration mismatch)
@@ -84,13 +96,19 @@ function UniversalClientContent({
 
   // Calculate relationship map for family groups (similar to original FamilyClient)
   const relationshipMap = useMemo(() => {
-    if (!groupContext?.currentUserMember || !initialRelationships || groupContext.group?.groupType?.code !== 'family') {
+    if (
+      !groupContext?.currentUserMember ||
+      !initialRelationships ||
+      groupContext.group?.groupType?.code !== 'family'
+    ) {
       return new Map<string, { label: string; steps: number }>()
     }
-    
+
     const newMap = new Map<string, { label: string; steps: number }>()
-    const usersMap = new Map(initialMembers.map(member => [member.userId, member.user]))
-    
+    const usersMap = new Map(
+      initialMembers.map((member) => [member.userId, member.user]),
+    )
+
     for (const alter of initialMembers) {
       if (alter.userId === groupContext.currentUserMember.userId) continue
       const result = getRelationship(
@@ -108,7 +126,12 @@ function UniversalClientContent({
       }
     }
     return newMap
-  }, [groupContext?.currentUserMember, initialRelationships, initialMembers, groupContext?.group?.groupType?.code])
+  }, [
+    groupContext?.currentUserMember,
+    initialRelationships,
+    initialMembers,
+    groupContext?.group?.groupType?.code,
+  ])
 
   // Get adapter-specific actions
   const actions = adapter.getActions()
@@ -130,7 +153,7 @@ function UniversalClientContent({
       sortedMembers = sortedMembers.filter((member) =>
         (member.user.name || '')
           .toLowerCase()
-          .includes(settings.searchQuery.toLowerCase())
+          .includes(settings.searchQuery.toLowerCase()),
       )
     }
 
@@ -140,40 +163,62 @@ function UniversalClientContent({
         (member) =>
           member.user.photoUrl &&
           !member.user.photoUrl.includes('api.dicebear.com') &&
-          !member.user.photoUrl.endsWith('default-avatar.png')
+          !member.user.photoUrl.endsWith('default-avatar.png'),
       )
+    }
+
+    // Apply connection filter (group-type specific)
+    if (settings.filterConnectedStatus !== 'all') {
+      sortedMembers = sortedMembers.filter((member) => {
+        let isConnected = false
+
+        if (groupContext?.group?.groupType?.code === 'community') {
+          // Community groups: use connectedAt (acquaintance relationships)
+          isConnected = !!member.connectedAt
+        } else if (groupContext?.group?.groupType?.code === 'family') {
+          // Family groups: use relationship map (family relationships)
+          isConnected = relationshipMap.has(member.userId)
+        }
+
+        if (settings.filterConnectedStatus === 'connected') {
+          return isConnected
+        } else if (settings.filterConnectedStatus === 'not_connected') {
+          return !isConnected
+        }
+        return true
+      })
     }
 
     // Multi-level sorting with proper secondary sorts
     sortedMembers.sort((a, b) => {
       const { key, direction } = settings.sortConfig
-      
+
       // Primary sort by the selected key
       let primaryResult = 0
-      
+
       if (key === 'firstName' || key === 'lastName') {
         const aValue = a.user[key as 'firstName' | 'lastName'] || ''
         const bValue = b.user[key as 'firstName' | 'lastName'] || ''
         if (aValue < bValue) primaryResult = direction === 'asc' ? -1 : 1
         else if (aValue > bValue) primaryResult = direction === 'asc' ? 1 : -1
-      }
-      
-      else if (key === 'closest' && relationshipMap.size > 0) {
+      } else if (key === 'closest' && relationshipMap.size > 0) {
         const aSteps = relationshipMap.get(a.userId)?.steps ?? 999
         const bSteps = relationshipMap.get(b.userId)?.steps ?? 999
         if (aSteps !== bSteps) {
-          primaryResult = direction === 'asc' ? aSteps - bSteps : bSteps - aSteps
+          primaryResult =
+            direction === 'asc' ? aSteps - bSteps : bSteps - aSteps
         }
-      }
-      
-      else if (key === 'when_connected') {
+      } else if (key === 'when_connected') {
         const aConnected = a.connectedAt ? new Date(a.connectedAt).getTime() : 0
         const bConnected = b.connectedAt ? new Date(b.connectedAt).getTime() : 0
         if (aConnected !== bConnected) {
-          primaryResult = direction === 'asc' ? aConnected - bConnected : bConnected - aConnected
+          primaryResult =
+            direction === 'asc'
+              ? aConnected - bConnected
+              : bConnected - aConnected
         }
       }
-      
+
       // If primary sort is tied, apply secondary sorts
       if (primaryResult === 0) {
         // Secondary sort: lastName (ascending)
@@ -181,14 +226,14 @@ function UniversalClientContent({
         const bLastName = b.user.lastName || ''
         if (aLastName < bLastName) return -1
         if (aLastName > bLastName) return 1
-        
+
         // Tertiary sort: firstName (ascending)
         const aFirstName = a.user.firstName || ''
         const bFirstName = b.user.firstName || ''
         if (aFirstName < bFirstName) return -1
         if (aFirstName > bFirstName) return 1
       }
-      
+
       return primaryResult
     })
 
@@ -199,7 +244,7 @@ function UniversalClientContent({
   const handleOpenRelateModal = async (member: MemberWithUser) => {
     setSelectedMember(member)
     setIsRelateModalOpen(true)
-    
+
     // Fetch the member's relations
     try {
       const relations = await getMemberRelations(member.userId, groupSlug)
@@ -262,7 +307,7 @@ function UniversalClientContent({
         groupName={group?.name}
         groupType={group?.groupType.code}
       />
-      
+
       <div
         id="group-toolbar-container"
         className="bg-background border-border sticky top-16 z-10 border-b pt-1 pb-3"
@@ -281,7 +326,7 @@ function UniversalClientContent({
             familyTreeRef={treeRef}
             isResetDisabled={isResetDisabled}
           />
-          
+
           {/* Search input */}
           {view === 'tree' ? (
             <div className="relative">
@@ -290,26 +335,38 @@ function UniversalClientContent({
                 onSelect={(userId) => treeRef.current?.setFocalUser?.(userId)}
               />
             </div>
-          ) : view !== 'games' && (
-            <div className="relative mb-[8px]" data-tour="search-input">
-              <input
-                type="text"
-                placeholder={`Search ${initialMembers.length} members...`}
-                value={settings.searchQuery}
-                onChange={(e) => handleSearchChange(e.target.value)}
-                className="w-full rounded-md border p-2 pr-10 text-sm"
-              />
-              {settings.searchQuery && (
-                <button
-                  onClick={() => handleSearchChange('')}
-                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600"
-                >
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              )}
-            </div>
+          ) : (
+            view !== 'games' && (
+              <div className="relative mb-[8px]" data-tour="search-input">
+                <input
+                  type="text"
+                  placeholder={`Search ${initialMembers.length} members...`}
+                  value={settings.searchQuery}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  className="w-full rounded-md border p-2 pr-10 text-sm"
+                />
+                {settings.searchQuery && (
+                  <button
+                    onClick={() => handleSearchChange('')}
+                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600"
+                  >
+                    <svg
+                      className="h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                )}
+              </div>
+            )
           )}
         </div>
       </div>
@@ -327,8 +384,10 @@ function UniversalClientContent({
                     relationship={
                       member.userId === currentUserMember?.userId
                         ? 'Me'
-                        : relationshipMap.get(member.userId)?.label || 
-                          (groupContext.group.groupType.code === 'family' ? 'Relative' : undefined)
+                        : relationshipMap.get(member.userId)?.label ||
+                          (groupContext.group.groupType.code === 'family'
+                            ? 'Relative'
+                            : undefined)
                     }
                     isGroupAdmin={isGroupAdmin}
                     currentUserId={currentUserMember?.userId}
@@ -342,7 +401,7 @@ function UniversalClientContent({
               })}
             </div>
           )}
-          
+
           {/* Games view - universal for all group types */}
           {view === 'games' && (
             <GamesView
@@ -355,30 +414,38 @@ function UniversalClientContent({
               }}
             />
           )}
-          
+
           {/* Adapter-specific view rendering (tree, etc.) */}
-          {view !== 'grid' && view !== 'games' && adapter.renderView && adapter.renderView(view, {
-            onIsFocalUserCurrentUserChange: (isCurrentUser: boolean) => setIsResetDisabled(isCurrentUser),
-            members: initialMembers,
-            onOpenRelate: handleOpenRelateModal,
-            relationshipMap: relationshipMap,
-            relationships: initialRelationships,
-            ref: treeRef,
-          })}
-          
+          {view !== 'grid' &&
+            view !== 'games' &&
+            adapter.renderView &&
+            adapter.renderView(view, {
+              onIsFocalUserCurrentUserChange: (isCurrentUser: boolean) =>
+                setIsResetDisabled(isCurrentUser),
+              members: initialMembers,
+              onOpenRelate: handleOpenRelateModal,
+              relationshipMap: relationshipMap,
+              relationships: initialRelationships,
+              ref: treeRef,
+            })}
+
           {/* Fallback for unsupported views */}
-          {view !== 'grid' && view !== 'games' && (!adapter.renderView || !adapter.renderView(view, {
-            onIsFocalUserCurrentUserChange: (isCurrentUser: boolean) => setIsResetDisabled(isCurrentUser),
-            members: initialMembers,
-            onOpenRelate: handleOpenRelateModal,
-            relationshipMap: relationshipMap,
-            relationships: initialRelationships,
-          })) && (
-            <div className="text-center py-8 text-gray-500">
-              {view} view is not available for {groupContext.group.groupType.code} groups
-            </div>
-          )}
-          
+          {view !== 'grid' &&
+            view !== 'games' &&
+            (!adapter.renderView ||
+              !adapter.renderView(view, {
+                onIsFocalUserCurrentUserChange: (isCurrentUser: boolean) =>
+                  setIsResetDisabled(isCurrentUser),
+                members: initialMembers,
+                onOpenRelate: handleOpenRelateModal,
+                relationshipMap: relationshipMap,
+                relationships: initialRelationships,
+              })) && (
+              <div className="py-8 text-center text-gray-500">
+                {view} view is not available for{' '}
+                {groupContext.group.groupType.code} groups
+              </div>
+            )}
         </TooltipProvider>
       </div>
 
@@ -396,7 +463,11 @@ function UniversalClientContent({
           groupSlug={groupSlug}
           initialRelations={memberRelations}
           onRelationshipAdded={handleRelationshipAdded}
-          isReadOnly={!groupContext.isGroupAdmin && !groupContext.isSuperAdmin && selectedMember.userId !== groupContext.currentUserMember?.userId}
+          isReadOnly={
+            !groupContext.isGroupAdmin &&
+            !groupContext.isSuperAdmin &&
+            selectedMember.userId !== groupContext.currentUserMember?.userId
+          }
           loggedInUserId={groupContext.currentUserMember?.userId || ''}
         />
       )}
