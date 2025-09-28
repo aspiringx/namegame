@@ -45,7 +45,7 @@ const FamilyActionsContext = createContext<{
   selectedMember: null,
 })
 
-const FamilyDataContext = createContext<{
+export const FamilyDataContext = createContext<{
   relationshipMap: Map<string, { label: string; steps: number }>
 }>({
   relationshipMap: new Map(),

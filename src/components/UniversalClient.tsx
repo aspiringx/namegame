@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import useLocalStorage from '@/hooks/useLocalStorage'
 import { useGroup } from '@/components/GroupProvider'
@@ -22,6 +22,7 @@ import { createAcquaintanceRelationship } from '@/app/g/[slug]/(community)/actio
 import Modal from '@/components/ui/modal'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
+import { FocalUserSearch } from '@/app/g/[slug]/(family)/FocalUserSearch'
 
 interface UniversalClientProps {
   view: 'grid' | 'tree' | 'games'
@@ -61,6 +62,10 @@ function UniversalClientContent({
   // Connect modal state
   const [isConnectModalOpen, setIsConnectModalOpen] = useState(false)
   const [memberToConnect, setMemberToConnect] = useState<MemberWithUser | null>(null)
+  
+  // Tree view state
+  const [isResetDisabled, setIsResetDisabled] = useState(true)
+  const treeRef = useRef<any>(null)
 
   // Get adapter-specific default settings
   const [settings, setSettings] = useLocalStorage<GroupPageSettings>(
@@ -272,10 +277,19 @@ function UniversalClientContent({
             groupSlug={groupSlug}
             gridSizeConfig={getGridSizeConfig(isMobile)}
             config={adapter.getToolbarConfig(groupSlug)}
+            familyTreeRef={treeRef}
+            isResetDisabled={isResetDisabled}
           />
           
           {/* Search input */}
-          {view !== 'tree' && view !== 'games' && (
+          {view === 'tree' ? (
+            <div className="relative">
+              <FocalUserSearch
+                members={initialMembers}
+                onSelect={(userId) => treeRef.current?.setFocalUser?.(userId)}
+              />
+            </div>
+          ) : view !== 'games' && (
             <div className="relative mb-[8px]" data-tour="search-input">
               <input
                 type="text"
@@ -328,18 +342,29 @@ function UniversalClientContent({
             </div>
           )}
           
-          {/* Other views would be implemented here */}
-          {view === 'tree' && (
+          {/* Adapter-specific view rendering */}
+          {view !== 'grid' && adapter.renderView && adapter.renderView(view, {
+            onIsFocalUserCurrentUserChange: (isCurrentUser: boolean) => setIsResetDisabled(isCurrentUser),
+            members: initialMembers,
+            onOpenRelate: handleOpenRelateModal,
+            relationshipMap: relationshipMap,
+            relationships: initialRelationships,
+            ref: treeRef,
+          })}
+          
+          {/* Fallback for unsupported views */}
+          {view !== 'grid' && (!adapter.renderView || !adapter.renderView(view, {
+            onIsFocalUserCurrentUserChange: (isCurrentUser: boolean) => setIsResetDisabled(isCurrentUser),
+            members: initialMembers,
+            onOpenRelate: handleOpenRelateModal,
+            relationshipMap: relationshipMap,
+            relationships: initialRelationships,
+          })) && (
             <div className="text-center py-8 text-gray-500">
-              Tree view implementation needed
+              {view} view is not available for {groupContext.group.groupType.code} groups
             </div>
           )}
           
-          {view === 'games' && (
-            <div className="text-center py-8 text-gray-500">
-              Games view implementation needed
-            </div>
-          )}
         </TooltipProvider>
       </div>
 

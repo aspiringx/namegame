@@ -12,6 +12,9 @@ import {
 import { GroupPageSettings, getDefaultSettings } from '@/lib/group-utils'
 import { FamilyCardStrategy } from './strategies/FamilyCardStrategy'
 import { MemberWithUser } from '@/types'
+import { createElement } from 'react'
+import TreeView from '@/app/g/[slug]/(family)/TreeView'
+import { FamilyDataContext } from '@/app/g/[slug]/(family)/FamilyClient'
 
 // Import tour steps
 import { steps as familyTourSteps } from '@/components/tours/FamilyTour'
@@ -110,6 +113,24 @@ export class FamilyAdapter implements GroupAdapter {
   renderAdditionalContent(): ReactNode {
     // Family groups might need additional content like focal user search
     // This would be implemented based on the view type
+    return null
+  }
+
+  renderView(view: string, props: any): ReactNode {
+    if (view === 'tree') {
+      // Wrap TreeView with FamilyDataContext to provide relationshipMap
+      return createElement(
+        FamilyDataContext.Provider,
+        { value: { relationshipMap: props.relationshipMap || new Map() } },
+        createElement(TreeView, {
+          ref: props.ref,
+          onIsFocalUserCurrentUserChange: props.onIsFocalUserCurrentUserChange,
+          members: props.members,
+          onOpenRelate: props.onOpenRelate,
+          relationships: props.relationships,
+        })
+      )
+    }
     return null
   }
 }

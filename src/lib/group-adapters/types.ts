@@ -63,6 +63,7 @@ export interface GroupAdapter {
   // View-specific rendering
   renderSearchInput?(settings: GroupPageSettings, setSettings: (settings: GroupPageSettings) => void, memberCount: number): ReactNode
   renderAdditionalContent?(): ReactNode
+  renderView?(view: string, props: any): ReactNode
 }
 
 // Group type enum for factory
