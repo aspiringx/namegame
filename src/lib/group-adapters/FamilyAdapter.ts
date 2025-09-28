@@ -14,7 +14,7 @@ import { FamilyCardStrategy } from './strategies/FamilyCardStrategy'
 import { MemberWithUser } from '@/types'
 import { createElement } from 'react'
 import TreeView from '@/app/g/[slug]/(family)/TreeView'
-import { FamilyDataContext } from '@/app/g/[slug]/(family)/FamilyClient'
+import { FamilyDataContext } from '@/app/g/[slug]/(family)/contexts'
 
 // Import tour steps
 import { steps as familyTourSteps } from '@/components/tours/FamilyTour'

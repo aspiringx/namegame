@@ -2,7 +2,7 @@
 
 import { forwardRef } from 'react'
 import { useGroup } from '@/components/GroupProvider'
-import { useFamilyData } from './FamilyClient'
+import { useFamilyData } from './contexts'
 import FamilyTree, { FamilyTreeRef } from './FamilyTree'
 import { MemberWithUser, FullRelationship } from '@/types'
 

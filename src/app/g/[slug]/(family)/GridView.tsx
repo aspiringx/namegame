@@ -7,7 +7,7 @@ import {
   useFamilyMembers,
   useFamilyActions,
   useFamilyData,
-} from './FamilyClient'
+} from './contexts'
 
 interface GridViewProps {
   gridSize: number
