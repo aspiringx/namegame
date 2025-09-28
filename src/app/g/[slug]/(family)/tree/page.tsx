@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import { FullRelationship } from '@/types'
 import { getGroup, getFamilyRelationships } from '../data'
-import { FamilyClient } from '../FamilyClient'
+import { UniversalClient } from '@/components/UniversalClient'
 import { headers } from 'next/headers'
 import { getDeviceTypeFromHeaders } from '@/lib/device'
 
@@ -24,12 +24,12 @@ export default async function FamilyTreePage({
   const relationships = await getFamilyRelationships(groupMemberIds)
 
   return (
-    <FamilyClient
+    <UniversalClient
+      view="tree"
       initialMembers={groupData.members}
       groupSlug={params.slug}
       initialMemberCount={groupData.memberCount}
       initialRelationships={relationships as FullRelationship[]}
-      view="tree"
     />
   )
 }

@@ -1,6 +1,6 @@
 import { headers } from 'next/headers'
 import { getGroupForLayout } from '../utils'
-import GamesClient from './GamesClient'
+import { UniversalClient } from '@/components/UniversalClient'
 import { notFound } from 'next/navigation'
 import { getDeviceTypeFromHeaders } from '@/lib/device'
 
@@ -18,5 +18,12 @@ export default async function GamesPage({
     notFound()
   }
 
-  return <GamesClient group={groupData} />
+  return (
+    <UniversalClient
+      view="games"
+      initialMembers={groupData.members}
+      groupSlug={params.slug}
+      initialMemberCount={groupData.members.length}
+    />
+  )
 }

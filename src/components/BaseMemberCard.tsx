@@ -17,31 +17,43 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { LoginCodeModal } from './LoginCodeModal'
 import PhotoGalleryModal from './PhotoGalleryModal'
+import { MemberCardStrategy } from '@/lib/group-adapters/types'
 
-interface MemberCardProps {
+interface BaseMemberCardProps {
   member: Member
-  relationship?: string
+  strategy: MemberCardStrategy
+  relationship?: string | null
   isGroupAdmin?: boolean
-  onRelate: (member: Member) => void
-  onConnect?: (member: Member) => void
   currentUserId?: string
   groupSlug?: string
   // Photo gallery props
   allMembers?: Member[]
   memberIndex?: number
+  // Strategy-specific action handlers
+  onRelate?: (member: Member) => void
+  onConnect?: (member: Member) => void
 }
 
-export default function MemberCard({
+/**
+ * Universal member card component that uses strategy pattern
+ * to handle group-specific rendering and behavior.
+ *
+ * Used by UniversalClient to provide consistent member card rendering
+ * across all group types. Legacy MemberCard and FamilyMemberCard
+ * components are still used by older parts of the codebase.
+ */
+export default function BaseMemberCard({
   member,
-  // relationship,
+  strategy,
+  relationship,
   isGroupAdmin,
-  onRelate,
-  onConnect,
   currentUserId,
   groupSlug,
   allMembers = [],
   memberIndex = 0,
-}: MemberCardProps) {
+  onRelate,
+  onConnect,
+}: BaseMemberCardProps) {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
   const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false)
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(memberIndex)
@@ -62,9 +74,20 @@ export default function MemberCard({
   const currentMember = allMembers[currentPhotoIndex] || member
   const imageUrl = member.user.photoUrl || '/images/default-avatar.png'
 
+  // Determine if user is connected (for community groups)
+  const isConnected = !strategy.showConnectedTime || member.connectedAt
+  const photoClassName = `rounded object-cover${isConnected ? '' : ' grayscale'}`
+
+  // Note: actionProps removed since we're using strategy configuration directly
+
+  // Get strategy-specific CSS classes
+  const cardClassName = strategy.cardClassName || ''
+
   return (
     <>
-      <div className="text-center transition-transform duration-300 ease-in-out">
+      <div
+        className={`text-center transition-transform duration-300 ease-in-out ${cardClassName}`}
+      >
         <div
           className="relative aspect-square w-full cursor-pointer overflow-hidden rounded-lg shadow-lg transition-shadow duration-200 hover:shadow-xl"
           onClick={handlePhotoClick}
@@ -74,37 +97,46 @@ export default function MemberCard({
             alt={member.user.name || 'User avatar'}
             fill
             sizes="(max-width: 767px) 100vw, (max-width: 1023px) 50vw, 33vw"
-            className="rounded object-cover"
+            className={photoClassName}
           />
         </div>
         <div className="items-top mt-2 flex justify-between gap-2">
           <div className="w-8">&nbsp;</div>
           <div className="w-7/10">
-            <div className="truncate text-xs text-gray-800 md:text-sm dark:text-gray-200">
+            <div className="truncate text-xs text-gray-800 dark:text-gray-200">
               {member.user.name}
             </div>
-            {member.connectedAt && (
-              <div>
-                {member.connectedAt ? (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger>
-                        <p className="cursor-pointer text-xs text-gray-500 dark:text-gray-400">
-                          {formatDistanceToNow(new Date(member.connectedAt), {
-                            addSuffix: true,
-                          })}
-                        </p>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>{new Date(member.connectedAt).toLocaleString()}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                ) : null}
-              </div>
+            {/* Strategy-specific relationship rendering */}
+            {strategy.showRelationship && relationship && (
+              <button
+                className={strategy.relationshipClassName}
+                onClick={() =>
+                  strategy.relationshipClickable && onRelate?.(member)
+                }
+                disabled={!strategy.relationshipClickable}
+              >
+                {relationship}
+              </button>
+            )}
+
+            {/* Strategy-specific connected time rendering (community groups) */}
+            {strategy.showConnectedTime && member.connectedAt && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <p className={strategy.connectedTimeClassName}>
+                      {formatDistanceToNow(new Date(member.connectedAt), {
+                        addSuffix: true,
+                      })}
+                    </p>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{new Date(member.connectedAt).toLocaleString()}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             )}
           </div>
-
           <div className="vertical-align-top">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -113,36 +145,36 @@ export default function MemberCard({
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => onRelate(member)}>
-                  <Users className="mr-2 h-4 w-4" />
-                  Relationships
-                </DropdownMenuItem>
-                {!member.connectedAt &&
-                  onConnect &&
+                {/* Strategy-specific actions */}
+                {strategy.availableActions.includes('relate') && (
+                  <DropdownMenuItem onClick={() => onRelate?.(member)}>
+                    <Users className="mr-2 h-4 w-4" />
+                    Relationships
+                  </DropdownMenuItem>
+                )}
+                {strategy.availableActions.includes('connect') &&
+                  !member.connectedAt &&
                   member.userId !== currentUserId && (
-                    <DropdownMenuItem onClick={() => onConnect(member)}>
+                    <DropdownMenuItem onClick={() => onConnect?.(member)}>
                       <Link className="mr-2 h-4 w-4" />
                       Connect
                     </DropdownMenuItem>
                   )}
-                {isGroupAdmin && (
-                  <DropdownMenuItem onClick={handleLoginLinkClick}>
-                    <KeyRound className="mr-2 h-4 w-4" />
-                    Get Login Code
-                  </DropdownMenuItem>
-                )}
+                {/* Common admin action */}
+                {isGroupAdmin &&
+                  strategy.availableActions.includes('admin') && (
+                    <DropdownMenuItem onClick={handleLoginLinkClick}>
+                      <KeyRound className="mr-2 h-4 w-4" />
+                      Get Login Code
+                    </DropdownMenuItem>
+                  )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
         </div>
       </div>
-      {/* I believe we only show relationship in family groups. */}
-      {/* {relationship && (
-              <p className="truncate text-xs text-blue-500 dark:text-blue-400">
-                {relationship}
-              </p>
-            )} */}
 
+      {/* Common modals */}
       {isGroupAdmin && groupSlug && (
         <LoginCodeModal
           isOpen={isLoginModalOpen}

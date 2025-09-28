@@ -1,22 +1,32 @@
 'use client'
 
 import { useGroup } from '@/components/GroupProvider'
-import FamilyMemberCard from '@/components/FamilyMemberCard'
+import BaseMemberCard from '@/components/BaseMemberCard'
 import { getGridClasses } from '@/lib/group-utils'
-import {
-  useFamilyMembers,
-  useFamilyActions,
-  useFamilyData,
-} from './FamilyClient'
+import { MemberCardStrategy } from '@/lib/group-adapters/types'
+import { MemberWithUser } from '@/types'
 
 interface GridViewProps {
+  members: MemberWithUser[]
   gridSize: number
+  strategy: MemberCardStrategy
+  relationshipMap: Map<string, { label: string; steps: number }>
+  onRelate: (member: MemberWithUser) => void
+  onConnect?: (member: MemberWithUser) => void
 }
 
-export default function GridView({ gridSize }: GridViewProps) {
-  const members = useFamilyMembers()
-  const { onOpenRelateModal } = useFamilyActions()
-  const { relationshipMap } = useFamilyData()
+/**
+ * Universal grid view component that works for all group types.
+ * Uses strategy pattern to handle group-specific member card rendering.
+ */
+export default function GridView({
+  members,
+  gridSize,
+  strategy,
+  relationshipMap,
+  onRelate,
+  onConnect,
+}: GridViewProps) {
   const groupContext = useGroup()
 
   if (!groupContext) {
@@ -35,14 +45,17 @@ export default function GridView({ gridSize }: GridViewProps) {
         const isCurrentUser = member.userId === currentUserMember.userId
         const relationship = isCurrentUser
           ? 'Me'
-          : relationshipMap.get(member.userId)?.label || 'Relative'
+          : relationshipMap.get(member.userId)?.label ||
+            (group.groupType.code === 'family' ? 'Relative' : undefined)
 
         return (
-          <FamilyMemberCard
+          <BaseMemberCard
             key={member.userId}
             member={member}
+            strategy={strategy}
             relationship={relationship}
-            onRelate={onOpenRelateModal}
+            onRelate={onRelate}
+            onConnect={onConnect}
             currentUserId={currentUserMember?.userId}
             isGroupAdmin={isGroupAdmin}
             groupSlug={group.slug}
