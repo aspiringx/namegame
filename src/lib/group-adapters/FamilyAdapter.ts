@@ -1,10 +1,17 @@
 import { ReactNode } from 'react'
-import { GroupAdapter, MemberCardStrategy, GroupActions, DataFetcher } from './types'
-import { GroupToolbarConfig, getFamilyGroupToolbarConfig } from '@/lib/group-toolbar-config'
+import {
+  GroupAdapter,
+  MemberCardStrategy,
+  GroupActions,
+  DataFetcher,
+} from './types'
+import {
+  GroupToolbarConfig,
+  getFamilyGroupToolbarConfig,
+} from '@/lib/group-toolbar-config'
 import { GroupPageSettings, getDefaultSettings } from '@/lib/group-utils'
 import { FamilyCardStrategy } from './strategies/FamilyCardStrategy'
 import { MemberWithUser } from '@/types'
-import { X } from 'lucide-react'
 
 // Import tour steps
 import { steps as familyTourSteps } from '@/components/tours/FamilyTour'
@@ -33,12 +40,17 @@ export class FamilyAdapter implements GroupAdapter {
 
   getActions(): GroupActions {
     return {
-      handleSort: (key: string, settings: GroupPageSettings, setSettings: (settings: GroupPageSettings) => void) => {
+      handleSort: (
+        key: string,
+        settings: GroupPageSettings,
+        setSettings: (settings: GroupPageSettings) => void,
+      ) => {
         const isSameKey = settings.sortConfig.key === key
         let newDirection: 'asc' | 'desc'
 
         if (isSameKey) {
-          newDirection = settings.sortConfig.direction === 'asc' ? 'desc' : 'asc'
+          newDirection =
+            settings.sortConfig.direction === 'asc' ? 'desc' : 'asc'
         } else {
           newDirection = key === 'joined' ? 'desc' : 'asc'
         }
@@ -51,7 +63,10 @@ export class FamilyAdapter implements GroupAdapter {
           },
         })
       },
-      handleSearch: (query: string, setSettings: (settings: GroupPageSettings) => void) => {
+      handleSearch: (
+        query: string,
+        setSettings: (settings: GroupPageSettings) => void,
+      ) => {
         setSettings((prev) => ({ ...prev, searchQuery: query }))
       },
       handleMemberAction: (action: string, member: MemberWithUser) => {
@@ -86,7 +101,7 @@ export class FamilyAdapter implements GroupAdapter {
   renderSearchInput(
     _settings: GroupPageSettings,
     _setSettings: (settings: GroupPageSettings) => void,
-    _memberCount: number
+    _memberCount: number,
   ): ReactNode {
     // Search input will be rendered by the parent component
     return null

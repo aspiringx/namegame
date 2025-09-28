@@ -50,24 +50,11 @@ export default async function UniversalTestPage({
 
   // Fetch additional data for family groups
   let relationships: FullRelationship[] = []
-  let relationshipMap: Map<string, { label: string; steps: number }> | undefined
 
   if (groupType === 'family') {
     // Fetch relationship data for family groups
     const groupMemberIds = groupData.members.map((member) => member.userId)
     relationships = await getFamilyRelationships(groupMemberIds) as FullRelationship[]
-    
-    // Create relationship map (simplified version - would need full logic from FamilyClient)
-    relationshipMap = new Map()
-    relationships.forEach(rel => {
-      // Add null checks to prevent errors
-      if (rel.relatedUser && rel.relatedUser.id && rel.relationType) {
-        relationshipMap!.set(rel.relatedUser.id, { 
-          label: rel.relationType.code, 
-          steps: 1 
-        })
-      }
-    })
   }
 
   return (
@@ -97,7 +84,6 @@ export default async function UniversalTestPage({
         groupSlug={params.slug}
         initialMemberCount={groupData.memberCount}
         initialRelationships={relationships}
-        relationshipMap={relationshipMap}
       />
     </div>
   )

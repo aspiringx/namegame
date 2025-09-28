@@ -77,7 +77,6 @@ export default async function UniversalPage({
       groupSlug={params.slug}
       initialMemberCount={groupData.memberCount}
       initialRelationships={relationships}
-      relationshipMap={relationshipMap}
     />
   )
 }

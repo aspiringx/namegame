@@ -6,7 +6,8 @@ import { MemberCardStrategy } from '../types'
  */
 export class FamilyCardStrategy implements MemberCardStrategy {
   showRelationship = true
-  relationshipClassName = 'text-left text-xs text-blue-500 hover:underline focus:outline-none dark:text-blue-400'
+  relationshipClassName =
+    'text-xs text-blue-500 hover:underline focus:outline-none dark:text-blue-400'
   relationshipClickable = true
   availableActions: Array<'relate' | 'connect' | 'admin'> = ['relate', 'admin']
   cardClassName = 'family-member-card'

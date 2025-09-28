@@ -30,7 +30,7 @@ interface BaseMemberCardProps {
 /**
  * Universal member card component that uses strategy pattern
  * to handle group-specific rendering and behavior.
- * 
+ *
  * This replaces both MemberCard and FamilyMemberCard with a single,
  * configurable component that eliminates duplication.
  */
@@ -73,7 +73,9 @@ export default function BaseMemberCard({
 
   return (
     <>
-      <div className={`text-center transition-transform duration-300 ease-in-out ${cardClassName}`}>
+      <div
+        className={`text-center transition-transform duration-300 ease-in-out ${cardClassName}`}
+      >
         <div
           className="relative aspect-square w-full cursor-pointer overflow-hidden rounded-lg shadow-lg transition-shadow duration-200 hover:shadow-xl"
           onClick={handlePhotoClick}
@@ -89,18 +91,20 @@ export default function BaseMemberCard({
         <div className="items-top mt-2 flex justify-between gap-2">
           <div className="w-8">&nbsp;</div>
           <div className="w-7/10">
-            <div className="truncate text-xs text-gray-800 md:text-sm dark:text-gray-200">
+            <div className="truncate text-xs text-gray-800 dark:text-gray-200">
               {member.user.name}
             </div>
             {/* Strategy-specific relationship rendering */}
             {strategy.showRelationship && relationship && (
-              <div 
+              <button
                 className={strategy.relationshipClassName}
-                onClick={() => strategy.relationshipClickable && onRelate?.(member)}
-                style={{ cursor: strategy.relationshipClickable ? 'pointer' : 'default' }}
+                onClick={() =>
+                  strategy.relationshipClickable && onRelate?.(member)
+                }
+                disabled={!strategy.relationshipClickable}
               >
                 {relationship}
-              </div>
+              </button>
             )}
           </div>
           <div className="vertical-align-top">
@@ -118,21 +122,22 @@ export default function BaseMemberCard({
                     Relationships
                   </DropdownMenuItem>
                 )}
-                {strategy.availableActions.includes('connect') && 
-                  !member.connectedAt && 
+                {strategy.availableActions.includes('connect') &&
+                  !member.connectedAt &&
                   member.userId !== currentUserId && (
-                  <DropdownMenuItem onClick={() => onConnect?.(member)}>
-                    <Link className="mr-2 h-4 w-4" />
-                    Connect
-                  </DropdownMenuItem>
-                )}
+                    <DropdownMenuItem onClick={() => onConnect?.(member)}>
+                      <Link className="mr-2 h-4 w-4" />
+                      Connect
+                    </DropdownMenuItem>
+                  )}
                 {/* Common admin action */}
-                {isGroupAdmin && strategy.availableActions.includes('admin') && (
-                  <DropdownMenuItem onClick={handleLoginLinkClick}>
-                    <KeyRound className="mr-2 h-4 w-4" />
-                    Get Login Code
-                  </DropdownMenuItem>
-                )}
+                {isGroupAdmin &&
+                  strategy.availableActions.includes('admin') && (
+                    <DropdownMenuItem onClick={handleLoginLinkClick}>
+                      <KeyRound className="mr-2 h-4 w-4" />
+                      Get Login Code
+                    </DropdownMenuItem>
+                  )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

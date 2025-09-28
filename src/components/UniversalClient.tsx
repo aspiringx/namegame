@@ -15,6 +15,7 @@ import { GroupAdapter } from '@/lib/group-adapters/types'
 import BaseMemberCard from '@/components/BaseMemberCard'
 import { getGridClasses } from '@/lib/group-utils'
 import { TooltipProvider } from '@/components/ui/tooltip'
+import { getRelationship } from '@/lib/family-tree'
 
 interface UniversalClientProps {
   view: 'grid' | 'tree' | 'games'
@@ -23,7 +24,6 @@ interface UniversalClientProps {
   initialMemberCount: number
   // Optional props for family-specific features
   initialRelationships?: any[]
-  relationshipMap?: Map<string, { label: string; steps: number }>
 }
 
 interface UniversalClientContentProps extends Omit<UniversalClientProps, 'initialMemberCount'> {
@@ -41,7 +41,7 @@ function UniversalClientContent({
   groupSlug,
   isMobile,
   adapter,
-  relationshipMap,
+  initialRelationships,
 }: UniversalClientContentProps) {
   const groupContext = useGroup()
   const { setIsOpen } = useTour()
@@ -60,6 +60,34 @@ function UniversalClientContent({
       setSettings((prev) => ({ ...prev, gridSize: config.default }))
     }
   }, [isMobile, settings.gridSize, setSettings])
+
+  // Calculate relationship map for family groups (similar to original FamilyClient)
+  const relationshipMap = useMemo(() => {
+    if (!groupContext?.currentUserMember || !initialRelationships || groupContext.group?.groupType?.code !== 'family') {
+      return new Map<string, { label: string; steps: number }>()
+    }
+    
+    const newMap = new Map<string, { label: string; steps: number }>()
+    const usersMap = new Map(initialMembers.map(member => [member.userId, member.user]))
+    
+    for (const alter of initialMembers) {
+      if (alter.userId === groupContext.currentUserMember.userId) continue
+      const result = getRelationship(
+        groupContext.currentUserMember.userId,
+        alter.userId,
+        initialRelationships,
+        initialMembers,
+        usersMap,
+      )
+      if (result && result.relationship) {
+        newMap.set(alter.userId, {
+          label: result.relationship,
+          steps: result.steps,
+        })
+      }
+    }
+    return newMap
+  }, [groupContext?.currentUserMember, initialRelationships, initialMembers, groupContext?.group?.groupType?.code])
 
   // Get adapter-specific actions
   const actions = adapter.getActions()
@@ -95,19 +123,44 @@ function UniversalClientContent({
       )
     }
 
-    // Basic sorting (would need full implementation)
+    // Multi-level sorting with proper secondary sorts
     sortedMembers.sort((a, b) => {
       const { key, direction } = settings.sortConfig
+      
+      // Primary sort by the selected key
+      let primaryResult = 0
       
       if (key === 'firstName' || key === 'lastName') {
         const aValue = a.user[key as 'firstName' | 'lastName'] || ''
         const bValue = b.user[key as 'firstName' | 'lastName'] || ''
-        if (aValue < bValue) return direction === 'asc' ? -1 : 1
-        if (aValue > bValue) return direction === 'asc' ? 1 : -1
-        return 0
+        if (aValue < bValue) primaryResult = direction === 'asc' ? -1 : 1
+        else if (aValue > bValue) primaryResult = direction === 'asc' ? 1 : -1
       }
       
-      return 0 // Default no sorting
+      else if (key === 'closest' && relationshipMap.size > 0) {
+        const aSteps = relationshipMap.get(a.userId)?.steps ?? 999
+        const bSteps = relationshipMap.get(b.userId)?.steps ?? 999
+        if (aSteps !== bSteps) {
+          primaryResult = direction === 'asc' ? aSteps - bSteps : bSteps - aSteps
+        }
+      }
+      
+      // If primary sort is tied, apply secondary sorts
+      if (primaryResult === 0) {
+        // Secondary sort: lastName (ascending)
+        const aLastName = a.user.lastName || ''
+        const bLastName = b.user.lastName || ''
+        if (aLastName < bLastName) return -1
+        if (aLastName > bLastName) return 1
+        
+        // Tertiary sort: firstName (ascending)
+        const aFirstName = a.user.firstName || ''
+        const bFirstName = b.user.firstName || ''
+        if (aFirstName < bFirstName) return -1
+        if (aFirstName > bFirstName) return 1
+      }
+      
+      return primaryResult
     })
 
     return sortedMembers
@@ -165,7 +218,7 @@ function UniversalClientContent({
                 placeholder={`Search ${initialMembers.length} members...`}
                 value={settings.searchQuery}
                 onChange={(e) => handleSearchChange(e.target.value)}
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                className="w-full rounded-md border p-2 pr-10 text-sm"
               />
               {settings.searchQuery && (
                 <button
