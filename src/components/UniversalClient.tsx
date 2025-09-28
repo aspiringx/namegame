@@ -143,6 +143,65 @@ function UniversalClientContent({
     actions.handleSearch(query, setSettings)
   }
 
+  // Calculate search placeholder based on applied filters
+  const searchPlaceholder = useMemo(() => {
+    const totalCount = initialMembers.length
+    const hasFilters =
+      settings.filterByRealPhoto || settings.filterConnectedStatus !== 'all'
+
+    if (!hasFilters) {
+      return `Search ${totalCount} members...`
+    }
+
+    // Calculate filtered count (excluding search filter) by applying the same logic as filteredAndSortedMembers
+    let filteredCount = initialMembers.length
+
+    if (settings.filterByRealPhoto) {
+      filteredCount = initialMembers.filter(
+        (member) =>
+          member.user.photoUrl &&
+          !member.user.photoUrl.includes('api.dicebear.com') &&
+          !member.user.photoUrl.endsWith('default-avatar.png'),
+      ).length
+    }
+
+    if (settings.filterConnectedStatus !== 'all') {
+      const membersAfterPhotoFilter = settings.filterByRealPhoto
+        ? initialMembers.filter(
+            (member) =>
+              member.user.photoUrl &&
+              !member.user.photoUrl.includes('api.dicebear.com') &&
+              !member.user.photoUrl.endsWith('default-avatar.png'),
+          )
+        : initialMembers
+
+      filteredCount = membersAfterPhotoFilter.filter((member) => {
+        let isConnected = false
+
+        if (groupContext?.group?.groupType?.code === 'community') {
+          isConnected = !!member.connectedAt
+        } else if (groupContext?.group?.groupType?.code === 'family') {
+          isConnected = relationshipMap.has(member.userId)
+        }
+
+        if (settings.filterConnectedStatus === 'connected') {
+          return isConnected
+        } else if (settings.filterConnectedStatus === 'not_connected') {
+          return !isConnected
+        }
+        return true
+      }).length
+    }
+
+    return `Search ${filteredCount} (current filter) of ${totalCount} members...`
+  }, [
+    initialMembers,
+    settings.filterByRealPhoto,
+    settings.filterConnectedStatus,
+    relationshipMap,
+    groupContext?.group?.groupType?.code,
+  ])
+
   // Filter and sort members with multi-level sorting
   const filteredAndSortedMembers = useMemo(() => {
     let sortedMembers = [...initialMembers]
@@ -339,7 +398,7 @@ function UniversalClientContent({
               <div className="relative mb-[8px]" data-tour="search-input">
                 <input
                   type="text"
-                  placeholder={`Search ${initialMembers.length} members...`}
+                  placeholder={searchPlaceholder}
                   value={settings.searchQuery}
                   onChange={(e) => handleSearchChange(e.target.value)}
                   className="w-full rounded-md border p-2 pr-10 text-sm"
