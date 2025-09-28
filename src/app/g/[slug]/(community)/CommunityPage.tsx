@@ -1,5 +1,5 @@
 import { getGroup } from './data'
-import CommunityClient from './CommunityClient'
+import { UniversalClient } from '@/components/UniversalClient'
 import { notFound } from 'next/navigation'
 import { headers } from 'next/headers'
 import { getDeviceTypeFromHeaders } from '@/lib/device'
@@ -18,5 +18,12 @@ export default async function CommunityPage({
     notFound()
   }
 
-  return <CommunityClient groupData={groupData} view="grid" />
+  return (
+    <UniversalClient
+      view="grid"
+      initialMembers={groupData.members}
+      groupSlug={params.slug}
+      initialMemberCount={groupData.memberCount}
+    />
+  )
 }
