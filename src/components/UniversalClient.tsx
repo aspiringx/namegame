@@ -19,8 +19,7 @@ import {
   getGroupTypeFromCode,
 } from '@/lib/group-adapters/factory'
 import { GroupAdapter } from '@/lib/group-adapters/types'
-import BaseMemberCard from '@/components/BaseMemberCard'
-import { getGridClasses } from '@/lib/group-utils'
+import GridView from '@/components/GridView'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { getRelationship } from '@/lib/family-tree'
 import RelateModal from '@/components/RelateModal'
@@ -374,32 +373,14 @@ function UniversalClientContent({
       <div className="container mx-auto mt-2 px-2 md:px-4">
         <TooltipProvider>
           {view === 'grid' && (
-            <div className={getGridClasses(settings.gridSize)}>
-              {filteredAndSortedMembers.map((member, index) => {
-                return (
-                  <BaseMemberCard
-                    key={member.userId}
-                    member={member}
-                    strategy={strategy}
-                    relationship={
-                      member.userId === currentUserMember?.userId
-                        ? 'Me'
-                        : relationshipMap.get(member.userId)?.label ||
-                          (groupContext.group.groupType.code === 'family'
-                            ? 'Relative'
-                            : undefined)
-                    }
-                    isGroupAdmin={isGroupAdmin}
-                    currentUserId={currentUserMember?.userId}
-                    groupSlug={groupSlug}
-                    allMembers={filteredAndSortedMembers}
-                    memberIndex={index}
-                    onRelate={handleOpenRelateModal}
-                    onConnect={handleOpenConnectModal}
-                  />
-                )
-              })}
-            </div>
+            <GridView
+              members={filteredAndSortedMembers}
+              gridSize={settings.gridSize}
+              strategy={strategy}
+              relationshipMap={relationshipMap}
+              onRelate={handleOpenRelateModal}
+              onConnect={handleOpenConnectModal}
+            />
           )}
 
           {/* Games view - universal for all group types */}
