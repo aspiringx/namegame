@@ -23,6 +23,7 @@ import Modal from '@/components/ui/modal'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { FocalUserSearch } from '@/app/g/[slug]/(family)/FocalUserSearch'
+import GamesView from '@/components/GamesView'
 
 interface UniversalClientProps {
   view: 'grid' | 'tree' | 'games'
@@ -342,8 +343,21 @@ function UniversalClientContent({
             </div>
           )}
           
-          {/* Adapter-specific view rendering */}
-          {view !== 'grid' && adapter.renderView && adapter.renderView(view, {
+          {/* Games view - universal for all group types */}
+          {view === 'games' && (
+            <GamesView
+              members={initialMembers}
+              groupSlug={groupSlug}
+              currentUserId={currentUserMember?.userId}
+              onSwitchToGrid={() => {
+                // Navigate to grid view using router
+                router.push(`/g/${groupSlug}`)
+              }}
+            />
+          )}
+          
+          {/* Adapter-specific view rendering (tree, etc.) */}
+          {view !== 'grid' && view !== 'games' && adapter.renderView && adapter.renderView(view, {
             onIsFocalUserCurrentUserChange: (isCurrentUser: boolean) => setIsResetDisabled(isCurrentUser),
             members: initialMembers,
             onOpenRelate: handleOpenRelateModal,
@@ -353,7 +367,7 @@ function UniversalClientContent({
           })}
           
           {/* Fallback for unsupported views */}
-          {view !== 'grid' && (!adapter.renderView || !adapter.renderView(view, {
+          {view !== 'grid' && view !== 'games' && (!adapter.renderView || !adapter.renderView(view, {
             onIsFocalUserCurrentUserChange: (isCurrentUser: boolean) => setIsResetDisabled(isCurrentUser),
             members: initialMembers,
             onOpenRelate: handleOpenRelateModal,
