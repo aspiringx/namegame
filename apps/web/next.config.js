@@ -3,6 +3,7 @@ const withPWA = require('next-pwa')
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  transpilePackages: ['@namegame/db'],
   images: {
     minimumCacheTTL: 7776000, // 90 days
     deviceSizes: [320, 480, 640, 750, 828, 1080, 1200, 1920, 2048, 3840],
