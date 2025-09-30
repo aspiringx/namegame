@@ -32,9 +32,51 @@ DigitalOcean's App Platform is built to support this architecture.
 
 ### Recommended Stack
 
--   **Queue:** **BullMQ** (a robust, modern queueing library for Node.js).
--   **Broker:** **Redis** (BullMQ is built on Redis; can be added as a managed database on DigitalOcean).
 -   **Structure:** **pnpm Workspaces** (fast and efficient for monorepo management).
+-   **Queue (Phase 1):** **Graphile Worker** (Postgres-based job queue, uses existing database).
+-   **Chat (Phase 1):** **Postgres LISTEN/NOTIFY** (built-in pub/sub, no additional cost).
+-   **Queue (Phase 2):** **BullMQ + Redis** (migrate when throughput demands it).
+-   **Chat (Phase 2):** **Redis Pub/Sub** (migrate when real-time performance becomes critical).
+
+### Phase 1: Postgres-Based Approach (No Additional Cost)
+
+For a passion project, starting with Postgres for both job queuing and real-time messaging is the most cost-effective approach:
+
+**Job Queue: Graphile Worker**
+-   Built specifically for Postgres-based background jobs
+-   Supports retries, priorities, cron jobs, and concurrency control
+-   Battle-tested in production environments
+-   Zero additional infrastructure cost
+-   Performance is excellent for small-to-medium workloads (hundreds of jobs/minute)
+
+**Real-Time Chat: Postgres LISTEN/NOTIFY**
+-   Native Postgres pub/sub mechanism
+-   Supports multi-instance deployments
+-   Suitable for moderate message volumes
+-   Zero additional infrastructure cost
+-   Can be wrapped in Socket.io or similar WebSocket library
+
+### Phase 2: When to Migrate to Redis
+
+You'll know it's time to add Redis (DigitalOcean managed Redis starts at $15/month) when you experience:
+
+**For Job Queue:**
+-   Processing >1,000 jobs per minute consistently
+-   Need sub-second job latency (Postgres queues typically have 100ms-1s latency)
+-   Queue operations are causing noticeable database load
+-   Revenue/usage justifies the $15/month cost
+
+**For Chat:**
+-   >100 concurrent chat users
+-   High-frequency message broadcasts (multiple messages per second)
+-   Postgres LISTEN/NOTIFY causing connection pool issues
+-   Real-time features become a core product differentiator
+
+**Migration Strategy:**
+-   Abstract queue and pub/sub interfaces in shared packages
+-   Swap implementations without changing application code
+-   Run both systems in parallel during migration for safety
+-   Monitor performance before and after to validate improvement
 
 ---
 
@@ -53,7 +95,9 @@ DigitalOcean's App Platform is built to support this architecture.
 
 3.  **Set Up New Services:**
     -   For each new service (worker, chat), create a `package.json` in its respective directory (e.g., `apps/worker/package.json`).
-    -   Add necessary dependencies, including the shared `db` package.
+    -   Add necessary dependencies:
+        -   Worker: Graphile Worker, shared `db` package
+        -   Chat: Socket.io (or ws), shared `db` package for auth/persistence
     -   Write the basic logic for each service.
 
 4.  **Update DigitalOcean App Spec:**
