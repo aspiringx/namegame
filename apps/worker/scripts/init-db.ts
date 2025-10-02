@@ -3,7 +3,12 @@
  * 
  * Run this once to create the necessary tables in your database
  */
+import { config } from 'dotenv';
+import { resolve } from 'path';
 import { runMigrations } from 'graphile-worker';
+
+// Load environment variables from .env.local (symlink to root .env)
+config({ path: resolve(__dirname, '../.env.local') });
 
 const DATABASE_URL = process.env.DATABASE_URL;
 

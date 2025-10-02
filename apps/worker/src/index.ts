@@ -1,5 +1,10 @@
+import { config } from 'dotenv';
+import { resolve } from 'path';
 import { GraphileWorkerQueue } from '@namegame/queue';
 import { jobs } from './jobs';
+
+// Load environment variables from .env.local (symlink to root .env)
+config({ path: resolve(__dirname, '../.env.local') });
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -13,7 +18,7 @@ async function main() {
 
   const queue = new GraphileWorkerQueue(
     {
-      connectionString: DATABASE_URL,
+      connectionString: DATABASE_URL as string,
       concurrency: 5, // Process up to 5 jobs concurrently
       pollInterval: 1000, // Check for new jobs every second
     },
