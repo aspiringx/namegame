@@ -52,7 +52,11 @@ export function Combobox({
         });
 
   return (
-    <HeadlessCombobox value={selectedValue} onChange={onSelectValue} name={name}>
+    <HeadlessCombobox 
+      value={selectedValue} 
+      onChange={(value) => value && onSelectValue(value)} 
+      name={name}
+    >
       <div className="relative mt-1">
         <input type="hidden" name={name} value={selectedValue} />
         <div className="relative w-full cursor-default overflow-hidden rounded-md border bg-white text-left shadow-sm focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 dark:border-gray-600 dark:bg-gray-700">

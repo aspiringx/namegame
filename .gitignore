@@ -1,7 +1,7 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-/node_modules
+node_modules
 /.pnp
 .pnp.*
 .yarn/*
@@ -14,17 +14,17 @@
 /coverage
 
 # next.js
-/.next/
+.next/
 /out/
 
-# public
-/public/uploads
-/public/sw.js
-/public/sw.js.map
-/public/workbox-*.js
-/public/workbox-*.js.map
-/public/worker-*.js
-/public/worker-*.js.map
+# public (PWA and uploads - works in monorepo)
+**/public/uploads
+**/public/sw.js
+**/public/sw.js.map
+**/public/workbox-*.js
+**/public/workbox-*.js.map
+**/public/worker-*.js
+**/public/worker-*.js.map
 
 # production
 /build
@@ -49,10 +49,12 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-/src/generated/prisma
+# Prisma generated client (in monorepo and old location)
+packages/db/src/generated/
+**/src/generated/prisma
 
 # Database backups
-prisma/backups/
+**/prisma/backups/
 
 # Playwright
 node_modules/
