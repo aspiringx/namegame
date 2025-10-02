@@ -1,4 +1,4 @@
-import { Gender, type User } from '../generated/prisma'
+import { Gender, type User } from '@namegame/db'
 import { FullRelationship, MemberWithUser, UserWithPhotoUrl } from '@/types'
 
 /**
