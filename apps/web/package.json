@@ -64,6 +64,8 @@
     "use-debounce": "^10.0.5",
     "uuid": "^11.1.0",
     "web-push": "^3.6.7",
+    "workbox-core": "^7.0.0",
+    "workbox-precaching": "^7.0.0",
     "zod": "^3.25.74"
   },
   "devDependencies": {
@@ -78,6 +80,7 @@
     "@types/uuid": "^10.0.0",
     "@types/web-push": "^3.6.4",
     "autoprefixer": "^10.4.19",
+    "babel-loader": "^9.2.1",
     "eslint": "^8.57.0",
     "eslint-config-next": "^15.4.6",
     "eslint-config-prettier": "^10.1.8",

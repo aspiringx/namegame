@@ -3,8 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": "20.x"
+    "node": "20.x",
+    "pnpm": "10.x"
   },
+  "packageManager": "pnpm@10.17.1",
   "scripts": {
     "dev": "pnpm --filter web dev",
     "dev:mobile": "pnpm --filter web dev:mobile",
