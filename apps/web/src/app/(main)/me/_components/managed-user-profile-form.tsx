@@ -11,7 +11,7 @@ import {
   Photo,
   DatePrecision,
   Group,
-} from '@/generated/prisma/client'
+} from '@namegame/db'
 import GroupsSection from '@/app/(main)/me/_components/groups-section'
 import { Badge } from '@/components/ui/badge'
 import { formatDateForInput } from '@/lib/utils'

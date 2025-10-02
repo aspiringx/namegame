@@ -5,7 +5,7 @@ import type { GroupWithMembers } from '@/types/index'
 import Image from 'next/image'
 import { LoginCodeModal } from '@/components/LoginCodeModal'
 import { searchUsers, addMember, removeMember, updateMember } from './actions'
-import { GroupUser, User } from '@/generated/prisma'
+import { GroupUser, User } from '@namegame/db'
 import {
   Tooltip,
   TooltipContent,

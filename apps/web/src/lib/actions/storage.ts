@@ -8,7 +8,7 @@ import {
 import path from 'path'
 import { writeFile, unlink, mkdir } from 'fs/promises'
 import { env } from 'process'
-import { Photo } from '@/generated/prisma'
+import { Photo } from '@namegame/db'
 import { Readable } from 'stream'
 import { IMAGE_SIZES } from '@/config/photos'
 

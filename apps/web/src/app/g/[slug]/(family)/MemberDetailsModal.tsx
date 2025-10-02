@@ -2,18 +2,18 @@
 
 import Modal from '@/components/ui/modal'
 import { Button } from '@/components/ui/button'
-import { MemberWithUser } from '@/types'
-import Image from 'next/image'
+import type { MemberWithUser as Member } from '@/types/index'
+import type { Gender } from '@namegame/db'
 import { GitFork, X } from 'lucide-react'
-import { Gender } from '@/generated/prisma'
+import Image from 'next/image'
 
 interface MemberDetailsModalProps {
   isOpen: boolean
   onClose: () => void
-  member: MemberWithUser | null
+  member: Member | null
   relationship?: string
   currentUserId?: string
-  onOpenRelate?: (member: MemberWithUser) => void
+  onOpenRelate?: (member: Member) => void
   isGroupAdmin?: boolean
 }
 

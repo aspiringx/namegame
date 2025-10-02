@@ -7,7 +7,7 @@ import { Copy } from 'lucide-react';
 
 import { createLoginCode } from '@/actions/auth';
 import { Button } from '@/components/ui/button';
-import { User } from '@/generated/prisma';
+import { User } from '@namegame/db';
 
 interface LoginCodeModalProps {
   user: User | null;

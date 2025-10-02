@@ -7,7 +7,7 @@ import {
   User,
   Photo,
   GroupUser,
-} from '@/generated/prisma/client'
+} from '@namegame/db'
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
 import bcrypt from 'bcrypt'
@@ -17,7 +17,7 @@ import crypto from 'crypto'
 import { parseDateAndDeterminePrecision } from '@/lib/utils'
 import { getCodeTable } from '@/lib/codes'
 import { getPhotoUrl } from '@/lib/photos'
-import { Group, GroupType } from '@/generated/prisma/client'
+import { Group, GroupType } from '@namegame/db'
 
 export type ManagedUserWithPhoto = User & {
   primaryPhoto: (Photo & { url: string }) | null

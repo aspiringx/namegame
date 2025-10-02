@@ -1,14 +1,14 @@
-export type { User, UserUserRelationType } from '@/generated/prisma'
+export type { User, UserUserRelationType } from '@namegame/db'
 import {
   Prisma,
   Group,
   GroupUser,
-  User,
-  GroupUserRole,
   UserUser,
   UserUserRelationType,
   GroupType,
-} from '@/generated/prisma'
+  User,
+  GroupUserRole,
+} from '@namegame/db'
 
 // NOTE: It's important to keep this in sync with the `groupWithMembers` query in
 // `src/app/(main)/admin/groups/[slug]/edit/layout.tsx`.

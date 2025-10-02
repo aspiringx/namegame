@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Group, User } from '@/generated/prisma/client'
+import { Group, User } from '@namegame/db'
 import { Badge } from '@/components/ui/badge'
 import { ChevronDown, X } from 'lucide-react'
 import { addUserToGroup, removeUserFromGroup } from '../users/groups/actions'

@@ -41,7 +41,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { DatePrecision, Gender, Photo } from '@/generated/prisma/client'
+import { DatePrecision, Gender, Photo } from '@namegame/db'
 import { format } from 'date-fns'
 import UserProfileNextSteps from './UserProfileNextSteps'
 import StickySaveBar from '@/components/ui/StickySaveBar'

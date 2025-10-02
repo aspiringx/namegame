@@ -18,7 +18,7 @@ import {
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
-import type { User, Photo, ManagedStatus } from '@/generated/prisma/client'
+import type { User, Photo, ManagedStatus } from '@namegame/db'
 import { deleteManagedUser } from './actions'
 import { allowUserToManageMe, revokeManagementPermission } from '@/lib/actions'
 import { Combobox } from '@/components/ui/combobox'

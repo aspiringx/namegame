@@ -12,7 +12,7 @@ import {
   getGroupMembers,
 } from '@/app/(main)/me/users/actions'
 import { createUserUserRelation } from '@/lib/actions'
-import { User, Group, GroupType } from '@/generated/prisma/client'
+import { User, Group, GroupType } from '@namegame/db'
 import { toast } from 'sonner'
 import { Combobox } from './ui/combobox'
 import Image from 'next/image'

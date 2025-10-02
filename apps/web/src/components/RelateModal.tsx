@@ -32,7 +32,7 @@ import type {
   User,
   UserUser,
   UserUserRelationType,
-} from '@/generated/prisma'
+} from '@namegame/db'
 
 // Determines the correct display label (e.g., 'child' vs 'parent').
 function getRelationLabel(

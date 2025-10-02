@@ -4,7 +4,7 @@ import { useActionState, useState, useRef } from 'react'
 import { useFormStatus } from 'react-dom'
 import Image from 'next/image'
 import imageCompression from 'browser-image-compression'
-import type { GroupType } from '@/generated/prisma'
+import type { GroupType } from '@namegame/db'
 import { createGroup, type State } from './actions'
 import {
   Select,

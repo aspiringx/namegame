@@ -1,6 +1,6 @@
 'use server'
 
-import type { User } from '@/generated/prisma'
+import type { User } from '@namegame/db'
 import { auth } from '@/auth'
 import { revalidatePath } from 'next/cache'
 import prisma from '@/lib/prisma'

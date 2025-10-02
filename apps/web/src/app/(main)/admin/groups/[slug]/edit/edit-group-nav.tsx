@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import type { Group } from '@/generated/prisma'
+import type { Group } from '@namegame/db'
 
 interface EditGroupNavProps {
   group: Group
