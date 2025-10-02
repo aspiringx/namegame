@@ -354,7 +354,7 @@ function UniversalClientContent({
     return null
   }
 
-  const { group, isGroupAdmin, currentUserMember } = groupContext
+  const { group, currentUserMember } = groupContext
   const strategy = adapter.getMemberCardStrategy()
 
   return (

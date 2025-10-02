@@ -70,7 +70,7 @@ export class CommunityAdapter implements GroupAdapter {
 
   getDataFetcher(): DataFetcher {
     return {
-      getInitialData: async (groupSlug: string) => {
+      getInitialData: async (_groupSlug: string) => {
         // Community-specific data fetching logic would go here
         // For now, return empty object as this is handled by existing code
         return {}
