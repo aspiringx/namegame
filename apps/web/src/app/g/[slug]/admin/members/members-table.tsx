@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import type { GroupUser, GroupUserRole, User } from '@/generated/prisma'
+import type { GroupUser, GroupUserRole, User } from '@namegame/db'
 import Image from 'next/image'
 import { useParams } from 'next/navigation'
 import { updateMemberRole } from './actions'

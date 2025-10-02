@@ -3,7 +3,7 @@
 import { useState, useMemo, useCallback } from 'react'
 import { Search } from './Search'
 import GroupsTable from './GroupsTable'
-import type { Group } from '@/generated/prisma'
+import type { Group } from '@namegame/db'
 import { useDebouncedCallback } from 'use-debounce'
 import { Button } from '@/components/ui/button'
 

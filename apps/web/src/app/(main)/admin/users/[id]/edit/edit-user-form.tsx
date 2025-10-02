@@ -1,7 +1,7 @@
 'use client'
 
 import { useSession } from 'next-auth/react'
-import type { User } from '@/generated/prisma'
+import type { User } from '@namegame/db'
 import GlobalUserForm, { type UserFormData, type UserFormState } from '@/components/GlobalUserForm'
 import { updateUser, getUserUpdateRequirements } from './actions'
 

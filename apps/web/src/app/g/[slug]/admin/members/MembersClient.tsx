@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react'
 import { Search } from './Search'
 import MembersTable from './members-table'
-import type { GroupUser, GroupUserRole, User } from '@/generated/prisma'
+import type { GroupUser, GroupUserRole, User } from '@namegame/db'
 import { useDebouncedCallback } from 'use-debounce'
 import { Button } from '@/components/ui/button'
 

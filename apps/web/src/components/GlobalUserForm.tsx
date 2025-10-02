@@ -19,7 +19,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { Gender } from '@/generated/prisma/client'
+import { Gender } from '@namegame/db'
 import { z } from 'zod'
 
 export type UserFormData = {

@@ -8,7 +8,7 @@ import { getPhotoUrl } from '@/lib/photos'
 import { uploadFile, deleteFile } from '@/lib/actions/storage'
 import { getCodeTable } from '@/lib/codes'
 import { auth } from '@/auth'
-import { Gender, DatePrecision, User } from '@/generated/prisma/client'
+import { Gender, DatePrecision, User } from '@namegame/db'
 
 const FormSchema = z.object({
   username: z.string().min(1, 'Username is required.'),

@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { DeleteGroupButton } from './DeleteGroupButton'
 import { UndeleteGroupButton } from './UndeleteGroupButton'
 import { Edit } from 'lucide-react'
-import type { Group } from '@/generated/prisma'
+import type { Group } from '@namegame/db'
 
 type SortableColumn =
   | 'name'

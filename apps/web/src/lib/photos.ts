@@ -1,6 +1,6 @@
 'use server'
 
-import { Photo } from '@/generated/prisma/client'
+import { Photo } from '@namegame/db'
 import { getFileFromStorage, uploadToStorage } from '@/lib/actions/storage'
 import { IMAGE_SIZES } from '@/config/photos'
 import { getPublicUrl } from './storage'

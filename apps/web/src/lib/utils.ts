@@ -1,6 +1,6 @@
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge'
-import { DatePrecision } from '@/generated/prisma/client'
+import { DatePrecision } from '@namegame/db'
 import { isValid, parse } from 'date-fns'
 import { format, fromZonedTime } from 'date-fns-tz'
 

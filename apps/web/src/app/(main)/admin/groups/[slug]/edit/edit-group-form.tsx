@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { updateGroup } from './actions'
-import type { Group } from '@/generated/prisma'
+import type { Group } from '@namegame/db'
 import Image from 'next/image'
 
 export default function EditGroupForm({

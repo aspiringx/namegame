@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { GroupData } from '@/types'
 import { getGroupAdmins } from '@/app/g/[slug]/admin/actions'
-import { User } from '@/generated/prisma'
+import { User } from '@namegame/db'
 import { X } from 'lucide-react'
 import Image from 'next/image'
 
