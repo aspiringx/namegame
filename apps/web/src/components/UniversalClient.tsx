@@ -296,7 +296,7 @@ function UniversalClientContent({
     })
 
     return sortedMembers
-  }, [initialMembers, settings, relationshipMap])
+  }, [initialMembers, settings, relationshipMap, groupContext?.group?.groupType?.code])
 
   // Relationship modal handler with permission logic
   const handleOpenRelateModal = async (member: MemberWithUser) => {
