@@ -6,7 +6,7 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "init-db": "tsx scripts/init-db.ts"
+    "test": "echo \"No tests yet\""
   },
   "dependencies": {
     "@namegame/db": "workspace:*",
