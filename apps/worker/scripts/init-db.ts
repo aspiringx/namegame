@@ -7,8 +7,8 @@ import { config } from "dotenv";
 import { resolve } from "path";
 import { runMigrations } from "graphile-worker";
 
-// Load environment variables from .env.local (symlink to root .env)
-config({ path: resolve(__dirname, "../.env.local") });
+// Load environment variables from .env (symlink to root .env)
+config({ path: resolve(__dirname, "../.env") });
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
