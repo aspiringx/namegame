@@ -1,14 +1,19 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { X, Send, ArrowLeft, Smile } from 'lucide-react'
+import { Send, ArrowLeft } from 'lucide-react'
 import Image from 'next/image'
 import { useSocket } from '@/context/SocketContext'
 import { useSession } from 'next-auth/react'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 
 interface ChatInterfaceProps {
   isOpen: boolean
-  onClose: () => void
   onBack: () => void
   conversationId?: string
   participants: string[]
@@ -27,7 +32,6 @@ interface ChatMessage {
 
 export default function ChatInterface({
   isOpen,
-  onClose,
   onBack,
   conversationId,
   participants,
@@ -46,6 +50,11 @@ export default function ChatInterface({
   const { socket, isConnected, sendMessage, joinConversation, leaveConversation } = useSocket()
   const { data: session } = useSession()
   const currentUserId = session?.user?.id
+  
+  // Participant count (API already includes current user)
+  const participantCount = participants.length
+  const shouldTruncateName = conversationName.length > 30
+  const [showParticipantList, setShowParticipantList] = useState(false)
 
   // Focus input when chat opens
   useEffect(() => {
@@ -274,29 +283,40 @@ export default function ChatInterface({
     <div className="absolute inset-0 bg-white dark:bg-gray-900 flex flex-col z-50">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 min-w-0 flex-1">
           <button
             onClick={onBack}
-            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white"
+            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white flex-shrink-0"
           >
             <ArrowLeft size={24} />
           </button>
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <div className="min-w-0 flex-1">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
               {conversationName}
             </h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              {participants.length} participant{participants.length > 1 ? 's' : ''}
-            </p>
+            {shouldTruncateName ? (
+              <TooltipProvider>
+                <Tooltip open={showParticipantList} onOpenChange={setShowParticipantList}>
+                  <TooltipTrigger asChild>
+                    <button 
+                      className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+                      onClick={() => setShowParticipantList(!showParticipantList)}
+                    >
+                      {participantCount} participant{participantCount > 1 ? 's' : ''}
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="max-w-xs">
+                    <p className="font-semibold mb-1">Participants:</p>
+                    <p>{conversationName}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            ) : (
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {participantCount} participant{participantCount > 1 ? 's' : ''}
+              </p>
+            )}
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white"
-          >
-            <X size={24} />
-          </button>
         </div>
       </div>
 
@@ -453,10 +473,6 @@ export default function ChatInterface({
       {/* Message Input */}
       <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
         <div className="flex items-end gap-3">
-          <button className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white mb-2">
-            <Smile size={24} />
-          </button>
-          
           <div className="flex-1 relative">
             <textarea
               ref={inputRef}

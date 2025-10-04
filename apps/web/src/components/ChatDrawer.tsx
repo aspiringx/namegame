@@ -19,6 +19,7 @@ interface Conversation {
   timestamp: string
   unreadCount: number
   isGroup: boolean
+  participants: Array<{ id: string; name: string }>
 }
 
 export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
@@ -80,7 +81,8 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
           lastMessage: '', // TODO: Get last message
           timestamp: c.lastMessageAt ? new Date(c.lastMessageAt).toLocaleString() : '',
           unreadCount: 0, // TODO: Calculate unread
-          isGroup: c.participants.length > 2
+          isGroup: c.participants.length > 2,
+          participants: c.participants || []
         }))
         
         if (isInitialLoad) {
@@ -181,7 +183,7 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
   const handleOpenExistingChat = (conversation: Conversation) => {
     setCurrentConversation({
       id: conversation.id,
-      participants: [conversation.name], // Mock - would be actual participant IDs
+      participants: conversation.participants.map(p => p.id),
       name: conversation.name
     })
     setShowChatInterface(true)
@@ -302,7 +304,6 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
         {currentConversation && (
           <ChatInterface
             isOpen={showChatInterface}
-            onClose={onClose}
             onBack={handleBackToConversations}
             conversationId={currentConversation.id}
             participants={currentConversation.participants}

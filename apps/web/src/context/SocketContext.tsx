@@ -47,12 +47,10 @@ export function SocketProvider({ children }: SocketProviderProps) {
     })
 
     newSocket.on('connect', () => {
-      console.log('[Socket] Connected to chat service')
       setIsConnected(true)
     })
 
     newSocket.on('disconnect', () => {
-      console.log('[Socket] Disconnected from chat service')
       setIsConnected(false)
     })
 
@@ -62,19 +60,16 @@ export function SocketProvider({ children }: SocketProviderProps) {
     })
 
     // Handle incoming messages
-    newSocket.on('message', (message) => {
-      console.log('[Socket] Received message:', message)
+    newSocket.on('message', (_message) => {
       // TODO: Update message state in chat components
     })
 
     // Handle typing indicators
-    newSocket.on('user_typing', (data) => {
-      console.log('[Socket] User typing:', data)
+    newSocket.on('user_typing', (_data) => {
       // TODO: Update typing state in chat components
     })
 
-    newSocket.on('user_stopped_typing', (data) => {
-      console.log('[Socket] User stopped typing:', data)
+    newSocket.on('user_stopped_typing', (_data) => {
       // TODO: Update typing state in chat components
     })
 
@@ -100,16 +95,12 @@ export function SocketProvider({ children }: SocketProviderProps) {
 
   const joinConversation = (conversationId: string) => {
     if (!socket || !isConnected) return
-    
     socket.emit('join-conversation', conversationId)
-    console.log('[Socket] Joined conversation:', conversationId)
   }
 
   const leaveConversation = (conversationId: string) => {
     if (!socket || !isConnected) return
-    
     socket.emit('leave-conversation', conversationId)
-    console.log('[Socket] Left conversation:', conversationId)
   }
 
   const value: SocketContextType = {
