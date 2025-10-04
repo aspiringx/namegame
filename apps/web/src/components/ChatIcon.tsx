@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { MessageCircle } from 'lucide-react'
 import ChatModal from './ChatModal'
+import { useSession } from 'next-auth/react'
 
 interface ChatIconProps {
   unreadCount?: number
@@ -10,6 +11,12 @@ interface ChatIconProps {
 
 export default function ChatIcon({ unreadCount = 0 }: ChatIconProps) {
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const { data: session } = useSession()
+
+  // Don't show chat for unauthenticated users
+  if (!session?.user) {
+    return null
+  }
 
   return (
     <>

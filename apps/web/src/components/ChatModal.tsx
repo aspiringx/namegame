@@ -42,6 +42,7 @@ const mockConversations: Conversation[] = [
 
 export default function ChatModal({ isOpen, onClose }: ChatModalProps) {
   const [conversations, setConversations] = useState<Conversation[]>([])
+  const [isLoadingConversations, setIsLoadingConversations] = useState(false)
   const [showParticipantSelector, setShowParticipantSelector] = useState(false)
   const [showChatInterface, setShowChatInterface] = useState(false)
   const [selectorMode, setSelectorMode] = useState<'group' | 'global'>('group')
@@ -61,6 +62,7 @@ export default function ChatModal({ isOpen, onClose }: ChatModalProps) {
   }, [isOpen])
 
   const loadConversations = async () => {
+    setIsLoadingConversations(true)
     try {
       const response = await fetch('/api/chat/conversations')
       if (response.ok) {
@@ -76,6 +78,8 @@ export default function ChatModal({ isOpen, onClose }: ChatModalProps) {
       }
     } catch (error) {
       console.error('[ChatModal] Error loading conversations:', error)
+    } finally {
+      setIsLoadingConversations(false)
     }
   }
 
@@ -89,7 +93,7 @@ export default function ChatModal({ isOpen, onClose }: ChatModalProps) {
     setShowParticipantSelector(true)
   }
 
-  const handleStartChat = async (participantIds: string[], participantNames: string[]) => {
+  const handleStartChat = async (participantIds: string[]) => {
     try {
       // Create conversation in database (name will be generated from participants)
       const response = await fetch('/api/chat/conversations', {
@@ -119,6 +123,8 @@ export default function ChatModal({ isOpen, onClose }: ChatModalProps) {
         participants: participantIds,
         name: displayName
       })
+      
+      // Show chat interface and hide selector
       setShowParticipantSelector(false)
       setShowChatInterface(true)
     } catch (error) {
@@ -192,7 +198,12 @@ export default function ChatModal({ isOpen, onClose }: ChatModalProps) {
 
         {/* Conversation List */}
         <div className="flex-1 overflow-y-auto">
-          {conversations.length === 0 ? (
+          {isLoadingConversations ? (
+            <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
+              <p>Loading conversations...</p>
+            </div>
+          ) : conversations.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400">
               <MessageCircle size={48} className="mb-4 opacity-50" />
               <p>No conversations yet</p>

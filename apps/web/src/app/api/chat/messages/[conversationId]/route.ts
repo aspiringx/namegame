@@ -4,7 +4,7 @@ import prisma from '@/lib/prisma'
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { conversationId: string } }
+  { params }: { params: Promise<{ conversationId: string }> }
 ) {
   try {
     const session = await auth()
@@ -13,7 +13,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { conversationId } = params
+    const { conversationId } = await params
 
     // Verify user is a participant in this conversation
     const conversation = await prisma.chatConversation.findFirst({

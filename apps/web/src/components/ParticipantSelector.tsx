@@ -7,7 +7,7 @@ import { useGroup } from '@/components/GroupProvider'
 interface ParticipantSelectorProps {
   isOpen: boolean
   onClose: () => void
-  onStartChat: (participantIds: string[], participantNames: string[]) => void
+  onStartChat: (participantIds: string[]) => void
   mode: 'group' | 'global'
 }
 
@@ -15,14 +15,13 @@ interface Participant {
   id: string
   name: string
   avatar?: string
-  isOnline?: boolean
 }
 
 // Mock data for global connections (TODO: load from UserUser relationships)
 const mockGlobalConnections: Participant[] = [
-  { id: '5', name: 'David Chen', isOnline: true },
-  { id: '6', name: 'Emma Davis', isOnline: false },
-  { id: '7', name: 'Alex Rodriguez', isOnline: true },
+  { id: '5', name: 'David Chen' },
+  { id: '6', name: 'Emma Davis' },
+  { id: '7', name: 'Alex Rodriguez' },
 ]
 
 export default function ParticipantSelector({ 
@@ -38,29 +37,16 @@ export default function ParticipantSelector({
 
   if (!isOpen) return null
 
-  // Debug logging
-  console.log('[ParticipantSelector] Debug info:', {
-    mode,
-    hasGroupData: !!groupData,
-    groupData: groupData,
-    relatedMembersCount: groupData?.relatedMembers?.length || 0,
-    notRelatedMembersCount: groupData?.notRelatedMembers?.length || 0,
-    currentUserId: groupData?.currentUserMember?.user.id
-  })
-
   // Get real group members or use mock global connections
   const groupMembers: Participant[] = mode === 'group' && groupData?.group && (groupData.group as any).members 
     ? (groupData.group as any).members
         .map((member: any) => ({
           id: member.user.id,
           name: member.user.name || 'Unknown User',
-          avatar: member.user.photoUrl || undefined,
-          isOnline: false // TODO: Add online status tracking
+          avatar: member.user.photoUrl || undefined
         }))
         .filter((p: any) => p.id !== groupData.currentUserMember?.user.id) // Exclude current user
     : []
-
-  console.log('[ParticipantSelector] Group members:', groupMembers)
 
   const participants = mode === 'group' ? groupMembers : mockGlobalConnections
   const filteredParticipants = participants.filter((p: Participant) => 
@@ -77,10 +63,7 @@ export default function ParticipantSelector({
 
   const handleStartChat = () => {
     if (selectedParticipants.length > 0) {
-      const selectedNames = selectedParticipants.map(id => 
-        participants.find(p => p.id === id)?.name || 'Unknown User'
-      )
-      onStartChat(selectedParticipants, selectedNames)
+      onStartChat(selectedParticipants)
       setSelectedParticipants([])
       setSearchQuery('')
       onClose()
@@ -159,16 +142,10 @@ export default function ParticipantSelector({
                             </span>
                           </div>
                         )}
-                        {participant.isOnline && (
-                          <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-gray-800"></div>
-                        )}
                       </div>
                       <div>
                         <p className="font-medium text-gray-900 dark:text-white">
                           {participant.name}
-                        </p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          {participant.isOnline ? 'Online' : 'Offline'}
                         </p>
                       </div>
                     </div>

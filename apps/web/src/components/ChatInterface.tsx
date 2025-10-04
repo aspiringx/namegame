@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { X, Send, ArrowLeft, MoreVertical, Smile } from 'lucide-react'
+import { X, Send, ArrowLeft, Smile } from 'lucide-react'
 import { useSocket } from '@/context/SocketContext'
 import { useSession } from 'next-auth/react'
 
@@ -68,6 +68,7 @@ export default function ChatInterface({
   conversationName
 }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false)
   const [newMessage, setNewMessage] = useState('')
   const [isTyping, setIsTyping] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -110,6 +111,7 @@ export default function ChatInterface({
   const loadMessages = async () => {
     if (!conversationId) return
     
+    setIsLoadingMessages(true)
     try {
       const response = await fetch(`/api/chat/messages/${conversationId}`)
       if (response.ok) {
@@ -125,6 +127,8 @@ export default function ChatInterface({
       }
     } catch (error) {
       console.error('[ChatInterface] Error loading messages:', error)
+    } finally {
+      setIsLoadingMessages(false)
     }
   }
 
@@ -206,7 +210,7 @@ export default function ChatInterface({
   }, {} as Record<string, ChatMessage[]>)
 
   return (
-    <div className="fixed inset-0 z-50 bg-white dark:bg-gray-900 flex flex-col">
+    <div className="fixed inset-0 z-[60] bg-white dark:bg-gray-900 flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
         <div className="flex items-center gap-3">
@@ -221,14 +225,11 @@ export default function ChatInterface({
               {conversationName}
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              {participants.length} participant{participants.length > 1 ? 's' : ''} • {isConnected ? 'Connected' : 'Connecting...'}
+              {participants.length} participant{participants.length > 1 ? 's' : ''}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white">
-            <MoreVertical size={24} />
-          </button>
           <button
             onClick={onClose}
             className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white"
@@ -240,7 +241,12 @@ export default function ChatInterface({
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {Object.entries(groupedMessages).map(([dateKey, dayMessages]) => (
+        {isLoadingMessages ? (
+          <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
+            <p>Loading messages...</p>
+          </div>
+        ) : Object.entries(groupedMessages).map(([dateKey, dayMessages]) => (
           <div key={dateKey}>
             {/* Date separator */}
             <div className="flex items-center justify-center my-4">
@@ -303,7 +309,7 @@ export default function ChatInterface({
           </div>
         ))}
         
-        {isTyping && (
+        {!isLoadingMessages && isTyping && (
           <div className="flex gap-3">
             <div className="w-8 h-8 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center">
               <span className="text-xs font-medium text-gray-700 dark:text-gray-300">•••</span>
