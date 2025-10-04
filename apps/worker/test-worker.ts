@@ -5,7 +5,7 @@ import { config } from 'dotenv';
 import { resolve } from 'path';
 import { quickAddJob } from 'graphile-worker';
 
-config({ path: resolve(__dirname, '.env.local') });
+config({ path: resolve(__dirname, '.env') });
 
 const DATABASE_URL = process.env.DATABASE_URL;
 

@@ -1,10 +1,11 @@
 import { config } from 'dotenv';
 import { resolve } from 'path';
+import { runMigrations } from 'graphile-worker';
 import { GraphileWorkerQueue } from '@namegame/queue';
 import { jobs } from './jobs';
 
-// Load environment variables from .env.local (symlink to root .env)
-config({ path: resolve(__dirname, '../.env.local') });
+// Load environment variables from .env (symlink to root .env)
+config({ path: resolve(__dirname, '../.env') });
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -14,6 +15,19 @@ if (!DATABASE_URL) {
 
 async function main() {
   console.log('[Worker] Starting worker service...');
+  
+  // Auto-initialize Graphile Worker database schema if needed
+  console.log('[Worker] Ensuring Graphile Worker tables exist...');
+  try {
+    // Handle SSL mode for different environments
+    const connectionString = DATABASE_URL!.replace('sslmode=require', 'sslmode=no-verify');
+    await runMigrations({ connectionString });
+    console.log('[Worker] ✅ Graphile Worker database schema ready');
+  } catch (error) {
+    console.error('[Worker] ❌ Failed to initialize database schema:', error);
+    process.exit(1);
+  }
+  
   console.log('[Worker] Registered jobs:', Object.keys(jobs));
 
   const queue = new GraphileWorkerQueue(

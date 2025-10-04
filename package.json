@@ -3,18 +3,22 @@
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": "20.x",
-    "pnpm": "10.x"
+    "node": "20.x"
   },
   "packageManager": "pnpm@10.17.1",
   "scripts": {
-    "dev": "pnpm --filter web dev",
+    "dev": "concurrently --names \"web,worker,chat\" --prefix-colors \"blue,green,yellow\" \"pnpm dev:web\" \"pnpm dev:worker\" \"pnpm dev:chat\"",
+    "dev:all-mobile": "concurrently --names \"web,worker,chat\" --prefix-colors \"blue,green,yellow\" \"pnpm dev:mobile\" \"pnpm dev:worker\" \"pnpm dev:chat\"",
+    "dev:web": "pnpm --filter web dev",
     "dev:mobile": "pnpm --filter web dev:mobile",
     "dev:worker": "pnpm --filter worker dev",
     "dev:chat": "pnpm --filter chat dev",
     "build": "pnpm --filter web build",
     "build:all": "pnpm -r build",
-    "start": "pnpm --filter web start",
+    "start": "pm2 start ecosystem.config.js",
+    "start:web": "pnpm --filter web start",
+    "stop": "pm2 stop ecosystem.config.js",
+    "restart": "pm2 restart ecosystem.config.js",
     "lint": "pnpm --filter web lint",
     "lint:fix": "pnpm --filter web lint:fix",
     "test": "pnpm --filter web test",
@@ -29,6 +33,8 @@
     "email-preview": "pnpm --filter web email-preview"
   },
   "devDependencies": {
+    "concurrently": "^9.2.1",
+    "pm2": "^6.0.13",
     "typescript": "^5.5"
   }
 }
