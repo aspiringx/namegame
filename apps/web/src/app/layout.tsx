@@ -13,6 +13,7 @@ import AuthProvider from '@/components/AuthProvider'
 import { ServiceWorkerRegistrar } from '@/components/ServiceWorkerRegistrar'
 import { ServiceWorkerProvider } from '@/context/ServiceWorkerContext'
 import { PushNotificationsProvider } from '@/context/PushNotificationsContext'
+import { SocketProvider } from '@/context/SocketContext'
 
 import './globals.css'
 
@@ -304,18 +305,20 @@ export default async function RootLayout({
           <AuthProvider session={session}>
             <DeviceInfoProvider>
               <UserSessionProvider>
-                <A2HSProvider>
-                  <ServiceWorkerProvider>
-                    <PushNotificationsProvider>
-                      <div className="relative min-h-screen">{children}</div>
-                      <ClientOnly>
-                        <InstallAppPrompt />
-                        <ServiceWorkerRegistrar />
-                      </ClientOnly>
-                      <Toaster />
-                    </PushNotificationsProvider>
-                  </ServiceWorkerProvider>
-                </A2HSProvider>
+                <SocketProvider>
+                  <A2HSProvider>
+                    <ServiceWorkerProvider>
+                      <PushNotificationsProvider>
+                        <div className="relative min-h-screen">{children}</div>
+                        <ClientOnly>
+                          <InstallAppPrompt />
+                          <ServiceWorkerRegistrar />
+                        </ClientOnly>
+                        <Toaster />
+                      </PushNotificationsProvider>
+                    </ServiceWorkerProvider>
+                  </A2HSProvider>
+                </SocketProvider>
               </UserSessionProvider>
             </DeviceInfoProvider>
           </AuthProvider>

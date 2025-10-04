@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { X, Send, ArrowLeft, MoreVertical, Smile } from 'lucide-react'
+import { useSocket } from '@/context/SocketContext'
 
 interface ChatInterfaceProps {
   isOpen: boolean
@@ -70,6 +71,7 @@ export default function ChatInterface({
   const [isTyping, setIsTyping] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
+  const { socket, isConnected, sendMessage, joinConversation, leaveConversation } = useSocket()
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -83,13 +85,50 @@ export default function ChatInterface({
     }
   }, [isOpen])
 
+  // Join/leave conversation when component mounts/unmounts
+  useEffect(() => {
+    if (isOpen && conversationId && isConnected) {
+      joinConversation(conversationId)
+      
+      return () => {
+        leaveConversation(conversationId)
+      }
+    }
+  }, [isOpen, conversationId, isConnected, joinConversation, leaveConversation])
+
+  // Listen for incoming messages
+  useEffect(() => {
+    if (!socket) return
+
+    const handleNewMessage = (message: any) => {
+      // Convert socket message to our ChatMessage format
+      const chatMessage: ChatMessage = {
+        id: message.id,
+        content: message.content,
+        authorId: message.authorId,
+        authorName: message.authorName || 'Unknown User',
+        timestamp: new Date(message.createdAt),
+        type: message.type || 'text'
+      }
+      
+      setMessages(prev => [...prev, chatMessage])
+    }
+
+    socket.on('new_message', handleNewMessage)
+
+    return () => {
+      socket.off('new_message', handleNewMessage)
+    }
+  }, [socket])
+
   if (!isOpen) return null
 
   const handleSendMessage = () => {
-    if (!newMessage.trim()) return
+    if (!newMessage.trim() || !conversationId) return
 
-    const message: ChatMessage = {
-      id: Date.now().toString(),
+    // Optimistically add message to UI
+    const optimisticMessage: ChatMessage = {
+      id: `temp-${Date.now()}`,
       content: newMessage.trim(),
       authorId: 'current',
       authorName: 'You',
@@ -97,11 +136,15 @@ export default function ChatInterface({
       type: 'text'
     }
 
-    setMessages(prev => [...prev, message])
+    setMessages(prev => [...prev, optimisticMessage])
     setNewMessage('')
-    
-    // TODO: Send message via Socket.io
-    console.log('Sending message:', message)
+
+    // Send via Socket.io (real message will come back via socket event)
+    if (isConnected) {
+      sendMessage(conversationId, newMessage.trim())
+    } else {
+      console.error('[Chat] Cannot send message: not connected to chat service')
+    }
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -155,7 +198,7 @@ export default function ChatInterface({
               {conversationName}
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              {participants.length} participant{participants.length > 1 ? 's' : ''}
+              {participants.length} participant{participants.length > 1 ? 's' : ''} • {isConnected ? 'Connected' : 'Connecting...'}
             </p>
           </div>
         </div>

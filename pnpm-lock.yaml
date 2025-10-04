@@ -183,6 +183,9 @@ importers:
       sharp:
         specifier: ^0.34.2
         version: 0.34.4
+      socket.io-client:
+        specifier: ^4.8.1
+        version: 4.8.1
       sonner:
         specifier: ^2.0.7
         version: 2.0.7(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
