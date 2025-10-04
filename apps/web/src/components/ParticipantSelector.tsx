@@ -1,8 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { X, Search, Check } from 'lucide-react'
+import Image from 'next/image'
 import { useGroup } from '@/components/GroupProvider'
+import { getGroupMemberPhotos } from '@/app/actions/chat'
 
 interface ParticipantSelectorProps {
   isOpen: boolean
@@ -32,8 +34,23 @@ export default function ParticipantSelector({
 }: ParticipantSelectorProps) {
   const [selectedParticipants, setSelectedParticipants] = useState<string[]>([])
   const [searchQuery, setSearchQuery] = useState('')
+  const [photoMap, setPhotoMap] = useState<Map<string, string>>(new Map())
   const groupData = useGroup()
   const group = groupData?.group
+
+  // Load thumb photos for group members
+  useEffect(() => {
+    if (!isOpen || mode !== 'group' || !groupData?.group) return
+    
+    const members = (groupData.group as any).members || []
+    const userIds = members
+      .map((m: any) => m.user.id)
+      .filter((id: string) => id !== groupData.currentUserMember?.user.id)
+    
+    if (userIds.length > 0) {
+      getGroupMemberPhotos(userIds).then(setPhotoMap)
+    }
+  }, [isOpen, mode, groupData])
 
   if (!isOpen) return null
 
@@ -43,7 +60,7 @@ export default function ParticipantSelector({
         .map((member: any) => ({
           id: member.user.id,
           name: member.user.name || 'Unknown User',
-          avatar: member.user.photoUrl || undefined
+          avatar: photoMap.get(member.user.id) || undefined
         }))
         .filter((p: any) => p.id !== groupData.currentUserMember?.user.id) // Exclude current user
     : []
@@ -78,9 +95,10 @@ export default function ParticipantSelector({
     ? 'Choose group members to message'
     : 'Choose from your connections'
 
+  if (!isOpen) return null
+  
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-lg w-full max-w-md h-[600px] flex flex-col">
+    <div className="absolute inset-0 bg-white dark:bg-gray-900 flex flex-col z-50">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
           <div>
@@ -130,10 +148,14 @@ export default function ParticipantSelector({
                     <div className="flex items-center gap-3">
                       <div className="relative">
                         {participant.avatar ? (
-                          <img
+                          <Image
                             src={participant.avatar}
                             alt={participant.name}
+                            width={80}
+                            height={80}
                             className="w-10 h-10 rounded-full object-cover"
+                            quality={95}
+                            unoptimized={false}
                           />
                         ) : (
                           <div className="w-10 h-10 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center">
@@ -176,7 +198,6 @@ export default function ParticipantSelector({
             </button>
           </div>
         </div>
-      </div>
     </div>
   )
 }

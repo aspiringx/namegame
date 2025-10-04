@@ -35,7 +35,12 @@ export function SocketProvider({ children }: SocketProviderProps) {
     if (!session?.user) return
 
     // Connect to chat service
-    const newSocket = io('http://localhost:3001', {
+    // Use window.location.hostname to connect to chat server on same host as web app
+    const chatUrl = typeof window !== 'undefined' 
+      ? `http://${window.location.hostname}:3001`
+      : 'http://localhost:3001'
+    
+    const newSocket = io(chatUrl, {
       auth: {
         userId: session.user.id
       }

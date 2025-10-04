@@ -38,7 +38,8 @@ export default function ChatInterface({
   const [hasMoreMessages, setHasMoreMessages] = useState(true)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [newMessage, setNewMessage] = useState('')
-  const [revealedTimestamps, setRevealedTimestamps] = useState<Set<string>>(new Set())
+  const [showAllTimestamps, setShowAllTimestamps] = useState(false)
+  const [authorPhotos, setAuthorPhotos] = useState<Map<string, string | null>>(new Map())
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -71,6 +72,15 @@ export default function ChatInterface({
       const response = await fetch(url)
       if (response.ok) {
         const { messages: msgs, hasMore } = await response.json()
+        // Cache author photos
+        const newPhotos = new Map(authorPhotos)
+        msgs.forEach((m: any) => {
+          if (m.authorId && m.authorPhoto && !newPhotos.has(m.authorId)) {
+            newPhotos.set(m.authorId, m.authorPhoto)
+          }
+        })
+        setAuthorPhotos(newPhotos)
+        
         const newMessages = msgs.map((m: any) => ({
           id: m.id,
           content: m.content,
@@ -116,6 +126,7 @@ export default function ChatInterface({
         setIsLoadingMore(false)
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversationId])
   
   const loadMoreMessages = useCallback(() => {
@@ -182,12 +193,15 @@ export default function ChatInterface({
     if (!socket) return
 
     const handleNewMessage = (message: any) => {
+      const authorId = message.author?.id || message.authorId
+      
       // Convert socket message to our ChatMessage format
       const chatMessage: ChatMessage = {
         id: message.id,
         content: message.content,
-        authorId: message.author?.id || message.authorId,
+        authorId,
         authorName: message.author?.name || 'Unknown User',
+        authorPhoto: authorPhotos.get(authorId) || null,
         timestamp: new Date(message.createdAt),
         type: message.type || 'text'
       }
@@ -200,7 +214,7 @@ export default function ChatInterface({
     return () => {
       socket.off('message', handleNewMessage)
     }
-  }, [socket])
+  }, [socket, authorPhotos])
 
   if (!isOpen) return null
 
@@ -254,8 +268,10 @@ export default function ChatInterface({
     return groups
   }, {} as Record<string, ChatMessage[]>)
 
+  if (!isOpen) return null
+  
   return (
-    <div className="fixed inset-0 z-[60] bg-white dark:bg-gray-900 flex flex-col">
+    <div className="absolute inset-0 bg-white dark:bg-gray-900 flex flex-col z-50">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
         <div className="flex items-center gap-3">
@@ -285,7 +301,31 @@ export default function ChatInterface({
       </div>
 
       {/* Messages */}
-      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div 
+        ref={messagesContainerRef} 
+        className="flex-1 overflow-y-auto p-4 space-y-4"
+        onTouchStart={(e) => {
+          const container = e.currentTarget
+          container.dataset.touchStartX = String(e.touches[0].clientX)
+          container.dataset.touchStartY = String(e.touches[0].clientY)
+        }}
+        onTouchMove={(e) => {
+          const container = e.currentTarget
+          const startX = Number(container.dataset.touchStartX || 0)
+          const startY = Number(container.dataset.touchStartY || 0)
+          const deltaX = startX - e.touches[0].clientX
+          const deltaY = Math.abs(startY - e.touches[0].clientY)
+          
+          // Swipe left to reveal all timestamps
+          if (deltaX > 50 && deltaY < 30) {
+            setShowAllTimestamps(true)
+          }
+        }}
+        onTouchEnd={() => setShowAllTimestamps(false)}
+        onMouseDown={() => setShowAllTimestamps(true)}
+        onMouseUp={() => setShowAllTimestamps(false)}
+        onMouseLeave={() => setShowAllTimestamps(false)}
+      >
         {isLoadingMore && (
           <div className="flex justify-center py-2">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
@@ -316,40 +356,46 @@ export default function ChatInterface({
                 dayMessages[index - 1]?.authorId !== message.authorId
               )
               
-              // Show timestamp if:
-              // 1. First message of the day
-              // 2. Different author than previous
-              // 3. More than 5 minutes since last message
+              // Show centered timestamp if more than 5 minutes since last message
               const prevMessage = dayMessages[index - 1]
               const timeDiff = prevMessage 
                 ? (message.timestamp.getTime() - prevMessage.timestamp.getTime()) / 1000 / 60
                 : Infinity
-              const showTimestamp = index === 0 || 
-                                   message.authorId !== prevMessage?.authorId || 
-                                   timeDiff > 5
-              
-              const isTimestampRevealed = revealedTimestamps.has(message.id)
-              const shouldShowTime = showTimestamp || isTimestampRevealed
+              const showCenteredTimestamp = timeDiff > 5
 
               return (
+                <div key={message.id}>
+                  {/* Centered timestamp separator */}
+                  {showCenteredTimestamp && (
+                    <div className="flex justify-center my-3">
+                      <span className="text-xs text-gray-400 dark:text-gray-500">
+                        {formatTime(message.timestamp)}
+                      </span>
+                    </div>
+                  )}
+                  
+                  {/* Message */}
                 <div
-                  key={message.id}
                   data-message-id={message.id}
-                  className={`flex gap-3 mb-2 ${isCurrentUser ? 'justify-end' : 'justify-start'}`}
+                  className={`flex gap-3 mb-2 relative transition-transform duration-200 ${
+                    isCurrentUser ? 'justify-end' : 'justify-start'
+                  } ${showAllTimestamps ? '-translate-x-16' : ''}`}
                 >
                   {!isCurrentUser && (
-                    <div className="w-8 h-8 flex-shrink-0">
+                    <div className="w-12 h-8 flex-shrink-0">
                       {showAvatar && (
                         message.authorPhoto ? (
                           <Image
                             src={message.authorPhoto}
                             alt={message.authorName}
-                            width={32}
-                            height={32}
-                            className="w-8 h-8 rounded-full object-cover"
+                            width={64}
+                            height={64}
+                            className="w-12 h-12 rounded-full object-cover"
+                            quality={95}
+                            unoptimized={false}
                           />
                         ) : (
-                          <div className="w-8 h-8 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center">
+                          <div className="w-12 h-12 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center">
                             <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
                               {message.authorName.split(' ').map(n => n[0]).join('')}
                             </span>
@@ -366,26 +412,14 @@ export default function ChatInterface({
                       </span>
                     )}
                     
-                    <div
-                      onClick={() => {
-                        setRevealedTimestamps(prev => {
-                          const next = new Set(prev)
-                          if (next.has(message.id)) {
-                            next.delete(message.id)
-                          } else {
-                            next.add(message.id)
-                          }
-                          return next
-                        })
-                      }}
-                      className={`px-4 py-2 rounded-2xl cursor-pointer ${
+                    <div className={`px-4 py-2 rounded-2xl ${
                         isCurrentUser
                           ? 'bg-blue-500 text-white'
                           : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
                       }`}
                     >
                       {message.type === 'text' ? (
-                        <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                        <p className="text-xl whitespace-pre-wrap" style={{ WebkitTextSizeAdjust: '100%' }}>{message.content}</p>
                       ) : (
                         <Image 
                           src={message.content} 
@@ -396,13 +430,18 @@ export default function ChatInterface({
                         />
                       )}
                     </div>
-                    {shouldShowTime && (
-                      <span className="text-xs text-gray-400 mt-1 px-3">
-                        {formatTime(message.timestamp)}
-                      </span>
-                    )}
+                  </div>
+                  
+                  {/* Timestamp - shows in the right margin when swiping */}
+                  <div className={`absolute right-0 top-1/2 -translate-y-1/2 transition-all duration-200 ${
+                    showAllTimestamps ? 'opacity-100 translate-x-16' : 'opacity-0 translate-x-0 pointer-events-none'
+                  }`}>
+                    <span className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">
+                      {formatTime(message.timestamp)}
+                    </span>
                   </div>
                 </div>
+              </div>
               )
             })}
           </div>

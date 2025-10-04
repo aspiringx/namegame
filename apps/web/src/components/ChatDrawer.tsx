@@ -1,12 +1,13 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { X, Users, User, MessageCircle } from 'lucide-react'
+import { Users, User, MessageCircle } from 'lucide-react'
 import { useGroup } from '@/components/GroupProvider'
+import Drawer from './Drawer'
 import ParticipantSelector from './ParticipantSelector'
 import ChatInterface from './ChatInterface'
 
-interface ChatModalProps {
+interface ChatDrawerProps {
   isOpen: boolean
   onClose: () => void
 }
@@ -20,7 +21,7 @@ interface Conversation {
   isGroup: boolean
 }
 
-export default function ChatModal({ isOpen, onClose }: ChatModalProps) {
+export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [isLoadingConversations, setIsLoadingConversations] = useState(false)
   const [hasMoreConversations, setHasMoreConversations] = useState(true)
@@ -200,21 +201,9 @@ export default function ChatModal({ isOpen, onClose }: ChatModalProps) {
     }
   }, [isOpen])
 
-  if (!isOpen) return null
-
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-lg w-full max-w-md h-[600px] flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Messages</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white"
-          >
-            <X size={24} />
-          </button>
-        </div>
+    <>
+      <Drawer isOpen={isOpen} onClose={onClose} title="Messages" width="md">
 
         {/* New Message Buttons */}
         <div className="p-4 border-b border-gray-200 dark:border-gray-700 space-y-2">
@@ -300,27 +289,27 @@ export default function ChatModal({ isOpen, onClose }: ChatModalProps) {
             </div>
           )}
         </div>
-      </div>
-
-      {/* Participant Selector */}
-      <ParticipantSelector
-        isOpen={showParticipantSelector}
-        onClose={() => setShowParticipantSelector(false)}
-        onStartChat={handleStartChat}
-        mode={selectorMode}
-      />
-
-      {/* Chat Interface */}
-      {currentConversation && (
-        <ChatInterface
-          isOpen={showChatInterface}
-          onClose={onClose}
-          onBack={handleBackToConversations}
-          conversationId={currentConversation.id}
-          participants={currentConversation.participants}
-          conversationName={currentConversation.name}
+        
+        {/* Participant Selector - inside drawer */}
+        <ParticipantSelector
+          isOpen={showParticipantSelector}
+          onClose={() => setShowParticipantSelector(false)}
+          onStartChat={handleStartChat}
+          mode={selectorMode}
         />
-      )}
-    </div>
+        
+        {/* Chat Interface - inside drawer */}
+        {currentConversation && (
+          <ChatInterface
+            isOpen={showChatInterface}
+            onClose={onClose}
+            onBack={handleBackToConversations}
+            conversationId={currentConversation.id}
+            participants={currentConversation.participants}
+            conversationName={currentConversation.name}
+          />
+        )}
+      </Drawer>
+    </>
   )
 }

@@ -28,7 +28,12 @@ const io = new Server(httpServer, {
     origin:
       process.env.NODE_ENV === "production"
         ? process.env.NEXTAUTH_URL
-        : ["http://localhost:3000", "http://127.0.0.1:3000"],
+        : [
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+            /^http:\/\/192\.168\.\d+\.\d+:3000$/, // Allow local network IPs
+            /^http:\/\/10\.\d+\.\d+\.\d+:3000$/, // Allow 10.x.x.x network
+          ],
     methods: ["GET", "POST"],
     credentials: true,
   },
@@ -112,9 +117,9 @@ async function startChatServer() {
       }
     });
 
-    // Start the server
-    httpServer.listen(PORT, () => {
-      console.log(`[Chat] Server running on port ${PORT}`);
+    // Start the server on 0.0.0.0 to allow network access
+    httpServer.listen(Number(PORT), '0.0.0.0', () => {
+      console.log(`[Chat] Server running on 0.0.0.0:${PORT}`);
     });
   } catch (error) {
     console.error("[Chat] Failed to start chat server:", error);

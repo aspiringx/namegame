@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { MessageCircle } from 'lucide-react'
-import ChatModal from './ChatModal'
+import ChatDrawer from './ChatDrawer'
 import { useSession } from 'next-auth/react'
 
 interface ChatIconProps {
@@ -33,10 +33,7 @@ export default function ChatIcon({ unreadCount = 0 }: ChatIconProps) {
         )}
       </button>
       
-      <ChatModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-      />
+      <ChatDrawer isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </>
   )
 }

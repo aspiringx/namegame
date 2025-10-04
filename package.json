@@ -8,6 +8,7 @@
   "packageManager": "pnpm@10.17.1",
   "scripts": {
     "dev": "concurrently --names \"web,worker,chat\" --prefix-colors \"blue,green,yellow\" \"pnpm dev:web\" \"pnpm dev:worker\" \"pnpm dev:chat\"",
+    "dev:all-mobile": "concurrently --names \"web,worker,chat\" --prefix-colors \"blue,green,yellow\" \"pnpm dev:mobile\" \"pnpm dev:worker\" \"pnpm dev:chat\"",
     "dev:web": "pnpm --filter web dev",
     "dev:mobile": "pnpm --filter web dev:mobile",
     "dev:worker": "pnpm --filter worker dev",
