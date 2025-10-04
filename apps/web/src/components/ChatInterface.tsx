@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { X, Send, ArrowLeft, MoreVertical, Smile } from 'lucide-react'
 import { useSocket } from '@/context/SocketContext'
+import { useSession } from 'next-auth/react'
 
 interface ChatInterfaceProps {
   isOpen: boolean
@@ -66,12 +67,14 @@ export default function ChatInterface({
   participants,
   conversationName
 }: ChatInterfaceProps) {
-  const [messages, setMessages] = useState<ChatMessage[]>(mockMessages)
+  const [messages, setMessages] = useState<ChatMessage[]>([])
   const [newMessage, setNewMessage] = useState('')
   const [isTyping, setIsTyping] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const { socket, isConnected, sendMessage, joinConversation, leaveConversation } = useSocket()
+  const { data: session } = useSession()
+  const currentUserId = session?.user?.id
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -85,16 +88,45 @@ export default function ChatInterface({
     }
   }, [isOpen])
 
-  // Join/leave conversation when component mounts/unmounts
+  // Load messages and join conversation when component mounts
   useEffect(() => {
-    if (isOpen && conversationId && isConnected) {
-      joinConversation(conversationId)
+    if (isOpen && conversationId) {
+      // Load existing messages
+      loadMessages()
+      
+      // Join conversation room
+      if (isConnected) {
+        joinConversation(conversationId)
+      }
       
       return () => {
-        leaveConversation(conversationId)
+        if (isConnected) {
+          leaveConversation(conversationId)
+        }
       }
     }
   }, [isOpen, conversationId, isConnected, joinConversation, leaveConversation])
+
+  const loadMessages = async () => {
+    if (!conversationId) return
+    
+    try {
+      const response = await fetch(`/api/chat/messages/${conversationId}`)
+      if (response.ok) {
+        const { messages: msgs } = await response.json()
+        setMessages(msgs.map((m: any) => ({
+          id: m.id,
+          content: m.content,
+          authorId: m.authorId,
+          authorName: m.authorName,
+          timestamp: new Date(m.timestamp),
+          type: m.type
+        })))
+      }
+    } catch (error) {
+      console.error('[ChatInterface] Error loading messages:', error)
+    }
+  }
 
   // Listen for incoming messages
   useEffect(() => {
@@ -105,8 +137,8 @@ export default function ChatInterface({
       const chatMessage: ChatMessage = {
         id: message.id,
         content: message.content,
-        authorId: message.authorId,
-        authorName: message.authorName || 'Unknown User',
+        authorId: message.author?.id || message.authorId,
+        authorName: message.author?.name || 'Unknown User',
         timestamp: new Date(message.createdAt),
         type: message.type || 'text'
       }
@@ -114,10 +146,10 @@ export default function ChatInterface({
       setMessages(prev => [...prev, chatMessage])
     }
 
-    socket.on('new_message', handleNewMessage)
+    socket.on('message', handleNewMessage)
 
     return () => {
-      socket.off('new_message', handleNewMessage)
+      socket.off('message', handleNewMessage)
     }
   }, [socket])
 
@@ -126,24 +158,15 @@ export default function ChatInterface({
   const handleSendMessage = () => {
     if (!newMessage.trim() || !conversationId) return
 
-    // Optimistically add message to UI
-    const optimisticMessage: ChatMessage = {
-      id: `temp-${Date.now()}`,
-      content: newMessage.trim(),
-      authorId: 'current',
-      authorName: 'You',
-      timestamp: new Date(),
-      type: 'text'
-    }
-
-    setMessages(prev => [...prev, optimisticMessage])
+    const messageContent = newMessage.trim()
     setNewMessage('')
 
-    // Send via Socket.io (real message will come back via socket event)
+    // Send via Socket.io (message will come back via socket event for display)
     if (isConnected) {
-      sendMessage(conversationId, newMessage.trim())
+      sendMessage(conversationId, messageContent)
     } else {
       console.error('[Chat] Cannot send message: not connected to chat service')
+      // Show error to user
     }
   }
 
@@ -230,7 +253,7 @@ export default function ChatInterface({
 
             {/* Messages for this date */}
             {dayMessages.map((message, index) => {
-              const isCurrentUser = message.authorId === 'current'
+              const isCurrentUser = message.authorId === currentUserId
               const showAvatar = !isCurrentUser && (
                 index === 0 || 
                 dayMessages[index - 1]?.authorId !== message.authorId

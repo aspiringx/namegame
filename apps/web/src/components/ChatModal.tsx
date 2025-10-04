@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { X, Users, User, MessageCircle } from 'lucide-react'
 import { useGroup } from '@/components/GroupProvider'
 import ParticipantSelector from './ParticipantSelector'
@@ -41,7 +41,7 @@ const mockConversations: Conversation[] = [
 ]
 
 export default function ChatModal({ isOpen, onClose }: ChatModalProps) {
-  const [conversations] = useState<Conversation[]>(mockConversations)
+  const [conversations, setConversations] = useState<Conversation[]>([])
   const [showParticipantSelector, setShowParticipantSelector] = useState(false)
   const [showChatInterface, setShowChatInterface] = useState(false)
   const [selectorMode, setSelectorMode] = useState<'group' | 'global'>('group')
@@ -53,6 +53,32 @@ export default function ChatModal({ isOpen, onClose }: ChatModalProps) {
   const groupData = useGroup()
   const group = groupData?.group
 
+  // Load conversations when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      loadConversations()
+    }
+  }, [isOpen])
+
+  const loadConversations = async () => {
+    try {
+      const response = await fetch('/api/chat/conversations')
+      if (response.ok) {
+        const { conversations: convos } = await response.json()
+        setConversations(convos.map((c: any) => ({
+          id: c.id,
+          name: c.name || c.participants.map((p: any) => p.name).join(', '), // Shows all participant names
+          lastMessage: '', // TODO: Get last message
+          timestamp: c.lastMessageAt ? new Date(c.lastMessageAt).toLocaleString() : '',
+          unreadCount: 0, // TODO: Calculate unread
+          isGroup: c.participants.length > 2
+        })))
+      }
+    } catch (error) {
+      console.error('[ChatModal] Error loading conversations:', error)
+    }
+  }
+
   const handleNewGroupMessage = () => {
     setSelectorMode('group')
     setShowParticipantSelector(true)
@@ -63,20 +89,42 @@ export default function ChatModal({ isOpen, onClose }: ChatModalProps) {
     setShowParticipantSelector(true)
   }
 
-  const handleStartChat = (participantIds: string[], participantNames: string[]) => {
-    // Create a temporary conversation ID for new chats
-    const tempConversationId = `temp-${Date.now()}-${participantIds.join('-')}`
-    const conversationName = participantNames.length === 1 
-      ? participantNames[0]
-      : `${participantNames.slice(0, 2).join(', ')}${participantNames.length > 2 ? ` +${participantNames.length - 2}` : ''}`
-    
-    setCurrentConversation({
-      id: tempConversationId,
-      participants: participantIds,
-      name: conversationName
-    })
-    setShowParticipantSelector(false)
-    setShowChatInterface(true)
+  const handleStartChat = async (participantIds: string[], participantNames: string[]) => {
+    try {
+      // Create conversation in database (name will be generated from participants)
+      const response = await fetch('/api/chat/conversations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          participantIds,
+          type: 'direct',
+          groupId: selectorMode === 'group' ? group?.id : null,
+          name: null // Let API generate name from participants
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to create conversation')
+      }
+
+      const { conversation } = await response.json()
+      
+      // Use participant names for display (shows all participants)
+      const displayName = conversation.participants
+        .map((p: any) => p.name)
+        .join(', ')
+      
+      setCurrentConversation({
+        id: conversation.id,
+        participants: participantIds,
+        name: displayName
+      })
+      setShowParticipantSelector(false)
+      setShowChatInterface(true)
+    } catch (error) {
+      console.error('[ChatModal] Error creating conversation:', error)
+      // TODO: Show error message to user
+    }
   }
 
   const handleOpenExistingChat = (conversation: Conversation) => {
@@ -92,6 +140,15 @@ export default function ChatModal({ isOpen, onClose }: ChatModalProps) {
     setShowChatInterface(false)
     setCurrentConversation(null)
   }
+
+  // Reset state when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setShowChatInterface(false)
+      setShowParticipantSelector(false)
+      setCurrentConversation(null)
+    }
+  }, [isOpen])
 
   if (!isOpen) return null
 

@@ -57,7 +57,7 @@ export function SocketProvider({ children }: SocketProviderProps) {
     })
 
     // Handle incoming messages
-    newSocket.on('new_message', (message) => {
+    newSocket.on('message', (message) => {
       console.log('[Socket] Received message:', message)
       // TODO: Update message state in chat components
     })
@@ -86,7 +86,7 @@ export function SocketProvider({ children }: SocketProviderProps) {
       return
     }
 
-    socket.emit('send_message', {
+    socket.emit('send-message', {
       conversationId,
       content,
       type: 'text'
@@ -96,14 +96,14 @@ export function SocketProvider({ children }: SocketProviderProps) {
   const joinConversation = (conversationId: string) => {
     if (!socket || !isConnected) return
     
-    socket.emit('join_conversation', conversationId)
+    socket.emit('join-conversation', conversationId)
     console.log('[Socket] Joined conversation:', conversationId)
   }
 
   const leaveConversation = (conversationId: string) => {
     if (!socket || !isConnected) return
     
-    socket.emit('leave_conversation', conversationId)
+    socket.emit('leave-conversation', conversationId)
     console.log('[Socket] Left conversation:', conversationId)
   }
 
