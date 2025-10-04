@@ -216,7 +216,7 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
             >
               <Users size={20} className="text-blue-600 dark:text-blue-400" />
               <span className="text-blue-600 dark:text-blue-400 font-medium">
-                New in {group.name}
+                New chat in {group.name}
               </span>
             </button>
           )}
@@ -226,7 +226,7 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
           >
             <User size={20} className="text-gray-600 dark:text-gray-400" />
             <span className="text-gray-600 dark:text-gray-400 font-medium">
-              New Global Message
+              New chat global
             </span>
           </button>
         </div>
