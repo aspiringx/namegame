@@ -71,6 +71,7 @@ export default function ChatInterface({
   const [isLoadingMessages, setIsLoadingMessages] = useState(false)
   const [newMessage, setNewMessage] = useState('')
   const [isTyping, setIsTyping] = useState(false)
+  const [revealedTimestamps, setRevealedTimestamps] = useState<Set<string>>(new Set())
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const { socket, isConnected, sendMessage, joinConversation, leaveConversation } = useSocket()
@@ -264,11 +265,26 @@ export default function ChatInterface({
                 index === 0 || 
                 dayMessages[index - 1]?.authorId !== message.authorId
               )
+              
+              // Show timestamp if:
+              // 1. First message of the day
+              // 2. Different author than previous
+              // 3. More than 5 minutes since last message
+              const prevMessage = dayMessages[index - 1]
+              const timeDiff = prevMessage 
+                ? (message.timestamp.getTime() - prevMessage.timestamp.getTime()) / 1000 / 60
+                : Infinity
+              const showTimestamp = index === 0 || 
+                                   message.authorId !== prevMessage?.authorId || 
+                                   timeDiff > 5
+              
+              const isTimestampRevealed = revealedTimestamps.has(message.id)
+              const shouldShowTime = showTimestamp || isTimestampRevealed
 
               return (
                 <div
                   key={message.id}
-                  className={`flex gap-3 ${isCurrentUser ? 'justify-end' : 'justify-start'}`}
+                  className={`flex gap-3 mb-2 ${isCurrentUser ? 'justify-end' : 'justify-start'}`}
                 >
                   {!isCurrentUser && (
                     <div className="w-8 h-8 flex-shrink-0">
@@ -290,18 +306,34 @@ export default function ChatInterface({
                     )}
                     
                     <div
-                      className={`px-4 py-2 rounded-2xl ${
+                      onClick={() => {
+                        setRevealedTimestamps(prev => {
+                          const next = new Set(prev)
+                          if (next.has(message.id)) {
+                            next.delete(message.id)
+                          } else {
+                            next.add(message.id)
+                          }
+                          return next
+                        })
+                      }}
+                      className={`px-4 py-2 rounded-2xl cursor-pointer ${
                         isCurrentUser
                           ? 'bg-blue-500 text-white'
                           : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
                       }`}
                     >
-                      <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                      {message.type === 'text' ? (
+                        <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                      ) : (
+                        <img src={message.content} alt="Message attachment" className="w-full h-auto" />
+                      )}
                     </div>
-                    
-                    <span className="text-xs text-gray-400 mt-1 px-3">
-                      {formatTime(message.timestamp)}
-                    </span>
+                    {shouldShowTime && (
+                      <span className="text-xs text-gray-400 mt-1 px-3">
+                        {formatTime(message.timestamp)}
+                      </span>
+                    )}
                   </div>
                 </div>
               )

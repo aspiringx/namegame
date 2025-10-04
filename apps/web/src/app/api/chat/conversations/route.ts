@@ -152,7 +152,8 @@ export async function GET(request: NextRequest) {
       },
       orderBy: {
         lastMessageAt: 'desc'
-      }
+      },
+      take: 15 // Load 15 most recent conversations
     })
 
     return NextResponse.json({

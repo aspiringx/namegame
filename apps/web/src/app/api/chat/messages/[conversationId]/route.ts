@@ -31,7 +31,7 @@ export async function GET(
       return NextResponse.json({ error: 'Conversation not found' }, { status: 404 })
     }
 
-    // Get messages
+    // Get messages (most recent 50)
     const messages = await prisma.chatMessage.findMany({
       where: {
         conversationId
@@ -47,9 +47,13 @@ export async function GET(
         }
       },
       orderBy: {
-        createdAt: 'asc'
-      }
+        createdAt: 'desc' // Get newest first
+      },
+      take: 50 // Limit to 50 most recent messages
     })
+
+    // Reverse to show oldest first in UI
+    messages.reverse()
 
     return NextResponse.json({
       messages: messages.map(msg => ({
