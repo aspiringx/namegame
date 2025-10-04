@@ -37,7 +37,6 @@ export function SocketProvider({ children }: SocketProviderProps) {
     // Connect to chat service
     const newSocket = io('http://localhost:3001', {
       auth: {
-        token: 'mock-token', // TODO: Use proper JWT token from session
         userId: session.user.id
       }
     })

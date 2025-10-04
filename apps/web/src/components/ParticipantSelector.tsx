@@ -7,7 +7,7 @@ import { useGroup } from '@/components/GroupProvider'
 interface ParticipantSelectorProps {
   isOpen: boolean
   onClose: () => void
-  onStartChat: (participants: string[]) => void
+  onStartChat: (participantIds: string[], participantNames: string[]) => void
   mode: 'group' | 'global'
 }
 
@@ -18,14 +18,7 @@ interface Participant {
   isOnline?: boolean
 }
 
-// Mock data for development
-const mockGroupMembers: Participant[] = [
-  { id: '1', name: 'John Smith', isOnline: true },
-  { id: '2', name: 'Sarah Johnson', isOnline: false },
-  { id: '3', name: 'Mike Wilson', isOnline: true },
-  { id: '4', name: 'Lisa Brown', isOnline: false },
-]
-
+// Mock data for global connections (TODO: load from UserUser relationships)
 const mockGlobalConnections: Participant[] = [
   { id: '5', name: 'David Chen', isOnline: true },
   { id: '6', name: 'Emma Davis', isOnline: false },
@@ -45,8 +38,32 @@ export default function ParticipantSelector({
 
   if (!isOpen) return null
 
-  const participants = mode === 'group' ? mockGroupMembers : mockGlobalConnections
-  const filteredParticipants = participants.filter(p => 
+  // Debug logging
+  console.log('[ParticipantSelector] Debug info:', {
+    mode,
+    hasGroupData: !!groupData,
+    groupData: groupData,
+    relatedMembersCount: groupData?.relatedMembers?.length || 0,
+    notRelatedMembersCount: groupData?.notRelatedMembers?.length || 0,
+    currentUserId: groupData?.currentUserMember?.user.id
+  })
+
+  // Get real group members or use mock global connections
+  const groupMembers: Participant[] = mode === 'group' && groupData?.group && (groupData.group as any).members 
+    ? (groupData.group as any).members
+        .map((member: any) => ({
+          id: member.user.id,
+          name: member.user.name || 'Unknown User',
+          avatar: member.user.photoUrl || undefined,
+          isOnline: false // TODO: Add online status tracking
+        }))
+        .filter((p: any) => p.id !== groupData.currentUserMember?.user.id) // Exclude current user
+    : []
+
+  console.log('[ParticipantSelector] Group members:', groupMembers)
+
+  const participants = mode === 'group' ? groupMembers : mockGlobalConnections
+  const filteredParticipants = participants.filter((p: Participant) => 
     p.name.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
@@ -60,7 +77,10 @@ export default function ParticipantSelector({
 
   const handleStartChat = () => {
     if (selectedParticipants.length > 0) {
-      onStartChat(selectedParticipants)
+      const selectedNames = selectedParticipants.map(id => 
+        participants.find(p => p.id === id)?.name || 'Unknown User'
+      )
+      onStartChat(selectedParticipants, selectedNames)
       setSelectedParticipants([])
       setSearchQuery('')
       onClose()
@@ -76,7 +96,7 @@ export default function ParticipantSelector({
     : 'Choose from your connections'
 
   return (
-    <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
       <div className="bg-white dark:bg-gray-800 rounded-lg w-full max-w-md h-[600px] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
@@ -126,11 +146,19 @@ export default function ParticipantSelector({
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="relative">
-                        <div className="w-10 h-10 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center">
-                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                            {participant.name.split(' ').map(n => n[0]).join('')}
-                          </span>
-                        </div>
+                        {participant.avatar ? (
+                          <img
+                            src={participant.avatar}
+                            alt={participant.name}
+                            className="w-10 h-10 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center">
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                              {participant.name.split(' ').map((n: string) => n[0]).join('')}
+                            </span>
+                          </div>
+                        )}
                         {participant.isOnline && (
                           <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-gray-800"></div>
                         )}

@@ -63,14 +63,16 @@ export default function ChatModal({ isOpen, onClose }: ChatModalProps) {
     setShowParticipantSelector(true)
   }
 
-  const handleStartChat = (participants: string[]) => {
-    // Create conversation name based on participants (mock for now)
-    const conversationName = participants.length === 1 
-      ? participants[0] 
-      : `${participants.slice(0, 2).join(', ')}${participants.length > 2 ? ` +${participants.length - 2}` : ''}`
+  const handleStartChat = (participantIds: string[], participantNames: string[]) => {
+    // Create a temporary conversation ID for new chats
+    const tempConversationId = `temp-${Date.now()}-${participantIds.join('-')}`
+    const conversationName = participantNames.length === 1 
+      ? participantNames[0]
+      : `${participantNames.slice(0, 2).join(', ')}${participantNames.length > 2 ? ` +${participantNames.length - 2}` : ''}`
     
     setCurrentConversation({
-      participants,
+      id: tempConversationId,
+      participants: participantIds,
       name: conversationName
     })
     setShowParticipantSelector(false)
@@ -94,7 +96,7 @@ export default function ChatModal({ isOpen, onClose }: ChatModalProps) {
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
       <div className="bg-white dark:bg-gray-800 rounded-lg w-full max-w-md h-[600px] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
