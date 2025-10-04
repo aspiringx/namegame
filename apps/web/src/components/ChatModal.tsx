@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { X, Users, User, MessageCircle } from 'lucide-react'
 import { useGroup } from '@/components/GroupProvider'
 import ParticipantSelector from './ParticipantSelector'
+import ChatInterface from './ChatInterface'
 
 interface ChatModalProps {
   isOpen: boolean
@@ -42,7 +43,13 @@ const mockConversations: Conversation[] = [
 export default function ChatModal({ isOpen, onClose }: ChatModalProps) {
   const [conversations] = useState<Conversation[]>(mockConversations)
   const [showParticipantSelector, setShowParticipantSelector] = useState(false)
+  const [showChatInterface, setShowChatInterface] = useState(false)
   const [selectorMode, setSelectorMode] = useState<'group' | 'global'>('group')
+  const [currentConversation, setCurrentConversation] = useState<{
+    id?: string
+    participants: string[]
+    name: string
+  } | null>(null)
   const groupData = useGroup()
   const group = groupData?.group
 
@@ -57,9 +64,31 @@ export default function ChatModal({ isOpen, onClose }: ChatModalProps) {
   }
 
   const handleStartChat = (participants: string[]) => {
-    // TODO: Create new conversation and open chat interface
-    console.log('Starting chat with participants:', participants, 'mode:', selectorMode)
+    // Create conversation name based on participants (mock for now)
+    const conversationName = participants.length === 1 
+      ? participants[0] 
+      : `${participants.slice(0, 2).join(', ')}${participants.length > 2 ? ` +${participants.length - 2}` : ''}`
+    
+    setCurrentConversation({
+      participants,
+      name: conversationName
+    })
     setShowParticipantSelector(false)
+    setShowChatInterface(true)
+  }
+
+  const handleOpenExistingChat = (conversation: Conversation) => {
+    setCurrentConversation({
+      id: conversation.id,
+      participants: [conversation.name], // Mock - would be actual participant IDs
+      name: conversation.name
+    })
+    setShowChatInterface(true)
+  }
+
+  const handleBackToConversations = () => {
+    setShowChatInterface(false)
+    setCurrentConversation(null)
   }
 
   if (!isOpen) return null
@@ -115,6 +144,7 @@ export default function ChatModal({ isOpen, onClose }: ChatModalProps) {
               {conversations.map((conversation) => (
                 <button
                   key={conversation.id}
+                  onClick={() => handleOpenExistingChat(conversation)}
                   className="w-full p-4 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                 >
                   <div className="flex items-start justify-between">
@@ -158,6 +188,18 @@ export default function ChatModal({ isOpen, onClose }: ChatModalProps) {
         onStartChat={handleStartChat}
         mode={selectorMode}
       />
+
+      {/* Chat Interface */}
+      {currentConversation && (
+        <ChatInterface
+          isOpen={showChatInterface}
+          onClose={onClose}
+          onBack={handleBackToConversations}
+          conversationId={currentConversation.id}
+          participants={currentConversation.participants}
+          conversationName={currentConversation.name}
+        />
+      )}
     </div>
   )
 }
