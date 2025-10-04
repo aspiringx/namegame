@@ -123,6 +123,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const { searchParams } = new URL(request.url)
+    const cursor = searchParams.get('cursor') // Conversation ID to load after
+
     const conversations = await prisma.chatConversation.findMany({
       where: {
         participants: {
@@ -153,8 +156,11 @@ export async function GET(request: NextRequest) {
       orderBy: {
         lastMessageAt: 'desc'
       },
-      take: 15 // Load 15 most recent conversations
+      take: 15, // Load 15 most recent conversations
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {})
     })
+
+    const hasMore = conversations.length === 15
 
     return NextResponse.json({
       conversations: conversations.map(conv => ({
@@ -168,7 +174,8 @@ export async function GET(request: NextRequest) {
           id: p.user.id,
           name: `${p.user.firstName} ${p.user.lastName || ''}`.trim()
         }))
-      }))
+      })),
+      hasMore
     })
 
   } catch (error) {

@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { X, Send, ArrowLeft, Smile } from 'lucide-react'
+import Image from 'next/image'
 import { useSocket } from '@/context/SocketContext'
 import { useSession } from 'next-auth/react'
 
@@ -19,45 +20,10 @@ interface ChatMessage {
   content: string
   authorId: string
   authorName: string
+  authorPhoto?: string | null
   timestamp: Date
   type: 'text' | 'system'
 }
-
-// Mock messages for development
-const mockMessages: ChatMessage[] = [
-  {
-    id: '1',
-    content: 'Hey everyone! Are you coming to the BBQ this weekend?',
-    authorId: 'user1',
-    authorName: 'John Smith',
-    timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
-    type: 'text'
-  },
-  {
-    id: '2',
-    content: 'Yes! What should I bring?',
-    authorId: 'user2',
-    authorName: 'Sarah Johnson',
-    timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000), // 1 hour ago
-    type: 'text'
-  },
-  {
-    id: '3',
-    content: 'Maybe some drinks? I\'ve got the burgers covered.',
-    authorId: 'user1',
-    authorName: 'John Smith',
-    timestamp: new Date(Date.now() - 30 * 60 * 1000), // 30 minutes ago
-    type: 'text'
-  },
-  {
-    id: '4',
-    content: 'Perfect! See you at 2pm',
-    authorId: 'current',
-    authorName: 'You',
-    timestamp: new Date(Date.now() - 5 * 60 * 1000), // 5 minutes ago
-    type: 'text'
-  }
-]
 
 export default function ChatInterface({
   isOpen,
@@ -69,19 +35,16 @@ export default function ChatInterface({
 }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [isLoadingMessages, setIsLoadingMessages] = useState(false)
+  const [hasMoreMessages, setHasMoreMessages] = useState(true)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [newMessage, setNewMessage] = useState('')
-  const [isTyping, setIsTyping] = useState(false)
   const [revealedTimestamps, setRevealedTimestamps] = useState<Set<string>>(new Set())
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const messagesContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const { socket, isConnected, sendMessage, joinConversation, leaveConversation } = useSocket()
   const { data: session } = useSession()
   const currentUserId = session?.user?.id
-
-  // Auto-scroll to bottom when new messages arrive
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
 
   // Focus input when chat opens
   useEffect(() => {
@@ -89,6 +52,110 @@ export default function ChatInterface({
       inputRef.current?.focus()
     }
   }, [isOpen])
+
+  const loadMessages = useCallback(async (cursor?: string) => {
+    if (!conversationId) return
+    
+    const isInitialLoad = !cursor
+    if (isInitialLoad) {
+      setIsLoadingMessages(true)
+    } else {
+      setIsLoadingMore(true)
+    }
+    
+    try {
+      const url = cursor 
+        ? `/api/chat/messages/${conversationId}?cursor=${cursor}`
+        : `/api/chat/messages/${conversationId}`
+      
+      const response = await fetch(url)
+      if (response.ok) {
+        const { messages: msgs, hasMore } = await response.json()
+        const newMessages = msgs.map((m: any) => ({
+          id: m.id,
+          content: m.content,
+          authorId: m.authorId,
+          authorName: m.authorName,
+          authorPhoto: m.authorPhoto,
+          timestamp: new Date(m.timestamp),
+          type: m.type
+        }))
+        
+        if (isInitialLoad) {
+          setMessages(newMessages)
+        } else {
+          // Prepend older messages, avoiding duplicates
+          // Save the first visible message to maintain scroll position
+          const container = messagesContainerRef.current
+          const firstVisibleMessage = container?.querySelector('[data-message-id]') as HTMLElement
+          const offsetBefore = firstVisibleMessage?.offsetTop || 0
+          
+          setMessages(prev => {
+            const existingIds = new Set(prev.map((m: ChatMessage) => m.id))
+            const uniqueNewMessages = newMessages.filter((m: ChatMessage) => !existingIds.has(m.id))
+            return [...uniqueNewMessages, ...prev]
+          })
+          
+          // Restore scroll position relative to the same message
+          requestAnimationFrame(() => {
+            if (container && firstVisibleMessage) {
+              const offsetAfter = firstVisibleMessage.offsetTop
+              container.scrollTop = container.scrollTop + (offsetAfter - offsetBefore)
+            }
+          })
+        }
+        
+        setHasMoreMessages(hasMore)
+      }
+    } catch (error) {
+      console.error('[ChatInterface] Error loading messages:', error)
+    } finally {
+      if (isInitialLoad) {
+        setIsLoadingMessages(false)
+      } else {
+        setIsLoadingMore(false)
+      }
+    }
+  }, [conversationId])
+  
+  const loadMoreMessages = useCallback(() => {
+    if (!hasMoreMessages || isLoadingMore || messages.length === 0) return
+    
+    // Use the oldest message ID as cursor
+    const oldestMessage = messages[0]
+    loadMessages(oldestMessage.id)
+  }, [hasMoreMessages, isLoadingMore, messages, loadMessages])
+
+  // Auto-scroll to bottom when new messages arrive (only for new messages, not initial load)
+  const previousMessageCount = useRef(0)
+  useEffect(() => {
+    if (messages.length > 0) {
+      // Only scroll if messages were added to the end (new messages)
+      if (messages.length > previousMessageCount.current) {
+        const isInitialLoad = previousMessageCount.current === 0
+        messagesEndRef.current?.scrollIntoView({ 
+          behavior: isInitialLoad ? 'auto' : 'smooth' 
+        })
+      }
+      previousMessageCount.current = messages.length
+    }
+  }, [messages])
+  
+  // Detect scroll to top for loading more messages
+  useEffect(() => {
+    const container = messagesContainerRef.current
+    if (!container) return
+    
+    const handleScroll = () => {
+      // Load more when within 200px of top (gives time to load before reaching top)
+      if (container.scrollTop < 200 && hasMoreMessages && !isLoadingMore) {
+        loadMoreMessages()
+      }
+    }
+    
+    container.addEventListener('scroll', handleScroll)
+    return () => container.removeEventListener('scroll', handleScroll)
+  }, [hasMoreMessages, isLoadingMore, messages, loadMoreMessages])
 
   // Load messages and join conversation when component mounts
   useEffect(() => {
@@ -107,31 +174,8 @@ export default function ChatInterface({
         }
       }
     }
-  }, [isOpen, conversationId, isConnected, joinConversation, leaveConversation])
-
-  const loadMessages = async () => {
-    if (!conversationId) return
-    
-    setIsLoadingMessages(true)
-    try {
-      const response = await fetch(`/api/chat/messages/${conversationId}`)
-      if (response.ok) {
-        const { messages: msgs } = await response.json()
-        setMessages(msgs.map((m: any) => ({
-          id: m.id,
-          content: m.content,
-          authorId: m.authorId,
-          authorName: m.authorName,
-          timestamp: new Date(m.timestamp),
-          type: m.type
-        })))
-      }
-    } catch (error) {
-      console.error('[ChatInterface] Error loading messages:', error)
-    } finally {
-      setIsLoadingMessages(false)
-    }
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, conversationId, isConnected, loadMessages])
 
   // Listen for incoming messages
   useEffect(() => {
@@ -241,7 +285,13 @@ export default function ChatInterface({
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4">
+        {isLoadingMore && (
+          <div className="flex justify-center py-2">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+          </div>
+        )}
+        
         {isLoadingMessages ? (
           <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
@@ -284,16 +334,27 @@ export default function ChatInterface({
               return (
                 <div
                   key={message.id}
+                  data-message-id={message.id}
                   className={`flex gap-3 mb-2 ${isCurrentUser ? 'justify-end' : 'justify-start'}`}
                 >
                   {!isCurrentUser && (
                     <div className="w-8 h-8 flex-shrink-0">
                       {showAvatar && (
-                        <div className="w-8 h-8 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center">
-                          <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                            {message.authorName.split(' ').map(n => n[0]).join('')}
-                          </span>
-                        </div>
+                        message.authorPhoto ? (
+                          <Image
+                            src={message.authorPhoto}
+                            alt={message.authorName}
+                            width={32}
+                            height={32}
+                            className="w-8 h-8 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-8 h-8 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center">
+                            <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                              {message.authorName.split(' ').map(n => n[0]).join('')}
+                            </span>
+                          </div>
+                        )
                       )}
                     </div>
                   )}
@@ -326,7 +387,13 @@ export default function ChatInterface({
                       {message.type === 'text' ? (
                         <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                       ) : (
-                        <img src={message.content} alt="Message attachment" className="w-full h-auto" />
+                        <Image 
+                          src={message.content} 
+                          alt="Message attachment" 
+                          width={200} 
+                          height={150} 
+                          className="max-w-xs h-auto rounded-lg" 
+                        />
                       )}
                     </div>
                     {shouldShowTime && (
@@ -340,21 +407,6 @@ export default function ChatInterface({
             })}
           </div>
         ))}
-        
-        {!isLoadingMessages && isTyping && (
-          <div className="flex gap-3">
-            <div className="w-8 h-8 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center">
-              <span className="text-xs font-medium text-gray-700 dark:text-gray-300">•••</span>
-            </div>
-            <div className="bg-gray-100 dark:bg-gray-700 px-4 py-2 rounded-2xl">
-              <div className="flex space-x-1">
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-              </div>
-            </div>
-          </div>
-        )}
         
         <div ref={messagesEndRef} />
       </div>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { X, Users, User, MessageCircle } from 'lucide-react'
 import { useGroup } from '@/components/GroupProvider'
 import ParticipantSelector from './ParticipantSelector'
@@ -20,29 +20,11 @@ interface Conversation {
   isGroup: boolean
 }
 
-// Mock data for development
-const mockConversations: Conversation[] = [
-  {
-    id: '1',
-    name: 'John Smith',
-    lastMessage: 'Hey, are you coming to the BBQ?',
-    timestamp: '2m ago',
-    unreadCount: 2,
-    isGroup: false
-  },
-  {
-    id: '2', 
-    name: 'Sarah, Mike, Lisa',
-    lastMessage: 'Perfect! See you there',
-    timestamp: '1h ago',
-    unreadCount: 0,
-    isGroup: true
-  }
-]
-
 export default function ChatModal({ isOpen, onClose }: ChatModalProps) {
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [isLoadingConversations, setIsLoadingConversations] = useState(false)
+  const [hasMoreConversations, setHasMoreConversations] = useState(true)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [showParticipantSelector, setShowParticipantSelector] = useState(false)
   const [showChatInterface, setShowChatInterface] = useState(false)
   const [selectorMode, setSelectorMode] = useState<'group' | 'global'>('group')
@@ -53,6 +35,7 @@ export default function ChatModal({ isOpen, onClose }: ChatModalProps) {
   } | null>(null)
   const groupData = useGroup()
   const group = groupData?.group
+  const conversationsListRef = useRef<HTMLDivElement>(null)
 
   // Load conversations when modal opens
   useEffect(() => {
@@ -60,28 +43,89 @@ export default function ChatModal({ isOpen, onClose }: ChatModalProps) {
       loadConversations()
     }
   }, [isOpen])
+  
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = 'unset'
+    }
+    
+    return () => {
+      document.body.style.overflow = 'unset'
+    }
+  }, [isOpen])
 
-  const loadConversations = async () => {
-    setIsLoadingConversations(true)
+  const loadConversations = async (cursor?: string) => {
+    const isInitialLoad = !cursor
+    if (isInitialLoad) {
+      setIsLoadingConversations(true)
+    } else {
+      setIsLoadingMore(true)
+    }
+    
     try {
-      const response = await fetch('/api/chat/conversations')
+      const url = cursor 
+        ? `/api/chat/conversations?cursor=${cursor}`
+        : '/api/chat/conversations'
+      
+      const response = await fetch(url)
       if (response.ok) {
-        const { conversations: convos } = await response.json()
-        setConversations(convos.map((c: any) => ({
+        const { conversations: convos, hasMore } = await response.json()
+        const newConversations = convos.map((c: any) => ({
           id: c.id,
-          name: c.name || c.participants.map((p: any) => p.name).join(', '), // Shows all participant names
+          name: c.name || c.participants.map((p: any) => p.name).join(', '),
           lastMessage: '', // TODO: Get last message
           timestamp: c.lastMessageAt ? new Date(c.lastMessageAt).toLocaleString() : '',
           unreadCount: 0, // TODO: Calculate unread
           isGroup: c.participants.length > 2
-        })))
+        }))
+        
+        if (isInitialLoad) {
+          setConversations(newConversations)
+        } else {
+          // Append to end
+          setConversations(prev => [...prev, ...newConversations])
+        }
+        
+        setHasMoreConversations(hasMore)
       }
     } catch (error) {
       console.error('[ChatModal] Error loading conversations:', error)
     } finally {
-      setIsLoadingConversations(false)
+      if (isInitialLoad) {
+        setIsLoadingConversations(false)
+      } else {
+        setIsLoadingMore(false)
+      }
     }
   }
+  
+  const loadMoreConversations = useCallback(() => {
+    if (!hasMoreConversations || isLoadingMore || conversations.length === 0) return
+    
+    // Use the last conversation ID as cursor
+    const lastConversation = conversations[conversations.length - 1]
+    loadConversations(lastConversation.id)
+  }, [hasMoreConversations, isLoadingMore, conversations])
+  
+  // Detect scroll to bottom for loading more conversations
+  useEffect(() => {
+    const container = conversationsListRef.current
+    if (!container) return
+    
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container
+      // Load more when within 100px of bottom
+      if (scrollHeight - scrollTop - clientHeight < 100 && hasMoreConversations && !isLoadingMore) {
+        loadMoreConversations()
+      }
+    }
+    
+    container.addEventListener('scroll', handleScroll)
+    return () => container.removeEventListener('scroll', handleScroll)
+  }, [hasMoreConversations, isLoadingMore, conversations, loadMoreConversations])
 
   const handleNewGroupMessage = () => {
     setSelectorMode('group')
@@ -197,7 +241,7 @@ export default function ChatModal({ isOpen, onClose }: ChatModalProps) {
         </div>
 
         {/* Conversation List */}
-        <div className="flex-1 overflow-y-auto">
+        <div ref={conversationsListRef} className="flex-1 overflow-y-auto">
           {isLoadingConversations ? (
             <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
@@ -246,6 +290,13 @@ export default function ChatModal({ isOpen, onClose }: ChatModalProps) {
                   </div>
                 </button>
               ))}
+              
+              {/* Loading more indicator */}
+              {isLoadingMore && (
+                <div className="flex justify-center py-4">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+                </div>
+              )}
             </div>
           )}
         </div>
