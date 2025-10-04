@@ -7,6 +7,7 @@ import Image from 'next/image'
 import { GroupData } from '@/types'
 import { Settings } from 'lucide-react'
 import GroupInfoModal from './GroupInfoModal'
+import ChatIcon from './ChatIcon'
 
 interface HeaderProps {
   group?: GroupData | null
@@ -68,6 +69,7 @@ export default function Header({
                 <Settings size={24} />
               </Link>
             )}
+            <ChatIcon />
             <UserMenu />
           </div>
         </div>
