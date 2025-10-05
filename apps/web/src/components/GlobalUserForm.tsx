@@ -19,7 +19,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { Gender } from '@namegame/db'
+import { Gender } from '@namegame/db/types'
 import { z } from 'zod'
 
 export type UserFormData = {

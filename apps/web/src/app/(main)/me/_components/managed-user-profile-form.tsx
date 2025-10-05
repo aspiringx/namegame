@@ -5,13 +5,13 @@ import { useFormStatus } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { State, createManagedUser, updateManagedUser } from '../users/actions'
 import {
-  ManagedStatus,
-  Gender,
   User,
   Photo,
-  DatePrecision,
   Group,
-} from '@namegame/db'
+  ManagedStatus,
+  Gender,
+  DatePrecision,
+} from '@namegame/db/types'
 import GroupsSection from '@/app/(main)/me/_components/groups-section'
 import { Badge } from '@/components/ui/badge'
 import { formatDateForInput } from '@/lib/utils'
