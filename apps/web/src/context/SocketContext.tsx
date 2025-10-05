@@ -35,11 +35,12 @@ export function SocketProvider({ children }: SocketProviderProps) {
     if (!session?.user) return
 
     // Connect to chat service
-    // Production: connects to same origin, Next.js rewrites /socket.io/* to localhost:3001
+    // Production: connects to separate chat.namegame.app subdomain
     // Development: connects directly to chat service on port 3001
-    const chatUrl = process.env.NODE_ENV === 'production' 
-      ? window.location.origin 
-      : 'http://localhost:3001'
+    const chatUrl = process.env.NEXT_PUBLIC_CHAT_URL || 
+      (process.env.NODE_ENV === 'production' 
+        ? 'https://chat.namegame.app'
+        : 'http://localhost:3001')
     
     const newSocket = io(chatUrl, {
       path: '/socket.io',
