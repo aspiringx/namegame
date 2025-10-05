@@ -35,12 +35,15 @@ export function SocketProvider({ children }: SocketProviderProps) {
     if (!session?.user) return
 
     // Connect to chat service
-    // Use window.location.protocol to match HTTPS in production
-    const chatUrl = typeof window !== 'undefined' 
-      ? `${window.location.protocol}//${window.location.hostname}:3001`
+    // In production: proxy through Next.js on same origin
+    // In development: connect directly to chat service
+    const socketPath = '/socket.io'
+    const socketUrl = process.env.NODE_ENV === 'production' 
+      ? window.location.origin 
       : 'http://localhost:3001'
     
-    const newSocket = io(chatUrl, {
+    const newSocket = io(socketUrl, {
+      path: socketPath,
       auth: {
         userId: session.user.id
       }
