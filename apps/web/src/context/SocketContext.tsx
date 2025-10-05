@@ -35,10 +35,11 @@ export function SocketProvider({ children }: SocketProviderProps) {
     if (!session?.user) return
 
     // Connect to chat service
-    // Use NEXT_PUBLIC_CHAT_URL if set, otherwise default based on environment
+    // Production: connects to separate chat.namegame.app subdomain
+    // Development: connects directly to chat service on port 3001
     const chatUrl = process.env.NEXT_PUBLIC_CHAT_URL || 
       (process.env.NODE_ENV === 'production' 
-        ? window.location.origin 
+        ? 'https://chat.namegame.app'
         : 'http://localhost:3001')
     
     const newSocket = io(chatUrl, {
