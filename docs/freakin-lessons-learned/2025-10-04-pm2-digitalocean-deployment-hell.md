@@ -58,45 +58,32 @@ Error [ERR_MODULE_NOT_FOUND]: Cannot find module '/workspace/packages/db/dist/ge
 
 **Root Cause:**
 
-- Prisma generates files to `packages/db/src/generated/prisma/`
-- TypeScript compilation only processes `.ts` files, not generated `.js` files
 - The `dist/` folder was missing the entire `generated/` directory
 - Apps trying to import `@namegame/db` couldn't find the Prisma client
 
 ### The Core Issue #4: ERR_UNSUPPORTED_DIR_IMPORT & Prisma Bundling (Oct 5, 2025)
-
 After fixing the missing files, a new error appeared:
-
 ```
 Error [ERR_UNSUPPORTED_DIR_IMPORT]: Directory import '/workspace/packages/db/dist/generated/prisma' is not supported resolving ES modules
 ```
 
 Then during Next.js build, webpack bundling errors:
-
 ```
 Module build failed: UnhandledSchemeError: Reading from "node:crypto" is not handled by plugins
 Module build failed: UnhandledSchemeError: Reading from "node:events" is not handled by plugins
 ```
 
 **Root Cause:**
-
 - Next.js webpack was trying to bundle server-side Prisma client for the browser
 - Prisma client includes Node.js dependencies (`fs`, `crypto`, `events`, etc.)
 - Client-side React components were importing from main `@namegame/db` package
 - This pulled in the entire PrismaClient runtime, causing bundling failures
 
 **The Solution: Separate Type-Only Exports**
-
 - Created `@namegame/db/types` - exports only types and enum constants, no runtime code
 - Client components import from `/types`, server code imports from main package
 - Types are automatically derived from `schema.prisma` via Prisma generation
 - No manual type maintenance required - schema remains single source of truth
-
-## The Solutions
-
-### Option 1: Simplify (Quick Fix)
-
-**Run Command:** `pnpm start:web`
 
 - ✅ Deploys successfully
 - ✅ Web app with chat API routes works
