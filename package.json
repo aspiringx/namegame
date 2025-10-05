@@ -14,7 +14,7 @@
     "dev:worker": "pnpm --filter worker dev",
     "dev:chat": "pnpm --filter chat dev",
     "build": "pnpm --filter web build",
-    "build:all": "pnpm -r build",
+    "build:all": "pnpm --filter \"./packages/*\" build && pnpm --filter \"./apps/*\" build",
     "start": "pm2 start ecosystem.config.js",
     "start:web": "pnpm --filter web start",
     "stop": "pm2 stop ecosystem.config.js",

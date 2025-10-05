@@ -19,7 +19,7 @@ Digital Ocean App Platform expects **one main process per app**, but our monorep
 - **Run Command:** `pnpm start` (PM2 daemon mode)
 - **Result:** PM2 started successfully, but then deployment failed
 
-### The Core Issue
+### The Core Issue #1: PM2 Daemon Mode
 ```
 1. ✅ PM2 starts successfully with all 3 apps
 2. ❌ Digital Ocean detects the container "exited" (PM2 daemonizes)
@@ -28,6 +28,19 @@ Digital Ocean App Platform expects **one main process per app**, but our monorep
 ```
 
 **Why this happens:** PM2 in daemon mode forks processes then exits the main process. Digital Ocean thinks the container crashed and restarts it.
+
+### The Core Issue #2: Monorepo Build Problems (Oct 5, 2025)
+After fixing PM2 daemon mode, new errors emerged:
+```
+TypeError [ERR_UNKNOWN_FILE_EXTENSION]: Unknown file extension ".ts" for /workspace/packages/db/src/index.ts
+Error [ERR_MODULE_NOT_FOUND]: Cannot find module '/workspace/packages/queue/src/types'
+```
+
+**Root Cause:** 
+- Packages (db, queue) had no build scripts - exported raw `.ts` files
+- Missing TypeScript declaration files (`.d.ts`)
+- Import paths missing `.js` extensions for compiled output
+- Build order: apps tried to build before packages were compiled
 
 ## The Solutions
 
@@ -38,11 +51,22 @@ Digital Ocean App Platform expects **one main process per app**, but our monorep
 - ❌ No real-time chat (no Socket.IO server)
 - ❌ No background worker
 
-### Option 2: PM2 Foreground Mode (Recommended)
+### Option 2: PM2 Foreground Mode + Fixed Monorepo Build (CURRENT SOLUTION)
+**Build Command:** `pnpm install && pnpm db:generate && pnpm build:all`
 **Run Command:** `pm2-runtime start ecosystem.config.js`
+
+**What we fixed:**
+- ✅ Added build scripts to packages/db and packages/queue
+- ✅ Added TypeScript configs with `declaration: true`
+- ✅ Fixed import extensions (`.ts` → `.js` for compiled output)
+- ✅ Fixed build order: packages first, then apps
+- ✅ Updated ecosystem.config.js to use shell commands instead of `--filter`
+
+**Expected Result:**
 - ✅ Deploys successfully (foreground process)
 - ✅ All 3 services run in one container
 - ✅ Full chat functionality works
+- ✅ All TypeScript modules resolve correctly
 - ⚠️ Limited scalability (can't scale services independently)
 - ✅ Perfect for community-focused use case
 
@@ -81,7 +105,7 @@ Deploy each service as separate Digital Ocean apps:
 
 ## Deployment Commands That Work
 
-### Current Working Setup (Option 2)
+### Current Working Setup (Option 2 - Oct 5, 2025)
 ```bash
 # Build Command
 pnpm install && pnpm db:generate && pnpm build:all
@@ -89,6 +113,31 @@ pnpm install && pnpm db:generate && pnpm build:all
 # Run Command  
 pm2-runtime start ecosystem.config.js
 ```
+
+**Key Changes Made:**
+1. **Fixed package.json build scripts:**
+   - `packages/db`: Added `"build": "tsc"` and TypeScript config
+   - `packages/queue`: Added `"build": "tsc"` and `"declaration": true`
+   
+2. **Fixed build order in root package.json:**
+   ```bash
+   "build:all": "pnpm --filter \"./packages/*\" build && pnpm --filter \"./apps/*\" build"
+   ```
+
+3. **Fixed import extensions in packages/queue/src/index.ts:**
+   ```typescript
+   export * from './types.js';  // Was './types'
+   export { GraphileWorkerQueue } from './graphile-worker.js';  // Was './graphile-worker'
+   ```
+
+4. **Fixed ecosystem.config.js PM2 args:**
+   ```javascript
+   // Before (broken):
+   script: 'pnpm', args: '--filter chat start'
+   
+   // After (working):
+   script: 'sh', args: '-c "cd apps/chat && npm start"'
+   ```
 
 ### Fallback Setup (Option 1)
 ```bash

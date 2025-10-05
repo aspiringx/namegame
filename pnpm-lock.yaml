@@ -312,12 +312,22 @@ importers:
       ts-node:
         specifier: ^10.9.2
         version: 10.9.2(@types/node@22.18.8)(typescript@5.9.2)
+      typescript:
+        specifier: ^5.5.0
+        version: 5.9.2
 
   packages/queue:
     dependencies:
       graphile-worker:
         specifier: ^0.16.6
         version: 0.16.6(typescript@5.9.2)
+    devDependencies:
+      '@types/node':
+        specifier: ^20.0.0
+        version: 20.19.18
+      typescript:
+        specifier: ^5.5.0
+        version: 5.9.2
 
 packages:
 

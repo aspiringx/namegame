@@ -5,7 +5,7 @@
  * different implementations (Postgres via Graphile Worker, Redis via BullMQ, etc.)
  */
 
-export * from './types';
-export { GraphileWorkerQueue } from './graphile-worker';
+export * from './types.js';
+export { GraphileWorkerQueue } from './graphile-worker.js';
 
 // Future: export { BullMQQueue } from './bullmq';
