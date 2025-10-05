@@ -2,8 +2,8 @@ module.exports = {
   apps: [
     {
       name: 'namegame-web',
-      script: 'pnpm',
-      args: 'start:web',
+      script: 'sh',
+      args: '-c "cd apps/web && npm start"',
       cwd: '.',
       instances: 1,
       autorestart: true,
@@ -20,8 +20,8 @@ module.exports = {
     },
     {
       name: 'namegame-worker',
-      script: 'pnpm',
-      args: '--filter worker start',
+      script: 'sh',
+      args: '-c "cd apps/worker && npm start"',
       cwd: '.',
       instances: 1,
       autorestart: true,
@@ -37,8 +37,8 @@ module.exports = {
     },
     {
       name: 'namegame-chat',
-      script: 'pnpm',
-      args: '--filter chat start',
+      script: 'sh',
+      args: '-c "cd apps/chat && npm start"',
       cwd: '.',
       instances: 1,
       autorestart: true,
