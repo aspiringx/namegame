@@ -35,12 +35,15 @@ export function SocketProvider({ children }: SocketProviderProps) {
     if (!session?.user) return
 
     // Connect to chat service
-    // Use window.location.hostname to connect to chat server on same host as web app
-    const chatUrl = typeof window !== 'undefined' 
-      ? `http://${window.location.hostname}:3001`
-      : 'http://localhost:3001'
+    // Use NEXT_PUBLIC_CHAT_URL if set, otherwise default based on environment
+    const chatUrl = process.env.NEXT_PUBLIC_CHAT_URL || 
+      (process.env.NODE_ENV === 'production' 
+        ? window.location.origin 
+        : 'http://localhost:3001')
     
     const newSocket = io(chatUrl, {
+      path: '/socket.io',
+      transports: ['websocket', 'polling'], // Try websocket first, fall back to polling
       auth: {
         userId: session.user.id
       }
