@@ -42,6 +42,18 @@ Error [ERR_MODULE_NOT_FOUND]: Cannot find module '/workspace/packages/queue/src/
 - Import paths missing `.js` extensions for compiled output
 - Build order: apps tried to build before packages were compiled
 
+### The Core Issue #3: Prisma Generated Files Missing (Oct 5, 2025)
+After fixing the TypeScript build issues, a new runtime error appeared:
+```
+Error [ERR_MODULE_NOT_FOUND]: Cannot find module '/workspace/packages/db/dist/generated/prisma'
+```
+
+**Root Cause:**
+- Prisma generates files to `packages/db/src/generated/prisma/`
+- TypeScript compilation only processes `.ts` files, not generated `.js` files
+- The `dist/` folder was missing the entire `generated/` directory
+- Apps trying to import `@namegame/db` couldn't find the Prisma client
+
 ## The Solutions
 
 ### Option 1: Simplify (Quick Fix)
@@ -61,6 +73,7 @@ Error [ERR_MODULE_NOT_FOUND]: Cannot find module '/workspace/packages/queue/src/
 - ✅ Fixed import extensions (`.ts` → `.js` for compiled output)
 - ✅ Fixed build order: packages first, then apps
 - ✅ Updated ecosystem.config.js to use shell commands instead of `--filter`
+- ✅ Fixed Prisma generated files copying to dist folder
 
 **Expected Result:**
 - ✅ Deploys successfully (foreground process)
@@ -137,6 +150,15 @@ pm2-runtime start ecosystem.config.js
    
    // After (working):
    script: 'sh', args: '-c "cd apps/chat && npm start"'
+   ```
+
+5. **Fixed Prisma generated files in packages/db/package.json:**
+   ```bash
+   # Before (missing generated files):
+   "build": "tsc"
+   
+   # After (copies Prisma files):
+   "build": "tsc && cp -r src/generated dist/"
    ```
 
 ### Fallback Setup (Option 1)
