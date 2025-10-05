@@ -35,15 +35,15 @@ export function SocketProvider({ children }: SocketProviderProps) {
     if (!session?.user) return
 
     // Connect to chat service
-    // In production: proxy through Next.js on same origin
-    // In development: connect directly to chat service
-    const socketPath = '/socket.io'
-    const socketUrl = process.env.NODE_ENV === 'production' 
-      ? window.location.origin 
-      : 'http://localhost:3001'
+    // Use NEXT_PUBLIC_CHAT_URL if set, otherwise default based on environment
+    const chatUrl = process.env.NEXT_PUBLIC_CHAT_URL || 
+      (process.env.NODE_ENV === 'production' 
+        ? window.location.origin 
+        : 'http://localhost:3001')
     
-    const newSocket = io(socketUrl, {
-      path: socketPath,
+    const newSocket = io(chatUrl, {
+      path: '/socket.io',
+      transports: ['websocket', 'polling'], // Try websocket first, fall back to polling
       auth: {
         userId: session.user.id
       }
