@@ -1,6 +1,6 @@
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge'
-import { DatePrecision } from '@namegame/db'
+import { DatePrecision } from '@namegame/db/types'
 import { isValid, parse } from 'date-fns'
 import { format, fromZonedTime } from 'date-fns-tz'
 

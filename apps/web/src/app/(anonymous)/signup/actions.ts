@@ -1,6 +1,6 @@
 'use server'
 
-import { User } from '@namegame/db'
+import type { User } from '@namegame/db'
 import { z } from 'zod'
 import prisma from '@/lib/prisma'
 import bcrypt from 'bcrypt'

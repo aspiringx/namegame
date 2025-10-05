@@ -1,12 +1,14 @@
 'use server'
 
 import { z } from 'zod'
-import {
-  Gender,
-  ManagedStatus,
+import type {
   User,
   Photo,
   GroupUser,
+} from '@namegame/db'
+import {
+  Gender,
+  ManagedStatus,
 } from '@namegame/db'
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
@@ -17,7 +19,7 @@ import crypto from 'crypto'
 import { parseDateAndDeterminePrecision } from '@/lib/utils'
 import { getCodeTable } from '@/lib/codes'
 import { getPhotoUrl } from '@/lib/photos'
-import { Group, GroupType } from '@namegame/db'
+import type { Group, GroupType } from '@namegame/db'
 
 export type ManagedUserWithPhoto = User & {
   primaryPhoto: (Photo & { url: string }) | null

@@ -38,7 +38,7 @@ export default function EditUserForm({
     lastName: user.lastName,
     email: user.email,
     phone: user.phone,
-    gender: user.gender,
+    gender: user.gender || undefined,
     birthDate: user.birthDate,
     birthPlace: user.birthPlace,
     deathDate: user.deathDate,

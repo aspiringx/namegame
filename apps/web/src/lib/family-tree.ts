@@ -1,4 +1,5 @@
-import { Gender, type User } from '@namegame/db'
+import type { User } from '@namegame/db'
+import { Gender } from '@namegame/db'
 import { FullRelationship, MemberWithUser, UserWithPhotoUrl } from '@/types'
 
 /**
