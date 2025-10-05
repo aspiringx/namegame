@@ -42,6 +42,7 @@ const io = new Server(httpServer, {
 // Create PostgreSQL client for LISTEN/NOTIFY
 const pgClient = new Client({
   connectionString: DATABASE_URL,
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
 });
 
 async function startChatServer() {
