@@ -40,9 +40,13 @@ const io = new Server(httpServer, {
 });
 
 // Create PostgreSQL client for LISTEN/NOTIFY
+// Handle SSL for DigitalOcean managed database by modifying connection string
+const connectionString = process.env.NODE_ENV === 'production' 
+  ? DATABASE_URL!.replace('sslmode=require', 'sslmode=no-verify')
+  : DATABASE_URL!;
+
 const pgClient = new Client({
-  connectionString: DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+  connectionString,
 });
 
 async function startChatServer() {

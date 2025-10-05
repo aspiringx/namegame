@@ -19,13 +19,12 @@ async function main() {
   // Auto-initialize Graphile Worker database schema if needed
   console.log('[Worker] Ensuring Graphile Worker tables exist...');
   try {
-    // Handle SSL and permissions for DigitalOcean managed database
-    const connectionConfig = {
-      connectionString: DATABASE_URL,
-      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-    };
+    // Handle SSL for DigitalOcean managed database by modifying connection string
+    const connectionString = process.env.NODE_ENV === 'production' 
+      ? DATABASE_URL!.replace('sslmode=require', 'sslmode=no-verify')
+      : DATABASE_URL!;
     
-    await runMigrations(connectionConfig);
+    await runMigrations({ connectionString });
     console.log('[Worker] ✅ Graphile Worker database schema ready');
   } catch (error: any) {
     if (error.code === '42501') {
@@ -39,9 +38,14 @@ async function main() {
   
   console.log('[Worker] Registered jobs:', Object.keys(jobs));
 
+  // Use the same SSL-modified connection string for the queue
+  const queueConnectionString = process.env.NODE_ENV === 'production' 
+    ? DATABASE_URL!.replace('sslmode=require', 'sslmode=no-verify')
+    : DATABASE_URL!;
+
   const queue = new GraphileWorkerQueue(
     {
-      connectionString: DATABASE_URL as string,
+      connectionString: queueConnectionString,
       concurrency: 5, // Process up to 5 jobs concurrently
       pollInterval: 1000, // Check for new jobs every second
     },
