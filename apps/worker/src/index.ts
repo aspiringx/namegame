@@ -19,13 +19,22 @@ async function main() {
   // Auto-initialize Graphile Worker database schema if needed
   console.log('[Worker] Ensuring Graphile Worker tables exist...');
   try {
-    // Handle SSL mode for different environments
-    const connectionString = DATABASE_URL!.replace('sslmode=require', 'sslmode=no-verify');
-    await runMigrations({ connectionString });
+    // Handle SSL and permissions for DigitalOcean managed database
+    const connectionConfig = {
+      connectionString: DATABASE_URL,
+      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+    };
+    
+    await runMigrations(connectionConfig);
     console.log('[Worker] ✅ Graphile Worker database schema ready');
-  } catch (error) {
-    console.error('[Worker] ❌ Failed to initialize database schema:', error);
-    process.exit(1);
+  } catch (error: any) {
+    if (error.code === '42501') {
+      console.warn('[Worker] ⚠️ Database permissions issue - continuing without migrations');
+      console.warn('[Worker] Note: Ensure graphile_worker schema exists and user has permissions');
+    } else {
+      console.error('[Worker] ❌ Failed to initialize database schema:', error);
+      process.exit(1);
+    }
   }
   
   console.log('[Worker] Registered jobs:', Object.keys(jobs));
