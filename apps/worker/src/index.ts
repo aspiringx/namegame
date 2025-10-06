@@ -54,6 +54,11 @@ async function main() {
       connectionString: queueConnectionString,
       concurrency: 5, // Process up to 5 jobs concurrently
       pollInterval: 1000, // Check for new jobs every second
+      crontab: `
+        # Daily chat notifications at 12:30 PM Mountain Time (18:30 UTC in winter, 19:30 UTC in summer)
+        # Using 19:30 UTC as a compromise (12:30 PM MDT)
+        30 19 * * * send-daily-chat-notifications
+      `,
     },
     jobs
   );

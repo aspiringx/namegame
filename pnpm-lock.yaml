@@ -283,6 +283,9 @@ importers:
       '@namegame/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@namegame/notifications':
+        specifier: workspace:*
+        version: link:../../packages/notifications
       '@namegame/queue':
         specifier: workspace:*
         version: link:../../packages/queue
@@ -314,6 +317,22 @@ importers:
         version: 10.9.2(@types/node@22.18.8)(typescript@5.9.2)
       typescript:
         specifier: ^5.5.0
+        version: 5.9.2
+
+  packages/notifications:
+    dependencies:
+      '@namegame/db':
+        specifier: workspace:*
+        version: link:../db
+      web-push:
+        specifier: ^3.6.7
+        version: 3.6.7
+    devDependencies:
+      '@types/web-push':
+        specifier: ^3.6.3
+        version: 3.6.4
+      typescript:
+        specifier: ^5.5
         version: 5.9.2
 
   packages/queue:

@@ -5,6 +5,7 @@ export interface GraphileWorkerConfig {
   connectionString: string;
   concurrency?: number;
   pollInterval?: number;
+  crontab?: string;
 }
 
 /**
@@ -65,6 +66,7 @@ export class GraphileWorkerQueue implements JobQueue {
       taskList: this.jobs,
       concurrency: this.config.concurrency || 5,
       pollInterval: this.config.pollInterval || 1000,
+      crontab: this.config.crontab,
     };
 
     this.runner = await run(runnerOptions);
