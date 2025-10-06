@@ -1,10 +1,11 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { Send, ArrowLeft } from 'lucide-react'
+import { Send, ArrowLeft, Pencil, Check, X } from 'lucide-react'
 import Image from 'next/image'
 import { useSocket } from '@/context/SocketContext'
 import { useSession } from 'next-auth/react'
+import { updateConversationName } from '@/app/actions/chat'
 import {
   Tooltip,
   TooltipContent,
@@ -18,6 +19,7 @@ interface ChatInterfaceProps {
   conversationId?: string
   participants: string[]
   conversationName: string
+  onNameUpdate?: (newName: string) => void
 }
 
 interface ChatMessage {
@@ -35,7 +37,8 @@ export default function ChatInterface({
   onBack,
   conversationId,
   participants,
-  conversationName
+  conversationName,
+  onNameUpdate
 }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [isLoadingMessages, setIsLoadingMessages] = useState(false)
@@ -44,9 +47,12 @@ export default function ChatInterface({
   const [newMessage, setNewMessage] = useState('')
   const [showAllTimestamps, setShowAllTimestamps] = useState(false)
   const [authorPhotos, setAuthorPhotos] = useState<Map<string, string | null>>(new Map())
+  const [isEditingName, setIsEditingName] = useState(false)
+  const [editedName, setEditedName] = useState(conversationName)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
+  const nameInputRef = useRef<HTMLInputElement>(null)
   const { socket, isConnected, sendMessage, joinConversation, leaveConversation } = useSocket()
   const { data: session } = useSession()
   const currentUserId = session?.user?.id
@@ -55,6 +61,40 @@ export default function ChatInterface({
   const participantCount = participants.length
   const shouldTruncateName = conversationName.length > 30
   const [showParticipantList, setShowParticipantList] = useState(false)
+
+  // Handle name save
+  const handleSaveName = async () => {
+    if (!conversationId || !editedName.trim()) {
+      setIsEditingName(false)
+      setEditedName(conversationName)
+      return
+    }
+
+    try {
+      const result = await updateConversationName(conversationId, editedName)
+      if (result.success && onNameUpdate) {
+        onNameUpdate(result.name || editedName)
+      }
+      setIsEditingName(false)
+    } catch (error) {
+      console.error('Failed to update conversation name:', error)
+      setEditedName(conversationName)
+      setIsEditingName(false)
+    }
+  }
+
+  const handleCancelEdit = () => {
+    setEditedName(conversationName)
+    setIsEditingName(false)
+  }
+
+  // Focus name input when editing starts
+  useEffect(() => {
+    if (isEditingName && nameInputRef.current) {
+      nameInputRef.current.focus()
+      nameInputRef.current.select()
+    }
+  }, [isEditingName])
 
   // Focus input when chat opens
   useEffect(() => {
@@ -291,9 +331,49 @@ export default function ChatInterface({
             <ArrowLeft size={24} />
           </button>
           <div className="min-w-0 flex-1">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
-              {conversationName}
-            </h2>
+            {isEditingName ? (
+              <div className="flex items-center gap-2">
+                <input
+                  ref={nameInputRef}
+                  type="text"
+                  value={editedName}
+                  onChange={(e) => setEditedName(e.target.value.slice(0, 30))}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleSaveName()
+                    if (e.key === 'Escape') handleCancelEdit()
+                  }}
+                  maxLength={30}
+                  className="flex-1 px-2 py-1 text-lg font-semibold bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded text-gray-900 dark:text-white"
+                  placeholder="Conversation name"
+                />
+                <button
+                  onClick={handleSaveName}
+                  className="p-1 text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300"
+                >
+                  <Check size={20} />
+                </button>
+                <button
+                  onClick={handleCancelEdit}
+                  className="p-1 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
+                  {conversationName}
+                </h2>
+                {conversationId && (
+                  <button
+                    onClick={() => setIsEditingName(true)}
+                    className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  >
+                    <Pencil size={16} />
+                  </button>
+                )}
+              </div>
+            )}
             {shouldTruncateName ? (
               <TooltipProvider>
                 <Tooltip open={showParticipantList} onOpenChange={setShowParticipantList}>

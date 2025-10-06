@@ -93,3 +93,31 @@ export async function getUserConnections() {
 
   return users
 }
+
+export async function updateConversationName(conversationId: string, name: string) {
+  const session = await auth()
+  if (!session?.user?.id) {
+    throw new Error('Unauthorized')
+  }
+
+  // Verify user is a participant in this conversation
+  const participant = await prisma.chatParticipant.findFirst({
+    where: {
+      conversationId,
+      userId: session.user.id,
+    },
+  })
+
+  if (!participant) {
+    throw new Error('Not a participant in this conversation')
+  }
+
+  // Update conversation name (limit to 30 characters)
+  const trimmedName = name.trim().slice(0, 30)
+  const conversation = await prisma.chatConversation.update({
+    where: { id: conversationId },
+    data: { name: trimmedName || null }, // Set to null if empty
+  })
+
+  return { success: true, name: conversation.name }
+}

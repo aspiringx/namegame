@@ -193,7 +193,7 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
     }
   }
 
-  const handleOpenExistingChat = (conversation: Conversation) => {
+  const handleOpenConversation = (conversation: Conversation) => {
     setCurrentConversation({
       id: conversation.id,
       participants: conversation.participants.map(p => p.id),
@@ -202,12 +202,26 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
     setShowChatInterface(true)
   }
 
+  const handleNameUpdate = (newName: string) => {
+    if (currentConversation) {
+      setCurrentConversation({
+        ...currentConversation,
+        name: newName
+      })
+      
+      // Update in conversations list
+      setConversations(prev => prev.map(conv => 
+        conv.id === currentConversation.id 
+          ? { ...conv, name: newName }
+          : conv
+      ))
+    }
+  }
+
   const handleBackToConversations = () => {
     setShowChatInterface(false)
     setCurrentConversation(null)
   }
-
-  // Reset state when modal closes
   useEffect(() => {
     if (!isOpen) {
       setShowChatInterface(false)
@@ -262,35 +276,23 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
               {conversations.map((conversation) => (
                 <button
                   key={conversation.id}
-                  onClick={() => handleOpenExistingChat(conversation)}
+                  onClick={() => handleOpenConversation(conversation)}
                   className="w-full p-4 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        {conversation.isGroup ? (
-                          <Users size={16} className="text-gray-400 flex-shrink-0" />
-                        ) : (
-                          <User size={16} className="text-gray-400 flex-shrink-0" />
-                        )}
-                        <p className="font-medium text-gray-900 dark:text-white truncate">
-                          {conversation.name}
-                        </p>
-                      </div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 truncate mt-1">
-                        {conversation.lastMessage}
-                      </p>
-                    </div>
-                    <div className="flex flex-col items-end gap-1 ml-2">
-                      <span className="text-xs text-gray-400">
-                        {conversation.timestamp}
+                  <div className="flex items-center gap-2">
+                    {conversation.isGroup ? (
+                      <Users size={16} className="text-gray-400 flex-shrink-0" />
+                    ) : (
+                      <User size={16} className="text-gray-400 flex-shrink-0" />
+                    )}
+                    <p className="font-medium text-gray-900 dark:text-white truncate">
+                      {conversation.name}
+                    </p>
+                    {conversation.unreadCount > 0 && (
+                      <span className="bg-blue-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center ml-auto flex-shrink-0">
+                        {conversation.unreadCount}
                       </span>
-                      {conversation.unreadCount > 0 && (
-                        <span className="bg-blue-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                          {conversation.unreadCount}
-                        </span>
-                      )}
-                    </div>
+                    )}
                   </div>
                 </button>
               ))}
@@ -321,6 +323,7 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
             conversationId={currentConversation.id}
             participants={currentConversation.participants}
             conversationName={currentConversation.name}
+            onNameUpdate={handleNameUpdate}
           />
         )}
       </Drawer>
