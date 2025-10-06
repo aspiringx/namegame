@@ -1,13 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import Link from 'next/link'
 import UserMenu from './UserMenu'
 import Image from 'next/image'
 import { GroupData } from '@/types'
 import { Settings } from 'lucide-react'
 import GroupInfoModal from './GroupInfoModal'
-import ChatIcon from './ChatIcon'
+import ChatIcon, { ChatIconRef } from './ChatIcon'
+import ChatDeepLink from './ChatDeepLink'
 import RefreshButton from './ui/RefreshButton'
 
 interface HeaderProps {
@@ -22,9 +23,15 @@ export default function Header({
   groupSlug,
 }: HeaderProps) {
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const chatIconRef = useRef<ChatIconRef>(null)
+
+  const handleOpenChat = () => {
+    chatIconRef.current?.openChat()
+  }
 
   return (
     <>
+      <ChatDeepLink onOpenChat={handleOpenChat} />
       <header id="page-header" className="bg-background border-border sticky top-0 left-0 z-50 w-full border-b">
         <div className="container mx-auto flex h-full items-center justify-between px-5 py-1">
           {group ? (
@@ -71,7 +78,7 @@ export default function Header({
                 <Settings size={24} />
               </Link>
             )}
-            <ChatIcon />
+            <ChatIcon ref={chatIconRef} />
             <UserMenu />
           </div>
         </div>

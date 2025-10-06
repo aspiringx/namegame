@@ -1,19 +1,30 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useImperativeHandle, forwardRef } from 'react'
 import { MessageCircle } from 'lucide-react'
 import ChatDrawer from './ChatDrawer'
 import { useSession } from 'next-auth/react'
 import { hasUnreadMessages } from '@/app/actions/chat'
+import { useSocket } from '@/context/SocketContext'
 
 interface ChatIconProps {
   // No props needed - we'll fetch unread status internally
 }
 
-export default function ChatIcon({}: ChatIconProps) {
+export interface ChatIconRef {
+  openChat: () => void
+}
+
+const ChatIcon = forwardRef<ChatIconRef, ChatIconProps>(function ChatIcon({}, ref) {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [hasUnread, setHasUnread] = useState(false)
   const { data: session } = useSession()
+  const { socket } = useSocket()
+
+  // Expose openChat method via ref
+  useImperativeHandle(ref, () => ({
+    openChat: () => setIsModalOpen(true)
+  }))
 
   // Check for unread messages on mount and when modal closes
   useEffect(() => {
@@ -21,6 +32,27 @@ export default function ChatIcon({}: ChatIconProps) {
       hasUnreadMessages().then(setHasUnread)
     }
   }, [session?.user, isModalOpen])
+  
+  // Listen for new messages via socket to update unread indicator
+  useEffect(() => {
+    if (!socket || !session?.user) return
+    
+    const handleNewMessage = (message: any) => {
+      const startTime = Date.now()
+      console.log('[ChatIcon] Received message, checking unread status. Message:', message)
+      hasUnreadMessages().then(hasUnread => {
+        const elapsed = Date.now() - startTime
+        console.log('[ChatIcon] hasUnreadMessages returned:', hasUnread, 'after', elapsed, 'ms')
+        setHasUnread(hasUnread)
+      })
+    }
+    
+    socket.on('message', handleNewMessage)
+    
+    return () => {
+      socket.off('message', handleNewMessage)
+    }
+  }, [socket, session?.user])
 
   // Don't show chat for unauthenticated users
   if (!session?.user) {
@@ -43,4 +75,6 @@ export default function ChatIcon({}: ChatIconProps) {
       <ChatDrawer isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </>
   )
-}
+})
+
+export default ChatIcon

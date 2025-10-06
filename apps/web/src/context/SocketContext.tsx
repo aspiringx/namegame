@@ -64,8 +64,10 @@ export function SocketProvider({ children }: SocketProviderProps) {
     })
 
     // Handle incoming messages
-    newSocket.on('message', (_message) => {
-      // TODO: Update message state in chat components
+    newSocket.on('message', (message) => {
+      console.log('[SocketContext] Received message event:', message)
+      // Messages are handled by individual components listening to socket.on('message')
+      // This handler just logs for debugging
     })
 
     // Handle typing indicators

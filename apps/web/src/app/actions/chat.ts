@@ -162,40 +162,59 @@ export async function markAllConversationsAsRead() {
 }
 
 export async function hasUnreadMessages() {
-  const session = await auth()
-  if (!session?.user?.id) {
-    return false
-  }
+  try {
+    const startTime = Date.now()
+    const session = await auth()
+    console.log('[hasUnreadMessages] Auth took:', Date.now() - startTime, 'ms')
+    
+    if (!session?.user?.id) {
+      console.log('[hasUnreadMessages] No session')
+      return false
+    }
 
-  // Get all conversations where user is a participant
-  const participants = await prisma.chatParticipant.findMany({
-    where: {
-      userId: session.user.id,
-    },
-    include: {
-      conversation: {
-        include: {
-          messages: {
-            select: {
-              createdAt: true,
+    console.log('[hasUnreadMessages] Checking for user:', session.user.id)
+    const queryStart = Date.now()
+
+    // Get all conversations where user is a participant
+    const participants = await prisma.chatParticipant.findMany({
+      where: {
+        userId: session.user.id,
+      },
+      include: {
+        conversation: {
+          include: {
+            messages: {
+              select: {
+                createdAt: true,
+              },
+              orderBy: {
+                createdAt: 'desc',
+              },
+              take: 1,
             },
-            orderBy: {
-              createdAt: 'desc',
-            },
-            take: 1,
           },
         },
       },
-    },
-  })
+    })
 
-  // Check if any conversation has messages after lastReadAt
-  for (const participant of participants) {
-    const lastMessage = participant.conversation.messages[0]
-    if (lastMessage && (!participant.lastReadAt || lastMessage.createdAt > participant.lastReadAt)) {
-      return true
+    console.log('[hasUnreadMessages] Query took:', Date.now() - queryStart, 'ms')
+    console.log('[hasUnreadMessages] Found', participants.length, 'conversations')
+
+    // Check if any conversation has messages after lastReadAt
+    for (const participant of participants) {
+      const lastMessage = participant.conversation.messages[0]
+      if (lastMessage && (!participant.lastReadAt || lastMessage.createdAt > participant.lastReadAt)) {
+        console.log('[hasUnreadMessages] Found unread in conversation:', participant.conversationId)
+        console.log('[hasUnreadMessages] Total time:', Date.now() - startTime, 'ms')
+        return true
+      }
     }
-  }
 
-  return false
+    console.log('[hasUnreadMessages] No unread messages')
+    console.log('[hasUnreadMessages] Total time:', Date.now() - startTime, 'ms')
+    return false
+  } catch (error) {
+    console.error('[hasUnreadMessages] Error:', error)
+    return false
+  }
 }
