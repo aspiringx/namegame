@@ -14,6 +14,7 @@ import { ServiceWorkerRegistrar } from '@/components/ServiceWorkerRegistrar'
 import { ServiceWorkerProvider } from '@/context/ServiceWorkerContext'
 import { PushNotificationsProvider } from '@/context/PushNotificationsContext'
 import { SocketProvider } from '@/context/SocketContext'
+import PullToRefresh from '@/components/PullToRefresh'
 
 import './globals.css'
 
@@ -311,6 +312,7 @@ export default async function RootLayout({
                       <PushNotificationsProvider>
                         <div className="relative min-h-screen">{children}</div>
                         <ClientOnly>
+                          <PullToRefresh />
                           <InstallAppPrompt />
                           <ServiceWorkerRegistrar />
                         </ClientOnly>

@@ -8,6 +8,7 @@ import { GroupData } from '@/types'
 import { Settings } from 'lucide-react'
 import GroupInfoModal from './GroupInfoModal'
 import ChatIcon from './ChatIcon'
+import RefreshButton from './ui/RefreshButton'
 
 interface HeaderProps {
   group?: GroupData | null
@@ -60,7 +61,8 @@ export default function Header({
               NameGame
             </Link>
           )}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <RefreshButton />
             {isGroupAdmin && groupSlug && (
               <Link
                 href={`/g/${groupSlug}/admin`}
