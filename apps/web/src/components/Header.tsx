@@ -61,7 +61,7 @@ export default function Header({
               NameGame
             </Link>
           )}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
             <RefreshButton />
             {isGroupAdmin && groupSlug && (
               <Link

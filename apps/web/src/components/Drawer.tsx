@@ -1,6 +1,6 @@
 'use client'
 
-import { ReactNode, useEffect } from 'react'
+import { ReactNode } from 'react'
 import { X } from 'lucide-react'
 
 interface DrawerProps {
@@ -25,27 +25,13 @@ export default function Drawer({
   title,
   width = 'md' 
 }: DrawerProps) {
-  // Lock body scroll when drawer is open
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = 'unset'
-    }
-    
-    return () => {
-      document.body.style.overflow = 'unset'
-    }
-  }, [isOpen])
-
   if (!isOpen) return null
 
   return (
     <>
-      {/* Backdrop */}
+      {/* Backdrop - only on mobile, allows interaction on desktop */}
       <div 
-        className="fixed inset-0 bg-black/50 z-40 md:bg-black/20 transition-opacity"
-        onClick={onClose}
+        className="fixed inset-0 bg-black/50 z-40 md:bg-transparent md:pointer-events-none transition-opacity"
       />
 
       {/* Drawer - slides in from right */}
