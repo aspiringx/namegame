@@ -199,7 +199,15 @@ export async function updateUserProfile(
     }
   }
 
-  const groupUserRoles = await getCodeTable('groupUserRole')
+  // Fetch code tables outside transaction to reduce transaction time
+  const [groupUserRoles, photoTypes, entityTypes] = await Promise.all([
+    getCodeTable('groupUserRole'),
+    getCodeTable('photoType'),
+    getCodeTable('entityType'),
+  ])
+  
+  const primaryPhotoTypeId = photoTypes.primary.id
+  const userEntityTypeId = entityTypes.user.id
   let photoToDelete = null
 
   try {
@@ -274,13 +282,6 @@ export async function updateUserProfile(
       })
 
       if (newPhotoKeys) {
-        const [photoTypes, entityTypes] = await Promise.all([
-          getCodeTable('photoType'),
-          getCodeTable('entityType'),
-        ])
-        const primaryPhotoTypeId = photoTypes.primary.id
-        const userEntityTypeId = entityTypes.user.id
-
         if (primaryPhotoTypeId && userEntityTypeId) {
           const existingPhoto = await tx.photo.findFirst({
             where: {
@@ -323,8 +324,8 @@ export async function updateUserProfile(
       const primaryPhoto = await tx.photo.findFirst({
         where: {
           entityId: user.id,
-          entityTypeId: (await getCodeTable('entityType')).user.id,
-          typeId: (await getCodeTable('photoType')).primary.id,
+          entityTypeId: userEntityTypeId,
+          typeId: primaryPhotoTypeId,
         },
         select: { id: true },
       })
@@ -403,8 +404,8 @@ export async function updateUserProfile(
   const primaryPhoto = await prisma.photo.findFirst({
     where: {
       entityId: userId,
-      entityTypeId: (await getCodeTable('entityType')).user.id,
-      typeId: (await getCodeTable('photoType')).primary.id,
+      entityTypeId: userEntityTypeId,
+      typeId: primaryPhotoTypeId,
     },
   })
 

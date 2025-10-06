@@ -188,7 +188,7 @@ export default function UserProfileForm({
 
   const formRef = useRef<HTMLFormElement>(null)
 
-  const [state, formAction] = useActionState(updateUserProfile, initialState)
+  const [state, formAction, isPending] = useActionState(updateUserProfile, initialState)
 
   const handleDiscard = useCallback(() => {
     setFirstName(user.firstName || '')
@@ -1080,6 +1080,7 @@ export default function UserProfileForm({
       <StickySaveBar
         isDirty={isDirty}
         isFormValid={isFormValid}
+        isSaving={isPending}
         onSave={() => formRef.current?.requestSubmit()}
         onDiscard={handleDiscard}
       />

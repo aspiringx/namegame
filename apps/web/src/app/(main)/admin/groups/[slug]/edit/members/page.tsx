@@ -28,22 +28,22 @@ export default async function ManageMembersPage({
     notFound()
   }
 
-  const [members, groupUserRoles, entityTypes, photoTypes] =
-    await prisma.$transaction([
-      prisma.groupUser.findMany({
-        where: { groupId: group.id },
-        include: {
-          role: true,
-          user: true,
-        },
-        orderBy: {
-          createdAt: 'desc',
-        },
-      }),
-      prisma.groupUserRole.findMany(),
-      prisma.entityType.findMany(),
-      prisma.photoType.findMany(),
-    ])
+  // Use Promise.all instead of transaction for read-only queries
+  const [members, groupUserRoles, entityTypes, photoTypes] = await Promise.all([
+    prisma.groupUser.findMany({
+      where: { groupId: group.id },
+      include: {
+        role: true,
+        user: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    }),
+    prisma.groupUserRole.findMany(),
+    prisma.entityType.findMany(),
+    prisma.photoType.findMany(),
+  ])
 
   const userEntityType = entityTypes.find((et) => et.code === 'user')
   const primaryPhotoType = photoTypes.find((pt) => pt.code === 'primary')

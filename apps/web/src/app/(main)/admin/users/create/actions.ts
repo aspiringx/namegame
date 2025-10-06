@@ -127,6 +127,12 @@ export async function createUser(
   }
 
   try {
+    // Fetch code tables outside transaction to reduce transaction time
+    const [photoTypes, entityTypes] = await Promise.all([
+      getCodeTable('photoType'),
+      getCodeTable('entityType'),
+    ])
+
     await prisma.$transaction(async (tx) => {
       const hashedPassword = await bcrypt.hash(password, 10)
       const newUser = await tx.user.create({
@@ -141,11 +147,6 @@ export async function createUser(
           updatedBy: { connect: { id: creatorId } },
         },
       })
-
-      const [photoTypes, entityTypes] = await Promise.all([
-        getCodeTable('photoType'),
-        getCodeTable('entityType'),
-      ])
 
       if (photoKeys) {
         await tx.photo.create({

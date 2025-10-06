@@ -167,7 +167,7 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
       
       setCurrentConversation({
         id: conversation.id,
-        participants: participantIds,
+        participants: conversation.participants.map((p: any) => p.id),
         name: displayName
       })
       
