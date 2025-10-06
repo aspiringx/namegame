@@ -60,17 +60,36 @@ async function startChatServer() {
     console.log("[Chat] Listening for new_message notifications");
 
     // Handle PostgreSQL notifications
-    pgClient.on("notification", (msg) => {
+    pgClient.on("notification", async (msg) => {
       try {
         if (msg.channel === "new_message" && msg.payload) {
           const messageData = JSON.parse(msg.payload);
-          // Broadcast to specific conversation room
+          
+          // Broadcast to conversation room (for users actively viewing the conversation)
           io.to(`conversation:${messageData.conversationId}`).emit(
             "message",
             messageData
           );
+          
+          // Also broadcast to all participants' user rooms (for unread indicators)
+          // This ensures users get notified even if they're not in the conversation room
+          const { PrismaClient } = await import('@namegame/db');
+          const prisma = new PrismaClient();
+          
+          const participants = await prisma.chatParticipant.findMany({
+            where: { conversationId: messageData.conversationId },
+            select: { userId: true }
+          });
+          
+          // Emit to each participant's user room
+          participants.forEach(participant => {
+            io.to(`user:${participant.userId}`).emit("message", messageData);
+          });
+          
+          await prisma.$disconnect();
+          
           console.log(
-            `[Chat] Broadcasted message to conversation:${messageData.conversationId}`
+            `[Chat] Broadcasted message to conversation:${messageData.conversationId} and ${participants.length} participants`
           );
         }
       } catch (error) {
@@ -91,6 +110,9 @@ async function startChatServer() {
         }
 
         console.log(`[Chat] User authenticated: ${user.id}`);
+        
+        // Join user's personal room for receiving notifications
+        socket.join(`user:${user.id}`);
 
         // Handle joining conversation rooms
         socket.on("join-conversation", (conversationId: string) => {
