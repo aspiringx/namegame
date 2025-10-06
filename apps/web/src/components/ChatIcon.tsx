@@ -37,14 +37,8 @@ const ChatIcon = forwardRef<ChatIconRef, ChatIconProps>(function ChatIcon({}, re
   useEffect(() => {
     if (!socket || !session?.user) return
     
-    const handleNewMessage = (message: any) => {
-      const startTime = Date.now()
-      console.log('[ChatIcon] Received message, checking unread status. Message:', message)
-      hasUnreadMessages().then(hasUnread => {
-        const elapsed = Date.now() - startTime
-        console.log('[ChatIcon] hasUnreadMessages returned:', hasUnread, 'after', elapsed, 'ms')
-        setHasUnread(hasUnread)
-      })
+    const handleNewMessage = () => {
+      hasUnreadMessages().then(setHasUnread)
     }
     
     socket.on('message', handleNewMessage)

@@ -152,14 +152,9 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
   
   // Listen for new messages via socket and queue updates with debouncing
   useEffect(() => {
-    if (!socket || !isOpen) {
-      console.log('[ChatDrawer] Socket listener NOT attached - socket:', !!socket, 'isOpen:', isOpen)
-      return
-    }
+    if (!socket || !isOpen) return
     
     const handleNewMessage = (message: any) => {
-      console.log('[ChatDrawer] Received new message via socket:', message)
-      
       const conversationId = message.conversationId
       if (!conversationId) return
       
@@ -174,7 +169,6 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
       // Set new timer to batch update after 5 seconds
       updateTimerRef.current = setTimeout(() => {
         const idsToUpdate = Array.from(updateQueueRef.current)
-        console.log('[ChatDrawer] Batch updating conversations:', idsToUpdate)
         batchUpdateConversations(idsToUpdate)
         updateQueueRef.current.clear()
         updateTimerRef.current = null
@@ -182,14 +176,12 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
     }
     
     socket.on('message', handleNewMessage)
-    console.log('[ChatDrawer] Socket listener attached')
     
     return () => {
       socket.off('message', handleNewMessage)
       if (updateTimerRef.current) {
         clearTimeout(updateTimerRef.current)
       }
-      console.log('[ChatDrawer] Socket listener removed')
     }
   }, [socket, isOpen, batchUpdateConversations])
   

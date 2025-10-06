@@ -163,17 +163,11 @@ export async function markAllConversationsAsRead() {
 
 export async function hasUnreadMessages() {
   try {
-    const startTime = Date.now()
     const session = await auth()
-    console.log('[hasUnreadMessages] Auth took:', Date.now() - startTime, 'ms')
     
     if (!session?.user?.id) {
-      console.log('[hasUnreadMessages] No session')
       return false
     }
-
-    console.log('[hasUnreadMessages] Checking for user:', session.user.id)
-    const queryStart = Date.now()
 
     // Get all conversations where user is a participant
     const participants = await prisma.chatParticipant.findMany({
@@ -197,21 +191,14 @@ export async function hasUnreadMessages() {
       },
     })
 
-    console.log('[hasUnreadMessages] Query took:', Date.now() - queryStart, 'ms')
-    console.log('[hasUnreadMessages] Found', participants.length, 'conversations')
-
     // Check if any conversation has messages after lastReadAt
     for (const participant of participants) {
       const lastMessage = participant.conversation.messages[0]
       if (lastMessage && (!participant.lastReadAt || lastMessage.createdAt > participant.lastReadAt)) {
-        console.log('[hasUnreadMessages] Found unread in conversation:', participant.conversationId)
-        console.log('[hasUnreadMessages] Total time:', Date.now() - startTime, 'ms')
         return true
       }
     }
 
-    console.log('[hasUnreadMessages] No unread messages')
-    console.log('[hasUnreadMessages] Total time:', Date.now() - startTime, 'ms')
     return false
   } catch (error) {
     console.error('[hasUnreadMessages] Error:', error)
