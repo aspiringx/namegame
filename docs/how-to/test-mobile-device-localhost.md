@@ -10,15 +10,28 @@ This is the **recommended method** for testing PWA features like pull-to-refresh
 
 ### 1. Build and Start Production Mode
 
+Be sure the right env vars are set locally, like NEXT_PUBLIC_CHAT_URL which
+may change over time.
+
 ```bash
 # From the root of your monorepo
 cd /path/to/namegame
 
 # Build all apps (web, chat, worker)
-pnpm build
+pnpm build:all
 
-# Start in production mode
-pnpm start
+# Start all services (web, chat, worker)
+# This runs in the foreground with colored logs
+pnpm start:local
+```
+
+**Note:** `start:local` uses `concurrently` to run all three services with colored output. Press `Ctrl+C` to stop all services. Production uses PM2 with `ecosystem.config.js` which only starts web + worker (chat runs as a separate DigitalOcean app).
+
+**To restart without rebuilding:**
+
+```bash
+# Stop with Ctrl+C, then:
+pnpm start:local
 ```
 
 ### 2. Find Your Local IP Address
@@ -31,6 +44,7 @@ ifconfig | grep "inet " | grep -v 127.0.0.1
 Look for an address like `192.168.1.100` or `192.168.50.177`.
 
 **Alternative (GUI method):**
+
 - Click the Apple menu at the top-left of your screen
 - Go to System Settings > Network
 - Select your active Wi-Fi connection
@@ -52,6 +66,7 @@ Look for an address like `192.168.1.100` or `192.168.50.177`.
 ### 5. Test PWA Features
 
 Once installed as PWA, you should see:
+
 - ✅ **Refresh button** in the header (only visible in PWA mode)
 - ✅ **Pull-to-refresh** gesture (swipe down from top)
 - ✅ **Optimistic saving** with loading states
@@ -77,6 +92,7 @@ Then access via `http://YOUR_IP:3000` on your mobile device.
 ## Method 2: Using ngrok (For HTTPS/Public Testing)
 
 Use this method when you need:
+
 - HTTPS for testing secure features
 - Testing from a device not on your local network
 - Sharing a preview with others
@@ -187,9 +203,11 @@ The emulator needs to trust your local Certificate Authority (CA).
     npm start
     ```
 2.  **Start the SSL proxy** in a new terminal:
+
     ```bash
     npm run start:ssl
     ```
+
     Ensure your `package.json` script for `start:ssl` is `npx local-ssl-proxy --key local.namegame.app-key.pem --cert local.namegame.app.pem --source 3001 --target 3000`.
 
 3.  **Access the site in the emulator's browser**:

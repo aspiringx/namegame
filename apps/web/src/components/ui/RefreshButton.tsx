@@ -27,8 +27,8 @@ export default function RefreshButton({
     window.location.reload()
   }
 
-  // Only show in PWA mode (works for iOS, Android, and desktop PWAs)
-  if (!deviceInfo.isPWA) {
+  // Wait for device info to be ready and only show in PWA mode
+  if (!deviceInfo.isReady || !deviceInfo.isPWA) {
     return null
   }
 

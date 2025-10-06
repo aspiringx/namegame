@@ -16,7 +16,7 @@ export default function PullToRefresh() {
 
   useEffect(() => {
     // Only enable pull-to-refresh in PWA mode (iOS, Android, desktop PWAs)
-    if (!deviceInfo.isPWA) return
+    if (!deviceInfo.isReady || !deviceInfo.isPWA) return
 
     const handleTouchStart = (e: TouchEvent) => {
       // Only trigger if at top of page
@@ -71,7 +71,7 @@ export default function PullToRefresh() {
       document.removeEventListener('touchmove', handleTouchMove)
       document.removeEventListener('touchend', handleTouchEnd)
     }
-  }, [deviceInfo.isPWA, pullDistance, isRefreshing])
+  }, [deviceInfo.isReady, deviceInfo.isPWA, pullDistance, isRefreshing])
 
   // Don't render anything if not in PWA mode or not pulling
   if (!deviceInfo.isPWA || (pullDistance === 0 && !isRefreshing)) {
