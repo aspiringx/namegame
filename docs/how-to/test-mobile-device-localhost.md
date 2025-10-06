@@ -131,6 +131,46 @@ ngrok will provide an HTTPS URL like `https://random-string.ngrok-free.app`. Ope
 
 ---
 
+## Worker Jobs and Cron Schedules
+
+The worker service runs background jobs using Graphile Worker. Jobs can be triggered manually or run on a schedule.
+
+### Scheduled Jobs
+
+The worker automatically runs these cron jobs:
+
+- **Daily Chat Notifications**: Runs at 12:30 PM Mountain Time (19:30 UTC) daily
+  - Finds users with unread chat messages
+  - Sends push notifications to their registered devices
+  - Defined in `apps/worker/src/index.ts` crontab configuration
+
+### Manual Job Triggers
+
+To manually trigger a job for testing:
+
+```bash
+# Trigger daily chat notifications (from root directory)
+cd apps/worker && npx tsx scripts/trigger-daily-notifications.ts
+```
+
+The job will be queued and processed by the running worker. Check worker logs to see execution:
+
+```bash
+# If using pnpm start:local, logs appear in terminal
+# If using PM2:
+pm2 logs namegame-worker
+```
+
+### How Cron Jobs Work
+
+- **Database-based**: Cron schedules are stored in the database (not crontab files)
+- **Defined in code**: See `apps/worker/src/index.ts` for the `crontab` configuration
+- **Standard cron syntax**: `minute hour day month dayofweek jobname`
+  - Example: `30 19 * * * send-daily-chat-notifications` = 7:30 PM UTC daily
+- **Multiple workers**: Safe to run multiple worker instances - Graphile Worker handles coordination
+
+---
+
 ## Testing Push Notifications
 
 Push notifications require a secure context (HTTPS or localhost).

@@ -17,8 +17,8 @@ export const sendDailyChatNotifications: JobHandler = async () => {
     // Find users with unread messages using raw SQL
     const usersWithUnread = await prisma.$queryRaw<Array<{ userId: string }>>`
       SELECT DISTINCT cp."userId"
-      FROM "ChatParticipant" cp
-      INNER JOIN "ChatMessage" cm ON cm."conversationId" = cp."conversationId"
+      FROM chat_participants cp
+      INNER JOIN chat_messages cm ON cm."conversationId" = cp."conversationId"
       WHERE (cp."lastReadAt" IS NULL OR cm."createdAt" > cp."lastReadAt")
       AND EXISTS (
         SELECT 1 FROM "PushSubscription" ps WHERE ps."userId" = cp."userId"
