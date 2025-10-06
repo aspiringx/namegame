@@ -177,6 +177,12 @@ export async function createManagedUser(
       }
     }
 
+    // Fetch code tables outside transaction to reduce transaction time
+    const [photoTypes, entityTypes] = await Promise.all([
+      getCodeTable('photoType'),
+      getCodeTable('entityType'),
+    ])
+
     await prisma.$transaction(async (tx) => {
       const newUser = await tx.user.create({
         data: {
@@ -201,11 +207,6 @@ export async function createManagedUser(
           managedId: newUser.id,
         },
       })
-
-      const [photoTypes, entityTypes] = await Promise.all([
-        getCodeTable('photoType'),
-        getCodeTable('entityType'),
-      ])
 
       await tx.photo.create({
         data: {
@@ -452,15 +453,18 @@ export async function updateManagedUser(
     }
   }
 
+  // Fetch code tables outside transaction to reduce transaction time
+  // Used inside transaction closure below and OK to ignore with...
+  // eslint-disable-next-line
+  const [photoTypes, entityTypes] = await Promise.all([
+    getCodeTable('photoType'),
+    getCodeTable('entityType'),
+  ])
+
   let photoToDelete: Photo | null = null
 
   try {
     await prisma.$transaction(async (tx) => {
-      const [photoTypes, entityTypes] = await Promise.all([
-        getCodeTable('photoType'),
-        getCodeTable('entityType'),
-      ])
-
       if (newPhotoKeys) {
         const existingPrimaryPhoto = await tx.photo.findFirst({
           where: {
@@ -617,12 +621,13 @@ export async function deleteManagedUser(userId: string) {
     throw new Error('Forbidden')
   }
 
+  // Fetch code tables outside transaction to reduce transaction time
+  const entityTypes = await getCodeTable('entityType')
+  const userEntityTypeId = entityTypes.user.id
+
   // In a transaction, delete the user and all related data
   await prisma.$transaction(async (tx) => {
     // 1. Delete Photos from storage and database
-    const entityTypes = await getCodeTable('entityType')
-    const userEntityTypeId = entityTypes.user.id
-
     const photos = await tx.photo.findMany({
       where: { entityId: userId, entityTypeId: userEntityTypeId },
     })

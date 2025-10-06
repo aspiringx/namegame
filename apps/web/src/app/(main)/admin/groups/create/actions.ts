@@ -130,6 +130,16 @@ export async function createGroup(
     }
   }
 
+  // Fetch code tables outside transaction to reduce transaction time
+  let entityTypes: Record<string, { id: number; code: string }> | undefined
+  let photoTypes: Record<string, { id: number; code: string }> | undefined
+  if (newLogoKeys) {
+    ;[entityTypes, photoTypes] = await Promise.all([
+      getCodeTable('entityType'),
+      getCodeTable('photoType'),
+    ])
+  }
+
   try {
     await prisma.$transaction(async (tx) => {
       const existingGroup = await tx.group.findUnique({
@@ -149,12 +159,7 @@ export async function createGroup(
         },
       })
 
-      if (newLogoKeys) {
-        const [entityTypes, photoTypes] = await Promise.all([
-          getCodeTable('entityType'),
-          getCodeTable('photoType'),
-        ])
-
+      if (newLogoKeys && entityTypes && photoTypes) {
         const groupEntityType = entityTypes.group
         const logoPhotoType = photoTypes.logo
 

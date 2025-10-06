@@ -70,6 +70,12 @@ export async function signup(
     const hashedPassword = await bcrypt.hash(password, 10)
     let newUser: User | undefined
 
+    // Fetch code tables outside transaction to reduce transaction time
+    const [photoTypes, entityTypes] = await Promise.all([
+      getCodeTable('photoType'),
+      getCodeTable('entityType'),
+    ])
+
     // When creating a new user through the /signup form (not via greeting code)
     // we require email. Since username is also required, set it to email
     // value too so it's unique.
@@ -86,11 +92,6 @@ export async function signup(
 
       // Use the user's ID as a seed for a unique, deterministic avatar
       const avatarUrl = `https://api.dicebear.com/8.x/personas/png?seed=${newUser.id}`
-
-      const [photoTypes, entityTypes] = await Promise.all([
-        getCodeTable('photoType'),
-        getCodeTable('entityType'),
-      ])
 
       await tx.photo.create({
         data: {
