@@ -37,8 +37,12 @@ const ChatIcon = forwardRef<ChatIconRef, ChatIconProps>(function ChatIcon({}, re
   useEffect(() => {
     if (!socket || !session?.user) return
     
-    const handleNewMessage = () => {
-      hasUnreadMessages().then(setHasUnread)
+    const handleNewMessage = (message: any) => {
+      // If the message is from someone else, optimistically show green dot
+      if (message.author?.id !== session.user?.id) {
+        setHasUnread(true)
+      }
+      // If user sent the message themselves, no need to update
     }
     
     socket.on('message', handleNewMessage)
