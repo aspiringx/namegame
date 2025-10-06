@@ -66,3 +66,6 @@ node_modules/
 
 # PM2 logs
 logs/
+
+# DigitalOcean app specs (contain secrets)
+.do/
