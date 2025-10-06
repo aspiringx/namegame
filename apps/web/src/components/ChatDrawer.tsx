@@ -22,6 +22,17 @@ interface Conversation {
   participants: Array<{ id: string; name: string }>
 }
 
+// Helper function to format participant names with truncation
+function formatParticipantNames(names: string[], maxNames: number = 15): string {
+  if (names.length <= maxNames) {
+    return names.join(', ')
+  }
+  
+  const displayedNames = names.slice(0, maxNames).join(', ')
+  const remainingCount = names.length - maxNames
+  return `${displayedNames}... and ${remainingCount} more`
+}
+
 export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [isLoadingConversations, setIsLoadingConversations] = useState(false)
@@ -75,15 +86,18 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
       const response = await fetch(url)
       if (response.ok) {
         const { conversations: convos, hasMore } = await response.json()
-        const newConversations = convos.map((c: any) => ({
-          id: c.id,
-          name: c.name || c.participants.map((p: any) => p.name).join(', '),
-          lastMessage: '', // TODO: Get last message
-          timestamp: c.lastMessageAt ? new Date(c.lastMessageAt).toLocaleString() : '',
-          unreadCount: 0, // TODO: Calculate unread
-          isGroup: c.participants.length > 2,
-          participants: c.participants || []
-        }))
+        const newConversations = convos.map((c: any) => {
+          const participantNames = c.participants.map((p: any) => p.name)
+          return {
+            id: c.id,
+            name: c.name || formatParticipantNames(participantNames),
+            lastMessage: '', // TODO: Get last message
+            timestamp: c.lastMessageAt ? new Date(c.lastMessageAt).toLocaleString() : '',
+            unreadCount: 0, // TODO: Calculate unread
+            isGroup: c.participants.length > 2,
+            participants: c.participants || []
+          }
+        })
         
         if (isInitialLoad) {
           setConversations(newConversations)
@@ -160,10 +174,9 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
 
       const { conversation } = await response.json()
       
-      // Use participant names for display (shows all participants)
-      const displayName = conversation.participants
-        .map((p: any) => p.name)
-        .join(', ')
+      // Use saved name if available, otherwise generate from participants
+      const participantNames = conversation.participants.map((p: any) => p.name)
+      const displayName = conversation.name || formatParticipantNames(participantNames)
       
       setCurrentConversation({
         id: conversation.id,

@@ -3,6 +3,7 @@
 import prisma from '@/lib/prisma'
 import { getPhotoUrl } from '@/lib/photos'
 import { getCodeTable } from '@/lib/codes'
+import { auth } from '@/auth'
 
 export async function getGroupMemberPhotos(userIds: string[]) {
   if (userIds.length === 0) {
@@ -32,4 +33,63 @@ export async function getGroupMemberPhotos(userIds: string[]) {
   )
 
   return photoMap
+}
+
+export async function getUserConnections() {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return []
+  }
+
+  const userId = session.user.id
+
+  // Get UserUser relationships where current user is user1 or user2
+  const connections = await prisma.userUser.findMany({
+    where: {
+      OR: [
+        { user1Id: userId },
+        { user2Id: userId },
+      ],
+    },
+    include: {
+      user1: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+        },
+      },
+      user2: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+        },
+      },
+    },
+  })
+
+  // Map to get the "other" user and format the data
+  const users = connections.map((conn) => {
+    const otherUser = conn.user1Id === userId ? conn.user2 : conn.user1
+    const firstName = otherUser.firstName || ''
+    const lastName = otherUser.lastName || ''
+    const name = lastName ? `${firstName} ${lastName}`.trim() : firstName
+    
+    return {
+      id: otherUser.id,
+      firstName,
+      lastName,
+      name,
+    }
+  })
+
+  // Sort by lastName, then firstName
+  users.sort((a, b) => {
+    const lastNameCompare = a.lastName.localeCompare(b.lastName)
+    if (lastNameCompare !== 0) return lastNameCompare
+    return a.firstName.localeCompare(b.firstName)
+  })
+
+  return users
 }
