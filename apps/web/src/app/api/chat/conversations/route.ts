@@ -125,9 +125,13 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const cursor = searchParams.get('cursor') // Conversation ID to load after
+    const idsParam = searchParams.get('ids') // Comma-separated conversation IDs to fetch
+    const conversationIds = idsParam ? idsParam.split(',').filter(id => id.trim()) : null
 
     const conversations = await prisma.chatConversation.findMany({
       where: {
+        // Only add ID filter if specific IDs are requested
+        ...(conversationIds && conversationIds.length > 0 ? { id: { in: conversationIds } } : {}),
         participants: {
           some: {
             userId: session.user.id
@@ -166,8 +170,11 @@ export async function GET(request: NextRequest) {
       orderBy: {
         lastMessageAt: 'desc'
       },
-      take: 15, // Load 15 most recent conversations
-      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {})
+      // Only apply pagination if not fetching specific IDs
+      ...(!conversationIds ? {
+        take: 15, // Load 15 most recent conversations
+        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {})
+      } : {})
     })
 
     const hasMore = conversations.length === 15

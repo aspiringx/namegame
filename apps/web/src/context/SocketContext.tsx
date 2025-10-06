@@ -65,7 +65,7 @@ export function SocketProvider({ children }: SocketProviderProps) {
 
     // Handle incoming messages
     newSocket.on('message', (_message) => {
-      // TODO: Update message state in chat components
+      // Messages are handled by individual components listening to socket.on('message')
     })
 
     // Handle typing indicators

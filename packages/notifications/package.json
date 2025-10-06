@@ -1,0 +1,19 @@
+{
+  "name": "@namegame/notifications",
+  "version": "0.0.0",
+  "private": true,
+  "main": "./dist/push.js",
+  "types": "./dist/push.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "@namegame/db": "workspace:*",
+    "web-push": "^3.6.7"
+  },
+  "devDependencies": {
+    "@types/web-push": "^3.6.3",
+    "typescript": "^5.5"
+  }
+}

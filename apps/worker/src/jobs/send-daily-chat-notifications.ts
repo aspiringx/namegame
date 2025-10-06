@@ -1,0 +1,74 @@
+import { PrismaClient } from '@namegame/db';
+import { JobHandler } from '@namegame/queue';
+import { sendPushNotification } from '@namegame/notifications';
+
+const prisma = new PrismaClient();
+
+/**
+ * Daily job to send push notifications to users with unread chat messages
+ * Runs at 12:30 PM Mountain Time daily
+ */
+export const sendDailyChatNotifications: JobHandler = async () => {
+  const startTime = Date.now();
+  
+  try {
+    console.log('[DailyChatNotifications] Starting daily chat notification job');
+
+    // Find users with unread messages using raw SQL
+    const usersWithUnread = await prisma.$queryRaw<Array<{ userId: string }>>`
+      SELECT DISTINCT cp."userId"
+      FROM chat_participants cp
+      INNER JOIN chat_messages cm ON cm."conversationId" = cp."conversationId"
+      WHERE (cp."lastReadAt" IS NULL OR cm."createdAt" > cp."lastReadAt")
+      AND EXISTS (
+        SELECT 1 FROM "PushSubscription" ps WHERE ps."userId" = cp."userId"
+      )
+    `;
+
+    console.log(
+      `[DailyChatNotifications] Found ${usersWithUnread.length} users with unread messages`
+    );
+
+    if (usersWithUnread.length === 0) {
+      console.log('[DailyChatNotifications] No users to notify');
+      return;
+    }
+
+    let totalSuccess = 0;
+    let totalFailure = 0;
+
+    // Send notification to each user
+    for (const { userId } of usersWithUnread) {
+      try {
+        const { successCount, failureCount } = await sendPushNotification(
+          {
+            title: 'New Messages',
+            body: "Looks like you have new messages. Since this is a non-annoying notification, you can check them if you feel like it... or not.",
+            icon: '/icon.png',
+            badge: '/icon.png',
+            data: {
+              url: `${process.env.NEXT_PUBLIC_APP_URL}?openChat=true`,
+            },
+          },
+          { userId, prisma }
+        );
+        
+        totalSuccess += successCount;
+        totalFailure += failureCount;
+      } catch (error) {
+        console.error(`[DailyChatNotifications] Error for user ${userId}: ${error}`);
+        totalFailure++;
+      }
+    }
+
+    const duration = Date.now() - startTime;
+    console.log(
+      `[DailyChatNotifications] Completed in ${duration}ms. Sent: ${totalSuccess}, Failed: ${totalFailure}`
+    );
+  } catch (error) {
+    console.error(`[DailyChatNotifications] Job failed: ${error}`);
+    throw error;
+  } finally {
+    await prisma.$disconnect();
+  }
+};

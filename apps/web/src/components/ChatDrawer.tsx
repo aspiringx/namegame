@@ -7,6 +7,7 @@ import Drawer from './Drawer'
 import ParticipantSelector from './ParticipantSelector'
 import ChatInterface from './ChatInterface'
 import { markConversationAsRead, markAllConversationsAsRead } from '@/app/actions/chat'
+import { useSocket } from '@/context/SocketContext'
 
 interface ChatDrawerProps {
   isOpen: boolean
@@ -50,28 +51,11 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
   const groupData = useGroup()
   const group = groupData?.group
   const conversationsListRef = useRef<HTMLDivElement>(null)
+  const { socket } = useSocket()
+  const updateQueueRef = useRef<Set<string>>(new Set())
+  const updateTimerRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Load conversations when modal opens
-  useEffect(() => {
-    if (isOpen) {
-      loadConversations()
-    }
-  }, [isOpen])
-  
-  // Lock body scroll when modal is open
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = 'unset'
-    }
-    
-    return () => {
-      document.body.style.overflow = 'unset'
-    }
-  }, [isOpen])
-
-  const loadConversations = async (cursor?: string) => {
+  const loadConversations = useCallback(async (cursor?: string) => {
     const isInitialLoad = !cursor
     if (isInitialLoad) {
       setIsLoadingConversations(true)
@@ -118,7 +102,101 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
         setIsLoadingMore(false)
       }
     }
-  }
+  }, [])
+  
+  // Batch update conversations - fetches multiple conversations at once
+  const batchUpdateConversations = useCallback(async (conversationIds: string[]) => {
+    if (conversationIds.length === 0) return
+    
+    try {
+      // Fetch updated conversation data for specific IDs
+      const response = await fetch('/api/chat/conversations?' + new URLSearchParams({
+        ids: conversationIds.join(',')
+      }))
+      
+      if (response.ok) {
+        const { conversations: updatedConvos } = await response.json()
+        
+        // Update local state with fresh data
+        setConversations(prev => {
+          const updated = [...prev]
+          updatedConvos.forEach((newConvo: any) => {
+            const index = updated.findIndex(c => c.id === newConvo.id)
+            if (index !== -1) {
+              const participantNames = newConvo.participants.map((p: any) => p.name)
+              updated[index] = {
+                id: newConvo.id,
+                name: newConvo.name || formatParticipantNames(participantNames),
+                lastMessage: '',
+                timestamp: newConvo.lastMessageAt ? new Date(newConvo.lastMessageAt).toLocaleString() : '',
+                hasUnread: newConvo.hasUnread || false,
+                isGroup: newConvo.participants.length > 2,
+                participants: newConvo.participants || []
+              }
+            }
+          })
+          return updated
+        })
+      }
+    } catch (error) {
+      console.error('[ChatDrawer] Error batch updating conversations:', error)
+    }
+  }, [])
+  
+  // Load conversations when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      loadConversations()
+    }
+  }, [isOpen, loadConversations])
+  
+  // Listen for new messages via socket and queue updates with debouncing
+  useEffect(() => {
+    if (!socket || !isOpen) return
+    
+    const handleNewMessage = (message: any) => {
+      const conversationId = message.conversationId
+      if (!conversationId) return
+      
+      // Add to update queue
+      updateQueueRef.current.add(conversationId)
+      
+      // Clear existing timer
+      if (updateTimerRef.current) {
+        clearTimeout(updateTimerRef.current)
+      }
+      
+      // Set new timer to batch update after 5 seconds
+      updateTimerRef.current = setTimeout(() => {
+        const idsToUpdate = Array.from(updateQueueRef.current)
+        batchUpdateConversations(idsToUpdate)
+        updateQueueRef.current.clear()
+        updateTimerRef.current = null
+      }, 5000)
+    }
+    
+    socket.on('message', handleNewMessage)
+    
+    return () => {
+      socket.off('message', handleNewMessage)
+      if (updateTimerRef.current) {
+        clearTimeout(updateTimerRef.current)
+      }
+    }
+  }, [socket, isOpen, batchUpdateConversations])
+  
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = 'unset'
+    }
+    
+    return () => {
+      document.body.style.overflow = 'unset'
+    }
+  }, [isOpen])
   
   const loadMoreConversations = useCallback(() => {
     if (!hasMoreConversations || isLoadingMore || conversations.length === 0) return
@@ -126,7 +204,7 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
     // Use the last conversation ID as cursor
     const lastConversation = conversations[conversations.length - 1]
     loadConversations(lastConversation.id)
-  }, [hasMoreConversations, isLoadingMore, conversations])
+  }, [hasMoreConversations, isLoadingMore, conversations, loadConversations])
   
   // Detect scroll to bottom for loading more conversations
   useEffect(() => {

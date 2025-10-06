@@ -1,6 +1,7 @@
 import { JobRegistry } from '@namegame/queue';
 import { sendEmail } from './send-email';
 import { processImage } from './process-image';
+import { sendDailyChatNotifications } from './send-daily-chat-notifications';
 
 /**
  * Registry of all job handlers
@@ -10,5 +11,6 @@ import { processImage } from './process-image';
 export const jobs: JobRegistry = {
   'send-email': sendEmail,
   'process-image': processImage,
+  'send-daily-chat-notifications': sendDailyChatNotifications,
   // Add more jobs here as needed
 };
