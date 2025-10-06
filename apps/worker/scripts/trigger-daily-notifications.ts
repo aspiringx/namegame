@@ -18,8 +18,13 @@ async function triggerNotification() {
   try {
     console.log('[Trigger] Manually triggering daily chat notifications job...');
     
+    // Handle SSL for DigitalOcean managed database
+    const connectionString = process.env.NODE_ENV === 'production'
+      ? process.env.DATABASE_URL!.replace('sslmode=require', 'sslmode=no-verify')
+      : process.env.DATABASE_URL!;
+    
     await quickAddJob(
-      { connectionString: process.env.DATABASE_URL! },
+      { connectionString },
       'send-daily-chat-notifications',
       {}
     );
