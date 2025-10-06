@@ -147,6 +147,16 @@ export async function GET(request: NextRequest) {
             }
           }
         },
+        messages: {
+          select: {
+            id: true,
+            createdAt: true
+          },
+          orderBy: {
+            createdAt: 'desc'
+          },
+          take: 1
+        },
         _count: {
           select: {
             messages: true
@@ -161,20 +171,45 @@ export async function GET(request: NextRequest) {
     })
 
     const hasMore = conversations.length === 15
+    const userId = session.user.id
 
-    return NextResponse.json({
-      conversations: conversations.map(conv => ({
+    // Calculate unread status for each conversation
+    const conversationsWithUnread = conversations.map(conv => {
+      const currentUserParticipant = conv.participants.find(p => p.userId === userId)
+      const lastReadAt = currentUserParticipant?.lastReadAt
+      const lastMessage = conv.messages[0]
+      
+      // Has unread if there's a message after lastReadAt (or no lastReadAt)
+      const hasUnread = lastMessage && (!lastReadAt || lastMessage.createdAt > lastReadAt)
+      
+      return {
         id: conv.id,
         type: conv.type,
         name: conv.name,
         groupId: conv.groupId,
         lastMessageAt: conv.lastMessageAt,
         messageCount: conv._count.messages,
+        hasUnread,
         participants: conv.participants.map(p => ({
           id: p.user.id,
           name: `${p.user.firstName} ${p.user.lastName || ''}`.trim()
         }))
-      })),
+      }
+    })
+
+    // Sort: unread conversations first (by most recent message), then read conversations (by most recent message)
+    conversationsWithUnread.sort((a, b) => {
+      if (a.hasUnread && !b.hasUnread) return -1
+      if (!a.hasUnread && b.hasUnread) return 1
+      
+      // Both have same unread status, sort by lastMessageAt
+      const aTime = a.lastMessageAt?.getTime() || 0
+      const bTime = b.lastMessageAt?.getTime() || 0
+      return bTime - aTime
+    })
+
+    return NextResponse.json({
+      conversations: conversationsWithUnread,
       hasMore
     })
 

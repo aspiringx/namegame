@@ -6,6 +6,7 @@ import { useGroup } from '@/components/GroupProvider'
 import Drawer from './Drawer'
 import ParticipantSelector from './ParticipantSelector'
 import ChatInterface from './ChatInterface'
+import { markConversationAsRead, markAllConversationsAsRead } from '@/app/actions/chat'
 
 interface ChatDrawerProps {
   isOpen: boolean
@@ -17,7 +18,7 @@ interface Conversation {
   name: string
   lastMessage: string
   timestamp: string
-  unreadCount: number
+  hasUnread: boolean
   isGroup: boolean
   participants: Array<{ id: string; name: string }>
 }
@@ -93,7 +94,7 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
             name: c.name || formatParticipantNames(participantNames),
             lastMessage: '', // TODO: Get last message
             timestamp: c.lastMessageAt ? new Date(c.lastMessageAt).toLocaleString() : '',
-            unreadCount: 0, // TODO: Calculate unread
+            hasUnread: c.hasUnread || false,
             isGroup: c.participants.length > 2,
             participants: c.participants || []
           }
@@ -193,13 +194,22 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
     }
   }
 
-  const handleOpenConversation = (conversation: Conversation) => {
+  const handleOpenConversation = async (conversation: Conversation) => {
     setCurrentConversation({
       id: conversation.id,
       participants: conversation.participants.map(p => p.id),
       name: conversation.name
     })
     setShowChatInterface(true)
+    
+    // Mark as read when opening
+    if (conversation.id) {
+      await markConversationAsRead(conversation.id)
+      // Update local state
+      setConversations(prev => prev.map(conv => 
+        conv.id === conversation.id ? { ...conv, hasUnread: false } : conv
+      ))
+    }
   }
 
   const handleNameUpdate = (newName: string) => {
@@ -221,6 +231,12 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
   const handleBackToConversations = () => {
     setShowChatInterface(false)
     setCurrentConversation(null)
+  }
+  
+  const handleMarkAllAsRead = async () => {
+    await markAllConversationsAsRead()
+    // Update all conversations to mark as read
+    setConversations(prev => prev.map(conv => ({ ...conv, hasUnread: false })))
   }
   useEffect(() => {
     if (!isOpen) {
@@ -256,6 +272,16 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
               New chat global
             </span>
           </button>
+          
+          {/* Mark all as read button - only show if there are unread conversations */}
+          {conversations.some(c => c.hasUnread) && (
+            <button 
+              onClick={handleMarkAllAsRead}
+              className="w-full flex items-center justify-center gap-2 p-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+            >
+              Mark all as read
+            </button>
+          )}
         </div>
 
         {/* Conversation List */}
@@ -288,10 +314,8 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
                     <p className="font-medium text-gray-900 dark:text-white truncate">
                       {conversation.name}
                     </p>
-                    {conversation.unreadCount > 0 && (
-                      <span className="bg-blue-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center ml-auto flex-shrink-0">
-                        {conversation.unreadCount}
-                      </span>
+                    {conversation.hasUnread && (
+                      <span className="ml-auto flex-shrink-0 w-2 h-2 bg-green-500 rounded-full" />
                     )}
                   </div>
                 </button>

@@ -121,3 +121,81 @@ export async function updateConversationName(conversationId: string, name: strin
 
   return { success: true, name: conversation.name }
 }
+
+export async function markConversationAsRead(conversationId: string) {
+  const session = await auth()
+  if (!session?.user?.id) {
+    throw new Error('Unauthorized')
+  }
+
+  // Update lastReadAt for this user in this conversation
+  await prisma.chatParticipant.updateMany({
+    where: {
+      conversationId,
+      userId: session.user.id,
+    },
+    data: {
+      lastReadAt: new Date(),
+    },
+  })
+
+  return { success: true }
+}
+
+export async function markAllConversationsAsRead() {
+  const session = await auth()
+  if (!session?.user?.id) {
+    throw new Error('Unauthorized')
+  }
+
+  // Update lastReadAt for all conversations the user is in
+  await prisma.chatParticipant.updateMany({
+    where: {
+      userId: session.user.id,
+    },
+    data: {
+      lastReadAt: new Date(),
+    },
+  })
+
+  return { success: true }
+}
+
+export async function hasUnreadMessages() {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return false
+  }
+
+  // Get all conversations where user is a participant
+  const participants = await prisma.chatParticipant.findMany({
+    where: {
+      userId: session.user.id,
+    },
+    include: {
+      conversation: {
+        include: {
+          messages: {
+            select: {
+              createdAt: true,
+            },
+            orderBy: {
+              createdAt: 'desc',
+            },
+            take: 1,
+          },
+        },
+      },
+    },
+  })
+
+  // Check if any conversation has messages after lastReadAt
+  for (const participant of participants) {
+    const lastMessage = participant.conversation.messages[0]
+    if (lastMessage && (!participant.lastReadAt || lastMessage.createdAt > participant.lastReadAt)) {
+      return true
+    }
+  }
+
+  return false
+}
