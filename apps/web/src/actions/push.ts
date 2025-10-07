@@ -208,28 +208,58 @@ export async function getSubscription(
   }
 }
 
-export async function getSubscriptions(): Promise<
-  { endpoint: string; userName: string | null; userId: string; createdAt: Date }[]
-> {
+export async function getSubscriptions(params?: {
+  cursor?: string
+  limit?: number
+  search?: string
+}): Promise<{
+  subscriptions: { endpoint: string; userName: string; userId: string; createdAt: Date }[]
+  hasMore: boolean
+  nextCursor: string | null
+}> {
+  const limit = params?.limit || 20
+  const search = params?.search?.toLowerCase()
+
   const subscriptions = await db.pushSubscription.findMany({
+    where: search
+      ? {
+          user: {
+            OR: [
+              { firstName: { contains: search, mode: 'insensitive' } },
+              { lastName: { contains: search, mode: 'insensitive' } },
+            ],
+          },
+        }
+      : undefined,
     include: {
       user: {
         select: {
           firstName: true,
+          lastName: true,
         },
       },
     },
     orderBy: {
       createdAt: 'desc', // Most recent first
     },
+    take: limit + 1, // Fetch one extra to check if there are more
+    ...(params?.cursor ? { cursor: { endpoint: params.cursor }, skip: 1 } : {}),
   })
 
-  return subscriptions.map((sub) => ({
-    endpoint: sub.endpoint,
-    userName: sub.user.firstName,
-    userId: sub.userId,
-    createdAt: sub.createdAt,
-  }))
+  const hasMore = subscriptions.length > limit
+  const items = hasMore ? subscriptions.slice(0, limit) : subscriptions
+  const nextCursor = hasMore ? items[items.length - 1].endpoint : null
+
+  return {
+    subscriptions: items.map((sub) => ({
+      endpoint: sub.endpoint,
+      userName: `${sub.user.firstName}${sub.user.lastName ? ' ' + sub.user.lastName : ''}`,
+      userId: sub.userId,
+      createdAt: sub.createdAt,
+    })),
+    hasMore,
+    nextCursor,
+  }
 }
 
 export async function sendDailyChatNotifications(
@@ -284,6 +314,40 @@ export async function sendDailyChatNotifications(
     }
   }
 
+  // Check which users actually have unread messages
+  const userIds = [...new Set(subscriptions.map(s => s.userId))]
+  
+  if (userIds.length === 0) {
+    return {
+      success: true,
+      sent: 0,
+      failed: 0,
+      message: 'No users found for selected devices.',
+    }
+  }
+  
+  const usersWithUnread = await db.$queryRaw<Array<{ userId: string }>>`
+    SELECT DISTINCT cp."userId"
+    FROM chat_participants cp
+    INNER JOIN chat_messages cm ON cm."conversationId" = cp."conversationId"
+    WHERE (cp."lastReadAt" IS NULL OR cm."createdAt" > cp."lastReadAt")
+    AND cp."userId" = ANY(${userIds}::text[])
+  `
+
+  const userIdsWithUnread = new Set(usersWithUnread.map(u => u.userId))
+  
+  // Filter subscriptions to only include users with unread messages
+  const subscriptionsToNotify = subscriptions.filter(s => userIdsWithUnread.has(s.userId))
+
+  if (subscriptionsToNotify.length === 0) {
+    return {
+      success: true,
+      sent: 0,
+      failed: 0,
+      message: 'No users with unread messages among selected devices.',
+    }
+  }
+
   const payload = {
     title: 'New Messages',
     body: "Looks like you have new messages. Since this is a non-annoying notification, you can check them if you feel like it... or not.",
@@ -298,7 +362,7 @@ export async function sendDailyChatNotifications(
   let sent = 0
   let failed = 0
 
-  const sendPromises = subscriptions.map((sub) =>
+  const sendPromises = subscriptionsToNotify.map((sub) =>
     webPush
       .sendNotification(
         {

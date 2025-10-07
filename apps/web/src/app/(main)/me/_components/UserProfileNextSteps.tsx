@@ -300,8 +300,9 @@ export default function UserProfileNextSteps({
       id: 'enable-notifications',
       isComplete: false,
       title: 'Enable Notifications',
-      description:
-        'Push notifications are the easiest way for your groups to communicate with you.',
+      description: error?.message === 'Service worker not ready.' 
+        ? 'Loading notification system... (this takes a few seconds on first load)'
+        : 'Push notifications are the easiest way for your groups to communicate with you.',
       action: subscribe,
       actionLabel: 'Enable Notifications',
     })
