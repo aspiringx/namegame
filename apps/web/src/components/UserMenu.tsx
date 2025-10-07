@@ -138,6 +138,13 @@ export default function UserMenu() {
                   >
                     Users
                   </Link>
+                  <Link
+                    href="/me/push-test"
+                    className="block py-3 pr-4 pl-8 text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
+                    onClick={closeDropdown}
+                  >
+                    Push Test
+                  </Link>
                 </>
               )}
 

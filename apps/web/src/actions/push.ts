@@ -209,7 +209,7 @@ export async function getSubscription(
 }
 
 export async function getSubscriptions(): Promise<
-  { endpoint: string; userName: string | null }[]
+  { endpoint: string; userName: string | null; userId: string }[]
 > {
   const subscriptions = await db.pushSubscription.findMany({
     include: {
@@ -224,5 +224,108 @@ export async function getSubscriptions(): Promise<
   return subscriptions.map((sub) => ({
     endpoint: sub.endpoint,
     userName: sub.user.firstName,
+    userId: sub.userId,
   }))
+}
+
+export async function sendDailyChatNotifications(
+  endpoints: string[]
+): Promise<{ success: boolean; sent: number; failed: number; message: string }> {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return { success: false, sent: 0, failed: 0, message: 'User not authenticated.' }
+  }
+
+  // Check if user is super admin
+  if (!session.user.isSuperAdmin) {
+    return { success: false, sent: 0, failed: 0, message: 'Unauthorized.' }
+  }
+
+  // Configure VAPID details
+  if (
+    !process.env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY ||
+    !process.env.WEB_PUSH_PRIVATE_KEY
+  ) {
+    return {
+      success: false,
+      sent: 0,
+      failed: 0,
+      message: 'VAPID keys are not configured on the server.',
+    }
+  }
+
+  const subject = process.env.WEB_PUSH_EMAIL
+    ? process.env.WEB_PUSH_EMAIL
+    : 'https://www.namegame.app'
+
+  webPush.setVapidDetails(
+    subject,
+    process.env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY,
+    process.env.WEB_PUSH_PRIVATE_KEY,
+  )
+
+  // Get subscriptions for selected endpoints
+  const subscriptions = await db.pushSubscription.findMany({
+    where: {
+      endpoint: { in: endpoints },
+    },
+  })
+
+  if (subscriptions.length === 0) {
+    return {
+      success: false,
+      sent: 0,
+      failed: 0,
+      message: 'No subscriptions found for selected devices.',
+    }
+  }
+
+  const payload = {
+    title: 'New Messages',
+    body: "Looks like you have new messages. Since this is a non-annoying notification, you can check them if you feel like it... or not.",
+    icon: '/icon.png',
+    badge: '/icon.png',
+    data: {
+      url: `${process.env.NEXT_PUBLIC_APP_URL}?openChat=true`,
+    },
+  }
+
+  const notificationPayload = JSON.stringify(payload)
+  let sent = 0
+  let failed = 0
+
+  const sendPromises = subscriptions.map((sub) =>
+    webPush
+      .sendNotification(
+        {
+          endpoint: sub.endpoint,
+          keys: {
+            p256dh: sub.p256dh,
+            auth: sub.auth,
+          },
+        },
+        notificationPayload,
+      )
+      .then(() => {
+        sent++
+      })
+      .catch(async (error: WebPushError) => {
+        failed++
+        if (error.statusCode === 410 || error.statusCode === 404) {
+          console.log('Deleted expired subscription:', sub.id)
+          await db.pushSubscription.delete({ where: { id: sub.id } })
+        } else {
+          console.error('Error sending push notification:', error)
+        }
+      }),
+  )
+
+  await Promise.all(sendPromises)
+
+  return {
+    success: true,
+    sent,
+    failed,
+    message: `Sent ${sent} notifications, ${failed} failed.`,
+  }
 }
