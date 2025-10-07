@@ -28,15 +28,13 @@ const manifest = (self.__WB_MANIFEST || []).filter((entry) => {
 precacheAndRoute(manifest)
 
 self.addEventListener('push', (event: PushEvent) => {
-  const data = event.data?.json() ?? {}
-  const title = data.title || 'NameGame'
+  const payload = event.data?.json() ?? {}
+  const title = payload.title || 'NameGame'
   const options = {
-    body: data.body || 'You have a new notification.',
-    icon: data.icon || '/icons/icon-192x192.png',
+    body: payload.body || 'You have a new notification.',
+    icon: payload.icon || '/icons/icon-192x192.png',
     badge: '/icons/icon-96x96.png',
-    data: {
-      url: data.url || self.location.origin,
-    },
+    data: payload.data || { url: self.location.origin },
   }
 
   event.waitUntil(self.registration.showNotification(title, options))
