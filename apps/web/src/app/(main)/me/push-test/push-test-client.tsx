@@ -2,13 +2,14 @@
 
 import { sendNotification, getSubscriptions, sendDailyChatNotifications } from '@/actions/push'
 import { Button } from '@/components/ui/button'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Search, Loader2 } from 'lucide-react'
 
 type Subscription = {
   endpoint: string
-  userName: string | null
+  userName: string
   userId: string
   createdAt: Date
 }
@@ -37,14 +38,75 @@ export function PushTestClientPage() {
     'This is a test notification from the NameGame app!',
   )
   const [url, setUrl] = useState('/me')
+  const [search, setSearch] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [hasMore, setHasMore] = useState(false)
+  const [nextCursor, setNextCursor] = useState<string | null>(null)
+  const observerRef = useRef<IntersectionObserver | null>(null)
+  const loadMoreRef = useRef<HTMLDivElement | null>(null)
 
-  useEffect(() => {
-    async function fetchSubscriptions() {
-      const subscriptionList = await getSubscriptions()
-      setSubscriptions(subscriptionList)
+  const loadSubscriptions = useCallback(async (searchTerm: string, cursor?: string) => {
+    setIsLoading(true)
+    try {
+      const result = await getSubscriptions({
+        search: searchTerm || undefined,
+        cursor,
+        limit: 20,
+      })
+      
+      if (cursor) {
+        // Append to existing subscriptions
+        setSubscriptions(prev => [...prev, ...result.subscriptions])
+      } else {
+        // Replace subscriptions (new search or initial load)
+        setSubscriptions(result.subscriptions)
+      }
+      
+      setHasMore(result.hasMore)
+      setNextCursor(result.nextCursor)
+    } catch (error) {
+      console.error('Error loading subscriptions:', error)
+    } finally {
+      setIsLoading(false)
     }
-    fetchSubscriptions()
   }, [])
+
+  // Initial load
+  useEffect(() => {
+    loadSubscriptions('')
+  }, [loadSubscriptions])
+
+  // Search with debounce
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      loadSubscriptions(search)
+    }, 300)
+
+    return () => clearTimeout(timer)
+  }, [search, loadSubscriptions])
+
+  // Infinite scroll observer
+  useEffect(() => {
+    if (observerRef.current) {
+      observerRef.current.disconnect()
+    }
+
+    observerRef.current = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting && hasMore && !isLoading && nextCursor) {
+        loadSubscriptions(search, nextCursor)
+      }
+    })
+
+    if (loadMoreRef.current) {
+      observerRef.current.observe(loadMoreRef.current)
+    }
+
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect()
+      }
+    }
+  }, [hasMore, isLoading, nextCursor, search, loadSubscriptions])
 
   const handleSendNotification = async () => {
     if (selectedEndpoints.length === 0) {
@@ -130,10 +192,30 @@ export function PushTestClientPage() {
             Select Devices ({selectedEndpoints.length} selected)
           </label>
           <Button variant="outline" size="sm" onClick={toggleAll}>
-            {selectedEndpoints.length === subscriptions.length ? 'Deselect All' : 'Select All'}
+            {selectedEndpoints.length === subscriptions.length && subscriptions.length > 0 ? 'Deselect All' : 'Select All'}
           </Button>
         </div>
-        <div className="space-y-2">
+        
+        {/* Search Input */}
+        <div className="mb-3 relative">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          <Input
+            type="text"
+            placeholder="Search by name..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+
+        {/* Scrollable List */}
+        <div className="max-h-96 overflow-y-auto space-y-2 pr-2">
+          {subscriptions.length === 0 && !isLoading && (
+            <p className="text-sm text-gray-500 text-center py-4">
+              {search ? 'No subscriptions found matching your search.' : 'No subscriptions yet.'}
+            </p>
+          )}
+          
           {subscriptions.map((sub) => (
             <div key={sub.endpoint} className="flex items-center space-x-2">
               <Checkbox
@@ -143,12 +225,25 @@ export function PushTestClientPage() {
               />
               <label
                 htmlFor={sub.endpoint}
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex-1"
               >
                 {sub.userName} - {getBrowserInfo(sub.endpoint)} - {new Date(sub.createdAt).toLocaleString()}
               </label>
             </div>
           ))}
+          
+          {/* Infinite scroll trigger */}
+          {hasMore && (
+            <div ref={loadMoreRef} className="flex justify-center py-4">
+              <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+            </div>
+          )}
+          
+          {isLoading && subscriptions.length === 0 && (
+            <div className="flex justify-center py-4">
+              <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+            </div>
+          )}
         </div>
       </div>
 

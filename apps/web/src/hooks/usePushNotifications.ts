@@ -60,6 +60,11 @@ export function usePushNotifications() {
   }, [isSupported])
 
   useEffect(() => {
+    // Clear "service worker not ready" error once it becomes ready
+    if (isReady && error?.message === 'Service worker not ready.') {
+      setError(null)
+    }
+    
     if (!isReady || !registration || !session) return
 
     const verifySubscription = async () => {
@@ -111,7 +116,7 @@ export function usePushNotifications() {
     }
 
     verifySubscription()
-  }, [isReady, registration, session])
+  }, [isReady, registration, session, error?.message])
 
   const subscribe = useCallback(async () => {
     if (!isSupported || !process.env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY) {
