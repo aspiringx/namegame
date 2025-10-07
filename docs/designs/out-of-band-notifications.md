@@ -44,6 +44,7 @@ When expanded:
 ```
 
 **Key messaging elements:**
+
 - Checkmarks create positive framing
 - Specific numbers ("1 per day") are more trustworthy than vague promises
 - "No 2am buzzes" speaks directly to sleep anxiety
@@ -92,6 +93,7 @@ When expanded:
 ```
 
 **Alternative (if only one sender):**
+
 ```
 "You have some messages from Sarah"
 [Tap to open]
@@ -253,22 +255,70 @@ function isQuietHours(user: User): boolean {
 ### URL Parameter for Auto-Opening Chat
 
 **Implementation:**
+
 - Add `?openChat=true` query parameter to notification links
 - Example: `https://namegame.app?openChat=true`
 - On app load, check for this parameter and automatically open the chat drawer
 - User sees their conversation list with green dots indicating unread messages
 - User can choose which conversations to read
 
-**Code Location:**
-- Check query param in root layout or main app component
-- Trigger `ChatDrawer` open state if parameter present
-- Remove parameter from URL after opening (clean URL)
+**Code Locations:**
+
+- `apps/web/src/worker/index.ts` - Service worker handles notification clicks
+- `apps/web/src/components/ChatDeepLink.tsx` - Detects query param and opens chat
+- `apps/web/src/components/Header.tsx` - Renders ChatDeepLink component
+
+**Service Worker Notification Click Handler:**
+
+```typescript
+self.addEventListener("notificationclick", (event: NotificationEvent) => {
+  event.notification.close();
+  const urlToOpen = event.notification.data.url || "/";
+
+  event.waitUntil(
+    self.clients.matchAll({ type: "window" }).then((clientList) => {
+      if (clientList.length > 0) {
+        // Focus existing window and navigate
+        return clientList[0].focus().then((c) => c.navigate(urlToOpen));
+      } else {
+        // Open new window
+        return self.clients.openWindow(urlToOpen);
+      }
+    })
+  );
+});
+```
+
+**Push Notification Payload Structure:**
+
+```typescript
+{
+  title: 'New Messages',
+  body: 'You have some messages...',
+  icon: '/icon.png',
+  badge: '/icon.png',
+  data: {
+    url: 'https://namegame.app?openChat=true'  // Full URL with query param
+  }
+}
+```
+
+**Important:** The service worker accesses the URL via `event.notification.data.url`, so the payload must have the URL in `data.url`, not nested deeper.
 
 **Benefits:**
+
 - Simple implementation (no complex routing)
 - Works across all pages (home, group pages, etc.)
+- Works in both browser and PWA contexts
 - User maintains control (sees all conversations, chooses what to read)
 - No need to track specific conversation IDs in notification payload
+
+**PWA Considerations:**
+
+- PWAs honor URL navigation including query parameters
+- Service worker `navigate()` method works for both browser and PWA
+- Query parameter is preserved during navigation
+- `ChatDeepLink` component detects param after navigation completes
 
 ## Push Notification Implementation
 
@@ -310,43 +360,56 @@ async function sendPushNotification(userId: string, payload: object) {
 
 ## Email Notification Implementation
 
-### Using Existing Resend Infrastructure
+### Using Resend
 
-- Leverage `src/lib/mail.ts` patterns
-- Create new email template for chat digest
-- Send to verified email addresses only
+We use [Resend](https://resend.com) for email delivery. Configuration is in `apps/web/src/lib/resend.ts`.
 
-### Email Template
+**Key Principles:**
 
-```typescript
-export const ChatDigestEmail = ({
-  firstName,
-  messageCount,
-  conversationCount,
-  appUrl,
-}: {
-  firstName: string;
-  messageCount: number;
-  conversationCount: number;
-  appUrl: string;
-}) => (
-  <Html>
-    <Head />
-    <Body>
-      <Container>
-        <Heading>Hi {firstName},</Heading>
-        <Text>
-          You have {messageCount} new message{messageCount !== 1 ? "s" : ""}
-          in {conversationCount} conversation{conversationCount !== 1
-            ? "s"
-            : ""}.
-        </Text>
-        <Button href={appUrl}>Open NameGame</Button>
-      </Container>
-    </Body>
-  </Html>
-);
+- **Weekly digest only** - Not per-message, but a summary (e.g., Sundays at 6 PM MT)
+- **No counts** - Avoid anxiety-inducing numbers like "47 unread messages"
+- **Warm, friendly tone** - Conversational and non-urgent
+- **No direct message links** - Opens app with chat drawer, user chooses what to read
+- **Easy opt-out** - One-click unsubscribe in every email
+
+### Email Template (Conceptual)
+
+**Subject Line Examples:**
+
+- "Looks like you have some messages 💬"
+- "Your friends have been chatting ☕"
+- "Some folks are trying to reach you 👋"
+
+**Email Body (Warm & Friendly):**
+
 ```
+Hi [FirstName],
+
+Looks like you have some messages waiting for you in NameGame.
+No rush—check them when you have a moment.
+
+[View Messages]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+This is your weekly digest. We'll never send more than one per week.
+[Manage notification preferences] | [Unsubscribe]
+```
+
+**Tone Guidelines:**
+
+- Casual and conversational
+- No urgency or pressure
+- Reassuring about frequency
+- Humor welcome (but not forced)
+
+### Implementation Notes
+
+- Leverage existing `apps/worker/src/jobs/send-email.ts` job handler
+- Integrate with Resend via `apps/web/src/lib/resend.ts`
+- Send to verified email addresses only
+- Track last email sent to prevent duplicates
+- Respect user's email notification preferences
+- To start, send weekly on Saturday mornings at 7:00 AM Mountain Time (America/Denver).
 
 ## Future Enhancements
 
