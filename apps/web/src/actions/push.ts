@@ -209,7 +209,7 @@ export async function getSubscription(
 }
 
 export async function getSubscriptions(): Promise<
-  { endpoint: string; userName: string | null; userId: string }[]
+  { endpoint: string; userName: string | null; userId: string; createdAt: Date }[]
 > {
   const subscriptions = await db.pushSubscription.findMany({
     include: {
@@ -219,12 +219,16 @@ export async function getSubscriptions(): Promise<
         },
       },
     },
+    orderBy: {
+      createdAt: 'desc', // Most recent first
+    },
   })
 
   return subscriptions.map((sub) => ({
     endpoint: sub.endpoint,
     userName: sub.user.firstName,
     userId: sub.userId,
+    createdAt: sub.createdAt,
   }))
 }
 

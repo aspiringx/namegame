@@ -10,6 +10,7 @@ type Subscription = {
   endpoint: string
   userName: string | null
   userId: string
+  createdAt: Date
 }
 
 function getBrowserInfo(endpoint: string): string {
@@ -144,7 +145,7 @@ export function PushTestClientPage() {
                 htmlFor={sub.endpoint}
                 className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
               >
-                {sub.userName} - {getBrowserInfo(sub.endpoint)}
+                {sub.userName} - {getBrowserInfo(sub.endpoint)} - {new Date(sub.createdAt).toLocaleString()}
               </label>
             </div>
           ))}
