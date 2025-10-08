@@ -2,7 +2,6 @@
 
 import { auth } from '@/auth'
 import db from '@/lib/prisma'
-import webPush, { type WebPushError } from 'web-push'
 import { z } from 'zod'
 
 const subscriptionSchema = z.object({
@@ -103,86 +102,22 @@ export async function sendNotification(
     return { success: false, message: 'No subscription endpoint provided.' }
   }
 
-  // Configure VAPID details just-in-time to ensure keys are fresh.
-  if (
-    !process.env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY ||
-    !process.env.WEB_PUSH_PRIVATE_KEY
-  ) {
-    console.error(
-      'VAPID keys are not configured. Push notifications will fail.',
-    )
-    return {
-      success: false,
-      message: 'VAPID keys are not configured on the server.',
-    }
-  }
-
-  const subject = process.env.WEB_PUSH_EMAIL
-    ? process.env.WEB_PUSH_EMAIL
-    : 'https://www.namegame.app'
-
-  webPush.setVapidDetails(
-    subject,
-    process.env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY,
-    process.env.WEB_PUSH_PRIVATE_KEY,
-  )
-
   try {
-    const subscription = await db.pushSubscription.findUnique({
-      where: { endpoint },
-    })
-
-    if (!subscription) {
-      return { success: false, message: 'Subscription not found.' }
+    // Use the centralized push notification function with proper error handling
+    const { sendPushNotification } = await import('@namegame/notifications')
+    
+    const result = await sendPushNotification(payload, { endpoint, prisma: db })
+    
+    if (result.successCount > 0) {
+      return { success: true, message: 'Notification sent successfully.' }
+    } else if (result.failureCount > 0) {
+      return { success: false, message: 'Failed to send notification. Check server logs for details.' }
+    } else {
+      return { success: false, message: 'No subscriptions found for this endpoint.' }
     }
-
-    console.log(
-      'Server-side subscription object:',
-      JSON.stringify(subscription, null, 2),
-    )
-
-    const subscriptions = [subscription]
-
-    if (subscriptions.length === 0) {
-      return {
-        success: false,
-        message: 'No push subscriptions found for user.',
-      }
-    }
-
-    const notificationPayload = JSON.stringify(payload)
-
-    const sendPromises = subscriptions.map((sub) =>
-      webPush
-        .sendNotification(
-          {
-            endpoint: sub.endpoint,
-            keys: {
-              p256dh: sub.p256dh,
-              auth: sub.auth,
-            },
-          },
-          notificationPayload,
-        )
-        .catch((error: WebPushError) => {
-          if (error.statusCode === 410 || error.statusCode === 404) {
-            console.log(
-              'Subscription has expired or is no longer valid: ',
-              sub.id,
-            )
-            return db.pushSubscription.delete({ where: { id: sub.id } })
-          } else {
-            console.error('Error sending push notification:', error)
-          }
-        }),
-    )
-
-    await Promise.all(sendPromises)
-
-    return { success: true, message: 'Notifications sent successfully.' }
   } catch (error) {
-    console.error('Error sending notifications:', error)
-    return { success: false, message: 'Failed to send notifications.' }
+    console.error('Error sending notification:', error)
+    return { success: false, message: 'Failed to send notification.' }
   }
 }
 
@@ -275,29 +210,6 @@ export async function sendDailyChatNotifications(
     return { success: false, sent: 0, failed: 0, message: 'Unauthorized.' }
   }
 
-  // Configure VAPID details
-  if (
-    !process.env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY ||
-    !process.env.WEB_PUSH_PRIVATE_KEY
-  ) {
-    return {
-      success: false,
-      sent: 0,
-      failed: 0,
-      message: 'VAPID keys are not configured on the server.',
-    }
-  }
-
-  const subject = process.env.WEB_PUSH_EMAIL
-    ? process.env.WEB_PUSH_EMAIL
-    : 'https://www.namegame.app'
-
-  webPush.setVapidDetails(
-    subject,
-    process.env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY,
-    process.env.WEB_PUSH_PRIVATE_KEY,
-  )
-
   // Get subscriptions for selected endpoints
   const subscriptions = await db.pushSubscription.findMany({
     where: {
@@ -331,6 +243,7 @@ export async function sendDailyChatNotifications(
     FROM chat_participants cp
     INNER JOIN chat_messages cm ON cm."conversationId" = cp."conversationId"
     WHERE (cp."lastReadAt" IS NULL OR cm."createdAt" > cp."lastReadAt")
+    AND cm."authorId" != cp."userId"
     AND cp."userId" = ANY(${userIds}::text[])
   `
 
@@ -348,6 +261,9 @@ export async function sendDailyChatNotifications(
     }
   }
 
+  // Use centralized push notification function
+  const { sendPushNotification } = await import('@namegame/notifications')
+  
   const payload = {
     title: 'New Messages',
     body: "Looks like you have new messages. Since this is a non-annoying notification, you can check them if you feel like it... or not.",
@@ -358,37 +274,15 @@ export async function sendDailyChatNotifications(
     },
   }
 
-  const notificationPayload = JSON.stringify(payload)
   let sent = 0
   let failed = 0
 
-  const sendPromises = subscriptionsToNotify.map((sub) =>
-    webPush
-      .sendNotification(
-        {
-          endpoint: sub.endpoint,
-          keys: {
-            p256dh: sub.p256dh,
-            auth: sub.auth,
-          },
-        },
-        notificationPayload,
-      )
-      .then(() => {
-        sent++
-      })
-      .catch(async (error: WebPushError) => {
-        failed++
-        if (error.statusCode === 410 || error.statusCode === 404) {
-          console.log('Deleted expired subscription:', sub.id)
-          await db.pushSubscription.delete({ where: { id: sub.id } })
-        } else {
-          console.error('Error sending push notification:', error)
-        }
-      }),
-  )
-
-  await Promise.all(sendPromises)
+  // Send to each subscription individually to track success/failure
+  for (const sub of subscriptionsToNotify) {
+    const result = await sendPushNotification(payload, { endpoint: sub.endpoint, prisma: db })
+    sent += result.successCount
+    failed += result.failureCount
+  }
 
   return {
     success: true,

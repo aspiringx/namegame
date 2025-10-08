@@ -21,6 +21,7 @@
     "@aws-sdk/s3-request-presigner": "^3.844.0",
     "@headlessui/react": "^2.2.4",
     "@namegame/db": "workspace:*",
+    "@namegame/notifications": "workspace:*",
     "@paralleldrive/cuid2": "^2.2.2",
     "@radix-ui/react-alert-dialog": "^1.1.15",
     "@radix-ui/react-avatar": "^1.1.10",
