@@ -25,12 +25,13 @@ interface SendPushOptions {
 export function configureVapid() {
   const vapidPublicKey = process.env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY;
   const vapidPrivateKey = process.env.WEB_PUSH_PRIVATE_KEY;
-  const vapidEmail = process.env.WEB_PUSH_EMAIL || 'https://www.namegame.app';
+  const vapidEmail = process.env.WEB_PUSH_EMAIL || 'mailto:notifications@namegame.app';
 
   if (!vapidPublicKey || !vapidPrivateKey) {
     throw new Error('VAPID keys not configured. Set NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY and WEB_PUSH_PRIVATE_KEY');
   }
 
+  console.log(`[Push] Configuring VAPID with subject: ${vapidEmail}`);
   webPush.setVapidDetails(vapidEmail, vapidPublicKey, vapidPrivateKey);
 }
 
@@ -102,14 +103,25 @@ export async function sendPushNotification(
         failureCount++;
         const error = result.reason as WebPushError;
         
-        // If subscription is expired/invalid, delete it
+        // Log detailed error information
+        console.error(`Push notification failed for subscription ${subscriptions[i].id}:`, {
+          statusCode: error.statusCode,
+          message: error.message,
+          body: error.body,
+          endpoint: subscriptions[i].endpoint.substring(0, 50) + '...'
+        });
+        
+        // Only delete subscription if it's truly expired/gone (410, 404)
+        // Do NOT delete on 401/403 (authorization issues - likely VAPID config mismatch)
         if (error.statusCode === 410 || error.statusCode === 404) {
           await prisma.pushSubscription.delete({
             where: { id: subscriptions[i].id }
           });
-          console.log(`Deleted expired subscription: ${subscriptions[i].id}`);
+          console.log(`Deleted expired/gone subscription: ${subscriptions[i].id}`);
+        } else if (error.statusCode === 401 || error.statusCode === 403) {
+          console.error(`Authorization error (likely VAPID mismatch) - NOT deleting subscription ${subscriptions[i].id}`);
         } else {
-          console.error('Error sending push notification:', error);
+          console.error(`Unexpected error sending push notification to ${subscriptions[i].id}:`, error);
         }
       }
     }
