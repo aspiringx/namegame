@@ -31,6 +31,13 @@ export async function saveSubscription(
 
   const { endpoint, keys } = parsedSubscription.data
 
+  // Log subscription details for debugging
+  console.log('[SaveSubscription] New subscription:', {
+    endpoint: endpoint.substring(0, 50) + '...',
+    userId,
+    browser: endpoint.includes('fcm.googleapis.com') ? 'Chrome' : endpoint.includes('web.push.apple.com') ? 'Safari' : 'Unknown'
+  })
+
   try {
     // Find an existing subscription by its endpoint.
     const existingSubscription = await db.pushSubscription.findUnique({
