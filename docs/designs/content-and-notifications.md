@@ -1,6 +1,6 @@
 # Content & Notifications
 
-For the purposes of this document, we'll use the following definitions:
+For the purposes of this document, we'll use the following definitions here:
 
 ## Content
 
