@@ -255,7 +255,14 @@ export default function ChatInterface({
         type: message.type || 'text'
       }
       
-      setMessages(prev => [...prev, chatMessage])
+      // Add message only if it doesn't already exist (prevent duplicates)
+      setMessages(prev => {
+        const exists = prev.some(m => m.id === chatMessage.id)
+        if (exists) {
+          return prev
+        }
+        return [...prev, chatMessage]
+      })
     }
 
     socket.on('message', handleNewMessage)
