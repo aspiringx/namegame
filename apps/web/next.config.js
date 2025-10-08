@@ -1,3 +1,5 @@
+// NOTE: ESLint parsing error in this file is a known Next.js issue and doesn't affect functionality
+// See: https://github.com/vercel/next.js/issues/40687
 const nextBuildId = require('next-build-id')
 const withPWA = require('next-pwa')
 
