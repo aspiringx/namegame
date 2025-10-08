@@ -1,4 +1,6 @@
 import { precacheAndRoute, cleanupOutdatedCaches } from 'workbox-precaching'
+import { registerRoute } from 'workbox-routing'
+import { CacheFirst } from 'workbox-strategies'
 import { clientsClaim } from 'workbox-core'
 
 declare const self: ServiceWorkerGlobalScope
@@ -18,6 +20,11 @@ const manifest = (self.__WB_MANIFEST || []).filter((entry) => {
     return false
   }
 
+  // Don't precache dynamic chunks - they'll be cached on demand
+  if (url.includes('/chunks/')) {
+    return false
+  }
+
   // Filter out other problematic files.
   return (
     !url.endsWith('.map') &&
@@ -26,6 +33,14 @@ const manifest = (self.__WB_MANIFEST || []).filter((entry) => {
   )
 })
 precacheAndRoute(manifest)
+
+// Runtime cache for chunks - cache them when requested, not during install
+registerRoute(
+  ({ request }) => request.destination === 'script' && request.url.includes('/chunks/'),
+  new CacheFirst({
+    cacheName: 'js-chunks',
+  })
+)
 
 self.addEventListener('push', (event: PushEvent) => {
   const payload = event.data?.json() ?? {}
