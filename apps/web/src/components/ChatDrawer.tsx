@@ -8,6 +8,7 @@ import ParticipantSelector from './ParticipantSelector'
 import ChatInterface from './ChatInterface'
 import { markConversationAsRead, markAllConversationsAsRead } from '@/app/actions/chat'
 import { useSocket } from '@/context/SocketContext'
+import { useSession } from 'next-auth/react'
 
 interface ChatDrawerProps {
   isOpen: boolean
@@ -52,6 +53,7 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
   const group = groupData?.group
   const conversationsListRef = useRef<HTMLDivElement>(null)
   const { socket } = useSocket()
+  const { data: session } = useSession()
   const updateQueueRef = useRef<Set<string>>(new Set())
   const updateTimerRef = useRef<NodeJS.Timeout | null>(null)
 
@@ -152,11 +154,18 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
   
   // Listen for new messages via socket and queue updates with debouncing
   useEffect(() => {
-    if (!socket || !isOpen) return
+    if (!socket || !isOpen || !session?.user) return
     
     const handleNewMessage = (message: any) => {
       const conversationId = message.conversationId
       if (!conversationId) return
+      
+      // Only queue update if message is from someone else
+      // (sender's own messages shouldn't trigger unread indicators)
+      const authorId = message.author?.id || message.authorId
+      if (authorId === session.user?.id) {
+        return
+      }
       
       // Add to update queue
       updateQueueRef.current.add(conversationId)
@@ -183,7 +192,7 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
         clearTimeout(updateTimerRef.current)
       }
     }
-  }, [socket, isOpen, batchUpdateConversations])
+  }, [socket, isOpen, session?.user, batchUpdateConversations])
   
   // Lock body scroll when modal is open
   useEffect(() => {

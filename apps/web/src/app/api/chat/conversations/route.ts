@@ -154,7 +154,8 @@ export async function GET(request: NextRequest) {
         messages: {
           select: {
             id: true,
-            createdAt: true
+            createdAt: true,
+            authorId: true
           },
           orderBy: {
             createdAt: 'desc'
@@ -187,7 +188,10 @@ export async function GET(request: NextRequest) {
       const lastMessage = conv.messages[0]
       
       // Has unread if there's a message after lastReadAt (or no lastReadAt)
-      const hasUnread = lastMessage && (!lastReadAt || lastMessage.createdAt > lastReadAt)
+      // AND the message is from someone else (not the current user)
+      const hasUnread = lastMessage && 
+        lastMessage.authorId !== userId &&
+        (!lastReadAt || lastMessage.createdAt > lastReadAt)
       
       return {
         id: conv.id,
