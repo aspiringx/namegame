@@ -7,9 +7,10 @@ import { toast } from 'sonner'
 
 interface LoginHandlerProps {
   code: string
+  searchParams: { [key: string]: string | string[] | undefined }
 }
 
-export default function LoginHandler({ code }: LoginHandlerProps) {
+export default function LoginHandler({ code, searchParams }: LoginHandlerProps) {
   const router = useRouter()
 
   useEffect(() => {
@@ -26,7 +27,12 @@ export default function LoginHandler({ code }: LoginHandlerProps) {
 
         if (result?.ok) {
           toast.success('Login successful! Welcome back.')
-          router.push('/me?sso=true')
+          
+          // Preserve query params (like ?openChat=true) when redirecting
+          const queryString = new URLSearchParams(searchParams as Record<string, string>).toString();
+          const redirectUrl = queryString ? `/me?${queryString}` : '/me?sso=true';
+          
+          router.push(redirectUrl)
           router.refresh() // Refresh the page to update session state
         }
       } catch {
@@ -36,7 +42,7 @@ export default function LoginHandler({ code }: LoginHandlerProps) {
     }
 
     attemptSignIn()
-  }, [code, router])
+  }, [code, router, searchParams])
 
   return (
     <div className="flex h-screen w-full flex-col items-center justify-center">

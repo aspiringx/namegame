@@ -13,7 +13,8 @@
     "@namegame/notifications": "workspace:*",
     "@namegame/queue": "workspace:*",
     "dotenv": "^16.4.5",
-    "graphile-worker": "^0.16.6"
+    "graphile-worker": "^0.16.6",
+    "nanoid": "^5.0.0"
   },
   "devDependencies": {
     "tsx": "^4.19.2",

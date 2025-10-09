@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "codes" ALTER COLUMN "parentGroupId" DROP NOT NULL,
+ALTER COLUMN "groupId" DROP NOT NULL;

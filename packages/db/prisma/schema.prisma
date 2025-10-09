@@ -171,11 +171,11 @@ model GroupUser {
 model Code {
   id            Int      @id @default(autoincrement())
   userId        String
-  parentGroupId Int
-  groupId       Int
+  parentGroupId Int?
+  groupId       Int?
   code          String   @unique
   createdAt     DateTime @default(now())
-  group         Group    @relation(fields: [groupId], references: [id])
+  group         Group?   @relation(fields: [groupId], references: [id])
   user          User     @relation(fields: [userId], references: [id])
 
   @@index([userId, groupId])
