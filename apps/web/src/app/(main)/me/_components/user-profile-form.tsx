@@ -941,7 +941,7 @@ export default function UserProfileForm({
               Notifications
             </h4>
             <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-              Enable push notifications to receive updates from your groups.
+              Enable to see updates in your groups. <i>No more than one per day!</i>
             </p>
             <div className="mt-4">
               <PushManager />

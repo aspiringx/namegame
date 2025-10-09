@@ -9,6 +9,7 @@ import {
   deleteSubscription,
   getSubscription,
 } from '@/actions/push'
+import { messaging, getToken } from '@/lib/firebase'
 
 function urlBase64ToUint8Array(base64String: string) {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
@@ -120,13 +121,19 @@ export function usePushNotifications() {
 
   const subscribe = useCallback(async () => {
     if (!isSupported || !process.env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY) {
-      console.error('Push notifications not supported or VAPID key missing.')
+      console.error('Push notifications not supported.')
       return
     }
 
     if (!isReady || !registration) {
       console.error('Service worker not ready, cannot subscribe.')
-      setError(new Error('Service worker not ready.'))
+      setError(new Error('Connecting...'))
+      return
+    }
+
+    if (!deviceInfo?.isReady) {
+      console.error('Device info not ready, cannot subscribe.')
+      setError(new Error('Detecting device...'))
       return
     }
 
@@ -134,7 +141,7 @@ export function usePushNotifications() {
       console.error('Notification permission has been denied.')
       setError(
         new Error(
-          'Notifications are blocked. Please enable them in your browser settings.',
+          'Notifications are blocked. To receive them, enable in your browser settings.',
         ),
       )
       return
@@ -150,14 +157,44 @@ export function usePushNotifications() {
         return
       }
 
-      let sub = await registration.pushManager.getSubscription()
-      if (!sub) {
-        sub = await registration.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(
-            process.env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY,
-          ),
+      // Detect if Chrome/Edge (uses FCM) - use Firebase
+      // Chrome and Edge both use FCM, Safari/Firefox don't
+      const browser = deviceInfo?.browser || 'unknown'
+      const useFirebase = (browser === 'chrome' || browser === 'edge' || browser === 'brave') && messaging
+      console.log('[Push] Browser detection:', { browser, useFirebase, hasMessaging: !!messaging })
+
+      let sub: PushSubscription | null = null
+
+      if (useFirebase) {
+        // Use Firebase for Chrome/Edge
+        console.log('[Push] Using Firebase for Chrome/Edge')
+        const token = await getToken(messaging!, {
+          vapidKey: process.env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY,
+          serviceWorkerRegistration: registration,
         })
+        
+        if (!token) {
+          throw new Error('Failed to get Firebase token')
+        }
+
+        // Convert Firebase token to PushSubscription format for our backend
+        sub = await registration.pushManager.getSubscription()
+      } else {
+        // Use standard Push API for Safari/Firefox
+        console.log('[Push] Using standard Push API')
+        sub = await registration.pushManager.getSubscription()
+        if (!sub) {
+          sub = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(
+              process.env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY,
+            ),
+          })
+        }
+      }
+
+      if (!sub) {
+        throw new Error('Failed to create push subscription')
       }
 
       const result = await saveSubscription(sub)
@@ -175,7 +212,7 @@ export function usePushNotifications() {
     } finally {
       setIsSubscribing(false)
     }
-  }, [isReady, registration, isSupported, permissionStatus])
+  }, [isReady, registration, isSupported, permissionStatus, deviceInfo?.isReady, deviceInfo?.browser])
 
   const unsubscribe = useCallback(async () => {
     const endpoint = localStorage.getItem(PUSH_SUBSCRIPTION_ENDPOINT_KEY)
