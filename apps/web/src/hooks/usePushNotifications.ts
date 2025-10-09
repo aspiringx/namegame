@@ -9,6 +9,7 @@ import {
   deleteSubscription,
   getSubscription,
 } from '@/actions/push'
+import { messaging, getToken } from '@/lib/firebase'
 
 function urlBase64ToUint8Array(base64String: string) {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
@@ -150,14 +151,43 @@ export function usePushNotifications() {
         return
       }
 
-      let sub = await registration.pushManager.getSubscription()
-      if (!sub) {
-        sub = await registration.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(
-            process.env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY,
-          ),
+      // Detect if Chrome/Edge (uses FCM) - use Firebase
+      const isChrome = navigator.userAgent.includes('Chrome') && !navigator.userAgent.includes('Edg')
+      const isEdge = navigator.userAgent.includes('Edg')
+      const useFirebase = (isChrome || isEdge) && messaging
+
+      let sub: PushSubscription | null = null
+
+      if (useFirebase) {
+        // Use Firebase for Chrome/Edge
+        console.log('[Push] Using Firebase for Chrome/Edge')
+        const token = await getToken(messaging!, {
+          vapidKey: process.env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY,
+          serviceWorkerRegistration: registration,
         })
+        
+        if (!token) {
+          throw new Error('Failed to get Firebase token')
+        }
+
+        // Convert Firebase token to PushSubscription format for our backend
+        sub = await registration.pushManager.getSubscription()
+      } else {
+        // Use standard Push API for Safari/Firefox
+        console.log('[Push] Using standard Push API')
+        sub = await registration.pushManager.getSubscription()
+        if (!sub) {
+          sub = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(
+              process.env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY,
+            ),
+          })
+        }
+      }
+
+      if (!sub) {
+        throw new Error('Failed to create push subscription')
       }
 
       const result = await saveSubscription(sub)
