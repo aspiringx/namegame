@@ -121,13 +121,19 @@ export function usePushNotifications() {
 
   const subscribe = useCallback(async () => {
     if (!isSupported || !process.env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY) {
-      console.error('Push notifications not supported or VAPID key missing.')
+      console.error('Push notifications not supported.')
       return
     }
 
     if (!isReady || !registration) {
       console.error('Service worker not ready, cannot subscribe.')
-      setError(new Error('Service worker not ready.'))
+      setError(new Error('Connecting...'))
+      return
+    }
+
+    if (!deviceInfo?.isReady) {
+      console.error('Device info not ready, cannot subscribe.')
+      setError(new Error('Detecting device...'))
       return
     }
 
@@ -135,7 +141,7 @@ export function usePushNotifications() {
       console.error('Notification permission has been denied.')
       setError(
         new Error(
-          'Notifications are blocked. Please enable them in your browser settings.',
+          'Notifications are blocked. To receive them, enable in your browser settings.',
         ),
       )
       return
@@ -152,9 +158,10 @@ export function usePushNotifications() {
       }
 
       // Detect if Chrome/Edge (uses FCM) - use Firebase
-      const isChrome = navigator.userAgent.includes('Chrome') && !navigator.userAgent.includes('Edg')
-      const isEdge = navigator.userAgent.includes('Edg')
-      const useFirebase = (isChrome || isEdge) && messaging
+      // Chrome and Edge both use FCM, Safari/Firefox don't
+      const browser = deviceInfo?.browser || 'unknown'
+      const useFirebase = (browser === 'chrome' || browser === 'edge' || browser === 'brave') && messaging
+      console.log('[Push] Browser detection:', { browser, useFirebase, hasMessaging: !!messaging })
 
       let sub: PushSubscription | null = null
 
@@ -205,7 +212,7 @@ export function usePushNotifications() {
     } finally {
       setIsSubscribing(false)
     }
-  }, [isReady, registration, isSupported, permissionStatus])
+  }, [isReady, registration, isSupported, permissionStatus, deviceInfo?.isReady, deviceInfo?.browser])
 
   const unsubscribe = useCallback(async () => {
     const endpoint = localStorage.getItem(PUSH_SUBSCRIPTION_ENDPOINT_KEY)
