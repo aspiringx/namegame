@@ -310,6 +310,9 @@ importers:
       graphile-worker:
         specifier: ^0.16.6
         version: 0.16.6(typescript@5.9.2)
+      nanoid:
+        specifier: ^5.0.0
+        version: 5.1.6
     devDependencies:
       tsx:
         specifier: ^4.19.2

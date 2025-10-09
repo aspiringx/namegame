@@ -1,8 +1,25 @@
 import { PrismaClient } from '@namegame/db';
 import { JobHandler } from '@namegame/queue';
 import { sendPushNotification } from '@namegame/notifications';
+import { nanoid } from 'nanoid';
 
 const prisma = new PrismaClient();
+
+/**
+ * Generate a one-time login code for push notifications
+ */
+async function generateOneTimeLoginCode(userId: string): Promise<string> {
+  const code = nanoid(32);
+  
+  await prisma.code.create({
+    data: {
+      userId,
+      code,
+    },
+  });
+  
+  return code;
+}
 
 /**
  * Daily job to send push notifications to users with unread chat messages
@@ -42,6 +59,10 @@ export const sendDailyChatNotifications: JobHandler = async () => {
     // Send notification to each user
     for (const { userId } of usersWithUnread) {
       try {
+        // Generate one-time login code for SSO
+        const loginCode = await generateOneTimeLoginCode(userId);
+        const ssoUrl = `${process.env.NEXT_PUBLIC_APP_URL}/one-time-login/${loginCode}?openChat=true`;
+        
         const { successCount, failureCount } = await sendPushNotification(
           {
             title: 'New Messages',
@@ -49,7 +70,7 @@ export const sendDailyChatNotifications: JobHandler = async () => {
             icon: '/icon.png',
             badge: '/icon.png',
             data: {
-              url: `${process.env.NEXT_PUBLIC_APP_URL}?openChat=true`,
+              url: ssoUrl,
             },
           },
           { userId, prisma }

@@ -46,6 +46,29 @@ export async function createLoginCode(formData: FormData) {
   }
 }
 
+/**
+ * Generate a one-time login code for push notifications and emails
+ * @param userId - The user ID to create the code for
+ * @param groupId - Optional group ID to associate with the code
+ * @returns The generated code
+ */
+export async function generateOneTimeLoginCode(
+  userId: string,
+  groupId?: number
+): Promise<string> {
+  const code = nanoid(32)
+
+  await prisma.code.create({
+    data: {
+      userId,
+      ...(groupId && { groupId, parentGroupId: groupId }),
+      code,
+    },
+  })
+
+  return code
+}
+
 export async function getRecentGroups() {
   try {
     const session = await auth()

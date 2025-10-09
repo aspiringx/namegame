@@ -24,16 +24,30 @@ async function validateCode(code: string) {
 
 export default async function OneTimeLoginPage(props: {
   params: Promise<{ code: string }>
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
   const params = await props.params
+  const searchParams = await props.searchParams
   const session = await auth();
-  if (session?.user?.id) {
-    redirect('/me');
-  }
-
+  
   const { code } = params;
   if (!code) {
     notFound();
+  }
+
+  // If user is already logged in, invalidate the code and redirect with query params
+  if (session?.user?.id) {
+    // Invalidate the code so it can't be used again
+    await prisma.code.delete({
+      where: { code }
+    }).catch(() => {
+      // Code might already be deleted, ignore error
+    });
+    
+    // Preserve query params (like ?openChat=true) when redirecting
+    const queryString = new URLSearchParams(searchParams as Record<string, string>).toString();
+    const redirectUrl = queryString ? `/me?${queryString}` : '/me';
+    redirect(redirectUrl);
   }
 
   const result = await validateCode(code);
@@ -45,5 +59,5 @@ export default async function OneTimeLoginPage(props: {
     redirect(url.pathname + url.search);
   }
 
-  return <LoginHandler code={code} />;
+  return <LoginHandler code={code} searchParams={searchParams} />;
 }
