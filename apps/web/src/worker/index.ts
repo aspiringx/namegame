@@ -8,6 +8,30 @@ declare const self: ServiceWorkerGlobalScope
 self.skipWaiting()
 clientsClaim()
 
+// Initialize Firebase in service worker for FCM support
+// This allows Firebase getToken() to work with our custom service worker
+if (typeof importScripts === 'function') {
+  try {
+    importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js')
+    importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js')
+    
+    // @ts-ignore - Firebase is loaded via importScripts
+    if (typeof firebase !== 'undefined') {
+      // @ts-ignore
+      firebase.initializeApp({
+        apiKey: "AIzaSyCdLvrkh1n_fTjQvovGlXVUn3S67seq330",
+        authDomain: "namegame-d5341.firebaseapp.com",
+        projectId: "namegame-d5341",
+        storageBucket: "namegame-d5341.firebasestorage.app",
+        messagingSenderId: "951901886749",
+        appId: "1:951901886749:web:a50d9a9e60b0cd42d5e9f4"
+      })
+    }
+  } catch (e) {
+    console.error('[SW] Failed to initialize Firebase:', e)
+  }
+}
+
 // clean up old precache entries
 cleanupOutdatedCaches()
 
