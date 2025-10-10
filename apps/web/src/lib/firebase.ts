@@ -10,18 +10,31 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
+console.log('[Firebase Client] Initializing with project:', firebaseConfig.projectId);
+
 // Initialize Firebase only once
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 
 // Only initialize messaging in browser and if supported
 let messaging: ReturnType<typeof getMessaging> | null = null;
+let messagingPromise: Promise<ReturnType<typeof getMessaging> | null> | null = null;
 
 if (typeof window !== 'undefined') {
-  isSupported().then((supported) => {
+  messagingPromise = isSupported().then((supported) => {
     if (supported) {
       messaging = getMessaging(app);
+      return messaging;
     }
+    return null;
   });
 }
 
-export { messaging, getToken, onMessage };
+// Helper to get messaging (waits for initialization)
+async function getMessagingInstance() {
+  if (messagingPromise) {
+    await messagingPromise;
+  }
+  return messaging;
+}
+
+export { messaging, getToken, onMessage, getMessagingInstance };

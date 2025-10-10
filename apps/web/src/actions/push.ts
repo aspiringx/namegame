@@ -14,6 +14,7 @@ const subscriptionSchema = z.object({
 
 export async function saveSubscription(
   subscription: unknown,
+  fcmToken?: string,
 ): Promise<{ success: boolean; message: string }> {
   const session = await auth()
   if (!session?.user?.id) {
@@ -31,11 +32,24 @@ export async function saveSubscription(
 
   const { endpoint, keys } = parsedSubscription.data
 
+  // Detect browser from endpoint
+  let browser = 'Other'
+  if (endpoint.includes('fcm.googleapis.com')) {
+    browser = 'Chrome/Android'
+  } else if (endpoint.includes('web.push.apple.com')) {
+    browser = 'Safari'
+  } else if (endpoint.includes('notify.windows.com')) {
+    browser = 'Edge'
+  } else if (endpoint.includes('updates.push.services.mozilla.com')) {
+    browser = 'Firefox'
+  }
+
   // Log subscription details for debugging
   console.log('[SaveSubscription] New subscription:', {
     endpoint: endpoint.substring(0, 50) + '...',
     userId,
-    browser: endpoint.includes('fcm.googleapis.com') ? 'Chrome' : endpoint.includes('web.push.apple.com') ? 'Safari' : 'Unknown'
+    browser,
+    hasFcmToken: !!fcmToken
   })
 
   try {
@@ -59,12 +73,14 @@ export async function saveSubscription(
         p256dh: keys.p256dh,
         auth: keys.auth,
         userId: userId, // Ensure userId is explicitly set on update
+        fcmToken: fcmToken || null,
       },
       create: {
         userId,
         endpoint,
         p256dh: keys.p256dh,
         auth: keys.auth,
+        fcmToken: fcmToken || null,
       },
     })
     return { success: true, message: 'Subscription saved.' }
@@ -147,6 +163,31 @@ export async function getSubscription(
   } catch (error) {
     console.error('Error fetching subscription:', error)
     return { success: false, subscription: null }
+  }
+}
+
+export async function getUserSubscriptions(): Promise<{
+  success: boolean
+  subscriptions: any[]
+}> {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return { success: false, subscriptions: [] }
+  }
+
+  try {
+    const subscriptions = await db.pushSubscription.findMany({
+      where: {
+        userId: session.user.id,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    })
+    return { success: true, subscriptions }
+  } catch (error) {
+    console.error('Error fetching user subscriptions:', error)
+    return { success: false, subscriptions: [] }
   }
 }
 

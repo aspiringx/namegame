@@ -12,11 +12,14 @@ clientsClaim()
 // This allows Firebase getToken() to work with our custom service worker
 if (typeof importScripts === 'function') {
   try {
+    console.log('[SW] Loading Firebase scripts...')
     importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js')
     importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js')
+    console.log('[SW] Firebase scripts loaded')
     
     // @ts-ignore - Firebase is loaded via importScripts
     if (typeof firebase !== 'undefined') {
+      console.log('[SW] Firebase object available, initializing...')
       // @ts-ignore
       firebase.initializeApp({
         apiKey: "AIzaSyCdLvrkh1n_fTjQvovGlXVUn3S67seq330",
@@ -25,6 +28,26 @@ if (typeof importScripts === 'function') {
         storageBucket: "namegame-d5341.firebasestorage.app",
         messagingSenderId: "951901886749",
         appId: "1:951901886749:web:a50d9a9e60b0cd42d5e9f4"
+      })
+      
+      // @ts-ignore
+      const messaging = firebase.messaging()
+      console.log('[SW] Firebase messaging initialized successfully')
+      
+      // Handle background messages from Firebase
+      // @ts-ignore
+      messaging.onBackgroundMessage((payload) => {
+        console.log('[SW] Firebase background message received:', payload)
+        
+        const notificationTitle = payload.notification?.title || payload.data?.title || 'NameGame'
+        const notificationOptions = {
+          body: payload.notification?.body || payload.data?.body || 'You have a new notification.',
+          icon: payload.notification?.icon || payload.data?.icon || '/icons/icon-192x192.png',
+          badge: '/icons/icon-96x96.png',
+          data: payload.data || { url: self.location.origin },
+        }
+        
+        return self.registration.showNotification(notificationTitle, notificationOptions)
       })
     }
   } catch (e) {

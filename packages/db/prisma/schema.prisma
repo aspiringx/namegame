@@ -348,12 +348,14 @@ model PasswordResetToken {
   @@unique([email, token])
 }
 
+// Push notification subscription model.
 model PushSubscription {
   id        String   @id @default(cuid())
   endpoint  String   @unique
   p256dh    String
   auth      String
   userId    String
+  fcmToken  String? // FCM/Firebase token needed for Google Chrome/Android.
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 
