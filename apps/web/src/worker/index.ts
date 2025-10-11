@@ -13,8 +13,8 @@ clientsClaim()
 if (typeof importScripts === 'function') {
   try {
     console.log('[SW] Loading Firebase scripts...')
-    importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js')
-    importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js')
+    importScripts('https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js')
+    importScripts('https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging-compat.js')
     console.log('[SW] Firebase scripts loaded')
     
     // @ts-ignore - Firebase is loaded via importScripts

@@ -15,6 +15,7 @@ const subscriptionSchema = z.object({
 export async function saveSubscription(
   subscription: unknown,
   fcmToken?: string,
+  deviceInfo?: { browser?: string; os?: string; deviceType?: string },
 ): Promise<{ success: boolean; message: string }> {
   const session = await auth()
   if (!session?.user?.id) {
@@ -32,16 +33,18 @@ export async function saveSubscription(
 
   const { endpoint, keys } = parsedSubscription.data
 
-  // Detect browser from endpoint
-  let browser = 'Other'
-  if (endpoint.includes('fcm.googleapis.com')) {
-    browser = 'Chrome/Android'
-  } else if (endpoint.includes('web.push.apple.com')) {
-    browser = 'Safari'
-  } else if (endpoint.includes('notify.windows.com')) {
-    browser = 'Edge'
-  } else if (endpoint.includes('updates.push.services.mozilla.com')) {
-    browser = 'Firefox'
+  // Detect browser from endpoint (fallback if not provided)
+  let browser = deviceInfo?.browser || 'unknown'
+  if (!deviceInfo?.browser) {
+    if (endpoint.includes('fcm.googleapis.com')) {
+      browser = 'chrome'
+    } else if (endpoint.includes('web.push.apple.com')) {
+      browser = 'safari'
+    } else if (endpoint.includes('notify.windows.com')) {
+      browser = 'edge'
+    } else if (endpoint.includes('updates.push.services.mozilla.com')) {
+      browser = 'firefox'
+    }
   }
 
   // Log subscription details for debugging
@@ -49,6 +52,8 @@ export async function saveSubscription(
     endpoint: endpoint.substring(0, 50) + '...',
     userId,
     browser,
+    os: deviceInfo?.os,
+    deviceType: deviceInfo?.deviceType,
     hasFcmToken: !!fcmToken
   })
 
@@ -74,6 +79,9 @@ export async function saveSubscription(
         auth: keys.auth,
         userId: userId, // Ensure userId is explicitly set on update
         fcmToken: fcmToken || null,
+        browser: browser,
+        os: deviceInfo?.os || null,
+        deviceType: deviceInfo?.deviceType || null,
       },
       create: {
         userId,
@@ -81,6 +89,9 @@ export async function saveSubscription(
         p256dh: keys.p256dh,
         auth: keys.auth,
         fcmToken: fcmToken || null,
+        browser: browser,
+        os: deviceInfo?.os || null,
+        deviceType: deviceInfo?.deviceType || null,
       },
     })
     return { success: true, message: 'Subscription saved.' }

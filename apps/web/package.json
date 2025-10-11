@@ -42,7 +42,7 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
-    "firebase": "^12.3.0",
+    "firebase": "^12.4.0",
     "idb": "^8.0.3",
     "js-cookie": "^3.0.5",
     "lottie-react": "^2.4.1",
