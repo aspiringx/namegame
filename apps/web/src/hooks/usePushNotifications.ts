@@ -72,7 +72,6 @@ export function usePushNotifications() {
     const verifySubscription = async () => {
       // Skip verification if we just subscribed (avoid race condition)
       if (skipNextVerification.current) {
-        console.log('[Push] Skipping verification after subscribe')
         skipNextVerification.current = false
         return
       }
@@ -83,7 +82,6 @@ export function usePushNotifications() {
         
         if (!userSubsResult.success || userSubsResult.subscriptions.length === 0) {
           // No subscriptions in database - user is not subscribed
-          console.log('[Push] No subscriptions found in database')
           setIsPushEnabled(false)
           localStorage.removeItem(PUSH_SUBSCRIPTION_ENDPOINT_KEY)
           return
@@ -107,8 +105,6 @@ export function usePushNotifications() {
         
         if (deviceMatch) {
           // Database has a subscription for this device
-          console.log('[Push] Found subscription for this device in database')
-          
           // SYNC CHECK: Verify browser has matching subscription
           const browserSub = await registration.pushManager.getSubscription()
           
@@ -128,18 +124,24 @@ export function usePushNotifications() {
                 
                 if (currentToken !== dbToken) {
                   // MISMATCH: Browser has different token than database
-                  console.warn('[Push] Token mismatch detected!')
-                  console.warn('[Push] DB token:', dbToken?.substring(0, 20) + '...')
-                  console.warn('[Push] Browser token:', currentToken?.substring(0, 20) + '...')
-                  console.log('[Push] Auto-refreshing subscription...')
+                  console.log('[Push] Token mismatch detected, auto-refreshing...')
                   
                   // Delete old subscription and create new one
                   await deleteSubscription(deviceMatch.endpoint)
                   
                   // Update database with current token
+                  // For Firebase, create a fake PushSubscription with dummy keys
                   const newEndpoint = `https://fcm.googleapis.com/fcm/send/${currentToken}`
+                  const fakeSub = {
+                    endpoint: newEndpoint,
+                    keys: {
+                      p256dh: 'firebase-dummy-key',
+                      auth: 'firebase-dummy-key',
+                    }
+                  }
+                  
                   const result = await saveSubscription(
-                    { endpoint: newEndpoint } as PushSubscription,
+                    fakeSub,
                     currentToken,
                     {
                       browser: deviceInfo?.browser,
@@ -167,7 +169,6 @@ export function usePushNotifications() {
             }
           } else if (!browserSub) {
             // Non-Chrome browser has no subscription - needs refresh
-            console.warn('[Push] Browser subscription missing, auto-refreshing...')
             await deleteSubscription(deviceMatch.endpoint)
             setIsPushEnabled(false)
             localStorage.removeItem(PUSH_SUBSCRIPTION_ENDPOINT_KEY)
@@ -180,7 +181,6 @@ export function usePushNotifications() {
           localStorage.setItem(PUSH_SUBSCRIPTION_ENDPOINT_KEY, deviceMatch.endpoint)
         } else {
           // No subscription for this device
-          console.log('[Push] No subscription found for this device')
           setIsPushEnabled(false)
           setSubscription(null)
           localStorage.removeItem(PUSH_SUBSCRIPTION_ENDPOINT_KEY)
@@ -238,29 +238,22 @@ export function usePushNotifications() {
       const browser = deviceInfo?.browser || 'unknown'
       const messaging = await getMessagingInstance()
       const useFirebase = (browser === 'chrome' || browser === 'brave') && messaging
-      console.log('[Push] Browser detection:', { browser, useFirebase, hasMessaging: !!messaging })
 
       let sub: PushSubscription | null = null
       let fcmToken: string | undefined = undefined
 
       if (useFirebase) {
         // For Chrome/Brave: Use Firebase getToken() - no PushSubscription needed
-        console.log('[Push] Using Firebase Cloud Messaging for Chrome')
-        
         // Wait for service worker to be active
         if (!registration.active) {
-          console.log('[Push] Service worker not active yet, waiting...')
-          
-          // Wait for either installing or waiting to become active
+          await new Promise<void>((resolve, reject) => {
           const sw = registration.installing || registration.waiting
           if (sw) {
-            await new Promise<void>((resolve, reject) => {
               const timeout = setTimeout(() => {
                 reject(new Error('Service worker activation timeout'))
               }, 10000) // 10 second timeout
               
               sw.addEventListener('statechange', function handler() {
-                console.log('[Push] Service worker state:', sw.state)
                 if (sw.state === 'activated') {
                   clearTimeout(timeout)
                   sw.removeEventListener('statechange', handler)
@@ -270,14 +263,11 @@ export function usePushNotifications() {
                   sw.removeEventListener('statechange', handler)
                   reject(new Error('Service worker became redundant'))
                 }
-              })
             })
           } else {
             throw new Error('No service worker found to activate')
           }
-        }
-        
-        console.log('[Push] Service worker is active:', registration.active?.scriptURL)
+          })
         
         const { getToken } = await import('firebase/messaging')
         
@@ -295,8 +285,6 @@ export function usePushNotifications() {
           if (!fcmToken) {
             throw new Error('getToken() returned empty token')
           }
-          
-          console.log('[Push] ✅ Firebase token received:', fcmToken.substring(0, 20) + '...')
         } catch (tokenError: any) {
           console.error('[Push] ❌ getToken() failed:', tokenError)
           console.error('[Push] Error code:', tokenError.code)
@@ -321,11 +309,8 @@ export function usePushNotifications() {
           },
           options: { applicationServerKey: null, userVisibleOnly: true }
         } as unknown as PushSubscription
-        
-        console.log('[Push] Created Firebase subscription with endpoint:', fakeEndpoint.substring(0, 50) + '...')
       } else {
         // Use standard Push API for Safari/Firefox/Edge
-        console.log('[Push] Using standard Push API for', browser)
         sub = await registration.pushManager.getSubscription()
         if (!sub) {
           sub = await registration.pushManager.subscribe({
