@@ -56,6 +56,7 @@ export async function saveSubscription(
     deviceType: deviceInfo?.deviceType,
     hasFcmToken: !!fcmToken
   })
+  console.log('[SaveSubscription] Stack trace:', new Error().stack)
 
   try {
     // Find an existing subscription by its endpoint.

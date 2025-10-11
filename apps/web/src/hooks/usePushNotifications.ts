@@ -129,6 +129,17 @@ export function usePushNotifications() {
   }, [isReady, registration, session, deviceInfo?.isReady]) // Verify when SW ready, session changes, or deviceInfo ready. Don't include error?.message to avoid loops.
 
   const subscribe = useCallback(async () => {
+    const stack = new Error().stack
+    console.log('[Push] ⚠️⚠️⚠️ subscribe() called!')
+    console.log('[Push] Stack trace:', stack)
+    console.log('[Push] Called from:', stack?.split('\n')[2]) // Show immediate caller
+    
+    // TEMPORARY: Block auto-subscribe to prevent token creation
+    if (!window.confirm('Subscribe to push notifications? (Click Cancel if this appeared automatically)')) {
+      console.log('[Push] ❌ Subscribe blocked by user')
+      return
+    }
+    
     if (!isSupported || !process.env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY) {
       console.error('Push notifications not supported.')
       return
@@ -233,6 +244,7 @@ export function usePushNotifications() {
           console.log('[Push] Token length:', fcmToken.length)
           console.log('[Push] Token first 50 chars:', fcmToken.substring(0, 50))
           console.log('[Push] Token last 50 chars:', fcmToken.substring(fcmToken.length - 50))
+          console.log('[Push] 🧪 IMMEDIATELY test this token with: node test-firebase-send.js "' + fcmToken + '"')
         } catch (tokenError: any) {
           console.error('[Push] ❌ getToken() failed:', tokenError)
           console.error('[Push] Error code:', tokenError.code)
