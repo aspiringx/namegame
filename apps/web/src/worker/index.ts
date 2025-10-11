@@ -1,57 +1,25 @@
 import { precacheAndRoute, cleanupOutdatedCaches } from 'workbox-precaching'
 import { registerRoute } from 'workbox-routing'
 import { CacheFirst } from 'workbox-strategies'
-import { initializeApp } from 'firebase/app'
-import { getMessaging, onBackgroundMessage } from 'firebase/messaging/sw'
+// Firebase imports removed - we use standard Web Push API for all browsers
+// This prevents duplicate notifications from Firebase intercepting push events
 
 declare const self: ServiceWorkerGlobalScope
 
 // IMPORTANT: Event listeners must be added during initial script evaluation
 // Don't use skipWaiting() or clientsClaim() - they invalidate Firebase tokens
+// The service worker will update on next page load/navigation
 
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting()
-  }
-})
-
-self.addEventListener('activate', (event) => {
+self.addEventListener('activate', () => {
   console.log('[SW] Service worker activated')
-  event.waitUntil(self.clients.claim())
+  // Don't claim clients immediately - let it happen naturally on next page load
+  // This prevents Firebase token invalidation
 })
 
-// Initialize Firebase v12 in service worker using bundled imports
-try {
-  console.log('[SW] Initializing Firebase v12...')
-  const app = initializeApp({
-    apiKey: "AIzaSyCdLvrkh1n_fTjQvovGlXVUn3S67seq330",
-    authDomain: "namegame-d5341.firebaseapp.com",
-    projectId: "namegame-d5341",
-    storageBucket: "namegame-d5341.firebasestorage.app",
-    messagingSenderId: "951901886749",
-    appId: "1:951901886749:web:a50d9a9e60b0cd42d5e9f4"
-  })
-  
-  const messaging = getMessaging(app)
-  console.log('[SW] Firebase messaging initialized successfully')
-  
-  // Handle background messages from Firebase
-  onBackgroundMessage(messaging, (payload) => {
-    console.log('[SW] Firebase background message received:', payload)
-    
-    const notificationTitle = payload.notification?.title || payload.data?.title || 'NameGame'
-    const notificationOptions = {
-      body: payload.notification?.body || payload.data?.body || 'You have a new notification.',
-      icon: payload.notification?.icon || payload.data?.icon || '/icons/icon-192x192.png',
-      badge: '/icons/icon-96x96.png',
-      data: payload.data || { url: self.location.origin },
-    }
-    
-    return self.registration.showNotification(notificationTitle, notificationOptions)
-  })
-} catch (e) {
-  console.error('[SW] Failed to initialize Firebase:', e)
-}
+// Firebase is ONLY for Chrome/Android (FCM)
+// For Edge/Safari/Firefox, we use the standard push event listener below
+// DO NOT initialize Firebase here - it intercepts ALL push events and causes duplicates
+console.log('[SW] Skipping Firebase initialization - using standard Web Push API for all browsers')
 
 // clean up old precache entries
 cleanupOutdatedCaches()
@@ -88,23 +56,62 @@ registerRoute(
 )
 
 self.addEventListener('push', (event: PushEvent) => {
+  console.log('[SW] Push event received')
+  console.log('[SW] Event data:', event.data?.text())
+  
   const payload = event.data?.json() ?? {}
-  const title = payload.title || 'NameGame'
+  console.log('[SW] Parsed payload:', payload)
+  
+  // Extract notification data from various push service formats:
+  // - Firebase (Chrome/Android): payload.notification.{title,body,icon} + payload.data
+  // - Web Push (Edge/Firefox/Brave/Samsung): payload.{title,body,icon,data}
+  // - Safari (APNs): payload.aps.alert.{title,body} + custom data
+  // - Our backend: payload.{title,body,icon,data}
+  
+  const title = 
+    payload.notification?.title ||  // Firebase
+    payload.aps?.alert?.title ||    // Safari APNs
+    payload.data?.title ||          // Some services put it in data
+    payload.title ||                // Web Push / our backend
+    'NameGame'
+  
+  const body = 
+    payload.notification?.body ||   // Firebase
+    payload.aps?.alert?.body ||     // Safari APNs
+    payload.data?.body ||           // Some services put it in data
+    payload.body ||                 // Web Push / our backend
+    'You have a new notification.'
+  
+  const icon = 
+    payload.notification?.icon ||   // Firebase
+    payload.data?.icon ||           // Some services put it in data
+    payload.icon ||                 // Web Push / our backend
+    '/icons/icon-192x192.png'
+  
+  // Data is typically at the root level or in payload.data
+  const data = payload.data || { url: self.location.origin }
+  
   const options = {
-    body: payload.body || 'You have a new notification.',
-    icon: payload.icon || '/icons/icon-192x192.png',
+    body,
+    icon,
     badge: '/icons/icon-96x96.png',
-    data: payload.data || { url: self.location.origin },
+    data,
   }
-
+  
+  console.log('[SW] Showing notification:', title, options)
   event.waitUntil(self.registration.showNotification(title, options))
 })
 
 self.addEventListener('notificationclick', (event: NotificationEvent) => {
+  console.log('[SW] Notification clicked')
+  console.log('[SW] Notification data:', event.notification.data)
+  
   event.notification.close()
 
   const urlToOpen =
     event.notification.data.url || new URL('/', self.location.origin).href
+  
+  console.log('[SW] Opening URL:', urlToOpen)
 
   event.waitUntil(
     self.clients
@@ -113,6 +120,7 @@ self.addEventListener('notificationclick', (event: NotificationEvent) => {
         includeUncontrolled: true,
       })
       .then((clientList) => {
+        console.log('[SW] Found clients:', clientList.length)
         if (clientList.length > 0) {
           let client = clientList[0]
           for (const c of clientList) {
@@ -120,8 +128,10 @@ self.addEventListener('notificationclick', (event: NotificationEvent) => {
               client = c
             }
           }
+          console.log('[SW] Navigating existing client to:', urlToOpen)
           return client.focus().then((c) => c.navigate(urlToOpen))
         } else {
+          console.log('[SW] Opening new window:', urlToOpen)
           return self.clients.openWindow(urlToOpen)
         }
       }),

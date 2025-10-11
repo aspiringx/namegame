@@ -321,7 +321,7 @@ export async function sendDailyChatNotifications(
     icon: '/icon.png',
     badge: '/icon.png',
     data: {
-      url: `${process.env.NEXT_PUBLIC_APP_URL}?openChat=true`,
+      url: `${process.env.NEXT_PUBLIC_APP_URL}/me?openChat=true`,
     },
   }
 

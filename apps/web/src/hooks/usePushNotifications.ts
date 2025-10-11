@@ -167,15 +167,44 @@ export function usePushNotifications() {
               console.error('[Push] Error checking token sync:', tokenError)
               // If we can't check, assume it's fine and continue
             }
-          } else if (!browserSub) {
-            // Non-Chrome browser has no subscription - needs refresh
-            await deleteSubscription(deviceMatch.endpoint)
-            setIsPushEnabled(false)
-            localStorage.removeItem(PUSH_SUBSCRIPTION_ENDPOINT_KEY)
+          } else {
+            // Non-Chrome browser (Edge/Safari/Firefox) - check if browser has subscription
+            if (browserSub && browserSub.endpoint === deviceMatch.endpoint) {
+              // Browser subscription matches DB - all good
+              setIsPushEnabled(true)
+              setSubscription(browserSub)
+              localStorage.setItem(PUSH_SUBSCRIPTION_ENDPOINT_KEY, deviceMatch.endpoint)
+            } else if (browserSub && browserSub.endpoint !== deviceMatch.endpoint) {
+              // Browser has different subscription than DB - update DB
+              console.log('[Push] Browser subscription differs from DB, updating...')
+              await deleteSubscription(deviceMatch.endpoint)
+              const result = await saveSubscription(browserSub, undefined, {
+                browser: deviceInfo?.browser,
+                os: deviceInfo?.os,
+                deviceType: currentDeviceType,
+              })
+              if (result.success) {
+                setIsPushEnabled(true)
+                setSubscription(browserSub)
+                localStorage.setItem(PUSH_SUBSCRIPTION_ENDPOINT_KEY, browserSub.endpoint)
+              } else {
+                setIsPushEnabled(false)
+                localStorage.removeItem(PUSH_SUBSCRIPTION_ENDPOINT_KEY)
+              }
+            } else {
+              // Browser has no subscription but DB does
+              // This happens in Edge/Safari after refresh - subscription doesn't persist
+              // Trust the DB and show as enabled, but subscription might not work
+              // User will need to re-enable if they want notifications
+              console.log('[Push] DB has subscription but browser does not (Edge/Safari behavior)')
+              setIsPushEnabled(true)
+              setSubscription(null)
+              localStorage.setItem(PUSH_SUBSCRIPTION_ENDPOINT_KEY, deviceMatch.endpoint)
+            }
             return
           }
           
-          // All good - subscription is synced
+          // Chrome: All good - subscription is synced
           setIsPushEnabled(true)
           setSubscription(null) // Browser sub might not be available in all tabs
           localStorage.setItem(PUSH_SUBSCRIPTION_ENDPOINT_KEY, deviceMatch.endpoint)
@@ -247,8 +276,8 @@ export function usePushNotifications() {
         // Wait for service worker to be active
         if (!registration.active) {
           await new Promise<void>((resolve, reject) => {
-          const sw = registration.installing || registration.waiting
-          if (sw) {
+            const sw = registration.installing || registration.waiting
+            if (sw) {
               const timeout = setTimeout(() => {
                 reject(new Error('Service worker activation timeout'))
               }, 10000) // 10 second timeout
@@ -268,13 +297,9 @@ export function usePushNotifications() {
             throw new Error('No service worker found to activate')
           }
           })
+        }
         
         const { getToken } = await import('firebase/messaging')
-        
-        // Firebase getToken() registers with FCM and returns the token
-        console.log('[Push] Calling Firebase getToken()...')
-        console.log('[Push] VAPID key:', process.env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY?.substring(0, 20) + '...')
-        console.log('[Push] Service worker scope:', registration.scope)
         
         try {
           fcmToken = await getToken(messaging!, {

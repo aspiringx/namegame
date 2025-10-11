@@ -16,17 +16,34 @@ export function ServiceWorkerRegistrar() {
 
     const setupServiceWorker = async () => {
       try {
-        // Unregister any existing service workers to ensure a clean slate.
-        const oldRegistrations =
-          await navigator.serviceWorker.getRegistrations()
-        for (const reg of oldRegistrations) {
-          await reg.unregister()
+        // Check if service worker is already registered
+        const existingRegistration = await navigator.serviceWorker.getRegistration('/sw.js')
+        
+        let newRegistration: ServiceWorkerRegistration
+        
+        if (existingRegistration) {
+          // Service worker already registered, use it
+          console.log('[SW Registration] Service worker already registered')
+          newRegistration = existingRegistration
+          
+          // Check if the controller matches the active worker from this registration
+          if (navigator.serviceWorker.controller && 
+              newRegistration.active && 
+              navigator.serviceWorker.controller.scriptURL === newRegistration.active.scriptURL) {
+            console.log('[SW Registration] Service worker already controlling page with matching registration')
+            _setRegistration(newRegistration)
+            _setIsReady(true)
+            return
+          }
+          
+          console.log('[SW Registration] Service worker exists but not controlling page, waiting for control...')
+        } else {
+          // Register the new service worker
+          console.log('[SW Registration] Registering new service worker')
+          newRegistration = await navigator.serviceWorker.register('/sw.js')
         }
 
-        // Register the new service worker.
-        const newRegistration = await navigator.serviceWorker.register('/sw.js')
-
-        // Wait for the new service worker to become active.
+        // Wait for the service worker to become active and control the page.
         await new Promise<void>((resolve) => {
           const awaitStateChange = () => {
             newRegistration.installing?.addEventListener('statechange', (e) => {
