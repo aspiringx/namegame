@@ -106,8 +106,75 @@ export function usePushNotifications() {
         )
         
         if (deviceMatch) {
-          // Database has a subscription for this device - trust it
+          // Database has a subscription for this device
           console.log('[Push] Found subscription for this device in database')
+          
+          // SYNC CHECK: Verify browser has matching subscription
+          const browserSub = await registration.pushManager.getSubscription()
+          
+          // For Chrome/Android, check Firebase token in IndexedDB
+          if (deviceInfo?.browser?.toLowerCase().includes('chrome') || deviceInfo?.os === 'android') {
+            try {
+              const messaging = await getMessagingInstance()
+              if (messaging) {
+                const { getToken } = await import('firebase/messaging')
+                // This will return existing token from IndexedDB or create new one
+                const currentToken = await getToken(messaging, {
+                  vapidKey: process.env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY,
+                  serviceWorkerRegistration: registration,
+                })
+                
+                const dbToken = deviceMatch.fcmToken
+                
+                if (currentToken !== dbToken) {
+                  // MISMATCH: Browser has different token than database
+                  console.warn('[Push] Token mismatch detected!')
+                  console.warn('[Push] DB token:', dbToken?.substring(0, 20) + '...')
+                  console.warn('[Push] Browser token:', currentToken?.substring(0, 20) + '...')
+                  console.log('[Push] Auto-refreshing subscription...')
+                  
+                  // Delete old subscription and create new one
+                  await deleteSubscription(deviceMatch.endpoint)
+                  
+                  // Update database with current token
+                  const newEndpoint = `https://fcm.googleapis.com/fcm/send/${currentToken}`
+                  const result = await saveSubscription(
+                    { endpoint: newEndpoint } as PushSubscription,
+                    currentToken,
+                    {
+                      browser: deviceInfo?.browser,
+                      os: deviceInfo?.os,
+                      deviceType: currentDeviceType,
+                    }
+                  )
+                  
+                  if (result.success) {
+                    console.log('[Push] ✅ Subscription auto-refreshed successfully')
+                    localStorage.setItem(PUSH_SUBSCRIPTION_ENDPOINT_KEY, newEndpoint)
+                    setIsPushEnabled(true)
+                    setSubscription(null)
+                  } else {
+                    console.error('[Push] Failed to refresh subscription:', result.message)
+                    setIsPushEnabled(false)
+                    localStorage.removeItem(PUSH_SUBSCRIPTION_ENDPOINT_KEY)
+                  }
+                  return
+                }
+              }
+            } catch (tokenError) {
+              console.error('[Push] Error checking token sync:', tokenError)
+              // If we can't check, assume it's fine and continue
+            }
+          } else if (!browserSub) {
+            // Non-Chrome browser has no subscription - needs refresh
+            console.warn('[Push] Browser subscription missing, auto-refreshing...')
+            await deleteSubscription(deviceMatch.endpoint)
+            setIsPushEnabled(false)
+            localStorage.removeItem(PUSH_SUBSCRIPTION_ENDPOINT_KEY)
+            return
+          }
+          
+          // All good - subscription is synced
           setIsPushEnabled(true)
           setSubscription(null) // Browser sub might not be available in all tabs
           localStorage.setItem(PUSH_SUBSCRIPTION_ENDPOINT_KEY, deviceMatch.endpoint)
@@ -129,19 +196,8 @@ export function usePushNotifications() {
   }, [isReady, registration, session, deviceInfo?.isReady]) // Verify when SW ready, session changes, or deviceInfo ready. Don't include error?.message to avoid loops.
 
   const subscribe = useCallback(async () => {
-    const stack = new Error().stack
-    console.log('[Push] ⚠️⚠️⚠️ subscribe() called!')
-    console.log('[Push] Stack trace:', stack)
-    console.log('[Push] Called from:', stack?.split('\n')[2]) // Show immediate caller
-    
-    // TEMPORARY: Block auto-subscribe to prevent token creation
-    if (!window.confirm('Subscribe to push notifications? (Click Cancel if this appeared automatically)')) {
-      console.log('[Push] ❌ Subscribe blocked by user')
-      return
-    }
-    
     if (!isSupported || !process.env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY) {
-      console.error('Push notifications not supported.')
+      console.error('[Push] Push notifications not supported.')
       return
     }
 
@@ -240,11 +296,7 @@ export function usePushNotifications() {
             throw new Error('getToken() returned empty token')
           }
           
-          console.log('[Push] ✅ Firebase token received from getToken():', fcmToken)
-          console.log('[Push] Token length:', fcmToken.length)
-          console.log('[Push] Token first 50 chars:', fcmToken.substring(0, 50))
-          console.log('[Push] Token last 50 chars:', fcmToken.substring(fcmToken.length - 50))
-          console.log('[Push] 🧪 IMMEDIATELY test this token with: node test-firebase-send.js "' + fcmToken + '"')
+          console.log('[Push] ✅ Firebase token received:', fcmToken.substring(0, 20) + '...')
         } catch (tokenError: any) {
           console.error('[Push] ❌ getToken() failed:', tokenError)
           console.error('[Push] Error code:', tokenError.code)
@@ -353,7 +405,7 @@ export function usePushNotifications() {
       }
 
       // For Firebase (Android/Chrome), also delete the FCM token
-      if (deviceInfo?.os === 'android' || deviceInfo?.browser?.includes('Chrome')) {
+      if (deviceInfo?.os === 'android' || deviceInfo?.browser?.toLowerCase().includes('chrome')) {
         try {
           const messaging = await getMessagingInstance()
           if (messaging) {

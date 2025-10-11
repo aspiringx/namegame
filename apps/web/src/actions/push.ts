@@ -42,21 +42,12 @@ export async function saveSubscription(
       browser = 'safari'
     } else if (endpoint.includes('notify.windows.com')) {
       browser = 'edge'
-    } else if (endpoint.includes('updates.push.services.mozilla.com')) {
       browser = 'firefox'
     }
   }
 
   // Log subscription details for debugging
-  console.log('[SaveSubscription] New subscription:', {
-    endpoint: endpoint.substring(0, 50) + '...',
-    userId,
-    browser,
-    os: deviceInfo?.os,
-    deviceType: deviceInfo?.deviceType,
-    hasFcmToken: !!fcmToken
-  })
-  console.log('[SaveSubscription] Stack trace:', new Error().stack)
+  console.log('[SaveSubscription] New subscription for user:', userId)
 
   try {
     // Find an existing subscription by its endpoint.

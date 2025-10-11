@@ -154,18 +154,9 @@ export async function sendPushNotification(
     // Fetch subscriptions
     let subscriptions;
     if (endpoint) {
-      console.log('[Push] Looking up subscription by endpoint:', endpoint.substring(0, 50) + '...');
       const sub = await prisma.pushSubscription.findUnique({
         where: { endpoint }
       });
-      if (sub) {
-        console.log('[Push] Found subscription:', {
-          id: sub.id,
-          endpoint: sub.endpoint.substring(0, 50) + '...',
-          fcmToken: sub.fcmToken?.substring(0, 20) + '...',
-          createdAt: sub.createdAt
-        });
-      }
       subscriptions = sub ? [sub] : [];
     } else if (userId) {
       subscriptions = await prisma.pushSubscription.findMany({
