@@ -11,6 +11,13 @@ const firebaseConfig = {
 };
 
 console.log('[Firebase Client] Initializing with project:', firebaseConfig.projectId);
+console.log('[Firebase Client] Full config:', firebaseConfig);
+
+// Enable Firebase debug logging
+if (typeof window !== 'undefined') {
+  (window as any).FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+  localStorage.setItem('debug', 'firebase:*');
+}
 
 // Initialize Firebase only once
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];

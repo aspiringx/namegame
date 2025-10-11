@@ -216,16 +216,29 @@ export function usePushNotifications() {
         
         // Firebase getToken() registers with FCM and returns the token
         console.log('[Push] Calling Firebase getToken()...')
-        fcmToken = await getToken(messaging!, {
-          vapidKey: process.env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY,
-          serviceWorkerRegistration: registration,
-        })
+        console.log('[Push] VAPID key:', process.env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY?.substring(0, 20) + '...')
+        console.log('[Push] Service worker scope:', registration.scope)
         
-        if (!fcmToken) {
-          throw new Error('Failed to get Firebase token')
+        try {
+          fcmToken = await getToken(messaging!, {
+            vapidKey: process.env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY,
+            serviceWorkerRegistration: registration,
+          })
+          
+          if (!fcmToken) {
+            throw new Error('getToken() returned empty token')
+          }
+          
+          console.log('[Push] ✅ Firebase token received from getToken():', fcmToken)
+          console.log('[Push] Token length:', fcmToken.length)
+          console.log('[Push] Token first 50 chars:', fcmToken.substring(0, 50))
+          console.log('[Push] Token last 50 chars:', fcmToken.substring(fcmToken.length - 50))
+        } catch (tokenError: any) {
+          console.error('[Push] ❌ getToken() failed:', tokenError)
+          console.error('[Push] Error code:', tokenError.code)
+          console.error('[Push] Error message:', tokenError.message)
+          throw tokenError
         }
-        
-        console.log('[Push] Firebase token received:', fcmToken.substring(0, 20) + '...')
         
         // Create a fake PushSubscription object for database compatibility
         // Firebase doesn't use PushSubscription - it only uses the FCM token
