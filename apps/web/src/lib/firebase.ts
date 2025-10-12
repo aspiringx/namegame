@@ -10,11 +10,8 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-console.log('[Firebase Client] Initializing with project:', firebaseConfig.projectId);
-console.log('[Firebase Client] Full config:', firebaseConfig);
-
-// Enable Firebase debug logging
-if (typeof window !== 'undefined') {
+// Enable Firebase debug logging in development
+if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
   (window as any).FIREBASE_APPCHECK_DEBUG_TOKEN = true;
   localStorage.setItem('debug', 'firebase:*');
 }

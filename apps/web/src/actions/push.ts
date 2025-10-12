@@ -3,6 +3,7 @@
 import { auth } from '@/auth'
 import db from '@/lib/prisma'
 import { z } from 'zod'
+import { headers } from 'next/headers'
 
 const subscriptionSchema = z.object({
   endpoint: z.string().url(),
@@ -313,7 +314,11 @@ export async function sendDailyChatNotifications(
   }
 
   // Use centralized push notification function
-  const { sendPushNotification } = await import('@namegame/notifications')
+  const { sendPushNotification, getNotificationUrl } = await import('@namegame/notifications')
+  
+  // Get the notification URL using centralized helper
+  const headersList = await headers()
+  const notificationUrl = getNotificationUrl('/me?openChat=true', headersList)
   
   const payload = {
     title: 'New Messages',
@@ -321,7 +326,7 @@ export async function sendDailyChatNotifications(
     icon: '/icon.png',
     badge: '/icon.png',
     data: {
-      url: `${process.env.NEXT_PUBLIC_APP_URL}/me?openChat=true`,
+      url: notificationUrl,
     },
   }
 

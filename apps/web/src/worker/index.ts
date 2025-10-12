@@ -10,10 +10,16 @@ declare const self: ServiceWorkerGlobalScope
 // Don't use skipWaiting() or clientsClaim() - they invalidate Firebase tokens
 // The service worker will update on next page load/navigation
 
-self.addEventListener('activate', () => {
+self.addEventListener('activate', (event) => {
   console.log('[SW] Service worker activated')
-  // Don't claim clients immediately - let it happen naturally on next page load
-  // This prevents Firebase token invalidation
+  
+  // Claim clients immediately so the SW can handle push notifications
+  // This is safe because we're not using skipWaiting() anymore
+  event.waitUntil(
+    self.clients.claim().then(() => {
+      console.log('[SW] Clients claimed - service worker now controlling all pages')
+    })
+  )
 })
 
 // Firebase is ONLY for Chrome/Android (FCM)
@@ -105,11 +111,13 @@ self.addEventListener('push', (event: PushEvent) => {
 self.addEventListener('notificationclick', (event: NotificationEvent) => {
   console.log('[SW] Notification clicked')
   console.log('[SW] Notification data:', event.notification.data)
+  console.log('[SW] Notification tag:', event.notification.tag)
+  console.log('[SW] Event action:', event.action)
   
   event.notification.close()
 
   const urlToOpen =
-    event.notification.data.url || new URL('/', self.location.origin).href
+    event.notification.data?.url || new URL('/', self.location.origin).href
   
   console.log('[SW] Opening URL:', urlToOpen)
 

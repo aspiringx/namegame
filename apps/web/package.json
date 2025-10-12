@@ -10,7 +10,8 @@
     "build": "next build",
     "build:clean": "rm -rf .next && pnpm build",
     "start": "next start",
-    "start:ssl": "npx local-ssl-proxy --key ../../local.namegame.app-key.pem --cert ../../local.namegame.app.pem --source 3001 --target 3000",
+    "start:mobile": "next start -H 0.0.0.0",
+    "start:ssl": "npx local-ssl-proxy --key ../../local.namegame.app-key.pem --cert ../../local.namegame.app.pem --source 3443 --target 3000",
     "test": "vitest run",
     "test:watch": "vitest",
     "email-preview": "email dev --dir src/emails --port 3001"

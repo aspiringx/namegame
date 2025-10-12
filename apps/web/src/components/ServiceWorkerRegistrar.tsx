@@ -23,23 +23,18 @@ export function ServiceWorkerRegistrar() {
         
         if (existingRegistration) {
           // Service worker already registered, use it
-          console.log('[SW Registration] Service worker already registered')
           newRegistration = existingRegistration
           
           // Check if the controller matches the active worker from this registration
           if (navigator.serviceWorker.controller && 
               newRegistration.active && 
               navigator.serviceWorker.controller.scriptURL === newRegistration.active.scriptURL) {
-            console.log('[SW Registration] Service worker already controlling page with matching registration')
             _setRegistration(newRegistration)
             _setIsReady(true)
             return
           }
-          
-          console.log('[SW Registration] Service worker exists but not controlling page, waiting for control...')
         } else {
           // Register the new service worker
-          console.log('[SW Registration] Registering new service worker')
           newRegistration = await navigator.serviceWorker.register('/sw.js')
         }
 

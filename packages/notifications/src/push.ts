@@ -2,6 +2,9 @@ import webPush, { type WebPushError } from "web-push";
 import { PrismaClient } from "@namegame/db";
 import * as admin from "firebase-admin";
 
+// Export notification URL helpers
+export { getAppOrigin, getNotificationUrl } from "./notification-url";
+
 // Initialize Firebase Admin SDK
 let firebaseInitialized = false;
 function initializeFirebase() {

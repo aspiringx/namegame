@@ -1,6 +1,6 @@
 import { PrismaClient } from '@namegame/db';
 import { JobHandler } from '@namegame/queue';
-import { sendPushNotification } from '@namegame/notifications';
+import { sendPushNotification, getNotificationUrl } from '@namegame/notifications';
 import { nanoid } from 'nanoid';
 
 const prisma = new PrismaClient();
@@ -61,7 +61,8 @@ export const sendDailyChatNotifications: JobHandler = async () => {
       try {
         // Generate one-time login code for SSO
         const loginCode = await generateOneTimeLoginCode(userId);
-        const ssoUrl = `${process.env.NEXT_PUBLIC_APP_URL}/one-time-login/${loginCode}?openChat=true`;
+        // Use centralized URL helper (falls back to NEXT_PUBLIC_APP_URL in worker context)
+        const ssoUrl = getNotificationUrl(`/one-time-login/${loginCode}?openChat=true`);
         
         const { successCount, failureCount } = await sendPushNotification(
           {

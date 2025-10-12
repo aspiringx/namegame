@@ -41,11 +41,26 @@ export function usePushNotifications() {
   const [error, setError] = useState<Error | null>(null)
   const skipNextVerification = useRef(false)
 
-  const isSupported =
-    typeof window !== 'undefined' &&
-    'serviceWorker' in navigator &&
-    'PushManager' in window &&
-    'permissions' in navigator
+  // Check if push notifications are supported
+  // Exclude Safari desktop browser (but allow Safari PWA)
+  const isSupported = (() => {
+    if (typeof window === 'undefined') return false
+    if (!('serviceWorker' in navigator)) return false
+    if (!('PushManager' in window)) return false
+    if (!('permissions' in navigator)) return false
+    
+    // Detect Safari browser (not PWA)
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent)
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
+                        (window.navigator as any).standalone === true
+    
+    // Block Safari desktop browser, but allow Safari PWA
+    if (isSafari && !isStandalone) {
+      return false
+    }
+    
+    return true
+  })()
 
   useEffect(() => {
     if (isSupported) {
