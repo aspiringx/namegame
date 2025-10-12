@@ -1,6 +1,7 @@
 import webPush, { type WebPushError } from "web-push";
 import { PrismaClient } from "@namegame/db";
 import * as admin from "firebase-admin";
+import notificationVariations from "./notification-variations.json";
 
 // Export notification URL helpers
 export { getAppOrigin, getNotificationUrl } from "./notification-url";
@@ -58,6 +59,26 @@ interface SendPushOptions {
   userId?: string;
   endpoint?: string;
   prisma?: PrismaClient;
+}
+
+/**
+ * Generate random notification text with Mad Lib style combinations
+ * @returns Object with title and body for the notification
+ */
+export function getRandomNotificationText(): { title: string; body: string } {
+  // Generate 3 independent random indices
+  const adjectiveIndex = Math.floor(Math.random() * notificationVariations.adjectives.length);
+  const phraseIndex = Math.floor(Math.random() * notificationVariations.phrases.length);
+  const emojiIndex = Math.floor(Math.random() * notificationVariations.emojis.length);
+
+  const adjective = notificationVariations.adjectives[adjectiveIndex];
+  const phrase = notificationVariations.phrases[phraseIndex];
+  const emoji = notificationVariations.emojis[emojiIndex];
+
+  return {
+    title: `${adjective} Messages`,
+    body: `${emoji}${emoji} ${phrase} ${emoji}${emoji}`,
+  };
 }
 
 /**

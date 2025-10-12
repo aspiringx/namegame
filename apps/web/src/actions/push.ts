@@ -314,15 +314,18 @@ export async function sendDailyChatNotifications(
   }
 
   // Use centralized push notification function
-  const { sendPushNotification, getNotificationUrl } = await import('@namegame/notifications')
+  const { sendPushNotification, getNotificationUrl, getRandomNotificationText } = await import('@namegame/notifications')
   
   // Get the notification URL using centralized helper
   const headersList = await headers()
   const notificationUrl = getNotificationUrl('/me?openChat=true', headersList)
   
+  // Generate random notification text
+  const notificationText = getRandomNotificationText()
+  
   const payload = {
-    title: 'New Messages',
-    body: "Looks like you have new messages. Since this is a non-annoying notification, you can check them if you feel like it... or not.",
+    title: notificationText.title,
+    body: notificationText.body,
     icon: '/icon.png',
     badge: '/icon.png',
     data: {
