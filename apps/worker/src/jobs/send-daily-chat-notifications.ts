@@ -1,6 +1,6 @@
 import { PrismaClient } from '@namegame/db';
 import { JobHandler } from '@namegame/queue';
-import { sendPushNotification, getNotificationUrl } from '@namegame/notifications';
+import { sendPushNotification, getNotificationUrl, getRandomNotificationText } from '@namegame/notifications';
 import { nanoid } from 'nanoid';
 
 const prisma = new PrismaClient();
@@ -56,6 +56,12 @@ export const sendDailyChatNotifications: JobHandler = async () => {
     let totalSuccess = 0;
     let totalFailure = 0;
 
+    // Generate random notification text once for this batch
+    const notificationText = getRandomNotificationText();
+    console.log(
+      `[DailyChatNotifications] Using notification text: "${notificationText.title}" / "${notificationText.body}"`
+    );
+
     // Send notification to each user
     for (const { userId } of usersWithUnread) {
       try {
@@ -66,8 +72,8 @@ export const sendDailyChatNotifications: JobHandler = async () => {
         
         const { successCount, failureCount } = await sendPushNotification(
           {
-            title: 'New Messages',
-            body: "Looks like you have new messages. Since this is a non-annoying notification, you can check them if you feel like it... or not.",
+            title: notificationText.title,
+            body: notificationText.body,
             icon: '/icon.png',
             badge: '/icon.png',
             data: {
