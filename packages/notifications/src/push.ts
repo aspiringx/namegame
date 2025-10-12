@@ -67,9 +67,15 @@ interface SendPushOptions {
  */
 export function getRandomNotificationText(): { title: string; body: string } {
   // Generate 3 independent random indices
-  const adjectiveIndex = Math.floor(Math.random() * notificationVariations.adjectives.length);
-  const phraseIndex = Math.floor(Math.random() * notificationVariations.phrases.length);
-  const emojiIndex = Math.floor(Math.random() * notificationVariations.emojis.length);
+  const adjectiveIndex = Math.floor(
+    Math.random() * notificationVariations.adjectives.length
+  );
+  const phraseIndex = Math.floor(
+    Math.random() * notificationVariations.phrases.length
+  );
+  const emojiIndex = Math.floor(
+    Math.random() * notificationVariations.emojis.length
+  );
 
   const adjective = notificationVariations.adjectives[adjectiveIndex];
   const phrase = notificationVariations.phrases[phraseIndex];
@@ -88,8 +94,7 @@ export function getRandomNotificationText(): { title: string; body: string } {
 export function configureVapid() {
   const vapidPublicKey = process.env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY;
   const vapidPrivateKey = process.env.WEB_PUSH_PRIVATE_KEY;
-  const vapidEmail =
-    process.env.WEB_PUSH_EMAIL || "mailto:notifications@namegame.app";
+  const vapidEmail = process.env.WEB_PUSH_EMAIL || "mailto:push@namegame.app";
 
   if (!vapidPublicKey || !vapidPrivateKey) {
     throw new Error(
