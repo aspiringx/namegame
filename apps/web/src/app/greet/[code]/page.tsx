@@ -31,6 +31,11 @@ export default async function GreetPage({
 
   // If the code is valid and the user is authenticated, handle the greeting and redirect.
   if (isValidCode && session?.user?.id) {
+    // Codes without a group are for SSO login, not greetings
+    if (!codeData.group) {
+      return redirect('/me')
+    }
+
     // Prevent users from greeting themselves.
     if (session.user.id === codeData.user.id) {
       return redirect(`/g/${codeData.group.slug}`)

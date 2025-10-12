@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Search, Loader2 } from 'lucide-react'
+import { Search, Loader2, RefreshCw } from 'lucide-react'
 
 type Subscription = {
   endpoint: string
@@ -60,6 +60,10 @@ export function PushTestClientPage() {
       } else {
         // Replace subscriptions (new search or initial load)
         setSubscriptions(result.subscriptions)
+        
+        // Clean up selected endpoints that no longer exist
+        const validEndpoints = new Set(result.subscriptions.map(s => s.endpoint))
+        setSelectedEndpoints(prev => prev.filter(endpoint => validEndpoints.has(endpoint)))
       }
       
       setHasMore(result.hasMore)
@@ -114,17 +118,13 @@ export function PushTestClientPage() {
       return
     }
 
-    // const origin = window.location.origin
-    // // HACK: In local dev with an SSL proxy, the origin can be http even if the site is served over https.
-    // // This forces https to ensure the link works on devices.
-    const baseUrl = window.location.origin.startsWith('http://')
-      ? window.location.origin.replace('http://', 'https://')
-      : window.location.origin
-    // // HACK: Temporary for Android Emulator testing. Leave this commented code
-    // // here as a reminder for local testing.
-    // // const baseUrl = 'https://10.0.2.2:3001'
-    // // Same for local iPhone based on mac ip address which could change.
-    // // const baseUrl = 'https://192.168.50.177:3001'
+    // Use the actual origin without forcing HTTPS
+    const baseUrl = window.location.origin
+    
+    // HACK: Uncomment for Android Emulator testing
+    // const baseUrl = 'https://10.0.2.2:3001'
+    // HACK: Uncomment for local iPhone testing (update IP as needed)
+    // const baseUrl = 'https://192.168.50.177:3001'
 
     const payload = {
       title,
@@ -173,38 +173,54 @@ export function PushTestClientPage() {
     )
   }
 
-  const toggleAll = () => {
-    if (selectedEndpoints.length === subscriptions.length) {
-      setSelectedEndpoints([])
-    } else {
-      setSelectedEndpoints(subscriptions.map(s => s.endpoint))
-    }
-  }
-
   return (
     <div className="container mx-auto p-4 max-w-2xl">
       <h1 className="mb-6 text-2xl font-bold">Push Notification Test</h1>
       
       {/* Device Selection */}
       <div className="mb-6 rounded-lg border p-4 dark:border-gray-700">
-        <div className="mb-3 flex items-center justify-between">
-          <label className="block text-sm font-medium">
-            Select Devices ({selectedEndpoints.length} selected)
-          </label>
-          <Button variant="outline" size="sm" onClick={toggleAll}>
-            {selectedEndpoints.length === subscriptions.length && subscriptions.length > 0 ? 'Deselect All' : 'Select All'}
-          </Button>
+        <div className="mb-6 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Select Devices ({selectedEndpoints.length} selected)
+            </h3>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => loadSubscriptions(search)}
+              disabled={isLoading}
+            >
+              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                if (selectedEndpoints.length === subscriptions.length) {
+                  setSelectedEndpoints([])
+                } else {
+                  setSelectedEndpoints(subscriptions.map((s) => s.endpoint))
+                }
+              }}
+            >
+              {selectedEndpoints.length === subscriptions.length
+                ? 'Deselect All'
+                : 'Select All'}
+            </Button>
+          </div>
         </div>
-        
-        {/* Search Input */}
-        <div className="mb-3 relative">
+
+        {/* Search */}
+        <div className="mb-4 relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <Input
             type="text"
             placeholder="Search by name..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
+            className="pl-10"
           />
         </div>
 
@@ -319,6 +335,17 @@ export function PushTestClientPage() {
       >
         Send {selectedEndpoints.length} Custom Notification{selectedEndpoints.length !== 1 ? 's' : ''}
       </Button>
+      
+      <div className="mt-6 rounded-md bg-gray-100 p-4 text-xs text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+        <p className="mb-2 font-semibold">Developer Notes:</p>
+        <ul className="list-inside list-disc space-y-1">
+          <li>File: <code className="rounded bg-gray-200 px-1 dark:bg-gray-700">apps/web/src/app/(main)/me/push-test/push-test-client.tsx</code></li>
+          <li>Chrome uses Firebase Cloud Messaging (FCM) - tokens stored in IndexedDB</li>
+          <li>Edge/Safari/Firefox use standard Web Push API - subscriptions in browser</li>
+          <li>Manual refresh: Click the refresh button to update the subscription list</li>
+          <li>For Android Emulator or iPhone testing, uncomment baseUrl hacks in handleSendNotification()</li>
+        </ul>
+      </div>
     </div>
   )
 }

@@ -12,8 +12,8 @@ import { getCodeTable } from '@/lib/codes'
 export interface CodeData {
   id: number
   userId: string
-  parentGroupId: number
-  groupId: number
+  parentGroupId: number | null
+  groupId: number | null
   code: string
   user: {
     firstName: string | null
@@ -26,7 +26,7 @@ export interface CodeData {
     groupType: {
       code: string
     }
-  }
+  } | null
 }
 
 /**
@@ -38,6 +38,10 @@ export async function handleAuthenticatedGreeting(
   codeData: CodeData,
   currentUserId: string,
 ) {
+  // Greeting codes must have a group
+  if (!codeData.group || !codeData.groupId) {
+    throw new Error('Invalid greeting code - no group associated');
+  }
 
   const [relationTypes, roleTypes, photoTypes, entityTypes] = await Promise.all(
     [
@@ -76,7 +80,7 @@ export async function handleAuthenticatedGreeting(
 
   await prisma.$transaction(async (tx) => {
     // 1. Determine the relation type based on the group type
-    const relationTypeId = codeData.group.groupType.code === 'family'
+    const relationTypeId = codeData.group!.groupType.code === 'family'
       ? relationTypes.family.id
       : relationTypes.acquaintance.id;
 
@@ -119,13 +123,13 @@ export async function handleAuthenticatedGreeting(
       where: {
         userId_groupId: {
           userId: currentUserId,
-          groupId: codeData.groupId,
+          groupId: codeData.groupId!,
         },
       },
       update: {},
       create: {
         userId: currentUserId,
-        groupId: codeData.groupId,
+        groupId: codeData.groupId!,
         roleId: roleId, // Dynamically assign role
       },
     })
@@ -182,6 +186,10 @@ export async function handleGuestGreeting(
   firstName: string,
   codeData: CodeData,
 ) {
+  // Greeting codes must have a group
+  if (!codeData.group || !codeData.groupId) {
+    throw new Error('Invalid greeting code - no group associated');
+  }
   const hashedPassword = await bcrypt.hash('password123', 10)
   const username = `guest-${firstName.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`
 
@@ -222,7 +230,7 @@ export async function handleGuestGreeting(
       const user1Id = codeData.user.id < newUser.id ? codeData.user.id : newUser.id;
       const user2Id = codeData.user.id > newUser.id ? codeData.user.id : newUser.id;
 
-      const relationTypeId = codeData.group.groupType.code === 'family'
+      const relationTypeId = codeData.group!.groupType.code === 'family'
         ? relationTypes.family.id
         : relationTypes.acquaintance.id;
 
@@ -240,7 +248,7 @@ export async function handleGuestGreeting(
       await tx.groupUser.create({
         data: {
           userId: newUser.id,
-          groupId: codeData.groupId,
+          groupId: codeData.groupId!,
           roleId: roleTypes.guest.id,
         },
       })

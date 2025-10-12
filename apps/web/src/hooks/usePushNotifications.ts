@@ -1,15 +1,15 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import { useServiceWorker } from '@/context/ServiceWorkerContext'
 import { useDeviceInfoContext } from '@/context/DeviceInfoContext'
 import {
   saveSubscription,
   deleteSubscription,
-  getSubscription,
+  getUserSubscriptions,
 } from '@/actions/push'
-import { messaging, getToken } from '@/lib/firebase'
+import { getMessagingInstance } from '@/lib/firebase'
 
 function urlBase64ToUint8Array(base64String: string) {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
@@ -39,12 +39,28 @@ export function usePushNotifications() {
   const [permissionStatus, setPermissionStatus] =
     useState<NotificationPermission>('default')
   const [error, setError] = useState<Error | null>(null)
+  const skipNextVerification = useRef(false)
 
-  const isSupported =
-    typeof window !== 'undefined' &&
-    'serviceWorker' in navigator &&
-    'PushManager' in window &&
-    'permissions' in navigator
+  // Check if push notifications are supported
+  // Exclude Safari desktop browser (but allow Safari PWA)
+  const isSupported = (() => {
+    if (typeof window === 'undefined') return false
+    if (!('serviceWorker' in navigator)) return false
+    if (!('PushManager' in window)) return false
+    if (!('permissions' in navigator)) return false
+    
+    // Detect Safari browser (not PWA)
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent)
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
+                        (window.navigator as any).standalone === true
+    
+    // Block Safari desktop browser, but allow Safari PWA
+    if (isSafari && !isStandalone) {
+      return false
+    }
+    
+    return true
+  })()
 
   useEffect(() => {
     if (isSupported) {
@@ -66,49 +82,152 @@ export function usePushNotifications() {
       setError(null)
     }
     
-    if (!isReady || !registration || !session) return
+    if (!isReady || !registration || !session || !deviceInfo?.isReady) return
 
     const verifySubscription = async () => {
-      const localEndpoint = localStorage.getItem(PUSH_SUBSCRIPTION_ENDPOINT_KEY)
-
-      if (!localEndpoint) {
-        setIsPushEnabled(false)
-        setSubscription(null)
+      // Skip verification if we just subscribed (avoid race condition)
+      if (skipNextVerification.current) {
+        skipNextVerification.current = false
         return
       }
-
-      // Optimistically set UI state while we verify
-      setIsPushEnabled(true)
-
+      
       try {
-        const serverResult = await getSubscription(localEndpoint)
-
-        if (serverResult.success && serverResult.subscription) {
-          // Server confirms subscription exists. Sync with browser.
-          const browserSub = await registration.pushManager.getSubscription()
-          if (browserSub && browserSub.endpoint === localEndpoint) {
-            setSubscription(browserSub)
-          } else if (!browserSub) {
-            // This can happen on a hard refresh. The state is still valid.
-            console.log(
-              'Browser subscription not immediately available, but server confirmed.',
-            )
-          } else {
-            // Browser has a different subscription. This is an edge case.
-            // We trust the one in localStorage which is confirmed by the server.
-            console.warn('Browser and local storage subscriptions mismatch.')
-            setSubscription(browserSub) // Or handle as an error
-          }
-        } else {
-          // Server says subscription is invalid. Clean up everywhere.
-          console.log('Server could not find subscription. Cleaning up.')
+        // DATABASE IS SOURCE OF TRUTH: Check what subscriptions the user has
+        const userSubsResult = await getUserSubscriptions()
+        
+        if (!userSubsResult.success || userSubsResult.subscriptions.length === 0) {
+          // No subscriptions in database - user is not subscribed
+          setIsPushEnabled(false)
           localStorage.removeItem(PUSH_SUBSCRIPTION_ENDPOINT_KEY)
+          return
+        }
+
+        // User has subscription(s) in database
+        // Derive current device type
+        let currentDeviceType: 'mobile' | 'tablet' | 'desktop' | undefined
+        if (deviceInfo?.isMobile) {
+          currentDeviceType = window.innerWidth >= 768 ? 'tablet' : 'mobile'
+        } else if (deviceInfo?.isDesktop) {
+          currentDeviceType = 'desktop'
+        }
+        
+        // Find subscription matching this device
+        const deviceMatch = userSubsResult.subscriptions.find(
+          sub => sub.browser === deviceInfo?.browser && 
+                 sub.os === deviceInfo?.os && 
+                 sub.deviceType === currentDeviceType
+        )
+        
+        if (deviceMatch) {
+          // Database has a subscription for this device
+          // SYNC CHECK: Verify browser has matching subscription
+          const browserSub = await registration.pushManager.getSubscription()
+          
+          // For Chrome/Android, check Firebase token in IndexedDB
+          if (deviceInfo?.browser?.toLowerCase().includes('chrome') || deviceInfo?.os === 'android') {
+            try {
+              const messaging = await getMessagingInstance()
+              if (messaging) {
+                const { getToken } = await import('firebase/messaging')
+                // This will return existing token from IndexedDB or create new one
+                const currentToken = await getToken(messaging, {
+                  vapidKey: process.env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY,
+                  serviceWorkerRegistration: registration,
+                })
+                
+                const dbToken = deviceMatch.fcmToken
+                
+                if (currentToken !== dbToken) {
+                  // MISMATCH: Browser has different token than database
+                  console.log('[Push] Token mismatch detected, auto-refreshing...')
+                  
+                  // Delete old subscription and create new one
+                  await deleteSubscription(deviceMatch.endpoint)
+                  
+                  // Update database with current token
+                  // For Firebase, create a fake PushSubscription with dummy keys
+                  const newEndpoint = `https://fcm.googleapis.com/fcm/send/${currentToken}`
+                  const fakeSub = {
+                    endpoint: newEndpoint,
+                    keys: {
+                      p256dh: 'firebase-dummy-key',
+                      auth: 'firebase-dummy-key',
+                    }
+                  }
+                  
+                  const result = await saveSubscription(
+                    fakeSub,
+                    currentToken,
+                    {
+                      browser: deviceInfo?.browser,
+                      os: deviceInfo?.os,
+                      deviceType: currentDeviceType,
+                    }
+                  )
+                  
+                  if (result.success) {
+                    console.log('[Push] ✅ Subscription auto-refreshed successfully')
+                    localStorage.setItem(PUSH_SUBSCRIPTION_ENDPOINT_KEY, newEndpoint)
+                    setIsPushEnabled(true)
+                    setSubscription(null)
+                  } else {
+                    console.error('[Push] Failed to refresh subscription:', result.message)
+                    setIsPushEnabled(false)
+                    localStorage.removeItem(PUSH_SUBSCRIPTION_ENDPOINT_KEY)
+                  }
+                  return
+                }
+              }
+            } catch (tokenError) {
+              console.error('[Push] Error checking token sync:', tokenError)
+              // If we can't check, assume it's fine and continue
+            }
+          } else {
+            // Non-Chrome browser (Edge/Safari/Firefox) - check if browser has subscription
+            if (browserSub && browserSub.endpoint === deviceMatch.endpoint) {
+              // Browser subscription matches DB - all good
+              setIsPushEnabled(true)
+              setSubscription(browserSub)
+              localStorage.setItem(PUSH_SUBSCRIPTION_ENDPOINT_KEY, deviceMatch.endpoint)
+            } else if (browserSub && browserSub.endpoint !== deviceMatch.endpoint) {
+              // Browser has different subscription than DB - update DB
+              console.log('[Push] Browser subscription differs from DB, updating...')
+              await deleteSubscription(deviceMatch.endpoint)
+              const result = await saveSubscription(browserSub, undefined, {
+                browser: deviceInfo?.browser,
+                os: deviceInfo?.os,
+                deviceType: currentDeviceType,
+              })
+              if (result.success) {
+                setIsPushEnabled(true)
+                setSubscription(browserSub)
+                localStorage.setItem(PUSH_SUBSCRIPTION_ENDPOINT_KEY, browserSub.endpoint)
+              } else {
+                setIsPushEnabled(false)
+                localStorage.removeItem(PUSH_SUBSCRIPTION_ENDPOINT_KEY)
+              }
+            } else {
+              // Browser has no subscription but DB does
+              // This happens in Edge/Safari after refresh - subscription doesn't persist
+              // Trust the DB and show as enabled, but subscription might not work
+              // User will need to re-enable if they want notifications
+              console.log('[Push] DB has subscription but browser does not (Edge/Safari behavior)')
+              setIsPushEnabled(true)
+              setSubscription(null)
+              localStorage.setItem(PUSH_SUBSCRIPTION_ENDPOINT_KEY, deviceMatch.endpoint)
+            }
+            return
+          }
+          
+          // Chrome: All good - subscription is synced
+          setIsPushEnabled(true)
+          setSubscription(null) // Browser sub might not be available in all tabs
+          localStorage.setItem(PUSH_SUBSCRIPTION_ENDPOINT_KEY, deviceMatch.endpoint)
+        } else {
+          // No subscription for this device
           setIsPushEnabled(false)
           setSubscription(null)
-          const browserSub = await registration.pushManager.getSubscription()
-          if (browserSub) {
-            await browserSub.unsubscribe()
-          }
+          localStorage.removeItem(PUSH_SUBSCRIPTION_ENDPOINT_KEY)
         }
       } catch (e) {
         console.error('Error verifying push subscription:', e)
@@ -117,11 +236,12 @@ export function usePushNotifications() {
     }
 
     verifySubscription()
-  }, [isReady, registration, session, error?.message])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isReady, registration, session, deviceInfo?.isReady]) // Verify when SW ready, session changes, or deviceInfo ready. Don't include error?.message to avoid loops.
 
   const subscribe = useCallback(async () => {
     if (!isSupported || !process.env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY) {
-      console.error('Push notifications not supported.')
+      console.error('[Push] Push notifications not supported.')
       return
     }
 
@@ -157,31 +277,80 @@ export function usePushNotifications() {
         return
       }
 
-      // Detect if Chrome/Edge (uses FCM) - use Firebase
-      // Chrome and Edge both use FCM, Safari/Firefox don't
+      // Detect if Chrome (uses FCM) - use Firebase
+      // Only Chrome uses FCM. Safari/Firefox/Edge use standard web-push
       const browser = deviceInfo?.browser || 'unknown'
-      const useFirebase = (browser === 'chrome' || browser === 'edge' || browser === 'brave') && messaging
-      console.log('[Push] Browser detection:', { browser, useFirebase, hasMessaging: !!messaging })
+      const messaging = await getMessagingInstance()
+      const useFirebase = (browser === 'chrome' || browser === 'brave') && messaging
 
       let sub: PushSubscription | null = null
+      let fcmToken: string | undefined = undefined
 
       if (useFirebase) {
-        // Use Firebase for Chrome/Edge
-        console.log('[Push] Using Firebase for Chrome/Edge')
-        const token = await getToken(messaging!, {
-          vapidKey: process.env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY,
-          serviceWorkerRegistration: registration,
-        })
-        
-        if (!token) {
-          throw new Error('Failed to get Firebase token')
+        // For Chrome/Brave: Use Firebase getToken() - no PushSubscription needed
+        // Wait for service worker to be active
+        if (!registration.active) {
+          await new Promise<void>((resolve, reject) => {
+            const sw = registration.installing || registration.waiting
+            if (sw) {
+              const timeout = setTimeout(() => {
+                reject(new Error('Service worker activation timeout'))
+              }, 10000) // 10 second timeout
+              
+              sw.addEventListener('statechange', function handler() {
+                if (sw.state === 'activated') {
+                  clearTimeout(timeout)
+                  sw.removeEventListener('statechange', handler)
+                  resolve()
+                } else if (sw.state === 'redundant') {
+                  clearTimeout(timeout)
+                  sw.removeEventListener('statechange', handler)
+                  reject(new Error('Service worker became redundant'))
+                }
+            })
+          } else {
+            throw new Error('No service worker found to activate')
+          }
+          })
         }
-
-        // Convert Firebase token to PushSubscription format for our backend
-        sub = await registration.pushManager.getSubscription()
+        
+        const { getToken } = await import('firebase/messaging')
+        
+        try {
+          fcmToken = await getToken(messaging!, {
+            vapidKey: process.env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY,
+            serviceWorkerRegistration: registration,
+          })
+          
+          if (!fcmToken) {
+            throw new Error('getToken() returned empty token')
+          }
+        } catch (tokenError: any) {
+          console.error('[Push] ❌ getToken() failed:', tokenError)
+          console.error('[Push] Error code:', tokenError.code)
+          console.error('[Push] Error message:', tokenError.message)
+          throw tokenError
+        }
+        
+        // Create a fake PushSubscription object for database compatibility
+        // Firebase doesn't use PushSubscription - it only uses the FCM token
+        const fakeEndpoint = `https://fcm.googleapis.com/fcm/send/${fcmToken}`
+        sub = {
+          endpoint: fakeEndpoint,
+          expirationTime: null,
+          toJSON: () => ({
+            endpoint: fakeEndpoint,
+            keys: { p256dh: '', auth: '' } // Firebase doesn't use these
+          }),
+          getKey: () => null,
+          unsubscribe: async () => {
+            // Would need to call Firebase deleteToken() here
+            return true
+          },
+          options: { applicationServerKey: null, userVisibleOnly: true }
+        } as unknown as PushSubscription
       } else {
-        // Use standard Push API for Safari/Firefox
-        console.log('[Push] Using standard Push API')
+        // Use standard Push API for Safari/Firefox/Edge
         sub = await registration.pushManager.getSubscription()
         if (!sub) {
           sub = await registration.pushManager.subscribe({
@@ -197,11 +366,26 @@ export function usePushNotifications() {
         throw new Error('Failed to create push subscription')
       }
 
-      const result = await saveSubscription(sub)
+      // Derive device type from deviceInfo
+      let deviceType: 'mobile' | 'tablet' | 'desktop' | undefined
+      if (deviceInfo?.isMobile) {
+        // Distinguish between phone and tablet based on screen size
+        deviceType = window.innerWidth >= 768 ? 'tablet' : 'mobile'
+      } else if (deviceInfo?.isDesktop) {
+        deviceType = 'desktop'
+      }
+
+      const result = await saveSubscription(sub, fcmToken, {
+        browser: deviceInfo?.browser,
+        os: deviceInfo?.os,
+        deviceType: deviceType,
+      })
       if (result.success) {
         setSubscription(sub)
         setIsPushEnabled(true)
         localStorage.setItem(PUSH_SUBSCRIPTION_ENDPOINT_KEY, sub.endpoint)
+        // Skip next verification to avoid race condition
+        skipNextVerification.current = true
       } else {
         console.error('Failed to save subscription:', result.message)
         setError(new Error(result.message || 'Failed to save subscription.'))
@@ -212,7 +396,7 @@ export function usePushNotifications() {
     } finally {
       setIsSubscribing(false)
     }
-  }, [isReady, registration, isSupported, permissionStatus, deviceInfo?.isReady, deviceInfo?.browser])
+  }, [isReady, registration, isSupported, permissionStatus, deviceInfo?.isReady, deviceInfo?.browser, deviceInfo?.os, deviceInfo?.isMobile, deviceInfo?.isDesktop])
 
   const unsubscribe = useCallback(async () => {
     const endpoint = localStorage.getItem(PUSH_SUBSCRIPTION_ENDPOINT_KEY)
@@ -245,6 +429,20 @@ export function usePushNotifications() {
         }
       }
 
+      // For Firebase (Android/Chrome), also delete the FCM token
+      if (deviceInfo?.os === 'android' || deviceInfo?.browser?.toLowerCase().includes('chrome')) {
+        try {
+          const messaging = await getMessagingInstance()
+          if (messaging) {
+            const { deleteToken } = await import('firebase/messaging')
+            await deleteToken(messaging)
+            console.log('[Push] Firebase token deleted')
+          }
+        } catch (err) {
+          console.error('[Push] Failed to delete Firebase token:', err)
+        }
+      }
+
       // Finally, clean up local state
       localStorage.removeItem(PUSH_SUBSCRIPTION_ENDPOINT_KEY)
       setSubscription(null)
@@ -255,7 +453,7 @@ export function usePushNotifications() {
     } finally {
       setIsSubscribing(false)
     }
-  }, [registration])
+  }, [registration, deviceInfo?.os, deviceInfo?.browser])
 
   useEffect(() => {
     // When permissions change to default or denied, the existing subscription

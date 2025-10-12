@@ -3,6 +3,7 @@
 import { auth } from '@/auth'
 import db from '@/lib/prisma'
 import { z } from 'zod'
+import { headers } from 'next/headers'
 
 const subscriptionSchema = z.object({
   endpoint: z.string().url(),
@@ -14,6 +15,8 @@ const subscriptionSchema = z.object({
 
 export async function saveSubscription(
   subscription: unknown,
+  fcmToken?: string,
+  deviceInfo?: { browser?: string; os?: string; deviceType?: string },
 ): Promise<{ success: boolean; message: string }> {
   const session = await auth()
   if (!session?.user?.id) {
@@ -31,12 +34,21 @@ export async function saveSubscription(
 
   const { endpoint, keys } = parsedSubscription.data
 
+  // Detect browser from endpoint (fallback if not provided)
+  let browser = deviceInfo?.browser || 'unknown'
+  if (!deviceInfo?.browser) {
+    if (endpoint.includes('fcm.googleapis.com')) {
+      browser = 'chrome'
+    } else if (endpoint.includes('web.push.apple.com')) {
+      browser = 'safari'
+    } else if (endpoint.includes('notify.windows.com')) {
+      browser = 'edge'
+      browser = 'firefox'
+    }
+  }
+
   // Log subscription details for debugging
-  console.log('[SaveSubscription] New subscription:', {
-    endpoint: endpoint.substring(0, 50) + '...',
-    userId,
-    browser: endpoint.includes('fcm.googleapis.com') ? 'Chrome' : endpoint.includes('web.push.apple.com') ? 'Safari' : 'Unknown'
-  })
+  console.log('[SaveSubscription] New subscription for user:', userId)
 
   try {
     // Find an existing subscription by its endpoint.
@@ -59,12 +71,20 @@ export async function saveSubscription(
         p256dh: keys.p256dh,
         auth: keys.auth,
         userId: userId, // Ensure userId is explicitly set on update
+        fcmToken: fcmToken || null,
+        browser: browser,
+        os: deviceInfo?.os || null,
+        deviceType: deviceInfo?.deviceType || null,
       },
       create: {
         userId,
         endpoint,
         p256dh: keys.p256dh,
         auth: keys.auth,
+        fcmToken: fcmToken || null,
+        browser: browser,
+        os: deviceInfo?.os || null,
+        deviceType: deviceInfo?.deviceType || null,
       },
     })
     return { success: true, message: 'Subscription saved.' }
@@ -147,6 +167,31 @@ export async function getSubscription(
   } catch (error) {
     console.error('Error fetching subscription:', error)
     return { success: false, subscription: null }
+  }
+}
+
+export async function getUserSubscriptions(): Promise<{
+  success: boolean
+  subscriptions: any[]
+}> {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return { success: false, subscriptions: [] }
+  }
+
+  try {
+    const subscriptions = await db.pushSubscription.findMany({
+      where: {
+        userId: session.user.id,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    })
+    return { success: true, subscriptions }
+  } catch (error) {
+    console.error('Error fetching user subscriptions:', error)
+    return { success: false, subscriptions: [] }
   }
 }
 
@@ -269,7 +314,11 @@ export async function sendDailyChatNotifications(
   }
 
   // Use centralized push notification function
-  const { sendPushNotification } = await import('@namegame/notifications')
+  const { sendPushNotification, getNotificationUrl } = await import('@namegame/notifications')
+  
+  // Get the notification URL using centralized helper
+  const headersList = await headers()
+  const notificationUrl = getNotificationUrl('/me?openChat=true', headersList)
   
   const payload = {
     title: 'New Messages',
@@ -277,7 +326,7 @@ export async function sendDailyChatNotifications(
     icon: '/icon.png',
     badge: '/icon.png',
     data: {
-      url: `${process.env.NEXT_PUBLIC_APP_URL}?openChat=true`,
+      url: notificationUrl,
     },
   }
 

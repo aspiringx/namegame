@@ -17,6 +17,7 @@
     "build:all": "pnpm --filter \"./packages/*\" build && pnpm --filter \"./apps/*\" build",
     "start": "pm2 start ecosystem.config.js",
     "start:local": "concurrently --names \"web,worker,chat\" --prefix-colors \"blue,green,yellow\" \"pnpm --filter web start\" \"pnpm --filter worker start\" \"pnpm --filter chat start\"",
+    "start:local:mobile": "concurrently --names \"web,worker,chat\" --prefix-colors \"blue,green,yellow\" \"pnpm --filter web start:mobile\" \"pnpm --filter worker start\" \"pnpm --filter chat start\"",
     "start:web": "pnpm --filter web start",
     "stop:pm2": "pm2 stop all",
     "restart:pm2": "pm2 restart all",

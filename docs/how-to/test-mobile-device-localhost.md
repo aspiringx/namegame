@@ -175,12 +175,12 @@ pm2 logs namegame-worker
 
 Push notifications require a secure context (HTTPS or localhost).
 
-### On Your Local Machine
+### On Your Local Machine (Desktop Browsers)
 
 ```bash
 # Build and start production
-pnpm build
-pnpm start
+pnpm build:all
+pnpm start:local
 
 # Open browser
 open http://localhost:3000
@@ -191,11 +191,50 @@ Modern browsers treat `localhost` as secure, so Push API will work.
 1. Go to `/me` to subscribe to notifications
 2. Go to `/me/push-test` to send a test notification
 
-### On Mobile Device
+**Browser Support:**
+- ✅ **Chrome/Edge/Firefox**: Full support for push notifications
+- ✅ **Safari PWA** (Add to Dock): Full support
+- ❌ **Safari Browser**: Push notifications disabled (Apple limitation)
 
-Use the **ngrok method** above to get an HTTPS URL, then:
+### On iPhone (HTTPS Required)
 
-1. Open the `https://...ngrok-free.app` URL on your mobile device
+iOS requires HTTPS for push notifications, even in local development. Use the SSL proxy method:
+
+**Terminal 1 - Start production server:**
+```bash
+pnpm build:all
+pnpm start:local:mobile
+```
+
+**Terminal 2 - Start SSL proxy:**
+```bash
+pnpm --filter web start:ssl
+```
+
+**On your iPhone:**
+1. Connect to the same WiFi as your Mac
+2. Find your Mac's IP: `ifconfig | grep "inet " | grep -v 127.0.0.1`
+3. Open Safari and go to `https://YOUR_IP:3443` (e.g., `https://192.168.50.177:3443`)
+4. Accept the self-signed certificate warning
+5. **For browser testing**: Safari browser doesn't support push notifications (Apple limitation)
+6. **For PWA testing**: 
+   - Tap Share → "Add to Home Screen"
+   - Open the PWA from your home screen
+   - Go to `/me` to enable notifications
+   - Go to `/me/push-test` to test
+
+**Port Configuration:**
+- `3000` - Next.js server (HTTP, accessible on local network)
+- `3001` - Chat WebSocket server
+- `3443` - HTTPS proxy → forwards to Next.js on port 3000
+
+**Note:** The notification URLs are dynamically generated from request headers, so they will automatically use the correct protocol and host (http/https, localhost/IP address).
+
+### On Android Device
+
+Use the **ngrok method** or **Android Emulator method** (see below) to get an HTTPS URL, then:
+
+1. Open the HTTPS URL on your Android device
 2. Navigate to `/me` to subscribe
 3. Navigate to `/me/push-test` to send a test notification
 
@@ -239,16 +278,18 @@ The emulator needs to trust your local Certificate Authority (CA).
 
 1.  **Start your app's production server**:
     ```bash
-    npm run build
-    npm start
+    pnpm build:all
+    pnpm start:local
     ```
 2.  **Start the SSL proxy** in a new terminal:
 
     ```bash
-    npm run start:ssl
+    pnpm --filter web start:ssl
     ```
 
-    Ensure your `package.json` script for `start:ssl` is `npx local-ssl-proxy --key local.namegame.app-key.pem --cert local.namegame.app.pem --source 3001 --target 3000`.
+    This runs `npx local-ssl-proxy --key ../../local.namegame.app-key.pem --cert ../../local.namegame.app.pem --source 3443 --target 3000`.
 
 3.  **Access the site in the emulator's browser**:
-    Navigate to **`https://10.0.2.2:3001`**. The site should load securely, and all PWA features will be functional.
+    Navigate to **`https://10.0.2.2:3443`**. The site should load securely, and all PWA features will be functional.
+    
+**Note:** Port 3443 is used for the SSL proxy to avoid conflicts with the chat server on port 3001.

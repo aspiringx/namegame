@@ -90,13 +90,13 @@ export default function GreetPageClient({
               expires: 1, // Expires in 1 day
             },
           )
-          Cookies.set('post_login_redirect', `/g/${codeData.group.slug}`, {
+          Cookies.set('post_login_redirect', `/g/${codeData.group!.slug}`, {
             expires: 1,
           })
           setSignInFailed(true)
         } else if (result.success) {
           // Account created and signed in successfully.
-          window.location.href = `/g/${codeData.group.slug}`
+          window.location.href = `/g/${codeData.group!.slug}`
         } else {
           alert(result.error || 'An unknown error occurred.')
         }
@@ -129,6 +129,17 @@ export default function GreetPageClient({
               <p className="text-xl">
                 This greeting link is either expired or invalid. Please ask for
                 a new one.
+              </p>
+            </div>
+          </div>
+        ) : !codeData.group ? (
+          <div className="flex min-h-[calc(100vh-12rem)] flex-col items-center justify-center p-4 text-center">
+            <div className="w-full max-w-md">
+              <h1 className="text-destructive mb-4 text-4xl font-bold">
+                Invalid Greeting Link
+              </h1>
+              <p className="text-xl">
+                This link is for login only, not for greetings.
               </p>
             </div>
           </div>

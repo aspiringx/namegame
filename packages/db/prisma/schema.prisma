@@ -348,16 +348,22 @@ model PasswordResetToken {
   @@unique([email, token])
 }
 
+// Push notification subscription model.
 model PushSubscription {
-  id        String   @id @default(cuid())
-  endpoint  String   @unique
-  p256dh    String
-  auth      String
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
+  id         String   @id @default(cuid())
+  endpoint   String   @unique
+  p256dh     String
+  auth       String
+  userId     String
+  fcmToken   String? // FCM/Firebase token needed for Google Chrome/Android.
+  browser    String? // Browser name (chrome, safari, firefox, edge, brave)
+  os         String? // Operating system (ios, android, macos, windows, linux)
+  deviceType String? // Device type (mobile, tablet, desktop)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
 
   @@index([userId])
+  @@index([userId, browser, os, deviceType])
 }
 
 // Chat system models

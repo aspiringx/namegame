@@ -67,8 +67,8 @@ const nextConfig = {
 
 module.exports = withPWA({
   dest: 'public',
-  register: false,
-  skipWaiting: true,
+  register: false, // Manual registration via ServiceWorkerRegistrar component
+  skipWaiting: false, // CRITICAL: Don't use skipWaiting - it invalidates Firebase tokens
   swSrc: 'src/worker/index.ts',
   disable: process.env.NODE_ENV === 'development',
 })(nextConfig)
