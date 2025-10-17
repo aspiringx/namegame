@@ -94,16 +94,7 @@ export async function handleAuthenticatedGreeting(
       },
     });
 
-    if (existingRelation) {
-      await tx.userUser.update({
-        where: {
-          id: existingRelation.id,
-        },
-        data: {
-          greetCount: { increment: 1 },
-        },
-      });
-    } else {
+    if (!existingRelation) {
       // For non-directional relationships, sort IDs to prevent duplicates
       const user1Id = currentUserId < codeData.user.id ? currentUserId : codeData.user.id;
       const user2Id = currentUserId > codeData.user.id ? currentUserId : codeData.user.id;

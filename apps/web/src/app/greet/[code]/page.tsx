@@ -1,6 +1,9 @@
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
 import { redirect } from 'next/navigation'
+import { headers } from 'next/headers'
+import { getDeviceTypeFromHeaders } from '@/lib/device'
+import { getPhotoUrl } from '@/lib/photos'
 import GreetPageClient from './client' // Keep client component separate
 
 // This is the main page component, which is a Server Component.
@@ -11,6 +14,8 @@ export default async function GreetPage({
 }) {
   const { code } = await params
   const session = await auth()
+  const headersList = await headers()
+  const deviceType = getDeviceTypeFromHeaders(headersList)
 
   const codeData = await prisma.code.findUnique({
     where: { code },
@@ -26,6 +31,27 @@ export default async function GreetPage({
       },
     },
   })
+
+  // Fetch the user's profile photo following the established pattern
+  let userPhotoUrl: string | undefined
+  if (codeData) {
+    const [userEntityType, primaryPhotoType] = await Promise.all([
+      prisma.entityType.findFirst({ where: { code: 'user' } }),
+      prisma.photoType.findFirst({ where: { code: 'primary' } }),
+    ])
+
+    const userPhoto = await prisma.photo.findFirst({
+      where: {
+        entityId: codeData.user.id,
+        entityTypeId: userEntityType?.id,
+        typeId: primaryPhotoType?.id,
+      },
+    })
+
+    if (userPhoto) {
+      userPhotoUrl = await getPhotoUrl(userPhoto, { deviceType })
+    }
+  }
 
   const isValidCode = !!codeData
 
@@ -48,5 +74,11 @@ export default async function GreetPage({
   }
 
   // If the code is invalid or the user is not authenticated, render the client component.
-  return <GreetPageClient codeData={codeData} isValidCode={isValidCode} />
+  return (
+    <GreetPageClient
+      codeData={codeData}
+      isValidCode={isValidCode}
+      userPhotoUrl={userPhotoUrl}
+    />
+  )
 }

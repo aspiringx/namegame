@@ -2,6 +2,7 @@
 
 import { useState, useTransition, useEffect } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
+import Image from 'next/image'
 import Cookies from 'js-cookie'
 import { handleGuestGreeting, CodeData } from '@/app/greet/[code]/actions'
 import Header from '@/components/Header'
@@ -28,9 +29,11 @@ function UnsupportedBrowser({ onCopy }: { onCopy: () => void }) {
 export default function GreetPageClient({
   codeData,
   isValidCode,
+  userPhotoUrl,
 }: {
   codeData: CodeData | null
   isValidCode: boolean
+  userPhotoUrl?: string
 }) {
   const router = useRouter()
   const pathname = usePathname()
@@ -119,7 +122,7 @@ export default function GreetPageClient({
   return (
     <div className="flex min-h-screen flex-col">
       <Header />
-      <main className="bg-background container mx-auto flex-grow px-4 py-18 sm:px-6 lg:px-8">
+      <main className="bg-background container mx-auto flex-grow px-4 py-8 sm:px-6 lg:px-8">
         {!isValidCode || !codeData ? (
           <div className="flex min-h-[calc(100vh-12rem)] flex-col items-center justify-center p-4 text-center">
             <div className="w-full max-w-md">
@@ -146,11 +149,26 @@ export default function GreetPageClient({
         ) : (
           <div className="flex min-h-[calc(100vh-12rem)] flex-col items-center justify-center p-6 text-center">
             <div className="w-full max-w-md">
-              <h1 className="mb-4 text-4xl font-bold">
+              <h1 className="mb-4 text-3xl font-bold">
                 Welcome to {codeData.group.name}!
               </h1>
-              <p className="mb-8 text-2xl">
+              {userPhotoUrl && (
+                <div className="mb-4 flex justify-center">
+                  <Image
+                    src={userPhotoUrl}
+                    alt={codeData.user.firstName || 'User'}
+                    width={120}
+                    height={120}
+                    className="rounded-full object-cover"
+                  />
+                </div>
+              )}
+              <p className="text-2xl mb-4">
                 {codeData.user.firstName} just greeted you.
+              </p>
+              <p className="mb-6 text">
+                Ask about: 
+                 {/* Randomly show one of 100 ice-breaker questions here  */}
               </p>
 
               {signInFailed ? (
@@ -172,20 +190,16 @@ export default function GreetPageClient({
               ) : !showSignupForm ? (
                 <div className="w-full space-y-4">
                   <div>
-                    <p className="mb-4 text-center text-xl">
-                      Is this your first time playing NameGame?
-                    </p>
                     <button
                       onClick={() => setShowSignupForm(true)}
                       className="bg-primary text-primary-foreground w-full rounded-md border px-6 py-2 sm:w-auto"
                     >
-                      <span className="md:hidden">Enter as a First-Timer</span>
-                      <span className="hidden md:inline">Enter</span>
+                      <span>Enter as a First-Timer</span>
                     </button>
                   </div>
                   <div className="pt-8">
                     <p className="mb-4 text-center">
-                      Can you already log in to NameGame?
+                      Already have a NameGame login?
                     </p>
                     <button
                       onClick={handleLogin}

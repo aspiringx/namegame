@@ -14,7 +14,7 @@
     "start:ssl": "npx local-ssl-proxy --key ../../local.namegame.app-key.pem --cert ../../local.namegame.app.pem --source 3443 --target 3000",
     "test": "vitest run",
     "test:watch": "vitest",
-    "email-preview": "email dev --dir src/emails --port 3001"
+    "email-preview": "email dev --dir src/emails --port 3002"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.1.0",

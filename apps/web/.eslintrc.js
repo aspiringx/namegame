@@ -13,5 +13,8 @@ module.exports = {
         argsIgnorePattern: '^_',
       },
     ],
+    "react/no-unescaped-entities": ["error", {
+      "forbid": [">", "}"]
+    }]
   },
 };

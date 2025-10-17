@@ -26,7 +26,7 @@ const inter = localFont({
 export const metadata: Metadata = {
   applicationName: 'NameGame',
   title: 'NameGame',
-  description: 'The relationship game that starts with a name',
+  description: 'Life is relationships',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,

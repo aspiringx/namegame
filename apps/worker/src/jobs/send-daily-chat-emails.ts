@@ -1,25 +1,31 @@
-import { PrismaClient } from '@namegame/db';
-import { JobHandler } from '@namegame/queue';
-import { getNotificationUrl, getRandomNotificationText } from '@namegame/notifications';
-import { nanoid } from 'nanoid';
-import { Resend } from 'resend';
+import { PrismaClient } from "@namegame/db";
+import { JobHandler } from "@namegame/queue";
+import {
+  getNotificationUrl,
+  getRandomNotificationText,
+} from "@namegame/notifications";
+import { nanoid } from "nanoid";
+import { Resend } from "resend";
 
 const prisma = new PrismaClient();
 const resend = new Resend(process.env.RESEND_API_KEY);
+const fromEmail =
+  process.env.FROM_EMAIL_NO_REPLY || "NameGame <no-reply@mail.namegame.app>";
 
 /**
  * Generate HTML email for daily chat notification
  */
 function generateEmailHtml(
   ssoLink: string,
+  unsubscribeLink: string,
   firstName: string | undefined,
   notificationTitle: string,
   notificationBody: string,
   emoji: string
 ): string {
-  const name = firstName || 'there';
+  const name = firstName || "there";
   const year = new Date().getFullYear();
-  
+
   return `
 <!DOCTYPE html>
 <html>
@@ -109,7 +115,7 @@ function generateEmailHtml(
       <h1>
         NameGame
         <br>
-        <span class="tagline">The relationship game that starts with a name</span>
+        <span class="tagline">Life is relationships</span>
       </h1>
     </div>
     
@@ -117,13 +123,18 @@ function generateEmailHtml(
       <p>Hi ${name},</p>
       <p>${notificationBody}</p>
       <a href="${ssoLink}" class="button">View Messages</a>
-      <p class="small-text">This is your daily digest. We'll never send more than one per day.</p>
+      <p class="small-text">We only send this if you have new messages and no more than daily.</p>
     </div>
     
     <hr class="hr">
     
     <div class="footer">
-      <p>&copy; ${year} NameGame</p>
+      <p style="margin-bottom: 8px;">
+        <a href="${unsubscribeLink}" style="color: #8898aa; text-decoration: underline;">Unsubscribe</a> from daily digest emails
+      </p>
+      <p style="margin: 4px 0;">NameGame</p>
+      <p style="margin: 4px 0;">Sandy, UT 84070</p>
+      <p style="margin: 4px 0;">&copy; ${year} NameGame</p>
     </div>
   </div>
 </body>
@@ -136,12 +147,13 @@ function generateEmailHtml(
  */
 function generateEmailText(
   ssoLink: string,
+  unsubscribeLink: string,
   firstName: string | undefined,
   notificationBody: string
 ): string {
-  const name = firstName || 'there';
+  const name = firstName || "there";
   const year = new Date().getFullYear();
-  
+
   return `
 Hi ${name},
 
@@ -149,8 +161,12 @@ ${notificationBody}
 
 View your messages: ${ssoLink}
 
-This is your daily digest. We'll never send more than one per day.
+We only send this if you have new messages and no more than daily.
 
+Unsubscribe: ${unsubscribeLink}
+
+NameGame
+Sandy, UT 84070
 ${year} NameGame
   `.trim();
 }
@@ -160,14 +176,14 @@ ${year} NameGame
  */
 async function generateOneTimeLoginCode(userId: string): Promise<string> {
   const code = nanoid(32);
-  
+
   await prisma.code.create({
     data: {
       userId,
       code,
     },
   });
-  
+
   return code;
 }
 
@@ -178,17 +194,19 @@ async function generateOneTimeLoginCode(userId: string): Promise<string> {
  */
 export const sendDailyChatEmails: JobHandler = async () => {
   const startTime = Date.now();
-  
+
   try {
-    console.log('[DailyChatEmails] Starting daily chat email job');
+    console.log("[DailyChatEmails] Starting daily chat email job");
 
     // Find users with unread messages AND verified emails
     // Excludes messages sent by the user themselves
-    const usersWithUnread = await prisma.$queryRaw<Array<{ 
-      userId: string; 
-      email: string;
-      firstName: string | null;
-    }>>`
+    const usersWithUnread = await prisma.$queryRaw<
+      Array<{
+        userId: string;
+        email: string;
+        firstName: string | null;
+      }>
+    >`
       SELECT DISTINCT 
         u.id as "userId",
         u.email,
@@ -207,7 +225,7 @@ export const sendDailyChatEmails: JobHandler = async () => {
     );
 
     if (usersWithUnread.length === 0) {
-      console.log('[DailyChatEmails] No users to notify');
+      console.log("[DailyChatEmails] No users to notify");
       return;
     }
 
@@ -222,7 +240,7 @@ export const sendDailyChatEmails: JobHandler = async () => {
 
     // Extract emoji from the body (first emoji before the text)
     const emojiMatch = notificationText.body.match(/^([\p{Emoji}]+)/u);
-    const emoji = emojiMatch ? emojiMatch[1].charAt(0) : '💬';
+    const emoji = emojiMatch ? emojiMatch[1].charAt(0) : "💬";
 
     // Send email to each user
     for (const { userId, email, firstName } of usersWithUnread) {
@@ -230,11 +248,17 @@ export const sendDailyChatEmails: JobHandler = async () => {
         // Generate one-time login code for SSO
         const loginCode = await generateOneTimeLoginCode(userId);
         // Use centralized URL helper (falls back to NEXT_PUBLIC_APP_URL in worker context)
-        const ssoUrl = getNotificationUrl(`/one-time-login/${loginCode}?openChat=true`);
-        
+        const ssoUrl = getNotificationUrl(
+          `/one-time-login/${loginCode}?openChat=true`
+        );
+        const unsubscribeUrl = getNotificationUrl(
+          `/one-time-login/${loginCode}?emailUnsubscribe=true`
+        );
+
         // Generate email HTML and text
         const emailHtml = generateEmailHtml(
           ssoUrl,
+          unsubscribeUrl,
           firstName || undefined,
           notificationText.title,
           notificationText.body,
@@ -243,13 +267,14 @@ export const sendDailyChatEmails: JobHandler = async () => {
 
         const emailText = generateEmailText(
           ssoUrl,
+          unsubscribeUrl,
           firstName || undefined,
           notificationText.body
         );
 
         // Send via Resend
         await resend.emails.send({
-          from: 'NameGame <notifications@namegame.app>',
+          from: fromEmail,
           to: email,
           subject: `${emoji} ${notificationText.title} ${emoji}`,
           html: emailHtml,

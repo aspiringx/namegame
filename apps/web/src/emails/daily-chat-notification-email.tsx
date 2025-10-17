@@ -1,9 +1,10 @@
-import { Button, Section, Text } from '@react-email/components'
+import { Button, Link, Section, Text } from '@react-email/components'
 import * as React from 'react'
 import { EmailTemplate } from './email-template'
 
 interface DailyChatNotificationEmailProps {
   ssoLink: string
+  unsubscribeLink?: string
   firstName?: string
   notificationTitle: string
   notificationBody: string
@@ -12,6 +13,7 @@ interface DailyChatNotificationEmailProps {
 
 export const DailyChatNotificationEmail = ({
   ssoLink,
+  unsubscribeLink,
   firstName,
   notificationTitle,
   notificationBody,
@@ -29,8 +31,20 @@ export const DailyChatNotificationEmail = ({
         View Messages
       </Button>
       <Text style={smallText} className="text">
-        This is your daily digest. We&apos;ll never send more than one per day.
+        We only send this if you have new messages and no more than daily.
       </Text>
+      {unsubscribeLink && (
+        <Text style={footerText} className="text">
+          <Link href={unsubscribeLink} style={linkStyle}>
+            Unsubscribe
+          </Link>{' '}
+          <br />
+          <br />
+          NameGame
+          <br />
+          Sandy, UT 84070
+        </Text>
+      )}
     </Section>
   </EmailTemplate>
 )
@@ -39,6 +53,7 @@ const DailyChatNotificationEmailPreview = () => (
   <DailyChatNotificationEmail
     firstName="Joe"
     ssoLink="https://namegame.app/one-time-login/mock_code?openChat=true"
+    unsubscribeLink="https://namegame.app/one-time-login/mock_code?emailUnsubscribe=true"
     notificationTitle="Tantalizing Messages"
     notificationBody="🦋🦋 someone said something 🦋🦋"
     emoji="🦋"
@@ -46,23 +61,6 @@ const DailyChatNotificationEmailPreview = () => (
 )
 
 export default DailyChatNotificationEmailPreview
-
-// Helper function to generate plain text version
-export const getDailyChatNotificationEmailText = (
-  ssoLink: string,
-  firstName: string | undefined,
-  notificationBody: string,
-) => `
-Hi ${firstName || 'there'},
-
-${notificationBody}
-
-View your messages: ${ssoLink}
-
-This is your daily digest. We'll never send more than one per day.
-
-${new Date().getFullYear()} NameGame
-`
 
 const text = {
   color: '#000',
@@ -85,4 +83,16 @@ const button = {
   textDecoration: 'none',
   fontWeight: 'bold',
   maxWidth: '200px',
+}
+
+const footerText = {
+  color: '#8898aa',
+  fontSize: '12px',
+  lineHeight: '20px',
+  marginTop: '16px',
+}
+
+const linkStyle = {
+  color: '#8898aa',
+  textDecoration: 'underline',
 }

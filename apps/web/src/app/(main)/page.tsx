@@ -8,6 +8,14 @@ import { ChevronDown, ChevronUp } from 'lucide-react'
 export default function Home() {
   const [isCommunityOpen, setIsCommunityOpen] = useState(false)
   const [isFamilyOpen, setIsFamilyOpen] = useState(false)
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({})
+
+  const toggleSection = (sectionId: string) => {
+    setOpenSections(prev => ({
+      ...prev,
+      [sectionId]: !prev[sectionId]
+    }))
+  }
 
   return (
     <div className="font-sans text-gray-800 dark:text-gray-200">
@@ -20,28 +28,313 @@ export default function Home() {
             height={267}
             className="mx-auto -mt-6 h-auto md:max-w-[500px]"
           />
-          <p className="mx-auto max-w-[240px] text-xl text-gray-600 italic sm:max-w-[500px] dark:text-gray-400">
-            The relationship game that starts with a name
+          <p className="mx-auto max-w-[300px] text-xl text-gray-600 italic dark:text-gray-400">
+            Life is relationships
           </p>
         </header>
 
         <section className="space-y-4 text-lg leading-relaxed">
           <p>
-            NameGame is the fun, easy, non-scary, no-stress way for people in
-            groups to:
+            Life is relationships. Relationships start with names.
           </p>
-          <ul className="ml-4 list-inside list-disc">
-            <li>Meet</li>
-            <li>Remember names</li>
-            <li>Get to know each other</li>
-            <li>Do stuff together</li>
+          <p>
+            NameGame makes starting and growing relationships fun and easy.
+          </p>
+          <h2 className="my-6 text-2xl font-bold" id="break-the-ice-section">Existing and Potential Relationships</h2>
+          <p>
+            You play with a group. When you start, everyone has <i>existing</i>{' '}
+            and/or <i>potential</i> relationships with:
+          </p>
+          <ul className="list-disc list-outer ml-8 space-y-2">
+            <li>Your group</li>
+            <li>Each person in your group</li>
           </ul>
           <p>
-            You don&apos;t have to be a social butterfly to break the ice or get
-            to know people. Just play.
+            All relationships are in one of three stages:
           </p>
+          <ul className="list-decimal ml-8 space-y-2">
+            <li>
+              <a 
+                href="#break-the-ice-section" 
+                className="text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300 hover:underline"
+                onClick={(e) => {
+                  e.preventDefault()
+                  const element = document.getElementById('break-the-ice-section')
+                  if (element) {
+                    const offset = 80 // Adjust this value based on your header height
+                    const elementPosition = element.getBoundingClientRect().top
+                    const offsetPosition = elementPosition + window.pageYOffset - offset
+                    window.scrollTo({
+                      top: offsetPosition,
+                      behavior: 'smooth'
+                    })
+                  }
+                }}
+              >
+                Breaking the Ice
+              </a>
+            </li>
+            <li>
+              <a 
+                href="#getting-acquainted-section" 
+                className="text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300 hover:underline"
+                onClick={(e) => {
+                  e.preventDefault()
+                  const element = document.getElementById('getting-acquainted-section')
+                  if (element) {
+                    const offset = 80
+                    const elementPosition = element.getBoundingClientRect().top
+                    const offsetPosition = elementPosition + window.pageYOffset - offset
+                    window.scrollTo({
+                      top: offsetPosition,
+                      behavior: 'smooth'
+                    })
+                  }
+                }}
+              >
+                Getting Acquainted
+              </a>
+            </li>
+            <li>
+              <a 
+                href="#growing-relationships-section" 
+                className="text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300 hover:underline"
+                onClick={(e) => {
+                  e.preventDefault()
+                  const element = document.getElementById('growing-relationships-section')
+                  if (element) {
+                    const offset = 80
+                    const elementPosition = element.getBoundingClientRect().top
+                    const offsetPosition = elementPosition + window.pageYOffset - offset
+                    window.scrollTo({
+                      top: offsetPosition,
+                      behavior: 'smooth'
+                    })
+                  }
+                }}
+              >
+                Growing Relationships
+              </a>
+            </li>
+          </ul>
         </section>
 
+        <section className="mt-8 space-y-4 text-lg leading-relaxed">
+          <Image
+            src="/images/butterflies.png"
+            alt="NameGame social butterflies"
+            width={48}
+            height={48}
+            className="mx-auto mt-8 h-auto w-auto"
+          />
+          <h3 className="mb-6 text-left text-xl font-bold" id="break-the-ice-section">1. Breaking the Ice</h3>
+          <p className="text-center italic">
+            "You wanna be where everybody knows your name." ~Cheers
+          </p>
+          <p>
+            Meeting new people is often called "breaking the ice". The discomfort 
+            of greeting, having things to say, remembering names, etc.{' '}
+            <button
+              type="button"
+              onClick={() => toggleSection('break-the-ice')}
+              className="inline-flex items-center text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
+            >
+              More
+              {openSections['break-the-ice'] ? (
+                <ChevronUp className="ml-1 h-4 w-4" />
+              ) : (
+                <ChevronDown className="ml-1 h-4 w-4" />
+              )}
+            </button>
+          </p>
+          {openSections['break-the-ice'] && (
+            <div id="break-the-ice" className="space-y-4 rounded-lg bg-gray-50 px-6 py-4 dark:bg-gray-800/50">
+              <p>
+                Remembering names is the ultimate ice breaker. 
+              </p>
+              <p>
+                When you can confidently greet people by name, the awkward
+                ice soon melts. 
+              </p>
+              <Image
+                src="/images/namegame-greeting-code.png"
+                alt="NameGame greeting code"
+                width={256}
+                height={256}
+                className="mx-auto my-6 h-auto w-full sm:w-1/2"
+              />
+              <p>
+                With NameGame greeting codes, you instantly get names and faces 
+                of everyone you meet. 
+              </p>
+              <Image
+                src="/images/namegame-welcome-to-group.jpg"
+                alt="NameGame welcome to group"
+                width={256}
+                height={256}
+                className="mx-auto my-6 h-auto w-full sm:w-1/2"
+              />
+              <p>
+                Now you can remember any "Joe" that greets you. 
+              </p>
+              <p>
+                Your group's private photo album and name quiz (flash cards with 
+                faces and names) makes it easy to remember names. 
+              </p>
+              <p>
+                When people know each others names and always have things to 
+                talk about, interacting is natural and comfortable. 
+              </p>
+              <button
+                type="button"
+                onClick={() => toggleSection('break-the-ice')}
+                className="mx-auto flex items-center pt-2 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              >
+                <ChevronUp className="mr-1 h-4 w-4" />
+                Close
+              </button>
+            </div>
+          )}
+        </section>
+        <section className="mt-8 space-y-4 text-lg leading-relaxed">
+          <Image
+            src="/images/butterflies.png"
+            alt="NameGame social butterflies"
+            width={48}
+            height={48}
+            className="mx-auto mt-8 h-auto w-auto"
+          />
+          <h3 className="mb-6 text-left text-2xl font-bold" id="getting-acquainted-section">2. Getting Acquainted</h3>
+          <p>
+            After people break the ice, feeling like they <i>belong</i> in 
+            your group happens on two levels. 
+          </p>
+          <ul className="list-disc list-outer ml-4 space-y-2">
+            <li><i>Individual</i> friendships</li>
+            <li><i>Group</i> involvement</li>
+          </ul>
+          <p>
+            Using the <i>secret sauce</i>, NameGame helps people do both.{' '}
+            <button
+              type="button"
+              onClick={() => toggleSection('getting-acquainted')}
+              className="inline-flex items-center text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
+            >
+              More
+              {openSections['getting-acquainted'] ? (
+                <ChevronUp className="ml-1 h-4 w-4" />
+              ) : (
+                <ChevronDown className="ml-1 h-4 w-4" />
+              )}
+            </button>
+          </p>
+          {openSections['getting-acquainted'] && (
+            <div id="getting-acquainted" className="space-y-4 rounded-lg bg-gray-50 px-6 py-4 dark:bg-gray-800/50">
+              <p>
+                <i>Regularly spending time together</i> is the secret sauce of 
+                relationships. You get to know people you consistently spend 
+                time with.
+              </p>
+              <p>
+                <i>But time is precious</i>. You only do this when you have a 
+                reason. A shared interest that brings you together.
+              </p>
+              <h4 className="mb-6 text-xl font-bold">Individual belonging</h4>
+              <p>
+                
+                realize you have things in common. 
+              </p>
+              <p>
+                <i>Did you know</i> your neighbor five doors away has kids the 
+                same age as your kids? And you're both dying to find nearby 
+                friends?
+              </p>
+              <p>
+                <i>Did you know</i> your co-worker on the next floor up is also 
+                an avid rock hounder, bird watcher, or D&D fanatic?
+              </p>
+              <p>
+                <i>Did you know</i> your the cousin you knew well as a child 
+                lives just 20 minutes away?
+              </p>
+              <p>
+                <i>Did you know</i> that lady at church you met five months 
+                ago is also looking for a walking partner?
+              </p>
+              <p>
+                NameGame helps you discover people with common interests, giving 
+                you easy ways to connect and do things together. 
+              </p>
+              <button
+                type="button"
+                onClick={() => toggleSection('getting-acquainted')}
+                className="mx-auto flex items-center pt-2 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              >
+                <ChevronUp className="mr-1 h-4 w-4" />
+                Close
+              </button>
+            </div>
+          )}
+        </section>
+
+        <section className="mt-8 space-y-4 text-lg leading-relaxed">
+          <Image
+            src="/images/butterflies.png"
+            alt="NameGame social butterflies"
+            width={48}
+            height={48}
+            className="mx-auto mt-8 h-auto w-auto"
+          />
+          <h3 className="mb-6 text-left text-2xl font-bold" id="growing-relationships-section">3. Growing Relationships</h3>
+          <p>
+            We build relationships with the people we regularly see and spend 
+            time with. They ebb and flow with different people over time.{' '}
+            <button
+              type="button"
+              onClick={() => toggleSection('growing-relationships')}
+              className="inline-flex items-center text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
+            >
+              More
+              {openSections['growing-relationships'] ? (
+                <ChevronUp className="ml-1 h-4 w-4" />
+              ) : (
+                <ChevronDown className="ml-1 h-4 w-4" />
+              )}
+            </button>
+          </p>
+          {openSections['growing-relationships'] && (
+            <div id="growing-relationships" className="space-y-4 rounded-lg bg-gray-50 px-6 py-4 dark:bg-gray-800/50">
+              <p>
+                We naturally spend time with people near us. 
+              </p>
+              <p>
+                People we live with, neighbors we live by, those we work, study, 
+                play, or worship with. We see and talk to them regularly. 
+              </p>
+              <p>
+                We also have old friends... 
+              </p>
+
+              <p>
+                NameGame helps you stay engaged with the people in your 
+                life today!
+              </p>
+              <p>
+                Those you want to make time for (family, close friends) and 
+                those you haebecause you live, work, or study 
+                together. 
+              </p>
+              <button
+                type="button"
+                onClick={() => toggleSection('growing-relationships')}
+                className="mx-auto flex items-center pt-2 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              >
+                <ChevronUp className="mr-1 h-4 w-4" />
+                Close
+              </button>
+            </div>
+          )}
+        </section>
         <section className="mt-8 space-y-4 text-lg leading-relaxed">
           <Image
             src="/images/butterflies.png"
@@ -53,9 +346,11 @@ export default function Home() {
         </section>
 
         <section className="mt-8 space-y-4 text-lg leading-relaxed">
-          <h2 className="mb-6 text-center text-3xl font-bold">How to Play</h2>
-          <p>Start with people you know.</p>
-          <ul className="ml-4 list-inside list-disc">
+          <h2 className="mb-6 text-center text-2xl font-bold">How to Play</h2>
+          <p>
+            You don't have to be a social butterfly. Just play.
+          </p>
+          <ul className="ml-4 list-outside list-disc">
             <li>
               <Link
                 href="/signup"
@@ -72,24 +367,17 @@ export default function Home() {
               </Link>
             </li>
             <li>
-              Add your info <br />
-              <div className="ml-6 text-sm text-gray-500 italic dark:text-gray-400">
-                (name, photo, etc.)
-              </div>
+              Add your basic info <br />
             </li>
             <li>
               Create a private group
-              <br />
-              <div className="ml-6 text-sm text-gray-500 italic dark:text-gray-400">
-                (not yet publicly available)
-              </div>
             </li>
-            <li>Say hello with a greeting code</li>
+            <li>Welcome others with a greeting code</li>
           </ul>
-          <p>A greeting code is both a QR code and a link/URL.</p>
-          <ul className="ml-8 list-outside list-disc">
+          <p>A greeting code is both a QR code and a link.</p>
+          <ul className="ml-4 list-outside list-disc">
             <li>
-              If you&apos;re together, they scan your code with their camera
+              If you're together, they scan your code with their camera
             </li>
             <li>If not, they open your link via text or email</li>
           </ul>
@@ -224,7 +512,7 @@ export default function Home() {
             />
           </p>
 
-          <ul className="mt-8 mb-16 ml-4 list-inside list-disc">
+          <ul className="mt-8 mb-16 ml-4 list-outside list-disc">
             <li>
               <Link
                 href="/signup"

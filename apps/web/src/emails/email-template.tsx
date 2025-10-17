@@ -60,7 +60,7 @@ export const EmailTemplate = ({ children, preview }: EmailTemplateProps) => (
               NameGame
               <br />
               <span style={h2}>
-                The relationship game that starts with a name
+                Life is relationships
               </span>
             </Heading>
           </Section>
