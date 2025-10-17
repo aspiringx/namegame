@@ -168,22 +168,26 @@ export default function Home() {
                 of everyone you meet. 
               </p>
               <Image
-                src="/images/namegame-welcome-to-group.jpg"
+                src="/images/namegame-greeting-page.jpg"
                 alt="NameGame welcome to group"
                 width={256}
                 height={256}
                 className="mx-auto my-6 h-auto w-full sm:w-1/2"
               />
               <p>
-                Now you can remember any "Joe" that greets you. 
+                Now you can:
+              </p>
+              <ul className="list-disc list-outer ml-4 space-y-2">
+                <li>Remember any "Joe" that greets you</li>
+                <li>Have an instant icebreaker question if you're not sure what to say</li>
+              </ul>
+              <p>
+                Your group's private photo album and name quiz make it easy 
+                to remember names and faces. 
               </p>
               <p>
-                Your group's private photo album and name quiz (flash cards with 
-                faces and names) makes it easy to remember names. 
-              </p>
-              <p>
-                When people know each others names and always have things to 
-                talk about, interacting is natural and comfortable. 
+                When people know each others names and have things to talk 
+                about, interacting becomes easy.
               </p>
               <button
                 type="button"

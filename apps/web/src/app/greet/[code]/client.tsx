@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, useTransition, useEffect } from 'react'
+import { useState, useTransition, useEffect, useMemo } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Cookies from 'js-cookie'
 import { handleGuestGreeting, CodeData } from '@/app/greet/[code]/actions'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
+import icebreakers from '@/data/icebreakers.json'
 
 function UnsupportedBrowser({ onCopy }: { onCopy: () => void }) {
   return (
@@ -43,6 +44,12 @@ export default function GreetPageClient({
   const [signInFailed, setSignInFailed] = useState(false)
   const [isUnsupportedBrowser, setIsUnsupportedBrowser] = useState(false)
   const [showCopied, setShowCopied] = useState(false)
+
+  // Get a random icebreaker question (memoized so it doesn't change on re-renders)
+  const randomQuestion = useMemo(() => {
+    const randomIndex = Math.floor(Math.random() * icebreakers.questions.length)
+    return icebreakers.questions[randomIndex]
+  }, [])
 
   useEffect(() => {
     const userAgent = navigator.userAgent
@@ -166,10 +173,11 @@ export default function GreetPageClient({
               <p className="text-2xl mb-4">
                 {codeData.user.firstName} just greeted you.
               </p>
-              <p className="mb-6 text">
-                Ask about: 
-                 {/* Randomly show one of 100 ice-breaker questions here  */}
-              </p>
+              <div className="mb-8 rounded-lg border border-gray-200 bg-gray-50 px-6 py-4 dark:border-gray-700 dark:bg-gray-800/50">
+                <p className="text text-left italic">
+                  {randomQuestion}
+                </p>
+              </div>
 
               {signInFailed ? (
                 <div className="space-y-4 rounded-md border border-yellow-300 bg-yellow-50 p-6 text-yellow-800">
