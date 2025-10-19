@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { useSession } from 'next-auth/react';
+import Link from 'next/link';
 
 // Dummy data for demonstration
 const dummyRelationships = [
@@ -93,6 +95,7 @@ function getRelationshipLabel(score: number) {
 }
 
 export default function RelationshipStarPage() {
+  const { status } = useSession();
   const [selectedRelationship, setSelectedRelationship] = useState(0);
   const [isInteractive, setIsInteractive] = useState(false);
   const [interactiveScores, setInteractiveScores] = useState({
@@ -106,6 +109,9 @@ export default function RelationshipStarPage() {
   const [aiInsight, setAiInsight] = useState<string | null>(null);
   const [isLoadingAI, setIsLoadingAI] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
+  
+  const isSignedIn = status === 'authenticated';
+  const isLoadingSession = status === 'loading';
 
   const current = isInteractive
     ? {
@@ -212,17 +218,17 @@ export default function RelationshipStarPage() {
             <h2 className="mb-4 text-xl font-bold text-green-900 dark:text-green-100">
               Make a Relation Star
             </h2>
-            <p className="mb-6 text-sm text-green-800 dark:text-green-200">
-              Think of a relationship and adjust the sliders to show how you see 
-              it today. 
+            <p className="mb-4 text-sm text-green-800 dark:text-green-200">
+              Use the sliders to indicate how you see one of your relationships 
+              today. Then get optional insights from Relation Star AI.
             </p>
             <div className="space-y-6">
               {[
                 { key: 'proximity', label: 'How often are you near this person?', hint: '(physically or virtually)', minLabel: 'Never', maxLabel: 'Daily' },
-                { key: 'interest', label: 'How interested are you in this relationship?', hint: '(desire, ability, commitment)', minLabel: 'Not at all', maxLabel: 'Very interested' },
-                { key: 'personalTime', label: 'How much personal time do you spend together?', hint: '(focused on each other/voluntary activities, not formal/required group tasks)', minLabel: 'None', maxLabel: 'A lot' },
                 { key: 'commonGround', label: 'How much common ground do you share?', hint: '(interests, values, experiences)', minLabel: 'None', maxLabel: 'A lot' },
                 { key: 'familiarity', label: 'How well do you know them?', hint: '(from name recognition to deep understanding)', minLabel: 'Not at all', maxLabel: 'Very well' },
+                { key: 'interest', label: 'How interested are you in this relationship?', hint: '(desire, ability, commitment)', minLabel: 'Not at all', maxLabel: 'Very interested' },
+                { key: 'personalTime', label: 'How much personal time do you spend together?', hint: '(time together focused on each other in spaces where you can talk freely, not in formal/bigger gatherings or doing required tasks)', minLabel: 'None', maxLabel: 'A lot' },
               ].map(({ key, label, hint, minLabel, maxLabel }) => (
                 <div key={key}>
                   <div className="mb-2 flex items-start justify-between gap-4">
@@ -256,10 +262,13 @@ export default function RelationshipStarPage() {
             </div>
 
             {/* Relationship Goals */}
-            <div className="mt-8 space-y-3">
+            <div className="mt-8">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                What would you like or hope for in this relationship? <span className="text-gray-500">(optional)</span>
+                What would you like or hope for in this relationship?
               </label>
+              <div className="mt-1 mb-2 text-xs text-gray-500 dark:text-gray-400">
+                (optionally provide more context for a better response)
+              </div>
               <textarea
                 value={relationshipGoals}
                 onChange={(e) => setRelationshipGoals(e.target.value)}
@@ -273,27 +282,62 @@ export default function RelationshipStarPage() {
               </div>
             </div>
 
+            {/* Privacy Notice */}
+            <div className="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
+              <div className="flex items-start gap-2">
+                <svg className="h-5 w-5 flex-shrink-0 text-gray-600 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                <div className="text-xs text-gray-700 dark:text-gray-300">
+                  <strong className="font-semibold">Your privacy matters.</strong> Your responses and AI insights are completely private and only visible to you. They are not shared with group admins, other users, or anyone else.
+                </div>
+              </div>
+            </div>
+
             {/* AI Assessment Button */}
             <div className="mt-6">
-              <button
-                onClick={handleAIAssessment}
-                disabled={isLoadingAI || Object.values(interactiveScores).every(v => v === 0)}
-                className="w-full rounded-lg bg-indigo-600 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500 dark:disabled:bg-gray-700 dark:disabled:text-gray-400"
-              >
-                {isLoadingAI ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                    Generating insights...
-                  </span>
-                ) : Object.values(interactiveScores).every(v => v === 0) ? (
-                  'Adjust sliders to get AI insights'
-                ) : (
-                  'Get AI Insight (Sign in required)'
-                )}
-              </button>
+              {!isSignedIn ? (
+                <>
+                  <Link
+                    href={`/auth/signin?callbackUrl=${encodeURIComponent('/relation-star-demo')}`}
+                    className="block w-full rounded-lg bg-indigo-600 px-4 py-3 text-center text-sm font-medium text-white transition-colors hover:bg-indigo-700"
+                  >
+                    Log in to Get Relation Star Insights
+                  </Link>
+                  <p className="mt-2 text-center text-xs text-gray-600 dark:text-gray-400">
+                    Don't have an account?{' '}
+                    <Link href="/auth/signup" className="text-indigo-600 hover:text-indigo-700 dark:text-indigo-400">
+                      Sign up for free
+                    </Link>
+                  </p>
+                </>
+              ) : (
+                <button
+                  onClick={aiInsight ? () => {
+                    setAiInsight(null);
+                    setRelationshipGoals('');
+                    setAiError(null);
+                  } : handleAIAssessment}
+                  disabled={!aiInsight && (isLoadingAI || isLoadingSession || Object.values(interactiveScores).every(v => v === 0))}
+                  className="w-full rounded-lg bg-indigo-600 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500 dark:disabled:bg-gray-700 dark:disabled:text-gray-400"
+                >
+                  {aiInsight ? (
+                    'Start Over'
+                  ) : isLoadingAI ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      Generating insights...
+                    </span>
+                  ) : Object.values(interactiveScores).every(v => v === 0) ? (
+                    'Adjust sliders to get Relation Star Insights'
+                  ) : (
+                    'Get Relation Star Insights'
+                  )}
+                </button>
+              )}
               
               {aiError && (
                 <div className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-200">
@@ -302,13 +346,14 @@ export default function RelationshipStarPage() {
               )}
               
               {aiInsight && (
-                <div className="mt-4 rounded-lg border border-indigo-200 bg-indigo-50 p-4 dark:border-indigo-900 dark:bg-indigo-950">
-                  <h4 className="mb-2 font-semibold text-indigo-900 dark:text-indigo-100">
-                    AI Insight
+                <div className="mt-4 rounded-lg border border-indigo-200 bg-indigo-50 p-6 dark:border-indigo-900 dark:bg-indigo-950">
+                  <h4 className="mb-4 text-lg font-semibold text-indigo-900 dark:text-indigo-100">
+                    Relation Star Insights
                   </h4>
-                  <p className="text-sm text-indigo-800 dark:text-indigo-200">
-                    {aiInsight}
-                  </p>
+                  <div 
+                    className="prose prose-sm prose-indigo dark:prose-invert max-w-none text-indigo-800 dark:text-indigo-200 [&>p]:mb-4 [&>div]:space-y-2 [&_ul]:space-y-3 [&_li]:leading-relaxed"
+                    dangerouslySetInnerHTML={{ __html: aiInsight }}
+                  />
                 </div>
               )}
             </div>
@@ -320,16 +365,16 @@ export default function RelationshipStarPage() {
             <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
               <h3 className="mb-3 text-lg font-bold">Star Chart</h3>
               <div className="relative mx-auto aspect-square w-full">
-                <svg viewBox="0 0 240 240" className="h-full w-full">
+                <svg viewBox="0 0 320 320" className="h-full w-full">
                   {/* Center point */}
-                  <circle cx="120" cy="120" r="2" fill="#4f46e5" />
+                  <circle cx="160" cy="160" r="2" fill="#4f46e5" />
                   
                   {/* Concentric circles */}
-                  {[20, 40, 60, 80, 100].map((radius) => (
+                  {[24, 48, 72, 96, 120].map((radius) => (
                     <circle
                       key={radius}
-                      cx="120"
-                      cy="120"
+                      cx="160"
+                      cy="160"
                       r={radius}
                       fill="none"
                       stroke="currentColor"
@@ -338,16 +383,31 @@ export default function RelationshipStarPage() {
                     />
                   ))}
                   
+                  {/* Scale labels (0, 5, 10) at bottom */}
+                  {[0, 5, 10].map((val) => (
+                    <text
+                      key={val}
+                      x="160"
+                      y={160 + val * 12 + 12}
+                      textAnchor="middle"
+                      fontSize="10"
+                      fill="currentColor"
+                      className="fill-gray-500 dark:fill-gray-400"
+                    >
+                      {val}
+                    </text>
+                  ))}
+                  
                   {/* Axes */}
                   {current.data.map((_, idx) => {
                     const angle = (idx * (360 / current.data.length) - 90) * (Math.PI / 180);
-                    const x = 120 + 100 * Math.cos(angle);
-                    const y = 120 + 100 * Math.sin(angle);
+                    const x = 160 + 120 * Math.cos(angle);
+                    const y = 160 + 120 * Math.sin(angle);
                     return (
                       <line
                         key={idx}
-                        x1="120"
-                        y1="120"
+                        x1="160"
+                        y1="160"
                         x2={x}
                         y2={y}
                         stroke="currentColor"
@@ -361,9 +421,9 @@ export default function RelationshipStarPage() {
                   <path
                     d={current.data.map((item, idx) => {
                       const angle = (idx * (360 / current.data.length) - 90) * (Math.PI / 180);
-                      const length = item.value * 10;
-                      const x = 120 + length * Math.cos(angle);
-                      const y = 120 + length * Math.sin(angle);
+                      const length = item.value * 12;
+                      const x = 160 + length * Math.cos(angle);
+                      const y = 160 + length * Math.sin(angle);
                       return `${idx === 0 ? 'M' : 'L'} ${x} ${y}`;
                     }).join(' ') + ' Z'}
                     fill="#4f46e5"
@@ -376,9 +436,9 @@ export default function RelationshipStarPage() {
                   {/* Points */}
                   {current.data.map((item, idx) => {
                     const angle = (idx * (360 / current.data.length) - 90) * (Math.PI / 180);
-                    const length = item.value * 10;
-                    const x = 120 + length * Math.cos(angle);
-                    const y = 120 + length * Math.sin(angle);
+                    const length = item.value * 12;
+                    const x = 160 + length * Math.cos(angle);
+                    const y = 160 + length * Math.sin(angle);
                     
                     return (
                       <g key={idx}>
@@ -402,8 +462,8 @@ export default function RelationshipStarPage() {
                             {item.dimension === 'Personal Time' ? (
                               <>
                                 <text
-                                  x={120 + (length + 20) * Math.cos(angle)}
-                                  y={120 + (length + 20) * Math.sin(angle) - 4}
+                                  x={160 + (length + 20) * Math.cos(angle)}
+                                  y={160 + (length + 20) * Math.sin(angle) - 4}
                                   textAnchor="middle"
                                   fontSize="9"
                                   fill="currentColor"
@@ -412,8 +472,8 @@ export default function RelationshipStarPage() {
                                   Personal
                                 </text>
                                 <text
-                                  x={120 + (length + 20) * Math.cos(angle)}
-                                  y={120 + (length + 20) * Math.sin(angle) + 5}
+                                  x={160 + (length + 20) * Math.cos(angle)}
+                                  y={160 + (length + 20) * Math.sin(angle) + 5}
                                   textAnchor="middle"
                                   fontSize="9"
                                   fill="currentColor"
@@ -425,8 +485,8 @@ export default function RelationshipStarPage() {
                             ) : item.dimension === 'Common Ground' ? (
                               <>
                                 <text
-                                  x={120 + (length + 20) * Math.cos(angle)}
-                                  y={120 + (length + 20) * Math.sin(angle) - 4}
+                                  x={160 + (length + 20) * Math.cos(angle)}
+                                  y={160 + (length + 20) * Math.sin(angle) - 4}
                                   textAnchor="middle"
                                   fontSize="9"
                                   fill="currentColor"
@@ -435,8 +495,8 @@ export default function RelationshipStarPage() {
                                   Common
                                 </text>
                                 <text
-                                  x={120 + (length + 20) * Math.cos(angle)}
-                                  y={120 + (length + 20) * Math.sin(angle) + 5}
+                                  x={160 + (length + 20) * Math.cos(angle)}
+                                  y={160 + (length + 20) * Math.sin(angle) + 5}
                                   textAnchor="middle"
                                   fontSize="9"
                                   fill="currentColor"
@@ -447,8 +507,8 @@ export default function RelationshipStarPage() {
                               </>
                             ) : (
                               <text
-                                x={120 + (length + 20) * Math.cos(angle)}
-                                y={120 + (length + 20) * Math.sin(angle)}
+                                x={160 + (length + 20) * Math.cos(angle)}
+                                y={160 + (length + 20) * Math.sin(angle)}
                                 textAnchor="middle"
                                 fontSize="9"
                                 fill="currentColor"
@@ -529,32 +589,32 @@ export default function RelationshipStarPage() {
         <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800 sm:p-6">
           <h2 className="mb-4 text-xl font-bold">Star Chart</h2>
           <div className="relative mx-auto aspect-square w-full max-w-md">
-            <svg viewBox="0 0 240 240" className="h-full w-full">
+            <svg viewBox="0 0 320 320" className="h-full w-full">
               {/* Center point */}
-              <circle cx="120" cy="120" r="2" fill="#4f46e5" />
+              <circle cx="160" cy="160" r="2" fill="#4f46e5" />
               
-              {/* Grid circles */}
-              {[2, 4, 6, 8, 10].map((val) => (
+              {/* Concentric circles */}
+              {[24, 48, 72, 96, 120].map((radius) => (
                 <circle
-                  key={val}
-                  cx="120"
-                  cy="120"
-                  r={val * 8}
+                  key={radius}
+                  cx="160"
+                  cy="160"
+                  r={radius}
                   fill="none"
-                  stroke="#e5e7eb"
+                  stroke="currentColor"
                   strokeWidth="0.5"
-                  className="dark:stroke-gray-600"
+                  className="stroke-gray-300 dark:stroke-gray-600"
                 />
               ))}
               
-              {/* Scale numbers (0, 5, 10) positioned horizontally to the left */}
+              {/* Scale labels (0, 5, 10) at bottom */}
               {[0, 5, 10].map((val) => (
                 <text
                   key={val}
-                  x={120 - val * 8 - 5}
-                  y="123"
+                  x="160"
+                  y={160 + val * 12 + 12}
                   textAnchor="middle"
-                  fontSize="8"
+                  fontSize="10"
                   fill="currentColor"
                   className="fill-gray-500 dark:fill-gray-400"
                 >
@@ -566,9 +626,9 @@ export default function RelationshipStarPage() {
               <path
                 d={current.data.map((item, idx) => {
                   const angle = (idx * (360 / current.data.length) - 90) * (Math.PI / 180);
-                  const length = item.value * 8;
-                  const x = 120 + length * Math.cos(angle);
-                  const y = 120 + length * Math.sin(angle);
+                  const length = item.value * 12;
+                  const x = 160 + length * Math.cos(angle);
+                  const y = 160 + length * Math.sin(angle);
                   return `${idx === 0 ? 'M' : 'L'} ${x} ${y}`;
                 }).join(' ') + ' Z'}
                 fill="#4f46e5"
@@ -581,9 +641,9 @@ export default function RelationshipStarPage() {
               {/* Points with glow at each dimension */}
               {current.data.map((item, idx) => {
                 const angle = (idx * (360 / current.data.length) - 90) * (Math.PI / 180);
-                const length = item.value * 8;
-                const x = 120 + length * Math.cos(angle);
-                const y = 120 + length * Math.sin(angle);
+                const length = item.value * 12;
+                const x = 160 + length * Math.cos(angle);
+                const y = 160 + length * Math.sin(angle);
                 
                 return (
                   <g key={idx}>
@@ -611,8 +671,8 @@ export default function RelationshipStarPage() {
                     {item.dimension === 'Personal Time' ? (
                       <>
                         <text
-                          x={120 + (length + 25) * Math.cos(angle)}
-                          y={120 + (length + 25) * Math.sin(angle) - 4}
+                          x={160 + (length + 25) * Math.cos(angle)}
+                          y={160 + (length + 25) * Math.sin(angle) - 4}
                           textAnchor="middle"
                           fontSize="9"
                           fill="currentColor"
@@ -621,8 +681,8 @@ export default function RelationshipStarPage() {
                           Personal
                         </text>
                         <text
-                          x={120 + (length + 25) * Math.cos(angle)}
-                          y={120 + (length + 25) * Math.sin(angle) + 5}
+                          x={160 + (length + 25) * Math.cos(angle)}
+                          y={160 + (length + 25) * Math.sin(angle) + 5}
                           textAnchor="middle"
                           fontSize="9"
                           fill="currentColor"
@@ -634,8 +694,8 @@ export default function RelationshipStarPage() {
                     ) : item.dimension === 'Common Ground' ? (
                       <>
                         <text
-                          x={120 + (length + 25) * Math.cos(angle)}
-                          y={120 + (length + 25) * Math.sin(angle) - 4}
+                          x={160 + (length + 25) * Math.cos(angle)}
+                          y={160 + (length + 25) * Math.sin(angle) - 4}
                           textAnchor="middle"
                           fontSize="9"
                           fill="currentColor"
@@ -644,8 +704,8 @@ export default function RelationshipStarPage() {
                           Common
                         </text>
                         <text
-                          x={120 + (length + 25) * Math.cos(angle)}
-                          y={120 + (length + 25) * Math.sin(angle) + 5}
+                          x={160 + (length + 25) * Math.cos(angle)}
+                          y={160 + (length + 25) * Math.sin(angle) + 5}
                           textAnchor="middle"
                           fontSize="9"
                           fill="currentColor"
@@ -656,8 +716,8 @@ export default function RelationshipStarPage() {
                       </>
                     ) : (
                       <text
-                        x={120 + (length + 25) * Math.cos(angle)}
-                        y={120 + (length + 25) * Math.sin(angle)}
+                        x={160 + (length + 25) * Math.cos(angle)}
+                        y={160 + (length + 25) * Math.sin(angle)}
                         textAnchor="middle"
                         fontSize="9"
                         fill="currentColor"

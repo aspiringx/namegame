@@ -80,17 +80,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 3. Check rate limit
-    const rateLimit = await checkRateLimit(session.user.id);
-    if (!rateLimit.allowed) {
-      return NextResponse.json(
-        {
-          error: 'Rate limit exceeded',
-          message: 'You have used your 2 free AI assessments for today. Please try again in 24 hours.',
-          remaining: 0,
-        },
-        { status: 429 }
-      );
+    // 3. Check rate limit (skip for super admins)
+    const isSuperAdmin = session.user.isSuperAdmin || false;
+    let rateLimit = { allowed: true, remaining: 999 };
+    
+    if (!isSuperAdmin) {
+      rateLimit = await checkRateLimit(session.user.id);
+      if (!rateLimit.allowed) {
+        return NextResponse.json(
+          {
+            error: 'Rate limit exceeded',
+            message: 'You have used your 2 free AI assessments for today. Please try again in 24 hours.',
+            remaining: 0,
+          },
+          { status: 429 }
+        );
+      }
     }
 
     // 4. Parse and validate request body
@@ -174,7 +179,7 @@ export async function POST(request: NextRequest) {
         relationshipLabel,
       },
       rateLimit: {
-        remaining: rateLimit.remaining - 1,
+        remaining: isSuperAdmin ? 999 : rateLimit.remaining - 1,
         resetAt: new Date(Date.now() + RATE_LIMIT_WINDOW_MS).toISOString(),
       },
       metadata: {

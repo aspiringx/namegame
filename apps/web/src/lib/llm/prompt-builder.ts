@@ -87,10 +87,18 @@ function buildRelationStarIndividualPrompt(data: RelationStarIndividualData): st
     prompt += `\n\n**User's Goal:** "${relationshipGoals}"`;
   }
 
-  prompt += `\n\nProvide a brief insight (2-3 sentences) about:
-1. The relationship's current state
-2. Any notable patterns or barriers
-3. One actionable suggestion for growth`;
+  prompt += `\n\nProvide your response as clean HTML (no wrapping tags like <html> or <body>). Use this structure:
+
+<p><strong>Summary:</strong> (1-2 sentences about the overall relationship state and pattern)</p>
+
+<div>
+  <strong>Dimension Insights:</strong>
+  <ul>
+    <li><strong>Dimension Name (score/10):</strong> Brief observation and actionable suggestion (1-2 sentences)</li>
+  </ul>
+</div>
+
+Address each dimension that has a notable score (high, low, or mismatched with others). Focus on the most impactful dimensions first.`;
 
   return prompt;
 }
@@ -156,13 +164,13 @@ ${JSON.stringify(metrics, null, 2)}`;
 export function getMaxTokens(requestType: AIRequestType): number {
   switch (requestType) {
     case 'relation_star_individual':
-      return 300;
+      return 400; // Est. cost: ~$0.0003 per request (gpt-4o-mini: ~200 input + 400 output tokens)
     case 'relation_star_comparison':
-      return 400;
+      return 400; // Est. cost: ~$0.0004 per request (gpt-4o-mini: ~300 input + 400 output tokens)
     case 'group_health':
-      return 500;
+      return 500; // Est. cost: ~$0.0005 per request (gpt-4o-mini: ~400 input + 500 output tokens)
     case 'custom':
-      return 500;
+      return 500; // Est. cost: varies by input
     default:
       return 300;
   }
