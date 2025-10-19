@@ -31,11 +31,17 @@ Indicated by a person using these definitions.
 
 ### 4. Time Together
 
-What kind of time do people spend together? Currently, in the past, or hoping
-for it in the future?
+What kind of time do people spend together? The key distinction is whether the time is **relationship-focused** or **task-focused**.
 
-- **Personal**: Time together focused on one or a few people (2-4).
-- **Group**: Time focused on a group (5+ people)
+- **Personal/Relational time**: Time where people are free to focus on each other rather than external tasks or goals. This builds deeper connection.
+  - Examples: Coffee dates, walks, phone calls, hanging out, personal conversations
+  - Can be 1-on-1 or small group (2-4) as long as the focus is on connecting
+- **Task-focused time**: Time spent working together on projects, goals, or structured activities. Even with just 2-3 people, if attention is on completing a task rather than building relationship, it's task-focused.
+  - Examples: Work projects, committee meetings, organizing events, collaborative tasks
+  - Includes "personal banter" but primary focus remains on the task
+- **Large group time**: Formal group activities with 5+ people, typically structured
+  - Examples: Church services, neighborhood BBQs, team meetings, classes
+  - Limited opportunity for deep personal connection due to group size and structure
 
 ### 5. Experiences
 
@@ -223,11 +229,273 @@ The apparent overlaps actually represent the complexity of relationships - multi
 
 ---
 
+## Data Model Design
+
+### Input vs. Output Dimensions
+
+**Input Dimensions** (User provides data):
+
+1. **Proximity** - "How close do you live/work to this person?"
+2. **Desire for Relationship** - "How interested are you in deepening this relationship?"
+3. **Time Together** - "How much time have you spent together?"
+   - **Personal/Relational time**: Time focused on each other, not tasks (1-on-1 or small group 2-4 where people are free to connect)
+   - **Task-focused time**: Working together on projects/goals (even if just 2-3 people, if focus is on the task not the relationship)
+   - **Large group time**: Formal group activities (5+ people, structured events)
+4. **Experiences** - "What have you shared together?"
+   - Places visited together
+   - Memorable events/moments
+   - Identity markers (common background, interests)
+5. **Familiarity** - "How well do you know them?"
+   - Face/name recognition
+   - Personal life details
+   - Deep understanding (goals, fears, needs)
+6. **Commitment** - "How available are you for this relationship?"
+   - Current priority level
+   - Recent interaction frequency
+
+**Output Dimensions** (Calculated from inputs):
+
+1. **Strength of Relationship** - Derived from inputs, validated against user's self-assessment
+2. **Change** - Calculated from temporal deltas in other dimensions
+
+**Relationship Strength Calculation:**
+
+```
+Strength Score = weighted average of:
+- Time Together:
+  - Personal/Relational time × 0.20 (highest weight)
+  - Task-focused time × 0.05 (minimal weight)
+  - Large group time × 0.02 (very minimal weight)
+- Experiences (formative moments) × 0.20
+- Familiarity (depth of knowledge) × 0.20
+- Commitment (current investment) × 0.20
+- Proximity (enables interaction) × 0.10
+- Desire (capacity for growth) × 0.05
+
+Label Assignment:
+0-2: Stranger
+2-4: Nodding Acquaintance
+4-6: Acquaintance
+6-8: Friend
+8-10: Close Friend
+```
+
+### Reality Check & Validation
+
+When calculated strength differs from user's self-assessment by >2 points:
+
+**Scenario 1: User says "Close Friend" but inputs suggest "Friend"**
+
+- Show comparison: "You've labeled this as a close friendship, but you've indicated:"
+  - ✓ You know their name and interests
+  - ✓ You've spent time together in group settings or working on projects
+  - ⚠️ You haven't spent much personal/relational time together (where you focus on each other, not tasks)
+  - ⚠️ You don't know much about their personal life or deeper goals
+- Prompt: "Would you like to:"
+  - Update your inputs (maybe you forgot about personal time together)
+  - Keep your label (your definition of 'close friend' is different)
+  - Get suggestions for deepening this friendship
+
+**Scenario 2: User says "Acquaintance" but inputs suggest "Friend"**
+
+- Show: "Based on your inputs, this relationship seems stronger than you've labeled it:"
+  - ✓ You've spent significant time together
+  - ✓ You've shared memorable experiences
+  - ✓ You know them fairly well
+- Prompt: "Consider updating your label or reflecting on what's holding you back from seeing this as a friendship."
+
+### Database Schema
+
+```typescript
+// Core relationship assessment table
+RelationshipAssessment {
+  id: string
+  userId: string              // Who is assessing
+  targetUserId: string        // Who is being assessed
+  groupId: string             // Context of relationship
+  createdAt: timestamp        // When this assessment was made
+
+  // INPUT DIMENSIONS (0-10 scale)
+  proximity: number
+  desire: number
+  timePersonal: number        // Relationship-focused (1-on-1 or small group)
+  timeTask: number            // Task-focused (any size, focus on work/projects)
+  timeGroup: number           // Large group formal activities (5+ people)
+  experiencesPlaces: number
+  experiencesEvents: number
+  experiencesIdentity: number
+  experiencesFormative: number
+  familiarityBasic: number    // Face/name
+  familiarityPersonal: number // Life details
+  familiarityDeep: number     // Goals/fears/needs
+  commitmentLevel: number
+  commitmentFrequency: number
+
+  // OUTPUT DIMENSIONS (calculated)
+  calculatedStrength: number  // Algorithm output
+
+  // USER OVERRIDE
+  userStrength: number | null // User's self-assessment
+  userStrengthLabel: string | null // "friend", "close friend", etc.
+
+  // VALIDATION
+  hasDiscrepancy: boolean     // |calculated - user| > 2
+  discrepancyAcknowledged: boolean
+}
+
+// Change events that explain shifts
+RelationshipEvent {
+  id: string
+  assessmentId: string
+  userId: string
+  targetUserId: string
+  eventDate: timestamp
+  eventType: string           // "bonding_moment", "conflict", "life_change"
+  description: string
+  impactedDimensions: string[] // ["experiences", "familiarity"]
+  impactMagnitude: number     // -10 to +10
+}
+
+// Simplified quick-entry table for mobile
+QuickAssessment {
+  id: string
+  userId: string
+  targetUserId: string
+  groupId: string
+  createdAt: timestamp
+
+  // Simplified 3-question input
+  howOftenConnect: number     // 0-10 (never → daily)
+  howWellKnow: number         // 0-10 (stranger → deeply)
+  howMuchCare: number         // 0-10 (indifferent → high priority)
+
+  // Expands to full assessment
+  expandedToFullAssessment: boolean
+  fullAssessmentId: string | null
+}
+```
+
+### Quick Input UI Flow
+
+**Step 1: Gut Check (3 questions, 15 seconds)**
+
+```
+"How often do you connect with [Name]?"
+[Slider: Never ←→ Daily]
+
+"How well do you know them?"
+[Slider: Just their name ←→ Know them deeply]
+
+"How much do you care about this relationship?"
+[Slider: Not a priority ←→ Very important]
+```
+
+**Step 2: Auto-calculate & Show Result**
+
+```
+Your relationship with [Name]: Friend ⭐⭐⭐
+
+Based on your responses:
+- You connect occasionally
+- You know them moderately well
+- This relationship matters to you
+```
+
+**Step 3: Offer Deep Dive (Optional)**
+
+```
+"Want to get more specific? Answer a few more questions
+to get personalized suggestions for strengthening this relationship."
+
+[Maybe Later] [Yes, Let's Go]
+```
+
+### Temporal Tracking & Change Detection
+
+**Automatic Change Detection:**
+
+- Run weekly: Compare current assessment to previous assessment
+- Flag significant changes (>2 point shift in any dimension)
+- Prompt user: "We noticed your relationship with [Name] has changed. What happened?"
+
+**Change Score Calculation:**
+
+```
+Change Score = sum of absolute deltas across all dimensions
+0-5: Stable
+5-10: Minor shift
+10-20: Moderate change
+20+: Major transformation
+```
+
+**Timeline View:**
+
+- Store all assessments (never delete)
+- Show relationship trajectory over time
+- Annotate with events ("Started new job", "Had conflict", "Went on trip")
+
+### Group Health Score
+
+**Individual Relationship Health:**
+
+```
+Health = (calculatedStrength + commitment + desire) / 3
+```
+
+**Group Integration Score (per member):**
+
+```
+Integration Score = average(Health scores with all group members)
+
+Interpretation:
+0-3: Isolated (not connected to group)
+3-5: Peripheral (few connections)
+5-7: Integrated (solid connections)
+7-10: Core (deeply connected to many)
+```
+
+**Group Overall Health:**
+
+```
+Group Health = average(all members' Integration Scores)
+
+Also track:
+- % of members with Integration Score > 5 ("Connected Members")
+- % of possible relationships that exist ("Network Density")
+- Members with lowest scores ("At Risk")
+```
+
+### Actionable Insights
+
+**When relationship strength is lower than desired:**
+
+```
+You want to be closer to [Name], but:
+- Low personal time → "Schedule a coffee or lunch, just the two of you"
+- Low familiarity → "Ask about their background, interests, or current challenges"
+- Low experiences → "Invite them to do something memorable together"
+- Low commitment → "Set a reminder to check in with them weekly"
+```
+
+**When group integration is low:**
+
+```
+[Member] seems disconnected from the group:
+- Only 2 relationships above "Acquaintance" level
+- Hasn't attended recent events
+- Suggestion: Pair them with [Well-Connected Member] for a small group activity
+```
+
+---
+
 ## Next Steps
 
 - [ ] Create a prototype of the star chart visualization
-- [ ] Design the data model to store these assessments
+- [ ] Implement the quick 3-question assessment flow
+- [ ] Build the full assessment form with validation
+- [ ] Design the temporal comparison view (relationship over time)
+- [ ] Create the group health dashboard
 - [ ] Decide whether "Change" should be a chart axis or a separate timeline annotation
 - [ ] Consider grouping dimensions by temporal characteristics in the UI
-- [ ] Explore alternative visualization approaches
-- [ ] Refine the dimension scales to make them more measurable
+- [ ] Test the strength calculation algorithm with real data
+- [ ] Design the "reality check" intervention UI
