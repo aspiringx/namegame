@@ -14,6 +14,7 @@ import { z } from 'zod'
 import { Badge } from '@/components/ui/badge'
 import Modal from '@/components/ui/modal'
 import { Button } from '@/components/ui/button'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { getPhotoUrl } from '@/lib/photos'
 import { PushManager } from '@/components/PushManager'
 import { usePushManager } from '@/hooks/use-push-manager'
@@ -45,6 +46,37 @@ import { DatePrecision, Photo, Gender } from '@namegame/db/types'
 import { format } from 'date-fns'
 import UserProfileNextSteps from './UserProfileNextSteps'
 import StickySaveBar from '@/components/ui/StickySaveBar'
+
+function EmailConsentNotice() {
+  const [isExpanded, setIsExpanded] = useState(false)
+
+  return (
+    <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+      <p>
+        By saving your email, you consent to receive messages.{' '}
+        <button
+          type="button"
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 underline inline-flex items-center gap-0.5"
+        >
+          {isExpanded ? 'Less' : 'More'}
+          <ChevronDown
+            className={`h-3 w-3 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+          />
+        </button>
+      </p>
+      {isExpanded && (
+        <ul className="mt-2 space-y-1 list-disc list-inside">
+          <li>Daily digest emails (max 1/day), only sent if you have unread messages</li>
+          <li>Account and security notifications</li>
+          <li className="list-none mt-2 text-gray-600 dark:text-gray-400">
+            You can unsubscribe anytime by removing your email here. 
+          </li>
+        </ul>
+      )}
+    </div>
+  )
+}
 
 const formatBirthDateForDisplay = (
   date: string | Date | null,
@@ -519,6 +551,13 @@ export default function UserProfileForm({
         }}
         className="space-y-6"
       >
+        {searchParams.get('emailUnsubscribe') === 'true' && (
+          <Alert variant="default" className="bg-yellow-50 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800">
+            <AlertDescription className="text-yellow-800 dark:text-yellow-200">
+              <strong>To unsubscribe from daily digest emails:</strong> Remove your email address from the field below and save your profile.
+            </AlertDescription>
+          </Alert>
+        )}
         {showSuccessMessage && state?.message && (
           <div className="space-y-4">
             <div className="rounded-md bg-green-50 p-4 dark:bg-green-900/30">
@@ -758,9 +797,7 @@ export default function UserProfileForm({
               {state.errors.email[0]}
             </p>
           )}
-          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            Saving an email is your consent to receive messages.
-          </p>
+          <EmailConsentNotice />
         </div>
         <div id="password" className="scroll-mt-24">
           <label
