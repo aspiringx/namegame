@@ -89,6 +89,7 @@ model User {
   chatParticipants ChatParticipant[]
   chatMessages     ChatMessage[]
   chatReactions    ChatMessageReaction[]
+  aiRequests       AIRequest[]
 
   @@map("users")
 }
@@ -430,4 +431,45 @@ model ChatMessageReaction {
   
   @@unique([messageId, userId, emoji]) // Prevent duplicate reactions
   @@map("chat_message_reactions")
+}
+
+model AIRequest {
+  id               String   @id @default(cuid())
+  userId           String
+  requestType      String   // 'relation_star_individual' | 'relation_star_comparison' | 'group_health' | 'custom'
+  requestedAt      DateTime @default(now())
+  
+  // Flexible input - stored as JSON
+  requestInput     String   @db.Text  // JSON string containing all context and data
+  
+  // AI response
+  provider         String   // 'openai' | 'anthropic' | 'google'
+  model            String
+  systemPrompt     String   @db.Text
+  userPrompt       String   @db.Text
+  response         String   @db.Text
+  tokensUsed       Int?
+  costUsd          Float?
+  
+  // Conversation support (for future use)
+  conversationId   String?  // Groups related requests together
+  parentRequestId  String?  // References previous request in conversation
+  isFollowUp       Boolean  @default(false)
+  
+  // Cost control
+  creditsUsed      Int?     // For future credit system
+  
+  // Metadata
+  processingTimeMs Int?
+  error            String?  @db.Text
+  
+  // Relations
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parentRequest    AIRequest? @relation("AIRequestThread", fields: [parentRequestId], references: [id])
+  followUpRequests AIRequest[] @relation("AIRequestThread")
+  
+  @@index([userId, requestedAt])
+  @@index([requestType])
+  @@index([conversationId])
+  @@map("ai_requests")
 }

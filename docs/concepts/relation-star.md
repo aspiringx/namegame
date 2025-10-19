@@ -4,7 +4,7 @@ A framework for modeling and visualizing personal relationships both at a point 
 
 ## Core Dimensions
 
-Based on the relationship framework, we track eight key dimensions:
+Based on the relationship framework, we track seven key dimensions (5 inputs + 2 outputs):
 
 ### 1. Proximity
 
@@ -12,12 +12,14 @@ Based on the relationship framework, we track eight key dimensions:
 - Affects the probability of two people meeting and interacting
 - Can be in-person or virtual
 
-### 2. Desire for Relationship
+### 2. Interest
+
+Your desire, ability, and commitment to the relationship.
 
 - **None**: No interest in a relationship, especially new ones if a person already has existing strong relationships that consume their time
 - **Low**: Some interest in a relationship, but not enough to readily invest time and energy
 - **Medium**: Moderate interest in a relationship, with ability and interest in investing time and energy
-- **High**: Strong interest and ability for a relationship
+- **High**: Strong interest, ability, and active commitment to the relationship
 
 ### 3. Strength of Relationship
 
@@ -29,28 +31,29 @@ Indicated by a person using these definitions.
 - **Friend**: Someone you like, share interests, and have spent group time together (co-workers, classmates, etc.)
 - **Close friend**: A friend with whom you've spent significant personal time (outside of formal group activities)
 
-### 4. Time Together
+### 4. Personal Time
 
-What kind of time do people spend together? The key distinction is whether the time is **relationship-focused** or **task-focused**.
+Time spent focusing on each other (not tasks or large groups). This is the most important factor in building deep relationships.
 
 - **Personal/Relational time**: Time where people are free to focus on each other rather than external tasks or goals. This builds deeper connection.
   - Examples: Coffee dates, walks, phone calls, hanging out, personal conversations
   - Can be 1-on-1 or small group (2-4) as long as the focus is on connecting
-- **Task-focused time**: Time spent working together on projects, goals, or structured activities. Even with just 2-3 people, if attention is on completing a task rather than building relationship, it's task-focused.
+- **Task-focused time**: Time spent working together on projects, goals, or structured activities has minimal impact on relationship depth.
   - Examples: Work projects, committee meetings, organizing events, collaborative tasks
-  - Includes "personal banter" but primary focus remains on the task
-- **Large group time**: Formal group activities with 5+ people, typically structured
+- **Large group time**: Formal group activities with 5+ people have very limited impact on relationship depth.
   - Examples: Church services, neighborhood BBQs, team meetings, classes
-  - Limited opportunity for deep personal connection due to group size and structure
 
-### 5. Experiences
+### 5. Common Ground
 
-What kind of experiences have people shared?
+Shared identity, experiences, interests, and values that create natural connection points.
 
-- **Places**: Shared locations
-- **Events**: Shared events, experiences, or situations
-- **Identity**: Do people have or see common identity that makes someone feel more familiar and likely to have shared understandings?
-- **Formative**: Key moments that define relationships or create bonds from shared memories
+- **Shared Identity**: Common background, life stage, or circumstances that make someone feel more familiar
+- **Shared Experiences**: Places visited together, events attended, formative moments
+- **Shared Interests**: Hobbies, activities, topics, passions
+- **Shared Values**: Worldview, priorities, what matters most in life
+- **Professional Overlap**: Career fields, industry topics, professional development
+
+The more common ground you share, the more opportunities for connection and conversation.
 
 ### 6. Familiarity
 
@@ -62,14 +65,7 @@ What kind of experiences have people shared?
 - **Sympathy**: Feeling for them
 - **Empathy**: Feeling with them
 
-### 7. Commitment
-
-- **Passive and disinterested**: No investment
-- **Passive and interested**: Care but no action or not close enough to be aware of what someone cares about
-- **Active but unavailable (low priority)**: Some action but limited or inconsistent
-- **Active and available (high priority)**: High investment, awareness, and regular interaction
-
-### 8. Change
+### 7. Change
 
 Have there been changes that affect the dynamics of a relationship? New  
 circumstances that limit or expand a person's time and availability in a
@@ -80,21 +76,40 @@ relationship.
 
 ---
 
+## Input vs. Output Dimensions
+
+The framework distinguishes between **input dimensions** (data you provide) and **output dimensions** (calculated results):
+
+**Input Dimensions** (5 - visualized on the star chart):
+1. **Proximity** - How often you're near this person (physically, emotionally, or through shared groups)
+2. **Interest** - Your desire, ability, and commitment to the relationship
+3. **Personal Time** - Time spent focusing on each other (not tasks or large groups)
+4. **Common Ground** - Shared identity, experiences, interests, and values
+5. **Familiarity** - How well you know them
+
+**Output Dimensions** (2 - calculated, not visualized):
+1. **Strength of Relationship** - Calculated from inputs, validated against your self-assessment
+2. **Change** - Calculated from temporal deltas in other dimensions
+
+---
+
 ## Recommended Visualization: Star Chart (Radar/Spider Chart) with Timeline
 
 ### Core Design
 
 **1. Star Chart for Point-in-Time Assessment**
 
-- Each axis represents one of the 8 dimensions:
-  - **Proximity** (0-10 scale: distant → physically/emotionally close)
-  - **Desire for Relationship** (0-10 scale: none → high interest and ability)
-  - **Strength of Relationship** (0-10 scale: stranger → close friend)
-  - **Time Together** (0-10 scale: none → significant shared time)
-  - **Experiences** (0-10 scale: none → many formative shared experiences)
-  - **Familiarity** (0-10 scale: don't know face/name → deep empathy)
-  - **Commitment** (0-10 scale: passive/disinterested → active/high priority)
-  - **Change** (0-10 scale: stable circumstances → major life changes affecting relationship)
+The star chart visualizes the **5 input dimensions** (outputs are shown separately):
+
+- **Proximity** (0-10 scale: distant → physically/emotionally/group-connected)
+- **Interest** (0-10 scale: none → high desire, ability, and commitment)
+- **Personal Time** (0-10 scale: none → significant 1-on-1 or small group relational time)
+- **Common Ground** (0-10 scale: nothing in common → many shared interests/values/experiences)
+- **Familiarity** (0-10 scale: don't know face/name → deep empathy)
+
+**Calculated Outputs** (displayed separately, not on star chart):
+- **Strength of Relationship** - Shown as a label (Stranger → Close Friend) with numeric score
+- **Change** - Shown as timeline annotations or trend indicators
 
 **2. Timeline Slider/Animation**
 
@@ -488,14 +503,276 @@ You want to be closer to [Name], but:
 
 ---
 
+---
+
+## AI-Powered Relationship Insights
+
+### Overview
+
+Users can request AI-generated narrative assessments of their Relation Star responses. The system supports both individual assessments and comparative assessments when two users evaluate the same relationship.
+
+### LLM Provider Architecture
+
+**Design Principle**: Provider-agnostic architecture with pluggable LLM backends.
+
+**Initial Implementation**: OpenAI GPT-4o-mini
+- Cost-effective: ~$0.0003 per assessment
+- High quality for relationship analysis
+- Fast response times
+- Easy upgrade path to GPT-4o if needed
+
+**Future Providers**:
+- Anthropic Claude 3.5 Sonnet (for more nuanced analysis)
+- Google Gemini 1.5 Flash (for budget-conscious scaling)
+- Local models (for privacy-sensitive deployments)
+
+### Assessment Types
+
+#### 1. Individual Assessment
+
+**Input**:
+- 5 dimension scores (0-10 each)
+- Overall Star Score
+- Relationship label (Stranger → Close Friend)
+- Optional: User's relationship goals/hopes (free text)
+
+**Output** (2-3 sentences):
+1. Current state of the relationship
+2. Notable patterns or barriers identified
+3. One actionable suggestion for growth
+
+**Example**:
+```
+Your relationship shows high interest (8/10) but limited personal time (3/10). 
+This suggests you value the connection but haven't had opportunities to deepen it. 
+Consider scheduling regular one-on-one time to build on your shared interests.
+```
+
+#### 2. Comparative Assessment (Two Perspectives)
+
+**Input**:
+- Person A's 5 dimension scores + goals
+- Person B's 5 dimension scores + goals
+- Both users must consent to comparison
+
+**Output** (~150 words):
+1. Areas of agreement (aligned perceptions)
+2. Key differences in perception
+3. Mutual strengths to build on
+4. 2-3 specific suggestions for bridging gaps
+
+**Example**:
+```
+You both value this relationship highly (Interest: 8/10 and 9/10), but perceive 
+different levels of personal time spent together (A: 4/10, B: 7/10). This gap 
+suggests you may define "quality time" differently. Person A may be seeking more 
+focused one-on-one conversations, while Person B counts group activities as 
+meaningful connection time. Your shared common ground (both 8/10) is a strength 
+to build on. Suggestion: Discuss what "personal time" means to each of you, and 
+experiment with both styles of connection.
+```
+
+### User Input: Relationship Goals
+
+**New Field**: "What would you like or hope for in this relationship?"
+
+**Purpose**:
+- Provides context for AI assessment
+- Helps identify gaps between current state and desired state
+- Enables more personalized suggestions
+
+**Examples**:
+- "I'd like to feel closer to my teenage daughter"
+- "I want to maintain this friendship despite living far apart"
+- "I hope we can move from coworkers to actual friends"
+- "I'd like to rebuild trust after our conflict"
+
+**Implementation**: Optional textarea (max 500 characters) below the 5 sliders
+
+### Rate Limiting & Access Control
+
+**Authentication Requirement**:
+- AI assessments only available to authenticated users with verified email
+- Prevents abuse and manages API costs
+
+**Rate Limits**:
+- **Free tier**: 2 AI assessments per 24-hour period per user
+- **Paid tier** (future): Unlimited assessments
+- Rate limit tracked per user, not per assessment type
+
+**Implementation**:
+```typescript
+// Database table (flexible design)
+AIRequest {
+  id: string
+  userId: string
+  requestType: string              // 'relation_star_individual' | 'relation_star_comparison' | 'group_health' | 'custom'
+                                   // Stored as string (not enum) to avoid migrations when adding new types
+  requestedAt: timestamp
+  
+  // Flexible input - stored as JSON
+  requestInput: string             // JSON string containing all context and data
+  
+  // AI response
+  provider: string                 // 'openai' | 'anthropic' | 'google' (managed in code, not DB enum)
+  model: string
+  systemPrompt: string
+  userPrompt: string
+  response: string
+  tokensUsed?: number
+  costUsd?: number
+  
+  // Conversation support (for future credit-based system)
+  conversationId?: string          // Groups related requests together
+  parentRequestId?: string         // References previous request in conversation
+  isFollowUp: boolean              // Default false
+  creditsUsed?: number             // For future credit system
+  
+  // Metadata
+  processingTimeMs?: number
+  error?: string
+}
+
+// Rate limiting check
+async function canRequestAssessment(userId: string): Promise<boolean> {
+  const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const recentRequests = await db.aIRequest.count({
+    where: {
+      userId,
+      requestedAt: { gte: twentyFourHoursAgo },
+      isFollowUp: false  // Only count initial requests, not follow-ups
+    }
+  });
+  return recentRequests < 2;
+}
+```
+
+**Design Principles**:
+- **No DB enums**: `requestType` and `provider` are strings managed in TypeScript, avoiding migrations when adding new types
+- **JSON flexibility**: `requestInput` stores any data structure, allowing new request types without schema changes
+- **One-shot by default**: Initial implementation provides single response per request
+- **Future-ready**: Conversation threading (`conversationId`, `parentRequestId`) and credits system ready for when pricing allows
+- **Cost control**: Admin controls AI interaction; users can't freely chat with AI (prevents cost overruns)
+
+### API Integration
+
+**Provider Interface** (pluggable architecture):
+```typescript
+interface LLMProvider {
+  name: string;
+  generateAssessment(input: AssessmentInput): Promise<AssessmentOutput>;
+  estimateCost(input: AssessmentInput): number;
+}
+
+class OpenAIProvider implements LLMProvider {
+  name = 'openai';
+  model = 'gpt-4o-mini';
+  
+  async generateAssessment(input: AssessmentInput): Promise<AssessmentOutput> {
+    const prompt = this.buildPrompt(input);
+    const response = await openai.chat.completions.create({
+      model: this.model,
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'user', content: prompt }
+      ],
+      max_tokens: 300,
+      temperature: 0.7
+    });
+    return {
+      text: response.choices[0].message.content,
+      tokensUsed: response.usage.total_tokens,
+      cost: this.calculateCost(response.usage)
+    };
+  }
+}
+
+// Easy to add new providers
+class AnthropicProvider implements LLMProvider { ... }
+class GeminiProvider implements LLMProvider { ... }
+```
+
+**System Prompt**:
+```
+You are a relationship insight assistant. Your role is to provide brief, 
+empathetic, and actionable assessments of personal relationships based on 
+Relation Star data. Focus on:
+
+1. Identifying patterns and barriers
+2. Validating the user's feelings and goals
+3. Offering specific, practical suggestions
+4. Being warm, non-judgmental, and constructive
+
+Keep responses concise (2-3 sentences for individual, ~150 words for comparisons).
+Avoid jargon. Speak directly to the user.
+```
+
+### Privacy & Security
+
+**Data Handling**:
+- No personally identifiable information sent to LLM APIs
+- Use OpenAI's zero-retention option (data not used for training)
+- Store AI responses in our database, not with provider
+- User can delete their AI assessment history
+
+**Consent for Comparisons**:
+- Both users must explicitly opt-in to share their assessment
+- Comparison only shows aggregated insights, not raw scores to other party
+- Either user can revoke comparison access
+
+### Cost Management
+
+**Estimated Costs** (GPT-4o-mini):
+- Individual assessment: ~500 input + 300 output tokens = $0.0003
+- Comparison assessment: ~800 input + 400 output tokens = $0.0005
+- 1,000 users × 2 assessments/day = $0.60/day = $18/month
+- 10,000 users × 2 assessments/day = $6/day = $180/month
+
+**Optimization Strategies**:
+- Cache system prompts (OpenAI prompt caching)
+- Batch processing for non-urgent assessments
+- Monitor token usage and adjust max_tokens
+- Switch to cheaper providers for simple assessments
+
+### Demo Page Implementation
+
+**UI Flow**:
+1. User completes 5 sliders
+2. Optional: Enters relationship goals (textarea)
+3. "Get AI Insight" button appears
+4. If not authenticated: Prompt to sign in
+5. If rate limited: Show "You've used your 2 free assessments today. Try again in X hours."
+6. If available: Show loading state → Display AI assessment
+7. Assessment saved to user's history
+
+**Button States**:
+```typescript
+// Disabled states
+- Not authenticated: "Sign in to get AI insights"
+- Rate limited: "Daily limit reached (2/2)"
+- All sliders at 0: "Adjust sliders to get insights"
+- Loading: "Generating insights..."
+
+// Active state
+- "Get AI Insight (X/2 remaining today)"
+```
+
+---
+
 ## Next Steps
 
+- [x] Document AI assessment architecture
+- [ ] Implement LLM provider interface
+- [ ] Add relationship goals textarea to demo page
+- [ ] Build AI assessment API endpoint with rate limiting
+- [ ] Add authentication check to demo page
+- [ ] Create AI assessment history view
+- [ ] Implement comparison assessment flow
+- [ ] Add cost tracking dashboard (admin)
 - [ ] Create a prototype of the star chart visualization
 - [ ] Implement the quick 3-question assessment flow
 - [ ] Build the full assessment form with validation
 - [ ] Design the temporal comparison view (relationship over time)
 - [ ] Create the group health dashboard
-- [ ] Decide whether "Change" should be a chart axis or a separate timeline annotation
-- [ ] Consider grouping dimensions by temporal characteristics in the UI
 - [ ] Test the strength calculation algorithm with real data
 - [ ] Design the "reality check" intervention UI
