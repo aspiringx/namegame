@@ -190,19 +190,17 @@ export async function POST(request: NextRequest) {
     const session = await auth();
     if (session?.user?.id) {
       try {
-        await prisma.aIAssessmentRequest.create({
+        await prisma.aIRequest.create({
           data: {
             userId: session.user.id,
-            assessmentType: 'individual',
-            proximity: 0,
-            interest: 0,
-            personalTime: 0,
-            commonGround: 0,
-            familiarity: 0,
-            provider: 'openai',
+            requestType: AI_REQUEST_TYPES.RELATION_STAR_INDIVIDUAL,
+            requestInput: '{}',
+            provider: AI_PROVIDERS.OPENAI,
             model: 'gpt-4o-mini',
-            prompt: '',
+            systemPrompt: '',
+            userPrompt: '',
             response: '',
+            isFollowUp: false,
             error: error instanceof Error ? error.message : 'Unknown error',
           },
         });

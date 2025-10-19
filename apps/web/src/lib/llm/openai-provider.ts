@@ -6,10 +6,10 @@ import { AI_PROVIDERS } from './types';
 
 export class OpenAIProvider implements LLMProvider {
   name = AI_PROVIDERS.OPENAI;
-  model = 'gpt-4o-mini';
+  model = 'openai/gpt-4o-mini'; // OpenRouter format: provider/model
   private client: OpenAI;
 
-  // Pricing per 1M tokens (as of 2024)
+  // Pricing per 1M tokens via OpenRouter (cheaper than direct OpenAI)
   private readonly INPUT_COST_PER_1M = 0.15; // $0.15 per 1M input tokens
   private readonly OUTPUT_COST_PER_1M = 0.60; // $0.60 per 1M output tokens
 
@@ -17,8 +17,16 @@ export class OpenAIProvider implements LLMProvider {
     if (!process.env.OPENAI_API_KEY) {
       throw new Error('OPENAI_API_KEY environment variable is not set');
     }
+    
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    
     this.client = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
+      baseURL: 'https://openrouter.ai/api/v1',
+      defaultHeaders: {
+        'HTTP-Referer': appUrl,
+        'X-Title': 'Relation Star',
+      },
     });
   }
 

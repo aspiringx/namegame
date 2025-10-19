@@ -166,7 +166,7 @@ export default function RelationshipStarPage() {
       {/* Header */}
       <div className="mb-8 text-center">
         <h1 className="mb-4 text-4xl font-bold">
-          Relationship Star Chart
+          Relation Star
         </h1>
         <p className="text-lg text-gray-600 dark:text-gray-400">
           A visual framework for understanding and strengthening your
@@ -276,10 +276,7 @@ export default function RelationshipStarPage() {
             {/* AI Assessment Button */}
             <div className="mt-6">
               <button
-                onClick={() => {
-                  // TODO: Implement AI assessment with auth check
-                  alert('AI assessment feature coming soon! Requires authentication and is limited to 2 requests per day.');
-                }}
+                onClick={handleAIAssessment}
                 disabled={isLoadingAI || Object.values(interactiveScores).every(v => v === 0)}
                 className="w-full rounded-lg bg-indigo-600 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500 dark:disabled:bg-gray-700 dark:disabled:text-gray-400"
               >
