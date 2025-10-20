@@ -176,7 +176,7 @@ export default function RelationStarModal({
                           }
                           className="mb-4 flex w-full items-center justify-between text-xl font-semibold text-gray-900 hover:text-indigo-600 dark:text-gray-100 dark:hover:text-indigo-400"
                         >
-                          <span>Map the Stars</span>
+                          <span>Map the Relationship</span>
                           {isSlidersCollapsed ? (
                             <ChevronDown className="h-4 w-4" />
                           ) : (
@@ -187,29 +187,29 @@ export default function RelationStarModal({
                         {!isSlidersCollapsed && (
                           <div className="space-y-6">
                             <p className="mb-6 text-sm text-gray-700 dark:text-gray-300">
-                              Use the sliders to indicate how you see this
-                              relationship today. Get optional insights from the
-                              Relation AI.
+                              Map your relationship in the stars and get cosmic
+                              insights.
                             </p>
 
                             {[
                               {
                                 key: 'proximity',
-                                label: 'How often are you near this person?',
+                                label: '⭐ How often are you near this person?',
                                 hint: 'Physical and/or virtual proximity',
                                 minLabel: 'Never',
                                 maxLabel: 'Daily',
                               },
                               {
                                 key: 'commonGround',
-                                label: 'How much common ground do you share?',
+                                label:
+                                  '⭐ How much common ground do you share?',
                                 hint: 'Interests, values, experiences',
                                 minLabel: 'None',
                                 maxLabel: 'A lot',
                               },
                               {
                                 key: 'familiarity',
-                                label: 'How well do you know them?',
+                                label: '⭐ How well do you know them?',
                                 hint: 'From name recognition to deep understanding',
                                 minLabel: 'Not at all',
                                 maxLabel: 'Very well',
@@ -217,7 +217,7 @@ export default function RelationStarModal({
                               {
                                 key: 'interest',
                                 label:
-                                  'How interested are you in this relationship?',
+                                  '⭐ How interested are you in this relationship?',
                                 hint: 'Desire, ability, commitment',
                                 minLabel: 'Not at all',
                                 maxLabel: 'Very interested',
@@ -225,7 +225,7 @@ export default function RelationStarModal({
                               {
                                 key: 'personalTime',
                                 label:
-                                  'How much personal time do you spend together?',
+                                  '⭐  How much personal time do you spend together?',
                                 hint: 'Time together focused on each other in spaces where you can talk freely, not formal/bigger gatherings or doing required tasks',
                                 minLabel: 'None',
                                 maxLabel: 'A lot',
@@ -281,14 +281,14 @@ export default function RelationStarModal({
                       {/* Relationship Goals */}
                       <div className="mt-8">
                         <h3 className="mb-4 text-xl font-bold">
-                          Read the Stars
+                          Cosmic Insights
                         </h3>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                          What would you like or hope for in this relationship?
+                          Insights from the universe
                         </label>
                         <div className="mt-1 mb-2 text-xs text-gray-500 dark:text-gray-400">
-                          Provide relationship context and hopes for better
-                          insights.
+                          Provide relationship context (status, dynamics, hopes,
+                          etc.) for personalized insights.
                         </div>
                         <textarea
                           value={relationshipGoals}
@@ -303,105 +303,104 @@ export default function RelationStarModal({
                         </div>
                       </div>
 
-                      {/* Privacy Notice */}
-                      <div className="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
-                        <div className="flex items-start gap-2">
-                          <svg
-                            className="h-5 w-5 flex-shrink-0 text-gray-600 dark:text-gray-400"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                            />
-                          </svg>
-                          <div className="text-xs text-gray-700 dark:text-gray-300">
-                            <strong className="font-semibold">
-                              Your privacy matters.
-                            </strong>{' '}
-                            Your responses and AI insights are completely
-                            private and only visible to you. They are not shared
-                            with group admins, other users, or anyone else.
+                      {/* Privacy Notice - Only show when at least one slider has a value */}
+                      {!Object.values(interactiveScores).every(
+                        (v) => v === 0,
+                      ) && (
+                        <div className="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
+                          <div className="flex items-start gap-2">
+                            <svg
+                              className="h-5 w-5 flex-shrink-0 text-gray-600 dark:text-gray-400"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                              />
+                            </svg>
+                            <div className="text-xs text-gray-700 dark:text-gray-300">
+                              <strong className="font-semibold">
+                                Your privacy matters.
+                              </strong>{' '}
+                              Your responses and AI insights are completely
+                              private and only visible to you.
+                            </div>
                           </div>
                         </div>
-                      </div>
+                      )}
 
-                      {/* AI Assessment Button */}
-                      <div className="mt-6">
-                        <button
-                          onClick={
-                            aiInsight ? handleStartOver : handleAIAssessment
-                          }
-                          disabled={
-                            !aiInsight &&
-                            (isLoadingAI ||
-                              Object.values(interactiveScores).every(
-                                (v) => v === 0,
-                              ))
-                          }
-                          className="w-full rounded-lg bg-indigo-600 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500 dark:disabled:bg-gray-700 dark:disabled:text-gray-400"
-                        >
-                          {aiInsight ? (
-                            'Start Over'
-                          ) : isLoadingAI ? (
-                            <span className="flex items-center justify-center gap-2">
-                              <svg
-                                className="h-4 w-4 animate-spin"
-                                viewBox="0 0 24 24"
-                              >
-                                <circle
-                                  className="opacity-25"
-                                  cx="12"
-                                  cy="12"
-                                  r="10"
-                                  stroke="currentColor"
-                                  strokeWidth="4"
-                                  fill="none"
-                                />
-                                <path
-                                  className="opacity-75"
-                                  fill="currentColor"
-                                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                />
-                              </svg>
-                              Generating insights...
-                            </span>
-                          ) : Object.values(interactiveScores).every(
-                              (v) => v === 0,
-                            ) ? (
-                            'Adjust sliders to get Relation Insights'
-                          ) : (
-                            'Get Relation Insights'
-                          )}
-                        </button>
+                      {/* AI Assessment Button - Only show when at least one slider has a value */}
+                      {!Object.values(interactiveScores).every(
+                        (v) => v === 0,
+                      ) && (
+                        <div className="mt-6">
+                          <button
+                            onClick={
+                              aiInsight ? handleStartOver : handleAIAssessment
+                            }
+                            disabled={!aiInsight && isLoadingAI}
+                            className="w-full rounded-lg bg-indigo-600 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500 dark:disabled:bg-gray-700 dark:disabled:text-gray-400"
+                          >
+                            {aiInsight ? (
+                              'Start Over'
+                            ) : isLoadingAI ? (
+                              <span className="flex items-center justify-center gap-2">
+                                <svg
+                                  className="h-4 w-4 animate-spin"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <circle
+                                    className="opacity-25"
+                                    cx="12"
+                                    cy="12"
+                                    r="10"
+                                    stroke="currentColor"
+                                    strokeWidth="4"
+                                    fill="none"
+                                  />
+                                  <path
+                                    className="opacity-75"
+                                    fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                  />
+                                </svg>
+                                Generating insights...
+                              </span>
+                            ) : (
+                              'Get Cosmic Insights'
+                            )}
+                          </button>
 
-                        {aiError && (
-                          <div className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-200">
-                            {aiError}
-                          </div>
-                        )}
-
-                        {aiInsight && (
-                          <>
-                            {/* Divider before AI Insights */}
-                            <div className="my-6 border-t-2 border-gray-300 dark:border-gray-600" />
-
-                            <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-6 dark:border-indigo-900 dark:bg-indigo-950">
-                              <h4 className="mb-4 text-lg font-semibold text-indigo-900 dark:text-indigo-100">
-                                Relation Insights from the Stars
-                              </h4>
-                              <div
-                                className="prose prose-sm prose-indigo dark:prose-invert max-w-none text-indigo-800 dark:text-indigo-200 [&_li]:leading-relaxed [&_ul]:space-y-3 [&>div]:space-y-2 [&>p]:mb-4"
-                                dangerouslySetInnerHTML={{ __html: aiInsight }}
-                              />
+                          {aiError && (
+                            <div className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-200">
+                              {aiError}
                             </div>
-                          </>
-                        )}
-                      </div>
+                          )}
+
+                          {aiInsight && (
+                            <>
+                              {/* Divider before AI Insights */}
+                              <div className="my-6 border-t-2 border-gray-300 dark:border-gray-600" />
+
+                              <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-6 dark:border-indigo-900 dark:bg-indigo-950">
+                                <h4 className="mb-4 text-lg font-semibold text-indigo-900 dark:text-indigo-100">
+                                  Relation Insights from the Stars
+                                </h4>
+                                <div
+                                  className="prose prose-sm prose-indigo dark:prose-invert max-w-none text-indigo-800 dark:text-indigo-200 [&_li]:leading-relaxed [&_ul]:space-y-3 [&>div]:space-y-2 [&>p]:mb-4"
+                                  dangerouslySetInnerHTML={{
+                                    __html: aiInsight,
+                                  }}
+                                />
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      )}
                     </div>
 
                     {/* Right: Chart and Score */}
