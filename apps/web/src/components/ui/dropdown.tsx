@@ -3,7 +3,17 @@
 import { Menu, Transition } from '@headlessui/react'
 import { Fragment } from 'react'
 
-export function Dropdown({ trigger, children, triggerClassName }: { trigger: React.ReactNode, children: React.ReactNode, triggerClassName?: string }) {
+export function Dropdown({ 
+  trigger, 
+  children, 
+  triggerClassName,
+  menuClassName 
+}: { 
+  trigger: React.ReactNode
+  children: React.ReactNode
+  triggerClassName?: string
+  menuClassName?: string
+}) {
   return (
     <Menu as="div" className="relative inline-block text-left">
       <div>
@@ -20,7 +30,7 @@ export function Dropdown({ trigger, children, triggerClassName }: { trigger: Rea
         leaveFrom="transform opacity-100 scale-100"
         leaveTo="transform opacity-0 scale-95"
       >
-        <Menu.Items className="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md border border-gray-200 bg-white text-gray-900 shadow-lg focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">
+        <Menu.Items className={menuClassName || "absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md border border-gray-200 bg-white text-gray-900 shadow-lg focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"}>
           <div className="px-1 py-1 ">
             {children}
           </div>
@@ -46,12 +56,12 @@ export function DropdownItem({
           type="button"
           onClick={onClick}
           disabled={disabled}
-          className={`group flex w-full items-center rounded-md px-2 py-2 text-sm ${
-            active && !disabled
-              ? 'bg-indigo-500 text-white'
-              : 'text-gray-900 dark:text-gray-100'
-          } ${
-            disabled ? 'cursor-not-allowed opacity-50' : ''
+          className={`group flex w-full items-center rounded-md px-2 py-2 text-sm transition-colors ${
+            disabled 
+              ? 'cursor-not-allowed opacity-50 text-gray-900 dark:text-gray-100' 
+              : active
+              ? 'bg-indigo-600 text-white dark:bg-indigo-500 dark:text-white'
+              : 'text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800'
           }`}
         >
           {children}
