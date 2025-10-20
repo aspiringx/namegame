@@ -172,7 +172,7 @@ export default function RelationshipStarPage() {
       {/* Header */}
       <div className="mb-8 text-center">
         <h1 className="mb-4 text-4xl font-bold">
-          Relation Constellation
+          Relation Star
         </h1>
         <p className="text-lg text-gray-600 dark:text-gray-400">
           A visual framework for understanding and strengthening your
@@ -216,19 +216,19 @@ export default function RelationshipStarPage() {
           {/* Left: Sliders */}
           <div className="rounded-lg border border-green-200 bg-green-50 p-6 dark:border-green-900 dark:bg-green-950">
             <h2 className="mb-4 text-xl font-bold text-green-900 dark:text-green-100">
-              Make a Relation Constellation
+              Map the Stars
             </h2>
             <p className="mb-4 text-sm text-green-800 dark:text-green-200">
-              Use the sliders to indicate how you see one of your relationships 
-              today. Get optional Relation AI insights.
+              Indicate how you see a relationship today and get insights from 
+              the stars!
             </p>
             <div className="space-y-6">
               {[
-                { key: 'proximity', label: 'How often are you near this person?', hint: '(physical and/or virtual proximity)', minLabel: 'Never', maxLabel: 'Daily' },
-                { key: 'commonGround', label: 'How much common ground do you share?', hint: '(interests, values, experiences)', minLabel: 'None', maxLabel: 'A lot' },
-                { key: 'familiarity', label: 'How well do you know them?', hint: '(from name recognition to deep understanding)', minLabel: 'Not at all', maxLabel: 'Very well' },
-                { key: 'interest', label: 'How interested are you in this relationship?', hint: '(desire, ability, commitment)', minLabel: 'Not at all', maxLabel: 'Very interested' },
-                { key: 'personalTime', label: 'How much personal time do you spend together?', hint: '(time together focused on each other in spaces where you can talk freely, not formal/bigger gatherings or doing required tasks)', minLabel: 'None', maxLabel: 'A lot' },
+                { key: 'proximity', label: 'How often are you near this person?', hint: 'Physical and/or virtual proximity', minLabel: 'Never', maxLabel: 'Daily' },
+                { key: 'commonGround', label: 'How much common ground do you share?', hint: 'Interests, values, experiences', minLabel: 'None', maxLabel: 'A lot' },
+                { key: 'familiarity', label: 'How well do you know them?', hint: 'From name recognition to deep understanding', minLabel: 'Not at all', maxLabel: 'Very well' },
+                { key: 'interest', label: 'How interested are you in this relationship?', hint: 'Desire, ability, commitment', minLabel: 'Not at all', maxLabel: 'Very interested' },
+                { key: 'personalTime', label: 'How much personal time do you spend together?', hint: 'Time together focused on each other in spaces where you can talk freely, not formal/bigger gatherings or doing required tasks', minLabel: 'None', maxLabel: 'A lot' },
               ].map(({ key, label, hint, minLabel, maxLabel }) => (
                 <div key={key}>
                   <div className="mb-2 flex items-start justify-between gap-4">
@@ -263,11 +263,12 @@ export default function RelationshipStarPage() {
 
             {/* Relationship Goals */}
             <div className="mt-8">
+              <h3 className="mb-4 text-xl font-bold">Read the Stars</h3>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                What would you like or hope for in this relationship?
+                Tell the universe about 
               </label>
               <div className="mt-1 mb-2 text-xs text-gray-500 dark:text-gray-400">
-                (optionally provide more context for a better response)
+                Provide more context for a better response
               </div>
               <textarea
                 value={relationshipGoals}

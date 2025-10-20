@@ -43,7 +43,7 @@ export interface LLMProvider {
   estimateCost(inputTokens: number, outputTokens: number): number;
 }
 
-// Helper type for Relation Constellation requests
+// Helper type for Relation Star requests
 export interface RelationStarIndividualData {
   scores: {
     proximity: number;

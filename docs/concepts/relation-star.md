@@ -512,7 +512,7 @@ You want to be closer to [Name], but:
 
 ### Overview
 
-Users can request AI-generated narrative assessments of their Relation Constellation responses. The system supports both individual assessments and comparative assessments when two users evaluate the same relationship.
+Users can request AI-generated narrative assessments of their Relation Star responses. The system supports both individual assessments and comparative assessments when two users evaluate the same relationship.
 
 ### LLM Provider Architecture
 
@@ -715,7 +715,7 @@ class GeminiProvider implements LLMProvider { ... }
 ```
 You are a relationship insight assistant. Your role is to provide brief,
 empathetic, and actionable assessments of personal relationships based on
-Relation Constellation data. Focus on:
+Relation Star data. Focus on:
 
 1. Identifying patterns and barriers
 2. Validating the user's feelings and goals

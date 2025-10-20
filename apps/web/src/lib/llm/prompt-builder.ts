@@ -8,7 +8,7 @@ import type {
 } from './types';
 
 const SYSTEM_PROMPTS: Record<AIRequestType, string> = {
-  relation_star_individual: `You are a relationship insight assistant. Provide brief, empathetic, and actionable assessments of personal relationships based on Relation Constellation data. Focus on:
+  relation_star_individual: `You are a relationship insight assistant. Provide brief, empathetic, and actionable assessments of personal relationships based on Relation Star data. Focus on:
 
 1. Identifying patterns and barriers
 2. Validating the user's feelings and goals
@@ -72,7 +72,7 @@ export function buildPrompt(
 function buildRelationStarIndividualPrompt(data: RelationStarIndividualData): string {
   const { scores, starScore, relationshipLabel, relationshipGoals, currentUserFirstName, memberFirstName } = data;
 
-  let prompt = `Analyze this Relation Constellation assessment:
+  let prompt = `Analyze this Relation Star assessment:
 ${currentUserFirstName && memberFirstName ? `\n**Context:** ${currentUserFirstName} is reflecting on their relationship with ${memberFirstName}.\n` : ''}
 **Scores (0-10):**
 - Proximity: ${scores.proximity}/10
@@ -108,7 +108,7 @@ Address each dimension that has a notable score (high, low, or mismatched with o
 function buildRelationStarComparisonPrompt(data: RelationStarComparisonData): string {
   const { personA, personB } = data;
 
-  let prompt = `Compare these two Relation Constellation assessments of the same relationship:
+  let prompt = `Compare these two Relation Star assessments of the same relationship:
 
 **Person A's Assessment:**
 - Proximity: ${personA.scores.proximity}/10
