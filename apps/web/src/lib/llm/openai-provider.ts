@@ -25,7 +25,7 @@ export class OpenAIProvider implements LLMProvider {
       baseURL: 'https://openrouter.ai/api/v1',
       defaultHeaders: {
         'HTTP-Referer': appUrl,
-        'X-Title': 'Relation Star',
+        'X-Title': 'Relation Constellation',
       },
     });
   }

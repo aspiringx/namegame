@@ -81,6 +81,7 @@ relationship.
 The framework distinguishes between **input dimensions** (data you provide) and **output dimensions** (calculated results):
 
 **Input Dimensions** (5 - visualized on the star chart):
+
 1. **Proximity** - How often you're near this person (physically, emotionally, or through shared groups)
 2. **Interest** - Your desire, ability, and commitment to the relationship
 3. **Personal Time** - Time spent focusing on each other (not tasks or large groups)
@@ -88,6 +89,7 @@ The framework distinguishes between **input dimensions** (data you provide) and 
 5. **Familiarity** - How well you know them
 
 **Output Dimensions** (2 - calculated, not visualized):
+
 1. **Strength of Relationship** - Calculated from inputs, validated against your self-assessment
 2. **Change** - Calculated from temporal deltas in other dimensions
 
@@ -108,6 +110,7 @@ The star chart visualizes the **5 input dimensions** (outputs are shown separate
 - **Familiarity** (0-10 scale: don't know face/name → deep empathy)
 
 **Calculated Outputs** (displayed separately, not on star chart):
+
 - **Strength of Relationship** - Shown as a label (Stranger → Close Friend) with numeric score
 - **Change** - Shown as timeline annotations or trend indicators
 
@@ -509,19 +512,21 @@ You want to be closer to [Name], but:
 
 ### Overview
 
-Users can request AI-generated narrative assessments of their Relation Star responses. The system supports both individual assessments and comparative assessments when two users evaluate the same relationship.
+Users can request AI-generated narrative assessments of their Relation Constellation responses. The system supports both individual assessments and comparative assessments when two users evaluate the same relationship.
 
 ### LLM Provider Architecture
 
 **Design Principle**: Provider-agnostic architecture with pluggable LLM backends.
 
 **Initial Implementation**: OpenAI GPT-4o-mini
+
 - Cost-effective: ~$0.0003 per assessment
 - High quality for relationship analysis
 - Fast response times
 - Easy upgrade path to GPT-4o if needed
 
 **Future Providers**:
+
 - Anthropic Claude 3.5 Sonnet (for more nuanced analysis)
 - Google Gemini 1.5 Flash (for budget-conscious scaling)
 - Local models (for privacy-sensitive deployments)
@@ -531,44 +536,50 @@ Users can request AI-generated narrative assessments of their Relation Star resp
 #### 1. Individual Assessment
 
 **Input**:
+
 - 5 dimension scores (0-10 each)
 - Overall Star Score
 - Relationship label (Stranger → Close Friend)
 - Optional: User's relationship goals/hopes (free text)
 
 **Output** (2-3 sentences):
+
 1. Current state of the relationship
 2. Notable patterns or barriers identified
 3. One actionable suggestion for growth
 
 **Example**:
+
 ```
-Your relationship shows high interest (8/10) but limited personal time (3/10). 
-This suggests you value the connection but haven't had opportunities to deepen it. 
+Your relationship shows high interest (8/10) but limited personal time (3/10).
+This suggests you value the connection but haven't had opportunities to deepen it.
 Consider scheduling regular one-on-one time to build on your shared interests.
 ```
 
 #### 2. Comparative Assessment (Two Perspectives)
 
 **Input**:
+
 - Person A's 5 dimension scores + goals
 - Person B's 5 dimension scores + goals
 - Both users must consent to comparison
 
 **Output** (~150 words):
+
 1. Areas of agreement (aligned perceptions)
 2. Key differences in perception
 3. Mutual strengths to build on
 4. 2-3 specific suggestions for bridging gaps
 
 **Example**:
+
 ```
-You both value this relationship highly (Interest: 8/10 and 9/10), but perceive 
-different levels of personal time spent together (A: 4/10, B: 7/10). This gap 
-suggests you may define "quality time" differently. Person A may be seeking more 
-focused one-on-one conversations, while Person B counts group activities as 
-meaningful connection time. Your shared common ground (both 8/10) is a strength 
-to build on. Suggestion: Discuss what "personal time" means to each of you, and 
+You both value this relationship highly (Interest: 8/10 and 9/10), but perceive
+different levels of personal time spent together (A: 4/10, B: 7/10). This gap
+suggests you may define "quality time" differently. Person A may be seeking more
+focused one-on-one conversations, while Person B counts group activities as
+meaningful connection time. Your shared common ground (both 8/10) is a strength
+to build on. Suggestion: Discuss what "personal time" means to each of you, and
 experiment with both styles of connection.
 ```
 
@@ -577,11 +588,13 @@ experiment with both styles of connection.
 **New Field**: "What would you like or hope for in this relationship?"
 
 **Purpose**:
+
 - Provides context for AI assessment
 - Helps identify gaps between current state and desired state
 - Enables more personalized suggestions
 
 **Examples**:
+
 - "I'd like to feel closer to my teenage daughter"
 - "I want to maintain this friendship despite living far apart"
 - "I hope we can move from coworkers to actual friends"
@@ -592,15 +605,18 @@ experiment with both styles of connection.
 ### Rate Limiting & Access Control
 
 **Authentication Requirement**:
+
 - AI assessments only available to authenticated users with verified email
 - Prevents abuse and manages API costs
 
 **Rate Limits**:
+
 - **Free tier**: 2 AI assessments per 24-hour period per user
 - **Paid tier** (future): Unlimited assessments
 - Rate limit tracked per user, not per assessment type
 
 **Implementation**:
+
 ```typescript
 // Database table (flexible design)
 AIRequest {
@@ -609,10 +625,10 @@ AIRequest {
   requestType: string              // 'relation_star_individual' | 'relation_star_comparison' | 'group_health' | 'custom'
                                    // Stored as string (not enum) to avoid migrations when adding new types
   requestedAt: timestamp
-  
+
   // Flexible input - stored as JSON
   requestInput: string             // JSON string containing all context and data
-  
+
   // AI response
   provider: string                 // 'openai' | 'anthropic' | 'google' (managed in code, not DB enum)
   model: string
@@ -621,13 +637,13 @@ AIRequest {
   response: string
   tokensUsed?: number
   costUsd?: number
-  
+
   // Conversation support (for future credit-based system)
   conversationId?: string          // Groups related requests together
   parentRequestId?: string         // References previous request in conversation
   isFollowUp: boolean              // Default false
   creditsUsed?: number             // For future credit system
-  
+
   // Metadata
   processingTimeMs?: number
   error?: string
@@ -648,6 +664,7 @@ async function canRequestAssessment(userId: string): Promise<boolean> {
 ```
 
 **Design Principles**:
+
 - **No DB enums**: `requestType` and `provider` are strings managed in TypeScript, avoiding migrations when adding new types
 - **JSON flexibility**: `requestInput` stores any data structure, allowing new request types without schema changes
 - **One-shot by default**: Initial implementation provides single response per request
@@ -657,6 +674,7 @@ async function canRequestAssessment(userId: string): Promise<boolean> {
 ### API Integration
 
 **Provider Interface** (pluggable architecture):
+
 ```typescript
 interface LLMProvider {
   name: string;
@@ -667,7 +685,7 @@ interface LLMProvider {
 class OpenAIProvider implements LLMProvider {
   name = 'openai';
   model = 'gpt-4o-mini';
-  
+
   async generateAssessment(input: AssessmentInput): Promise<AssessmentOutput> {
     const prompt = this.buildPrompt(input);
     const response = await openai.chat.completions.create({
@@ -693,10 +711,11 @@ class GeminiProvider implements LLMProvider { ... }
 ```
 
 **System Prompt**:
+
 ```
-You are a relationship insight assistant. Your role is to provide brief, 
-empathetic, and actionable assessments of personal relationships based on 
-Relation Star data. Focus on:
+You are a relationship insight assistant. Your role is to provide brief,
+empathetic, and actionable assessments of personal relationships based on
+Relation Constellation data. Focus on:
 
 1. Identifying patterns and barriers
 2. Validating the user's feelings and goals
@@ -710,12 +729,14 @@ Avoid jargon. Speak directly to the user.
 ### Privacy & Security
 
 **Data Handling**:
+
 - No personally identifiable information sent to LLM APIs
 - Use OpenAI's zero-retention option (data not used for training)
 - Store AI responses in our database, not with provider
 - User can delete their AI assessment history
 
 **Consent for Comparisons**:
+
 - Both users must explicitly opt-in to share their assessment
 - Comparison only shows aggregated insights, not raw scores to other party
 - Either user can revoke comparison access
@@ -723,12 +744,14 @@ Avoid jargon. Speak directly to the user.
 ### Cost Management
 
 **Estimated Costs** (GPT-4o-mini):
+
 - Individual assessment: ~500 input + 300 output tokens = $0.0003
 - Comparison assessment: ~800 input + 400 output tokens = $0.0005
 - 1,000 users × 2 assessments/day = $0.60/day = $18/month
 - 10,000 users × 2 assessments/day = $6/day = $180/month
 
 **Optimization Strategies**:
+
 - Cache system prompts (OpenAI prompt caching)
 - Batch processing for non-urgent assessments
 - Monitor token usage and adjust max_tokens
@@ -737,6 +760,7 @@ Avoid jargon. Speak directly to the user.
 ### Demo Page Implementation
 
 **UI Flow**:
+
 1. User completes 5 sliders
 2. Optional: Enters relationship goals (textarea)
 3. "Get AI Insight" button appears
@@ -746,6 +770,7 @@ Avoid jargon. Speak directly to the user.
 7. Assessment saved to user's history
 
 **Button States**:
+
 ```typescript
 // Disabled states
 - Not authenticated: "Sign in to get AI insights"

@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Dialog, Transition } from '@headlessui/react'
 import { Fragment } from 'react'
-import { X } from 'lucide-react'
+import { X, ChevronDown, ChevronUp } from 'lucide-react'
 import Image from 'next/image'
 
 interface RelationStarModalProps {
@@ -35,6 +35,7 @@ export default function RelationStarModal({
   const [relationshipGoals, setRelationshipGoals] = useState('')
   const [aiInsight, setAiInsight] = useState<string | null>(null)
   const [isLoadingAI, setIsLoadingAI] = useState(false)
+  const [isSlidersCollapsed, setIsSlidersCollapsed] = useState(false)
   const [aiError, setAiError] = useState<string | null>(null)
 
   const handleSliderChange = (dimension: keyof typeof interactiveScores, value: number) => {
@@ -134,7 +135,7 @@ export default function RelationStarModal({
                     </div>
                     <div>
                       <Dialog.Title className="text-xl font-bold text-gray-900 dark:text-gray-100">
-                        Your Relation Star with {memberName}
+                        Your Relation Constellation with {memberName}
                       </Dialog.Title>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
                         Reflect on your relationship
@@ -155,11 +156,23 @@ export default function RelationStarModal({
                     {/* Left: Sliders */}
                     <div>
                       <p className="mb-6 text-sm text-gray-700 dark:text-gray-300">
-                        Use the sliders to indicate how you see this relationship today. Then get optional insights from Relation Star.
+                        Use the sliders to indicate how you see this relationship today. Get optional insights from the Relation AI.
                       </p>
+                      
+                      {/* Collapsible Sliders Section */}
+                      <div className="mb-6">
+                        <button
+                          onClick={() => setIsSlidersCollapsed(!isSlidersCollapsed)}
+                          className="mb-4 flex w-full items-center justify-between text-sm font-semibold text-gray-900 hover:text-indigo-600 dark:text-gray-100 dark:hover:text-indigo-400"
+                        >
+                          <span>Assessment Questions</span>
+                          {isSlidersCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+                        </button>
+                        
+                        {!isSlidersCollapsed && (
                       <div className="space-y-6">
                         {[
-                          { key: 'proximity', label: 'How often are you near this person?', hint: '(physically or virtually)', minLabel: 'Never', maxLabel: 'Daily' },
+                          { key: 'proximity', label: 'How often are you near this person?', hint: '(physical and/or virtual proximity)', minLabel: 'Never', maxLabel: 'Daily' },
                           { key: 'commonGround', label: 'How much common ground do you share?', hint: '(interests, values, experiences)', minLabel: 'None', maxLabel: 'A lot' },
                           { key: 'familiarity', label: 'How well do you know them?', hint: '(from name recognition to deep understanding)', minLabel: 'Not at all', maxLabel: 'Very well' },
                           { key: 'interest', label: 'How interested are you in this relationship?', hint: '(desire, ability, commitment)', minLabel: 'Not at all', maxLabel: 'Very interested' },
@@ -191,6 +204,8 @@ export default function RelationStarModal({
                             </div>
                           </div>
                         ))}
+                      </div>
+                        )}
                       </div>
 
                       {/* Relationship Goals */}
@@ -244,9 +259,9 @@ export default function RelationStarModal({
                               Generating insights...
                             </span>
                           ) : Object.values(interactiveScores).every(v => v === 0) ? (
-                            'Adjust sliders to get Relation Star Insights'
+                            'Adjust sliders to get Relation Insights'
                           ) : (
-                            'Get Relation Star Insights'
+                            'Get Relation Insights'
                           )}
                         </button>
 
@@ -257,15 +272,20 @@ export default function RelationStarModal({
                         )}
 
                         {aiInsight && (
-                          <div className="mt-4 rounded-lg border border-indigo-200 bg-indigo-50 p-6 dark:border-indigo-900 dark:bg-indigo-950">
-                            <h4 className="mb-4 text-lg font-semibold text-indigo-900 dark:text-indigo-100">
-                              Relation Star Insights
-                            </h4>
-                            <div 
-                              className="prose prose-sm prose-indigo dark:prose-invert max-w-none text-indigo-800 dark:text-indigo-200 [&>p]:mb-4 [&>div]:space-y-2 [&_ul]:space-y-3 [&_li]:leading-relaxed"
-                              dangerouslySetInnerHTML={{ __html: aiInsight }}
-                            />
-                          </div>
+                          <>
+                            {/* Divider before AI Insights */}
+                            <div className="my-6 border-t-2 border-gray-300 dark:border-gray-600" />
+                            
+                            <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-6 dark:border-indigo-900 dark:bg-indigo-950">
+                              <h4 className="mb-4 text-lg font-semibold text-indigo-900 dark:text-indigo-100">
+                                Relation Insights from the Stars
+                              </h4>
+                              <div 
+                                className="prose prose-sm prose-indigo dark:prose-invert max-w-none text-indigo-800 dark:text-indigo-200 [&>p]:mb-4 [&>div]:space-y-2 [&_ul]:space-y-3 [&_li]:leading-relaxed"
+                                dangerouslySetInnerHTML={{ __html: aiInsight }}
+                              />
+                            </div>
+                          </>
                         )}
                       </div>
                     </div>
@@ -405,14 +425,20 @@ export default function RelationStarModal({
                                     />
                                   </circle>
                                   
-                                  {/* Labels - only show if value > 2 to avoid center overlap */}
-                                  {item.value > 2 && (
-                                    <>
-                                      {item.dimension === 'Personal Time' ? (
+                                  {/* Labels - always show, with smart positioning */}
+                                  {(() => {
+                                    // Use minimum distance of 60px from center for low values to avoid overlap
+                                    const labelDistance = Math.max(length - 30, 60);
+                                    const labelX = 160 + labelDistance * Math.cos(angle);
+                                    const labelY = 160 + labelDistance * Math.sin(angle);
+                                    
+                                    return (
+                                      <>
+                                        {item.dimension === 'Personal Time' ? (
                                         <>
                                           <text
-                                            x={160 + Math.max(length - 30, 25) * Math.cos(angle)}
-                                            y={160 + Math.max(length - 30, 25) * Math.sin(angle) - 6}
+                                            x={labelX}
+                                            y={labelY - 6}
                                             textAnchor="middle"
                                             fontSize="14"
                                             fontWeight="600"
@@ -422,8 +448,8 @@ export default function RelationStarModal({
                                             Personal
                                           </text>
                                           <text
-                                            x={160 + Math.max(length - 30, 25) * Math.cos(angle)}
-                                            y={160 + Math.max(length - 30, 25) * Math.sin(angle) + 6}
+                                            x={labelX}
+                                            y={labelY + 6}
                                             textAnchor="middle"
                                             fontSize="14"
                                             fontWeight="600"
@@ -436,8 +462,8 @@ export default function RelationStarModal({
                                       ) : item.dimension === 'Common Ground' ? (
                                         <>
                                           <text
-                                            x={160 + Math.max(length - 30, 25) * Math.cos(angle)}
-                                            y={160 + Math.max(length - 30, 25) * Math.sin(angle) - 6}
+                                            x={labelX}
+                                            y={labelY - 6}
                                             textAnchor="middle"
                                             fontSize="14"
                                             fontWeight="600"
@@ -447,8 +473,8 @@ export default function RelationStarModal({
                                             Common
                                           </text>
                                           <text
-                                            x={160 + Math.max(length - 30, 25) * Math.cos(angle)}
-                                            y={160 + Math.max(length - 30, 25) * Math.sin(angle) + 6}
+                                            x={labelX}
+                                            y={labelY + 6}
                                             textAnchor="middle"
                                             fontSize="14"
                                             fontWeight="600"
@@ -460,8 +486,8 @@ export default function RelationStarModal({
                                         </>
                                       ) : (
                                         <text
-                                          x={160 + Math.max(length - 25, 30) * Math.cos(angle)}
-                                          y={160 + Math.max(length - 25, 30) * Math.sin(angle)}
+                                          x={labelX}
+                                          y={labelY}
                                           textAnchor="middle"
                                           fontSize="14"
                                           fontWeight="600"
@@ -471,14 +497,18 @@ export default function RelationStarModal({
                                           {item.dimension}
                                         </text>
                                       )}
-                                    </>
-                                  )}
+                                      </>
+                                    );
+                                  })()}
                                 </g>
                               );
                             })}
                           </svg>
                         </div>
                       </div>
+
+                      {/* Divider */}
+                      <div className="border-t border-gray-200 dark:border-gray-700" />
 
                       {/* Star Score */}
                       <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">

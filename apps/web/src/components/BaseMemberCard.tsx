@@ -153,7 +153,7 @@ export default function BaseMemberCard({
                 {member.userId !== currentUserId && (
                   <DropdownMenuItem onClick={() => setIsRelationStarModalOpen(true)}>
                     <span className="mr-2">⭐</span>
-                    See Relation Star
+                    See Relation Constellation 
                   </DropdownMenuItem>
                 )}
                 {/* Strategy-specific actions */}

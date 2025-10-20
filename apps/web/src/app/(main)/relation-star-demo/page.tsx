@@ -172,7 +172,7 @@ export default function RelationshipStarPage() {
       {/* Header */}
       <div className="mb-8 text-center">
         <h1 className="mb-4 text-4xl font-bold">
-          Relation Star
+          Relation Constellation
         </h1>
         <p className="text-lg text-gray-600 dark:text-gray-400">
           A visual framework for understanding and strengthening your
@@ -216,15 +216,15 @@ export default function RelationshipStarPage() {
           {/* Left: Sliders */}
           <div className="rounded-lg border border-green-200 bg-green-50 p-6 dark:border-green-900 dark:bg-green-950">
             <h2 className="mb-4 text-xl font-bold text-green-900 dark:text-green-100">
-              Make a Relation Star
+              Make a Relation Constellation
             </h2>
             <p className="mb-4 text-sm text-green-800 dark:text-green-200">
               Use the sliders to indicate how you see one of your relationships 
-              today. Then get optional insights from Relation Star AI.
+              today. Get optional Relation AI insights.
             </p>
             <div className="space-y-6">
               {[
-                { key: 'proximity', label: 'How often are you near this person?', hint: '(physically or virtually)', minLabel: 'Never', maxLabel: 'Daily' },
+                { key: 'proximity', label: 'How often are you near this person?', hint: '(physical and/or virtual proximity)', minLabel: 'Never', maxLabel: 'Daily' },
                 { key: 'commonGround', label: 'How much common ground do you share?', hint: '(interests, values, experiences)', minLabel: 'None', maxLabel: 'A lot' },
                 { key: 'familiarity', label: 'How well do you know them?', hint: '(from name recognition to deep understanding)', minLabel: 'Not at all', maxLabel: 'Very well' },
                 { key: 'interest', label: 'How interested are you in this relationship?', hint: '(desire, ability, commitment)', minLabel: 'Not at all', maxLabel: 'Very interested' },
@@ -302,7 +302,7 @@ export default function RelationshipStarPage() {
                     href={`/auth/signin?callbackUrl=${encodeURIComponent('/relation-star-demo')}`}
                     className="block w-full rounded-lg bg-indigo-600 px-4 py-3 text-center text-sm font-medium text-white transition-colors hover:bg-indigo-700"
                   >
-                    Log in to Get Relation Star Insights
+                    Log in to Get Relation Insights
                   </Link>
                   <p className="mt-2 text-center text-xs text-gray-600 dark:text-gray-400">
                     Don't have an account?{' '}
@@ -332,9 +332,9 @@ export default function RelationshipStarPage() {
                       Generating insights...
                     </span>
                   ) : Object.values(interactiveScores).every(v => v === 0) ? (
-                    'Adjust sliders to get Relation Star Insights'
+                    'Adjust sliders to get Relation Insights'
                   ) : (
-                    'Get Relation Star Insights'
+                    'Get Relation Insights'
                   )}
                 </button>
               )}
@@ -348,7 +348,7 @@ export default function RelationshipStarPage() {
               {aiInsight && (
                 <div className="mt-4 rounded-lg border border-indigo-200 bg-indigo-50 p-6 dark:border-indigo-900 dark:bg-indigo-950">
                   <h4 className="mb-4 text-lg font-semibold text-indigo-900 dark:text-indigo-100">
-                    Relation Star Insights
+                    Relation Insights
                   </h4>
                   <div 
                     className="prose prose-sm prose-indigo dark:prose-invert max-w-none text-indigo-800 dark:text-indigo-200 [&>p]:mb-4 [&>div]:space-y-2 [&_ul]:space-y-3 [&_li]:leading-relaxed"
@@ -457,14 +457,20 @@ export default function RelationshipStarPage() {
                           fill="#4f46e5"
                         />
                         
-                        {/* Labels - only show if value > 2 to avoid center overlap */}
-                        {item.value > 2 && (
-                          <>
-                            {item.dimension === 'Personal Time' ? (
-                              <>
-                                <text
-                                  x={160 + Math.max(length - 30, 25) * Math.cos(angle)}
-                                  y={160 + Math.max(length - 30, 25) * Math.sin(angle) - 6}
+                        {/* Labels - always show, with smart positioning */}
+                        {(() => {
+                          // Use minimum distance of 60px from center for low values to avoid overlap
+                          const labelDistance = Math.max(length - 30, 60);
+                          const labelX = 160 + labelDistance * Math.cos(angle);
+                          const labelY = 160 + labelDistance * Math.sin(angle);
+                          
+                          return (
+                            <>
+                              {item.dimension === 'Personal Time' ? (
+                                <>
+                                  <text
+                                    x={labelX}
+                                    y={labelY - 6}
                                   textAnchor="middle"
                                   fontSize="14"
                                   fontWeight="600"
@@ -488,8 +494,8 @@ export default function RelationshipStarPage() {
                             ) : item.dimension === 'Common Ground' ? (
                               <>
                                 <text
-                                  x={160 + Math.max(length - 30, 25) * Math.cos(angle)}
-                                  y={160 + Math.max(length - 30, 25) * Math.sin(angle) - 6}
+                                  x={labelX}
+                                  y={labelY - 6}
                                   textAnchor="middle"
                                   fontSize="14"
                                   fontWeight="600"
@@ -499,8 +505,8 @@ export default function RelationshipStarPage() {
                                   Common
                                 </text>
                                 <text
-                                  x={160 + Math.max(length - 30, 25) * Math.cos(angle)}
-                                  y={160 + Math.max(length - 30, 25) * Math.sin(angle) + 6}
+                                  x={labelX}
+                                  y={labelY + 6}
                                   textAnchor="middle"
                                   fontSize="14"
                                   fontWeight="600"
@@ -512,8 +518,8 @@ export default function RelationshipStarPage() {
                               </>
                             ) : (
                               <text
-                                x={160 + Math.max(length - 30, 25) * Math.cos(angle)}
-                                y={160 + Math.max(length - 30, 25) * Math.sin(angle)}
+                                x={labelX}
+                                y={labelY}
                                 textAnchor="middle"
                                 fontSize="14"
                                 fontWeight="600"
@@ -523,8 +529,9 @@ export default function RelationshipStarPage() {
                                 {item.dimension}
                               </text>
                             )}
-                          </>
-                        )}
+                            </>
+                          );
+                        })()}
                       </g>
                     );
                   })}
@@ -675,14 +682,21 @@ export default function RelationshipStarPage() {
                       r="3"
                       fill="#c7d2fe"
                     />
-                    {/* Label - only show if value > 2 to avoid center overlap */}
-                    {item.value > 2 && (
-                      item.dimension === 'Personal Time' ? (
-                      <>
-                        <text
-                          x={160 + Math.max(length - 30, 25) * Math.cos(angle)}
-                          y={160 + Math.max(length - 30, 25) * Math.sin(angle) - 6}
-                          textAnchor="middle"
+                    {/* Labels - always show, with smart positioning */}
+                    {(() => {
+                      // Use minimum distance of 60px from center for low values to avoid overlap
+                      const labelDistance = Math.max(length - 30, 60);
+                      const labelX = 160 + labelDistance * Math.cos(angle);
+                      const labelY = 160 + labelDistance * Math.sin(angle);
+                      
+                      return (
+                        <>
+                          {item.dimension === 'Personal Time' ? (
+                            <>
+                              <text
+                                x={labelX}
+                                y={labelY - 6}
+                                textAnchor="middle"
                           fontSize="14"
                           fontWeight="600"
                           fill="currentColor"
@@ -691,8 +705,8 @@ export default function RelationshipStarPage() {
                           Personal
                         </text>
                         <text
-                          x={160 + Math.max(length - 30, 25) * Math.cos(angle)}
-                          y={160 + Math.max(length - 30, 25) * Math.sin(angle) + 6}
+                          x={labelX}
+                          y={labelY + 6}
                           textAnchor="middle"
                           fontSize="14"
                           fontWeight="600"
@@ -705,8 +719,8 @@ export default function RelationshipStarPage() {
                     ) : item.dimension === 'Common Ground' ? (
                       <>
                         <text
-                          x={160 + Math.max(length - 30, 25) * Math.cos(angle)}
-                          y={160 + Math.max(length - 30, 25) * Math.sin(angle) - 6}
+                          x={labelX}
+                          y={labelY - 6}
                           textAnchor="middle"
                           fontSize="14"
                           fontWeight="600"
@@ -716,8 +730,8 @@ export default function RelationshipStarPage() {
                           Common
                         </text>
                         <text
-                          x={160 + Math.max(length - 30, 25) * Math.cos(angle)}
-                          y={160 + Math.max(length - 30, 25) * Math.sin(angle) + 6}
+                          x={labelX}
+                          y={labelY + 6}
                           textAnchor="middle"
                           fontSize="14"
                           fontWeight="600"
@@ -729,8 +743,8 @@ export default function RelationshipStarPage() {
                       </>
                     ) : (
                       <text
-                        x={160 + Math.max(length - 25, 30) * Math.cos(angle)}
-                        y={160 + Math.max(length - 25, 30) * Math.sin(angle)}
+                        x={labelX}
+                        y={labelY}
                         textAnchor="middle"
                         fontSize="14"
                         fontWeight="600"
@@ -739,8 +753,10 @@ export default function RelationshipStarPage() {
                       >
                         {item.dimension}
                       </text>
-                    )
                     )}
+                        </>
+                      );
+                    })()}
                   </g>
                 );
               })}
