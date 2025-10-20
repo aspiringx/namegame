@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Dialog, Transition } from '@headlessui/react'
 import { Fragment } from 'react'
-import { X, ChevronDown, ChevronUp } from 'lucide-react'
+import { X, ChevronDown, ChevronUp, Plus } from 'lucide-react'
 import Image from 'next/image'
+import { Dropdown, DropdownItem } from '@/components/ui/dropdown'
 
 interface RelationStarModalProps {
   isOpen: boolean
@@ -17,14 +18,38 @@ interface RelationStarModalProps {
   memberFirstName?: string
 }
 
+interface HistoricalSnapshot {
+  id: string
+  scores: {
+    proximity: number
+    interest: number
+    personalTime: number
+    commonGround: number
+    familiarity: number
+  }
+  starScore: number
+  relationshipLabel: string
+  relationshipGoals?: string
+  response: string
+  createdAt: string
+}
+
 export default function RelationStarModal({
   isOpen,
   onClose,
   memberName,
   memberPhotoUrl,
+  memberId,
   currentUserFirstName,
   memberFirstName,
 }: RelationStarModalProps) {
+  // History management
+  const [snapshots, setSnapshots] = useState<HistoricalSnapshot[]>([])
+  const [selectedSnapshotId, setSelectedSnapshotId] = useState<string | null>(null)
+  const [isLoadingHistory, setIsLoadingHistory] = useState(true)
+  const [isCreatingNew, setIsCreatingNew] = useState(false)
+
+  // Form state (for creating new snapshots)
   const [interactiveScores, setInteractiveScores] = useState({
     proximity: 0,
     interest: 0,
@@ -37,6 +62,42 @@ export default function RelationStarModal({
   const [isLoadingAI, setIsLoadingAI] = useState(false)
   const [isSlidersCollapsed, setIsSlidersCollapsed] = useState(false)
   const [aiError, setAiError] = useState<string | null>(null)
+
+  // Fetch history function
+  const fetchHistory = useCallback(async () => {
+    setIsLoadingHistory(true)
+    try {
+      const response = await fetch(`/api/relation-star/history?memberId=${memberId}`)
+      const data = await response.json()
+
+      if (response.ok && data.assessments) {
+        setSnapshots(data.assessments)
+        // Select the most recent snapshot by default
+        if (data.assessments.length > 0) {
+          setSelectedSnapshotId(data.assessments[0].id)
+          setIsCreatingNew(false)
+        } else {
+          // No history - show creation form
+          setIsCreatingNew(true)
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch history:', error)
+      // On error, default to creation mode
+      setIsCreatingNew(true)
+    } finally {
+      setIsLoadingHistory(false)
+    }
+  }, [memberId])
+
+  // Fetch history when modal opens
+  useEffect(() => {
+    if (isOpen && memberId) {
+      fetchHistory()
+    }
+  }, [isOpen, memberId, fetchHistory])
+
+  const selectedSnapshot = snapshots.find((s) => s.id === selectedSnapshotId)
 
   const handleSliderChange = (
     dimension: keyof typeof interactiveScores,
@@ -92,6 +153,8 @@ export default function RelationStarModal({
       }
 
       setAiInsight(data.assessment.text)
+      // Refresh history to include the new snapshot
+      await fetchHistory()
     } catch (error) {
       setAiError(
         error instanceof Error ? error.message : 'An unexpected error occurred',
@@ -106,6 +169,22 @@ export default function RelationStarModal({
     setRelationshipGoals('')
     setAiError(null)
     setIsSlidersCollapsed(false) // Expand sliders when starting over
+  }
+
+  const handleNewInsights = () => {
+    // Reset form state
+    setInteractiveScores({
+      proximity: 0,
+      interest: 0,
+      personalTime: 0,
+      commonGround: 0,
+      familiarity: 0,
+    })
+    setRelationshipGoals('')
+    setAiInsight(null)
+    setAiError(null)
+    setIsSlidersCollapsed(false)
+    setIsCreatingNew(true)
   }
 
   const starScore = calculateStarScore()
@@ -138,38 +217,105 @@ export default function RelationStarModal({
             >
               <Dialog.Panel className="relative w-full max-w-5xl transform overflow-hidden rounded-2xl bg-white text-left align-middle shadow-xl transition-all dark:bg-gray-900">
                 {/* Header */}
-                <div className="flex items-center justify-between border-b border-gray-200 p-6 dark:border-gray-700">
-                  <div className="flex items-center gap-4">
-                    <div className="relative h-12 w-12 overflow-hidden rounded-full">
-                      <Image
-                        src={memberPhotoUrl}
-                        alt={memberName}
-                        fill
-                        className="object-cover"
-                      />
+                <div className="border-b border-gray-200 p-4 sm:p-6 dark:border-gray-700">
+                  {/* Top row: Title and Close button */}
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                      <div className="relative h-10 w-10 sm:h-12 sm:w-12 flex-shrink-0 overflow-hidden rounded-full">
+                        <Image
+                          src={memberPhotoUrl}
+                          alt={memberName}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <Dialog.Title className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100 truncate">
+                          Cosmic Insights with {memberName}
+                        </Dialog.Title>
+                        <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                          Reflect on your relationship
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <Dialog.Title className="text-xl font-bold text-gray-900 dark:text-gray-100">
-                        Relation Stars with {memberName}
-                      </Dialog.Title>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Reflect on your relationship
-                      </p>
-                    </div>
+                    <button
+                      onClick={onClose}
+                      className="flex-shrink-0 rounded-full p-2 hover:bg-gray-100 dark:hover:bg-gray-800"
+                    >
+                      <X className="h-5 w-5" />
+                    </button>
                   </div>
-                  <button
-                    onClick={onClose}
-                    className="rounded-full p-2 hover:bg-gray-100 dark:hover:bg-gray-800"
-                  >
-                    <X className="h-5 w-5" />
-                  </button>
+
+                  {/* Snapshot selector and New button (only show if there's history) */}
+                  {!isLoadingHistory && snapshots.length > 0 && (
+                    <div className="mt-4 flex flex-col sm:flex-row items-stretch gap-3 sm:gap-4">
+                      <Dropdown
+                        trigger={
+                          <div className="flex w-full items-center justify-between rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700">
+                            <span className="truncate">
+                              {selectedSnapshot
+                                ? `${new Date(selectedSnapshot.createdAt).toLocaleDateString()} - ${selectedSnapshot.starScore.toFixed(1)}/10 (${selectedSnapshot.relationshipLabel})`
+                                : 'Select a snapshot'}
+                            </span>
+                            <ChevronDown className="ml-2 h-4 w-4 flex-shrink-0" />
+                          </div>
+                        }
+                        triggerClassName="w-full sm:flex-1"
+                        menuClassName="absolute left-0 z-10 mt-2 w-full origin-top-left rounded-md border border-gray-200 bg-white text-gray-900 shadow-lg focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
+                      >
+                        {snapshots.map((snapshot, index) => (
+                          <div key={snapshot.id}>
+                            {index > 0 && (
+                              <div className="my-1 border-t border-gray-200 dark:border-gray-700" />
+                            )}
+                            <DropdownItem
+                              onClick={() => {
+                                setSelectedSnapshotId(snapshot.id)
+                                setIsCreatingNew(false)
+                              }}
+                            >
+                              <div className="flex items-center justify-between gap-3 w-full">
+                                <span className="font-medium">
+                                  {new Date(snapshot.createdAt).toLocaleDateString()}
+                                </span>
+                                <span className="text-xs opacity-75 whitespace-nowrap">
+                                  {snapshot.starScore.toFixed(1)}/10 · {snapshot.relationshipLabel}
+                                </span>
+                              </div>
+                            </DropdownItem>
+                          </div>
+                        ))}
+                      </Dropdown>
+                      {!isCreatingNew && (
+                        <button
+                          onClick={handleNewInsights}
+                          className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700 whitespace-nowrap"
+                        >
+                          <Plus className="h-4 w-4" />
+                          New Cosmic Insights
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Content */}
-                <div className="max-h-[calc(90vh-120px)] overflow-y-auto p-6">
-                  <div className="grid gap-8 lg:grid-cols-2">
-                    {/* Left: Sliders */}
-                    <div>
+                <div className="max-h-[calc(90vh-120px)] min-h-[400px] overflow-y-auto p-4 sm:p-6">
+                  {/* Show loading state */}
+                  {isLoadingHistory ? (
+                    <div className="flex items-center justify-center py-24">
+                      <div className="text-center">
+                        <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-indigo-600"></div>
+                        <p className="mt-4 text-sm text-gray-600 dark:text-gray-400">
+                          Loading history...
+                        </p>
+                      </div>
+                    </div>
+                  ) : isCreatingNew || snapshots.length === 0 ? (
+                    // Creation mode - show the input form
+                    <div className="grid gap-8 lg:grid-cols-2">
+                      {/* Left: Sliders */}
+                      <div>
                       {/* Collapsible Sliders Section */}
                       <div className="mb-6">
                         <button
@@ -286,7 +432,7 @@ export default function RelationStarModal({
                           Cosmic Insights
                         </h3>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                          Insights from the universe
+                          Relationship context
                         </label>
                         <div className="mt-1 mb-2 text-xs text-gray-500 dark:text-gray-400">
                           Provide relationship context (status, dynamics, hopes,
@@ -585,11 +731,8 @@ export default function RelationStarModal({
 
                                   {/* Labels - always show, with smart positioning */}
                                   {(() => {
-                                    // Use minimum distance of 60px from center for low values to avoid overlap
-                                    const labelDistance = Math.max(
-                                      length - 30,
-                                      60,
-                                    )
+                                    // Use a smaller distance to keep labels within viewBox
+                                    const labelDistance = 145
                                     const labelX =
                                       160 + labelDistance * Math.cos(angle)
                                     const labelY =
@@ -743,6 +886,249 @@ export default function RelationStarModal({
                       </div>
                     </div>
                   </div>
+                ) : selectedSnapshot ? (
+                  // Read-only mode - show historical snapshot
+                  <div className="grid gap-8 lg:grid-cols-2">
+                    {/* Left: Saved Context and AI Response */}
+                    <div className="space-y-6">
+                      {selectedSnapshot.relationshipGoals && (
+                        <div>
+                          <h3 className="mb-4 text-xl font-bold">
+                            Relationship Context
+                          </h3>
+                          <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                            {selectedSnapshot.relationshipGoals}
+                          </div>
+                        </div>
+                      )}
+
+                      <div>
+                        <h3 className="mb-4 text-xl font-bold">
+                          Cosmic Insights from the Stars
+                        </h3>
+                        <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-6 dark:border-indigo-900 dark:bg-indigo-950">
+                          <div
+                            className="prose prose-sm prose-indigo dark:prose-invert max-w-none text-indigo-800 dark:text-indigo-200 [&_li]:leading-relaxed [&_ul]:space-y-3 [&>div]:space-y-2 [&>p]:mb-4"
+                            dangerouslySetInnerHTML={{
+                              __html: selectedSnapshot.response,
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right: Chart and Score */}
+                    <div className="space-y-6">
+                      {/* Star Chart */}
+                      <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
+                        <h3 className="mb-4 text-xl font-bold">Star Chart</h3>
+                        <div className="relative mx-auto aspect-square w-full">
+                          <svg
+                            viewBox="-10 -10 340 340"
+                            className="h-full w-full"
+                          >
+                            {/* Center point */}
+                            <circle cx="160" cy="160" r="3" fill="#4f46e5" />
+
+                            {/* Concentric circles */}
+                            {[32, 64, 96, 128, 160].map((radius) => (
+                              <circle
+                                key={radius}
+                                cx="160"
+                                cy="160"
+                                r={radius}
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="1"
+                                className="stroke-gray-300 dark:stroke-gray-600"
+                              />
+                            ))}
+
+                            {/* Scale labels */}
+                            {[0, 5, 10].map((val) => (
+                              <text
+                                key={val}
+                                x="160"
+                                y={160 - val * 16 - (val === 0 ? 12 : 0) + 5}
+                                textAnchor="middle"
+                                fontSize="14"
+                                fontWeight="500"
+                                fill="currentColor"
+                                className="fill-gray-500 dark:fill-gray-400"
+                              >
+                                {val}
+                              </text>
+                            ))}
+
+                            {/* Axes */}
+                            {Object.keys(selectedSnapshot.scores).map((_, idx) => {
+                              const angle =
+                                (idx * (360 / 5) - 90 + 30) * (Math.PI / 180)
+                              const x = 160 + 160 * Math.cos(angle)
+                              const y = 160 + 160 * Math.sin(angle)
+                              return (
+                                <line
+                                  key={idx}
+                                  x1="160"
+                                  y1="160"
+                                  x2={x}
+                                  y2={y}
+                                  stroke="currentColor"
+                                  strokeWidth="1"
+                                  className="stroke-gray-300 dark:stroke-gray-600"
+                                />
+                              )
+                            })}
+
+                            {/* Filled area */}
+                            <path
+                              d={
+                                Object.values(selectedSnapshot.scores)
+                                  .map((value, idx) => {
+                                    const angle =
+                                      (idx * (360 / 5) - 90 + 30) *
+                                      (Math.PI / 180)
+                                    const length = value * 16
+                                    const x = 160 + length * Math.cos(angle)
+                                    const y = 160 + length * Math.sin(angle)
+                                    return `${idx === 0 ? 'M' : 'L'} ${x} ${y}`
+                                  })
+                                  .join(' ') + ' Z'
+                              }
+                              fill="#4f46e5"
+                              fillOpacity="0.15"
+                              stroke="#4f46e5"
+                              strokeWidth="3"
+                              opacity="0.6"
+                            />
+
+                            {/* Points */}
+                            {Object.values(selectedSnapshot.scores).map(
+                              (value, idx) => {
+                                const angle =
+                                  (idx * (360 / 5) - 90 + 30) * (Math.PI / 180)
+                                const length = value * 16
+                                const x = 160 + length * Math.cos(angle)
+                                const y = 160 + length * Math.sin(angle)
+
+                                return (
+                                  <g key={idx}>
+                                    <circle
+                                      cx={x}
+                                      cy={y}
+                                      r="6"
+                                      fill="#4f46e5"
+                                      stroke="white"
+                                      strokeWidth="2"
+                                    />
+                                  </g>
+                                )
+                              },
+                            )}
+
+                            {/* Labels */}
+                            {[
+                              { key: 'proximity', label: 'Proximity' },
+                              { key: 'interest', label: 'Interest' },
+                              { key: 'personalTime', label: 'Personal\nTime' },
+                              { key: 'commonGround', label: 'Common\nGround' },
+                              { key: 'familiarity', label: 'Familiarity' },
+                            ].map((dim, idx) => {
+                              const angle =
+                                (idx * (360 / 5) - 90 + 30) * (Math.PI / 180)
+                              const labelDistance = 145
+                              const x = 160 + labelDistance * Math.cos(angle)
+                              const y = 160 + labelDistance * Math.sin(angle)
+
+                              return (
+                                <text
+                                  key={dim.key}
+                                  x={x}
+                                  y={y}
+                                  textAnchor="middle"
+                                  dominantBaseline="middle"
+                                  fontSize="14"
+                                  fontWeight="600"
+                                  fill="currentColor"
+                                  className="fill-gray-700 dark:fill-gray-300"
+                                >
+                                  {dim.label.split('\n').map((line, i) => (
+                                    <tspan
+                                      key={i}
+                                      x={x}
+                                      dy={i === 0 ? 0 : 16}
+                                    >
+                                      {line}
+                                    </tspan>
+                                  ))}
+                                </text>
+                              )
+                            })}
+                          </svg>
+                        </div>
+                      </div>
+
+                      {/* Star Score */}
+                      <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+                        <h3 className="mb-4 text-xl font-bold">Star Score</h3>
+                        <div className="mb-4 text-center">
+                          <div className="font-bold">
+                            <span className="text-4xl text-indigo-600 dark:text-indigo-400">
+                              {selectedSnapshot.starScore.toFixed(1)}
+                            </span>
+                            <span className="text-2xl text-gray-400">/10</span>
+                          </div>
+                          <div className="mt-2 text-sm font-medium text-gray-600 dark:text-gray-400">
+                            {selectedSnapshot.relationshipLabel}
+                          </div>
+                        </div>
+
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-gray-600 dark:text-gray-400">
+                              Personal Time (30%)
+                            </span>
+                            <span className="font-medium">
+                              {selectedSnapshot.scores.personalTime}/10
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600 dark:text-gray-400">
+                              Common Ground (25%)
+                            </span>
+                            <span className="font-medium">
+                              {selectedSnapshot.scores.commonGround}/10
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600 dark:text-gray-400">
+                              Familiarity (20%)
+                            </span>
+                            <span className="font-medium">
+                              {selectedSnapshot.scores.familiarity}/10
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600 dark:text-gray-400">
+                              Interest (15%)
+                            </span>
+                            <span className="font-medium">
+                              {selectedSnapshot.scores.interest}/10
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600 dark:text-gray-400">
+                              Proximity (10%)
+                            </span>
+                            <span className="font-medium">
+                              {selectedSnapshot.scores.proximity}/10
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
                 </div>
               </Dialog.Panel>
             </Transition.Child>

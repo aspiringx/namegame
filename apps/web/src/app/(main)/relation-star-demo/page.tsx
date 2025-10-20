@@ -326,7 +326,7 @@ export default function RelationshipStarPage() {
             <div className="mt-8">
               <h3 className="mb-4 text-xl font-bold">Cosmic Insights</h3>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Insights from the universe
+                Relationship context
               </label>
               <div className="mt-1 mb-2 text-xs text-gray-500 dark:text-gray-400">
                 Provide relationship context (status, dynamics, hopes, etc.) for

@@ -80,7 +80,9 @@ export default function BaseMemberCard({
 
   // Determine if user is connected (for community groups)
   const isConnected = !strategy.showConnectedTime || member.connectedAt
-  const photoClassName = `rounded object-cover${isConnected ? '' : ' grayscale'}`
+  const photoClassName = `rounded object-cover${
+    isConnected ? '' : ' grayscale'
+  }`
 
   // Note: actionProps removed since we're using strategy configuration directly
 
@@ -151,9 +153,11 @@ export default function BaseMemberCard({
               <DropdownMenuContent align="end">
                 {/* Relation Star - available to all users for their own relationships */}
                 {member.userId !== currentUserId && (
-                  <DropdownMenuItem onClick={() => setIsRelationStarModalOpen(true)}>
+                  <DropdownMenuItem
+                    onClick={() => setIsRelationStarModalOpen(true)}
+                  >
                     <span className="mr-2">⭐</span>
-                    See Relation Star 
+                    See Cosmic Insights
                   </DropdownMenuItem>
                 )}
                 {/* Strategy-specific actions */}
