@@ -6,18 +6,33 @@ import { CacheFirst } from 'workbox-strategies'
 
 declare const self: ServiceWorkerGlobalScope
 
+// Service worker version - this will change with each build to force updates
+const SW_VERSION = process.env.NEXT_PUBLIC_BUILD_ID || 'dev'
+console.log('[SW] Service Worker Version:', SW_VERSION)
+
 // IMPORTANT: Event listeners must be added during initial script evaluation
 // Don't use skipWaiting() or clientsClaim() - they invalidate Firebase tokens
 // The service worker will update on next page load/navigation
 
+self.addEventListener('install', (event) => {
+  console.log('[SW] Service worker installing, version:', SW_VERSION)
+  // Skip waiting to activate immediately
+  event.waitUntil(self.skipWaiting())
+})
+
 self.addEventListener('activate', (event) => {
-  console.log('[SW] Service worker activated')
+  console.log('[SW] Service worker activated, version:', SW_VERSION)
   
   // Claim clients immediately so the SW can handle push notifications
-  // This is safe because we're not using skipWaiting() anymore
   event.waitUntil(
     self.clients.claim().then(() => {
       console.log('[SW] Clients claimed - service worker now controlling all pages')
+      // Notify all clients to reload
+      return self.clients.matchAll({ type: 'window' }).then((clients) => {
+        clients.forEach((client) => {
+          client.postMessage({ type: 'SW_UPDATED', version: SW_VERSION })
+        })
+      })
     })
   )
 })

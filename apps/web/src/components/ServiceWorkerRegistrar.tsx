@@ -14,19 +14,27 @@ export function ServiceWorkerRegistrar() {
       return
     }
 
+    // Listen for service worker updates
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'SW_UPDATED') {
+        console.log('[SW] New service worker activated, version:', event.data.version)
+        console.log('[SW] Reloading page to use new version...')
+        // Reload the page to use the new service worker
+        window.location.reload()
+      }
+    }
+
+    navigator.serviceWorker.addEventListener('message', handleMessage)
+
     const setupServiceWorker = async () => {
       try {
-        // Use build ID as cache-busting parameter to force updates on new deployments
-        const buildId = process.env.NEXT_PUBLIC_BUILD_ID || Date.now().toString()
-        const swUrl = `/sw.js?v=${buildId}`
-        
         // Check if service worker is already registered
         const existingRegistration = await navigator.serviceWorker.getRegistration('/sw.js')
         
         let newRegistration: ServiceWorkerRegistration
         
         if (existingRegistration) {
-          // Update the existing registration with new version
+          // Update the existing registration to check for new version
           await existingRegistration.update()
           newRegistration = existingRegistration
           
@@ -39,8 +47,8 @@ export function ServiceWorkerRegistrar() {
             return
           }
         } else {
-          // Register the new service worker with cache-busting parameter
-          newRegistration = await navigator.serviceWorker.register(swUrl)
+          // Register the new service worker
+          newRegistration = await navigator.serviceWorker.register('/sw.js')
         }
 
         // Wait for the service worker to become active and control the page.
@@ -85,6 +93,11 @@ export function ServiceWorkerRegistrar() {
     }
 
     setupServiceWorker()
+
+    // Cleanup
+    return () => {
+      navigator.serviceWorker.removeEventListener('message', handleMessage)
+    }
   }, [_setRegistration, _setIsReady])
 
   return null
