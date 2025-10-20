@@ -16,13 +16,18 @@ export function ServiceWorkerRegistrar() {
 
     const setupServiceWorker = async () => {
       try {
+        // Use build ID as cache-busting parameter to force updates on new deployments
+        const buildId = process.env.NEXT_PUBLIC_BUILD_ID || Date.now().toString()
+        const swUrl = `/sw.js?v=${buildId}`
+        
         // Check if service worker is already registered
         const existingRegistration = await navigator.serviceWorker.getRegistration('/sw.js')
         
         let newRegistration: ServiceWorkerRegistration
         
         if (existingRegistration) {
-          // Service worker already registered, use it
+          // Update the existing registration with new version
+          await existingRegistration.update()
           newRegistration = existingRegistration
           
           // Check if the controller matches the active worker from this registration
@@ -34,8 +39,8 @@ export function ServiceWorkerRegistrar() {
             return
           }
         } else {
-          // Register the new service worker
-          newRegistration = await navigator.serviceWorker.register('/sw.js')
+          // Register the new service worker with cache-busting parameter
+          newRegistration = await navigator.serviceWorker.register(swUrl)
         }
 
         // Wait for the service worker to become active and control the page.
