@@ -1,11 +1,20 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
+import { useDeviceInfo } from '@/hooks/useDeviceInfo'
 import { Dialog, Transition } from '@headlessui/react'
 import { Fragment } from 'react'
-import { X, ChevronDown, ChevronUp, Plus } from 'lucide-react'
+import { X, ChevronDown, ChevronUp, Plus, Info } from 'lucide-react'
 import Image from 'next/image'
 import { Dropdown, DropdownItem } from '@/components/ui/dropdown'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 
 interface RelationStarModalProps {
   isOpen: boolean
@@ -18,7 +27,7 @@ interface RelationStarModalProps {
   memberFirstName?: string
 }
 
-interface HistoricalSnapshot {
+interface Snapshot {
   id: string
   scores: {
     proximity: number
@@ -43,10 +52,13 @@ export default function RelationStarModal({
   currentUserFirstName,
   memberFirstName,
 }: RelationStarModalProps) {
-  // History management
-  const [snapshots, setSnapshots] = useState<HistoricalSnapshot[]>([])
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false)
+  const [snapshots, setSnapshots] = useState<Snapshot[]>([])
   const [selectedSnapshotId, setSelectedSnapshotId] = useState<string | null>(null)
-  const [isLoadingHistory, setIsLoadingHistory] = useState(true)
+
+  const router = useRouter()
+  const { data: session } = useSession()
+  const deviceInfo = useDeviceInfo(session)
   const [isCreatingNew, setIsCreatingNew] = useState(false)
 
   // Form state (for creating new snapshots)
@@ -59,6 +71,7 @@ export default function RelationStarModal({
   })
   const [relationshipGoals, setRelationshipGoals] = useState('')
   const [aiInsight, setAiInsight] = useState<string | null>(null)
+  const [currentAssessmentId, setCurrentAssessmentId] = useState<string | null>(null)
   const [isLoadingAI, setIsLoadingAI] = useState(false)
   const [isSlidersCollapsed, setIsSlidersCollapsed] = useState(false)
   const [aiError, setAiError] = useState<string | null>(null)
@@ -153,6 +166,7 @@ export default function RelationStarModal({
       }
 
       setAiInsight(data.assessment.text)
+      setCurrentAssessmentId(data.assessment.id)
       // Refresh history to include the new snapshot
       await fetchHistory()
     } catch (error) {
@@ -166,6 +180,7 @@ export default function RelationStarModal({
 
   const handleStartOver = () => {
     setAiInsight(null)
+    setCurrentAssessmentId(null)
     setRelationshipGoals('')
     setAiError(null)
     setIsSlidersCollapsed(false) // Expand sliders when starting over
@@ -182,6 +197,7 @@ export default function RelationStarModal({
     })
     setRelationshipGoals('')
     setAiInsight(null)
+    setCurrentAssessmentId(null)
     setAiError(null)
     setIsSlidersCollapsed(false)
     setIsCreatingNew(true)
@@ -233,9 +249,41 @@ export default function RelationStarModal({
                         <Dialog.Title className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100 truncate">
                           Cosmic Insights with {memberName}
                         </Dialog.Title>
-                        <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-                          Reflect on your relationship
-                        </p>
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                            Reflect on your relationship
+                          </p>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button
+                                  type="button"
+                                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+                                  aria-label="Learn how to interpret star charts"
+                                >
+                                  <Info className="h-4 w-4" />
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent side="right" className="max-w-xs">
+                                <p className="mb-2">
+                                  Learn how to interpret your star chart and understand the five dimensions of relationships.
+                                </p>
+                                <button
+                                  onClick={() => {
+                                    if (deviceInfo.isPWA) {
+                                      router.push('/relation-star-demo')
+                                    } else {
+                                      window.open('/relation-star-demo', '_blank')
+                                    }
+                                  }}
+                                  className="text-white hover:text-gray-200 underline font-semibold text-left"
+                                >
+                                  View Interactive Demo →
+                                </button>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
                       </div>
                     </div>
                     <button
@@ -535,9 +583,37 @@ export default function RelationStarModal({
                               <div className="my-6 border-t-2 border-gray-300 dark:border-gray-600" />
 
                               <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-6 dark:border-indigo-900 dark:bg-indigo-950">
-                                <h4 className="mb-4 text-lg font-semibold text-indigo-900 dark:text-indigo-100">
-                                  Cosmic Insights from the Stars
-                                </h4>
+                                <div className="mb-4 flex items-center justify-between">
+                                  <h4 className="text-lg font-semibold text-indigo-900 dark:text-indigo-100">
+                                    Cosmic Insights from the Stars
+                                  </h4>
+                                  {currentAssessmentId && (
+                                    <button
+                                      onClick={() =>
+                                        window.open(
+                                          `/cosmic-insights/${currentAssessmentId}`,
+                                          '_blank'
+                                        )
+                                      }
+                                      className="flex items-center gap-2 rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
+                                    >
+                                      <svg
+                                        className="h-4 w-4"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                                        />
+                                      </svg>
+                                      Full Page
+                                    </button>
+                                  )}
+                                </div>
                                 <div
                                   className="prose prose-sm prose-indigo dark:prose-invert max-w-none text-indigo-800 dark:text-indigo-200 [&_li]:leading-relaxed [&_ul]:space-y-3 [&>div]:space-y-2 [&>p]:mb-4"
                                   dangerouslySetInnerHTML={{
@@ -903,10 +979,36 @@ export default function RelationStarModal({
                       )}
 
                       <div>
-                        <h3 className="mb-4 text-xl font-bold">
-                          Cosmic Insights from the Stars
-                        </h3>
                         <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-6 dark:border-indigo-900 dark:bg-indigo-950">
+                          <div className="mb-4 flex items-center justify-between">
+                            <h3 className="text-xl font-bold text-indigo-900 dark:text-indigo-100">
+                              Cosmic Insights from the Stars
+                            </h3>
+                            <button
+                              onClick={() =>
+                                window.open(
+                                  `/cosmic-insights/${selectedSnapshot.id}`,
+                                  '_blank'
+                                )
+                              }
+                              className="flex items-center gap-2 rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
+                            >
+                              <svg
+                                className="h-4 w-4"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                                />
+                              </svg>
+                              Full Page
+                            </button>
+                          </div>
                           <div
                             className="prose prose-sm prose-indigo dark:prose-invert max-w-none text-indigo-800 dark:text-indigo-200 [&_li]:leading-relaxed [&_ul]:space-y-3 [&>div]:space-y-2 [&>p]:mb-4"
                             dangerouslySetInnerHTML={{
@@ -984,7 +1086,7 @@ export default function RelationStarModal({
                             <path
                               d={
                                 Object.values(selectedSnapshot.scores)
-                                  .map((value, idx) => {
+                                  .map((value: number, idx) => {
                                     const angle =
                                       (idx * (360 / 5) - 90 + 30) *
                                       (Math.PI / 180)
@@ -1004,7 +1106,7 @@ export default function RelationStarModal({
 
                             {/* Points */}
                             {Object.values(selectedSnapshot.scores).map(
-                              (value, idx) => {
+                              (value: number, idx) => {
                                 const angle =
                                   (idx * (360 / 5) - 90 + 30) * (Math.PI / 180)
                                 const length = value * 16
