@@ -67,6 +67,7 @@ export default function RelationStarModal({
     setIsLoadingAI(true)
     setAiError(null)
     setAiInsight(null)
+    setIsSlidersCollapsed(true) // Collapse sliders immediately when button is clicked
 
     try {
       const response = await fetch('/api/relation-star/ai-assessment', {
@@ -104,6 +105,7 @@ export default function RelationStarModal({
     setAiInsight(null)
     setRelationshipGoals('')
     setAiError(null)
+    setIsSlidersCollapsed(false) // Expand sliders when starting over
   }
 
   const starScore = calculateStarScore()
@@ -368,7 +370,7 @@ export default function RelationStarModal({
                                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                                   />
                                 </svg>
-                                Generating insights...
+                                Gathering wisdom...
                               </span>
                             ) : (
                               'Get Cosmic Insights'
@@ -388,7 +390,7 @@ export default function RelationStarModal({
 
                               <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-6 dark:border-indigo-900 dark:bg-indigo-950">
                                 <h4 className="mb-4 text-lg font-semibold text-indigo-900 dark:text-indigo-100">
-                                  Relation Insights from the Stars
+                                  Cosmic Insights from the Stars
                                 </h4>
                                 <div
                                   className="prose prose-sm prose-indigo dark:prose-invert max-w-none text-indigo-800 dark:text-indigo-200 [&_li]:leading-relaxed [&_ul]:space-y-3 [&>div]:space-y-2 [&>p]:mb-4"
@@ -674,7 +676,7 @@ export default function RelationStarModal({
 
                       {/* Star Score */}
                       <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
-                        <h3 className="mb-3 text-lg font-bold">Star Score</h3>
+                        <h3 className="mb-4 text-xl font-bold">Star Score</h3>
                         <div className="mb-4 text-center">
                           <div className="font-bold">
                             <span className="text-4xl text-indigo-600 dark:text-indigo-400">

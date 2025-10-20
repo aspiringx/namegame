@@ -232,11 +232,11 @@ export default function RelationshipStarPage() {
       {isInteractive && (
         <div className="mb-8 grid gap-8 lg:grid-cols-2">
           {/* Left: Sliders */}
-          <div className="rounded-lg border border-green-200 bg-green-50 p-6 dark:border-green-900 dark:bg-green-950">
-            <h2 className="mb-4 text-xl font-bold text-green-900 dark:text-green-100">
+          <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
+            <h2 className="mb-4 text-xl font-bold text-gray-900 dark:text-gray-100">
               Map the Relationship
             </h2>
-            <p className="mb-4 text-sm text-green-800 dark:text-green-200">
+            <p className="mb-4 text-sm text-gray-700 dark:text-gray-300">
               Map your relationship in the stars and get cosmic insights.
             </p>
             <div className="space-y-6">
@@ -287,7 +287,7 @@ export default function RelationshipStarPage() {
                         {hint}
                       </div>
                     </div>
-                    <span className="text-lg font-bold text-green-700 dark:text-green-300 flex-shrink-0">
+                    <span className="flex-shrink-0 text-lg font-bold text-indigo-700 dark:text-indigo-300">
                       {interactiveScores[key as keyof typeof interactiveScores]}
                     </span>
                   </div>
@@ -384,7 +384,7 @@ export default function RelationshipStarPage() {
                       )}`}
                       className="block w-full rounded-lg bg-indigo-600 px-4 py-3 text-center text-sm font-medium text-white transition-colors hover:bg-indigo-700"
                     >
-                      Log in to Get Relation Insights
+                      Log in to Get Cosmic Insights
                     </Link>
                     <p className="mt-2 text-center text-xs text-gray-600 dark:text-gray-400">
                       Don't have an account?{' '}
@@ -433,7 +433,7 @@ export default function RelationshipStarPage() {
                             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                           />
                         </svg>
-                        Generating insights...
+                        Gathering wisdom...
                       </span>
                     ) : (
                       'Get Cosmic Insights'
@@ -450,7 +450,7 @@ export default function RelationshipStarPage() {
                 {aiInsight && (
                   <div className="mt-4 rounded-lg border border-indigo-200 bg-indigo-50 p-6 dark:border-indigo-900 dark:bg-indigo-950">
                     <h4 className="mb-4 text-lg font-semibold text-indigo-900 dark:text-indigo-100">
-                      Relation Insights
+                      Cosmic Insights
                     </h4>
                     <div
                       className="prose prose-sm prose-indigo dark:prose-invert max-w-none text-indigo-800 dark:text-indigo-200 [&>p]:mb-4 [&>div]:space-y-2 [&_ul]:space-y-3 [&_li]:leading-relaxed"

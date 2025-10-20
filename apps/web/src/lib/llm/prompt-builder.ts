@@ -84,7 +84,7 @@ ${currentUserFirstName && memberFirstName ? `\n**Context:** ${currentUserFirstNa
 **Overall Star Score:** ${starScore}/10 (${relationshipLabel})`;
 
   if (relationshipGoals) {
-    prompt += `\n\n**User's Goal:** "${relationshipGoals}"`;
+    prompt += `\n\n**User's Context/Goal:** "${relationshipGoals}"`;
   }
 
   prompt += `\n\nProvide your response as clean HTML (no wrapping tags like <html> or <body>). Use this structure:
@@ -100,7 +100,9 @@ ${currentUserFirstName && memberFirstName ? `Use "${currentUserFirstName}" and "
   </ul>
 </div>
 
-Address each dimension that has a notable score (high, low, or mismatched with others). Focus on the most impactful dimensions first.`;
+IMPORTANT: 
+1. You MUST provide insights for ALL 5 dimensions (Proximity, Interest, Personal Time, Common Ground, and Familiarity). For high scores, offer maintenance advice. For low scores, offer growth strategies. For medium scores, offer enhancement ideas.
+2. If the user provided context or goals, you MUST directly address them in your summary and relevant dimension insights. Do not ignore sensitive topics like political differences, values conflicts, or personal struggles - these are often the most important aspects of the relationship dynamic. Be respectful but honest in acknowledging these challenges and offering constructive guidance.`;
 
   return prompt;
 }
