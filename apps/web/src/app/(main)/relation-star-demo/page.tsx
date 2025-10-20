@@ -228,7 +228,7 @@ export default function RelationshipStarPage() {
                 { key: 'commonGround', label: 'How much common ground do you share?', hint: '(interests, values, experiences)', minLabel: 'None', maxLabel: 'A lot' },
                 { key: 'familiarity', label: 'How well do you know them?', hint: '(from name recognition to deep understanding)', minLabel: 'Not at all', maxLabel: 'Very well' },
                 { key: 'interest', label: 'How interested are you in this relationship?', hint: '(desire, ability, commitment)', minLabel: 'Not at all', maxLabel: 'Very interested' },
-                { key: 'personalTime', label: 'How much personal time do you spend together?', hint: '(time together focused on each other in spaces where you can talk freely, not in formal/bigger gatherings or doing required tasks)', minLabel: 'None', maxLabel: 'A lot' },
+                { key: 'personalTime', label: 'How much personal time do you spend together?', hint: '(time together focused on each other in spaces where you can talk freely, not formal/bigger gatherings or doing required tasks)', minLabel: 'None', maxLabel: 'A lot' },
               ].map(({ key, label, hint, minLabel, maxLabel }) => (
                 <div key={key}>
                   <div className="mb-2 flex items-start justify-between gap-4">
@@ -367,10 +367,10 @@ export default function RelationshipStarPage() {
               <div className="relative mx-auto aspect-square w-full">
                 <svg viewBox="0 0 320 320" className="h-full w-full">
                   {/* Center point */}
-                  <circle cx="160" cy="160" r="2" fill="#4f46e5" />
+                  <circle cx="160" cy="160" r="3" fill="#4f46e5" />
                   
                   {/* Concentric circles */}
-                  {[24, 48, 72, 96, 120].map((radius) => (
+                  {[32, 64, 96, 128, 160].map((radius) => (
                     <circle
                       key={radius}
                       cx="160"
@@ -378,7 +378,7 @@ export default function RelationshipStarPage() {
                       r={radius}
                       fill="none"
                       stroke="currentColor"
-                      strokeWidth="0.5"
+                      strokeWidth="1"
                       className="stroke-gray-300 dark:stroke-gray-600"
                     />
                   ))}
@@ -388,9 +388,10 @@ export default function RelationshipStarPage() {
                     <text
                       key={val}
                       x="160"
-                      y={160 + val * 12 + 12}
+                      y={160 + val * 16 + 16}
                       textAnchor="middle"
-                      fontSize="10"
+                      fontSize="14"
+                      fontWeight="500"
                       fill="currentColor"
                       className="fill-gray-500 dark:fill-gray-400"
                     >
@@ -401,8 +402,8 @@ export default function RelationshipStarPage() {
                   {/* Axes */}
                   {current.data.map((_, idx) => {
                     const angle = (idx * (360 / current.data.length) - 90) * (Math.PI / 180);
-                    const x = 160 + 120 * Math.cos(angle);
-                    const y = 160 + 120 * Math.sin(angle);
+                    const x = 160 + 160 * Math.cos(angle);
+                    const y = 160 + 160 * Math.sin(angle);
                     return (
                       <line
                         key={idx}
@@ -411,7 +412,7 @@ export default function RelationshipStarPage() {
                         x2={x}
                         y2={y}
                         stroke="currentColor"
-                        strokeWidth="0.5"
+                        strokeWidth="1"
                         className="stroke-gray-300 dark:stroke-gray-600"
                       />
                     );
@@ -421,7 +422,7 @@ export default function RelationshipStarPage() {
                   <path
                     d={current.data.map((item, idx) => {
                       const angle = (idx * (360 / current.data.length) - 90) * (Math.PI / 180);
-                      const length = item.value * 12;
+                      const length = item.value * 16;
                       const x = 160 + length * Math.cos(angle);
                       const y = 160 + length * Math.sin(angle);
                       return `${idx === 0 ? 'M' : 'L'} ${x} ${y}`;
@@ -429,14 +430,14 @@ export default function RelationshipStarPage() {
                     fill="#4f46e5"
                     fillOpacity="0.15"
                     stroke="#4f46e5"
-                    strokeWidth="2"
+                    strokeWidth="3"
                     opacity="0.6"
                   />
                   
                   {/* Points */}
                   {current.data.map((item, idx) => {
                     const angle = (idx * (360 / current.data.length) - 90) * (Math.PI / 180);
-                    const length = item.value * 12;
+                    const length = item.value * 16;
                     const x = 160 + length * Math.cos(angle);
                     const y = 160 + length * Math.sin(angle);
                     
@@ -456,28 +457,30 @@ export default function RelationshipStarPage() {
                           fill="#4f46e5"
                         />
                         
-                        {/* Labels - only show if value > 0 */}
-                        {item.value > 0 && (
+                        {/* Labels - only show if value > 2 to avoid center overlap */}
+                        {item.value > 2 && (
                           <>
                             {item.dimension === 'Personal Time' ? (
                               <>
                                 <text
-                                  x={160 + (length + 20) * Math.cos(angle)}
-                                  y={160 + (length + 20) * Math.sin(angle) - 4}
+                                  x={160 + Math.max(length - 30, 25) * Math.cos(angle)}
+                                  y={160 + Math.max(length - 30, 25) * Math.sin(angle) - 6}
                                   textAnchor="middle"
-                                  fontSize="9"
+                                  fontSize="14"
+                                  fontWeight="600"
                                   fill="currentColor"
-                                  className="fill-gray-600 dark:fill-gray-400"
+                                  className="fill-gray-900 dark:fill-gray-100"
                                 >
                                   Personal
                                 </text>
                                 <text
-                                  x={160 + (length + 20) * Math.cos(angle)}
-                                  y={160 + (length + 20) * Math.sin(angle) + 5}
+                                  x={160 + Math.max(length - 30, 25) * Math.cos(angle)}
+                                  y={160 + Math.max(length - 30, 25) * Math.sin(angle) + 6}
                                   textAnchor="middle"
-                                  fontSize="9"
+                                  fontSize="14"
+                                  fontWeight="600"
                                   fill="currentColor"
-                                  className="fill-gray-600 dark:fill-gray-400"
+                                  className="fill-gray-900 dark:fill-gray-100"
                                 >
                                   Time
                                 </text>
@@ -485,34 +488,37 @@ export default function RelationshipStarPage() {
                             ) : item.dimension === 'Common Ground' ? (
                               <>
                                 <text
-                                  x={160 + (length + 20) * Math.cos(angle)}
-                                  y={160 + (length + 20) * Math.sin(angle) - 4}
+                                  x={160 + Math.max(length - 30, 25) * Math.cos(angle)}
+                                  y={160 + Math.max(length - 30, 25) * Math.sin(angle) - 6}
                                   textAnchor="middle"
-                                  fontSize="9"
+                                  fontSize="14"
+                                  fontWeight="600"
                                   fill="currentColor"
-                                  className="fill-gray-600 dark:fill-gray-400"
+                                  className="fill-gray-900 dark:fill-gray-100"
                                 >
                                   Common
                                 </text>
                                 <text
-                                  x={160 + (length + 20) * Math.cos(angle)}
-                                  y={160 + (length + 20) * Math.sin(angle) + 5}
+                                  x={160 + Math.max(length - 30, 25) * Math.cos(angle)}
+                                  y={160 + Math.max(length - 30, 25) * Math.sin(angle) + 6}
                                   textAnchor="middle"
-                                  fontSize="9"
+                                  fontSize="14"
+                                  fontWeight="600"
                                   fill="currentColor"
-                                  className="fill-gray-600 dark:fill-gray-400"
+                                  className="fill-gray-900 dark:fill-gray-100"
                                 >
                                   Ground
                                 </text>
                               </>
                             ) : (
                               <text
-                                x={160 + (length + 20) * Math.cos(angle)}
-                                y={160 + (length + 20) * Math.sin(angle)}
+                                x={160 + Math.max(length - 30, 25) * Math.cos(angle)}
+                                y={160 + Math.max(length - 30, 25) * Math.sin(angle)}
                                 textAnchor="middle"
-                                fontSize="9"
+                                fontSize="14"
+                                fontWeight="600"
                                 fill="currentColor"
-                                className="fill-gray-600 dark:fill-gray-400"
+                                className="fill-gray-900 dark:fill-gray-100"
                               >
                                 {item.dimension}
                               </text>
@@ -530,8 +536,9 @@ export default function RelationshipStarPage() {
             <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
               <h3 className="mb-3 text-lg font-bold">Star Score</h3>
               <div className="mb-4 text-center">
-                <div className="text-4xl font-bold text-indigo-600">
-                  {starScore.total}
+                <div className="font-bold">
+                  <span className="text-4xl text-indigo-600 dark:text-indigo-400">{starScore.total}</span>
+                  <span className="text-2xl text-gray-400 dark:text-gray-600">/10</span>
                 </div>
                 <div className="text-sm text-gray-600 dark:text-gray-400">
                   {getRelationshipLabel(parseFloat(starScore.total))}
@@ -591,10 +598,10 @@ export default function RelationshipStarPage() {
           <div className="relative mx-auto aspect-square w-full max-w-md">
             <svg viewBox="0 0 320 320" className="h-full w-full">
               {/* Center point */}
-              <circle cx="160" cy="160" r="2" fill="#4f46e5" />
+              <circle cx="160" cy="160" r="3" fill="#4f46e5" />
               
               {/* Concentric circles */}
-              {[24, 48, 72, 96, 120].map((radius) => (
+              {[32, 64, 96, 128, 160].map((radius) => (
                 <circle
                   key={radius}
                   cx="160"
@@ -602,7 +609,7 @@ export default function RelationshipStarPage() {
                   r={radius}
                   fill="none"
                   stroke="currentColor"
-                  strokeWidth="0.5"
+                  strokeWidth="1"
                   className="stroke-gray-300 dark:stroke-gray-600"
                 />
               ))}
@@ -612,9 +619,10 @@ export default function RelationshipStarPage() {
                 <text
                   key={val}
                   x="160"
-                  y={160 + val * 12 + 12}
+                  y={160 + val * 16 + 16}
                   textAnchor="middle"
-                  fontSize="10"
+                  fontSize="14"
+                  fontWeight="500"
                   fill="currentColor"
                   className="fill-gray-500 dark:fill-gray-400"
                 >
@@ -626,7 +634,7 @@ export default function RelationshipStarPage() {
               <path
                 d={current.data.map((item, idx) => {
                   const angle = (idx * (360 / current.data.length) - 90) * (Math.PI / 180);
-                  const length = item.value * 12;
+                  const length = item.value * 16;
                   const x = 160 + length * Math.cos(angle);
                   const y = 160 + length * Math.sin(angle);
                   return `${idx === 0 ? 'M' : 'L'} ${x} ${y}`;
@@ -634,14 +642,14 @@ export default function RelationshipStarPage() {
                 fill="#4f46e5"
                 fillOpacity="0.15"
                 stroke="#4f46e5"
-                strokeWidth="2"
+                strokeWidth="3"
                 opacity="0.6"
               />
               
               {/* Points with glow at each dimension */}
               {current.data.map((item, idx) => {
                 const angle = (idx * (360 / current.data.length) - 90) * (Math.PI / 180);
-                const length = item.value * 12;
+                const length = item.value * 16;
                 const x = 160 + length * Math.cos(angle);
                 const y = 160 + length * Math.sin(angle);
                 
@@ -658,7 +666,7 @@ export default function RelationshipStarPage() {
                     <circle
                       cx={x}
                       cy={y}
-                      r="5"
+                      r="4"
                       fill="#4f46e5"
                     />
                     <circle
@@ -667,26 +675,29 @@ export default function RelationshipStarPage() {
                       r="3"
                       fill="#c7d2fe"
                     />
-                    {/* Label */}
-                    {item.dimension === 'Personal Time' ? (
+                    {/* Label - only show if value > 2 to avoid center overlap */}
+                    {item.value > 2 && (
+                      item.dimension === 'Personal Time' ? (
                       <>
                         <text
-                          x={160 + (length + 25) * Math.cos(angle)}
-                          y={160 + (length + 25) * Math.sin(angle) - 4}
+                          x={160 + Math.max(length - 30, 25) * Math.cos(angle)}
+                          y={160 + Math.max(length - 30, 25) * Math.sin(angle) - 6}
                           textAnchor="middle"
-                          fontSize="9"
+                          fontSize="14"
+                          fontWeight="600"
                           fill="currentColor"
-                          className="fill-gray-600 dark:fill-gray-400"
+                          className="fill-gray-900 dark:fill-gray-100"
                         >
                           Personal
                         </text>
                         <text
-                          x={160 + (length + 25) * Math.cos(angle)}
-                          y={160 + (length + 25) * Math.sin(angle) + 5}
+                          x={160 + Math.max(length - 30, 25) * Math.cos(angle)}
+                          y={160 + Math.max(length - 30, 25) * Math.sin(angle) + 6}
                           textAnchor="middle"
-                          fontSize="9"
+                          fontSize="14"
+                          fontWeight="600"
                           fill="currentColor"
-                          className="fill-gray-600 dark:fill-gray-400"
+                          className="fill-gray-900 dark:fill-gray-100"
                         >
                           Time
                         </text>
@@ -694,37 +705,41 @@ export default function RelationshipStarPage() {
                     ) : item.dimension === 'Common Ground' ? (
                       <>
                         <text
-                          x={160 + (length + 25) * Math.cos(angle)}
-                          y={160 + (length + 25) * Math.sin(angle) - 4}
+                          x={160 + Math.max(length - 30, 25) * Math.cos(angle)}
+                          y={160 + Math.max(length - 30, 25) * Math.sin(angle) - 6}
                           textAnchor="middle"
-                          fontSize="9"
+                          fontSize="14"
+                          fontWeight="600"
                           fill="currentColor"
-                          className="fill-gray-600 dark:fill-gray-400"
+                          className="fill-gray-900 dark:fill-gray-100"
                         >
                           Common
                         </text>
                         <text
-                          x={160 + (length + 25) * Math.cos(angle)}
-                          y={160 + (length + 25) * Math.sin(angle) + 5}
+                          x={160 + Math.max(length - 30, 25) * Math.cos(angle)}
+                          y={160 + Math.max(length - 30, 25) * Math.sin(angle) + 6}
                           textAnchor="middle"
-                          fontSize="9"
+                          fontSize="14"
+                          fontWeight="600"
                           fill="currentColor"
-                          className="fill-gray-600 dark:fill-gray-400"
+                          className="fill-gray-900 dark:fill-gray-100"
                         >
                           Ground
                         </text>
                       </>
                     ) : (
                       <text
-                        x={160 + (length + 25) * Math.cos(angle)}
-                        y={160 + (length + 25) * Math.sin(angle)}
+                        x={160 + Math.max(length - 25, 30) * Math.cos(angle)}
+                        y={160 + Math.max(length - 25, 30) * Math.sin(angle)}
                         textAnchor="middle"
-                        fontSize="9"
+                        fontSize="14"
+                        fontWeight="600"
                         fill="currentColor"
-                        className="fill-gray-600 dark:fill-gray-400"
+                        className="fill-gray-900 dark:fill-gray-100"
                       >
                         {item.dimension}
                       </text>
+                    )
                     )}
                   </g>
                 );

@@ -70,10 +70,10 @@ export function buildPrompt(
 }
 
 function buildRelationStarIndividualPrompt(data: RelationStarIndividualData): string {
-  const { scores, starScore, relationshipLabel, relationshipGoals } = data;
+  const { scores, starScore, relationshipLabel, relationshipGoals, currentUserFirstName, memberFirstName } = data;
 
   let prompt = `Analyze this Relation Star assessment:
-
+${currentUserFirstName && memberFirstName ? `\n**Context:** ${currentUserFirstName} is reflecting on their relationship with ${memberFirstName}.\n` : ''}
 **Scores (0-10):**
 - Proximity: ${scores.proximity}/10
 - Interest: ${scores.interest}/10
@@ -88,6 +88,8 @@ function buildRelationStarIndividualPrompt(data: RelationStarIndividualData): st
   }
 
   prompt += `\n\nProvide your response as clean HTML (no wrapping tags like <html> or <body>). Use this structure:
+
+${currentUserFirstName && memberFirstName ? `Use "${currentUserFirstName}" and "${memberFirstName}" naturally in your response to make it feel personal and conversational.\n` : ''}
 
 <p><strong>Summary:</strong> (1-2 sentences about the overall relationship state and pattern)</p>
 

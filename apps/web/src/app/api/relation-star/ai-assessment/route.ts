@@ -107,6 +107,8 @@ export async function POST(request: NextRequest) {
       commonGround,
       familiarity,
       relationshipGoals,
+      currentUserFirstName,
+      memberFirstName,
     } = body;
 
     // Validate scores
@@ -138,6 +140,8 @@ export async function POST(request: NextRequest) {
       starScore: parseFloat(starScore.toFixed(1)),
       relationshipLabel,
       relationshipGoals: relationshipGoals || undefined,
+      currentUserFirstName: currentUserFirstName || undefined,
+      memberFirstName: memberFirstName || undefined,
     };
 
     // 7. Build prompts

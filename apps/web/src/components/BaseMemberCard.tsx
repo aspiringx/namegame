@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { LoginCodeModal } from './LoginCodeModal'
 import PhotoGalleryModal from './PhotoGalleryModal'
+import RelationStarModal from './RelationStarModal'
 import { MemberCardStrategy } from '@/lib/group-adapters/types'
 
 interface BaseMemberCardProps {
@@ -25,6 +26,7 @@ interface BaseMemberCardProps {
   relationship?: string | null
   isGroupAdmin?: boolean
   currentUserId?: string
+  currentUserFirstName?: string
   groupSlug?: string
   // Photo gallery props
   allMembers?: Member[]
@@ -48,6 +50,7 @@ export default function BaseMemberCard({
   relationship,
   isGroupAdmin,
   currentUserId,
+  currentUserFirstName,
   groupSlug,
   allMembers = [],
   memberIndex = 0,
@@ -56,6 +59,7 @@ export default function BaseMemberCard({
 }: BaseMemberCardProps) {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
   const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false)
+  const [isRelationStarModalOpen, setIsRelationStarModalOpen] = useState(false)
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(memberIndex)
 
   const handleLoginLinkClick = () => {
@@ -145,6 +149,13 @@ export default function BaseMemberCard({
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
+                {/* Relation Star - available to all users for their own relationships */}
+                {member.userId !== currentUserId && (
+                  <DropdownMenuItem onClick={() => setIsRelationStarModalOpen(true)}>
+                    <span className="mr-2">⭐</span>
+                    See Relation Star
+                  </DropdownMenuItem>
+                )}
                 {/* Strategy-specific actions */}
                 {strategy.availableActions.includes('relate') && (
                   <DropdownMenuItem onClick={() => onRelate?.(member)}>
@@ -193,6 +204,16 @@ export default function BaseMemberCard({
         totalPhotos={allMembers.length || 1}
         allMembers={allMembers}
         onNavigate={handleNavigate}
+      />
+      <RelationStarModal
+        isOpen={isRelationStarModalOpen}
+        onClose={() => setIsRelationStarModalOpen(false)}
+        memberName={member.user.name || 'Unknown'}
+        memberPhotoUrl={member.user.photoUrl || '/images/default-avatar.png'}
+        userId={currentUserId || ''}
+        memberId={member.userId}
+        currentUserFirstName={currentUserFirstName}
+        memberFirstName={member.user.firstName || undefined}
       />
     </>
   )

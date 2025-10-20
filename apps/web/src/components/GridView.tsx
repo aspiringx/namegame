@@ -57,6 +57,7 @@ export default function GridView({
             onRelate={onRelate}
             onConnect={onConnect}
             currentUserId={currentUserMember?.userId}
+            currentUserFirstName={currentUserMember?.user.firstName || undefined}
             isGroupAdmin={isGroupAdmin}
             groupSlug={group.slug}
             allMembers={members}

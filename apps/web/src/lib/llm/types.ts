@@ -55,6 +55,8 @@ export interface RelationStarIndividualData {
   starScore: number;
   relationshipLabel: string;
   relationshipGoals?: string;
+  currentUserFirstName?: string;
+  memberFirstName?: string;
 }
 
 export interface RelationStarComparisonData {
