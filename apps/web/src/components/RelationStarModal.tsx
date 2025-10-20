@@ -54,7 +54,9 @@ export default function RelationStarModal({
 }: RelationStarModalProps) {
   const [isLoadingHistory, setIsLoadingHistory] = useState(false)
   const [snapshots, setSnapshots] = useState<Snapshot[]>([])
-  const [selectedSnapshotId, setSelectedSnapshotId] = useState<string | null>(null)
+  const [selectedSnapshotId, setSelectedSnapshotId] = useState<string | null>(
+    null,
+  )
 
   const router = useRouter()
   const { data: session } = useSession()
@@ -71,7 +73,9 @@ export default function RelationStarModal({
   })
   const [relationshipGoals, setRelationshipGoals] = useState('')
   const [aiInsight, setAiInsight] = useState<string | null>(null)
-  const [currentAssessmentId, setCurrentAssessmentId] = useState<string | null>(null)
+  const [currentAssessmentId, setCurrentAssessmentId] = useState<string | null>(
+    null,
+  )
   const [isLoadingAI, setIsLoadingAI] = useState(false)
   const [isSlidersCollapsed, setIsSlidersCollapsed] = useState(false)
   const [aiError, setAiError] = useState<string | null>(null)
@@ -80,7 +84,9 @@ export default function RelationStarModal({
   const fetchHistory = useCallback(async () => {
     setIsLoadingHistory(true)
     try {
-      const response = await fetch(`/api/relation-star/history?memberId=${memberId}`)
+      const response = await fetch(
+        `/api/relation-star/history?memberId=${memberId}`,
+      )
       const data = await response.json()
 
       if (response.ok && data.assessments) {
@@ -266,14 +272,19 @@ export default function RelationStarModal({
                               </TooltipTrigger>
                               <TooltipContent side="right" className="max-w-xs">
                                 <p className="mb-2">
-                                  Learn how to interpret your star chart and understand the five dimensions of relationships.
+                                  Learn how to interpret your star chart and
+                                  understand the five dimensions of
+                                  relationships.
                                 </p>
                                 <button
                                   onClick={() => {
                                     if (deviceInfo.isPWA) {
                                       router.push('/relation-star-demo')
                                     } else {
-                                      window.open('/relation-star-demo', '_blank')
+                                      window.open(
+                                        '/relation-star-demo',
+                                        '_blank',
+                                      )
                                     }
                                   }}
                                   className="text-white hover:text-gray-200 underline font-semibold text-left"
@@ -302,7 +313,11 @@ export default function RelationStarModal({
                           <div className="flex w-full items-center justify-between rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700">
                             <span className="truncate">
                               {selectedSnapshot
-                                ? `${new Date(selectedSnapshot.createdAt).toLocaleDateString()} - ${selectedSnapshot.starScore.toFixed(1)}/10 (${selectedSnapshot.relationshipLabel})`
+                                ? `${new Date(
+                                    selectedSnapshot.createdAt,
+                                  ).toLocaleDateString()} - ${selectedSnapshot.starScore.toFixed(
+                                    1,
+                                  )}/10 (${selectedSnapshot.relationshipLabel})`
                                 : 'Select a snapshot'}
                             </span>
                             <ChevronDown className="ml-2 h-4 w-4 flex-shrink-0" />
@@ -324,10 +339,13 @@ export default function RelationStarModal({
                             >
                               <div className="flex items-center justify-between gap-3 w-full">
                                 <span className="font-medium">
-                                  {new Date(snapshot.createdAt).toLocaleDateString()}
+                                  {new Date(
+                                    snapshot.createdAt,
+                                  ).toLocaleDateString()}
                                 </span>
                                 <span className="text-xs opacity-75 whitespace-nowrap">
-                                  {snapshot.starScore.toFixed(1)}/10 · {snapshot.relationshipLabel}
+                                  {snapshot.starScore.toFixed(1)}/10 ·{' '}
+                                  {snapshot.relationshipLabel}
                                 </span>
                               </div>
                             </DropdownItem>
@@ -340,7 +358,7 @@ export default function RelationStarModal({
                           className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700 whitespace-nowrap"
                         >
                           <Plus className="h-4 w-4" />
-                          New Cosmic Insights
+                          New
                         </button>
                       )}
                     </div>
@@ -364,637 +382,152 @@ export default function RelationStarModal({
                     <div className="grid gap-8 lg:grid-cols-2">
                       {/* Left: Sliders */}
                       <div>
-                      {/* Collapsible Sliders Section */}
-                      <div className="mb-6">
-                        <button
-                          onClick={() =>
-                            setIsSlidersCollapsed(!isSlidersCollapsed)
-                          }
-                          className="mb-4 flex w-full items-center justify-between text-xl font-semibold text-gray-900 hover:text-indigo-600 dark:text-gray-100 dark:hover:text-indigo-400"
-                        >
-                          <span>Map the Relationship</span>
-                          {isSlidersCollapsed ? (
-                            <ChevronDown className="h-4 w-4" />
-                          ) : (
-                            <ChevronUp className="h-4 w-4" />
-                          )}
-                        </button>
+                        {/* Collapsible Sliders Section */}
+                        <div className="mb-6">
+                          <button
+                            onClick={() =>
+                              setIsSlidersCollapsed(!isSlidersCollapsed)
+                            }
+                            className="mb-4 flex w-full items-center justify-between text-xl font-semibold text-gray-900 hover:text-indigo-600 dark:text-gray-100 dark:hover:text-indigo-400"
+                          >
+                            <span>Map the Relationship</span>
+                            {isSlidersCollapsed ? (
+                              <ChevronDown className="h-4 w-4" />
+                            ) : (
+                              <ChevronUp className="h-4 w-4" />
+                            )}
+                          </button>
 
-                        {!isSlidersCollapsed && (
-                          <div className="space-y-6">
-                            <p className="mb-6 text-sm text-gray-700 dark:text-gray-300">
-                              Map your relationship in the stars and get cosmic
-                              insights.
-                            </p>
+                          {!isSlidersCollapsed && (
+                            <div className="space-y-6">
+                              <p className="mb-6 text-sm text-gray-700 dark:text-gray-300">
+                                Map your relationship in the stars and get
+                                cosmic insights.
+                              </p>
 
-                            {[
-                              {
-                                key: 'proximity',
-                                label: '⭐ How often are you near this person?',
-                                hint: 'Physical and/or virtual proximity',
-                                minLabel: 'Never',
-                                maxLabel: 'Daily',
-                              },
-                              {
-                                key: 'commonGround',
-                                label:
-                                  '⭐ How much common ground do you share?',
-                                hint: 'Interests, values, experiences',
-                                minLabel: 'None',
-                                maxLabel: 'A lot',
-                              },
-                              {
-                                key: 'familiarity',
-                                label: '⭐ How well do you know them?',
-                                hint: 'From name recognition to deep understanding',
-                                minLabel: 'Not at all',
-                                maxLabel: 'Very well',
-                              },
-                              {
-                                key: 'interest',
-                                label:
-                                  '⭐ How interested are you in this relationship?',
-                                hint: 'Desire, ability, commitment',
-                                minLabel: 'Not at all',
-                                maxLabel: 'Very interested',
-                              },
-                              {
-                                key: 'personalTime',
-                                label:
-                                  '⭐  How much personal time do you spend together?',
-                                hint: 'Time together focused on each other in spaces where you can talk freely, not formal/bigger gatherings or doing required tasks',
-                                minLabel: 'None',
-                                maxLabel: 'A lot',
-                              },
-                            ].map(
-                              ({ key, label, hint, minLabel, maxLabel }) => (
-                                <div key={key}>
-                                  <div className="mb-2 flex items-start justify-between gap-4">
-                                    <div className="flex-1">
-                                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                        {label}
-                                      </label>
-                                      <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                        {hint}
+                              {[
+                                {
+                                  key: 'proximity',
+                                  label:
+                                    '⭐ How often are you near this person?',
+                                  hint: 'Physical and/or virtual proximity',
+                                  minLabel: 'Never',
+                                  maxLabel: 'Daily',
+                                },
+                                {
+                                  key: 'commonGround',
+                                  label:
+                                    '⭐ How much common ground do you share?',
+                                  hint: 'Interests, values, experiences',
+                                  minLabel: 'None',
+                                  maxLabel: 'A lot',
+                                },
+                                {
+                                  key: 'familiarity',
+                                  label: '⭐ How well do you know them?',
+                                  hint: 'From name recognition to deep understanding',
+                                  minLabel: 'Not at all',
+                                  maxLabel: 'Very well',
+                                },
+                                {
+                                  key: 'interest',
+                                  label:
+                                    '⭐ How interested are you in this relationship?',
+                                  hint: 'Desire, ability, commitment',
+                                  minLabel: 'Not at all',
+                                  maxLabel: 'Very interested',
+                                },
+                                {
+                                  key: 'personalTime',
+                                  label:
+                                    '⭐  How much personal time do you spend together?',
+                                  hint: 'Time together focused on each other in spaces where you can talk freely, not formal/bigger gatherings or doing required tasks',
+                                  minLabel: 'None',
+                                  maxLabel: 'A lot',
+                                },
+                              ].map(
+                                ({ key, label, hint, minLabel, maxLabel }) => (
+                                  <div key={key}>
+                                    <div className="mb-2 flex items-start justify-between gap-4">
+                                      <div className="flex-1">
+                                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                          {label}
+                                        </label>
+                                        <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                          {hint}
+                                        </div>
                                       </div>
+                                      <span className="flex-shrink-0 text-lg font-bold text-indigo-700 dark:text-indigo-300">
+                                        {
+                                          interactiveScores[
+                                            key as keyof typeof interactiveScores
+                                          ]
+                                        }
+                                      </span>
                                     </div>
-                                    <span className="flex-shrink-0 text-lg font-bold text-indigo-700 dark:text-indigo-300">
-                                      {
+                                    <input
+                                      type="range"
+                                      min="0"
+                                      max="10"
+                                      value={
                                         interactiveScores[
                                           key as keyof typeof interactiveScores
                                         ]
                                       }
-                                    </span>
-                                  </div>
-                                  <input
-                                    type="range"
-                                    min="0"
-                                    max="10"
-                                    value={
-                                      interactiveScores[
-                                        key as keyof typeof interactiveScores
-                                      ]
-                                    }
-                                    onChange={(e) =>
-                                      handleSliderChange(
-                                        key as keyof typeof interactiveScores,
-                                        parseInt(e.target.value),
-                                      )
-                                    }
-                                    className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-200 dark:bg-gray-700 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-indigo-600 [&::-moz-range-thumb]:dark:bg-indigo-400 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-indigo-600 [&::-webkit-slider-thumb]:dark:bg-indigo-400"
-                                  />
-                                  <div className="mt-1 flex justify-between text-xs text-gray-500 dark:text-gray-400">
-                                    <span>0 - {minLabel}</span>
-                                    <span>10 - {maxLabel}</span>
-                                  </div>
-                                </div>
-                              ),
-                            )}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Relationship Goals */}
-                      <div className="mt-8">
-                        <h3 className="mb-4 text-xl font-bold">
-                          Cosmic Insights
-                        </h3>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                          Relationship context
-                        </label>
-                        <div className="mt-1 mb-2 text-xs text-gray-500 dark:text-gray-400">
-                          Provide relationship context (status, dynamics, hopes,
-                          etc.) for personalized insights.
-                        </div>
-                        <textarea
-                          value={relationshipGoals}
-                          onChange={(e) => setRelationshipGoals(e.target.value)}
-                          placeholder={`e.g., I'd like to feel closer to ${memberName}, or I want to maintain this friendship despite living far apart...`}
-                          maxLength={500}
-                          rows={3}
-                          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500"
-                        />
-                        <div className="text-right text-xs text-gray-500 dark:text-gray-400">
-                          {relationshipGoals.length}/500 characters
-                        </div>
-                      </div>
-
-                      {/* Privacy Notice - Only show when at least one slider has a value */}
-                      {!Object.values(interactiveScores).every(
-                        (v) => v === 0,
-                      ) && (
-                        <div className="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
-                          <div className="flex items-start gap-2">
-                            <svg
-                              className="h-5 w-5 flex-shrink-0 text-gray-600 dark:text-gray-400"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                              />
-                            </svg>
-                            <div className="text-xs text-gray-700 dark:text-gray-300">
-                              <strong className="font-semibold">
-                                Your privacy matters.
-                              </strong>{' '}
-                              Your responses and AI insights are completely
-                              private and only visible to you.
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* AI Assessment Button - Only show when at least one slider has a value */}
-                      {!Object.values(interactiveScores).every(
-                        (v) => v === 0,
-                      ) && (
-                        <div className="mt-6">
-                          <button
-                            onClick={
-                              aiInsight ? handleStartOver : handleAIAssessment
-                            }
-                            disabled={!aiInsight && isLoadingAI}
-                            className="w-full rounded-lg bg-indigo-600 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500 dark:disabled:bg-gray-700 dark:disabled:text-gray-400"
-                          >
-                            {aiInsight ? (
-                              'Start Over'
-                            ) : isLoadingAI ? (
-                              <span className="flex items-center justify-center gap-2">
-                                <svg
-                                  className="h-4 w-4 animate-spin"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <circle
-                                    className="opacity-25"
-                                    cx="12"
-                                    cy="12"
-                                    r="10"
-                                    stroke="currentColor"
-                                    strokeWidth="4"
-                                    fill="none"
-                                  />
-                                  <path
-                                    className="opacity-75"
-                                    fill="currentColor"
-                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                  />
-                                </svg>
-                                Gathering wisdom...
-                              </span>
-                            ) : (
-                              'Get Cosmic Insights'
-                            )}
-                          </button>
-
-                          {aiError && (
-                            <div className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-200">
-                              {aiError}
-                            </div>
-                          )}
-
-                          {aiInsight && (
-                            <>
-                              {/* Divider before AI Insights */}
-                              <div className="my-6 border-t-2 border-gray-300 dark:border-gray-600" />
-
-                              <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-6 dark:border-indigo-900 dark:bg-indigo-950">
-                                <div className="mb-4 flex items-center justify-between">
-                                  <h4 className="text-lg font-semibold text-indigo-900 dark:text-indigo-100">
-                                    Cosmic Insights from the Stars
-                                  </h4>
-                                  {currentAssessmentId && (
-                                    <button
-                                      onClick={() =>
-                                        window.open(
-                                          `/cosmic-insights/${currentAssessmentId}`,
-                                          '_blank'
+                                      onChange={(e) =>
+                                        handleSliderChange(
+                                          key as keyof typeof interactiveScores,
+                                          parseInt(e.target.value),
                                         )
                                       }
-                                      className="flex items-center gap-2 rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
-                                    >
-                                      <svg
-                                        className="h-4 w-4"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
-                                      >
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          strokeWidth={2}
-                                          d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                                        />
-                                      </svg>
-                                      Full Page
-                                    </button>
-                                  )}
-                                </div>
-                                <div
-                                  className="prose prose-sm prose-indigo dark:prose-invert max-w-none text-indigo-800 dark:text-indigo-200 [&_li]:leading-relaxed [&_ul]:space-y-3 [&>div]:space-y-2 [&>p]:mb-4"
-                                  dangerouslySetInnerHTML={{
-                                    __html: aiInsight,
-                                  }}
-                                />
-                              </div>
-                            </>
+                                      className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-200 dark:bg-gray-700 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-indigo-600 [&::-moz-range-thumb]:dark:bg-indigo-400 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-indigo-600 [&::-webkit-slider-thumb]:dark:bg-indigo-400"
+                                    />
+                                    <div className="mt-1 flex justify-between text-xs text-gray-500 dark:text-gray-400">
+                                      <span>0 - {minLabel}</span>
+                                      <span>10 - {maxLabel}</span>
+                                    </div>
+                                  </div>
+                                ),
+                              )}
+                            </div>
                           )}
                         </div>
-                      )}
-                    </div>
 
-                    {/* Right: Chart and Score */}
-                    <div className="space-y-6">
-                      {/* Mini Chart */}
-                      <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
-                        <h3 className="mb-4 text-xl font-bold">Star Chart</h3>
-                        <div className="relative mx-auto aspect-square w-full">
-                          <svg
-                            viewBox="-10 -10 340 340"
-                            className="h-full w-full"
-                          >
-                            {/* Center point */}
-                            <circle cx="160" cy="160" r="3" fill="#4f46e5" />
-
-                            {/* Concentric circles */}
-                            {[32, 64, 96, 128, 160].map((radius) => (
-                              <circle
-                                key={radius}
-                                cx="160"
-                                cy="160"
-                                r={radius}
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="1"
-                                className="stroke-gray-300 dark:stroke-gray-600"
-                              />
-                            ))}
-
-                            {/* Scale labels (0, 5, 10) straight up from center */}
-                            {[0, 5, 10].map((val) => (
-                              <text
-                                key={val}
-                                x="160"
-                                y={160 - val * 16 - (val === 0 ? 12 : 0) + 5}
-                                textAnchor="middle"
-                                fontSize="14"
-                                fontWeight="500"
-                                fill="currentColor"
-                                className="fill-gray-600 dark:fill-gray-400"
-                              >
-                                {val}
-                              </text>
-                            ))}
-
-                            {/* Axes */}
-                            {[
-                              { key: 'proximity', label: 'Proximity' },
-                              { key: 'interest', label: 'Interest' },
-                              { key: 'personalTime', label: 'Personal Time' },
-                              { key: 'commonGround', label: 'Common Ground' },
-                              { key: 'familiarity', label: 'Familiarity' },
-                            ].map((_, idx) => {
-                              const angle =
-                                (idx * (360 / 5) - 90 + 30) * (Math.PI / 180)
-                              const x = 160 + 160 * Math.cos(angle)
-                              const y = 160 + 160 * Math.sin(angle)
-                              return (
-                                <line
-                                  key={idx}
-                                  x1="160"
-                                  y1="160"
-                                  x2={x}
-                                  y2={y}
-                                  stroke="currentColor"
-                                  strokeWidth="1"
-                                  className="stroke-gray-300 dark:stroke-gray-600"
-                                />
-                              )
-                            })}
-
-                            {/* Filled area */}
-                            <path
-                              d={
-                                [
-                                  {
-                                    key: 'proximity',
-                                    value: interactiveScores.proximity,
-                                  },
-                                  {
-                                    key: 'interest',
-                                    value: interactiveScores.interest,
-                                  },
-                                  {
-                                    key: 'personalTime',
-                                    value: interactiveScores.personalTime,
-                                  },
-                                  {
-                                    key: 'commonGround',
-                                    value: interactiveScores.commonGround,
-                                  },
-                                  {
-                                    key: 'familiarity',
-                                    value: interactiveScores.familiarity,
-                                  },
-                                ]
-                                  .map((item, idx) => {
-                                    const angle =
-                                      (idx * (360 / 5) - 90 + 30) *
-                                      (Math.PI / 180)
-                                    const length = item.value * 16
-                                    const x = 160 + length * Math.cos(angle)
-                                    const y = 160 + length * Math.sin(angle)
-                                    return `${idx === 0 ? 'M' : 'L'} ${x} ${y}`
-                                  })
-                                  .join(' ') + ' Z'
-                              }
-                              fill="#4f46e5"
-                              fillOpacity="0.15"
-                              stroke="#4f46e5"
-                              strokeWidth="3"
-                              opacity="0.6"
-                            />
-
-                            {/* Points */}
-                            {[
-                              {
-                                key: 'proximity',
-                                value: interactiveScores.proximity,
-                                dimension: 'Proximity',
-                              },
-                              {
-                                key: 'interest',
-                                value: interactiveScores.interest,
-                                dimension: 'Interest',
-                              },
-                              {
-                                key: 'personalTime',
-                                value: interactiveScores.personalTime,
-                                dimension: 'Personal Time',
-                              },
-                              {
-                                key: 'commonGround',
-                                value: interactiveScores.commonGround,
-                                dimension: 'Common Ground',
-                              },
-                              {
-                                key: 'familiarity',
-                                value: interactiveScores.familiarity,
-                                dimension: 'Familiarity',
-                              },
-                            ].map((item, idx) => {
-                              const angle =
-                                (idx * (360 / 5) - 90 + 30) * (Math.PI / 180)
-                              const length = item.value * 16
-                              // No offset needed now that chart is rotated away from edges
-                              const offset = 0
-                              const x =
-                                160 + (length + offset) * Math.cos(angle)
-                              const y =
-                                160 + (length + offset) * Math.sin(angle)
-
-                              return (
-                                <g key={idx}>
-                                  {/* Dots - drawn before labels */}
-                                  <circle
-                                    cx={x}
-                                    cy={y}
-                                    r="8"
-                                    fill="#4f46e5"
-                                    opacity="0.3"
-                                  />
-                                  <circle cx={x} cy={y} r="4" fill="#4f46e5" />
-                                  {/* Twinkle effect - white flash */}
-                                  <circle
-                                    cx={x}
-                                    cy={y}
-                                    r="3"
-                                    fill="white"
-                                    opacity="0"
-                                  >
-                                    <animate
-                                      attributeName="opacity"
-                                      values="0;0;0.8;0;0"
-                                      dur="2.5s"
-                                      repeatCount="indefinite"
-                                      begin={`${idx * 0.5}s`}
-                                    />
-                                  </circle>
-
-                                  {/* Labels - always show, with smart positioning */}
-                                  {(() => {
-                                    // Use a smaller distance to keep labels within viewBox
-                                    const labelDistance = 145
-                                    const labelX =
-                                      160 + labelDistance * Math.cos(angle)
-                                    const labelY =
-                                      160 + labelDistance * Math.sin(angle)
-
-                                    return (
-                                      <>
-                                        {item.dimension === 'Personal Time' ? (
-                                          <>
-                                            <text
-                                              x={labelX}
-                                              y={labelY - 6}
-                                              textAnchor="middle"
-                                              fontSize="14"
-                                              fontWeight="600"
-                                              fill="currentColor"
-                                              className="fill-gray-900 dark:fill-gray-100"
-                                            >
-                                              Personal
-                                            </text>
-                                            <text
-                                              x={labelX}
-                                              y={labelY + 6}
-                                              textAnchor="middle"
-                                              fontSize="14"
-                                              fontWeight="600"
-                                              fill="currentColor"
-                                              className="fill-gray-900 dark:fill-gray-100"
-                                            >
-                                              Time
-                                            </text>
-                                          </>
-                                        ) : item.dimension ===
-                                          'Common Ground' ? (
-                                          <>
-                                            <text
-                                              x={labelX}
-                                              y={labelY - 6}
-                                              textAnchor="middle"
-                                              fontSize="14"
-                                              fontWeight="600"
-                                              fill="currentColor"
-                                              className="fill-gray-900 dark:fill-gray-100"
-                                            >
-                                              Common
-                                            </text>
-                                            <text
-                                              x={labelX}
-                                              y={labelY + 6}
-                                              textAnchor="middle"
-                                              fontSize="14"
-                                              fontWeight="600"
-                                              fill="currentColor"
-                                              className="fill-gray-900 dark:fill-gray-100"
-                                            >
-                                              Ground
-                                            </text>
-                                          </>
-                                        ) : (
-                                          <text
-                                            x={labelX}
-                                            y={labelY}
-                                            textAnchor="middle"
-                                            fontSize="14"
-                                            fontWeight="600"
-                                            fill="currentColor"
-                                            className="fill-gray-900 dark:fill-gray-100"
-                                          >
-                                            {item.dimension}
-                                          </text>
-                                        )}
-                                      </>
-                                    )
-                                  })()}
-                                </g>
-                              )
-                            })}
-                          </svg>
-                        </div>
-                      </div>
-
-                      {/* Divider */}
-                      <div className="border-t border-gray-200 dark:border-gray-700" />
-
-                      {/* Star Score */}
-                      <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
-                        <h3 className="mb-4 text-xl font-bold">Star Score</h3>
-                        <div className="mb-4 text-center">
-                          <div className="font-bold">
-                            <span className="text-4xl text-indigo-600 dark:text-indigo-400">
-                              {starScore.toFixed(1)}
-                            </span>
-                            <span className="text-2xl text-gray-400 dark:text-gray-600">
-                              /10
-                            </span>
-                          </div>
-                          <div className="text-sm text-gray-600 dark:text-gray-400">
-                            {starScore >= 8
-                              ? 'Close Friend'
-                              : starScore >= 5
-                              ? 'Friend'
-                              : starScore >= 3
-                              ? 'Acquaintance'
-                              : starScore >= 1
-                              ? 'Nodding Acquaintance'
-                              : 'Stranger'}
-                          </div>
-                        </div>
-                        <div className="space-y-2 text-sm">
-                          <div className="flex justify-between">
-                            <span className="text-gray-600 dark:text-gray-400">
-                              Personal Time (30%)
-                            </span>
-                            <span className="font-medium">
-                              {interactiveScores.personalTime}/10
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-600 dark:text-gray-400">
-                              Common Ground (25%)
-                            </span>
-                            <span className="font-medium">
-                              {interactiveScores.commonGround}/10
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-600 dark:text-gray-400">
-                              Familiarity (20%)
-                            </span>
-                            <span className="font-medium">
-                              {interactiveScores.familiarity}/10
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-600 dark:text-gray-400">
-                              Interest (15%)
-                            </span>
-                            <span className="font-medium">
-                              {interactiveScores.interest}/10
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-600 dark:text-gray-400">
-                              Proximity (10%)
-                            </span>
-                            <span className="font-medium">
-                              {interactiveScores.proximity}/10
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ) : selectedSnapshot ? (
-                  // Read-only mode - show historical snapshot
-                  <div className="grid gap-8 lg:grid-cols-2">
-                    {/* Left: Saved Context and AI Response */}
-                    <div className="space-y-6">
-                      {selectedSnapshot.relationshipGoals && (
-                        <div>
+                        {/* Relationship Goals */}
+                        <div className="mt-8">
                           <h3 className="mb-4 text-xl font-bold">
-                            Relationship Context
+                            Cosmic Insights
                           </h3>
-                          <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
-                            {selectedSnapshot.relationshipGoals}
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Relationship context
+                          </label>
+                          <div className="mt-1 mb-2 text-xs text-gray-500 dark:text-gray-400">
+                            Provide relationship context (status, dynamics,
+                            hopes, etc.) for personalized insights.
+                          </div>
+                          <textarea
+                            value={relationshipGoals}
+                            onChange={(e) =>
+                              setRelationshipGoals(e.target.value)
+                            }
+                            placeholder={`e.g., I'd like to feel closer to ${memberName}, or I want to maintain this friendship despite living far apart...`}
+                            maxLength={500}
+                            rows={3}
+                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500"
+                          />
+                          <div className="text-right text-xs text-gray-500 dark:text-gray-400">
+                            {relationshipGoals.length}/500 characters
                           </div>
                         </div>
-                      )}
 
-                      <div>
-                        <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-6 dark:border-indigo-900 dark:bg-indigo-950">
-                          <div className="mb-4 flex items-center justify-between">
-                            <h3 className="text-xl font-bold text-indigo-900 dark:text-indigo-100">
-                              Cosmic Insights from the Stars
-                            </h3>
-                            <button
-                              onClick={() =>
-                                window.open(
-                                  `/cosmic-insights/${selectedSnapshot.id}`,
-                                  '_blank'
-                                )
-                              }
-                              className="flex items-center gap-2 rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
-                            >
+                        {/* Privacy Notice - Only show when at least one slider has a value */}
+                        {!Object.values(interactiveScores).every(
+                          (v) => v === 0,
+                        ) && (
+                          <div className="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
+                            <div className="flex items-start gap-2">
                               <svg
-                                className="h-4 w-4"
+                                className="h-5 w-5 flex-shrink-0 text-gray-600 dark:text-gray-400"
                                 fill="none"
                                 viewBox="0 0 24 24"
                                 stroke="currentColor"
@@ -1003,234 +536,744 @@ export default function RelationStarModal({
                                   strokeLinecap="round"
                                   strokeLinejoin="round"
                                   strokeWidth={2}
-                                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
                                 />
                               </svg>
-                              Full Page
-                            </button>
+                              <div className="text-xs text-gray-700 dark:text-gray-300">
+                                <strong className="font-semibold">
+                                  Your privacy matters.
+                                </strong>{' '}
+                                Your responses and AI insights are completely
+                                private and only visible to you.
+                              </div>
+                            </div>
                           </div>
-                          <div
-                            className="prose prose-sm prose-indigo dark:prose-invert max-w-none text-indigo-800 dark:text-indigo-200 [&_li]:leading-relaxed [&_ul]:space-y-3 [&>div]:space-y-2 [&>p]:mb-4"
-                            dangerouslySetInnerHTML={{
-                              __html: selectedSnapshot.response,
-                            }}
-                          />
-                        </div>
+                        )}
+
+                        {/* AI Assessment Button - Only show when at least one slider has a value */}
+                        {!Object.values(interactiveScores).every(
+                          (v) => v === 0,
+                        ) && (
+                          <div className="mt-6">
+                            <button
+                              onClick={
+                                aiInsight ? handleStartOver : handleAIAssessment
+                              }
+                              disabled={!aiInsight && isLoadingAI}
+                              className="w-full rounded-lg bg-indigo-600 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500 dark:disabled:bg-gray-700 dark:disabled:text-gray-400"
+                            >
+                              {aiInsight ? (
+                                'Start Over'
+                              ) : isLoadingAI ? (
+                                <span className="flex items-center justify-center gap-2">
+                                  <svg
+                                    className="h-4 w-4 animate-spin"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <circle
+                                      className="opacity-25"
+                                      cx="12"
+                                      cy="12"
+                                      r="10"
+                                      stroke="currentColor"
+                                      strokeWidth="4"
+                                      fill="none"
+                                    />
+                                    <path
+                                      className="opacity-75"
+                                      fill="currentColor"
+                                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                    />
+                                  </svg>
+                                  Gathering wisdom...
+                                </span>
+                              ) : (
+                                'Get Cosmic Insights'
+                              )}
+                            </button>
+
+                            {aiError && (
+                              <div className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-200">
+                                {aiError}
+                              </div>
+                            )}
+
+                            {aiInsight && (
+                              <>
+                                {/* Divider before AI Insights */}
+                                <div className="my-6 border-t-2 border-gray-300 dark:border-gray-600" />
+
+                                <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-6 dark:border-indigo-900 dark:bg-indigo-950">
+                                  <div className="mb-4 flex items-center justify-between">
+                                    <h4 className="text-lg font-semibold text-indigo-900 dark:text-indigo-100">
+                                      Cosmic Insights from the Stars
+                                    </h4>
+                                    {currentAssessmentId && (
+                                      <button
+                                        onClick={() =>
+                                          window.open(
+                                            `/cosmic-insights/${currentAssessmentId}`,
+                                            '_blank',
+                                          )
+                                        }
+                                        className="flex items-center gap-2 rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
+                                      >
+                                        <svg
+                                          className="h-4 w-4"
+                                          fill="none"
+                                          viewBox="0 0 24 24"
+                                          stroke="currentColor"
+                                        >
+                                          <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                                          />
+                                        </svg>
+                                        Full Page
+                                      </button>
+                                    )}
+                                  </div>
+                                  <div
+                                    className="prose prose-sm prose-indigo dark:prose-invert max-w-none text-indigo-800 dark:text-indigo-200 [&_li]:leading-relaxed [&_ul]:space-y-3 [&>div]:space-y-2 [&>p]:mb-4"
+                                    dangerouslySetInnerHTML={{
+                                      __html: aiInsight,
+                                    }}
+                                  />
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        )}
                       </div>
-                    </div>
 
-                    {/* Right: Chart and Score */}
-                    <div className="space-y-6">
-                      {/* Star Chart */}
-                      <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
-                        <h3 className="mb-4 text-xl font-bold">Star Chart</h3>
-                        <div className="relative mx-auto aspect-square w-full">
-                          <svg
-                            viewBox="-10 -10 340 340"
-                            className="h-full w-full"
-                          >
-                            {/* Center point */}
-                            <circle cx="160" cy="160" r="3" fill="#4f46e5" />
+                      {/* Right: Chart and Score */}
+                      <div className="space-y-6">
+                        {/* Mini Chart */}
+                        <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
+                          <h3 className="mb-4 text-xl font-bold">Star Chart</h3>
+                          <div className="relative mx-auto aspect-square w-full">
+                            <svg
+                              viewBox="-10 -10 340 340"
+                              className="h-full w-full"
+                            >
+                              {/* Center point */}
+                              <circle cx="160" cy="160" r="3" fill="#4f46e5" />
 
-                            {/* Concentric circles */}
-                            {[32, 64, 96, 128, 160].map((radius) => (
-                              <circle
-                                key={radius}
-                                cx="160"
-                                cy="160"
-                                r={radius}
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="1"
-                                className="stroke-gray-300 dark:stroke-gray-600"
-                              />
-                            ))}
-
-                            {/* Scale labels */}
-                            {[0, 5, 10].map((val) => (
-                              <text
-                                key={val}
-                                x="160"
-                                y={160 - val * 16 - (val === 0 ? 12 : 0) + 5}
-                                textAnchor="middle"
-                                fontSize="14"
-                                fontWeight="500"
-                                fill="currentColor"
-                                className="fill-gray-500 dark:fill-gray-400"
-                              >
-                                {val}
-                              </text>
-                            ))}
-
-                            {/* Axes */}
-                            {Object.keys(selectedSnapshot.scores).map((_, idx) => {
-                              const angle =
-                                (idx * (360 / 5) - 90 + 30) * (Math.PI / 180)
-                              const x = 160 + 160 * Math.cos(angle)
-                              const y = 160 + 160 * Math.sin(angle)
-                              return (
-                                <line
-                                  key={idx}
-                                  x1="160"
-                                  y1="160"
-                                  x2={x}
-                                  y2={y}
+                              {/* Concentric circles */}
+                              {[32, 64, 96, 128, 160].map((radius) => (
+                                <circle
+                                  key={radius}
+                                  cx="160"
+                                  cy="160"
+                                  r={radius}
+                                  fill="none"
                                   stroke="currentColor"
                                   strokeWidth="1"
                                   className="stroke-gray-300 dark:stroke-gray-600"
                                 />
-                              )
-                            })}
+                              ))}
 
-                            {/* Filled area */}
-                            <path
-                              d={
-                                Object.values(selectedSnapshot.scores)
-                                  .map((value: number, idx) => {
-                                    const angle =
-                                      (idx * (360 / 5) - 90 + 30) *
-                                      (Math.PI / 180)
-                                    const length = value * 16
-                                    const x = 160 + length * Math.cos(angle)
-                                    const y = 160 + length * Math.sin(angle)
-                                    return `${idx === 0 ? 'M' : 'L'} ${x} ${y}`
-                                  })
-                                  .join(' ') + ' Z'
-                              }
-                              fill="#4f46e5"
-                              fillOpacity="0.15"
-                              stroke="#4f46e5"
-                              strokeWidth="3"
-                              opacity="0.6"
-                            />
+                              {/* Scale labels (0, 5, 10) straight up from center */}
+                              {[0, 5, 10].map((val) => (
+                                <text
+                                  key={val}
+                                  x="160"
+                                  y={160 - val * 16 - (val === 0 ? 12 : 0) + 5}
+                                  textAnchor="middle"
+                                  fontSize="14"
+                                  fontWeight="500"
+                                  fill="currentColor"
+                                  className="fill-gray-600 dark:fill-gray-400"
+                                >
+                                  {val}
+                                </text>
+                              ))}
 
-                            {/* Points */}
-                            {Object.values(selectedSnapshot.scores).map(
-                              (value: number, idx) => {
+                              {/* Axes */}
+                              {[
+                                { key: 'proximity', label: 'Proximity' },
+                                { key: 'interest', label: 'Interest' },
+                                { key: 'personalTime', label: 'Personal Time' },
+                                { key: 'commonGround', label: 'Common Ground' },
+                                { key: 'familiarity', label: 'Familiarity' },
+                              ].map((_, idx) => {
                                 const angle =
                                   (idx * (360 / 5) - 90 + 30) * (Math.PI / 180)
-                                const length = value * 16
-                                const x = 160 + length * Math.cos(angle)
-                                const y = 160 + length * Math.sin(angle)
+                                const x = 160 + 160 * Math.cos(angle)
+                                const y = 160 + 160 * Math.sin(angle)
+                                return (
+                                  <line
+                                    key={idx}
+                                    x1="160"
+                                    y1="160"
+                                    x2={x}
+                                    y2={y}
+                                    stroke="currentColor"
+                                    strokeWidth="1"
+                                    className="stroke-gray-300 dark:stroke-gray-600"
+                                  />
+                                )
+                              })}
+
+                              {/* Filled area */}
+                              <path
+                                d={
+                                  [
+                                    {
+                                      key: 'proximity',
+                                      value: interactiveScores.proximity,
+                                    },
+                                    {
+                                      key: 'interest',
+                                      value: interactiveScores.interest,
+                                    },
+                                    {
+                                      key: 'personalTime',
+                                      value: interactiveScores.personalTime,
+                                    },
+                                    {
+                                      key: 'commonGround',
+                                      value: interactiveScores.commonGround,
+                                    },
+                                    {
+                                      key: 'familiarity',
+                                      value: interactiveScores.familiarity,
+                                    },
+                                  ]
+                                    .map((item, idx) => {
+                                      const angle =
+                                        (idx * (360 / 5) - 90 + 30) *
+                                        (Math.PI / 180)
+                                      const length = item.value * 16
+                                      const x = 160 + length * Math.cos(angle)
+                                      const y = 160 + length * Math.sin(angle)
+                                      return `${
+                                        idx === 0 ? 'M' : 'L'
+                                      } ${x} ${y}`
+                                    })
+                                    .join(' ') + ' Z'
+                                }
+                                fill="#4f46e5"
+                                fillOpacity="0.15"
+                                stroke="#4f46e5"
+                                strokeWidth="3"
+                                opacity="0.6"
+                              />
+
+                              {/* Points */}
+                              {[
+                                {
+                                  key: 'proximity',
+                                  value: interactiveScores.proximity,
+                                  dimension: 'Proximity',
+                                },
+                                {
+                                  key: 'interest',
+                                  value: interactiveScores.interest,
+                                  dimension: 'Interest',
+                                },
+                                {
+                                  key: 'personalTime',
+                                  value: interactiveScores.personalTime,
+                                  dimension: 'Personal Time',
+                                },
+                                {
+                                  key: 'commonGround',
+                                  value: interactiveScores.commonGround,
+                                  dimension: 'Common Ground',
+                                },
+                                {
+                                  key: 'familiarity',
+                                  value: interactiveScores.familiarity,
+                                  dimension: 'Familiarity',
+                                },
+                              ].map((item, idx) => {
+                                const angle =
+                                  (idx * (360 / 5) - 90 + 30) * (Math.PI / 180)
+                                const length = item.value * 16
+                                // No offset needed now that chart is rotated away from edges
+                                const offset = 0
+                                const x =
+                                  160 + (length + offset) * Math.cos(angle)
+                                const y =
+                                  160 + (length + offset) * Math.sin(angle)
 
                                 return (
                                   <g key={idx}>
+                                    {/* Dots - drawn before labels */}
                                     <circle
                                       cx={x}
                                       cy={y}
-                                      r="6"
+                                      r="8"
                                       fill="#4f46e5"
-                                      stroke="white"
-                                      strokeWidth="2"
+                                      opacity="0.3"
                                     />
+                                    <circle
+                                      cx={x}
+                                      cy={y}
+                                      r="4"
+                                      fill="#4f46e5"
+                                    />
+                                    {/* Twinkle effect - white flash */}
+                                    <circle
+                                      cx={x}
+                                      cy={y}
+                                      r="3"
+                                      fill="white"
+                                      opacity="0"
+                                    >
+                                      <animate
+                                        attributeName="opacity"
+                                        values="0;0;0.8;0;0"
+                                        dur="2.5s"
+                                        repeatCount="indefinite"
+                                        begin={`${idx * 0.5}s`}
+                                      />
+                                    </circle>
+
+                                    {/* Labels - always show, with smart positioning */}
+                                    {(() => {
+                                      // Use a smaller distance to keep labels within viewBox
+                                      const labelDistance = 145
+                                      const labelX =
+                                        160 + labelDistance * Math.cos(angle)
+                                      const labelY =
+                                        160 + labelDistance * Math.sin(angle)
+
+                                      return (
+                                        <>
+                                          {item.dimension ===
+                                          'Personal Time' ? (
+                                            <>
+                                              <text
+                                                x={labelX}
+                                                y={labelY - 6}
+                                                textAnchor="middle"
+                                                fontSize="14"
+                                                fontWeight="600"
+                                                fill="currentColor"
+                                                className="fill-gray-900 dark:fill-gray-100"
+                                              >
+                                                Personal
+                                              </text>
+                                              <text
+                                                x={labelX}
+                                                y={labelY + 6}
+                                                textAnchor="middle"
+                                                fontSize="14"
+                                                fontWeight="600"
+                                                fill="currentColor"
+                                                className="fill-gray-900 dark:fill-gray-100"
+                                              >
+                                                Time
+                                              </text>
+                                            </>
+                                          ) : item.dimension ===
+                                            'Common Ground' ? (
+                                            <>
+                                              <text
+                                                x={labelX}
+                                                y={labelY - 6}
+                                                textAnchor="middle"
+                                                fontSize="14"
+                                                fontWeight="600"
+                                                fill="currentColor"
+                                                className="fill-gray-900 dark:fill-gray-100"
+                                              >
+                                                Common
+                                              </text>
+                                              <text
+                                                x={labelX}
+                                                y={labelY + 6}
+                                                textAnchor="middle"
+                                                fontSize="14"
+                                                fontWeight="600"
+                                                fill="currentColor"
+                                                className="fill-gray-900 dark:fill-gray-100"
+                                              >
+                                                Ground
+                                              </text>
+                                            </>
+                                          ) : (
+                                            <text
+                                              x={labelX}
+                                              y={labelY}
+                                              textAnchor="middle"
+                                              fontSize="14"
+                                              fontWeight="600"
+                                              fill="currentColor"
+                                              className="fill-gray-900 dark:fill-gray-100"
+                                            >
+                                              {item.dimension}
+                                            </text>
+                                          )}
+                                        </>
+                                      )
+                                    })()}
                                   </g>
                                 )
-                              },
-                            )}
-
-                            {/* Labels */}
-                            {[
-                              { key: 'proximity', label: 'Proximity' },
-                              { key: 'interest', label: 'Interest' },
-                              { key: 'personalTime', label: 'Personal\nTime' },
-                              { key: 'commonGround', label: 'Common\nGround' },
-                              { key: 'familiarity', label: 'Familiarity' },
-                            ].map((dim, idx) => {
-                              const angle =
-                                (idx * (360 / 5) - 90 + 30) * (Math.PI / 180)
-                              const labelDistance = 145
-                              const x = 160 + labelDistance * Math.cos(angle)
-                              const y = 160 + labelDistance * Math.sin(angle)
-
-                              return (
-                                <text
-                                  key={dim.key}
-                                  x={x}
-                                  y={y}
-                                  textAnchor="middle"
-                                  dominantBaseline="middle"
-                                  fontSize="14"
-                                  fontWeight="600"
-                                  fill="currentColor"
-                                  className="fill-gray-700 dark:fill-gray-300"
-                                >
-                                  {dim.label.split('\n').map((line, i) => (
-                                    <tspan
-                                      key={i}
-                                      x={x}
-                                      dy={i === 0 ? 0 : 16}
-                                    >
-                                      {line}
-                                    </tspan>
-                                  ))}
-                                </text>
-                              )
-                            })}
-                          </svg>
-                        </div>
-                      </div>
-
-                      {/* Star Score */}
-                      <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
-                        <h3 className="mb-4 text-xl font-bold">Star Score</h3>
-                        <div className="mb-4 text-center">
-                          <div className="font-bold">
-                            <span className="text-4xl text-indigo-600 dark:text-indigo-400">
-                              {selectedSnapshot.starScore.toFixed(1)}
-                            </span>
-                            <span className="text-2xl text-gray-400">/10</span>
-                          </div>
-                          <div className="mt-2 text-sm font-medium text-gray-600 dark:text-gray-400">
-                            {selectedSnapshot.relationshipLabel}
+                              })}
+                            </svg>
                           </div>
                         </div>
 
-                        <div className="space-y-2 text-sm">
-                          <div className="flex justify-between">
-                            <span className="text-gray-600 dark:text-gray-400">
-                              Personal Time (30%)
-                            </span>
-                            <span className="font-medium">
-                              {selectedSnapshot.scores.personalTime}/10
-                            </span>
+                        {/* Divider */}
+                        <div className="border-t border-gray-200 dark:border-gray-700" />
+
+                        {/* Star Score */}
+                        <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+                          <h3 className="mb-4 text-xl font-bold">Star Score</h3>
+                          <div className="mb-4 text-center">
+                            <div className="font-bold">
+                              <span className="text-4xl text-indigo-600 dark:text-indigo-400">
+                                {starScore.toFixed(1)}
+                              </span>
+                              <span className="text-2xl text-gray-400 dark:text-gray-600">
+                                /10
+                              </span>
+                            </div>
+                            <div className="text-sm text-gray-600 dark:text-gray-400">
+                              {starScore >= 8
+                                ? 'Close Friend'
+                                : starScore >= 5
+                                ? 'Friend'
+                                : starScore >= 3
+                                ? 'Acquaintance'
+                                : starScore >= 1
+                                ? 'Nodding Acquaintance'
+                                : 'Stranger'}
+                            </div>
                           </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-600 dark:text-gray-400">
-                              Common Ground (25%)
-                            </span>
-                            <span className="font-medium">
-                              {selectedSnapshot.scores.commonGround}/10
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-600 dark:text-gray-400">
-                              Familiarity (20%)
-                            </span>
-                            <span className="font-medium">
-                              {selectedSnapshot.scores.familiarity}/10
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-600 dark:text-gray-400">
-                              Interest (15%)
-                            </span>
-                            <span className="font-medium">
-                              {selectedSnapshot.scores.interest}/10
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-600 dark:text-gray-400">
-                              Proximity (10%)
-                            </span>
-                            <span className="font-medium">
-                              {selectedSnapshot.scores.proximity}/10
-                            </span>
+                          <div className="space-y-2 text-sm">
+                            <div className="flex justify-between">
+                              <span className="text-gray-600 dark:text-gray-400">
+                                Personal Time (30%)
+                              </span>
+                              <span className="font-medium">
+                                {interactiveScores.personalTime}/10
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600 dark:text-gray-400">
+                                Common Ground (25%)
+                              </span>
+                              <span className="font-medium">
+                                {interactiveScores.commonGround}/10
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600 dark:text-gray-400">
+                                Familiarity (20%)
+                              </span>
+                              <span className="font-medium">
+                                {interactiveScores.familiarity}/10
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600 dark:text-gray-400">
+                                Interest (15%)
+                              </span>
+                              <span className="font-medium">
+                                {interactiveScores.interest}/10
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600 dark:text-gray-400">
+                                Proximity (10%)
+                              </span>
+                              <span className="font-medium">
+                                {interactiveScores.proximity}/10
+                              </span>
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ) : null}
+                  ) : selectedSnapshot ? (
+                    // Read-only mode - show historical snapshot
+                    <div className="grid gap-8 lg:grid-cols-2">
+                      {/* Left: Saved Context and AI Response */}
+                      <div className="space-y-6">
+                        {selectedSnapshot.relationshipGoals && (
+                          <div>
+                            <h3 className="mb-4 text-xl font-bold">
+                              Relationship Context
+                            </h3>
+                            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                              {selectedSnapshot.relationshipGoals}
+                            </div>
+                          </div>
+                        )}
+
+                        <div>
+                          <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-6 dark:border-indigo-900 dark:bg-indigo-950">
+                            <div className="mb-4 flex items-center justify-between">
+                              <h3 className="text-xl font-bold text-indigo-900 dark:text-indigo-100">
+                                Cosmic Insights from the Stars
+                              </h3>
+                              <button
+                                onClick={() =>
+                                  window.open(
+                                    `/cosmic-insights/${selectedSnapshot.id}`,
+                                    '_blank',
+                                  )
+                                }
+                                className="flex items-center gap-2 rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
+                              >
+                                <svg
+                                  className="h-4 w-4"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                                  />
+                                </svg>
+                                Full Page
+                              </button>
+                            </div>
+                            <div
+                              className="prose prose-sm prose-indigo dark:prose-invert max-w-none text-indigo-800 dark:text-indigo-200 [&_li]:leading-relaxed [&_ul]:space-y-3 [&>div]:space-y-2 [&>p]:mb-4"
+                              dangerouslySetInnerHTML={{
+                                __html: selectedSnapshot.response,
+                              }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Right: Chart and Score */}
+                      <div className="space-y-6">
+                        {/* Star Chart */}
+                        <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
+                          <h3 className="mb-4 text-xl font-bold">Star Chart</h3>
+                          <div className="relative mx-auto aspect-square w-full">
+                            <svg
+                              viewBox="-10 -10 340 340"
+                              className="h-full w-full"
+                            >
+                              {/* Center point */}
+                              <circle cx="160" cy="160" r="3" fill="#4f46e5" />
+
+                              {/* Concentric circles */}
+                              {[32, 64, 96, 128, 160].map((radius) => (
+                                <circle
+                                  key={radius}
+                                  cx="160"
+                                  cy="160"
+                                  r={radius}
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="1"
+                                  className="stroke-gray-300 dark:stroke-gray-600"
+                                />
+                              ))}
+
+                              {/* Scale labels */}
+                              {[0, 5, 10].map((val) => (
+                                <text
+                                  key={val}
+                                  x="160"
+                                  y={160 - val * 16 - (val === 0 ? 12 : 0) + 5}
+                                  textAnchor="middle"
+                                  fontSize="14"
+                                  fontWeight="500"
+                                  fill="currentColor"
+                                  className="fill-gray-500 dark:fill-gray-400"
+                                >
+                                  {val}
+                                </text>
+                              ))}
+
+                              {/* Axes */}
+                              {Object.keys(selectedSnapshot.scores).map(
+                                (_, idx) => {
+                                  const angle =
+                                    (idx * (360 / 5) - 90 + 30) *
+                                    (Math.PI / 180)
+                                  const x = 160 + 160 * Math.cos(angle)
+                                  const y = 160 + 160 * Math.sin(angle)
+                                  return (
+                                    <line
+                                      key={idx}
+                                      x1="160"
+                                      y1="160"
+                                      x2={x}
+                                      y2={y}
+                                      stroke="currentColor"
+                                      strokeWidth="1"
+                                      className="stroke-gray-300 dark:stroke-gray-600"
+                                    />
+                                  )
+                                },
+                              )}
+
+                              {/* Filled area */}
+                              <path
+                                d={
+                                  Object.values(selectedSnapshot.scores)
+                                    .map((value: number, idx) => {
+                                      const angle =
+                                        (idx * (360 / 5) - 90 + 30) *
+                                        (Math.PI / 180)
+                                      const length = value * 16
+                                      const x = 160 + length * Math.cos(angle)
+                                      const y = 160 + length * Math.sin(angle)
+                                      return `${
+                                        idx === 0 ? 'M' : 'L'
+                                      } ${x} ${y}`
+                                    })
+                                    .join(' ') + ' Z'
+                                }
+                                fill="#4f46e5"
+                                fillOpacity="0.15"
+                                stroke="#4f46e5"
+                                strokeWidth="3"
+                                opacity="0.6"
+                              />
+
+                              {/* Points */}
+                              {Object.values(selectedSnapshot.scores).map(
+                                (value: number, idx) => {
+                                  const angle =
+                                    (idx * (360 / 5) - 90 + 30) *
+                                    (Math.PI / 180)
+                                  const length = value * 16
+                                  const x = 160 + length * Math.cos(angle)
+                                  const y = 160 + length * Math.sin(angle)
+
+                                  return (
+                                    <g key={idx}>
+                                      <circle
+                                        cx={x}
+                                        cy={y}
+                                        r="6"
+                                        fill="#4f46e5"
+                                        stroke="white"
+                                        strokeWidth="2"
+                                      />
+                                    </g>
+                                  )
+                                },
+                              )}
+
+                              {/* Labels */}
+                              {[
+                                { key: 'proximity', label: 'Proximity' },
+                                { key: 'interest', label: 'Interest' },
+                                {
+                                  key: 'personalTime',
+                                  label: 'Personal\nTime',
+                                },
+                                {
+                                  key: 'commonGround',
+                                  label: 'Common\nGround',
+                                },
+                                { key: 'familiarity', label: 'Familiarity' },
+                              ].map((dim, idx) => {
+                                const angle =
+                                  (idx * (360 / 5) - 90 + 30) * (Math.PI / 180)
+                                const labelDistance = 145
+                                const x = 160 + labelDistance * Math.cos(angle)
+                                const y = 160 + labelDistance * Math.sin(angle)
+
+                                return (
+                                  <text
+                                    key={dim.key}
+                                    x={x}
+                                    y={y}
+                                    textAnchor="middle"
+                                    dominantBaseline="middle"
+                                    fontSize="14"
+                                    fontWeight="600"
+                                    fill="currentColor"
+                                    className="fill-gray-700 dark:fill-gray-300"
+                                  >
+                                    {dim.label.split('\n').map((line, i) => (
+                                      <tspan
+                                        key={i}
+                                        x={x}
+                                        dy={i === 0 ? 0 : 16}
+                                      >
+                                        {line}
+                                      </tspan>
+                                    ))}
+                                  </text>
+                                )
+                              })}
+                            </svg>
+                          </div>
+                        </div>
+
+                        {/* Star Score */}
+                        <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+                          <h3 className="mb-4 text-xl font-bold">Star Score</h3>
+                          <div className="mb-4 text-center">
+                            <div className="font-bold">
+                              <span className="text-4xl text-indigo-600 dark:text-indigo-400">
+                                {selectedSnapshot.starScore.toFixed(1)}
+                              </span>
+                              <span className="text-2xl text-gray-400">
+                                /10
+                              </span>
+                            </div>
+                            <div className="mt-2 text-sm font-medium text-gray-600 dark:text-gray-400">
+                              {selectedSnapshot.relationshipLabel}
+                            </div>
+                          </div>
+
+                          <div className="space-y-2 text-sm">
+                            <div className="flex justify-between">
+                              <span className="text-gray-600 dark:text-gray-400">
+                                Personal Time (30%)
+                              </span>
+                              <span className="font-medium">
+                                {selectedSnapshot.scores.personalTime}/10
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600 dark:text-gray-400">
+                                Common Ground (25%)
+                              </span>
+                              <span className="font-medium">
+                                {selectedSnapshot.scores.commonGround}/10
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600 dark:text-gray-400">
+                                Familiarity (20%)
+                              </span>
+                              <span className="font-medium">
+                                {selectedSnapshot.scores.familiarity}/10
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600 dark:text-gray-400">
+                                Interest (15%)
+                              </span>
+                              <span className="font-medium">
+                                {selectedSnapshot.scores.interest}/10
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600 dark:text-gray-400">
+                                Proximity (10%)
+                              </span>
+                              <span className="font-medium">
+                                {selectedSnapshot.scores.proximity}/10
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
               </Dialog.Panel>
             </Transition.Child>

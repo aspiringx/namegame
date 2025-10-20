@@ -6,7 +6,7 @@ import prisma from '@/lib/prisma'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // 1. Check authentication
@@ -18,7 +18,7 @@ export async function GET(
       )
     }
 
-    const { id } = params
+    const { id } = await params
 
     // 2. Fetch the AI request
     const aiRequest = await prisma.aIRequest.findUnique({
