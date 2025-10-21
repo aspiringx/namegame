@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
+import { getCodeTable } from '@/lib/codes'
 
 export async function GET(
   request: NextRequest,
@@ -51,6 +52,9 @@ export async function GET(
 
     // 4. Parse the request input to get the scores and context
     const requestInput = JSON.parse(aiRequest.requestInput)
+    const requestContext = aiRequest.requestContext 
+      ? JSON.parse(aiRequest.requestContext) 
+      : null
 
     // 5. Extract scores (they're nested in a scores object)
     const scores = requestInput.scores || {
@@ -79,12 +83,42 @@ export async function GET(
         ? 'Nodding Acquaintance'
         : 'Stranger'
 
-    // 6. Return the assessment data
+    // 6. Fetch photos for both users
+    const [photoTypes, entityTypes] = await Promise.all([
+      getCodeTable('photoType'),
+      getCodeTable('entityType'),
+    ])
+
+    const aboutUserId = requestContext?.aboutUserId || null
+
+    const [creatorPhoto, aboutUserPhoto] = await Promise.all([
+      prisma.photo.findFirst({
+        where: {
+          entityId: aiRequest.userId,
+          entityTypeId: entityTypes.user.id,
+          typeId: photoTypes.primary.id,
+        },
+      }),
+      aboutUserId
+        ? prisma.photo.findFirst({
+            where: {
+              entityId: aboutUserId,
+              entityTypeId: entityTypes.user.id,
+              typeId: photoTypes.primary.id,
+            },
+          })
+        : null,
+    ])
+
+    // 7. Return the assessment data
     return NextResponse.json({
       id: aiRequest.id,
       userId: aiRequest.userId,
       userName: `${aiRequest.user.firstName} ${aiRequest.user.lastName || ''}`.trim(),
       memberFirstName: requestInput.memberFirstName,
+      memberId: aboutUserId,
+      creatorPhoto: creatorPhoto || null,
+      aboutUserPhoto: aboutUserPhoto || null,
       scores,
       starScore: parseFloat(starScore.toFixed(1)),
       relationshipLabel,

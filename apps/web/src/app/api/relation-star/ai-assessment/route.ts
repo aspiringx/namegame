@@ -109,6 +109,7 @@ export async function POST(request: NextRequest) {
       relationshipGoals,
       currentUserFirstName,
       memberFirstName,
+      aboutUserId, // The user this assessment is about
     } = body;
 
     // Validate scores
@@ -161,6 +162,7 @@ export async function POST(request: NextRequest) {
         userId: session.user.id,
         requestType: AI_REQUEST_TYPES.RELATION_STAR_INDIVIDUAL,
         requestInput: JSON.stringify(requestData),
+        requestContext: aboutUserId ? JSON.stringify({ aboutUserId }) : null,
         provider: AI_PROVIDERS.OPENAI,
         model: provider.model,
         systemPrompt,

@@ -9,12 +9,6 @@ import { Fragment } from 'react'
 import { X, ChevronDown, ChevronUp, Plus, Info } from 'lucide-react'
 import Image from 'next/image'
 import { Dropdown, DropdownItem } from '@/components/ui/dropdown'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
 
 interface RelationStarModalProps {
   isOpen: boolean
@@ -160,6 +154,7 @@ export default function RelationStarModal({
           relationshipGoals: relationshipGoals || undefined,
           currentUserFirstName: currentUserFirstName || undefined,
           memberFirstName: memberFirstName || undefined,
+          aboutUserId: memberId, // The user this assessment is about
         }),
       })
 
@@ -253,48 +248,11 @@ export default function RelationStarModal({
                       </div>
                       <div className="min-w-0 flex-1">
                         <Dialog.Title className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100 truncate">
-                          Cosmic Insights with {memberName}
+                          ⭐ Cosmic Insights
                         </Dialog.Title>
-                        <div className="flex items-center gap-1.5">
-                          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-                            Reflect on your relationship
-                          </p>
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <button
-                                  type="button"
-                                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
-                                  aria-label="Learn how to interpret star charts"
-                                >
-                                  <Info className="h-4 w-4" />
-                                </button>
-                              </TooltipTrigger>
-                              <TooltipContent side="right" className="max-w-xs">
-                                <p className="mb-2">
-                                  Learn how to interpret your star chart and
-                                  understand the five dimensions of
-                                  relationships.
-                                </p>
-                                <button
-                                  onClick={() => {
-                                    if (deviceInfo.isPWA) {
-                                      router.push('/relation-star-demo')
-                                    } else {
-                                      window.open(
-                                        '/relation-star-demo',
-                                        '_blank',
-                                      )
-                                    }
-                                  }}
-                                  className="text-white hover:text-gray-200 underline font-semibold text-left"
-                                >
-                                  View Interactive Demo →
-                                </button>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        </div>
+                        <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                          Reflect on your relationship with {memberName}
+                        </p>
                       </div>
                     </div>
                     <button
@@ -353,13 +311,28 @@ export default function RelationStarModal({
                         ))}
                       </Dropdown>
                       {!isCreatingNew && (
-                        <button
-                          onClick={handleNewInsights}
-                          className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700 whitespace-nowrap"
-                        >
-                          <Plus className="h-4 w-4" />
-                          New
-                        </button>
+                        <div className="flex gap-3 sm:contents">
+                          <button
+                            onClick={handleNewInsights}
+                            className="flex-[2] sm:flex-initial sm:w-auto flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700 whitespace-nowrap"
+                          >
+                            <Plus className="h-4 w-4" />
+                            New
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (deviceInfo.isPWA) {
+                                router.push('/relation-star-demo')
+                              } else {
+                                window.open('/relation-star-demo', '_blank')
+                              }
+                            }}
+                            className="flex-1 sm:flex-initial sm:w-auto flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 whitespace-nowrap"
+                          >
+                            <Info className="h-4 w-4" />
+                            Help
+                          </button>
+                        </div>
                       )}
                     </div>
                   )}
@@ -377,7 +350,7 @@ export default function RelationStarModal({
                         </p>
                       </div>
                     </div>
-                  ) : isCreatingNew || snapshots.length === 0 ? (
+                  ) : isCreatingNew ? (
                     // Creation mode - show the input form
                     <div className="grid gap-8 lg:grid-cols-2">
                       {/* Left: Sliders */}
@@ -604,39 +577,45 @@ export default function RelationStarModal({
                                 <div className="my-6 border-t-2 border-gray-300 dark:border-gray-600" />
 
                                 <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-6 dark:border-indigo-900 dark:bg-indigo-950">
-                                  <div className="mb-4 flex items-center justify-between">
-                                    <h4 className="text-lg font-semibold text-indigo-900 dark:text-indigo-100">
-                                      Cosmic Insights from the Stars
-                                    </h4>
-                                    {currentAssessmentId && (
-                                      <button
-                                        onClick={() =>
-                                          window.open(
-                                            `/cosmic-insights/${currentAssessmentId}`,
-                                            '_blank',
-                                          )
-                                        }
-                                        className="flex items-center gap-2 rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
-                                      >
-                                        <svg
-                                          className="h-4 w-4"
-                                          fill="none"
-                                          viewBox="0 0 24 24"
-                                          stroke="currentColor"
+                                  <div className="mb-4">
+                                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                      <h4 className="text-lg font-semibold text-indigo-900 dark:text-indigo-100">
+                                        Your Cosmic Insights
+                                      </h4>
+                                      {currentAssessmentId && (
+                                        <button
+                                          onClick={() => {
+                                            if (deviceInfo.isPWA) {
+                                              router.push(`/cosmic-insights/${currentAssessmentId}`)
+                                            } else {
+                                              window.open(
+                                                `/cosmic-insights/${currentAssessmentId}`,
+                                                '_blank',
+                                              )
+                                            }
+                                          }}
+                                          className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
                                         >
-                                          <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth={2}
-                                            d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                                          />
-                                        </svg>
-                                        Full Page
-                                      </button>
-                                    )}
+                                          <svg
+                                            className="h-4 w-4"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                            stroke="currentColor"
+                                          >
+                                            <path
+                                              strokeLinecap="round"
+                                              strokeLinejoin="round"
+                                              strokeWidth={2}
+                                              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                                            />
+                                          </svg>
+                                          Full Page
+                                        </button>
+                                      )}
+                                    </div>
                                   </div>
                                   <div
-                                    className="prose prose-sm prose-indigo dark:prose-invert max-w-none text-indigo-800 dark:text-indigo-200 [&_li]:leading-relaxed [&_ul]:space-y-3 [&>div]:space-y-2 [&>p]:mb-4"
+                                    className="prose prose-sm prose-indigo dark:prose-invert max-w-none text-indigo-800 dark:text-indigo-200 [&_li]:leading-relaxed [&_ul]:space-y-3 [&>div]:space-y-2 [&>p]:mb-8"
                                     dangerouslySetInnerHTML={{
                                       __html: aiInsight,
                                     }}
@@ -1009,37 +988,43 @@ export default function RelationStarModal({
 
                         <div>
                           <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-6 dark:border-indigo-900 dark:bg-indigo-950">
-                            <div className="mb-4 flex items-center justify-between">
-                              <h3 className="text-xl font-bold text-indigo-900 dark:text-indigo-100">
-                                Cosmic Insights from the Stars
-                              </h3>
-                              <button
-                                onClick={() =>
-                                  window.open(
-                                    `/cosmic-insights/${selectedSnapshot.id}`,
-                                    '_blank',
-                                  )
-                                }
-                                className="flex items-center gap-2 rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
-                              >
-                                <svg
-                                  className="h-4 w-4"
-                                  fill="none"
-                                  viewBox="0 0 24 24"
-                                  stroke="currentColor"
+                            <div className="mb-4">
+                              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                <h3 className="text-xl font-bold text-indigo-900 dark:text-indigo-100">
+                                  Your Cosmic Insights
+                                </h3>
+                                <button
+                                  onClick={() => {
+                                    if (deviceInfo.isPWA) {
+                                      router.push(`/cosmic-insights/${selectedSnapshot.id}`)
+                                    } else {
+                                      window.open(
+                                        `/cosmic-insights/${selectedSnapshot.id}`,
+                                        '_blank',
+                                      )
+                                    }
+                                  }}
+                                  className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
                                 >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                                  />
-                                </svg>
-                                Full Page
-                              </button>
+                                  <svg
+                                    className="h-4 w-4"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                                    />
+                                  </svg>
+                                  Full Page
+                                </button>
+                              </div>
                             </div>
                             <div
-                              className="prose prose-sm prose-indigo dark:prose-invert max-w-none text-indigo-800 dark:text-indigo-200 [&_li]:leading-relaxed [&_ul]:space-y-3 [&>div]:space-y-2 [&>p]:mb-4"
+                              className="prose prose-sm prose-indigo dark:prose-invert max-w-none text-indigo-800 dark:text-indigo-200 [&_li]:leading-relaxed [&_ul]:space-y-3 [&>div]:space-y-2 [&>p]:mb-8"
                               dangerouslySetInnerHTML={{
                                 __html: selectedSnapshot.response,
                               }}

@@ -440,7 +440,8 @@ model AIRequest {
   requestedAt      DateTime @default(now())
   
   // Flexible input - stored as JSON
-  requestInput     String   @db.Text  // JSON string containing all context and data
+  requestInput     String   @db.Text  // JSON string containing all context and data for AI
+  requestContext   String?  @db.Text  // JSON string containing metadata (e.g., aboutUserId, aboutGroupId)
   
   // AI response
   provider         String   // 'openai' | 'anthropic' | 'google'
