@@ -288,20 +288,17 @@ export function useDeviceInfo(_session: Session | null): DeviceInfo {
   useEffect(() => {
     if (typeof window === 'undefined') return
 
-    const userAgent = navigator.userAgent.toLowerCase()
+    const userAgent = window.navigator.userAgent.toLowerCase()
 
-    // --- Platform detection ---
-    let os: OperatingSystem = 'unknown'
+    let os: DeviceInfo['os'] = 'unknown'
     if (/iphone|ipad|ipod/.test(userAgent)) os = 'ios'
     else if (/android/.test(userAgent)) os = 'android'
-    else if (/mac os x/.test(userAgent)) os = 'macos'
-    else if (/windows/.test(userAgent)) os = 'windows'
+    else if (/win/.test(userAgent)) os = 'windows'
+    else if (/mac/.test(userAgent)) os = 'macos'
     else if (/linux/.test(userAgent)) os = 'linux'
 
-    // --- Browser Detection ---
-    let browser: Browser = 'unknown'
-    // Brave browser check must come before Chrome check
-    if ((navigator as any).brave?.isBrave) browser = 'brave'
+    let browser: DeviceInfo['browser'] = 'unknown'
+    if (/brave/.test(userAgent)) browser = 'brave'
     else if (/samsungbrowser/.test(userAgent)) browser = 'samsung'
     else if (/edg/.test(userAgent)) browser = 'edge'
     else if (/chrome/.test(userAgent) && !/edg/.test(userAgent))
@@ -312,10 +309,43 @@ export function useDeviceInfo(_session: Session | null): DeviceInfo {
 
     const isMobile = os === 'ios' || os === 'android'
     const isDesktop = !isMobile
-    const isStandalone =
-      window.matchMedia('(display-mode: standalone)').matches ||
-      (window.navigator as any).standalone === true
-    const wasInstalled = localStorage.getItem('isPWAInstalled') === 'true'
+    
+    const PWA_STORAGE_KEY = '__namegame_is_pwa__'
+    
+    // Function to check if we're in PWA mode
+    const checkPWAMode = () => {
+      // Check URL parameter
+      const urlParams = new URLSearchParams(window.location.search)
+      const launchedFromPWA = urlParams.get('source') === 'pwa'
+      
+      // If launched from PWA, mark it in localStorage
+      if (launchedFromPWA) {
+        localStorage.setItem(PWA_STORAGE_KEY, 'true')
+      }
+      
+      // Check localStorage
+      const isPWASession = localStorage.getItem(PWA_STORAGE_KEY) === 'true'
+      
+      // Check display-mode media queries
+      const hasStandaloneDisplayMode = 
+        window.matchMedia('(display-mode: standalone)').matches ||
+        window.matchMedia('(display-mode: window-controls-overlay)').matches ||
+        window.matchMedia('(display-mode: minimal-ui)').matches ||
+        window.matchMedia('(display-mode: fullscreen)').matches
+      
+      // Detect PWA
+      return (
+        // iOS Safari
+        (window.navigator as any).standalone === true ||
+        // Standard display-mode checks
+        hasStandaloneDisplayMode ||
+        // Fallback to localStorage
+        isPWASession
+      )
+    }
+    
+    // Initial check (might be false due to timing)
+    let isPWA = checkPWAMode()
 
     const initialInfo: DeviceInfo = {
       isReady: false,
@@ -323,8 +353,8 @@ export function useDeviceInfo(_session: Session | null): DeviceInfo {
       browser,
       isMobile,
       isDesktop,
-      isPWA: isStandalone,
-      isPWAInstalled: isStandalone || wasInstalled,
+      isPWA,
+      isPWAInstalled: isPWA,
       pwaPrompt: {
         canInstall: false,
         isReady: false,
@@ -345,14 +375,14 @@ export function useDeviceInfo(_session: Session | null): DeviceInfo {
     // --- Derive A2HS logic from the matrix ---
     const notificationsConfig = getNotificationConfig(os, browser)
     initialInfo.push.instructions =
-      isStandalone && notificationsConfig.pwaInstructions
+      isPWA && notificationsConfig.pwaInstructions
         ? notificationsConfig.pwaInstructions
         : notificationsConfig.instructions
 
     const a2hsConfig = getA2hsConfig(os, browser)
     initialInfo.a2hs = {
       isSupported: a2hsConfig.isSupported,
-      canInstall: a2hsConfig.canInstall(isStandalone, wasInstalled),
+      canInstall: a2hsConfig.canInstall(isPWA, isPWA),
       actionLabel: a2hsConfig.actionLabel,
       instructions: a2hsConfig.instructions,
     }
@@ -385,22 +415,47 @@ export function useDeviceInfo(_session: Session | null): DeviceInfo {
       setDeviceInfo((prev) => ({ ...prev, isPWAInstalled: true }))
     }
 
-    if (isStandalone) {
-      localStorage.setItem('isPWAInstalled', 'true')
-    }
-
     setDeviceInfo((prev) => ({
       ...prev,
       ...initialInfo,
       isReady: true, // Signal that the initial info is ready
     }))
 
-    if (!isStandalone) {
+    // Recheck PWA mode after a short delay to handle browser initialization timing
+    // Chrome PWAs sometimes report display-mode incorrectly on initial render
+    const recheckTimeout = setTimeout(() => {
+      const recheckIsPWA = checkPWAMode()
+      if (recheckIsPWA !== isPWA) {
+        setDeviceInfo((prev) => ({
+          ...prev,
+          isPWA: recheckIsPWA,
+          isPWAInstalled: recheckIsPWA,
+        }))
+      }
+    }, 100) // 100ms delay to let browser finish initialization
+
+    // Listen for display-mode changes
+    const standaloneQuery = window.matchMedia('(display-mode: standalone)')
+    const handleDisplayModeChange = (e: MediaQueryListEvent) => {
+      if (e.matches) {
+        localStorage.setItem(PWA_STORAGE_KEY, 'true')
+        setDeviceInfo((prev) => ({
+          ...prev,
+          isPWA: true,
+          isPWAInstalled: true,
+        }))
+      }
+    }
+    standaloneQuery.addEventListener('change', handleDisplayModeChange)
+
+    if (!isPWA) {
       window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
       window.addEventListener('appinstalled', handleAppInstalled)
     }
 
     return () => {
+      clearTimeout(recheckTimeout)
+      standaloneQuery.removeEventListener('change', handleDisplayModeChange)
       if (!initialInfo.isPWA) {
         window.removeEventListener(
           'beforeinstallprompt',

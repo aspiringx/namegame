@@ -94,9 +94,19 @@ export function ServiceWorkerRegistrar() {
 
     setupServiceWorker()
 
+    // Check for service worker updates every hour
+    const updateInterval = setInterval(async () => {
+      const registration = await navigator.serviceWorker.getRegistration('/sw.js')
+      if (registration) {
+        console.log('[SW] Checking for updates...')
+        await registration.update()
+      }
+    }, 60 * 60 * 1000) // 1 hour
+
     // Cleanup
     return () => {
       navigator.serviceWorker.removeEventListener('message', handleMessage)
+      clearInterval(updateInterval)
     }
   }, [_setRegistration, _setIsReady])
 
