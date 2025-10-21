@@ -384,7 +384,7 @@ export default function RelationshipStarPage() {
                       )}`}
                       className="block w-full rounded-lg bg-indigo-600 px-4 py-3 text-center text-sm font-medium text-white transition-colors hover:bg-indigo-700"
                     >
-                      Log in to Get Cosmic Insights
+                      Log in for Cosmic Insights
                     </Link>
                     <p className="mt-2 text-center text-xs text-gray-600 dark:text-gray-400">
                       Don't have an account?{' '}
@@ -450,10 +450,10 @@ export default function RelationshipStarPage() {
                 {aiInsight && (
                   <div className="mt-4 rounded-lg border border-indigo-200 bg-indigo-50 p-6 dark:border-indigo-900 dark:bg-indigo-950">
                     <h4 className="mb-4 text-lg font-semibold text-indigo-900 dark:text-indigo-100">
-                      Cosmic Insights
+                      Your Cosmic Insights
                     </h4>
                     <div
-                      className="prose prose-sm prose-indigo dark:prose-invert max-w-none text-indigo-800 dark:text-indigo-200 [&>p]:mb-4 [&>div]:space-y-2 [&_ul]:space-y-3 [&_li]:leading-relaxed"
+                      className="prose prose-sm prose-indigo dark:prose-invert max-w-none text-indigo-800 dark:text-indigo-200 [&>p]:mb-8 [&>div]:space-y-2 [&_ul]:space-y-3 [&_li]:leading-relaxed"
                       dangerouslySetInnerHTML={{ __html: aiInsight }}
                     />
                   </div>

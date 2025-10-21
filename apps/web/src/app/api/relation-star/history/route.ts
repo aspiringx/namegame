@@ -45,42 +45,28 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Verify there's a relationship between the users
-    const relationship = await prisma.userUser.findFirst({
-      where: {
-        OR: [
-          { user1Id: session.user.id, user2Id: memberId },
-          { user1Id: memberId, user2Id: session.user.id },
-        ],
-      },
-    });
+    // Note: We don't check user_user relationship here because access is controlled
+    // through group membership. Users can create assessments for any group member.
 
-    if (!relationship) {
-      return NextResponse.json(
-        { error: 'No relationship found with this user' },
-        { status: 403 }
-      );
-    }
+    // 4. Fetch relation star assessments for this specific member using raw SQL
+    // We use raw SQL to filter by JSON field in the database
+    const assessments = await prisma.$queryRaw<Array<{
+      id: string;
+      requestInput: string;
+      requestContext: string | null;
+      response: string;
+      requestedAt: Date;
+    }>>`
+      SELECT id, "requestInput", "requestContext", response, "requestedAt"
+      FROM ai_requests
+      WHERE "userId" = ${session.user.id}
+        AND "requestType" = ${AI_REQUEST_TYPES.RELATION_STAR_INDIVIDUAL}
+        AND "isFollowUp" = false
+        AND "requestContext"::jsonb->>'aboutUserId' = ${memberId}
+      ORDER BY "requestedAt" DESC
+    `;
 
-    // 4. Fetch all relation star assessments for this member
-    const assessments = await prisma.aIRequest.findMany({
-      where: {
-        userId: session.user.id,
-        requestType: AI_REQUEST_TYPES.RELATION_STAR_INDIVIDUAL,
-        isFollowUp: false,
-      },
-      select: {
-        id: true,
-        requestInput: true,
-        response: true,
-        requestedAt: true,
-      },
-      orderBy: {
-        requestedAt: 'desc',
-      },
-    });
-
-    // 5. Filter and parse assessments for this specific member
+    // 5. Parse assessments
     const memberAssessments = assessments
       .map((assessment) => {
         try {
@@ -95,12 +81,7 @@ export async function GET(request: NextRequest) {
           return null;
         }
       })
-      .filter((assessment): assessment is NonNullable<typeof assessment> => {
-        if (!assessment) return false;
-        // Check if this assessment is for the requested member
-        // The input contains memberFirstName which we can match
-        return assessment.input.memberFirstName === member.firstName;
-      });
+      .filter((assessment): assessment is NonNullable<typeof assessment> => assessment !== null);
 
     // 6. Format response
     const formattedAssessments = memberAssessments.map((assessment) => ({

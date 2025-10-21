@@ -3,12 +3,17 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
+import Image from 'next/image'
+import { getPhotoUrl } from '@/lib/photos'
 
 interface CosmicInsightsData {
   id: string
   userId: string
   userName: string
   memberFirstName?: string
+  memberId: string | null
+  creatorPhoto: { url: string } | null
+  aboutUserPhoto: { url: string } | null
   scores: {
     proximity: number
     interest: number
@@ -30,12 +35,14 @@ export default function CosmicInsightsPage() {
   const [data, setData] = useState<CosmicInsightsData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [creatorPhotoUrl, setCreatorPhotoUrl] = useState<string | null>(null)
+  const [aboutUserPhotoUrl, setAboutUserPhotoUrl] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const response = await fetch(`/api/cosmic-insights/${params.id}`)
-        
+
         if (!response.ok) {
           if (response.status === 403) {
             // Unauthorized - redirect to home
@@ -51,6 +58,16 @@ export default function CosmicInsightsPage() {
 
         const result = await response.json()
         setData(result)
+
+        // Load photo URLs
+        if (result.creatorPhoto) {
+          const url = await getPhotoUrl(result.creatorPhoto, { size: 'thumb' })
+          setCreatorPhotoUrl(url)
+        }
+        if (result.aboutUserPhoto) {
+          const url = await getPhotoUrl(result.aboutUserPhoto, { size: 'thumb' })
+          setAboutUserPhotoUrl(url)
+        }
       } catch {
         setError('An error occurred while loading the assessment.')
       } finally {
@@ -108,14 +125,64 @@ export default function CosmicInsightsPage() {
     <div className="mx-auto max-w-5xl px-4 py-8 pb-24">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="mb-2 text-3xl font-bold text-gray-900 dark:text-gray-100">
-          Cosmic Insights
-          {data.memberFirstName && ` with ${data.memberFirstName}`}
-        </h1>
-        <p className="text-sm text-gray-600 dark:text-gray-400">
-          Created {new Date(data.createdAt).toLocaleDateString()} at{' '}
-          {new Date(data.createdAt).toLocaleTimeString()} by {data.userName}
-        </p>
+        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+          <div className="flex-1">
+            <h1 className="mb-2 text-3xl font-bold text-gray-900 dark:text-gray-100">
+              Cosmic Insights
+              {data.memberFirstName && ` with ${data.memberFirstName}`}
+            </h1>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Created {new Date(data.createdAt).toLocaleDateString()} at{' '}
+              {new Date(data.createdAt).toLocaleTimeString()} by {data.userName}
+            </p>
+            {/* Mobile: Photos below text */}
+            <div className="flex gap-3 mt-3 md:hidden">
+              {creatorPhotoUrl && (
+                <div className="relative h-18 w-18 flex-shrink-0 overflow-hidden rounded-full">
+                  <Image
+                    src={creatorPhotoUrl}
+                    alt={data.userName}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+              )}
+              {aboutUserPhotoUrl && (
+                <div className="relative h-18 w-18 flex-shrink-0 overflow-hidden rounded-full">
+                  <Image
+                    src={aboutUserPhotoUrl}
+                    alt={data.memberFirstName || 'User'}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+          {/* Desktop: Photos on right */}
+          <div className="hidden md:flex gap-3">
+            {creatorPhotoUrl && (
+              <div className="relative h-18 w-18 flex-shrink-0 overflow-hidden rounded-full">
+                <Image
+                  src={creatorPhotoUrl}
+                  alt={data.userName}
+                  fill
+                  className="object-cover"
+                />
+              </div>
+            )}
+            {aboutUserPhotoUrl && (
+              <div className="relative h-18 w-18 flex-shrink-0 overflow-hidden rounded-full">
+                <Image
+                  src={aboutUserPhotoUrl}
+                  alt={data.memberFirstName || 'User'}
+                  fill
+                  className="object-cover"
+                />
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Content Grid */}
@@ -132,11 +199,9 @@ export default function CosmicInsightsPage() {
           )}
 
           <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
-            <h2 className="mb-4 text-xl font-bold">
-              Cosmic Insights from the Stars
-            </h2>
+            <h2 className="mb-4 text-xl font-bold">Your Cosmic Insights</h2>
             <div
-              className="prose prose-sm prose-indigo dark:prose-invert max-w-none text-gray-800 dark:text-gray-200 [&_li]:leading-relaxed [&_ul]:space-y-3 [&>div]:space-y-2 [&>p]:mb-4"
+              className="prose prose-sm prose-indigo dark:prose-invert max-w-none text-gray-800 dark:text-gray-200 [&_li]:leading-relaxed [&_ul]:space-y-3 [&>div]:space-y-2 [&>p]:mb-8"
               dangerouslySetInnerHTML={{ __html: data.response }}
             />
           </div>

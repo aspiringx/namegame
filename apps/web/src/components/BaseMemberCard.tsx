@@ -157,7 +157,7 @@ export default function BaseMemberCard({
                     onClick={() => setIsRelationStarModalOpen(true)}
                   >
                     <span className="mr-2">⭐</span>
-                    See Cosmic Insights
+                    Cosmic Insights
                   </DropdownMenuItem>
                 )}
                 {/* Strategy-specific actions */}
