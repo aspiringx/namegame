@@ -23,17 +23,29 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   console.log('[SW] Service worker activated, version:', SW_VERSION)
   
-  // Claim clients immediately so the SW can handle push notifications
   event.waitUntil(
-    self.clients.claim().then(() => {
-      console.log('[SW] Clients claimed - service worker now controlling all pages')
-      // Notify all clients to reload
-      return self.clients.matchAll({ type: 'window' }).then((clients) => {
-        clients.forEach((client) => {
-          client.postMessage({ type: 'SW_UPDATED', version: SW_VERSION })
+    (async () => {
+      // Clear all caches to force fresh content
+      const cacheNames = await caches.keys()
+      console.log('[SW] Clearing', cacheNames.length, 'caches')
+      await Promise.all(
+        cacheNames.map((cacheName) => {
+          console.log('[SW] Deleting cache:', cacheName)
+          return caches.delete(cacheName)
         })
+      )
+      
+      // Claim clients immediately so the SW can handle push notifications
+      await self.clients.claim()
+      console.log('[SW] Clients claimed - service worker now controlling all pages')
+      
+      // Notify all clients to reload
+      const clients = await self.clients.matchAll({ type: 'window' })
+      clients.forEach((client) => {
+        console.log('[SW] Notifying client to reload:', client.url)
+        client.postMessage({ type: 'SW_UPDATED', version: SW_VERSION })
       })
-    })
+    })()
   )
 })
 
