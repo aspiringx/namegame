@@ -215,17 +215,47 @@ export async function GET(request: NextRequest) {
     const hasMore = conversations.length === 15
     const userId = session.user.id
 
-    // Calculate unread status for each conversation
-    const conversationsWithUnread = conversations.map(conv => {
+    // Calculate unread status for each conversation by checking for activity from others
+    const conversationsWithUnread = await Promise.all(conversations.map(async conv => {
       const currentUserParticipant = conv.participants.find(p => p.userId === userId)
       const lastReadAt = currentUserParticipant?.lastReadAt
-      const lastMessage = conv.messages[0]
       
-      // Has unread if there's a message after lastReadAt (or no lastReadAt)
-      // AND the message is from someone else (not the current user)
-      const hasUnread = lastMessage && 
-        lastMessage.authorId !== userId &&
-        (!lastReadAt || lastMessage.updatedAt > lastReadAt)
+      // Get most recent message from someone else
+      const lastMessageFromOthers = await prisma.chatMessage.findFirst({
+        where: {
+          conversationId: conv.id,
+          authorId: { not: userId }
+        },
+        orderBy: { updatedAt: 'desc' },
+        select: { updatedAt: true }
+      })
+      
+      // Get most recent reaction from someone else to YOUR messages
+      const lastReactionFromOthers = await prisma.chatMessageReaction.findFirst({
+        where: {
+          message: { 
+            conversationId: conv.id,
+            authorId: userId  // Only reactions to YOUR messages
+          },
+          userId: { not: userId }  // From someone else
+        },
+        orderBy: { createdAt: 'desc' },
+        select: { createdAt: true }
+      })
+      
+      // Find the most recent activity from others
+      const timestamps = [
+        lastMessageFromOthers?.updatedAt,
+        lastReactionFromOthers?.createdAt
+      ].filter(Boolean) as Date[]
+      
+      const lastActivityFromOthers = timestamps.length > 0 
+        ? new Date(Math.max(...timestamps.map(d => d.getTime())))
+        : null
+      
+      // Has unread if there's activity from others after lastReadAt
+      const hasUnread = lastActivityFromOthers && 
+        (!lastReadAt || lastActivityFromOthers > lastReadAt)
       
       return {
         id: conv.id,
@@ -240,7 +270,7 @@ export async function GET(request: NextRequest) {
           name: `${p.user.firstName} ${p.user.lastName || ''}`.trim()
         }))
       }
-    })
+    }))
 
     // Sort: unread conversations first (by most recent message), then read conversations (by most recent message)
     conversationsWithUnread.sort((a, b) => {

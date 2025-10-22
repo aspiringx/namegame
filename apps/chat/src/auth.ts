@@ -17,14 +17,33 @@ export async function authenticateSocket(socket: Socket): Promise<User | null> {
       console.log('[Auth] No userId provided');
       return null;
     }
-
-    console.log('[Auth] TEMP: Allowing connection for userId:', userId);
     
-    // Return mock user info for testing
+    // Fetch real user data from database
+    const { PrismaClient } = await import('@namegame/db');
+    const prisma = new PrismaClient();
+    
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true
+      }
+    });
+    
+    await prisma.$disconnect();
+    
+    if (!user) {
+      console.log('[Auth] User not found:', userId);
+      return null;
+    }
+    
+    // Return user with formatted name
     return {
-      id: userId,
-      email: `${userId}@example.com`,
-      name: `User ${userId}`
+      id: user.id,
+      email: user.email || '',
+      name: `${user.firstName} ${user.lastName || ''}`.trim()
     };
 
   } catch (error) {

@@ -55,10 +55,12 @@ export async function handleMessage(socket: Socket, user: User, data: MessageDat
       }
     });
 
-    // Update conversation's lastMessageAt
+    // Update conversation's lastMessageAt (tracks message/reaction activity)
     await prisma.chatConversation.update({
       where: { id: conversationId },
-      data: { lastMessageAt: new Date() }
+      data: { 
+        lastMessageAt: new Date()
+      }
     });
 
     // Trigger PostgreSQL NOTIFY to broadcast to all chat servers

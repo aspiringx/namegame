@@ -17,6 +17,7 @@ import MessageEmojiPicker from './MessageEmojiPicker'
 interface ChatInterfaceProps {
   isOpen: boolean
   onBack: () => void
+  onClose: () => void
   conversationId?: string
   participants: string[]
   conversationName: string
@@ -44,6 +45,7 @@ interface ChatMessage {
 export default function ChatInterface({
   isOpen,
   onBack,
+  onClose,
   conversationId,
   participants,
   conversationName,
@@ -55,6 +57,9 @@ export default function ChatInterface({
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [newMessage, setNewMessage] = useState('')
   const [showAllTimestamps, setShowAllTimestamps] = useState(false)
+  const [isSwiping, setIsSwiping] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
+  const [dragStartX, setDragStartX] = useState(0)
   const [authorPhotos, setAuthorPhotos] = useState<Map<string, string | null>>(new Map())
   const [isEditingName, setIsEditingName] = useState(false)
   const [editedName, setEditedName] = useState(conversationName)
@@ -63,11 +68,14 @@ export default function ChatInterface({
     isOpen: boolean
     messageId: string | null
     position: { x: number; y: number }
-  }>({ isOpen: false, messageId: null, position: { x: 0, y: 0 } })
+    showAbove: boolean
+  }>({ isOpen: false, messageId: null, position: { x: 0, y: 0 }, showAbove: true })
+  const [hasOtherUnread, setHasOtherUnread] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const nameInputRef = useRef<HTMLInputElement>(null)
+  const messageBubbleRefs = useRef<Map<string, HTMLDivElement>>(new Map())
   const { socket, isConnected, sendMessage, joinConversation, leaveConversation } = useSocket()
   const { data: session } = useSession()
   const currentUserId = session?.user?.id
@@ -152,7 +160,8 @@ export default function ChatInterface({
           authorName: m.authorName,
           authorPhoto: m.authorPhoto,
           timestamp: new Date(m.timestamp),
-          type: m.type
+          type: m.type,
+          reactions: m.reactions || []
         }))
         
         if (isInitialLoad) {
@@ -308,6 +317,9 @@ export default function ChatInterface({
       userId: string
       userName: string
     }) => {
+      // Skip if this is our own action (already handled optimistically)
+      if (data.userId === currentUserId) return
+
       setMessages(prev => prev.map(msg => {
         if (msg.id !== data.messageId) return msg
 
@@ -315,6 +327,11 @@ export default function ChatInterface({
         const existingReaction = reactions.find(r => r.emoji === data.emoji)
 
         if (data.action === 'add') {
+          // Check if user already in reaction (prevent duplicates from multiple socket rooms)
+          if (existingReaction?.userIds.includes(data.userId)) {
+            return msg // Already added, skip
+          }
+
           if (existingReaction) {
             // Add user to existing reaction
             return {
@@ -346,7 +363,11 @@ export default function ChatInterface({
             }
           }
         } else {
-          // Remove reaction
+          // Remove reaction - check if user is actually in the reaction
+          if (!existingReaction?.userIds.includes(data.userId)) {
+            return msg // User not in reaction, skip
+          }
+
           return {
             ...msg,
             reactions: reactions.map(r =>
@@ -362,6 +383,16 @@ export default function ChatInterface({
           }
         }
       }))
+      
+      // Auto-mark as read if reaction is from someone else and conversation is open
+      if (conversationId && data.userId !== currentUserId && data.action === 'add') {
+        markConversationAsRead(conversationId).then(() => {
+          // Notify other components that read status changed
+          const channel = new BroadcastChannel('chat_read_updates')
+          channel.postMessage({ type: 'conversation_read', conversationId })
+          channel.close()
+        })
+      }
     }
 
     socket.on('reaction', handleReactionUpdate)
@@ -369,15 +400,15 @@ export default function ChatInterface({
     return () => {
       socket.off('reaction', handleReactionUpdate)
     }
-  }, [socket])
+  }, [socket, currentUserId, conversationId])
 
   // Detect keyboard open by viewport height change
   useEffect(() => {
     const handleResize = () => {
-      // On mobile, if viewport height is significantly smaller, keyboard is likely open
-      const viewportHeight = window.visualViewport?.height || window.innerHeight
-      const isSmaller = viewportHeight < window.innerHeight * 0.75
-      setIsKeyboardOpen(isSmaller)
+      if (window.visualViewport) {
+        const isKeyboard = window.visualViewport.height < window.innerHeight * 0.75
+        setIsKeyboardOpen(isKeyboard)
+      }
     }
     
     window.visualViewport?.addEventListener('resize', handleResize)
@@ -388,6 +419,34 @@ export default function ChatInterface({
       window.removeEventListener('resize', handleResize)
     }
   }, [])
+
+  // Listen for messages/reactions in OTHER conversations to show indicator
+  useEffect(() => {
+    if (!socket || !currentUserId) return
+    
+    const handleOtherMessage = (message: any) => {
+      // If message is in a different conversation, show indicator
+      if (message.conversationId !== conversationId && message.author?.id !== currentUserId) {
+        setHasOtherUnread(true)
+      }
+    }
+    
+    const handleOtherReaction = (data: any) => {
+      // If reaction is in a different conversation and to your message, show indicator
+      if (data.conversationId !== conversationId && data.action === 'add' && 
+          data.messageAuthorId === currentUserId && data.userId !== currentUserId) {
+        setHasOtherUnread(true)
+      }
+    }
+    
+    socket.on('message', handleOtherMessage)
+    socket.on('reaction', handleOtherReaction)
+    
+    return () => {
+      socket.off('message', handleOtherMessage)
+      socket.off('reaction', handleOtherReaction)
+    }
+  }, [socket, conversationId, currentUserId])
 
   if (!isOpen) return null
 
@@ -414,15 +473,69 @@ export default function ChatInterface({
   }
 
   // Reaction handlers
-  const handleLongPress = (messageId: string, event: React.TouchEvent | React.MouseEvent) => {
+  const handleLongPress = (messageId: string, event: React.MouseEvent | React.TouchEvent) => {
     event.preventDefault()
+    
+    // Save scroll position to prevent jump
+    const messagesContainer = document.querySelector('[data-messages-container]')
+    const scrollTop = messagesContainer?.scrollTop || 0
+    
     const rect = event.currentTarget.getBoundingClientRect()
-    setEmojiPickerState({
+    
+    // Position picker to stay on screen
+    const pickerWidth = 350
+    const pickerHeight = 350 // Quick reactions + compact emoji picker
+    
+    // Determine if message is on right side (current user's message)
+    const message = messages.find(m => m.id === messageId)
+    const isCurrentUserMessage = message?.authorId === currentUserId
+    
+    // Horizontal positioning
+    let x: number
+    if (isCurrentUserMessage) {
+      // Right-aligned message: try to position picker to the left of message
+      x = rect.right - pickerWidth
+    } else {
+      // Left-aligned message: try to position picker to the right of message
+      x = rect.left
+    }
+    
+    // Keep within screen bounds horizontally
+    x = Math.max(10, Math.min(x, window.innerWidth - pickerWidth - 10))
+    
+    // Vertical positioning - check if there's room above or below
+    const spaceAbove = rect.top
+    const spaceBelow = window.innerHeight - rect.bottom
+    
+    let y: number
+    let showAbove: boolean
+    
+    if (spaceBelow >= pickerHeight + 20) {
+      // Enough space below
+      y = rect.bottom + 10
+      showAbove = false
+    } else if (spaceAbove >= pickerHeight + 20) {
+      // Not enough below, but enough above
+      y = rect.top - 10
+      showAbove = true
+    } else {
+      // Not enough space either way - center vertically
+      y = Math.max(10, (window.innerHeight - pickerHeight) / 2)
+      showAbove = false
+    }
+    
+    const newState = {
       isOpen: true,
       messageId,
-      position: {
-        x: rect.left + rect.width / 2,
-        y: rect.top
+      position: { x, y },
+      showAbove
+    }
+    setEmojiPickerState(newState)
+    
+    // Restore scroll position after state update
+    requestAnimationFrame(() => {
+      if (messagesContainer) {
+        messagesContainer.scrollTop = scrollTop
       }
     })
   }
@@ -430,10 +543,25 @@ export default function ChatInterface({
   const handleEmojiSelect = async (emoji: string) => {
     if (!emojiPickerState.messageId || !conversationId) return
 
+    // Save messageId before closing picker
+    const messageId = emojiPickerState.messageId
+
+    // Close picker immediately
+    setEmojiPickerState({ isOpen: false, messageId: null, position: { x: 0, y: 0 }, showAbove: true })
+
+    // Save scroll position
+    const messagesContainer = document.querySelector('[data-messages-container]')
+    const scrollTop = messagesContainer?.scrollTop || 0
+
+    // Determine if adding or removing BEFORE optimistic update
+    const message = messages.find(m => m.id === messageId)
+    const existingReaction = message?.reactions?.find(r => r.emoji === emoji)
+    const isRemoving = existingReaction?.userIds.includes(currentUserId!)
+
     try {
       // Optimistic update
       setMessages(prev => prev.map(msg => {
-        if (msg.id !== emojiPickerState.messageId) return msg
+        if (msg.id !== messageId) return msg
         
         const reactions = msg.reactions || []
         const existingReaction = reactions.find(r => r.emoji === emoji)
@@ -487,21 +615,17 @@ export default function ChatInterface({
         }
       }))
 
-      // Determine if adding or removing
-      const message = messages.find(m => m.id === emojiPickerState.messageId)
-      const existingReaction = message?.reactions?.find(r => r.emoji === emoji)
-      const isRemoving = existingReaction?.userIds.includes(currentUserId!)
-
+      // Use the isRemoving flag we determined before the optimistic update
       if (isRemoving) {
         // Remove reaction via API
-        await fetch(`/api/chat/reactions/${emojiPickerState.messageId}?emoji=${encodeURIComponent(emoji)}`, {
+        await fetch(`/api/chat/reactions/${messageId}?emoji=${encodeURIComponent(emoji)}`, {
           method: 'DELETE'
         })
         
         // Emit socket event
         if (socket && isConnected) {
           socket.emit('send-reaction', {
-            messageId: emojiPickerState.messageId,
+            messageId,
             conversationId,
             emoji,
             action: 'remove'
@@ -509,7 +633,7 @@ export default function ChatInterface({
         }
       } else {
         // Add reaction via API
-        await fetch(`/api/chat/reactions/${emojiPickerState.messageId}`, {
+        await fetch(`/api/chat/reactions/${messageId}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ emoji })
@@ -518,13 +642,20 @@ export default function ChatInterface({
         // Emit socket event
         if (socket && isConnected) {
           socket.emit('send-reaction', {
-            messageId: emojiPickerState.messageId,
+            messageId,
             conversationId,
             emoji,
             action: 'add'
           })
         }
       }
+      
+      // Restore scroll position after state update
+      setTimeout(() => {
+        if (messagesContainer) {
+          messagesContainer.scrollTop = scrollTop
+        }
+      }, 0)
     } catch (error) {
       console.error('[Chat] Error handling reaction:', error)
       // TODO: Revert optimistic update on error
@@ -660,17 +791,26 @@ export default function ChatInterface({
 
   return (
     <div className="absolute inset-0 bg-white dark:bg-gray-900 flex flex-col z-50">
-      {/* Header - Fixed position so it stays visible when keyboard opens */}
-      <div className={`fixed top-0 left-0 right-0 z-20 flex items-center justify-between border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 transition-all ${
+      {/* Header - Absolute on mobile (fixed causes issues with iOS keyboard), fixed on desktop */}
+      <div className={`absolute md:fixed top-0 left-0 right-0 z-20 flex items-center justify-between border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 transition-all ${
         isKeyboardOpen ? 'p-2' : 'p-4'
       }`}>
         <div className="flex items-center gap-3 min-w-0 flex-1">
-          <button
-            onClick={onBack}
-            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white flex-shrink-0"
-          >
-            <ArrowLeft size={24} />
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Dot indicator - green when unread messages in other conversations, gray otherwise */}
+            <span className={`w-2 h-2 rounded-full flex-shrink-0 ${
+              hasOtherUnread ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'
+            }`} />
+            <button
+              onClick={() => {
+                setHasOtherUnread(false)
+                onBack()
+              }}
+              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white flex-shrink-0 md:block"
+            >
+              <ArrowLeft size={24} />
+            </button>
+          </div>
           <div className="min-w-0 flex-1">
             {isEditingName ? (
               <div className="flex items-center gap-2">
@@ -741,11 +881,21 @@ export default function ChatInterface({
             )}
           </div>
         </div>
+        
+        {/* Close button - visible on all screens */}
+        <button
+          onClick={onClose}
+          className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white flex-shrink-0"
+          aria-label="Close chat"
+        >
+          <X size={24} />
+        </button>
       </div>
 
       {/* Messages - Add top padding to account for fixed header */}
       <div 
-        ref={messagesContainerRef} 
+        ref={messagesContainerRef}
+        data-messages-container
         className="flex-1 overflow-y-auto p-4 space-y-4"
         style={{ paddingTop: isKeyboardOpen ? '60px' : '76px' }}
         onTouchStart={(e) => {
@@ -763,12 +913,38 @@ export default function ChatInterface({
           // Swipe left to reveal all timestamps
           if (deltaX > 50 && deltaY < 30) {
             setShowAllTimestamps(true)
+            setIsSwiping(true)
           }
         }}
-        onTouchEnd={() => setShowAllTimestamps(false)}
-        onMouseDown={() => setShowAllTimestamps(true)}
-        onMouseUp={() => setShowAllTimestamps(false)}
-        onMouseLeave={() => setShowAllTimestamps(false)}
+        onTouchEnd={() => {
+          setShowAllTimestamps(false)
+          setIsSwiping(false)
+        }}
+        onMouseDown={(e) => {
+          setDragStartX(e.clientX)
+        }}
+        onMouseMove={(e) => {
+          if (dragStartX > 0) {
+            const deltaX = dragStartX - e.clientX
+            if (Math.abs(deltaX) > 5) {
+              // User is dragging, not holding
+              setIsDragging(true)
+            }
+            if (deltaX > 50) {
+              setShowAllTimestamps(true)
+            }
+          }
+        }}
+        onMouseUp={() => {
+          setIsDragging(false)
+          setShowAllTimestamps(false)
+          setDragStartX(0)
+        }}
+        onMouseLeave={() => {
+          setIsDragging(false)
+          setShowAllTimestamps(false)
+          setDragStartX(0)
+        }}
       >
         {isLoadingMore && (
           <div className="flex justify-center py-2">
@@ -862,23 +1038,107 @@ export default function ChatInterface({
                           ? 'bg-blue-500 text-white'
                           : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
                       }`}
+                      style={{
+                        WebkitTouchCallout: 'none',
+                        WebkitUserSelect: 'none',
+                        userSelect: 'none',
+                        touchAction: 'none'
+                      }}
                       onContextMenu={(e) => {
                         e.preventDefault()
+                        e.stopPropagation()
+                        // Always call handleLongPress - let the timer handle deduplication
                         handleLongPress(message.id, e)
+                        return false
                       }}
-                      onTouchStart={(e) => {
+                      onMouseDown={(e) => {
+                        const target = e.currentTarget
+                        const startX = e.clientX
+                        const startY = e.clientY
+                        ;(target as any).mouseDownX = startX
+                        ;(target as any).mouseDownY = startY
+                        
                         const timer = setTimeout(() => {
-                          handleLongPress(message.id, e)
+                          if (!isDragging) {
+                            // Create a synthetic event with the saved target
+                            const syntheticEvent = {
+                              ...e,
+                              currentTarget: target,
+                              preventDefault: () => {},
+                            }
+                            handleLongPress(message.id, syntheticEvent as any)
+                          }
                         }, 500)
-                        ;(e.currentTarget as any).longPressTimer = timer
+                        ;(e.currentTarget as any).mouseHoldTimer = timer
                       }}
-                      onTouchEnd={(e) => {
-                        const timer = (e.currentTarget as any).longPressTimer
+                      onMouseUp={(e) => {
+                        const timer = (e.currentTarget as any).mouseHoldTimer
                         if (timer) clearTimeout(timer)
+                        ;(e.currentTarget as any).mouseDownX = undefined
+                        ;(e.currentTarget as any).mouseDownY = undefined
                       }}
-                      onTouchMove={(e) => {
-                        const timer = (e.currentTarget as any).longPressTimer
-                        if (timer) clearTimeout(timer)
+                      onMouseMove={(e) => {
+                        const target = e.currentTarget as any
+                        const startX = target.mouseDownX
+                        const startY = target.mouseDownY
+                        
+                        // Only cancel if mouse moved significantly (>10px)
+                        if (startX !== undefined && startY !== undefined) {
+                          const deltaX = Math.abs(e.clientX - startX)
+                          const deltaY = Math.abs(e.clientY - startY)
+                          
+                          if (deltaX > 10 || deltaY > 10) {
+                            const timer = target.mouseHoldTimer
+                            if (timer) clearTimeout(timer)
+                          }
+                        }
+                      }}
+                      ref={(el) => {
+                        if (el) {
+                          messageBubbleRefs.current.set(message.id, el)
+                          
+                          // Add non-passive touch event listener to prevent context menu
+                          const handleTouchStart = (e: TouchEvent) => {
+                            e.preventDefault() // This works because listener is non-passive
+                            
+                            const target = e.currentTarget as HTMLElement
+                            ;(target as any).touchStartTime = Date.now()
+                            
+                            const timer = setTimeout(() => {
+                              if (!isSwiping) {
+                                // Create synthetic event
+                                const syntheticEvent = {
+                                  currentTarget: target,
+                                  preventDefault: () => {},
+                                } as any
+                                handleLongPress(message.id, syntheticEvent)
+                              }
+                            }, 500)
+                            ;(target as any).longPressTimer = timer
+                          }
+                          
+                          const handleTouchEnd = (e: TouchEvent) => {
+                            const timer = ((e.currentTarget as HTMLElement) as any).longPressTimer
+                            if (timer) clearTimeout(timer)
+                          }
+                          
+                          const handleTouchMove = (e: TouchEvent) => {
+                            const timer = ((e.currentTarget as HTMLElement) as any).longPressTimer
+                            if (timer) clearTimeout(timer)
+                          }
+                          
+                          // Remove old listeners if they exist
+                          el.removeEventListener('touchstart', handleTouchStart as any)
+                          el.removeEventListener('touchend', handleTouchEnd as any)
+                          el.removeEventListener('touchmove', handleTouchMove as any)
+                          
+                          // Add non-passive listeners
+                          el.addEventListener('touchstart', handleTouchStart, { passive: false })
+                          el.addEventListener('touchend', handleTouchEnd, { passive: false })
+                          el.addEventListener('touchmove', handleTouchMove, { passive: false })
+                        } else {
+                          messageBubbleRefs.current.delete(message.id)
+                        }
                       }}
                     >
                       {message.type === 'text' ? (
@@ -963,9 +1223,10 @@ export default function ChatInterface({
       {/* Emoji Picker */}
       <MessageEmojiPicker
         isOpen={emojiPickerState.isOpen}
-        onClose={() => setEmojiPickerState({ isOpen: false, messageId: null, position: { x: 0, y: 0 } })}
+        onClose={() => setEmojiPickerState({ isOpen: false, messageId: null, position: { x: 0, y: 0 }, showAbove: true })}
         onEmojiSelect={handleEmojiSelect}
         position={emojiPickerState.position}
+        showAbove={emojiPickerState.showAbove}
       />
     </div>
   )

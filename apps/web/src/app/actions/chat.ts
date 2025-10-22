@@ -174,33 +174,50 @@ export async function hasUnreadMessages() {
       where: {
         userId: session.user.id,
       },
-      include: {
-        conversation: {
-          include: {
-            messages: {
-              select: {
-                updatedAt: true,
-                authorId: true,
-              },
-              orderBy: {
-                updatedAt: 'desc',
-              },
-              take: 1,
-            },
-          },
-        },
-      },
+      select: {
+        conversationId: true,
+        lastReadAt: true
+      }
     })
 
-    // Check if any conversation has messages after lastReadAt
-    // Only count messages from other users (not the current user's own messages)
+    // Check if any conversation has activity from others after lastReadAt
     for (const participant of participants) {
-      const lastMessage = participant.conversation.messages[0]
-      if (
-        lastMessage &&
-        lastMessage.authorId !== session.user.id &&
-        (!participant.lastReadAt || lastMessage.updatedAt > participant.lastReadAt)
-      ) {
+      // Get most recent message from someone else
+      const lastMessageFromOthers = await prisma.chatMessage.findFirst({
+        where: {
+          conversationId: participant.conversationId,
+          authorId: { not: session.user.id }
+        },
+        orderBy: { updatedAt: 'desc' },
+        select: { updatedAt: true }
+      })
+      
+      // Get most recent reaction from someone else to YOUR messages
+      const lastReactionFromOthers = await prisma.chatMessageReaction.findFirst({
+        where: {
+          message: { 
+            conversationId: participant.conversationId,
+            authorId: session.user.id  // Only reactions to YOUR messages
+          },
+          userId: { not: session.user.id }  // From someone else
+        },
+        orderBy: { createdAt: 'desc' },
+        select: { createdAt: true }
+      })
+      
+      // Find the most recent activity from others
+      const timestamps = [
+        lastMessageFromOthers?.updatedAt,
+        lastReactionFromOthers?.createdAt
+      ].filter(Boolean) as Date[]
+      
+      const lastActivityFromOthers = timestamps.length > 0 
+        ? new Date(Math.max(...timestamps.map(d => d.getTime())))
+        : null
+      
+      // Has unread if there's activity from others after lastReadAt
+      if (lastActivityFromOthers && 
+          (!participant.lastReadAt || lastActivityFromOthers > participant.lastReadAt)) {
         return true
       }
     }

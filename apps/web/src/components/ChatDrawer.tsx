@@ -152,6 +152,14 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
     }
   }, [isOpen, loadConversations])
   
+  // Refresh conversations when returning from chat interface to drawer
+  useEffect(() => {
+    if (isOpen && !showChatInterface && !showParticipantSelector) {
+      // Refresh to get latest unread status
+      loadConversations()
+    }
+  }, [isOpen, showChatInterface, showParticipantSelector, loadConversations])
+  
   // Listen for new messages via socket and queue updates with debouncing
   useEffect(() => {
     if (!socket || !isOpen || !session?.user) return
@@ -184,10 +192,38 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
       }, 5000)
     }
     
+    const handleReaction = (data: any) => {
+      // Only update when someone ADDS a reaction to YOUR message
+      // Check: action is 'add', message author is you, and reactor is not you
+      if (data.action !== 'add' || data.messageAuthorId !== session.user?.id || data.userId === session.user?.id) {
+        return
+      }
+      
+      const { conversationId } = data
+      
+      // Add to update queue
+      updateQueueRef.current.add(conversationId)
+      
+      // Clear existing timer
+      if (updateTimerRef.current) {
+        clearTimeout(updateTimerRef.current)
+      }
+      
+      // Set new timer to batch update after 5 seconds
+      updateTimerRef.current = setTimeout(() => {
+        const idsToUpdate = Array.from(updateQueueRef.current)
+        batchUpdateConversations(idsToUpdate)
+        updateQueueRef.current.clear()
+        updateTimerRef.current = null
+      }, 5000)
+    }
+    
     socket.on('message', handleNewMessage)
+    socket.on('reaction', handleReaction)
     
     return () => {
       socket.off('message', handleNewMessage)
+      socket.off('reaction', handleReaction)
       if (updateTimerRef.current) {
         clearTimeout(updateTimerRef.current)
       }
@@ -328,6 +364,10 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
     await markAllConversationsAsRead()
     // Update all conversations to mark as read
     setConversations(prev => prev.map(conv => ({ ...conv, hasUnread: false })))
+    // Notify other components (like ChatIcon) that all conversations are read
+    const channel = new BroadcastChannel('chat_read_updates')
+    channel.postMessage({ type: 'all_read' })
+    channel.close()
   }
   useEffect(() => {
     if (!isOpen) {
@@ -435,6 +475,7 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
           <ChatInterface
             isOpen={showChatInterface}
             onBack={handleBackToConversations}
+            onClose={onClose}
             conversationId={currentConversation.id}
             participants={currentConversation.participants}
             conversationName={currentConversation.name}

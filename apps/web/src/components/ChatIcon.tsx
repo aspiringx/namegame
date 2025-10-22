@@ -56,7 +56,7 @@ const ChatIcon = forwardRef<ChatIconRef, ChatIconProps>(function ChatIcon({}, re
     }
   }, [session?.user])
   
-  // Listen for new messages via socket to update unread indicator
+  // Listen for new messages and reactions via socket to update unread indicator
   useEffect(() => {
     if (!socket || !session?.user) return
     
@@ -77,10 +77,28 @@ const ChatIcon = forwardRef<ChatIconRef, ChatIconProps>(function ChatIcon({}, re
       // If user sent the message themselves, no need to update
     }
     
+    const handleReaction = (data: any) => {
+      // Only show green dot when someone ADDS a reaction to YOUR message
+      // Check: action is 'add', message author is you, and reactor is not you
+      if (data.action === 'add' && data.messageAuthorId === session.user?.id && data.userId !== session.user?.id) {
+        // Clear any existing timeout first
+        if (pendingUnreadTimeoutRef.current) {
+          clearTimeout(pendingUnreadTimeoutRef.current)
+        }
+        // Set new timeout
+        pendingUnreadTimeoutRef.current = setTimeout(() => {
+          setHasUnread(true)
+          pendingUnreadTimeoutRef.current = null
+        }, 400)
+      }
+    }
+    
     socket.on('message', handleNewMessage)
+    socket.on('reaction', handleReaction)
     
     return () => {
       socket.off('message', handleNewMessage)
+      socket.off('reaction', handleReaction)
       if (pendingUnreadTimeoutRef.current) {
         clearTimeout(pendingUnreadTimeoutRef.current)
         pendingUnreadTimeoutRef.current = null
