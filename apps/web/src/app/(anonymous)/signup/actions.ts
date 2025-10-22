@@ -6,7 +6,7 @@ import prisma from '@/lib/prisma'
 import bcrypt from 'bcrypt'
 import { redirect } from 'next/navigation'
 import { getCodeTable } from '@/lib/codes'
-import { sendVerificationEmail } from '@/lib/mail'
+import { queueVerificationEmail } from '@/lib/queue'
 
 const SignupSchema = z.object({
   email: z.string().email('Invalid email address.'),
@@ -105,7 +105,7 @@ export async function signup(
     })
 
     if (newUser && newUser.email) {
-      await sendVerificationEmail(newUser.email, newUser.id, newUser.firstName)
+      await queueVerificationEmail(newUser.email, newUser.id, newUser.firstName)
     }
   } catch {
     return {

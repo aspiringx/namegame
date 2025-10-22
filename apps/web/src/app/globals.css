@@ -1,6 +1,24 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
+/* Prevent iOS Safari auto-zoom on input focus by ensuring minimum 16px font size */
+input[type='text'],
+input[type='email'],
+input[type='password'],
+input[type='search'],
+input[type='tel'],
+input[type='url'],
+input[type='number'],
+input[type='date'],
+input[type='datetime-local'],
+input[type='month'],
+input[type='week'],
+input[type='time'],
+textarea,
+select {
+  font-size: max(16px, 1em);
+}
+
 @media print {
   header,
   footer,

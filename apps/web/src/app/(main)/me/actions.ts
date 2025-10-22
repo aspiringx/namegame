@@ -9,7 +9,7 @@ import { getCodeTable } from '@/lib/codes'
 import { parseDateAndDeterminePrecision } from '@/lib/utils'
 import { getPhotoUrl } from '@/lib/photos'
 import { uploadFile, deleteFile, UploadedUrls } from '@/lib/actions/storage'
-import { sendVerificationEmail } from '@/lib/mail'
+import { queueVerificationEmail } from '@/lib/queue'
 import { disposableEmailDomains } from '@/lib/disposable-email-domains'
 
 export type State = {
@@ -183,7 +183,7 @@ export async function updateUserProfile(
   const userId = session.user.id
 
   let newPhotoKeys: UploadedUrls | null = null
-  let updatedUser
+  let updatedUser: { id: string; firstName: string; email: string | null }
   let emailChanged = false
 
   if (photo && photo.size > 0) {
@@ -205,7 +205,7 @@ export async function updateUserProfile(
     getCodeTable('photoType'),
     getCodeTable('entityType'),
   ])
-  
+
   const primaryPhotoTypeId = photoTypes.primary.id
   const userEntityTypeId = entityTypes.user.id
   let photoToDelete = null
@@ -311,13 +311,7 @@ export async function updateUserProfile(
         }
       }
 
-      if (emailChanged && internalUpdatedUser.email) {
-        await sendVerificationEmail(
-          internalUpdatedUser.email,
-          userId,
-          internalUpdatedUser.firstName,
-        )
-      }
+      // Email verification will be queued after transaction if emailChanged is true
 
       const { firstName: formFirstName, lastName: formLastName } =
         validatedFields.data
@@ -353,6 +347,21 @@ export async function updateUserProfile(
 
     if (photoToDelete) {
       await deleteFile(photoToDelete)
+    }
+
+    // Queue verification email after transaction completes successfully
+    if (emailChanged && updatedUser.email) {
+      try {
+        await queueVerificationEmail(
+          updatedUser.email,
+          userId,
+          updatedUser.firstName,
+        )
+      } catch (emailError) {
+        console.error('Failed to queue verification email:', emailError)
+        // Don't fail the entire operation if email queuing fails
+        // The user's profile was updated successfully
+      }
     }
   } catch (error: any) {
     if (newPhotoKeys) {
@@ -605,13 +614,13 @@ export async function resendVerificationEmail(): Promise<{
   }
 
   try {
-    await sendVerificationEmail(user.email, session.user.id, user.firstName)
+    await queueVerificationEmail(user.email, session.user.id, user.firstName)
     return {
       success: true,
       message: `Verification email sent to ${user.email}.`,
     }
   } catch (error) {
-    console.error('Failed to resend verification email:', error)
+    console.error('Failed to queue verification email:', error)
     return {
       success: false,
       message: 'An unexpected error occurred. Please try again.',
