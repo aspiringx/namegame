@@ -12,6 +12,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
+import MessageEmojiPicker from './MessageEmojiPicker'
 
 interface ChatInterfaceProps {
   isOpen: boolean
@@ -22,6 +23,13 @@ interface ChatInterfaceProps {
   onNameUpdate?: (newName: string) => void
 }
 
+interface MessageReaction {
+  emoji: string
+  count: number
+  userIds: string[]
+  users: { id: string; name: string }[]
+}
+
 interface ChatMessage {
   id: string
   content: string
@@ -30,6 +38,7 @@ interface ChatMessage {
   authorPhoto?: string | null
   timestamp: Date
   type: 'text' | 'system'
+  reactions?: MessageReaction[]
 }
 
 export default function ChatInterface({
@@ -50,6 +59,11 @@ export default function ChatInterface({
   const [isEditingName, setIsEditingName] = useState(false)
   const [editedName, setEditedName] = useState(conversationName)
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false)
+  const [emojiPickerState, setEmojiPickerState] = useState<{
+    isOpen: boolean
+    messageId: string | null
+    position: { x: number; y: number }
+  }>({ isOpen: false, messageId: null, position: { x: 0, y: 0 } })
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -283,6 +297,80 @@ export default function ChatInterface({
     }
   }, [socket, authorPhotos, conversationId, session?.user?.id])
 
+  // Listen for reaction updates
+  useEffect(() => {
+    if (!socket) return
+
+    const handleReactionUpdate = (data: {
+      messageId: string
+      emoji: string
+      action: 'add' | 'remove'
+      userId: string
+      userName: string
+    }) => {
+      setMessages(prev => prev.map(msg => {
+        if (msg.id !== data.messageId) return msg
+
+        const reactions = msg.reactions || []
+        const existingReaction = reactions.find(r => r.emoji === data.emoji)
+
+        if (data.action === 'add') {
+          if (existingReaction) {
+            // Add user to existing reaction
+            return {
+              ...msg,
+              reactions: reactions.map(r =>
+                r.emoji === data.emoji
+                  ? {
+                      ...r,
+                      count: r.count + 1,
+                      userIds: [...r.userIds, data.userId],
+                      users: [...r.users, { id: data.userId, name: data.userName }]
+                    }
+                  : r
+              )
+            }
+          } else {
+            // New reaction
+            return {
+              ...msg,
+              reactions: [
+                ...reactions,
+                {
+                  emoji: data.emoji,
+                  count: 1,
+                  userIds: [data.userId],
+                  users: [{ id: data.userId, name: data.userName }]
+                }
+              ]
+            }
+          }
+        } else {
+          // Remove reaction
+          return {
+            ...msg,
+            reactions: reactions.map(r =>
+              r.emoji === data.emoji
+                ? {
+                    ...r,
+                    count: r.count - 1,
+                    userIds: r.userIds.filter(id => id !== data.userId),
+                    users: r.users.filter(u => u.id !== data.userId)
+                  }
+                : r
+            ).filter(r => r.count > 0)
+          }
+        }
+      }))
+    }
+
+    socket.on('reaction', handleReactionUpdate)
+
+    return () => {
+      socket.off('reaction', handleReactionUpdate)
+    }
+  }, [socket])
+
   // Detect keyboard open by viewport height change
   useEffect(() => {
     const handleResize = () => {
@@ -322,6 +410,221 @@ export default function ChatInterface({
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       handleSendMessage()
+    }
+  }
+
+  // Reaction handlers
+  const handleLongPress = (messageId: string, event: React.TouchEvent | React.MouseEvent) => {
+    event.preventDefault()
+    const rect = event.currentTarget.getBoundingClientRect()
+    setEmojiPickerState({
+      isOpen: true,
+      messageId,
+      position: {
+        x: rect.left + rect.width / 2,
+        y: rect.top
+      }
+    })
+  }
+
+  const handleEmojiSelect = async (emoji: string) => {
+    if (!emojiPickerState.messageId || !conversationId) return
+
+    try {
+      // Optimistic update
+      setMessages(prev => prev.map(msg => {
+        if (msg.id !== emojiPickerState.messageId) return msg
+        
+        const reactions = msg.reactions || []
+        const existingReaction = reactions.find(r => r.emoji === emoji)
+        
+        if (existingReaction) {
+          // User already reacted with this emoji - remove it
+          if (existingReaction.userIds.includes(currentUserId!)) {
+            return {
+              ...msg,
+              reactions: reactions.map(r => 
+                r.emoji === emoji
+                  ? {
+                      ...r,
+                      count: r.count - 1,
+                      userIds: r.userIds.filter(id => id !== currentUserId),
+                      users: r.users.filter(u => u.id !== currentUserId)
+                    }
+                  : r
+              ).filter(r => r.count > 0)
+            }
+          } else {
+            // Add user to existing reaction
+            return {
+              ...msg,
+              reactions: reactions.map(r =>
+                r.emoji === emoji
+                  ? {
+                      ...r,
+                      count: r.count + 1,
+                      userIds: [...r.userIds, currentUserId!],
+                      users: [...r.users, { id: currentUserId!, name: session?.user?.name || 'You' }]
+                    }
+                  : r
+              )
+            }
+          }
+        } else {
+          // New reaction
+          return {
+            ...msg,
+            reactions: [
+              ...reactions,
+              {
+                emoji,
+                count: 1,
+                userIds: [currentUserId!],
+                users: [{ id: currentUserId!, name: session?.user?.name || 'You' }]
+              }
+            ]
+          }
+        }
+      }))
+
+      // Determine if adding or removing
+      const message = messages.find(m => m.id === emojiPickerState.messageId)
+      const existingReaction = message?.reactions?.find(r => r.emoji === emoji)
+      const isRemoving = existingReaction?.userIds.includes(currentUserId!)
+
+      if (isRemoving) {
+        // Remove reaction via API
+        await fetch(`/api/chat/reactions/${emojiPickerState.messageId}?emoji=${encodeURIComponent(emoji)}`, {
+          method: 'DELETE'
+        })
+        
+        // Emit socket event
+        if (socket && isConnected) {
+          socket.emit('send-reaction', {
+            messageId: emojiPickerState.messageId,
+            conversationId,
+            emoji,
+            action: 'remove'
+          })
+        }
+      } else {
+        // Add reaction via API
+        await fetch(`/api/chat/reactions/${emojiPickerState.messageId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ emoji })
+        })
+        
+        // Emit socket event
+        if (socket && isConnected) {
+          socket.emit('send-reaction', {
+            messageId: emojiPickerState.messageId,
+            conversationId,
+            emoji,
+            action: 'add'
+          })
+        }
+      }
+    } catch (error) {
+      console.error('[Chat] Error handling reaction:', error)
+      // TODO: Revert optimistic update on error
+    }
+  }
+
+  const handleReactionClick = async (messageId: string, emoji: string) => {
+    if (!conversationId || !currentUserId) return
+
+    try {
+      const message = messages.find(m => m.id === messageId)
+      const reaction = message?.reactions?.find(r => r.emoji === emoji)
+      const isRemoving = reaction?.userIds.includes(currentUserId)
+
+      // Optimistic update (same logic as handleEmojiSelect)
+      setMessages(prev => prev.map(msg => {
+        if (msg.id !== messageId) return msg
+        
+        const reactions = msg.reactions || []
+        const existingReaction = reactions.find(r => r.emoji === emoji)
+        
+        if (existingReaction?.userIds.includes(currentUserId)) {
+          // Remove reaction
+          return {
+            ...msg,
+            reactions: reactions.map(r => 
+              r.emoji === emoji
+                ? {
+                    ...r,
+                    count: r.count - 1,
+                    userIds: r.userIds.filter(id => id !== currentUserId),
+                    users: r.users.filter(u => u.id !== currentUserId)
+                  }
+                : r
+            ).filter(r => r.count > 0)
+          }
+        } else {
+          // Add reaction
+          if (existingReaction) {
+            return {
+              ...msg,
+              reactions: reactions.map(r =>
+                r.emoji === emoji
+                  ? {
+                      ...r,
+                      count: r.count + 1,
+                      userIds: [...r.userIds, currentUserId],
+                      users: [...r.users, { id: currentUserId, name: session?.user?.name || 'You' }]
+                    }
+                  : r
+              )
+            }
+          } else {
+            return {
+              ...msg,
+              reactions: [
+                ...reactions,
+                {
+                  emoji,
+                  count: 1,
+                  userIds: [currentUserId],
+                  users: [{ id: currentUserId, name: session?.user?.name || 'You' }]
+                }
+              ]
+            }
+          }
+        }
+      }))
+
+      if (isRemoving) {
+        await fetch(`/api/chat/reactions/${messageId}?emoji=${encodeURIComponent(emoji)}`, {
+          method: 'DELETE'
+        })
+        
+        if (socket && isConnected) {
+          socket.emit('send-reaction', {
+            messageId,
+            conversationId,
+            emoji,
+            action: 'remove'
+          })
+        }
+      } else {
+        await fetch(`/api/chat/reactions/${messageId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ emoji })
+        })
+        
+        if (socket && isConnected) {
+          socket.emit('send-reaction', {
+            messageId,
+            conversationId,
+            emoji,
+            action: 'add'
+          })
+        }
+      }
+    } catch (error) {
+      console.error('[Chat] Error toggling reaction:', error)
     }
   }
 
@@ -553,11 +856,30 @@ export default function ChatInterface({
                       </span>
                     )}
                     
-                    <div className={`px-4 py-2 rounded-2xl ${
+                    <div
+                      className={`px-4 py-2 rounded-2xl ${
                         isCurrentUser
                           ? 'bg-blue-500 text-white'
                           : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
                       }`}
+                      onContextMenu={(e) => {
+                        e.preventDefault()
+                        handleLongPress(message.id, e)
+                      }}
+                      onTouchStart={(e) => {
+                        const timer = setTimeout(() => {
+                          handleLongPress(message.id, e)
+                        }, 500)
+                        ;(e.currentTarget as any).longPressTimer = timer
+                      }}
+                      onTouchEnd={(e) => {
+                        const timer = (e.currentTarget as any).longPressTimer
+                        if (timer) clearTimeout(timer)
+                      }}
+                      onTouchMove={(e) => {
+                        const timer = (e.currentTarget as any).longPressTimer
+                        if (timer) clearTimeout(timer)
+                      }}
                     >
                       {message.type === 'text' ? (
                         <p className="text-xl whitespace-pre-wrap" style={{ WebkitTextSizeAdjust: '100%' }}>{message.content}</p>
@@ -571,6 +893,27 @@ export default function ChatInterface({
                         />
                       )}
                     </div>
+
+                    {/* Reactions */}
+                    {message.reactions && message.reactions.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-1 px-1">
+                        {message.reactions.map((reaction) => (
+                          <button
+                            key={reaction.emoji}
+                            onClick={() => handleReactionClick(message.id, reaction.emoji)}
+                            className={`flex items-center gap-1 px-2 py-1 rounded-full text-sm transition-all ${
+                              reaction.userIds.includes(currentUserId || '')
+                                ? 'bg-blue-100 dark:bg-blue-900 border-2 border-blue-500'
+                                : 'bg-gray-100 dark:bg-gray-700 border-2 border-transparent hover:border-gray-300 dark:hover:border-gray-600'
+                            }`}
+                            title={reaction.users.map(u => u.name).join(', ')}
+                          >
+                            <span>{reaction.emoji}</span>
+                            <span className="text-xs font-medium">{reaction.count}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   
                   {/* Timestamp - shows in the right margin when swiping */}
@@ -616,6 +959,14 @@ export default function ChatInterface({
           </button>
         </div>
       </div>
+
+      {/* Emoji Picker */}
+      <MessageEmojiPicker
+        isOpen={emojiPickerState.isOpen}
+        onClose={() => setEmojiPickerState({ isOpen: false, messageId: null, position: { x: 0, y: 0 } })}
+        onEmojiSelect={handleEmojiSelect}
+        position={emojiPickerState.position}
+      />
     </div>
   )
 }

@@ -6,6 +6,7 @@ import { Server } from "socket.io";
 import { Client } from "pg";
 import { authenticateSocket } from "./auth.js";
 import { handleMessage } from "./handlers/message.js";
+import { handleReaction } from "./handlers/reaction.js";
 
 // Load environment variables
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -133,6 +134,15 @@ async function startChatServer() {
         // Handle new messages
         socket.on("send-message", async (data) => {
           await handleMessage(socket, user, data);
+        });
+
+        // Handle reactions
+        socket.on("send-reaction", async (data) => {
+          await handleReaction(io, socket, {
+            ...data,
+            userId: user.id,
+            userName: user.name || 'Unknown User'
+          });
         });
 
         socket.on("disconnect", () => {

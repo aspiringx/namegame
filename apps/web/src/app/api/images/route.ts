@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3'
 import { env } from 'process'
+import { auth } from '@/auth'
 
 // This client is separate from the one in storage.ts to avoid circular dependencies
 // and to be used specifically for the image proxy route.
@@ -15,7 +16,11 @@ const s3Client = new S3Client({
 })
 
 export async function GET(request: Request) {
-
+  // Require authentication
+  const session = await auth()
+  if (!session?.user?.id) {
+    return new NextResponse('Unauthorized', { status: 401 })
+  }
 
   const { searchParams } = new URL(request.url)
   const key = searchParams.get('key')

@@ -20,6 +20,40 @@ export async function POST(request: NextRequest) {
     // Include current user in participants
     const allParticipantIds = [...new Set([session.user.id, ...participantIds])]
 
+    // Validate that user has relationships with all participants (or they're in the same group)
+    if (type === 'group' && groupId) {
+      // For group chats, verify all participants are in the group
+      const groupMembers = await prisma.groupUser.findMany({
+        where: {
+          groupId,
+          userId: { in: allParticipantIds }
+        }
+      })
+      
+      if (groupMembers.length !== allParticipantIds.length) {
+        return NextResponse.json({ error: 'All participants must be members of the group' }, { status: 403 })
+      }
+    } else {
+      // For direct chats, verify user has relationships with all other participants
+      const currentUserId = session.user!.id // Already validated above
+      const otherParticipantIds = participantIds.filter((id: string) => id !== currentUserId)
+      
+      if (otherParticipantIds.length > 0) {
+        const relationships = await prisma.userUser.findMany({
+          where: {
+            OR: [
+              { user1Id: currentUserId, user2Id: { in: otherParticipantIds } },
+              { user2Id: currentUserId, user1Id: { in: otherParticipantIds } }
+            ]
+          }
+        })
+        
+        if (relationships.length !== otherParticipantIds.length) {
+          return NextResponse.json({ error: 'You can only create conversations with users you have a relationship with' }, { status: 403 })
+        }
+      }
+    }
+
     // Check if conversation already exists with these exact participants
     const existingConversation = await prisma.chatConversation.findFirst({
       where: {
