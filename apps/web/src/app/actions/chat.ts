@@ -179,10 +179,11 @@ export async function hasUnreadMessages() {
           include: {
             messages: {
               select: {
-                createdAt: true,
+                updatedAt: true,
+                authorId: true,
               },
               orderBy: {
-                createdAt: 'desc',
+                updatedAt: 'desc',
               },
               take: 1,
             },
@@ -192,9 +193,14 @@ export async function hasUnreadMessages() {
     })
 
     // Check if any conversation has messages after lastReadAt
+    // Only count messages from other users (not the current user's own messages)
     for (const participant of participants) {
       const lastMessage = participant.conversation.messages[0]
-      if (lastMessage && (!participant.lastReadAt || lastMessage.createdAt > participant.lastReadAt)) {
+      if (
+        lastMessage &&
+        lastMessage.authorId !== session.user.id &&
+        (!participant.lastReadAt || lastMessage.updatedAt > participant.lastReadAt)
+      ) {
         return true
       }
     }

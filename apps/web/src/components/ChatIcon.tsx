@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useImperativeHandle, forwardRef } from 'react'
+import { useState, useEffect, useImperativeHandle, forwardRef, useRef } from 'react'
 import { MessageCircle } from 'lucide-react'
 import ChatDrawer from './ChatDrawer'
 import { useSession } from 'next-auth/react'
@@ -20,6 +20,7 @@ const ChatIcon = forwardRef<ChatIconRef, ChatIconProps>(function ChatIcon({}, re
   const [hasUnread, setHasUnread] = useState(false)
   const { data: session } = useSession()
   const { socket } = useSocket()
+  const pendingUnreadTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Expose openChat method via ref
   useImperativeHandle(ref, () => ({
@@ -33,14 +34,45 @@ const ChatIcon = forwardRef<ChatIconRef, ChatIconProps>(function ChatIcon({}, re
     }
   }, [session?.user, isModalOpen])
   
+  // Listen for conversation read events via BroadcastChannel
+  useEffect(() => {
+    if (!session?.user) return
+    
+    const channel = new BroadcastChannel('chat_read_updates')
+    const handleReadUpdate = () => {
+      // Cancel any pending timeout that would show green dot
+      if (pendingUnreadTimeoutRef.current) {
+        clearTimeout(pendingUnreadTimeoutRef.current)
+        pendingUnreadTimeoutRef.current = null
+      }
+      // Refetch unread status when any conversation is marked as read
+      hasUnreadMessages().then(setHasUnread)
+    }
+    channel.addEventListener('message', handleReadUpdate)
+    
+    return () => {
+      channel.removeEventListener('message', handleReadUpdate)
+      channel.close()
+    }
+  }, [session?.user])
+  
   // Listen for new messages via socket to update unread indicator
   useEffect(() => {
     if (!socket || !session?.user) return
     
     const handleNewMessage = (message: any) => {
-      // If the message is from someone else, optimistically show green dot
+      // If the message is from someone else, delay showing green dot
+      // This allows auto-mark-as-read to complete first if conversation is open
       if (message.author?.id !== session.user?.id) {
-        setHasUnread(true)
+        // Clear any existing timeout first
+        if (pendingUnreadTimeoutRef.current) {
+          clearTimeout(pendingUnreadTimeoutRef.current)
+        }
+        // Set new timeout
+        pendingUnreadTimeoutRef.current = setTimeout(() => {
+          setHasUnread(true)
+          pendingUnreadTimeoutRef.current = null
+        }, 400) // 400ms delay - enough time for auto-mark-as-read to complete
       }
       // If user sent the message themselves, no need to update
     }
@@ -49,6 +81,10 @@ const ChatIcon = forwardRef<ChatIconRef, ChatIconProps>(function ChatIcon({}, re
     
     return () => {
       socket.off('message', handleNewMessage)
+      if (pendingUnreadTimeoutRef.current) {
+        clearTimeout(pendingUnreadTimeoutRef.current)
+        pendingUnreadTimeoutRef.current = null
+      }
     }
   }, [socket, session?.user])
 

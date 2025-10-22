@@ -3,6 +3,7 @@ import { sendEmail } from './send-email';
 import { processImage } from './process-image';
 import { sendDailyChatNotifications } from './send-daily-chat-notifications';
 import { sendDailyChatEmails } from './send-daily-chat-emails';
+import { sendVerificationEmail } from './send-verification-email';
 
 /**
  * Registry of all job handlers
@@ -14,5 +15,6 @@ export const jobs: JobRegistry = {
   'process-image': processImage,
   'send-daily-chat-notifications': sendDailyChatNotifications,
   'send-daily-chat-emails': sendDailyChatEmails,
+  'send-verification-email': sendVerificationEmail,
   // Add more jobs here as needed
 };
