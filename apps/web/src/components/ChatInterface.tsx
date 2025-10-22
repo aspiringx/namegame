@@ -49,6 +49,7 @@ export default function ChatInterface({
   const [authorPhotos, setAuthorPhotos] = useState<Map<string, string | null>>(new Map())
   const [isEditingName, setIsEditingName] = useState(false)
   const [editedName, setEditedName] = useState(conversationName)
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -282,6 +283,24 @@ export default function ChatInterface({
     }
   }, [socket, authorPhotos, conversationId, session?.user?.id])
 
+  // Detect keyboard open by viewport height change
+  useEffect(() => {
+    const handleResize = () => {
+      // On mobile, if viewport height is significantly smaller, keyboard is likely open
+      const viewportHeight = window.visualViewport?.height || window.innerHeight
+      const isSmaller = viewportHeight < window.innerHeight * 0.75
+      setIsKeyboardOpen(isSmaller)
+    }
+    
+    window.visualViewport?.addEventListener('resize', handleResize)
+    window.addEventListener('resize', handleResize)
+    
+    return () => {
+      window.visualViewport?.removeEventListener('resize', handleResize)
+      window.removeEventListener('resize', handleResize)
+    }
+  }, [])
+
   if (!isOpen) return null
 
   const handleSendMessage = () => {
@@ -335,11 +354,13 @@ export default function ChatInterface({
   }, {} as Record<string, ChatMessage[]>)
 
   if (!isOpen) return null
-  
+
   return (
     <div className="absolute inset-0 bg-white dark:bg-gray-900 flex flex-col z-50">
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+      {/* Header - Sticky and compact when keyboard is open */}
+      <div className={`sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 transition-all ${
+        isKeyboardOpen ? 'p-2' : 'p-4'
+      }`}>
         <div className="flex items-center gap-3 min-w-0 flex-1">
           <button
             onClick={onBack}
@@ -378,7 +399,9 @@ export default function ChatInterface({
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
+                <h2 className={`font-semibold text-gray-900 dark:text-white truncate ${
+                  isKeyboardOpen ? 'text-base' : 'text-lg'
+                }`}>
                   {conversationName}
                 </h2>
                 {conversationId && (
