@@ -66,17 +66,25 @@ Add support for images and links in chat messages with automatic link previews a
   - Enable send button when images are selected
 
 ### Phase 4: Message Processing
-- [ ] **Step 7:** Update message handler
-  - Detect URLs in content
-  - Queue link preview fetch
-  - Update message metadata
-  - Broadcast updates
+- [x] **Step 7:** Update message handler
+  - Support image messages with metadata (base64, dimensions, size)
+  - Message types: 'text', 'image', 'mixed' (text + images)
+  - Updated socket sendMessage to accept type and metadata
+  - Chat server stores metadata in database
+  - Note: URL detection and link previews deferred to future enhancement
 
 ### Phase 5: UI Rendering
-- [ ] **Step 8:** Create rendering components
-  - `MessageImage` component for base64 images
-  - `LinkPreview` component for rich cards
-  - Update message display logic
+- [x] **Step 8:** Create rendering components
+  - Render images in dynamic grid (1/2/3 columns based on count)
+  - Click image to open full-size in new tab
+  - Render URLs as clickable links (truncated to 50 chars with "...")
+  - Support text-only, image-only, and mixed messages
+  - Updated ChatMessage interface to include metadata
+  - Chat server broadcasts metadata to all participants
+  - Fixed: API now returns metadata when loading messages from database
+  - Added loading spinners: image processing and message sending
+  - Disabled buttons during processing to prevent double-sends
+  - Clear UI immediately on send for responsive feel
 
 ### Phase 6: Moderation
 - [ ] **Step 9:** Add moderation UI

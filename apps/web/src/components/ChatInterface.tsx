@@ -39,7 +39,22 @@ interface ChatMessage {
   authorName: string
   authorPhoto?: string | null
   timestamp: Date
-  type: 'text' | 'system'
+  type: 'text' | 'image' | 'mixed' | 'system'
+  metadata?: {
+    images?: Array<{
+      base64: string
+      width: number
+      height: number
+      size: number
+    }>
+    links?: Array<{
+      url: string
+      title?: string
+      description?: string
+      image?: string
+      siteName?: string
+    }>
+  }
   reactions?: MessageReaction[]
 }
 
@@ -74,6 +89,7 @@ export default function ChatInterface({
   const [hasOtherUnread, setHasOtherUnread] = useState(false)
   const [pendingImages, setPendingImages] = useState<ProcessedImage[]>([])
   const [isProcessingImage, setIsProcessingImage] = useState(false)
+  const [isSendingMessage, setIsSendingMessage] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -165,6 +181,7 @@ export default function ChatInterface({
           authorPhoto: m.authorPhoto,
           timestamp: new Date(m.timestamp),
           type: m.type,
+          metadata: m.metadata,
           reactions: m.reactions || []
         }))
         
@@ -280,7 +297,8 @@ export default function ChatInterface({
         authorName: message.author?.name || 'Unknown User',
         authorPhoto: authorPhotos.get(authorId) || null,
         timestamp: new Date(message.createdAt),
-        type: message.type || 'text'
+        type: message.type || 'text',
+        metadata: message.metadata
       }
       
       // Add message only if it doesn't already exist (prevent duplicates)
@@ -454,6 +472,34 @@ export default function ChatInterface({
 
   if (!isOpen) return null
 
+  // Helper function to render message content with clickable, truncated URLs
+  const renderMessageContent = (content: string, isCurrentUser: boolean) => {
+    const urlRegex = /(https?:\/\/[^\s]+)/g
+    const parts = content.split(urlRegex)
+    
+    return parts.map((part, index) => {
+      if (part.match(urlRegex)) {
+        const displayUrl = part.length > 50 ? part.substring(0, 47) + '...' : part
+        return (
+          <a
+            key={index}
+            href={part}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`inline-block px-2 py-0.5 mx-0.5 rounded-md font-medium underline break-all ${
+              isCurrentUser 
+                ? 'bg-blue-600 text-gray-100 hover:bg-blue-700' 
+                : 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 hover:bg-blue-200 dark:hover:bg-blue-800'
+            }`}
+          >
+            {displayUrl}
+          </a>
+        )
+      }
+      return <span key={index}>{part}</span>
+    })
+  }
+
   // Handle image selection (supports multiple images)
   const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
@@ -498,25 +544,48 @@ export default function ChatInterface({
   }
 
   const handleSendMessage = () => {
-    if ((!newMessage.trim() && pendingImages.length === 0) || !conversationId) return
+    if ((!newMessage.trim() && pendingImages.length === 0) || !conversationId || isSendingMessage) return
 
     const messageContent = newMessage.trim()
     const imagesToSend = pendingImages
     
+    // Clear UI immediately for responsive feel
     setNewMessage('')
     setPendingImages([])
+    setIsSendingMessage(true)
 
-    // TODO: Update to support image messages
-    // For now, just send text messages
-    if (messageContent && isConnected) {
-      sendMessage(conversationId, messageContent)
-    } else if (!messageContent && imagesToSend.length > 0) {
-      // Image-only message - will implement in next step
-      console.log('[Chat] Image message not yet implemented', imagesToSend.length, 'images')
-    } else if (!isConnected) {
+    if (!isConnected) {
       console.error('[Chat] Cannot send message: not connected to chat service')
-      // Show error to user
+      setIsSendingMessage(false)
+      return
     }
+
+    // Determine message type and build metadata
+    let messageType = 'text'
+    let metadata: any = undefined
+
+    if (imagesToSend.length > 0) {
+      messageType = messageContent ? 'mixed' : 'image'
+      metadata = {
+        images: imagesToSend.map(img => ({
+          base64: img.base64,
+          width: img.width,
+          height: img.height,
+          size: img.size
+        }))
+      }
+    }
+
+    // Send message with images and/or text
+    sendMessage(conversationId, messageContent || ' ', {
+      type: messageType,
+      metadata
+    })
+    
+    // Reset sending state after a brief delay (message should be sent by then)
+    setTimeout(() => {
+      setIsSendingMessage(false)
+    }, 500)
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -1079,7 +1148,7 @@ export default function ChatInterface({
                     </div>
                   )}
 
-                  <div className={`flex flex-col ${isCurrentUser ? 'items-end' : 'items-start'} max-w-[70%]`}>
+                  <div className={`flex flex-col ${isCurrentUser ? 'items-end' : 'items-start'} max-w-[85%]`}>
                     {!isCurrentUser && showAvatar && (
                       <span className="text-xs text-gray-500 dark:text-gray-400 mb-1 px-3">
                         {message.authorName}
@@ -1195,16 +1264,35 @@ export default function ChatInterface({
                         }
                       }}
                     >
-                      {message.type === 'text' ? (
-                        <p className="text-xl whitespace-pre-wrap" style={{ WebkitTextSizeAdjust: '100%' }}>{message.content}</p>
-                      ) : (
-                        <Image 
-                          src={message.content} 
-                          alt="Message attachment" 
-                          width={200} 
-                          height={150} 
-                          className="max-w-xs h-auto rounded-lg" 
-                        />
+                      {/* Message text content */}
+                      {message.content && message.content.trim() && (
+                        <p className="text-xl whitespace-pre-wrap" style={{ WebkitTextSizeAdjust: '100%' }}>
+                          {renderMessageContent(message.content, isCurrentUser)}
+                        </p>
+                      )}
+                      
+                      {/* Message images */}
+                      {message.metadata?.images && message.metadata.images.length > 0 && (
+                        <div className={`mt-2 grid gap-2 ${
+                          message.metadata.images.length === 1 ? 'grid-cols-1' :
+                          message.metadata.images.length === 2 ? 'grid-cols-2' :
+                          'grid-cols-3'
+                        }`}>
+                          {message.metadata.images.map((image, idx) => (
+                            <div key={idx} className="relative aspect-square max-w-xs">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={image.base64}
+                                alt={`Image ${idx + 1}`}
+                                className="w-full h-full object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                                onClick={() => {
+                                  // TODO: Open lightbox/modal to view full size
+                                  window.open(image.base64, '_blank')
+                                }}
+                              />
+                            </div>
+                          ))}
+                        </div>
                       )}
                     </div>
 
@@ -1294,9 +1382,13 @@ export default function ChatInterface({
             type="button"
             onClick={() => imageInputRef.current?.click()}
             disabled={isProcessingImage}
-            className="w-12 h-12 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
+            className="w-12 h-12 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50 relative"
           >
-            <ImagePlus size={20} />
+            {isProcessingImage ? (
+              <div className="w-5 h-5 border-2 border-gray-600 dark:border-gray-300 border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <ImagePlus size={20} />
+            )}
           </button>
           
           <div className="flex-1 relative">
@@ -1314,10 +1406,14 @@ export default function ChatInterface({
           
           <button
             onClick={handleSendMessage}
-            disabled={!newMessage.trim() && pendingImages.length === 0}
-            className="w-12 h-12 bg-blue-500 text-white rounded-full flex items-center justify-center disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-blue-600 disabled:hover:bg-gray-300 transition-colors"
+            disabled={(!newMessage.trim() && pendingImages.length === 0) || isSendingMessage}
+            className="w-12 h-12 bg-blue-500 text-white rounded-full flex items-center justify-center disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-blue-600 disabled:hover:bg-gray-300 transition-colors relative"
           >
-            <Send size={20} />
+            {isSendingMessage ? (
+              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <Send size={20} />
+            )}
           </button>
         </div>
       </div>
