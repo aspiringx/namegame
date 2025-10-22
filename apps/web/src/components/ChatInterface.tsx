@@ -5,7 +5,7 @@ import { Send, ArrowLeft, Pencil, Check, X } from 'lucide-react'
 import Image from 'next/image'
 import { useSocket } from '@/context/SocketContext'
 import { useSession } from 'next-auth/react'
-import { updateConversationName } from '@/app/actions/chat'
+import { updateConversationName, markConversationAsRead } from '@/app/actions/chat'
 import {
   Tooltip,
   TooltipContent,
@@ -263,6 +263,16 @@ export default function ChatInterface({
         }
         return [...prev, chatMessage]
       })
+      
+      // Auto-mark as read if message is from someone else and conversation is open
+      if (conversationId && authorId !== session?.user?.id) {
+        markConversationAsRead(conversationId).then(() => {
+          // Notify other components that read status changed
+          const channel = new BroadcastChannel('chat_read_updates')
+          channel.postMessage({ type: 'conversation_read', conversationId })
+          channel.close()
+        })
+      }
     }
 
     socket.on('message', handleNewMessage)
@@ -270,7 +280,7 @@ export default function ChatInterface({
     return () => {
       socket.off('message', handleNewMessage)
     }
-  }, [socket, authorPhotos])
+  }, [socket, authorPhotos, conversationId, session?.user?.id])
 
   if (!isOpen) return null
 

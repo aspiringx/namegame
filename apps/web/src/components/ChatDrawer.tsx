@@ -296,6 +296,10 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
       setConversations(prev => prev.map(conv => 
         conv.id === conversation.id ? { ...conv, hasUnread: false } : conv
       ))
+      // Notify other components (like ChatIcon) that read status changed
+      const channel = new BroadcastChannel('chat_read_updates')
+      channel.postMessage({ type: 'conversation_read', conversationId: conversation.id })
+      channel.close()
     }
   }
 
