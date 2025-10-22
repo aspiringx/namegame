@@ -20,6 +20,40 @@ export async function POST(request: NextRequest) {
     // Include current user in participants
     const allParticipantIds = [...new Set([session.user.id, ...participantIds])]
 
+    // Validate that user has relationships with all participants (or they're in the same group)
+    if (type === 'group' && groupId) {
+      // For group chats, verify all participants are in the group
+      const groupMembers = await prisma.groupUser.findMany({
+        where: {
+          groupId,
+          userId: { in: allParticipantIds }
+        }
+      })
+      
+      if (groupMembers.length !== allParticipantIds.length) {
+        return NextResponse.json({ error: 'All participants must be members of the group' }, { status: 403 })
+      }
+    } else {
+      // For direct chats, verify user has relationships with all other participants
+      const currentUserId = session.user!.id // Already validated above
+      const otherParticipantIds = participantIds.filter((id: string) => id !== currentUserId)
+      
+      if (otherParticipantIds.length > 0) {
+        const relationships = await prisma.userUser.findMany({
+          where: {
+            OR: [
+              { user1Id: currentUserId, user2Id: { in: otherParticipantIds } },
+              { user2Id: currentUserId, user1Id: { in: otherParticipantIds } }
+            ]
+          }
+        })
+        
+        if (relationships.length !== otherParticipantIds.length) {
+          return NextResponse.json({ error: 'You can only create conversations with users you have a relationship with' }, { status: 403 })
+        }
+      }
+    }
+
     // Check if conversation already exists with these exact participants
     const existingConversation = await prisma.chatConversation.findFirst({
       where: {
@@ -181,17 +215,47 @@ export async function GET(request: NextRequest) {
     const hasMore = conversations.length === 15
     const userId = session.user.id
 
-    // Calculate unread status for each conversation
-    const conversationsWithUnread = conversations.map(conv => {
+    // Calculate unread status for each conversation by checking for activity from others
+    const conversationsWithUnread = await Promise.all(conversations.map(async conv => {
       const currentUserParticipant = conv.participants.find(p => p.userId === userId)
       const lastReadAt = currentUserParticipant?.lastReadAt
-      const lastMessage = conv.messages[0]
       
-      // Has unread if there's a message after lastReadAt (or no lastReadAt)
-      // AND the message is from someone else (not the current user)
-      const hasUnread = lastMessage && 
-        lastMessage.authorId !== userId &&
-        (!lastReadAt || lastMessage.updatedAt > lastReadAt)
+      // Get most recent message from someone else
+      const lastMessageFromOthers = await prisma.chatMessage.findFirst({
+        where: {
+          conversationId: conv.id,
+          authorId: { not: userId }
+        },
+        orderBy: { updatedAt: 'desc' },
+        select: { updatedAt: true }
+      })
+      
+      // Get most recent reaction from someone else to YOUR messages
+      const lastReactionFromOthers = await prisma.chatMessageReaction.findFirst({
+        where: {
+          message: { 
+            conversationId: conv.id,
+            authorId: userId  // Only reactions to YOUR messages
+          },
+          userId: { not: userId }  // From someone else
+        },
+        orderBy: { createdAt: 'desc' },
+        select: { createdAt: true }
+      })
+      
+      // Find the most recent activity from others
+      const timestamps = [
+        lastMessageFromOthers?.updatedAt,
+        lastReactionFromOthers?.createdAt
+      ].filter(Boolean) as Date[]
+      
+      const lastActivityFromOthers = timestamps.length > 0 
+        ? new Date(Math.max(...timestamps.map(d => d.getTime())))
+        : null
+      
+      // Has unread if there's activity from others after lastReadAt
+      const hasUnread = lastActivityFromOthers && 
+        (!lastReadAt || lastActivityFromOthers > lastReadAt)
       
       return {
         id: conv.id,
@@ -206,7 +270,7 @@ export async function GET(request: NextRequest) {
           name: `${p.user.firstName} ${p.user.lastName || ''}`.trim()
         }))
       }
-    })
+    }))
 
     // Sort: unread conversations first (by most recent message), then read conversations (by most recent message)
     conversationsWithUnread.sort((a, b) => {

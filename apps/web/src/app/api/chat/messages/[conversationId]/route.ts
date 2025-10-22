@@ -44,7 +44,20 @@ export async function GET(
       orderBy: {
         createdAt: 'desc' // Get newest first
       },
-      take: 50 // Limit to 50 messages
+      take: 50, // Limit to 50 messages
+      include: {
+        reactions: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true
+              }
+            }
+          }
+        }
+      }
     })
 
     // Reverse to show oldest first in UI
@@ -84,12 +97,33 @@ export async function GET(
 
     const photosByUserId = new Map(photos.map(p => [p.entityId, p]))
 
-    // Build messages with photo URLs
+    // Build messages with photo URLs and reactions
     const messagesWithPhotos = await Promise.all(
       messages.map(async (msg) => {
         const user = usersByIdMap.get(msg.authorId)
         const primaryPhoto = photosByUserId.get(msg.authorId)
         const photoUrl = await getPhotoUrl(primaryPhoto || null, { size: 'thumb' })
+
+        // Group reactions by emoji
+        const reactionsByEmoji = new Map<string, { emoji: string; count: number; userIds: string[]; users: { id: string; name: string }[] }>()
+        
+        msg.reactions.forEach(reaction => {
+          const existing = reactionsByEmoji.get(reaction.emoji)
+          const userName = `${reaction.user.firstName} ${reaction.user.lastName || ''}`.trim()
+          
+          if (existing) {
+            existing.count++
+            existing.userIds.push(reaction.userId)
+            existing.users.push({ id: reaction.userId, name: userName })
+          } else {
+            reactionsByEmoji.set(reaction.emoji, {
+              emoji: reaction.emoji,
+              count: 1,
+              userIds: [reaction.userId],
+              users: [{ id: reaction.userId, name: userName }]
+            })
+          }
+        })
 
         return {
           id: msg.id,
@@ -99,7 +133,8 @@ export async function GET(
           authorName: user ? `${user.firstName} ${user.lastName || ''}`.trim() : 'Unknown User',
           authorPhoto: photoUrl,
           createdAt: msg.createdAt.toISOString(),
-          timestamp: msg.createdAt
+          timestamp: msg.createdAt,
+          reactions: Array.from(reactionsByEmoji.values())
         }
       })
     )

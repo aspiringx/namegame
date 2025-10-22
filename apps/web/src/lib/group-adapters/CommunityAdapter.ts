@@ -61,9 +61,9 @@ export class CommunityAdapter implements GroupAdapter {
       ) => {
         setSettings((prev: GroupPageSettings) => ({ ...prev, searchQuery: query }))
       },
-      handleMemberAction: (action: string, member: MemberWithUser) => {
+      handleMemberAction: (_action: string, _member: MemberWithUser) => {
         // Community-specific member actions
-        console.log(`Community action: ${action} for member:`, member.user.name)
+        // TODO: Implement community-specific actions
       },
     }
   }
