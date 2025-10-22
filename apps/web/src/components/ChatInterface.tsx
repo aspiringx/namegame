@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { Send, ArrowLeft, Pencil, Check, X, ImagePlus } from 'lucide-react'
+import { Send, ArrowLeft, Pencil, Check, X, ImagePlus, ChevronLeft, ChevronRight } from 'lucide-react'
 import Image from 'next/image'
 import { useSocket } from '@/context/SocketContext'
 import { useSession } from 'next-auth/react'
@@ -90,6 +90,11 @@ export default function ChatInterface({
   const [pendingImages, setPendingImages] = useState<ProcessedImage[]>([])
   const [isProcessingImage, setIsProcessingImage] = useState(false)
   const [isSendingMessage, setIsSendingMessage] = useState(false)
+  const [lightboxState, setLightboxState] = useState<{
+    isOpen: boolean
+    images: Array<{ base64: string; width: number; height: number }>
+    currentIndex: number
+  }>({ isOpen: false, images: [], currentIndex: 0 })
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -470,6 +475,39 @@ export default function ChatInterface({
     }
   }, [socket, conversationId, currentUserId])
 
+  // Keyboard navigation for lightbox
+  useEffect(() => {
+    if (!lightboxState.isOpen) return
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setLightboxState({ ...lightboxState, isOpen: false })
+      } else if (e.key === 'ArrowLeft' && lightboxState.images.length > 1) {
+        setLightboxState({
+          ...lightboxState,
+          currentIndex: lightboxState.currentIndex === 0 
+            ? lightboxState.images.length - 1 
+            : lightboxState.currentIndex - 1
+        })
+      } else if (e.key === 'ArrowRight' && lightboxState.images.length > 1) {
+        setLightboxState({
+          ...lightboxState,
+          currentIndex: lightboxState.currentIndex === lightboxState.images.length - 1 
+            ? 0 
+            : lightboxState.currentIndex + 1
+        })
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+      document.body.style.overflow = 'unset'
+    }
+  }, [lightboxState])
+
   if (!isOpen) return null
 
   // Helper function to render message content with clickable, truncated URLs
@@ -486,10 +524,10 @@ export default function ChatInterface({
             href={part}
             target="_blank"
             rel="noopener noreferrer"
-            className={`inline-block px-2 py-0.5 mx-0.5 rounded-md font-medium underline break-all ${
+            className={`inline px-1.5 py-0.5 mx-0.5 my-1 rounded font-normal underline decoration-1 underline-offset-2 break-all ${
               isCurrentUser 
-                ? 'bg-blue-600 text-gray-100 hover:bg-blue-700' 
-                : 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 hover:bg-blue-200 dark:hover:bg-blue-800'
+                ? 'bg-white/20 text-white hover:bg-white/30' 
+                : 'bg-blue-500/10 dark:bg-blue-400/20 text-blue-600 dark:text-blue-300 hover:bg-blue-500/20 dark:hover:bg-blue-400/30'
             }`}
           >
             {displayUrl}
@@ -914,8 +952,8 @@ export default function ChatInterface({
 
   return (
     <div className="absolute inset-0 bg-white dark:bg-gray-900 flex flex-col z-50">
-      {/* Header - Absolute on mobile (fixed causes issues with iOS keyboard), fixed on desktop */}
-      <div className={`absolute md:fixed top-0 left-0 right-0 z-20 flex items-center justify-between border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 transition-all ${
+      {/* Header - Part of flex flow so it stays visible when keyboard opens */}
+      <div className={`flex-shrink-0 flex items-center justify-between border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 transition-all ${
         isKeyboardOpen ? 'p-2' : 'p-4'
       }`}>
         <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -1015,12 +1053,11 @@ export default function ChatInterface({
         </button>
       </div>
 
-      {/* Messages - Add top padding to account for fixed header */}
+      {/* Messages */}
       <div 
         ref={messagesContainerRef}
         data-messages-container
         className="flex-1 overflow-y-auto p-4 space-y-4"
-        style={{ paddingTop: isKeyboardOpen ? '60px' : '76px' }}
         onTouchStart={(e) => {
           const container = e.currentTarget
           container.dataset.touchStartX = String(e.touches[0].clientX)
@@ -1222,6 +1259,12 @@ export default function ChatInterface({
                           
                           // Add non-passive touch event listener to prevent context menu
                           const handleTouchStart = (e: TouchEvent) => {
+                            // Don't prevent default if touching an image or link (let click events work)
+                            const touchTarget = e.target as HTMLElement
+                            if (touchTarget.tagName === 'IMG' || touchTarget.tagName === 'A') {
+                              return
+                            }
+                            
                             e.preventDefault() // This works because listener is non-passive
                             
                             const target = e.currentTarget as HTMLElement
@@ -1286,8 +1329,11 @@ export default function ChatInterface({
                                 alt={`Image ${idx + 1}`}
                                 className="w-full h-full object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
                                 onClick={() => {
-                                  // TODO: Open lightbox/modal to view full size
-                                  window.open(image.base64, '_blank')
+                                  setLightboxState({
+                                    isOpen: true,
+                                    images: message.metadata!.images!,
+                                    currentIndex: idx
+                                  })
                                 }}
                               />
                             </div>
@@ -1426,6 +1472,97 @@ export default function ChatInterface({
         position={emojiPickerState.position}
         showAbove={emojiPickerState.showAbove}
       />
+
+      {/* Image Lightbox */}
+      {lightboxState.isOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90"
+          onClick={() => setLightboxState({ ...lightboxState, isOpen: false })}
+          onTouchStart={(e) => {
+            const touch = e.touches[0]
+            ;(e.currentTarget as any).touchStartX = touch.clientX
+          }}
+          onTouchEnd={(e) => {
+            const touchStartX = (e.currentTarget as any).touchStartX
+            const touchEndX = e.changedTouches[0].clientX
+            const diff = touchStartX - touchEndX
+            
+            if (Math.abs(diff) > 50 && lightboxState.images.length > 1) {
+              if (diff > 0) {
+                // Swiped left -> next image
+                setLightboxState({
+                  ...lightboxState,
+                  currentIndex: lightboxState.currentIndex === lightboxState.images.length - 1 
+                    ? 0 
+                    : lightboxState.currentIndex + 1
+                })
+              } else {
+                // Swiped right -> previous image
+                setLightboxState({
+                  ...lightboxState,
+                  currentIndex: lightboxState.currentIndex === 0 
+                    ? lightboxState.images.length - 1 
+                    : lightboxState.currentIndex - 1
+                })
+              }
+            }
+          }}
+        >
+          <button
+            className="absolute top-4 right-4 z-20 w-10 h-10 rounded-full bg-black/50 text-white hover:bg-black/70 flex items-center justify-center"
+            onClick={() => setLightboxState({ ...lightboxState, isOpen: false })}
+          >
+            <X size={20} />
+          </button>
+
+          {lightboxState.images.length > 1 && (
+            <>
+              <button
+                className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-black/50 text-white hover:bg-black/70 flex items-center justify-center"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setLightboxState({
+                    ...lightboxState,
+                    currentIndex: lightboxState.currentIndex === 0 
+                      ? lightboxState.images.length - 1 
+                      : lightboxState.currentIndex - 1
+                  })
+                }}
+              >
+                <ChevronLeft size={24} />
+              </button>
+
+              <button
+                className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-black/50 text-white hover:bg-black/70 flex items-center justify-center"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setLightboxState({
+                    ...lightboxState,
+                    currentIndex: lightboxState.currentIndex === lightboxState.images.length - 1 
+                      ? 0 
+                      : lightboxState.currentIndex + 1
+                  })
+                }}
+              >
+                <ChevronRight size={24} />
+              </button>
+
+              <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 px-3 py-1 rounded-full bg-black/60 text-white text-sm">
+                {lightboxState.currentIndex + 1} / {lightboxState.images.length}
+              </div>
+            </>
+          )}
+
+          <div className="relative max-w-[90vw] max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={lightboxState.images[lightboxState.currentIndex].base64}
+              alt={`Image ${lightboxState.currentIndex + 1}`}
+              className="max-w-full max-h-[90vh] object-contain rounded-lg"
+            />
+          </div>
+        </div>
+      )}
     </div>
   )
 }

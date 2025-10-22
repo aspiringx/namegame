@@ -76,7 +76,7 @@ Add support for images and links in chat messages with automatic link previews a
 ### Phase 5: UI Rendering
 - [x] **Step 8:** Create rendering components
   - Render images in dynamic grid (1/2/3 columns based on count)
-  - Click image to open full-size in new tab
+  - Click image to open full-size in lightbox modal
   - Render URLs as clickable links (truncated to 50 chars with "...")
   - Support text-only, image-only, and mixed messages
   - Updated ChatMessage interface to include metadata
@@ -85,6 +85,17 @@ Add support for images and links in chat messages with automatic link previews a
   - Added loading spinners: image processing and message sending
   - Disabled buttons during processing to prevent double-sends
   - Clear UI immediately on send for responsive feel
+  - Increased message bubble max-width from 70% to 85%
+  - Link styling: background pills, visible in light/dark mode, gray text on sender bubbles
+  - **Image Lightbox Modal:**
+    - Full-screen overlay with dark background
+    - Left/Right arrow buttons for navigation (when multiple images)
+    - Image counter (e.g., "2 / 6")
+    - Close button (X)
+    - Keyboard navigation: Escape to close, Arrow keys to navigate
+    - Touch swipe support: Swipe left/right to navigate between images
+    - Click backdrop to close
+    - Prevents body scroll when open
 
 ### Phase 6: Moderation
 - [ ] **Step 9:** Add moderation UI
