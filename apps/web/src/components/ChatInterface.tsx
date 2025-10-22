@@ -357,8 +357,8 @@ export default function ChatInterface({
 
   return (
     <div className="absolute inset-0 bg-white dark:bg-gray-900 flex flex-col z-50">
-      {/* Header - Sticky and compact when keyboard is open */}
-      <div className={`sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 transition-all ${
+      {/* Header - Fixed position so it stays visible when keyboard opens */}
+      <div className={`fixed top-0 left-0 right-0 z-20 flex items-center justify-between border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 transition-all ${
         isKeyboardOpen ? 'p-2' : 'p-4'
       }`}>
         <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -440,10 +440,11 @@ export default function ChatInterface({
         </div>
       </div>
 
-      {/* Messages */}
+      {/* Messages - Add top padding to account for fixed header */}
       <div 
         ref={messagesContainerRef} 
         className="flex-1 overflow-y-auto p-4 space-y-4"
+        style={{ paddingTop: isKeyboardOpen ? '60px' : '76px' }}
         onTouchStart={(e) => {
           const container = e.currentTarget
           container.dataset.touchStartX = String(e.touches[0].clientX)
