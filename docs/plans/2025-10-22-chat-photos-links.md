@@ -40,21 +40,30 @@ Add support for images and links in chat messages with automatic link previews a
   - Migration: `20251022214356_add_chat_message_metadata_and_moderation`
 
 ### Phase 2: Link Previews
-- [ ] **Step 3:** Install `open-graph-scraper` package
-- [ ] **Step 4:** Create `/api/chat/link-preview` route
+- [x] **Step 3:** Install `open-graph-scraper` package
+  - Installed: `open-graph-scraper@6.10.0`
+- [x] **Step 4:** Create `/api/chat/link-preview` route
   - Fetch Open Graph metadata
-  - Add caching and rate limiting
-  - Handle timeouts and errors
+  - In-memory cache (24hr TTL, max 1000 entries)
+  - Rate limiting (10 requests/minute per user)
+  - 10 second timeout
+  - URL validation (blocks localhost, private IPs)
 
 ### Phase 3: Image Upload
-- [ ] **Step 5:** Create image resize utility
-  - Client-side compression
+- [x] **Step 5:** Create image resize utility
+  - Client-side compression (JPEG quality 0.8, auto-adjust if needed)
   - Convert to base64
-  - Max 800px width, ~100KB size
-- [ ] **Step 6:** Update ChatInterface
-  - Add image picker button
-  - Handle image selection
-  - Embed base64 in message
+  - Max 800px width/height, ~100KB target size
+  - Support file selection and camera capture
+  - Auto-detect camera support on mobile devices
+- [x] **Step 6:** Update ChatInterface
+  - Add image picker button (uses native file picker)
+  - Hidden file input with `accept="image/*"`, `capture="environment"`, and `multiple`
+  - Multiple image support (up to 9 images per message)
+  - Dynamic grid preview (1 col for 1 image, 2 cols for 2, 3 cols for 3+) with individual remove buttons
+  - Process and compress all selected images
+  - Show warning if >9 images selected (takes first 9)
+  - Enable send button when images are selected
 
 ### Phase 4: Message Processing
 - [ ] **Step 7:** Update message handler

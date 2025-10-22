@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { Send, ArrowLeft, Pencil, Check, X } from 'lucide-react'
+import { Send, ArrowLeft, Pencil, Check, X, ImagePlus } from 'lucide-react'
 import Image from 'next/image'
 import { useSocket } from '@/context/SocketContext'
 import { useSession } from 'next-auth/react'
@@ -13,6 +13,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import MessageEmojiPicker from './MessageEmojiPicker'
+import { processImageFile, ProcessedImage } from '@/lib/imageUtils'
 
 interface ChatInterfaceProps {
   isOpen: boolean
@@ -71,10 +72,13 @@ export default function ChatInterface({
     showAbove: boolean
   }>({ isOpen: false, messageId: null, position: { x: 0, y: 0 }, showAbove: true })
   const [hasOtherUnread, setHasOtherUnread] = useState(false)
+  const [pendingImages, setPendingImages] = useState<ProcessedImage[]>([])
+  const [isProcessingImage, setIsProcessingImage] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const nameInputRef = useRef<HTMLInputElement>(null)
+  const imageInputRef = useRef<HTMLInputElement>(null)
   const messageBubbleRefs = useRef<Map<string, HTMLDivElement>>(new Map())
   const { socket, isConnected, sendMessage, joinConversation, leaveConversation } = useSocket()
   const { data: session } = useSession()
@@ -450,16 +454,66 @@ export default function ChatInterface({
 
   if (!isOpen) return null
 
+  // Handle image selection (supports multiple images)
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files || files.length === 0) return
+
+    const MAX_IMAGES = 9
+    const filesToProcess = Array.from(files).slice(0, MAX_IMAGES)
+    
+    // Show toast if user selected more than max
+    if (files.length > MAX_IMAGES) {
+      // TODO: Show toast notification
+      console.warn(`Maximum ${MAX_IMAGES} images per message. First ${MAX_IMAGES} selected.`)
+    }
+
+    setIsProcessingImage(true)
+    try {
+      const processedImages: ProcessedImage[] = []
+      
+      for (const file of filesToProcess) {
+        try {
+          const processed = await processImageFile(file)
+          processedImages.push(processed)
+        } catch (error) {
+          console.error('[Chat] Error processing image:', error)
+          // Continue processing other images
+        }
+      }
+      
+      setPendingImages(prev => [...prev, ...processedImages])
+    } finally {
+      setIsProcessingImage(false)
+      // Reset input so same files can be selected again
+      if (imageInputRef.current) {
+        imageInputRef.current.value = ''
+      }
+    }
+  }
+
+  // Remove a pending image by index
+  const handleRemoveImage = (index: number) => {
+    setPendingImages(prev => prev.filter((_, i) => i !== index))
+  }
+
   const handleSendMessage = () => {
-    if (!newMessage.trim() || !conversationId) return
+    if ((!newMessage.trim() && pendingImages.length === 0) || !conversationId) return
 
     const messageContent = newMessage.trim()
+    const imagesToSend = pendingImages
+    
     setNewMessage('')
+    setPendingImages([])
 
-    // Send via Socket.io (message will come back via socket event for display)
-    if (isConnected) {
+    // TODO: Update to support image messages
+    // For now, just send text messages
+    if (messageContent && isConnected) {
       sendMessage(conversationId, messageContent)
-    } else {
+    } else if (!messageContent && imagesToSend.length > 0) {
+      // Image-only message - will implement in next step
+      console.log('[Chat] Image message not yet implemented', imagesToSend.length, 'images')
+    } else if (!isConnected) {
       console.error('[Chat] Cannot send message: not connected to chat service')
       // Show error to user
     }
@@ -1196,7 +1250,55 @@ export default function ChatInterface({
 
       {/* Message Input */}
       <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+        {/* Image previews - dynamic grid layout */}
+        {pendingImages.length > 0 && (
+          <div className={`mb-3 grid gap-2 ${
+            pendingImages.length === 1 ? 'grid-cols-1' :
+            pendingImages.length === 2 ? 'grid-cols-2' :
+            'grid-cols-3'
+          }`}>
+            {pendingImages.map((image, index) => (
+              <div key={index} className="relative aspect-square">
+                {/* Using <img> instead of <Image> because src is base64 data URL (already optimized client-side) */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={image.base64}
+                  alt={`Preview ${index + 1}`}
+                  className="w-full h-full object-cover rounded-lg border-2 border-blue-500"
+                />
+                <button
+                  onClick={() => handleRemoveImage(index)}
+                  className="absolute -top-1 -right-1 w-5 h-5 bg-gray-600 dark:bg-gray-500 text-white rounded-full flex items-center justify-center hover:bg-gray-700 dark:hover:bg-gray-600 shadow-md"
+                >
+                  <X size={12} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+        
         <div className="flex items-end gap-3">
+          {/* Hidden file input - supports multiple selection */}
+          <input
+            ref={imageInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            multiple
+            onChange={handleImageSelect}
+            className="hidden"
+          />
+          
+          {/* Image button */}
+          <button
+            type="button"
+            onClick={() => imageInputRef.current?.click()}
+            disabled={isProcessingImage}
+            className="w-12 h-12 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
+          >
+            <ImagePlus size={20} />
+          </button>
+          
           <div className="flex-1 relative">
             <textarea
               ref={inputRef}
@@ -1212,7 +1314,7 @@ export default function ChatInterface({
           
           <button
             onClick={handleSendMessage}
-            disabled={!newMessage.trim()}
+            disabled={!newMessage.trim() && pendingImages.length === 0}
             className="w-12 h-12 bg-blue-500 text-white rounded-full flex items-center justify-center disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-blue-600 disabled:hover:bg-gray-300 transition-colors"
           >
             <Send size={20} />
