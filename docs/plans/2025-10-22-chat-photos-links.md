@@ -1,0 +1,155 @@
+# Chat Photos & Links Implementation Plan
+
+**Date:** October 22, 2025  
+**Branch:** `add-photos-and-links-in-chat`
+
+## Overview
+
+Add support for images and links in chat messages with automatic link previews and content moderation features.
+
+## Design Decisions
+
+### Images
+- Store as base64 strings embedded in message content
+- Client-side resize to max 800px width, compress to ~100KB
+- Keep separate from main Photo model (simpler, faster)
+- No CDN/storage overhead for casual chat photos
+
+### Links
+- Auto-detect URLs in message content
+- Fetch Open Graph metadata server-side
+- Store preview data in message metadata JSON
+- Render rich preview cards in UI
+- Always open in new tab/browser
+
+### Moderation
+- Any participant can hide messages for themselves
+- Message author can delete their own messages
+- Group admin/owner can delete for everyone
+- Deleted messages show "[Message deleted]" placeholder
+
+## Implementation Plan
+
+### Phase 1: Schema & Database
+- [x] **Step 1:** Update ChatMessage schema
+  - Add `type` enum: 'text' | 'image' | 'link' | 'mixed'
+  - Add `metadata` JSON field for link previews and image info
+  - Add `isHidden` boolean for soft deletes
+  - Add `hiddenBy` and `hiddenAt` for moderation tracking
+- [x] **Step 2:** Create and run database migration
+  - Migration: `20251022214356_add_chat_message_metadata_and_moderation`
+
+### Phase 2: Link Previews
+- [x] **Step 3:** Install `open-graph-scraper` package
+  - Installed: `open-graph-scraper@6.10.0`
+- [x] **Step 4:** Create `/api/chat/link-preview` route
+  - Fetch Open Graph metadata
+  - In-memory cache (24hr TTL, max 1000 entries)
+  - Rate limiting (10 requests/minute per user)
+  - 10 second timeout
+  - URL validation (blocks localhost, private IPs)
+
+### Phase 3: Image Upload
+- [x] **Step 5:** Create image resize utility
+  - Client-side compression (JPEG quality 0.8, auto-adjust if needed)
+  - Convert to base64
+  - Max 800px width/height, ~100KB target size
+  - Support file selection and camera capture
+  - Auto-detect camera support on mobile devices
+- [x] **Step 6:** Update ChatInterface
+  - Add image picker button (uses native file picker)
+  - Hidden file input with `accept="image/*"`, `capture="environment"`, and `multiple`
+  - Multiple image support (up to 9 images per message)
+  - Dynamic grid preview (1 col for 1 image, 2 cols for 2, 3 cols for 3+) with individual remove buttons
+  - Process and compress all selected images
+  - Show warning if >9 images selected (takes first 9)
+  - Enable send button when images are selected
+
+### Phase 4: Message Processing
+- [x] **Step 7:** Update message handler
+  - Support image messages with metadata (base64, dimensions, size)
+  - Message types: 'text', 'image', 'mixed' (text + images)
+  - Updated socket sendMessage to accept type and metadata
+  - Chat server stores metadata in database
+  - Note: URL detection and link previews deferred to future enhancement
+
+### Phase 5: UI Rendering
+- [x] **Step 8:** Create rendering components
+  - Render images in dynamic grid (1/2/3 columns based on count)
+  - Click image to open full-size in lightbox modal
+  - Render URLs as clickable links (truncated to 50 chars with "...")
+  - Support text-only, image-only, and mixed messages
+  - Updated ChatMessage interface to include metadata
+  - Chat server broadcasts metadata to all participants
+  - Fixed: API now returns metadata when loading messages from database
+  - Added loading spinners: image processing and message sending
+  - Disabled buttons during processing to prevent double-sends
+  - Clear UI immediately on send for responsive feel
+  - Increased message bubble max-width from 70% to 85%
+  - Link styling: background pills, visible in light/dark mode, gray text on sender bubbles
+  - **Image Lightbox Modal:**
+    - Full-screen overlay with dark background
+    - Left/Right arrow buttons for navigation (when multiple images)
+    - Image counter (e.g., "2 / 6")
+    - Close button (X)
+    - Keyboard navigation: Escape to close, Arrow keys to navigate
+    - Touch swipe support: Swipe left/right to navigate between images
+    - Click backdrop to close
+    - Prevents body scroll when open
+
+### Phase 6: Moderation
+- [ ] **Step 9:** Add moderation UI
+  - Long-press menu with Hide/Delete
+  - Permission-based options
+- [ ] **Step 10:** Implement actions
+  - Hide/delete API routes
+  - Permission checks
+  - Update message state
+
+### Phase 7: Real-time Updates
+- [ ] **Step 11:** Update socket handlers
+  - Broadcast message updates
+  - Handle metadata changes
+  - Sync hidden status
+
+### Phase 8: Testing
+- [ ] **Step 12:** End-to-end testing
+  - Image upload and rendering
+  - Link preview generation
+  - Moderation permissions
+  - Real-time updates
+
+## Technical Details
+
+### Message Metadata Structure
+```json
+{
+  "images": [{
+    "width": 800,
+    "height": 600,
+    "size": 95000
+  }],
+  "links": [{
+    "url": "https://example.com",
+    "title": "Page Title",
+    "description": "Description...",
+    "image": "https://example.com/og-image.jpg",
+    "siteName": "Example"
+  }]
+}
+```
+
+### Security Considerations
+- Rate limit link preview requests
+- Validate URLs before fetching
+- Block internal IPs and localhost
+- Handle redirects safely
+- Set fetch timeout (5-10s)
+- Sanitize OG metadata
+
+### Performance Optimizations
+- Cache link previews by URL
+- Lazy load images
+- Compress images client-side
+- Batch preview requests
+- Use CDN for OG images (optional)

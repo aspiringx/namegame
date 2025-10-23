@@ -58,7 +58,8 @@ async function startChatServer() {
 
     // Set up LISTEN for new messages
     await pgClient.query("LISTEN new_message");
-    console.log("[Chat] Listening for new_message notifications");
+    await pgClient.query("LISTEN message_deleted");
+    console.log("[Chat] Listening for new_message and message_deleted notifications");
 
     // Handle PostgreSQL notifications
     pgClient.on("notification", async (msg) => {
@@ -92,6 +93,16 @@ async function startChatServer() {
           console.log(
             `[Chat] Broadcasted message to conversation:${messageData.conversationId} and ${participants.length} participants`
           );
+        } else if (msg.channel === "message_deleted" && msg.payload) {
+          const { messageId, conversationId } = JSON.parse(msg.payload);
+          
+          // Broadcast deletion to conversation room
+          io.to(`conversation:${conversationId}`).emit("message_deleted", {
+            messageId,
+            conversationId
+          });
+          
+          console.log(`[Chat] Broadcasted message deletion: ${messageId}`);
         }
       } catch (error) {
         console.error("[Chat] Error handling notification:", error);

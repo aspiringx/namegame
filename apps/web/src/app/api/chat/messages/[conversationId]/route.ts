@@ -129,6 +129,7 @@ export async function GET(
           id: msg.id,
           content: msg.content,
           type: msg.type,
+          metadata: msg.metadata,
           authorId: msg.authorId,
           authorName: user ? `${user.firstName} ${user.lastName || ''}`.trim() : 'Unknown User',
           authorPhoto: photoUrl,

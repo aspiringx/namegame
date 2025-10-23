@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { Send, ArrowLeft, Pencil, Check, X } from 'lucide-react'
+import { Send, ArrowLeft, Pencil, Check, X, ImagePlus, ChevronLeft, ChevronRight, MoreVertical, EyeOff, Trash2 } from 'lucide-react'
 import Image from 'next/image'
 import { useSocket } from '@/context/SocketContext'
 import { useSession } from 'next-auth/react'
@@ -13,6 +13,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import MessageEmojiPicker from './MessageEmojiPicker'
+import { processImageFile, ProcessedImage } from '@/lib/imageUtils'
 
 interface ChatInterfaceProps {
   isOpen: boolean
@@ -38,7 +39,22 @@ interface ChatMessage {
   authorName: string
   authorPhoto?: string | null
   timestamp: Date
-  type: 'text' | 'system'
+  type: 'text' | 'image' | 'mixed' | 'system'
+  metadata?: {
+    images?: Array<{
+      base64: string
+      width: number
+      height: number
+      size: number
+    }>
+    links?: Array<{
+      url: string
+      title?: string
+      description?: string
+      image?: string
+      siteName?: string
+    }>
+  }
   reactions?: MessageReaction[]
 }
 
@@ -71,10 +87,20 @@ export default function ChatInterface({
     showAbove: boolean
   }>({ isOpen: false, messageId: null, position: { x: 0, y: 0 }, showAbove: true })
   const [hasOtherUnread, setHasOtherUnread] = useState(false)
+  const [pendingImages, setPendingImages] = useState<ProcessedImage[]>([])
+  const [isProcessingImage, setIsProcessingImage] = useState(false)
+  const [isSendingMessage, setIsSendingMessage] = useState(false)
+  const [lightboxState, setLightboxState] = useState<{
+    isOpen: boolean
+    images: Array<{ base64: string; width: number; height: number }>
+    currentIndex: number
+  }>({ isOpen: false, images: [], currentIndex: 0 })
+  const [moderationMenuMessageId, setModerationMenuMessageId] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const nameInputRef = useRef<HTMLInputElement>(null)
+  const imageInputRef = useRef<HTMLInputElement>(null)
   const messageBubbleRefs = useRef<Map<string, HTMLDivElement>>(new Map())
   const { socket, isConnected, sendMessage, joinConversation, leaveConversation } = useSocket()
   const { data: session } = useSession()
@@ -161,6 +187,7 @@ export default function ChatInterface({
           authorPhoto: m.authorPhoto,
           timestamp: new Date(m.timestamp),
           type: m.type,
+          metadata: m.metadata,
           reactions: m.reactions || []
         }))
         
@@ -276,7 +303,8 @@ export default function ChatInterface({
         authorName: message.author?.name || 'Unknown User',
         authorPhoto: authorPhotos.get(authorId) || null,
         timestamp: new Date(message.createdAt),
-        type: message.type || 'text'
+        type: message.type || 'text',
+        metadata: message.metadata
       }
       
       // Add message only if it doesn't already exist (prevent duplicates)
@@ -439,30 +467,214 @@ export default function ChatInterface({
       }
     }
     
+    const handleMessageDeleted = (data: { messageId: string; conversationId: string }) => {
+      if (data.conversationId === conversationId) {
+        setMessages(prev => prev.filter(m => m.id !== data.messageId))
+      }
+    }
+    
     socket.on('message', handleOtherMessage)
     socket.on('reaction', handleOtherReaction)
+    socket.on('message_deleted', handleMessageDeleted)
     
     return () => {
       socket.off('message', handleOtherMessage)
       socket.off('reaction', handleOtherReaction)
+      socket.off('message_deleted', handleMessageDeleted)
     }
   }, [socket, conversationId, currentUserId])
 
+  // Keyboard navigation for lightbox
+  useEffect(() => {
+    if (!lightboxState.isOpen) return
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setLightboxState({ ...lightboxState, isOpen: false })
+      } else if (e.key === 'ArrowLeft' && lightboxState.images.length > 1) {
+        setLightboxState({
+          ...lightboxState,
+          currentIndex: lightboxState.currentIndex === 0 
+            ? lightboxState.images.length - 1 
+            : lightboxState.currentIndex - 1
+        })
+      } else if (e.key === 'ArrowRight' && lightboxState.images.length > 1) {
+        setLightboxState({
+          ...lightboxState,
+          currentIndex: lightboxState.currentIndex === lightboxState.images.length - 1 
+            ? 0 
+            : lightboxState.currentIndex + 1
+        })
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+      document.body.style.overflow = 'unset'
+    }
+  }, [lightboxState])
+
+  // Close moderation menu on click outside
+  useEffect(() => {
+    if (!moderationMenuMessageId) return
+
+    const handleClickOutside = () => {
+      setModerationMenuMessageId(null)
+    }
+
+    document.addEventListener('click', handleClickOutside)
+    return () => document.removeEventListener('click', handleClickOutside)
+  }, [moderationMenuMessageId])
+
   if (!isOpen) return null
 
-  const handleSendMessage = () => {
-    if (!newMessage.trim() || !conversationId) return
+  // Helper function to render message content with clickable, truncated URLs
+  const renderMessageContent = (content: string, isCurrentUser: boolean) => {
+    const urlRegex = /(https?:\/\/[^\s]+)/g
+    const parts = content.split(urlRegex)
+    
+    return parts.map((part, index) => {
+      if (part.match(urlRegex)) {
+        const displayUrl = part.length > 50 ? part.substring(0, 47) + '...' : part
+        return (
+          <a
+            key={index}
+            href={part}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`inline px-1.5 py-0.5 mx-0.5 my-1 rounded font-normal underline decoration-1 underline-offset-2 break-all ${
+              isCurrentUser 
+                ? 'bg-white/20 text-white hover:bg-white/30' 
+                : 'bg-blue-500/10 dark:bg-blue-400/20 text-blue-600 dark:text-blue-300 hover:bg-blue-500/20 dark:hover:bg-blue-400/30'
+            }`}
+          >
+            {displayUrl}
+          </a>
+        )
+      }
+      return <span key={index}>{part}</span>
+    })
+  }
+
+  // Handle image selection (supports multiple images)
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files || files.length === 0) return
+
+    const MAX_IMAGES = 9
+    const filesToProcess = Array.from(files).slice(0, MAX_IMAGES)
+    
+    // Show toast if user selected more than max
+    if (files.length > MAX_IMAGES) {
+      // TODO: Show toast notification
+      console.warn(`Maximum ${MAX_IMAGES} images per message. First ${MAX_IMAGES} selected.`)
+    }
+
+    setIsProcessingImage(true)
+    try {
+      const processedImages: ProcessedImage[] = []
+      
+      for (const file of filesToProcess) {
+        try {
+          const processed = await processImageFile(file)
+          processedImages.push(processed)
+        } catch (error) {
+          console.error('[Chat] Error processing image:', error)
+          // Continue processing other images
+        }
+      }
+      
+      setPendingImages(prev => [...prev, ...processedImages])
+    } finally {
+      setIsProcessingImage(false)
+      // Reset input so same files can be selected again
+      if (imageInputRef.current) {
+        imageInputRef.current.value = ''
+      }
+    }
+  }
+
+  // Remove a pending image by index
+  const handleRemoveImage = (index: number) => {
+    setPendingImages(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const handleSendMessage = async () => {
+    if ((!newMessage.trim() && pendingImages.length === 0) || !conversationId || isSendingMessage) return
 
     const messageContent = newMessage.trim()
+    const imagesToSend = pendingImages
+    
+    // Clear UI immediately for responsive feel
     setNewMessage('')
+    setPendingImages([])
+    setIsSendingMessage(true)
 
-    // Send via Socket.io (message will come back via socket event for display)
-    if (isConnected) {
-      sendMessage(conversationId, messageContent)
-    } else {
+    if (!isConnected) {
       console.error('[Chat] Cannot send message: not connected to chat service')
-      // Show error to user
+      setIsSendingMessage(false)
+      return
     }
+
+    // Determine message type and build metadata
+    let messageType = 'text'
+    let metadata: any = undefined
+
+    if (imagesToSend.length > 0) {
+      messageType = messageContent ? 'mixed' : 'image'
+      metadata = {
+        images: imagesToSend.map(img => ({
+          base64: img.base64,
+          width: img.width,
+          height: img.height,
+          size: img.size
+        }))
+      }
+    }
+
+    // Detect URLs and fetch link previews
+    const urlRegex = /(https?:\/\/[^\s]+)/g
+    const urls = messageContent.match(urlRegex)
+    if (urls && urls.length > 0) {
+      // Fetch preview for first URL only (to keep it simple)
+      try {
+        const response = await fetch('/api/chat/link-preview', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: urls[0] })
+        })
+        if (response.ok) {
+          const preview = await response.json()
+          if (!metadata) metadata = {}
+          metadata.links = [{
+            url: urls[0],
+            title: preview.title,
+            description: preview.description,
+            image: preview.image,
+            siteName: preview.siteName
+          }]
+          if (messageType === 'text') messageType = 'link'
+          if (messageType === 'mixed') messageType = 'mixed' // Keep as mixed if has images too
+        }
+      } catch (error) {
+        console.error('[Chat] Failed to fetch link preview:', error)
+        // Continue sending message without preview
+      }
+    }
+
+    // Send message with images, links, and/or text
+    sendMessage(conversationId, messageContent || ' ', {
+      type: messageType,
+      metadata
+    })
+    
+    // Reset sending state after a brief delay (message should be sent by then)
+    setTimeout(() => {
+      setIsSendingMessage(false)
+    }, 500)
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -791,8 +1003,8 @@ export default function ChatInterface({
 
   return (
     <div className="absolute inset-0 bg-white dark:bg-gray-900 flex flex-col z-50">
-      {/* Header - Absolute on mobile (fixed causes issues with iOS keyboard), fixed on desktop */}
-      <div className={`absolute md:fixed top-0 left-0 right-0 z-20 flex items-center justify-between border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 transition-all ${
+      {/* Header - Part of flex flow so it stays visible when keyboard opens */}
+      <div className={`flex-shrink-0 flex items-center justify-between border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 transition-all ${
         isKeyboardOpen ? 'p-2' : 'p-4'
       }`}>
         <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -892,12 +1104,11 @@ export default function ChatInterface({
         </button>
       </div>
 
-      {/* Messages - Add top padding to account for fixed header */}
+      {/* Messages */}
       <div 
         ref={messagesContainerRef}
         data-messages-container
         className="flex-1 overflow-y-auto p-4 space-y-4"
-        style={{ paddingTop: isKeyboardOpen ? '60px' : '76px' }}
         onTouchStart={(e) => {
           const container = e.currentTarget
           container.dataset.touchStartX = String(e.touches[0].clientX)
@@ -1025,7 +1236,7 @@ export default function ChatInterface({
                     </div>
                   )}
 
-                  <div className={`flex flex-col ${isCurrentUser ? 'items-end' : 'items-start'} max-w-[70%]`}>
+                  <div className={`flex flex-col ${isCurrentUser ? 'items-end' : 'items-start'} max-w-[85%]`}>
                     {!isCurrentUser && showAvatar && (
                       <span className="text-xs text-gray-500 dark:text-gray-400 mb-1 px-3">
                         {message.authorName}
@@ -1033,7 +1244,9 @@ export default function ChatInterface({
                     )}
                     
                     <div
-                      className={`px-4 py-2 rounded-2xl ${
+                      className={`px-4 pr-12 rounded-2xl relative group transition-all ${
+                        moderationMenuMessageId === message.id ? 'pt-8 pb-2' : 'py-2'
+                      } ${
                         isCurrentUser
                           ? 'bg-blue-500 text-white'
                           : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
@@ -1043,6 +1256,13 @@ export default function ChatInterface({
                         WebkitUserSelect: 'none',
                         userSelect: 'none',
                         touchAction: 'none'
+                      }}
+                      onClick={(e) => {
+                        // On mobile, tap message to show/hide menu button
+                        if (window.innerWidth < 768) {
+                          e.stopPropagation()
+                          setModerationMenuMessageId(moderationMenuMessageId === message.id ? null : message.id)
+                        }
                       }}
                       onContextMenu={(e) => {
                         e.preventDefault()
@@ -1099,6 +1319,12 @@ export default function ChatInterface({
                           
                           // Add non-passive touch event listener to prevent context menu
                           const handleTouchStart = (e: TouchEvent) => {
+                            // Don't prevent default if touching an image or link (let click events work)
+                            const touchTarget = e.target as HTMLElement
+                            if (touchTarget.tagName === 'IMG' || touchTarget.tagName === 'A') {
+                              return
+                            }
+                            
                             e.preventDefault() // This works because listener is non-passive
                             
                             const target = e.currentTarget as HTMLElement
@@ -1141,16 +1367,156 @@ export default function ChatInterface({
                         }
                       }}
                     >
-                      {message.type === 'text' ? (
-                        <p className="text-xl whitespace-pre-wrap" style={{ WebkitTextSizeAdjust: '100%' }}>{message.content}</p>
-                      ) : (
-                        <Image 
-                          src={message.content} 
-                          alt="Message attachment" 
-                          width={200} 
-                          height={150} 
-                          className="max-w-xs h-auto rounded-lg" 
-                        />
+                      {/* Message text content */}
+                      {message.content && message.content.trim() && (
+                        <p className="text-xl whitespace-pre-wrap" style={{ WebkitTextSizeAdjust: '100%' }}>
+                          {renderMessageContent(message.content, isCurrentUser)}
+                        </p>
+                      )}
+                      
+                      {/* Message images */}
+                      {message.metadata?.images && message.metadata.images.length > 0 && (
+                        <div className={`mt-2 grid gap-2 ${
+                          message.metadata.images.length === 1 ? 'grid-cols-1' :
+                          message.metadata.images.length === 2 ? 'grid-cols-2' :
+                          'grid-cols-3'
+                        }`}>
+                          {message.metadata.images.map((image, idx) => (
+                            <div key={idx} className="relative aspect-square max-w-xs">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={image.base64}
+                                alt={`Image ${idx + 1}`}
+                                className="w-full h-full object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                                onClick={() => {
+                                  setLightboxState({
+                                    isOpen: true,
+                                    images: message.metadata!.images!,
+                                    currentIndex: idx
+                                  })
+                                }}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Link preview */}
+                      {message.metadata?.links && message.metadata.links.length > 0 && (
+                        <div className="mt-2">
+                          {message.metadata.links.map((link, idx) => (
+                            <a
+                              key={idx}
+                              href={link.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={`block rounded-lg border overflow-hidden hover:opacity-90 transition-opacity ${
+                                isCurrentUser
+                                  ? 'border-blue-400 bg-blue-50 dark:bg-blue-900/20'
+                                  : 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800'
+                              }`}
+                            >
+                              {link.image && (
+                                <div className="w-full h-48 bg-gray-200 dark:bg-gray-700">
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img
+                                    src={link.image}
+                                    alt={link.title || 'Link preview'}
+                                    className="w-full h-full object-cover"
+                                  />
+                                </div>
+                              )}
+                              <div className="p-3">
+                                {link.siteName && (
+                                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                    {link.siteName}
+                                  </p>
+                                )}
+                                {link.title && (
+                                  <p className="font-semibold text-gray-900 dark:text-white mb-1 line-clamp-2">
+                                    {link.title}
+                                  </p>
+                                )}
+                                {link.description && (
+                                  <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2">
+                                    {link.description}
+                                  </p>
+                                )}
+                              </div>
+                            </a>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Moderation menu button - top-right corner inside bubble */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setModerationMenuMessageId(moderationMenuMessageId === message.id ? null : message.id)
+                        }}
+                        className={`absolute top-2 right-2 p-2 rounded-full transition-opacity ${
+                          isCurrentUser 
+                            ? 'hover:bg-blue-600' 
+                            : 'hover:bg-gray-200 dark:hover:bg-gray-600'
+                        } ${
+                          moderationMenuMessageId === message.id 
+                            ? 'opacity-100' 
+                            : 'opacity-0 md:group-hover:opacity-100'
+                        }`}
+                      >
+                        <MoreVertical size={18} className={isCurrentUser ? 'text-white' : 'text-gray-500 dark:text-gray-400'} />
+                      </button>
+
+                      {/* Moderation menu dropdown */}
+                      {moderationMenuMessageId === message.id && (
+                        <div className="absolute top-8 right-0 z-30 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 min-w-[120px]">
+                          <button
+                            onClick={async (e) => {
+                              e.stopPropagation()
+                              try {
+                                const response = await fetch(`/api/chat/message/${message.id}`, {
+                                  method: 'PATCH',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ action: 'hide' })
+                                })
+                                if (response.ok) {
+                                  // Remove from local state
+                                  setMessages(prev => prev.filter(m => m.id !== message.id))
+                                }
+                              } catch (error) {
+                                console.error('Failed to hide message:', error)
+                              }
+                              setModerationMenuMessageId(null)
+                            }}
+                            className="w-full px-4 py-2 text-left text-sm text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                          >
+                            <EyeOff size={16} />
+                            Hide
+                          </button>
+                          {(isCurrentUser || false) && ( // TODO: Add group admin check
+                            <button
+                              onClick={async (e) => {
+                                e.stopPropagation()
+                                if (!confirm('Delete this message? This cannot be undone.')) return
+                                try {
+                                  const response = await fetch(`/api/chat/message/${message.id}`, {
+                                    method: 'DELETE'
+                                  })
+                                  if (response.ok) {
+                                    // Socket will broadcast the deletion
+                                  }
+                                } catch (error) {
+                                  console.error('Failed to delete message:', error)
+                                }
+                                setModerationMenuMessageId(null)
+                              }}
+                              className="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                            >
+                              <Trash2 size={16} />
+                              Delete
+                            </button>
+                          )}
+                        </div>
                       )}
                     </div>
 
@@ -1196,7 +1562,59 @@ export default function ChatInterface({
 
       {/* Message Input */}
       <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+        {/* Image previews - dynamic grid layout */}
+        {pendingImages.length > 0 && (
+          <div className={`mb-3 grid gap-2 ${
+            pendingImages.length === 1 ? 'grid-cols-1' :
+            pendingImages.length === 2 ? 'grid-cols-2' :
+            'grid-cols-3'
+          }`}>
+            {pendingImages.map((image, index) => (
+              <div key={index} className="relative aspect-square">
+                {/* Using <img> instead of <Image> because src is base64 data URL (already optimized client-side) */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={image.base64}
+                  alt={`Preview ${index + 1}`}
+                  className="w-full h-full object-cover rounded-lg border-2 border-blue-500"
+                />
+                <button
+                  onClick={() => handleRemoveImage(index)}
+                  className="absolute -top-1 -right-1 w-5 h-5 bg-gray-600 dark:bg-gray-500 text-white rounded-full flex items-center justify-center hover:bg-gray-700 dark:hover:bg-gray-600 shadow-md"
+                >
+                  <X size={12} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+        
         <div className="flex items-end gap-3">
+          {/* Hidden file input - supports multiple selection */}
+          <input
+            ref={imageInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            multiple
+            onChange={handleImageSelect}
+            className="hidden"
+          />
+          
+          {/* Image button */}
+          <button
+            type="button"
+            onClick={() => imageInputRef.current?.click()}
+            disabled={isProcessingImage}
+            className="w-12 h-12 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50 relative"
+          >
+            {isProcessingImage ? (
+              <div className="w-5 h-5 border-2 border-gray-600 dark:border-gray-300 border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <ImagePlus size={20} />
+            )}
+          </button>
+          
           <div className="flex-1 relative">
             <textarea
               ref={inputRef}
@@ -1212,10 +1630,14 @@ export default function ChatInterface({
           
           <button
             onClick={handleSendMessage}
-            disabled={!newMessage.trim()}
-            className="w-12 h-12 bg-blue-500 text-white rounded-full flex items-center justify-center disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-blue-600 disabled:hover:bg-gray-300 transition-colors"
+            disabled={(!newMessage.trim() && pendingImages.length === 0) || isSendingMessage}
+            className="w-12 h-12 bg-blue-500 text-white rounded-full flex items-center justify-center disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-blue-600 disabled:hover:bg-gray-300 transition-colors relative"
           >
-            <Send size={20} />
+            {isSendingMessage ? (
+              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <Send size={20} />
+            )}
           </button>
         </div>
       </div>
@@ -1228,6 +1650,97 @@ export default function ChatInterface({
         position={emojiPickerState.position}
         showAbove={emojiPickerState.showAbove}
       />
+
+      {/* Image Lightbox */}
+      {lightboxState.isOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90"
+          onClick={() => setLightboxState({ ...lightboxState, isOpen: false })}
+          onTouchStart={(e) => {
+            const touch = e.touches[0]
+            ;(e.currentTarget as any).touchStartX = touch.clientX
+          }}
+          onTouchEnd={(e) => {
+            const touchStartX = (e.currentTarget as any).touchStartX
+            const touchEndX = e.changedTouches[0].clientX
+            const diff = touchStartX - touchEndX
+            
+            if (Math.abs(diff) > 50 && lightboxState.images.length > 1) {
+              if (diff > 0) {
+                // Swiped left -> next image
+                setLightboxState({
+                  ...lightboxState,
+                  currentIndex: lightboxState.currentIndex === lightboxState.images.length - 1 
+                    ? 0 
+                    : lightboxState.currentIndex + 1
+                })
+              } else {
+                // Swiped right -> previous image
+                setLightboxState({
+                  ...lightboxState,
+                  currentIndex: lightboxState.currentIndex === 0 
+                    ? lightboxState.images.length - 1 
+                    : lightboxState.currentIndex - 1
+                })
+              }
+            }
+          }}
+        >
+          <button
+            className="absolute top-4 right-4 z-20 w-10 h-10 rounded-full bg-black/50 text-white hover:bg-black/70 flex items-center justify-center"
+            onClick={() => setLightboxState({ ...lightboxState, isOpen: false })}
+          >
+            <X size={20} />
+          </button>
+
+          {lightboxState.images.length > 1 && (
+            <>
+              <button
+                className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-black/50 text-white hover:bg-black/70 flex items-center justify-center"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setLightboxState({
+                    ...lightboxState,
+                    currentIndex: lightboxState.currentIndex === 0 
+                      ? lightboxState.images.length - 1 
+                      : lightboxState.currentIndex - 1
+                  })
+                }}
+              >
+                <ChevronLeft size={24} />
+              </button>
+
+              <button
+                className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-black/50 text-white hover:bg-black/70 flex items-center justify-center"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setLightboxState({
+                    ...lightboxState,
+                    currentIndex: lightboxState.currentIndex === lightboxState.images.length - 1 
+                      ? 0 
+                      : lightboxState.currentIndex + 1
+                  })
+                }}
+              >
+                <ChevronRight size={24} />
+              </button>
+
+              <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 px-3 py-1 rounded-full bg-black/60 text-white text-sm">
+                {lightboxState.currentIndex + 1} / {lightboxState.images.length}
+              </div>
+            </>
+          )}
+
+          <div className="relative max-w-[90vw] max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={lightboxState.images[lightboxState.currentIndex].base64}
+              alt={`Image ${lightboxState.currentIndex + 1}`}
+              className="max-w-full max-h-[90vh] object-contain rounded-lg"
+            />
+          </div>
+        </div>
+      )}
     </div>
   )
 }

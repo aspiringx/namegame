@@ -7,7 +7,7 @@ import { useSession } from 'next-auth/react'
 interface SocketContextType {
   socket: Socket | null
   isConnected: boolean
-  sendMessage: (conversationId: string, content: string) => void
+  sendMessage: (conversationId: string, content: string, options?: { type?: string; metadata?: any }) => void
   joinConversation: (conversationId: string) => void
   leaveConversation: (conversationId: string) => void
 }
@@ -84,7 +84,7 @@ export function SocketProvider({ children }: SocketProviderProps) {
     }
   }, [session])
 
-  const sendMessage = (conversationId: string, content: string) => {
+  const sendMessage = (conversationId: string, content: string, options?: { type?: string; metadata?: any }) => {
     if (!socket || !isConnected) {
       console.error('[Socket] Cannot send message: not connected')
       return
@@ -93,7 +93,8 @@ export function SocketProvider({ children }: SocketProviderProps) {
     socket.emit('send-message', {
       conversationId,
       content,
-      type: 'text'
+      type: options?.type || 'text',
+      metadata: options?.metadata
     })
   }
 

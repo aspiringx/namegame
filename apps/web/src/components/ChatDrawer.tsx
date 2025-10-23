@@ -379,7 +379,7 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
 
   return (
     <>
-      <Drawer isOpen={isOpen} onClose={onClose} title="Messages" width="md">
+      <Drawer isOpen={isOpen} onClose={onClose} title={showChatInterface ? undefined : "Messages"} width="md">
 
         {/* New Message Buttons */}
         <div className="p-4 border-b border-gray-200 dark:border-gray-700 space-y-2">

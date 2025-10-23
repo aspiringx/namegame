@@ -12,12 +12,13 @@ interface User {
 interface MessageData {
   conversationId: string;
   content: string;
-  type?: 'text' | 'image' | 'system';
+  type?: 'text' | 'image' | 'link' | 'mixed' | 'system';
+  metadata?: any; // Images, link previews, etc.
 }
 
 export async function handleMessage(socket: Socket, user: User, data: MessageData) {
   try {
-    const { conversationId, content, type = 'text' } = data;
+    const { conversationId, content, type = 'text', metadata } = data;
 
     // Validate input
     if (!conversationId || !content?.trim()) {
@@ -33,6 +34,7 @@ export async function handleMessage(socket: Socket, user: User, data: MessageDat
       data: {
         content: content.trim(),
         type,
+        metadata: metadata || undefined,
         authorId: user.id,
         conversationId,
       },
@@ -69,6 +71,7 @@ export async function handleMessage(socket: Socket, user: User, data: MessageDat
         id: message.id,
         content: message.content,
         type: message.type,
+        metadata: message.metadata,
         conversationId: message.conversationId,
         conversation: message.conversation,
         author: {
