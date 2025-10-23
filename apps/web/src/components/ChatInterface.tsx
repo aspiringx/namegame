@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { Send, ArrowLeft, Pencil, Check, X, ImagePlus, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Send, ArrowLeft, Pencil, Check, X, ImagePlus, ChevronLeft, ChevronRight, MoreVertical, EyeOff, Trash2 } from 'lucide-react'
 import Image from 'next/image'
 import { useSocket } from '@/context/SocketContext'
 import { useSession } from 'next-auth/react'
@@ -95,6 +95,7 @@ export default function ChatInterface({
     images: Array<{ base64: string; width: number; height: number }>
     currentIndex: number
   }>({ isOpen: false, images: [], currentIndex: 0 })
+  const [moderationMenuMessageId, setModerationMenuMessageId] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -466,12 +467,20 @@ export default function ChatInterface({
       }
     }
     
+    const handleMessageDeleted = (data: { messageId: string; conversationId: string }) => {
+      if (data.conversationId === conversationId) {
+        setMessages(prev => prev.filter(m => m.id !== data.messageId))
+      }
+    }
+    
     socket.on('message', handleOtherMessage)
     socket.on('reaction', handleOtherReaction)
+    socket.on('message_deleted', handleMessageDeleted)
     
     return () => {
       socket.off('message', handleOtherMessage)
       socket.off('reaction', handleOtherReaction)
+      socket.off('message_deleted', handleMessageDeleted)
     }
   }, [socket, conversationId, currentUserId])
 
@@ -507,6 +516,18 @@ export default function ChatInterface({
       document.body.style.overflow = 'unset'
     }
   }, [lightboxState])
+
+  // Close moderation menu on click outside
+  useEffect(() => {
+    if (!moderationMenuMessageId) return
+
+    const handleClickOutside = () => {
+      setModerationMenuMessageId(null)
+    }
+
+    document.addEventListener('click', handleClickOutside)
+    return () => document.removeEventListener('click', handleClickOutside)
+  }, [moderationMenuMessageId])
 
   if (!isOpen) return null
 
@@ -1223,7 +1244,9 @@ export default function ChatInterface({
                     )}
                     
                     <div
-                      className={`px-4 py-2 rounded-2xl ${
+                      className={`px-4 pr-12 rounded-2xl relative group transition-all ${
+                        moderationMenuMessageId === message.id ? 'pt-8 pb-2' : 'py-2'
+                      } ${
                         isCurrentUser
                           ? 'bg-blue-500 text-white'
                           : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
@@ -1233,6 +1256,13 @@ export default function ChatInterface({
                         WebkitUserSelect: 'none',
                         userSelect: 'none',
                         touchAction: 'none'
+                      }}
+                      onClick={(e) => {
+                        // On mobile, tap message to show/hide menu button
+                        if (window.innerWidth < 768) {
+                          e.stopPropagation()
+                          setModerationMenuMessageId(moderationMenuMessageId === message.id ? null : message.id)
+                        }
                       }}
                       onContextMenu={(e) => {
                         e.preventDefault()
@@ -1415,6 +1445,77 @@ export default function ChatInterface({
                               </div>
                             </a>
                           ))}
+                        </div>
+                      )}
+
+                      {/* Moderation menu button - top-right corner inside bubble */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setModerationMenuMessageId(moderationMenuMessageId === message.id ? null : message.id)
+                        }}
+                        className={`absolute top-2 right-2 p-2 rounded-full transition-opacity ${
+                          isCurrentUser 
+                            ? 'hover:bg-blue-600' 
+                            : 'hover:bg-gray-200 dark:hover:bg-gray-600'
+                        } ${
+                          moderationMenuMessageId === message.id 
+                            ? 'opacity-100' 
+                            : 'opacity-0 md:group-hover:opacity-100'
+                        }`}
+                      >
+                        <MoreVertical size={18} className={isCurrentUser ? 'text-white' : 'text-gray-500 dark:text-gray-400'} />
+                      </button>
+
+                      {/* Moderation menu dropdown */}
+                      {moderationMenuMessageId === message.id && (
+                        <div className="absolute top-8 right-0 z-30 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 min-w-[120px]">
+                          <button
+                            onClick={async (e) => {
+                              e.stopPropagation()
+                              try {
+                                const response = await fetch(`/api/chat/message/${message.id}`, {
+                                  method: 'PATCH',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ action: 'hide' })
+                                })
+                                if (response.ok) {
+                                  // Remove from local state
+                                  setMessages(prev => prev.filter(m => m.id !== message.id))
+                                }
+                              } catch (error) {
+                                console.error('Failed to hide message:', error)
+                              }
+                              setModerationMenuMessageId(null)
+                            }}
+                            className="w-full px-4 py-2 text-left text-sm text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                          >
+                            <EyeOff size={16} />
+                            Hide
+                          </button>
+                          {(isCurrentUser || false) && ( // TODO: Add group admin check
+                            <button
+                              onClick={async (e) => {
+                                e.stopPropagation()
+                                if (!confirm('Delete this message? This cannot be undone.')) return
+                                try {
+                                  const response = await fetch(`/api/chat/message/${message.id}`, {
+                                    method: 'DELETE'
+                                  })
+                                  if (response.ok) {
+                                    // Socket will broadcast the deletion
+                                  }
+                                } catch (error) {
+                                  console.error('Failed to delete message:', error)
+                                }
+                                setModerationMenuMessageId(null)
+                              }}
+                              className="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                            >
+                              <Trash2 size={16} />
+                              Delete
+                            </button>
+                          )}
                         </div>
                       )}
                     </div>
