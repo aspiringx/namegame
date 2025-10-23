@@ -1630,10 +1630,10 @@ export default function ChatInterface({
           
           <button
             onClick={handleSendMessage}
-            disabled={(!newMessage.trim() && pendingImages.length === 0) || isSendingMessage}
+            disabled={(!newMessage.trim() && pendingImages.length === 0) || isSendingMessage || isProcessingImage}
             className="w-12 h-12 bg-blue-500 text-white rounded-full flex items-center justify-center disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-blue-600 disabled:hover:bg-gray-300 transition-colors relative"
           >
-            {isSendingMessage ? (
+            {isSendingMessage || isProcessingImage ? (
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
             ) : (
               <Send size={20} />
