@@ -581,7 +581,7 @@ export default function ChatInterface({
     setPendingImages(prev => prev.filter((_, i) => i !== index))
   }
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if ((!newMessage.trim() && pendingImages.length === 0) || !conversationId || isSendingMessage) return
 
     const messageContent = newMessage.trim()
@@ -614,7 +614,37 @@ export default function ChatInterface({
       }
     }
 
-    // Send message with images and/or text
+    // Detect URLs and fetch link previews
+    const urlRegex = /(https?:\/\/[^\s]+)/g
+    const urls = messageContent.match(urlRegex)
+    if (urls && urls.length > 0) {
+      // Fetch preview for first URL only (to keep it simple)
+      try {
+        const response = await fetch('/api/chat/link-preview', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: urls[0] })
+        })
+        if (response.ok) {
+          const preview = await response.json()
+          if (!metadata) metadata = {}
+          metadata.links = [{
+            url: urls[0],
+            title: preview.title,
+            description: preview.description,
+            image: preview.image,
+            siteName: preview.siteName
+          }]
+          if (messageType === 'text') messageType = 'link'
+          if (messageType === 'mixed') messageType = 'mixed' // Keep as mixed if has images too
+        }
+      } catch (error) {
+        console.error('[Chat] Failed to fetch link preview:', error)
+        // Continue sending message without preview
+      }
+    }
+
+    // Send message with images, links, and/or text
     sendMessage(conversationId, messageContent || ' ', {
       type: messageType,
       metadata
@@ -1337,6 +1367,53 @@ export default function ChatInterface({
                                 }}
                               />
                             </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Link preview */}
+                      {message.metadata?.links && message.metadata.links.length > 0 && (
+                        <div className="mt-2">
+                          {message.metadata.links.map((link, idx) => (
+                            <a
+                              key={idx}
+                              href={link.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={`block rounded-lg border overflow-hidden hover:opacity-90 transition-opacity ${
+                                isCurrentUser
+                                  ? 'border-blue-400 bg-blue-50 dark:bg-blue-900/20'
+                                  : 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800'
+                              }`}
+                            >
+                              {link.image && (
+                                <div className="w-full h-48 bg-gray-200 dark:bg-gray-700">
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img
+                                    src={link.image}
+                                    alt={link.title || 'Link preview'}
+                                    className="w-full h-full object-cover"
+                                  />
+                                </div>
+                              )}
+                              <div className="p-3">
+                                {link.siteName && (
+                                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                    {link.siteName}
+                                  </p>
+                                )}
+                                {link.title && (
+                                  <p className="font-semibold text-gray-900 dark:text-white mb-1 line-clamp-2">
+                                    {link.title}
+                                  </p>
+                                )}
+                                {link.description && (
+                                  <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2">
+                                    {link.description}
+                                  </p>
+                                )}
+                              </div>
+                            </a>
                           ))}
                         </div>
                       )}
