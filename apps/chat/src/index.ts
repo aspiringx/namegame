@@ -67,14 +67,14 @@ async function startChatServer() {
         if (msg.channel === "new_message" && msg.payload) {
           const messageData = JSON.parse(msg.payload);
           
-          // Broadcast to conversation room (for users actively viewing the conversation)
+          // Broadcast full message to conversation room (for users actively viewing)
           io.to(`conversation:${messageData.conversationId}`).emit(
             "message",
             messageData
           );
           
-          // Also broadcast to all participants' user rooms (for unread indicators)
-          // This ensures users get notified even if they're not in the conversation room
+          // Broadcast notification to user rooms (for unread indicators/green dots)
+          // Only send metadata, not full message content
           const { PrismaClient } = await import('@namegame/db');
           const prisma = new PrismaClient();
           
@@ -83,15 +83,20 @@ async function startChatServer() {
             select: { userId: true }
           });
           
-          // Emit to each participant's user room
+          // Emit notification event to each participant's user room
           participants.forEach(participant => {
-            io.to(`user:${participant.userId}`).emit("message", messageData);
+            io.to(`user:${participant.userId}`).emit("message_notification", {
+              conversationId: messageData.conversationId,
+              messageId: messageData.id,
+              authorId: messageData.authorId,
+              timestamp: messageData.createdAt
+            });
           });
           
           await prisma.$disconnect();
           
           console.log(
-            `[Chat] Broadcasted message to conversation:${messageData.conversationId} and ${participants.length} participants`
+            `[Chat] Broadcasted message to conversation:${messageData.conversationId} and notifications to ${participants.length} participants`
           );
         } else if (msg.channel === "message_deleted" && msg.payload) {
           const { messageId, conversationId } = JSON.parse(msg.payload);

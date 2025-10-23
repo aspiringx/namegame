@@ -293,6 +293,11 @@ export default function ChatInterface({
     if (!socket) return
 
     const handleNewMessage = (message: any) => {
+      // CRITICAL: Only add message if it belongs to THIS conversation
+      if (message.conversationId !== conversationId) {
+        return
+      }
+      
       const authorId = message.author?.id || message.authorId
       
       // Convert socket message to our ChatMessage format
@@ -448,13 +453,13 @@ export default function ChatInterface({
     }
   }, [])
 
-  // Listen for messages/reactions in OTHER conversations to show indicator
+  // Listen for notifications in OTHER conversations to show indicator
   useEffect(() => {
     if (!socket || !currentUserId) return
     
-    const handleOtherMessage = (message: any) => {
-      // If message is in a different conversation, show indicator
-      if (message.conversationId !== conversationId && message.author?.id !== currentUserId) {
+    const handleMessageNotification = (notification: any) => {
+      // If notification is for a different conversation and not from me, show indicator
+      if (notification.conversationId !== conversationId && notification.authorId !== currentUserId) {
         setHasOtherUnread(true)
       }
     }
@@ -473,12 +478,12 @@ export default function ChatInterface({
       }
     }
     
-    socket.on('message', handleOtherMessage)
+    socket.on('message_notification', handleMessageNotification)
     socket.on('reaction', handleOtherReaction)
     socket.on('message_deleted', handleMessageDeleted)
     
     return () => {
-      socket.off('message', handleOtherMessage)
+      socket.off('message_notification', handleMessageNotification)
       socket.off('reaction', handleOtherReaction)
       socket.off('message_deleted', handleMessageDeleted)
     }
