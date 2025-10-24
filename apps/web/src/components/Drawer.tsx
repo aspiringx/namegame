@@ -35,7 +35,7 @@ export default function Drawer({
       />
 
       {/* Drawer - slides in from right */}
-      <div className={`fixed top-0 right-0 h-full z-50 bg-white dark:bg-gray-800 shadow-2xl ${widthClasses[width]} flex flex-col transition-transform duration-300 ${
+      <div className={`fixed top-0 md:top-[64px] right-0 h-full md:h-[calc(100vh-64px)] z-50 bg-white dark:bg-gray-800 shadow-2xl ${widthClasses[width]} flex flex-col transition-transform duration-300 ${
         isOpen ? 'translate-x-0' : 'translate-x-full'
       }`}>
         {/* Header */}

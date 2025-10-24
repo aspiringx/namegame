@@ -56,7 +56,10 @@ export default function Header({
   return (
     <>
       <ChatDeepLink onOpenChat={handleOpenChat} />
-      <header id="page-header" className="bg-background border-border sticky top-0 left-0 z-50 w-full border-b">
+      <header
+        id="page-header"
+        className="bg-background border-border sticky top-0 left-0 z-50 w-full border-b"
+      >
         <div className="container mx-auto flex h-full items-center justify-between px-5 py-1">
           <div className="flex items-center gap-2">
             {/* PWA Navigation Controls */}
@@ -98,10 +101,12 @@ export default function Header({
                     className="h-10 w-10 object-cover"
                   />
                 )}
-                {/* Show group name on desktop, hide on mobile if in PWA */}
-                <span className={`block max-w-[200px] truncate text-xl font-bold text-gray-600 dark:text-gray-200 ${
-                  deviceInfo.isPWA && deviceInfo.isMobile ? 'hidden' : 'sm:max-w-none'
-                }`}>
+                {/* Show group name on desktop, hide on mobile */}
+                <span
+                  className={`block max-w-[200px] truncate text-xl font-bold text-gray-600 dark:text-gray-200 ${
+                    deviceInfo.isMobile ? 'hidden' : 'sm:max-w-none'
+                  }`}
+                >
                   {group.name}
                 </span>
               </button>
@@ -117,10 +122,8 @@ export default function Header({
                   height={32}
                   className="h-auto md:max-w-[32px]"
                 />
-                {/* Show NameGame text only on desktop or when not in PWA mobile */}
-                <span className={deviceInfo.isPWA && deviceInfo.isMobile ? 'hidden' : ''}>
-                  NameGame
-                </span>
+                {/* Show app name text only on desktop */}
+                <span className="hidden md:inline">NameGame</span>
               </Link>
             )}
           </div>

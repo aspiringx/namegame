@@ -102,6 +102,7 @@ export default function ChatInterface({
   const [editedName, setEditedName] = useState(conversationName)
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false)
   const [viewportOffset, setViewportOffset] = useState({ top: 0, height: 0 })
+  const [isMobile, setIsMobile] = useState(false)
   const [emojiPickerState, setEmojiPickerState] = useState<{
     isOpen: boolean
     messageId: string | null
@@ -275,9 +276,8 @@ export default function ChatInterface({
           setIsLoadingMore(false)
         }
       }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     },
-    [conversationId],
+    [conversationId, authorPhotos],
   )
 
   const loadMoreMessages = useCallback(() => {
@@ -413,27 +413,29 @@ export default function ChatInterface({
     return () => container.removeEventListener('scroll', handleScroll)
   }, [hasMoreMessages, isLoadingMore, messages, loadMoreMessages])
 
+  // Detect mobile on mount
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+
   // Load messages and join conversation when component mounts
   useEffect(() => {
     if (isOpen && conversationId) {
-      console.log('[ChatInterface] Conversation opened:', {
-        conversationId,
-        isKeyboardOpen,
-        visualViewportHeight: window.visualViewport?.height,
-        innerHeight: window.innerHeight
-      })
       // Load existing messages
       loadMessages()
 
       // Join conversation room
       if (isConnected) {
-        console.log('[Chat] Joining conversation:', conversationId)
         joinConversation(conversationId)
       }
 
       return () => {
         if (isConnected) {
-          console.log('[Chat] Leaving conversation:', conversationId)
           leaveConversation(conversationId)
         }
       }
@@ -449,11 +451,8 @@ export default function ChatInterface({
       messageId: string
       conversationId: string
     }) => {
-      console.log('[Chat] Received message notification:', notification)
-
       // CRITICAL: Only fetch message if it belongs to THIS conversation
       if (notification.conversationId !== conversationId) {
-        console.log('[Chat] Ignoring notification for different conversation')
         return
       }
 
@@ -462,12 +461,9 @@ export default function ChatInterface({
         (m) => m.id === notification.messageId || m.id.startsWith('temp-'),
       )
       if (exists) {
-        console.log('[Chat] Message already exists, skipping fetch')
         // If it's our optimistic message, it will be replaced by the POST response
         return
       }
-
-      console.log('[Chat] Fetching message:', notification.messageId)
       // Fetch full message via HTTP
       try {
         const response = await fetch(
@@ -660,39 +656,22 @@ export default function ChatInterface({
       if (window.visualViewport) {
         const isKeyboard =
           window.visualViewport.height < window.innerHeight * 0.75
-        console.log('[ChatInterface] Keyboard detection:', {
-          visualViewportHeight: window.visualViewport.height,
-          innerHeight: window.innerHeight,
-          threshold: window.innerHeight * 0.75,
-          isKeyboard,
-          isKeyboardOpen,
-          offsetTop: window.visualViewport.offsetTop,
-          offsetLeft: window.visualViewport.offsetLeft
-        })
         setIsKeyboardOpen(isKeyboard)
         setViewportOffset({
           top: window.visualViewport.offsetTop,
-          height: window.visualViewport.height
+          height: window.visualViewport.height,
         })
       }
     }
 
-    // Check on mount and after a delay (iOS keyboard opens async)
     const checkInitialState = () => {
       if (window.visualViewport) {
         const isKeyboard =
           window.visualViewport.height < window.innerHeight * 0.75
-        console.log('[ChatInterface] Initial viewport check:', {
-          visualViewportHeight: window.visualViewport.height,
-          innerHeight: window.innerHeight,
-          threshold: window.innerHeight * 0.75,
-          isKeyboard,
-          offsetTop: window.visualViewport.offsetTop
-        })
         setIsKeyboardOpen(isKeyboard)
         setViewportOffset({
           top: window.visualViewport.offsetTop,
-          height: window.visualViewport.height
+          height: window.visualViewport.height,
         })
       }
     }
@@ -715,7 +694,7 @@ export default function ChatInterface({
       window.visualViewport?.removeEventListener('scroll', handleResize)
       window.removeEventListener('resize', handleResize)
     }
-  }, [])
+  }, [isKeyboardOpen])
 
   // Listen for notifications in OTHER conversations to show indicator
   useEffect(() => {
@@ -1413,48 +1392,20 @@ export default function ChatInterface({
 
   if (!isOpen) return null
 
-  console.log('[ChatInterface] Rendering with isKeyboardOpen:', isKeyboardOpen)
-
   return (
     <div 
-      className="fixed left-0 right-0 bg-white dark:bg-gray-900 flex flex-col overflow-hidden z-50 transition-all duration-200 ease-out"
-      style={{
+      className="md:absolute md:inset-0 fixed left-0 right-0 bg-white dark:bg-gray-900 flex flex-col overflow-hidden z-50 transition-all duration-200 ease-out"
+      style={isMobile ? {
         top: viewportOffset.top > 0 ? `${viewportOffset.top - 1}px` : '0px',
         bottom: '0px',
         height: viewportOffset.height > 0 ? `${viewportOffset.height}px` : '100vh'
-      }}
-      ref={(el) => {
-        if (el) {
-          console.log('[ChatInterface] Container element:', {
-            position: window.getComputedStyle(el).position,
-            top: window.getComputedStyle(el).top,
-            height: window.getComputedStyle(el).height,
-            boundingRect: el.getBoundingClientRect(),
-            scrollTop: el.scrollTop,
-            visualViewport: {
-              offsetTop: window.visualViewport?.offsetTop,
-              height: window.visualViewport?.height
-            }
-          })
-        }
-      }}
+      } : undefined}
     >
       {/* Header - Fixed at top, outside scroll container */}
       <div
         className={`flex-shrink-0 z-10 flex items-center justify-between border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 transition-all ${
           isKeyboardOpen ? 'p-2' : 'p-4'
         }`}
-        ref={(el) => {
-          if (el) {
-            console.log('[ChatInterface] Header element:', {
-              position: window.getComputedStyle(el).position,
-              top: window.getComputedStyle(el).top,
-              zIndex: window.getComputedStyle(el).zIndex,
-              offsetTop: el.offsetTop,
-              boundingRect: el.getBoundingClientRect()
-            })
-          }
-        }}
       >
         <div className="flex items-center gap-3 min-w-0 flex-1">
           <div className="flex items-center gap-2">
