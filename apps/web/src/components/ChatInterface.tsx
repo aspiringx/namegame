@@ -938,12 +938,6 @@ export default function ChatInterface({
     setPendingImages([])
     setIsSendingMessage(true)
 
-    if (!isConnected) {
-      console.error('[Chat] Cannot send message: not connected to chat service')
-      setIsSendingMessage(false)
-      return
-    }
-
     // Determine message type and build metadata
     let messageType = 'text'
     let metadata: any = undefined
