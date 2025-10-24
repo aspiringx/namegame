@@ -505,10 +505,25 @@ export default function ChatInterface({
           isHidden: message.isHidden || false,
         }
 
-        // Add message
+        // Add or update message
         setMessages((prev) => {
-          const exists = prev.some((m) => m.id === chatMessage.id)
-          if (exists) return prev
+          // Check if this is replacing an optimistic message (temp ID)
+          const optimisticIndex = prev.findIndex((m) => m.id.startsWith('temp-'))
+          if (optimisticIndex !== -1 && chatMessage.authorId === session?.user?.id) {
+            // Replace optimistic message with real one (has real ID now)
+            const updated = [...prev]
+            updated[optimisticIndex] = chatMessage
+            return updated
+          }
+          
+          // Check if message already exists with this ID
+          const existingIndex = prev.findIndex((m) => m.id === chatMessage.id)
+          if (existingIndex !== -1) {
+            // Already have this message, don't duplicate
+            return prev
+          }
+          
+          // New message - add it
           return [...prev, chatMessage]
         })
 
@@ -1010,7 +1025,7 @@ export default function ChatInterface({
 
       const realMessage = await response.json()
 
-      // Replace optimistic message with real one
+      // Replace optimistic message with real one (has real ID now)
       setMessages((prev) =>
         prev.map((m) =>
           m.id === optimisticMessage.id
