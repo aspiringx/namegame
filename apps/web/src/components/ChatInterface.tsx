@@ -98,6 +98,7 @@ export default function ChatInterface({
   }>({ isOpen: false, images: [], currentIndex: 0 })
   const [moderationMenuMessageId, setModerationMenuMessageId] = useState<string | null>(null)
   const [moderationButtonVisibleId, setModerationButtonVisibleId] = useState<string | null>(null)
+  const [isGroupAdmin, setIsGroupAdmin] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -305,6 +306,42 @@ export default function ChatInterface({
   useEffect(() => {
     hasScrolledToMessageRef.current = false
   }, [conversationId])
+  
+  // Check if current user is a group admin for this conversation
+  useEffect(() => {
+    const checkGroupAdmin = async () => {
+      if (!conversationId || !currentUserId) {
+        setIsGroupAdmin(false)
+        return
+      }
+      
+      try {
+        // Fetch conversation details to get groupId
+        const response = await fetch(`/api/chat/conversations/${conversationId}`)
+        if (response.ok) {
+          const { conversation } = await response.json()
+          
+          // If conversation has a groupId, check if user is admin
+          if (conversation.groupId) {
+            const adminCheckResponse = await fetch(`/api/group/${conversation.groupId}/is-admin`)
+            if (adminCheckResponse.ok) {
+              const { isAdmin } = await adminCheckResponse.json()
+              setIsGroupAdmin(isAdmin)
+            } else {
+              setIsGroupAdmin(false)
+            }
+          } else {
+            setIsGroupAdmin(false)
+          }
+        }
+      } catch (error) {
+        console.error('[Chat] Error checking group admin status:', error)
+        setIsGroupAdmin(false)
+      }
+    }
+    
+    checkGroupAdmin()
+  }, [conversationId, currentUserId])
   
   // Detect scroll to top for loading more messages
   useEffect(() => {
@@ -1386,7 +1423,7 @@ export default function ChatInterface({
                         WebkitTouchCallout: 'none',
                         WebkitUserSelect: 'none',
                         userSelect: 'none',
-                        touchAction: 'none'
+                        touchAction: 'pan-y' // Allow vertical scrolling, prevent horizontal gestures
                       }}
                       onClick={(e) => {
                         // Don't handle click if user was dragging or if long press was triggered
@@ -1645,7 +1682,7 @@ export default function ChatInterface({
                             <EyeOff size={16} />
                             Hide
                           </button>
-                          {(isCurrentUser || false) && ( // TODO: Add group admin check
+                          {(isCurrentUser || isGroupAdmin) && (
                             <button
                               onClick={async (e) => {
                                 e.stopPropagation()

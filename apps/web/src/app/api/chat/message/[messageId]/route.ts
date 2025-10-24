@@ -36,11 +36,27 @@ export async function DELETE(
       return NextResponse.json({ error: 'Message not found' }, { status: 404 })
     }
 
-    // Check permissions: only author can delete for now
-    // TODO: Add group admin check using GroupUser with admin role
+    // Check permissions: author or group admin can delete
     const isAuthor = message.authorId === session.user!.id
+    
+    let isGroupAdmin = false
+    if (message.conversation.groupId) {
+      // Check if user is an admin of the group
+      const groupUser = await prisma.groupUser.findUnique({
+        where: {
+          userId_groupId: {
+            userId: session.user!.id,
+            groupId: message.conversation.groupId
+          }
+        },
+        include: {
+          role: true
+        }
+      })
+      isGroupAdmin = groupUser?.role?.code === 'admin'
+    }
 
-    if (!isAuthor) {
+    if (!isAuthor && !isGroupAdmin) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
