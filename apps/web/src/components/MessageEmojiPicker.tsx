@@ -25,6 +25,16 @@ export default function MessageEmojiPicker({
     setMounted(true)
   }, [])
 
+  // Ensure body scroll is not blocked when picker closes
+  useEffect(() => {
+    if (!isOpen) {
+      // Force restore scroll when picker closes
+      document.body.style.overflow = ''
+      document.body.style.position = ''
+      document.body.style.touchAction = ''
+    }
+  }, [isOpen])
+
   const handleEmojiClick = (emojiData: EmojiClickData) => {
     onEmojiSelect(emojiData.emoji)
     onClose()
@@ -48,6 +58,10 @@ export default function MessageEmojiPicker({
       <div 
         className="fixed inset-0 z-[60]"
         onClick={onClose}
+        onTouchEnd={(e) => {
+          e.preventDefault()
+          onClose()
+        }}
       />
       
       {/* Picker */}

@@ -843,6 +843,29 @@ export default function ChatInterface({
     }
   }, [socket, conversationId, currentUserId])
 
+  // Prevent system context menu when emoji picker is open or on message bubbles
+  useEffect(() => {
+    // Prevent context menu on message bubbles or when picker is open
+    const handleContextMenu = (e: Event) => {
+      const target = e.target as HTMLElement
+      const bubble = target.closest('[data-message-bubble]')
+      
+      // Prevent if on message bubble OR if emoji picker is open
+      if (bubble || emojiPickerState.isOpen) {
+        e.preventDefault()
+        e.stopPropagation()
+        return false
+      }
+    }
+
+    // Use capture phase to catch event before it bubbles
+    document.addEventListener('contextmenu', handleContextMenu, { capture: true })
+
+    return () => {
+      document.removeEventListener('contextmenu', handleContextMenu, { capture: true })
+    }
+  }, [emojiPickerState.isOpen])
+
   // Keyboard navigation for lightbox
   useEffect(() => {
     if (!lightboxState.isOpen) return
@@ -883,13 +906,16 @@ export default function ChatInterface({
     if (!moderationMenuMessageId && !moderationButtonVisibleId) return
 
     const handleClickOutside = () => {
+      // Don't clear if we're in edit mode - keep the padding consistent
+      if (editingMessageId) return
+      
       setModerationMenuMessageId(null)
       setModerationButtonVisibleId(null)
     }
 
     document.addEventListener('click', handleClickOutside)
     return () => document.removeEventListener('click', handleClickOutside)
-  }, [moderationMenuMessageId, moderationButtonVisibleId])
+  }, [moderationMenuMessageId, moderationButtonVisibleId, editingMessageId])
 
   if (!isOpen) return null
 
@@ -1182,11 +1208,17 @@ export default function ChatInterface({
       showAbove: true,
     })
 
-    // Save scroll position
+    // Save scroll position and ensure container is scrollable
     const messagesContainer = document.querySelector(
       '[data-messages-container]',
-    )
+    ) as HTMLElement
     const scrollTop = messagesContainer?.scrollTop || 0
+    
+    // Force restore scroll capability
+    if (messagesContainer) {
+      messagesContainer.style.overflow = 'auto'
+      messagesContainer.style.pointerEvents = 'auto'
+    }
 
     // Determine if adding or removing BEFORE optimistic update
     const message = messages.find((m) => m.id === messageId)
@@ -1623,6 +1655,9 @@ export default function ChatInterface({
           setDragStartX(e.clientX)
         }}
         onMouseMove={(e) => {
+          // Don't show timestamps if in edit mode
+          if (editingMessageId) return
+          
           if (dragStartX > 0) {
             const deltaX = dragStartX - e.clientX
             if (Math.abs(deltaX) > 5) {
@@ -1743,6 +1778,7 @@ export default function ChatInterface({
                         )}
 
                         <div
+                          data-message-bubble
                           className={`px-4 py-2 rounded-2xl relative group transition-all ${
                             moderationMenuMessageId === message.id ||
                             moderationButtonVisibleId === message.id
@@ -1767,8 +1803,8 @@ export default function ChatInterface({
                             WebkitTouchCallout: 'none',
                             WebkitUserSelect: 'none',
                             userSelect: 'none',
-                            touchAction: 'manipulation', // Prevent system context menu on long-press
-                          }}
+                            touchAction: 'pan-y', // Allow vertical scrolling but prevent long-press menu
+                          } as React.CSSProperties}
                           onClick={(e) => {
                             // Don't handle click if user was dragging or if long press was triggered
                             const target = e.currentTarget as any
@@ -1777,6 +1813,11 @@ export default function ChatInterface({
                               isSwiping ||
                               target.preventClick
                             ) {
+                              return
+                            }
+
+                            // Don't toggle button visibility if in edit mode
+                            if (editingMessageId === message.id) {
                               return
                             }
 
@@ -1796,6 +1837,9 @@ export default function ChatInterface({
                             return false
                           }}
                           onMouseDown={(e) => {
+                            // Don't handle if in edit mode
+                            if (editingMessageId === message.id) return
+
                             const target = e.currentTarget
                             const startX = e.clientX
                             const startY = e.clientY
@@ -1826,6 +1870,9 @@ export default function ChatInterface({
                             ;(e.currentTarget as any).mouseDownY = undefined
                           }}
                           onMouseMove={(e) => {
+                            // Don't handle if in edit mode
+                            if (editingMessageId === message.id) return
+
                             const target = e.currentTarget as any
                             const startX = target.mouseDownX
                             const startY = target.mouseDownY
@@ -1849,6 +1896,9 @@ export default function ChatInterface({
                             }
                           }}
                           onTouchStart={(e) => {
+                            // Don't handle if in edit mode
+                            if (editingMessageId === message.id) return
+
                             const target = e.currentTarget
                             const touchTarget = e.target as HTMLElement
 
@@ -1894,6 +1944,9 @@ export default function ChatInterface({
                             }, 50)
                           }}
                           onTouchMove={(e) => {
+                            // Don't handle if in edit mode
+                            if (editingMessageId === message.id) return
+
                             const target = e.currentTarget
                             const timer = (target as any).longPressTimer
                             if (timer) clearTimeout(timer)
@@ -1916,6 +1969,7 @@ export default function ChatInterface({
                         >
                           {/* Content wrapper to prevent overlap with button */}
                           <div className={
+                            editingMessageId === message.id ||
                             moderationMenuMessageId === message.id ||
                             moderationButtonVisibleId === message.id
                               ? 'pr-12'
@@ -1930,8 +1984,23 @@ export default function ChatInterface({
                                   className="w-full px-3 py-2 text-xl bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg resize-none"
                                   rows={3}
                                   autoFocus
+                                  onClick={(e) => e.stopPropagation()}
+                                  style={{
+                                    userSelect: 'text',
+                                    WebkitUserSelect: 'text',
+                                  }}
                                 />
                                 <div className="flex gap-2">
+                                  <button
+                                    onClick={() => {
+                                      setEditingMessageId(null)
+                                      setEditedContent('')
+                                    }}
+                                    className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 flex items-center gap-2"
+                                  >
+                                    <X size={16} />
+                                    Cancel
+                                  </button>
                                   <button
                                     onClick={async () => {
                                       if (!editedContent.trim()) return
@@ -1971,20 +2040,10 @@ export default function ChatInterface({
                                         console.error('[Chat] Error editing message:', error)
                                       }
                                     }}
-                                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 flex items-center gap-2"
+                                    className="px-4 py-2 bg-blue-500 text-white border-2 border-white rounded-lg hover:bg-blue-600 flex items-center gap-2"
                                   >
                                     <Check size={16} />
                                     Save
-                                  </button>
-                                  <button
-                                    onClick={() => {
-                                      setEditingMessageId(null)
-                                      setEditedContent('')
-                                    }}
-                                    className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 flex items-center gap-2"
-                                  >
-                                    <X size={16} />
-                                    Cancel
                                   </button>
                                 </div>
                               </div>
@@ -2003,7 +2062,11 @@ export default function ChatInterface({
                                   {/* Show (edited) indicator if message was edited */}
                                   {message.updatedAt && message.createdAt && 
                                    message.updatedAt.getTime() > message.createdAt.getTime() && (
-                                    <span className="text-xs text-gray-400 dark:text-gray-500 italic ml-2">
+                                    <span className={`text-xs italic ml-2 ${
+                                      isCurrentUser 
+                                        ? 'text-blue-100' 
+                                        : 'text-gray-400 dark:text-gray-500'
+                                    }`}>
                                       (edited)
                                     </span>
                                   )}
@@ -2116,9 +2179,11 @@ export default function ChatInterface({
                                   ? 'hover:bg-blue-600'
                                   : 'hover:bg-gray-200 dark:hover:bg-gray-600'
                               } ${
-                                // Show button if menu is open OR on mobile if button visibility toggled
-                                moderationMenuMessageId === message.id ||
-                                moderationButtonVisibleId === message.id
+                                // Hide button when editing, show if menu is open OR on mobile if button visibility toggled
+                                editingMessageId === message.id
+                                  ? 'opacity-0 pointer-events-none'
+                                  : moderationMenuMessageId === message.id ||
+                                    moderationButtonVisibleId === message.id
                                   ? 'opacity-100 pointer-events-auto'
                                   : 'opacity-0 pointer-events-none'
                               }`}
