@@ -26,11 +26,15 @@ const ChatIcon = forwardRef<ChatIconRef, ChatIconProps>(function ChatIcon({}, re
   const pendingUnreadTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const isInitialMount = useRef(true)
 
-  // Expose openChat method via ref
+  // Expose openChat method via ref (now toggles)
   useImperativeHandle(ref, () => ({
     openChat: () => {
-      setIsModalOpen(true)
-      updateURL('open')
+      setIsModalOpen(prev => !prev)
+      if (!isModalOpen) {
+        updateURL('open')
+      } else {
+        updateURL(null)
+      }
     }
   }))
 
@@ -179,7 +183,7 @@ const ChatIcon = forwardRef<ChatIconRef, ChatIconProps>(function ChatIcon({}, re
   return (
     <>
       <button
-        onClick={() => setIsModalOpen(true)}
+        onClick={() => setIsModalOpen(prev => !prev)}
         className="relative text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white"
         aria-label={`Chat${hasUnread ? ' (unread messages)' : ''}`}
       >

@@ -462,6 +462,8 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
         onClose={onClose}
         title={showChatInterface ? undefined : 'Messages'}
         width="md"
+        resizable={!showChatInterface}
+        storageKey="chat-drawer-width"
       >
         {/* New Message Buttons */}
         <div className="p-4 border-b border-gray-200 dark:border-gray-700 space-y-2">
@@ -565,6 +567,7 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
             participants={currentConversation.participants}
             conversationName={currentConversation.name}
             onNameUpdate={handleNameUpdate}
+            onResize={() => {}}
           />
         )}
       </Drawer>
