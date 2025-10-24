@@ -15,9 +15,58 @@ export function ServiceWorkerRegistrar() {
     }
 
     // Listen for service worker updates
-    const handleMessage = (event: MessageEvent) => {
+    const handleMessage = async (event: MessageEvent) => {
       if (event.data?.type === 'SW_UPDATED') {
         console.log('[SW] New service worker activated, version:', event.data.version)
+        console.log('[SW] Backing up push subscription before reload...')
+        
+        // Backup push subscription before reload to prevent loss
+        try {
+          const registration = await navigator.serviceWorker.ready
+          const sub = await registration.pushManager.getSubscription()
+          
+          if (sub) {
+            const backup: any = {
+              endpoint: sub.endpoint,
+              timestamp: Date.now()
+            }
+            
+            // For Chrome/Android (FCM), also backup the FCM token
+            // Check if this might be using Firebase
+            const userAgent = navigator.userAgent.toLowerCase()
+            const isChrome = userAgent.includes('chrome') && !userAgent.includes('edg')
+            const isBrave = userAgent.includes('brave')
+            const isAndroid = userAgent.includes('android')
+            
+            if (isChrome || isBrave || isAndroid) {
+              try {
+                // Dynamically import Firebase to get the token
+                const { getToken } = await import('firebase/messaging')
+                const { getMessagingInstance } = await import('@/lib/firebase')
+                
+                const messaging = await getMessagingInstance()
+                if (messaging) {
+                  const fcmToken = await getToken(messaging, {
+                    vapidKey: process.env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY,
+                    serviceWorkerRegistration: registration,
+                  })
+                  if (fcmToken) {
+                    backup.fcmToken = fcmToken
+                    console.log('[SW] FCM token backed up')
+                  }
+                }
+              } catch (fcmError) {
+                console.log('[SW] Not using FCM or failed to get token:', fcmError)
+              }
+            }
+            
+            localStorage.setItem('push_sub_backup', JSON.stringify(backup))
+            console.log('[SW] Push subscription backed up')
+          }
+        } catch (error) {
+          console.error('[SW] Failed to backup subscription:', error)
+        }
+        
         console.log('[SW] Reloading page to use new version...')
         // Reload the page to use the new service worker
         window.location.reload()
