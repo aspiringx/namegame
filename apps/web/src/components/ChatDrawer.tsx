@@ -9,6 +9,7 @@ import ChatInterface from './ChatInterface'
 import { markConversationAsRead, markAllConversationsAsRead } from '@/app/actions/chat'
 import { useSocket } from '@/context/SocketContext'
 import { useSession } from 'next-auth/react'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 interface ChatDrawerProps {
   isOpen: boolean
@@ -54,8 +55,11 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
   const conversationsListRef = useRef<HTMLDivElement>(null)
   const { socket } = useSocket()
   const { data: session } = useSession()
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const updateQueueRef = useRef<Set<string>>(new Set())
   const updateTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const hasProcessedURLRef = useRef(false)
 
   const loadConversations = useCallback(async (cursor?: string) => {
     const isInitialLoad = !cursor
@@ -317,13 +321,18 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
     }
   }
 
-  const handleOpenConversation = async (conversation: Conversation) => {
+  const handleOpenConversation = useCallback(async (conversation: Conversation) => {
     setCurrentConversation({
       id: conversation.id,
       participants: conversation.participants.map(p => p.id),
       name: conversation.name
     })
     setShowChatInterface(true)
+    
+    // Update URL with conversation ID
+    const params = new URLSearchParams(window.location.search)
+    params.set('chat', conversation.id)
+    router.replace(`?${params.toString()}`, { scroll: false })
     
     // Mark as read when opening
     if (conversation.id) {
@@ -337,7 +346,7 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
       channel.postMessage({ type: 'conversation_read', conversationId: conversation.id })
       channel.close()
     }
-  }
+  }, [router])
 
   const handleNameUpdate = (newName: string) => {
     if (currentConversation) {
@@ -358,6 +367,12 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
   const handleBackToConversations = () => {
     setShowChatInterface(false)
     setCurrentConversation(null)
+    
+    // Update URL to show conversations list
+    const params = new URLSearchParams(window.location.search)
+    params.set('chat', 'open')
+    params.delete('msg')
+    router.replace(`?${params.toString()}`, { scroll: false })
   }
   
   const handleMarkAllAsRead = async () => {
@@ -369,11 +384,27 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
     channel.postMessage({ type: 'all_read' })
     channel.close()
   }
+  // Handle opening conversation from URL param
+  useEffect(() => {
+    if (!isOpen || hasProcessedURLRef.current || conversations.length === 0) return
+    
+    const chatParam = searchParams.get('chat')
+    if (chatParam && chatParam !== 'open') {
+      // Try to find and open the conversation
+      const conversation = conversations.find(c => c.id === chatParam)
+      if (conversation) {
+        hasProcessedURLRef.current = true
+        handleOpenConversation(conversation)
+      }
+    }
+  }, [isOpen, conversations, searchParams, handleOpenConversation])
+
   useEffect(() => {
     if (!isOpen) {
       setShowChatInterface(false)
       setShowParticipantSelector(false)
       setCurrentConversation(null)
+      hasProcessedURLRef.current = false
     }
   }, [isOpen])
 

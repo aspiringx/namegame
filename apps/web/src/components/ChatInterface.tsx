@@ -5,6 +5,7 @@ import { Send, ArrowLeft, Pencil, Check, X, ImagePlus, ChevronLeft, ChevronRight
 import Image from 'next/image'
 import { useSocket } from '@/context/SocketContext'
 import { useSession } from 'next-auth/react'
+import { useSearchParams } from 'next/navigation'
 import { updateConversationName, markConversationAsRead } from '@/app/actions/chat'
 import {
   Tooltip,
@@ -105,7 +106,9 @@ export default function ChatInterface({
   const messageBubbleRefs = useRef<Map<string, HTMLDivElement>>(new Map())
   const { socket, isConnected, joinConversation, leaveConversation } = useSocket()
   const { data: session } = useSession()
+  const searchParams = useSearchParams()
   const currentUserId = session?.user?.id
+  const hasScrolledToMessageRef = useRef(false)
   
   // Participant count (API already includes current user)
   const participantCount = participants.length
@@ -265,17 +268,43 @@ export default function ChatInterface({
       const isInitialLoad = previousMessageCount.current === 0
       
       if (isInitialLoad || shouldAutoScroll.current) {
-        // Use requestAnimationFrame to wait for DOM update
-        requestAnimationFrame(() => {
-          messagesEndRef.current?.scrollIntoView({ 
-            behavior: isInitialLoad ? 'auto' : 'smooth' 
+        // Check if we need to scroll to a specific message from URL
+        const msgParam = searchParams.get('msg')
+        if (msgParam && !hasScrolledToMessageRef.current) {
+          // Try to scroll to specific message
+          requestAnimationFrame(() => {
+            const messageElement = messageBubbleRefs.current.get(msgParam)
+            if (messageElement) {
+              messageElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
+              hasScrolledToMessageRef.current = true
+              // Highlight the message briefly
+              messageElement.style.backgroundColor = 'rgba(59, 130, 246, 0.2)'
+              setTimeout(() => {
+                messageElement.style.backgroundColor = ''
+              }, 2000)
+            } else {
+              // Message not found, scroll to bottom
+              messagesEndRef.current?.scrollIntoView({ behavior: 'auto' })
+            }
           })
-        })
+        } else {
+          // Normal scroll to bottom
+          requestAnimationFrame(() => {
+            messagesEndRef.current?.scrollIntoView({ 
+              behavior: isInitialLoad ? 'auto' : 'smooth' 
+            })
+          })
+        }
       }
     }
     
     previousMessageCount.current = messages.length
-  }, [messages])
+  }, [messages, searchParams])
+  
+  // Reset scroll flag when conversation changes
+  useEffect(() => {
+    hasScrolledToMessageRef.current = false
+  }, [conversationId])
   
   // Detect scroll to top for loading more messages
   useEffect(() => {
