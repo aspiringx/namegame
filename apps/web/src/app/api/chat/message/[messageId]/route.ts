@@ -81,7 +81,7 @@ export async function DELETE(
   }
 }
 
-// PATCH - Hide a message for current user
+// PATCH - Hide or edit a message
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ messageId: string }> }
@@ -93,43 +93,73 @@ export async function PATCH(
     }
 
     const { messageId } = await params
-    const { action } = await request.json()
+    const body = await request.json()
+    const { action, content } = body
 
-    if (action !== 'hide') {
-      return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
-    }
-
-    // Get message to find conversationId
+    // Get message
     const message = await prisma.chatMessage.findUnique({
       where: { id: messageId },
-      select: { conversationId: true }
+      select: { 
+        conversationId: true,
+        authorId: true
+      }
     })
 
     if (!message) {
       return NextResponse.json({ error: 'Message not found' }, { status: 404 })
     }
 
-    // Update message to mark as hidden
-    await prisma.chatMessage.update({
-      where: { id: messageId },
-      data: {
-        isHidden: true,
-        hiddenBy: session.user.id,
-        hiddenAt: new Date()
+    // Handle edit action
+    if (content !== undefined) {
+      // Only author can edit
+      if (message.authorId !== session.user.id) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
       }
-    })
 
-    // Notify via PostgreSQL for socket broadcast
-    await prisma.$executeRaw`
-      SELECT pg_notify('message_hidden', ${JSON.stringify({
-        messageId,
-        conversationId: message.conversationId
-      })})
-    `
+      // Update message content
+      const updated = await prisma.chatMessage.update({
+        where: { id: messageId },
+        data: {
+          content: content.trim(),
+          updatedAt: new Date()
+        },
+        select: {
+          updatedAt: true
+        }
+      })
 
-    return NextResponse.json({ success: true })
+      return NextResponse.json({ 
+        success: true,
+        updatedAt: updated.updatedAt
+      })
+    }
+
+    // Handle hide action
+    if (action === 'hide') {
+      // Update message to mark as hidden
+      await prisma.chatMessage.update({
+        where: { id: messageId },
+        data: {
+          isHidden: true,
+          hiddenBy: session.user.id,
+          hiddenAt: new Date()
+        }
+      })
+
+      // Notify via PostgreSQL for socket broadcast
+      await prisma.$executeRaw`
+        SELECT pg_notify('message_hidden', ${JSON.stringify({
+          messageId,
+          conversationId: message.conversationId
+        })})
+      `
+
+      return NextResponse.json({ success: true })
+    }
+
+    return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
   } catch (error) {
-    console.error('[API] Error hiding message:', error)
+    console.error('[API] Error updating message:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
