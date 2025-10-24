@@ -92,6 +92,56 @@ export function usePushNotifications() {
       }
       
       try {
+        // Check for subscription backup from SW update reload
+        const backup = localStorage.getItem('push_sub_backup')
+        if (backup) {
+          try {
+            const { endpoint, timestamp, fcmToken } = JSON.parse(backup)
+            const age = Date.now() - timestamp
+            
+            // Only trust backup if it's less than 5 minutes old
+            if (age < 5 * 60 * 1000) {
+              console.log('[Push] Found subscription backup from SW update, verifying...')
+              
+              // If backup has FCM token, verify it (Chrome/Android)
+              if (fcmToken) {
+                try {
+                  const messaging = await getMessagingInstance()
+                  if (messaging) {
+                    const { getToken } = await import('firebase/messaging')
+                    const currentToken = await getToken(messaging, {
+                      vapidKey: process.env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY,
+                      serviceWorkerRegistration: registration,
+                    })
+                    
+                    if (currentToken === fcmToken) {
+                      console.log('[Push] ✅ FCM subscription survived SW update')
+                    } else {
+                      console.log('[Push] ⚠️ FCM token changed after SW update, will re-verify')
+                    }
+                  }
+                } catch (fcmError) {
+                  console.error('[Push] Failed to verify FCM token:', fcmError)
+                }
+              } else {
+                // Standard push subscription (Safari/Firefox/Edge)
+                const browserSub = await registration.pushManager.getSubscription()
+                if (browserSub && browserSub.endpoint === endpoint) {
+                  console.log('[Push] ✅ Push subscription survived SW update')
+                } else {
+                  console.log('[Push] ⚠️ Subscription changed after SW update, will re-verify')
+                }
+              }
+            }
+            
+            // Always remove backup after checking (stale or verified)
+            localStorage.removeItem('push_sub_backup')
+          } catch (e) {
+            console.error('[Push] Failed to parse subscription backup:', e)
+            localStorage.removeItem('push_sub_backup')
+          }
+        }
+        
         // DATABASE IS SOURCE OF TRUTH: Check what subscriptions the user has
         const userSubsResult = await getUserSubscriptions()
         
@@ -277,11 +327,13 @@ export function usePushNotifications() {
         return
       }
 
-      // Detect if Chrome (uses FCM) - use Firebase
-      // Only Chrome uses FCM. Safari/Firefox/Edge use standard web-push
+      // Detect if Chrome/Brave or Android (uses FCM) - use Firebase
+      // Chrome/Brave on any OS and any browser on Android use FCM
+      // Safari/Firefox/Edge on non-Android use standard web-push
       const browser = deviceInfo?.browser || 'unknown'
+      const os = deviceInfo?.os || 'unknown'
       const messaging = await getMessagingInstance()
-      const useFirebase = (browser === 'chrome' || browser === 'brave') && messaging
+      const useFirebase = ((browser === 'chrome' || browser === 'brave') || os === 'android') && messaging
 
       let sub: PushSubscription | null = null
       let fcmToken: string | undefined = undefined
