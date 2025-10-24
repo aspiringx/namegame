@@ -13,6 +13,7 @@ import {
   MoreVertical,
   EyeOff,
   Trash2,
+  Edit2,
 } from 'lucide-react'
 import Image from 'next/image'
 import { useSocket } from '@/context/SocketContext'
@@ -57,6 +58,8 @@ interface ChatMessage {
   authorName: string
   authorPhoto?: string | null
   timestamp: Date
+  createdAt?: Date
+  updatedAt?: Date
   type: 'text' | 'image' | 'mixed' | 'system' | 'link' | string
   metadata?: {
     images?: Array<{
@@ -138,6 +141,8 @@ export default function ChatInterface({
     type: 'delete' | 'hide'
     messageId: string | null
   }>({ isOpen: false, type: 'delete', messageId: null })
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null)
+  const [editedContent, setEditedContent] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -232,6 +237,8 @@ export default function ChatInterface({
             authorName: m.authorName,
             authorPhoto: m.authorPhoto,
             timestamp: new Date(m.timestamp),
+            createdAt: m.createdAt ? new Date(m.createdAt) : undefined,
+            updatedAt: m.updatedAt ? new Date(m.updatedAt) : undefined,
             type: m.type,
             metadata: m.metadata,
             reactions: m.reactions || [],
@@ -804,16 +811,35 @@ export default function ChatInterface({
       }
     }
 
+    const handleMessageEdited = (data: {
+      messageId: string
+      conversationId: string
+      content: string
+      updatedAt: string
+    }) => {
+      // Only update if it's for this conversation and not from current user
+      if (data.conversationId === conversationId) {
+        setMessages(prev => prev.map(m => 
+          m.id === data.messageId 
+            ? { ...m, content: data.content, updatedAt: new Date(data.updatedAt) }
+            : m
+        ))
+        // Don't scroll - just update in place
+      }
+    }
+
     socket.on('message_notification', handleMessageNotification)
     socket.on('reaction', handleOtherReaction)
     socket.on('message_deleted', handleMessageDeleted)
     socket.on('message_hidden', handleMessageHidden)
+    socket.on('message-edited', handleMessageEdited)
 
     return () => {
       socket.off('message_notification', handleMessageNotification)
       socket.off('reaction', handleOtherReaction)
       socket.off('message_deleted', handleMessageDeleted)
       socket.off('message_hidden', handleMessageHidden)
+      socket.off('message-edited', handleMessageEdited)
     }
   }, [socket, conversationId, currentUserId])
 
@@ -1741,7 +1767,7 @@ export default function ChatInterface({
                             WebkitTouchCallout: 'none',
                             WebkitUserSelect: 'none',
                             userSelect: 'none',
-                            touchAction: 'pan-y', // Allow vertical scrolling, prevent horizontal gestures
+                            touchAction: 'manipulation', // Prevent system context menu on long-press
                           }}
                           onClick={(e) => {
                             // Don't handle click if user was dragging or if long press was triggered
@@ -1895,17 +1921,94 @@ export default function ChatInterface({
                               ? 'pr-12'
                               : ''
                           }>
-                            {/* Message text content */}
-                            {message.content && message.content.trim() && (
-                              <p
-                                className="text-xl whitespace-pre-wrap"
-                                style={{ WebkitTextSizeAdjust: '100%' }}
-                              >
-                                {renderMessageContent(
-                                  message.content,
-                                  isCurrentUser,
-                                )}
-                              </p>
+                            {/* Message text content or edit textarea */}
+                            {editingMessageId === message.id ? (
+                              <div className="space-y-2">
+                                <textarea
+                                  value={editedContent}
+                                  onChange={(e) => setEditedContent(e.target.value)}
+                                  className="w-full px-3 py-2 text-xl bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg resize-none"
+                                  rows={3}
+                                  autoFocus
+                                />
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={async () => {
+                                      if (!editedContent.trim()) return
+                                      
+                                      // Save edit
+                                      try {
+                                        const response = await fetch(`/api/chat/message/${message.id}`, {
+                                          method: 'PATCH',
+                                          headers: { 'Content-Type': 'application/json' },
+                                          body: JSON.stringify({ content: editedContent.trim() }),
+                                        })
+                                        
+                                        if (response.ok) {
+                                          const updated = await response.json()
+                                          
+                                          // Optimistic update
+                                          setMessages(prev => prev.map(m => 
+                                            m.id === message.id 
+                                              ? { ...m, content: editedContent.trim(), updatedAt: new Date(updated.updatedAt) }
+                                              : m
+                                          ))
+                                          
+                                          // Emit socket event for real-time update
+                                          if (socket && isConnected) {
+                                            socket.emit('message-edited', {
+                                              messageId: message.id,
+                                              conversationId,
+                                              content: editedContent.trim(),
+                                              updatedAt: updated.updatedAt,
+                                            })
+                                          }
+                                          
+                                          setEditingMessageId(null)
+                                          setEditedContent('')
+                                        }
+                                      } catch (error) {
+                                        console.error('[Chat] Error editing message:', error)
+                                      }
+                                    }}
+                                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 flex items-center gap-2"
+                                  >
+                                    <Check size={16} />
+                                    Save
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      setEditingMessageId(null)
+                                      setEditedContent('')
+                                    }}
+                                    className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 flex items-center gap-2"
+                                  >
+                                    <X size={16} />
+                                    Cancel
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              message.content && message.content.trim() && (
+                                <div>
+                                  <p
+                                    className="text-xl whitespace-pre-wrap"
+                                    style={{ WebkitTextSizeAdjust: '100%' }}
+                                  >
+                                    {renderMessageContent(
+                                      message.content,
+                                      isCurrentUser,
+                                    )}
+                                  </p>
+                                  {/* Show (edited) indicator if message was edited */}
+                                  {message.updatedAt && message.createdAt && 
+                                   message.updatedAt.getTime() > message.createdAt.getTime() && (
+                                    <span className="text-xs text-gray-400 dark:text-gray-500 italic ml-2">
+                                      (edited)
+                                    </span>
+                                  )}
+                                </div>
+                              )
                             )}
 
                             {/* Message images */}
@@ -2034,10 +2137,23 @@ export default function ChatInterface({
                           {/* Moderation menu dropdown */}
                           {moderationMenuMessageId === message.id && (
                             <div className="absolute top-10 right-2 z-30 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 min-w-[140px]">
-                              <div className="px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
-                                Moderate
-                              </div>
                               <div className="py-2">
+                                {/* Edit - only for message owner */}
+                                {isCurrentUser && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      setEditingMessageId(message.id)
+                                      setEditedContent(message.content)
+                                      setModerationMenuMessageId(null)
+                                    }}
+                                    className="w-full px-4 py-3 text-left text-base text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3"
+                                  >
+                                    <Edit2 size={18} />
+                                    Edit
+                                  </button>
+                                )}
+                                {/* Hide */}
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation()
@@ -2053,25 +2169,23 @@ export default function ChatInterface({
                                   <EyeOff size={18} />
                                   Hide
                                 </button>
+                                {/* Delete - only for message owner or group admin */}
                                 {(isCurrentUser || isGroupAdmin) && (
-                                  <>
-                                    <div className="h-2" />
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation()
-                                        setConfirmDialog({
-                                          isOpen: true,
-                                          type: 'delete',
-                                          messageId: message.id,
-                                        })
-                                        setModerationMenuMessageId(null)
-                                      }}
-                                      className="w-full px-4 py-3 text-left text-base text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3"
-                                    >
-                                      <Trash2 size={18} />
-                                      Delete
-                                    </button>
-                                  </>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      setConfirmDialog({
+                                        isOpen: true,
+                                        type: 'delete',
+                                        messageId: message.id,
+                                      })
+                                      setModerationMenuMessageId(null)
+                                    }}
+                                    className="w-full px-4 py-3 text-left text-base text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3"
+                                  >
+                                    <Trash2 size={18} />
+                                    Delete
+                                  </button>
                                 )}
                               </div>
                             </div>

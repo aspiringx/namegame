@@ -151,6 +151,18 @@ async function startChatServer() {
           });
         });
 
+        // Handle message edits
+        socket.on("message-edited", (data: {
+          messageId: string;
+          conversationId: string;
+          content: string;
+          updatedAt: string;
+        }) => {
+          // Broadcast to all users in the conversation except sender
+          socket.to(`conversation:${data.conversationId}`).emit("message-edited", data);
+          console.log(`[Chat] Broadcasted message edit: ${data.messageId} to conversation:${data.conversationId}`);
+        });
+
         socket.on("disconnect", () => {
           console.log(`[Chat] Client disconnected: ${socket.id}`);
         });
