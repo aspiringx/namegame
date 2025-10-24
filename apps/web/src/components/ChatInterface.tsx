@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/tooltip'
 import MessageEmojiPicker from './MessageEmojiPicker'
 import { processImageFile, ProcessedImage } from '@/lib/imageUtils'
+import ConfirmDialog from './ConfirmDialog'
 
 interface ChatInterfaceProps {
   isOpen: boolean
@@ -57,6 +58,8 @@ interface ChatMessage {
     }>
   }
   reactions?: MessageReaction[]
+  isDeleted?: boolean
+  isHidden?: boolean
 }
 
 export default function ChatInterface({
@@ -99,6 +102,11 @@ export default function ChatInterface({
   const [moderationMenuMessageId, setModerationMenuMessageId] = useState<string | null>(null)
   const [moderationButtonVisibleId, setModerationButtonVisibleId] = useState<string | null>(null)
   const [isGroupAdmin, setIsGroupAdmin] = useState(false)
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean
+    type: 'delete' | 'hide'
+    messageId: string | null
+  }>({ isOpen: false, type: 'delete', messageId: null })
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -595,18 +603,34 @@ export default function ChatInterface({
     
     const handleMessageDeleted = (data: { messageId: string; conversationId: string }) => {
       if (data.conversationId === conversationId) {
-        setMessages(prev => prev.filter(m => m.id !== data.messageId))
+        setMessages(prev => prev.map(m => 
+          m.id === data.messageId 
+            ? { ...m, content: '[Message deleted]', type: 'system', metadata: undefined, isDeleted: true }
+            : m
+        ))
+      }
+    }
+    
+    const handleMessageHidden = (data: { messageId: string; conversationId: string }) => {
+      if (data.conversationId === conversationId) {
+        setMessages(prev => prev.map(m => 
+          m.id === data.messageId 
+            ? { ...m, content: '[Message hidden]', type: 'system', metadata: undefined, isHidden: true }
+            : m
+        ))
       }
     }
     
     socket.on('message_notification', handleMessageNotification)
     socket.on('reaction', handleOtherReaction)
     socket.on('message_deleted', handleMessageDeleted)
+    socket.on('message_hidden', handleMessageHidden)
     
     return () => {
       socket.off('message_notification', handleMessageNotification)
       socket.off('reaction', handleOtherReaction)
       socket.off('message_deleted', handleMessageDeleted)
+      socket.off('message_hidden', handleMessageHidden)
     }
   }, [socket, conversationId, currentUserId])
 
@@ -1352,6 +1376,7 @@ export default function ChatInterface({
             {/* Messages for this date */}
             {dayMessages.map((message, index) => {
               const isCurrentUser = message.authorId === currentUserId
+              const isModerated = message.isDeleted || message.isHidden
               const showAvatar = !isCurrentUser && (
                 index === 0 || 
                 dayMessages[index - 1]?.authorId !== message.authorId
@@ -1414,10 +1439,12 @@ export default function ChatInterface({
                     )}
                     
                     <div
-                      className={`px-4 pr-12 py-2 rounded-2xl relative group transition-all ${
-                        isCurrentUser
-                          ? 'bg-blue-500 text-white'
-                          : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
+                      className={`px-4 py-2 rounded-2xl relative group transition-all ${
+                        isModerated 
+                          ? 'bg-gray-200 dark:bg-gray-800 text-gray-500 dark:text-gray-500 italic pr-4'
+                          : isCurrentUser
+                            ? 'bg-blue-500 text-white pr-12'
+                            : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white pr-12'
                       }`}
                       style={{
                         WebkitTouchCallout: 'none',
@@ -1631,80 +1658,73 @@ export default function ChatInterface({
                       )}
 
                       {/* Moderation menu button - top-right corner inside bubble */}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          // Toggle menu open/closed
-                          const isOpening = moderationMenuMessageId !== message.id
-                          setModerationMenuMessageId(isOpening ? message.id : null)
-                          // Hide button visibility state when opening menu
-                          if (isOpening) {
-                            setModerationButtonVisibleId(null)
-                          }
-                        }}
-                        className={`absolute top-1/2 -translate-y-1/2 right-2 p-2 rounded-full transition-opacity ${
-                          isCurrentUser 
-                            ? 'hover:bg-blue-600' 
-                            : 'hover:bg-gray-200 dark:hover:bg-gray-600'
-                        } ${
-                          // Show button if menu is open OR on mobile if button visibility toggled
-                          moderationMenuMessageId === message.id || moderationButtonVisibleId === message.id
-                            ? 'opacity-100 pointer-events-auto' 
-                            : 'opacity-0 pointer-events-none'
-                        }`}
-                      >
-                        <MoreVertical size={18} className={isCurrentUser ? 'text-white' : 'text-gray-500 dark:text-gray-400'} />
-                      </button>
+                      {!isModerated && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            // Toggle menu open/closed
+                            const isOpening = moderationMenuMessageId !== message.id
+                            setModerationMenuMessageId(isOpening ? message.id : null)
+                            // Hide button visibility state when opening menu
+                            if (isOpening) {
+                              setModerationButtonVisibleId(null)
+                            }
+                          }}
+                          className={`absolute top-1/2 -translate-y-1/2 right-2 p-2 rounded-full transition-opacity ${
+                            isCurrentUser 
+                              ? 'hover:bg-blue-600' 
+                              : 'hover:bg-gray-200 dark:hover:bg-gray-600'
+                          } ${
+                            // Show button if menu is open OR on mobile if button visibility toggled
+                            moderationMenuMessageId === message.id || moderationButtonVisibleId === message.id
+                              ? 'opacity-100 pointer-events-auto' 
+                              : 'opacity-0 pointer-events-none'
+                          }`}
+                        >
+                          <MoreVertical size={18} className={isCurrentUser ? 'text-white' : 'text-gray-500 dark:text-gray-400'} />
+                        </button>
+                      )}
 
                       {/* Moderation menu dropdown */}
                       {moderationMenuMessageId === message.id && (
-                        <div className="absolute top-1/2 translate-y-4 right-2 z-30 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 min-w-[120px]">
-                          <button
-                            onClick={async (e) => {
-                              e.stopPropagation()
-                              try {
-                                const response = await fetch(`/api/chat/message/${message.id}`, {
-                                  method: 'PATCH',
-                                  headers: { 'Content-Type': 'application/json' },
-                                  body: JSON.stringify({ action: 'hide' })
-                                })
-                                if (response.ok) {
-                                  // Remove from local state
-                                  setMessages(prev => prev.filter(m => m.id !== message.id))
-                                }
-                              } catch (error) {
-                                console.error('Failed to hide message:', error)
-                              }
-                              setModerationMenuMessageId(null)
-                            }}
-                            className="w-full px-4 py-2 text-left text-sm text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
-                          >
-                            <EyeOff size={16} />
-                            Hide
-                          </button>
-                          {(isCurrentUser || isGroupAdmin) && (
+                        <div className="absolute top-1/2 translate-y-4 right-2 z-30 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 min-w-[120px]">
+                          <div className="px-4 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+                            Moderate
+                          </div>
+                          <div className="py-1">
                             <button
-                              onClick={async (e) => {
+                              onClick={(e) => {
                                 e.stopPropagation()
-                                if (!confirm('Delete this message? This cannot be undone.')) return
-                                try {
-                                  const response = await fetch(`/api/chat/message/${message.id}`, {
-                                    method: 'DELETE'
-                                  })
-                                  if (response.ok) {
-                                    // Socket will broadcast the deletion
-                                  }
-                                } catch (error) {
-                                  console.error('Failed to delete message:', error)
-                                }
+                                setConfirmDialog({
+                                  isOpen: true,
+                                  type: 'hide',
+                                  messageId: message.id
+                                })
                                 setModerationMenuMessageId(null)
                               }}
-                              className="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                              className="w-full px-4 py-2 text-left text-sm text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
                             >
-                              <Trash2 size={16} />
-                              Delete
+                              <EyeOff size={16} />
+                              Hide
                             </button>
-                          )}
+                            {(isCurrentUser || isGroupAdmin) && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setConfirmDialog({
+                                    isOpen: true,
+                                    type: 'delete',
+                                    messageId: message.id
+                                  })
+                                  setModerationMenuMessageId(null)
+                                }}
+                                className="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                              >
+                                <Trash2 size={16} />
+                                Delete
+                              </button>
+                            )}
+                          </div>
                         </div>
                       )}
                     </div>
@@ -1930,6 +1950,46 @@ export default function ChatInterface({
           </div>
         </div>
       )}
+
+      {/* Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title={confirmDialog.type === 'delete' ? 'Delete Message' : 'Hide Message'}
+        message={
+          confirmDialog.type === 'delete'
+            ? 'Delete this message? This cannot be undone.'
+            : 'Hide this message for everyone in the conversation? This should only be done if the message is inappropriate.'
+        }
+        confirmText={confirmDialog.type === 'delete' ? 'Delete' : 'Hide'}
+        cancelText="Cancel"
+        variant={confirmDialog.type === 'delete' ? 'danger' : 'warning'}
+        onConfirm={async () => {
+          if (!confirmDialog.messageId) return
+          
+          try {
+            if (confirmDialog.type === 'delete') {
+              await fetch(`/api/chat/message/${confirmDialog.messageId}`, {
+                method: 'DELETE'
+              })
+              // Socket will broadcast the update to all clients
+            } else {
+              await fetch(`/api/chat/message/${confirmDialog.messageId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'hide' })
+              })
+              // Socket will broadcast the update to all clients
+            }
+          } catch (error) {
+            console.error(`Failed to ${confirmDialog.type} message:`, error)
+          }
+          
+          setConfirmDialog({ isOpen: false, type: 'delete', messageId: null })
+        }}
+        onCancel={() => {
+          setConfirmDialog({ isOpen: false, type: 'delete', messageId: null })
+        }}
+      />
     </div>
   )
 }

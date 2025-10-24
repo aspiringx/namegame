@@ -168,6 +168,7 @@ export async function GET(
     }
 
     // Get messages (most recent 50, or 50 before cursor)
+    // Include deleted and hidden messages, but we'll replace their content
     const messages = await prisma.chatMessage.findMany({
       where: {
         conversationId,
@@ -269,11 +270,15 @@ export async function GET(
           }
         })
 
+        // Replace content for deleted/hidden messages
+        const isDeleted = msg.deletedAt !== null
+        const isHidden = msg.isHidden
+        
         return {
           id: msg.id,
-          content: msg.content,
-          type: msg.type,
-          metadata: msg.metadata,
+          content: isDeleted ? '[Message deleted]' : isHidden ? '[Message hidden]' : msg.content,
+          type: isDeleted || isHidden ? 'system' : msg.type,
+          metadata: isDeleted || isHidden ? null : msg.metadata, // Clear metadata for moderated messages
           authorId: msg.authorId,
           authorName: user
             ? `${user.firstName} ${user.lastName || ''}`.trim()
@@ -282,6 +287,8 @@ export async function GET(
           createdAt: msg.createdAt.toISOString(),
           timestamp: msg.createdAt,
           reactions: Array.from(reactionsByEmoji.values()),
+          isDeleted,
+          isHidden,
         }
       }),
     )

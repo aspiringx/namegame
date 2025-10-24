@@ -99,6 +99,16 @@ export async function PATCH(
       return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
     }
 
+    // Get message to find conversationId
+    const message = await prisma.chatMessage.findUnique({
+      where: { id: messageId },
+      select: { conversationId: true }
+    })
+
+    if (!message) {
+      return NextResponse.json({ error: 'Message not found' }, { status: 404 })
+    }
+
     // Update message to mark as hidden
     await prisma.chatMessage.update({
       where: { id: messageId },
@@ -108,6 +118,14 @@ export async function PATCH(
         hiddenAt: new Date()
       }
     })
+
+    // Notify via PostgreSQL for socket broadcast
+    await prisma.$executeRaw`
+      SELECT pg_notify('message_hidden', ${JSON.stringify({
+        messageId,
+        conversationId: message.conversationId
+      })})
+    `
 
     return NextResponse.json({ success: true })
   } catch (error) {
