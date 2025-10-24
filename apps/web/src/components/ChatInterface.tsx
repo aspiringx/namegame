@@ -40,6 +40,7 @@ interface ChatInterfaceProps {
   participants: string[]
   conversationName: string
   onNameUpdate?: (newName: string) => void
+  onResize?: (isResizing: boolean) => void
 }
 
 interface MessageReaction {
@@ -85,6 +86,7 @@ export default function ChatInterface({
   participants,
   conversationName,
   onNameUpdate,
+  onResize,
 }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [isLoadingMessages, setIsLoadingMessages] = useState(false)
@@ -103,6 +105,7 @@ export default function ChatInterface({
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false)
   const [viewportOffset, setViewportOffset] = useState({ top: 0, height: 0 })
   const [isMobile, setIsMobile] = useState(false)
+  const [isResizingDrawer, setIsResizingDrawer] = useState(false)
   const [emojiPickerState, setEmojiPickerState] = useState<{
     isOpen: boolean
     messageId: string | null
@@ -422,6 +425,43 @@ export default function ChatInterface({
     window.addEventListener('resize', checkMobile)
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
+
+  // Handle drawer resize
+  useEffect(() => {
+    if (!isResizingDrawer || !onResize) return
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const MIN_WIDTH = 400
+      const MAX_WIDTH_VW = 40
+      const maxWidth = window.innerWidth * (MAX_WIDTH_VW / 100)
+      const newWidth = Math.max(MIN_WIDTH, Math.min(window.innerWidth - e.clientX, maxWidth))
+      
+      // Update parent drawer width
+      const drawerEl = document.querySelector('[data-chat-drawer]') as HTMLElement
+      if (drawerEl) {
+        drawerEl.style.width = `${newWidth}px`
+      }
+    }
+
+    const handleMouseUp = () => {
+      setIsResizingDrawer(false)
+      onResize(false)
+      
+      // Save to localStorage
+      const drawerEl = document.querySelector('[data-chat-drawer]') as HTMLElement
+      if (drawerEl && typeof window !== 'undefined') {
+        localStorage.setItem('chat-drawer-width', drawerEl.style.width.replace('px', ''))
+      }
+    }
+
+    document.addEventListener('mousemove', handleMouseMove)
+    document.addEventListener('mouseup', handleMouseUp)
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+    }
+  }, [isResizingDrawer, onResize])
 
   // Load messages and join conversation when component mounts
   useEffect(() => {
@@ -1401,6 +1441,18 @@ export default function ChatInterface({
         height: viewportOffset.height > 0 ? `${viewportOffset.height}px` : '100vh'
       } : undefined}
     >
+      {/* Resize handle - only on desktop */}
+      {onResize && (
+        <div
+          className="hidden md:block absolute left-0 top-0 bottom-0 w-1 hover:w-2 cursor-col-resize bg-transparent hover:bg-blue-500 transition-all z-[60]"
+          onMouseDown={(e) => {
+            e.preventDefault()
+            setIsResizingDrawer(true)
+            onResize(true)
+          }}
+        />
+      )}
+
       {/* Header - Fixed at top, outside scroll container */}
       <div
         className={`flex-shrink-0 z-10 flex items-center justify-between border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 transition-all ${
