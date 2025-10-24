@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useEffect, useImperativeHandle, forwardRef, useRef } from 'react'
+import { useState, useEffect, useImperativeHandle, forwardRef, useRef, useCallback } from 'react'
 import { MessageCircle } from 'lucide-react'
 import ChatDrawer from './ChatDrawer'
 import { useSession } from 'next-auth/react'
 import { hasUnreadMessages } from '@/app/actions/chat'
 import { useSocket } from '@/context/SocketContext'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 interface ChatIconProps {
   // No props needed - we'll fetch unread status internally
@@ -20,12 +21,76 @@ const ChatIcon = forwardRef<ChatIconRef, ChatIconProps>(function ChatIcon({}, re
   const [hasUnread, setHasUnread] = useState(false)
   const { data: session } = useSession()
   const { socket } = useSocket()
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const pendingUnreadTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const isInitialMount = useRef(true)
 
   // Expose openChat method via ref
   useImperativeHandle(ref, () => ({
-    openChat: () => setIsModalOpen(true)
+    openChat: () => {
+      setIsModalOpen(true)
+      updateURL('open')
+    }
   }))
+
+  // Helper to update URL without adding to history
+  const updateURL = useCallback((chatState: string | null) => {
+    const params = new URLSearchParams(window.location.search)
+    
+    if (chatState) {
+      params.set('chat', chatState)
+    } else {
+      params.delete('chat')
+      params.delete('msg') // Also clear message param when closing
+    }
+    
+    const newURL = params.toString() ? `?${params.toString()}` : window.location.pathname
+    router.replace(newURL, { scroll: false })
+  }, [router])
+
+  // Read URL params on mount to restore chat state
+  useEffect(() => {
+    if (!isInitialMount.current) return
+    isInitialMount.current = false
+    
+    const chatParam = searchParams.get('chat')
+    if (chatParam) {
+      setIsModalOpen(true)
+      // ChatDrawer will handle opening the specific conversation
+    } else {
+      // Fallback to localStorage for refresh without URL params
+      const savedState = localStorage.getItem('chatDrawerState')
+      if (savedState) {
+        try {
+          const { isOpen } = JSON.parse(savedState)
+          if (isOpen) {
+            setIsModalOpen(true)
+          }
+        } catch {
+          // Ignore parse errors
+        }
+      }
+    }
+  }, [searchParams])
+
+  // Sync URL when drawer opens/closes
+  useEffect(() => {
+    if (isInitialMount.current) return
+    
+    if (isModalOpen) {
+      const chatParam = searchParams.get('chat')
+      // Only update if not already set (to preserve conversation ID)
+      if (!chatParam) {
+        updateURL('open')
+      }
+      // Save to localStorage
+      localStorage.setItem('chatDrawerState', JSON.stringify({ isOpen: true }))
+    } else {
+      updateURL(null)
+      localStorage.setItem('chatDrawerState', JSON.stringify({ isOpen: false }))
+    }
+  }, [isModalOpen, searchParams, updateURL])
 
   // Check for unread messages on mount and when modal closes
   useEffect(() => {

@@ -59,39 +59,24 @@ async function startChatServer() {
     // Set up LISTEN for new messages
     await pgClient.query("LISTEN new_message");
     await pgClient.query("LISTEN message_deleted");
-    console.log("[Chat] Listening for new_message and message_deleted notifications");
+    await pgClient.query("LISTEN message_hidden");
+    console.log("[Chat] Listening for new_message, message_deleted, and message_hidden notifications");
 
     // Handle PostgreSQL notifications
     pgClient.on("notification", async (msg) => {
       try {
         if (msg.channel === "new_message" && msg.payload) {
-          const messageData = JSON.parse(msg.payload);
+          const { messageId, conversationId } = JSON.parse(msg.payload);
           
-          // Broadcast to conversation room (for users actively viewing the conversation)
-          io.to(`conversation:${messageData.conversationId}`).emit(
-            "message",
-            messageData
-          );
-          
-          // Also broadcast to all participants' user rooms (for unread indicators)
-          // This ensures users get notified even if they're not in the conversation room
-          const { PrismaClient } = await import('@namegame/db');
-          const prisma = new PrismaClient();
-          
-          const participants = await prisma.chatParticipant.findMany({
-            where: { conversationId: messageData.conversationId },
-            select: { userId: true }
+          // Broadcast only message ID to conversation room
+          // Clients will fetch full message via HTTP
+          io.to(`conversation:${conversationId}`).emit("message_notification", {
+            messageId,
+            conversationId
           });
-          
-          // Emit to each participant's user room
-          participants.forEach(participant => {
-            io.to(`user:${participant.userId}`).emit("message", messageData);
-          });
-          
-          await prisma.$disconnect();
           
           console.log(
-            `[Chat] Broadcasted message to conversation:${messageData.conversationId} and ${participants.length} participants`
+            `[Chat] Broadcasted message notification: ${messageId} to conversation:${conversationId}`
           );
         } else if (msg.channel === "message_deleted" && msg.payload) {
           const { messageId, conversationId } = JSON.parse(msg.payload);
@@ -103,6 +88,16 @@ async function startChatServer() {
           });
           
           console.log(`[Chat] Broadcasted message deletion: ${messageId}`);
+        } else if (msg.channel === "message_hidden" && msg.payload) {
+          const { messageId, conversationId } = JSON.parse(msg.payload);
+          
+          // Broadcast hide to conversation room
+          io.to(`conversation:${conversationId}`).emit("message_hidden", {
+            messageId,
+            conversationId
+          });
+          
+          console.log(`[Chat] Broadcasted message hidden: ${messageId}`);
         }
       } catch (error) {
         console.error("[Chat] Error handling notification:", error);

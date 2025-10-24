@@ -6,9 +6,13 @@ import { useGroup } from '@/components/GroupProvider'
 import Drawer from './Drawer'
 import ParticipantSelector from './ParticipantSelector'
 import ChatInterface from './ChatInterface'
-import { markConversationAsRead, markAllConversationsAsRead } from '@/app/actions/chat'
+import {
+  markConversationAsRead,
+  markAllConversationsAsRead,
+} from '@/app/actions/chat'
 import { useSocket } from '@/context/SocketContext'
 import { useSession } from 'next-auth/react'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 interface ChatDrawerProps {
   isOpen: boolean
@@ -26,11 +30,14 @@ interface Conversation {
 }
 
 // Helper function to format participant names with truncation
-function formatParticipantNames(names: string[], maxNames: number = 15): string {
+function formatParticipantNames(
+  names: string[],
+  maxNames: number = 15,
+): string {
   if (names.length <= maxNames) {
     return names.join(', ')
   }
-  
+
   const displayedNames = names.slice(0, maxNames).join(', ')
   const remainingCount = names.length - maxNames
   return `${displayedNames}... and ${remainingCount} more`
@@ -54,8 +61,11 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
   const conversationsListRef = useRef<HTMLDivElement>(null)
   const { socket } = useSocket()
   const { data: session } = useSession()
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const updateQueueRef = useRef<Set<string>>(new Set())
   const updateTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const hasProcessedURLRef = useRef(false)
 
   const loadConversations = useCallback(async (cursor?: string) => {
     const isInitialLoad = !cursor
@@ -64,12 +74,12 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
     } else {
       setIsLoadingMore(true)
     }
-    
+
     try {
-      const url = cursor 
+      const url = cursor
         ? `/api/chat/conversations?cursor=${cursor}`
         : '/api/chat/conversations'
-      
+
       const response = await fetch(url)
       if (response.ok) {
         const { conversations: convos, hasMore } = await response.json()
@@ -79,20 +89,22 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
             id: c.id,
             name: c.name || formatParticipantNames(participantNames),
             lastMessage: '', // TODO: Get last message
-            timestamp: c.lastMessageAt ? new Date(c.lastMessageAt).toLocaleString() : '',
+            timestamp: c.lastMessageAt
+              ? new Date(c.lastMessageAt).toLocaleString()
+              : '',
             hasUnread: c.hasUnread || false,
             isGroup: c.participants.length > 2,
-            participants: c.participants || []
+            participants: c.participants || [],
           }
         })
-        
+
         if (isInitialLoad) {
           setConversations(newConversations)
         } else {
           // Append to end
-          setConversations(prev => [...prev, ...newConversations])
+          setConversations((prev) => [...prev, ...newConversations])
         }
-        
+
         setHasMoreConversations(hasMore)
       }
     } catch (error) {
@@ -105,53 +117,64 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
       }
     }
   }, [])
-  
+
   // Batch update conversations - fetches multiple conversations at once
-  const batchUpdateConversations = useCallback(async (conversationIds: string[]) => {
-    if (conversationIds.length === 0) return
-    
-    try {
-      // Fetch updated conversation data for specific IDs
-      const response = await fetch('/api/chat/conversations?' + new URLSearchParams({
-        ids: conversationIds.join(',')
-      }))
-      
-      if (response.ok) {
-        const { conversations: updatedConvos } = await response.json()
-        
-        // Update local state with fresh data
-        setConversations(prev => {
-          const updated = [...prev]
-          updatedConvos.forEach((newConvo: any) => {
-            const index = updated.findIndex(c => c.id === newConvo.id)
-            if (index !== -1) {
-              const participantNames = newConvo.participants.map((p: any) => p.name)
-              updated[index] = {
-                id: newConvo.id,
-                name: newConvo.name || formatParticipantNames(participantNames),
-                lastMessage: '',
-                timestamp: newConvo.lastMessageAt ? new Date(newConvo.lastMessageAt).toLocaleString() : '',
-                hasUnread: newConvo.hasUnread || false,
-                isGroup: newConvo.participants.length > 2,
-                participants: newConvo.participants || []
+  const batchUpdateConversations = useCallback(
+    async (conversationIds: string[]) => {
+      if (conversationIds.length === 0) return
+
+      try {
+        // Fetch updated conversation data for specific IDs
+        const response = await fetch(
+          '/api/chat/conversations?' +
+            new URLSearchParams({
+              ids: conversationIds.join(','),
+            }),
+        )
+
+        if (response.ok) {
+          const { conversations: updatedConvos } = await response.json()
+
+          // Update local state with fresh data
+          setConversations((prev) => {
+            const updated = [...prev]
+            updatedConvos.forEach((newConvo: any) => {
+              const index = updated.findIndex((c) => c.id === newConvo.id)
+              if (index !== -1) {
+                const participantNames = newConvo.participants.map(
+                  (p: any) => p.name,
+                )
+                updated[index] = {
+                  id: newConvo.id,
+                  name:
+                    newConvo.name || formatParticipantNames(participantNames),
+                  lastMessage: '',
+                  timestamp: newConvo.lastMessageAt
+                    ? new Date(newConvo.lastMessageAt).toLocaleString()
+                    : '',
+                  hasUnread: newConvo.hasUnread || false,
+                  isGroup: newConvo.participants.length > 2,
+                  participants: newConvo.participants || [],
+                }
               }
-            }
+            })
+            return updated
           })
-          return updated
-        })
+        }
+      } catch (error) {
+        console.error('[ChatDrawer] Error batch updating conversations:', error)
       }
-    } catch (error) {
-      console.error('[ChatDrawer] Error batch updating conversations:', error)
-    }
-  }, [])
-  
+    },
+    [],
+  )
+
   // Load conversations when modal opens
   useEffect(() => {
     if (isOpen) {
       loadConversations()
     }
   }, [isOpen, loadConversations])
-  
+
   // Refresh conversations when returning from chat interface to drawer
   useEffect(() => {
     if (isOpen && !showChatInterface && !showParticipantSelector) {
@@ -159,30 +182,30 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
       loadConversations()
     }
   }, [isOpen, showChatInterface, showParticipantSelector, loadConversations])
-  
+
   // Listen for new messages via socket and queue updates with debouncing
   useEffect(() => {
     if (!socket || !isOpen || !session?.user) return
-    
+
     const handleNewMessage = (message: any) => {
       const conversationId = message.conversationId
       if (!conversationId) return
-      
+
       // Only queue update if message is from someone else
       // (sender's own messages shouldn't trigger unread indicators)
       const authorId = message.author?.id || message.authorId
       if (authorId === session.user?.id) {
         return
       }
-      
+
       // Add to update queue
       updateQueueRef.current.add(conversationId)
-      
+
       // Clear existing timer
       if (updateTimerRef.current) {
         clearTimeout(updateTimerRef.current)
       }
-      
+
       // Set new timer to batch update after 5 seconds
       updateTimerRef.current = setTimeout(() => {
         const idsToUpdate = Array.from(updateQueueRef.current)
@@ -191,24 +214,28 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
         updateTimerRef.current = null
       }, 5000)
     }
-    
+
     const handleReaction = (data: any) => {
       // Only update when someone ADDS a reaction to YOUR message
       // Check: action is 'add', message author is you, and reactor is not you
-      if (data.action !== 'add' || data.messageAuthorId !== session.user?.id || data.userId === session.user?.id) {
+      if (
+        data.action !== 'add' ||
+        data.messageAuthorId !== session.user?.id ||
+        data.userId === session.user?.id
+      ) {
         return
       }
-      
+
       const { conversationId } = data
-      
+
       // Add to update queue
       updateQueueRef.current.add(conversationId)
-      
+
       // Clear existing timer
       if (updateTimerRef.current) {
         clearTimeout(updateTimerRef.current)
       }
-      
+
       // Set new timer to batch update after 5 seconds
       updateTimerRef.current = setTimeout(() => {
         const idsToUpdate = Array.from(updateQueueRef.current)
@@ -217,10 +244,10 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
         updateTimerRef.current = null
       }, 5000)
     }
-    
+
     socket.on('message', handleNewMessage)
     socket.on('reaction', handleReaction)
-    
+
     return () => {
       socket.off('message', handleNewMessage)
       socket.off('reaction', handleReaction)
@@ -229,7 +256,7 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
       }
     }
   }, [socket, isOpen, session?.user, batchUpdateConversations])
-  
+
   // Lock body scroll when modal is open
   useEffect(() => {
     if (isOpen) {
@@ -237,36 +264,46 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
     } else {
       document.body.style.overflow = 'unset'
     }
-    
+
     return () => {
       document.body.style.overflow = 'unset'
     }
   }, [isOpen])
-  
+
   const loadMoreConversations = useCallback(() => {
-    if (!hasMoreConversations || isLoadingMore || conversations.length === 0) return
-    
+    if (!hasMoreConversations || isLoadingMore || conversations.length === 0)
+      return
+
     // Use the last conversation ID as cursor
     const lastConversation = conversations[conversations.length - 1]
     loadConversations(lastConversation.id)
   }, [hasMoreConversations, isLoadingMore, conversations, loadConversations])
-  
+
   // Detect scroll to bottom for loading more conversations
   useEffect(() => {
     const container = conversationsListRef.current
     if (!container) return
-    
+
     const handleScroll = () => {
       const { scrollTop, scrollHeight, clientHeight } = container
       // Load more when within 100px of bottom
-      if (scrollHeight - scrollTop - clientHeight < 100 && hasMoreConversations && !isLoadingMore) {
+      if (
+        scrollHeight - scrollTop - clientHeight < 100 &&
+        hasMoreConversations &&
+        !isLoadingMore
+      ) {
         loadMoreConversations()
       }
     }
-    
+
     container.addEventListener('scroll', handleScroll)
     return () => container.removeEventListener('scroll', handleScroll)
-  }, [hasMoreConversations, isLoadingMore, conversations, loadMoreConversations])
+  }, [
+    hasMoreConversations,
+    isLoadingMore,
+    conversations,
+    loadMoreConversations,
+  ])
 
   const handleNewGroupMessage = () => {
     setSelectorMode('group')
@@ -288,8 +325,8 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
           participantIds,
           type: 'direct',
           groupId: selectorMode === 'group' ? group?.id : null,
-          name: null // Let API generate name from participants
-        })
+          name: null, // Let API generate name from participants
+        }),
       })
 
       if (!response.ok) {
@@ -297,17 +334,18 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
       }
 
       const { conversation } = await response.json()
-      
+
       // Use saved name if available, otherwise generate from participants
       const participantNames = conversation.participants.map((p: any) => p.name)
-      const displayName = conversation.name || formatParticipantNames(participantNames)
-      
+      const displayName =
+        conversation.name || formatParticipantNames(participantNames)
+
       setCurrentConversation({
         id: conversation.id,
         participants: conversation.participants.map((p: any) => p.id),
-        name: displayName
+        name: displayName,
       })
-      
+
       // Show chat interface and hide selector
       setShowParticipantSelector(false)
       setShowChatInterface(true)
@@ -317,74 +355,118 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
     }
   }
 
-  const handleOpenConversation = async (conversation: Conversation) => {
-    setCurrentConversation({
-      id: conversation.id,
-      participants: conversation.participants.map(p => p.id),
-      name: conversation.name
-    })
-    setShowChatInterface(true)
-    
-    // Mark as read when opening
-    if (conversation.id) {
-      await markConversationAsRead(conversation.id)
-      // Update local state
-      setConversations(prev => prev.map(conv => 
-        conv.id === conversation.id ? { ...conv, hasUnread: false } : conv
-      ))
-      // Notify other components (like ChatIcon) that read status changed
-      const channel = new BroadcastChannel('chat_read_updates')
-      channel.postMessage({ type: 'conversation_read', conversationId: conversation.id })
-      channel.close()
-    }
-  }
+  const handleOpenConversation = useCallback(
+    async (conversation: Conversation) => {
+      setCurrentConversation({
+        id: conversation.id,
+        participants: conversation.participants.map((p) => p.id),
+        name: conversation.name,
+      })
+      setShowChatInterface(true)
+
+      // Update URL with conversation ID
+      const params = new URLSearchParams(window.location.search)
+      params.set('chat', conversation.id)
+      router.replace(`?${params.toString()}`, { scroll: false })
+
+      // Mark as read when opening
+      if (conversation.id) {
+        await markConversationAsRead(conversation.id)
+        // Update local state
+        setConversations((prev) =>
+          prev.map((conv) =>
+            conv.id === conversation.id ? { ...conv, hasUnread: false } : conv,
+          ),
+        )
+        // Notify other components (like ChatIcon) that read status changed
+        const channel = new BroadcastChannel('chat_read_updates')
+        channel.postMessage({
+          type: 'conversation_read',
+          conversationId: conversation.id,
+        })
+        channel.close()
+      }
+    },
+    [router],
+  )
 
   const handleNameUpdate = (newName: string) => {
     if (currentConversation) {
       setCurrentConversation({
         ...currentConversation,
-        name: newName
+        name: newName,
       })
-      
+
       // Update in conversations list
-      setConversations(prev => prev.map(conv => 
-        conv.id === currentConversation.id 
-          ? { ...conv, name: newName }
-          : conv
-      ))
+      setConversations((prev) =>
+        prev.map((conv) =>
+          conv.id === currentConversation.id
+            ? { ...conv, name: newName }
+            : conv,
+        ),
+      )
     }
   }
 
   const handleBackToConversations = () => {
     setShowChatInterface(false)
     setCurrentConversation(null)
+
+    // Update URL to show conversations list
+    const params = new URLSearchParams(window.location.search)
+    params.set('chat', 'open')
+    params.delete('msg')
+    router.replace(`?${params.toString()}`, { scroll: false })
   }
-  
+
   const handleMarkAllAsRead = async () => {
     await markAllConversationsAsRead()
     // Update all conversations to mark as read
-    setConversations(prev => prev.map(conv => ({ ...conv, hasUnread: false })))
+    setConversations((prev) =>
+      prev.map((conv) => ({ ...conv, hasUnread: false })),
+    )
     // Notify other components (like ChatIcon) that all conversations are read
     const channel = new BroadcastChannel('chat_read_updates')
     channel.postMessage({ type: 'all_read' })
     channel.close()
   }
+  // Handle opening conversation from URL param
+  useEffect(() => {
+    if (!isOpen || hasProcessedURLRef.current || conversations.length === 0)
+      return
+
+    const chatParam = searchParams.get('chat')
+    if (chatParam && chatParam !== 'open') {
+      // Try to find and open the conversation
+      const conversation = conversations.find((c) => c.id === chatParam)
+      if (conversation) {
+        hasProcessedURLRef.current = true
+        handleOpenConversation(conversation)
+      }
+    }
+  }, [isOpen, conversations, searchParams, handleOpenConversation])
+
   useEffect(() => {
     if (!isOpen) {
       setShowChatInterface(false)
       setShowParticipantSelector(false)
       setCurrentConversation(null)
+      hasProcessedURLRef.current = false
     }
   }, [isOpen])
 
   return (
     <>
-      <Drawer isOpen={isOpen} onClose={onClose} title={showChatInterface ? undefined : "Messages"} width="md">
-
+      <Drawer
+        isOpen={isOpen}
+        onClose={onClose}
+        title={showChatInterface ? undefined : 'Messages'}
+        width="md"
+      >
         {/* New Message Buttons */}
         <div className="p-4 border-b border-gray-200 dark:border-gray-700 space-y-2">
           {group && (
-            <button 
+            <button
               onClick={handleNewGroupMessage}
               className="w-full flex items-center gap-3 p-3 text-left bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
             >
@@ -394,19 +476,19 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
               </span>
             </button>
           )}
-          <button 
+          <button
             onClick={handleNewGlobalMessage}
             className="w-full flex items-center gap-3 p-3 text-left bg-gray-50 hover:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-lg transition-colors"
           >
             <User size={20} className="text-gray-600 dark:text-gray-400" />
             <span className="text-gray-600 dark:text-gray-400 font-medium">
-              New chat global
+              New direct chat
             </span>
           </button>
-          
+
           {/* Mark all as read button - only show if there are unread conversations */}
-          {conversations.some(c => c.hasUnread) && (
-            <button 
+          {conversations.some((c) => c.hasUnread) && (
+            <button
               onClick={handleMarkAllAsRead}
               className="w-full flex items-center justify-center gap-2 p-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
             >
@@ -438,7 +520,10 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
                 >
                   <div className="flex items-center gap-2">
                     {conversation.isGroup ? (
-                      <Users size={16} className="text-gray-400 flex-shrink-0" />
+                      <Users
+                        size={16}
+                        className="text-gray-400 flex-shrink-0"
+                      />
                     ) : (
                       <User size={16} className="text-gray-400 flex-shrink-0" />
                     )}
@@ -451,7 +536,7 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
                   </div>
                 </button>
               ))}
-              
+
               {/* Loading more indicator */}
               {isLoadingMore && (
                 <div className="flex justify-center py-4">
@@ -461,7 +546,7 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
             </div>
           )}
         </div>
-        
+
         {/* Participant Selector - inside drawer */}
         <ParticipantSelector
           isOpen={showParticipantSelector}
@@ -469,7 +554,7 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
           onStartChat={handleStartChat}
           mode={selectorMode}
         />
-        
+
         {/* Chat Interface - inside drawer */}
         {currentConversation && (
           <ChatInterface

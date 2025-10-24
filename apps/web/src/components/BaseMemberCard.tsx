@@ -126,22 +126,24 @@ export default function BaseMemberCard({
             )}
 
             {/* Strategy-specific connected time rendering (community groups) */}
-            {strategy.showConnectedTime && member.connectedAt && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <p className={strategy.connectedTimeClassName}>
-                      {formatDistanceToNow(new Date(member.connectedAt), {
-                        addSuffix: true,
-                      })}
-                    </p>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{new Date(member.connectedAt).toLocaleString()}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
+            {member.userId !== currentUserId &&
+              strategy.showConnectedTime &&
+              member.connectedAt && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <p className={strategy.connectedTimeClassName}>
+                        {formatDistanceToNow(new Date(member.connectedAt), {
+                          addSuffix: true,
+                        })}
+                      </p>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{new Date(member.connectedAt).toLocaleString()}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
           </div>
           <div className="vertical-align-top">
             <DropdownMenu>
