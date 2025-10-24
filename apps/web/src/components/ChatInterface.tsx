@@ -39,7 +39,7 @@ interface ChatMessage {
   authorName: string
   authorPhoto?: string | null
   timestamp: Date
-  type: 'text' | 'image' | 'mixed' | 'system'
+  type: 'text' | 'image' | 'mixed' | 'system' | 'link' | string
   metadata?: {
     images?: Array<{
       base64: string
@@ -96,13 +96,14 @@ export default function ChatInterface({
     currentIndex: number
   }>({ isOpen: false, images: [], currentIndex: 0 })
   const [moderationMenuMessageId, setModerationMenuMessageId] = useState<string | null>(null)
+  const [moderationButtonVisibleId, setModerationButtonVisibleId] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const nameInputRef = useRef<HTMLInputElement>(null)
   const imageInputRef = useRef<HTMLInputElement>(null)
   const messageBubbleRefs = useRef<Map<string, HTMLDivElement>>(new Map())
-  const { socket, isConnected, sendMessage, joinConversation, leaveConversation } = useSocket()
+  const { socket, isConnected, joinConversation, leaveConversation } = useSocket()
   const { data: session } = useSession()
   const currentUserId = session?.user?.id
   
@@ -237,19 +238,43 @@ export default function ChatInterface({
     loadMessages(oldestMessage.id)
   }, [hasMoreMessages, isLoadingMore, messages, loadMessages])
 
-  // Auto-scroll to bottom when new messages arrive (only for new messages, not initial load)
+  // Auto-scroll to bottom when new messages arrive
   const previousMessageCount = useRef(0)
+  const shouldAutoScroll = useRef(true) // Track if we should auto-scroll
+  
+  // Update shouldAutoScroll when user manually scrolls
   useEffect(() => {
-    if (messages.length > 0) {
-      // Only scroll if messages were added to the end (new messages)
-      if (messages.length > previousMessageCount.current) {
-        const isInitialLoad = previousMessageCount.current === 0
-        messagesEndRef.current?.scrollIntoView({ 
-          behavior: isInitialLoad ? 'auto' : 'smooth' 
+    const container = messagesContainerRef.current
+    if (!container) return
+    
+    const handleScroll = () => {
+      // If user scrolls up more than 150px from bottom, disable auto-scroll
+      const scrollBottom = container.scrollHeight - container.scrollTop - container.clientHeight
+      shouldAutoScroll.current = scrollBottom < 150
+    }
+    
+    container.addEventListener('scroll', handleScroll)
+    return () => container.removeEventListener('scroll', handleScroll)
+  }, [])
+  
+  useEffect(() => {
+    if (messages.length === 0) return
+    
+    // If messages were added and auto-scroll is enabled, scroll to bottom
+    if (messages.length > previousMessageCount.current) {
+      const isInitialLoad = previousMessageCount.current === 0
+      
+      if (isInitialLoad || shouldAutoScroll.current) {
+        // Use requestAnimationFrame to wait for DOM update
+        requestAnimationFrame(() => {
+          messagesEndRef.current?.scrollIntoView({ 
+            behavior: isInitialLoad ? 'auto' : 'smooth' 
+          })
         })
       }
-      previousMessageCount.current = messages.length
     }
+    
+    previousMessageCount.current = messages.length
   }, [messages])
   
   // Detect scroll to top for loading more messages
@@ -276,68 +301,98 @@ export default function ChatInterface({
       
       // Join conversation room
       if (isConnected) {
+        console.log('[Chat] Joining conversation:', conversationId)
         joinConversation(conversationId)
       }
       
       return () => {
         if (isConnected) {
+          console.log('[Chat] Leaving conversation:', conversationId)
           leaveConversation(conversationId)
         }
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, conversationId, isConnected, loadMessages])
+  }, [isOpen, conversationId, isConnected])
 
-  // Listen for incoming messages
+  // Listen for incoming message notifications
   useEffect(() => {
     if (!socket) return
 
-    const handleNewMessage = (message: any) => {
-      // CRITICAL: Only add message if it belongs to THIS conversation
-      if (message.conversationId !== conversationId) {
+    const handleMessageNotification = async (notification: { messageId: string; conversationId: string }) => {
+      console.log('[Chat] Received message notification:', notification)
+      
+      // CRITICAL: Only fetch message if it belongs to THIS conversation
+      if (notification.conversationId !== conversationId) {
+        console.log('[Chat] Ignoring notification for different conversation')
         return
       }
       
-      const authorId = message.author?.id || message.authorId
-      
-      // Convert socket message to our ChatMessage format
-      const chatMessage: ChatMessage = {
-        id: message.id,
-        content: message.content,
-        authorId,
-        authorName: message.author?.name || 'Unknown User',
-        authorPhoto: authorPhotos.get(authorId) || null,
-        timestamp: new Date(message.createdAt),
-        type: message.type || 'text',
-        metadata: message.metadata
+      // Check if we already have this message (optimistic or real)
+      const exists = messages.some(m => m.id === notification.messageId || m.id.startsWith('temp-'))
+      if (exists) {
+        console.log('[Chat] Message already exists, skipping fetch')
+        // If it's our optimistic message, it will be replaced by the POST response
+        return
       }
       
-      // Add message only if it doesn't already exist (prevent duplicates)
-      setMessages(prev => {
-        const exists = prev.some(m => m.id === chatMessage.id)
-        if (exists) {
-          return prev
+      console.log('[Chat] Fetching message:', notification.messageId)
+      // Fetch full message via HTTP
+      try {
+        const response = await fetch(`/api/chat/messages/${conversationId}?messageId=${notification.messageId}`)
+        if (!response.ok) {
+          console.error('[Chat] Failed to fetch message:', notification.messageId)
+          return
         }
-        return [...prev, chatMessage]
-      })
-      
-      // Auto-mark as read if message is from someone else and conversation is open
-      if (conversationId && authorId !== session?.user?.id) {
-        markConversationAsRead(conversationId).then(() => {
-          // Notify other components that read status changed
-          const channel = new BroadcastChannel('chat_read_updates')
-          channel.postMessage({ type: 'conversation_read', conversationId })
-          channel.close()
+        
+        const data = await response.json()
+        const message = data.messages?.[0]
+        
+        if (!message) {
+          console.error('[Chat] Message not found:', notification.messageId)
+          return
+        }
+        
+        const authorId = message.author?.id || message.authorId
+        
+        // Convert to ChatMessage format
+        const chatMessage: ChatMessage = {
+          id: message.id,
+          content: message.content,
+          authorId,
+          authorName: message.author?.name || 'Unknown User',
+          authorPhoto: authorPhotos.get(authorId) || null,
+          timestamp: new Date(message.createdAt),
+          type: message.type || 'text',
+          metadata: message.metadata
+        }
+        
+        // Add message
+        setMessages(prev => {
+          const exists = prev.some(m => m.id === chatMessage.id)
+          if (exists) return prev
+          return [...prev, chatMessage]
         })
+        
+        // Auto-mark as read if message is from someone else
+        if (conversationId && authorId !== session?.user?.id) {
+          markConversationAsRead(conversationId).then(() => {
+            const channel = new BroadcastChannel('chat_read_updates')
+            channel.postMessage({ type: 'conversation_read', conversationId })
+            channel.close()
+          })
+        }
+      } catch (error) {
+        console.error('[Chat] Failed to fetch message:', error)
       }
     }
 
-    socket.on('message', handleNewMessage)
+    socket.on('message_notification', handleMessageNotification)
 
     return () => {
-      socket.off('message', handleNewMessage)
+      socket.off('message_notification', handleMessageNotification)
     }
-  }, [socket, authorPhotos, conversationId, session?.user?.id])
+  }, [socket, authorPhotos, conversationId, session?.user?.id, messages])
 
   // Listen for reaction updates
   useEffect(() => {
@@ -522,17 +577,18 @@ export default function ChatInterface({
     }
   }, [lightboxState])
 
-  // Close moderation menu on click outside
+  // Close moderation menu and button visibility on click outside
   useEffect(() => {
-    if (!moderationMenuMessageId) return
+    if (!moderationMenuMessageId && !moderationButtonVisibleId) return
 
     const handleClickOutside = () => {
       setModerationMenuMessageId(null)
+      setModerationButtonVisibleId(null)
     }
 
     document.addEventListener('click', handleClickOutside)
     return () => document.removeEventListener('click', handleClickOutside)
-  }, [moderationMenuMessageId])
+  }, [moderationMenuMessageId, moderationButtonVisibleId])
 
   if (!isOpen) return null
 
@@ -670,16 +726,55 @@ export default function ChatInterface({
       }
     }
 
-    // Send message with images, links, and/or text
-    sendMessage(conversationId, messageContent || ' ', {
+    // Create optimistic message for immediate display
+    const optimisticMessage: ChatMessage = {
+      id: `temp-${Date.now()}`,
+      content: messageContent,
+      authorId: session?.user?.id || '',
+      authorName: session?.user?.name || 'You',
+      authorPhoto: null,
+      timestamp: new Date(),
       type: messageType,
       metadata
-    })
+    }
     
-    // Reset sending state after a brief delay (message should be sent by then)
-    setTimeout(() => {
+    // Add optimistic message immediately
+    setMessages(prev => [...prev, optimisticMessage])
+    
+    // Send message via HTTP POST (handles large payloads better than WebSocket)
+    try {
+      const response = await fetch(`/api/chat/messages/${conversationId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content: messageContent || '',
+          type: messageType,
+          metadata
+        })
+      })
+      
+      if (!response.ok) {
+        throw new Error('Failed to send message')
+      }
+      
+      const realMessage = await response.json()
+      
+      // Replace optimistic message with real one
+      setMessages(prev => prev.map(m => 
+        m.id === optimisticMessage.id ? {
+          ...m,
+          id: realMessage.id,
+          timestamp: new Date(realMessage.createdAt)
+        } : m
+      ))
+    } catch (error) {
+      console.error('[Chat] Failed to send message:', error)
+      // Remove optimistic message on error
+      setMessages(prev => prev.filter(m => m.id !== optimisticMessage.id))
+      // TODO: Show error toast
+    } finally {
       setIsSendingMessage(false)
-    }, 500)
+    }
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -749,12 +844,14 @@ export default function ChatInterface({
     }
     setEmojiPickerState(newState)
     
-    // Restore scroll position after state update
-    requestAnimationFrame(() => {
-      if (messagesContainer) {
-        messagesContainer.scrollTop = scrollTop
-      }
-    })
+    // Restore scroll position after state update (only if we have a valid position)
+    if (scrollTop > 0) {
+      requestAnimationFrame(() => {
+        if (messagesContainer) {
+          messagesContainer.scrollTop = scrollTop
+        }
+      })
+    }
   }
 
   const handleEmojiSelect = async (emoji: string) => {
@@ -867,12 +964,14 @@ export default function ChatInterface({
         }
       }
       
-      // Restore scroll position after state update
-      setTimeout(() => {
-        if (messagesContainer) {
-          messagesContainer.scrollTop = scrollTop
-        }
-      }, 0)
+      // Restore scroll position after state update (only if we have a valid position)
+      if (scrollTop > 0) {
+        setTimeout(() => {
+          if (messagesContainer) {
+            messagesContainer.scrollTop = scrollTop
+          }
+        }, 0)
+      }
     } catch (error) {
       console.error('[Chat] Error handling reaction:', error)
       // TODO: Revert optimistic update on error
@@ -1008,8 +1107,8 @@ export default function ChatInterface({
 
   return (
     <div className="absolute inset-0 bg-white dark:bg-gray-900 flex flex-col z-50">
-      {/* Header - Part of flex flow so it stays visible when keyboard opens */}
-      <div className={`flex-shrink-0 flex items-center justify-between border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 transition-all ${
+      {/* Header - Sticky to stay visible when keyboard opens */}
+      <div className={`sticky top-0 z-10 flex-shrink-0 flex items-center justify-between border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 transition-all ${
         isKeyboardOpen ? 'p-2' : 'p-4'
       }`}>
         <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -1249,9 +1348,7 @@ export default function ChatInterface({
                     )}
                     
                     <div
-                      className={`px-4 pr-12 rounded-2xl relative group transition-all ${
-                        moderationMenuMessageId === message.id ? 'pt-8 pb-2' : 'py-2'
-                      } ${
+                      className={`px-4 pr-12 py-2 rounded-2xl relative group transition-all ${
                         isCurrentUser
                           ? 'bg-blue-500 text-white'
                           : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
@@ -1263,11 +1360,15 @@ export default function ChatInterface({
                         touchAction: 'none'
                       }}
                       onClick={(e) => {
-                        // On mobile, tap message to show/hide menu button
-                        if (window.innerWidth < 768) {
-                          e.stopPropagation()
-                          setModerationMenuMessageId(moderationMenuMessageId === message.id ? null : message.id)
+                        // Don't handle click if user was dragging or if long press was triggered
+                        const target = e.currentTarget as any
+                        if (isDragging || isSwiping || target.preventClick) {
+                          return
                         }
+                        
+                        // Click message to show/hide three-dot button (not the menu)
+                        e.stopPropagation()
+                        setModerationButtonVisibleId(moderationButtonVisibleId === message.id ? null : message.id)
                       }}
                       onContextMenu={(e) => {
                         e.preventDefault()
@@ -1321,54 +1422,64 @@ export default function ChatInterface({
                       ref={(el) => {
                         if (el) {
                           messageBubbleRefs.current.set(message.id, el)
-                          
-                          // Add non-passive touch event listener to prevent context menu
-                          const handleTouchStart = (e: TouchEvent) => {
-                            // Don't prevent default if touching an image or link (let click events work)
-                            const touchTarget = e.target as HTMLElement
-                            if (touchTarget.tagName === 'IMG' || touchTarget.tagName === 'A') {
-                              return
-                            }
-                            
-                            e.preventDefault() // This works because listener is non-passive
-                            
-                            const target = e.currentTarget as HTMLElement
-                            ;(target as any).touchStartTime = Date.now()
-                            
-                            const timer = setTimeout(() => {
-                              if (!isSwiping) {
-                                // Create synthetic event
-                                const syntheticEvent = {
-                                  currentTarget: target,
-                                  preventDefault: () => {},
-                                } as any
-                                handleLongPress(message.id, syntheticEvent)
-                              }
-                            }, 500)
-                            ;(target as any).longPressTimer = timer
-                          }
-                          
-                          const handleTouchEnd = (e: TouchEvent) => {
-                            const timer = ((e.currentTarget as HTMLElement) as any).longPressTimer
-                            if (timer) clearTimeout(timer)
-                          }
-                          
-                          const handleTouchMove = (e: TouchEvent) => {
-                            const timer = ((e.currentTarget as HTMLElement) as any).longPressTimer
-                            if (timer) clearTimeout(timer)
-                          }
-                          
-                          // Remove old listeners if they exist
-                          el.removeEventListener('touchstart', handleTouchStart as any)
-                          el.removeEventListener('touchend', handleTouchEnd as any)
-                          el.removeEventListener('touchmove', handleTouchMove as any)
-                          
-                          // Add non-passive listeners
-                          el.addEventListener('touchstart', handleTouchStart, { passive: false })
-                          el.addEventListener('touchend', handleTouchEnd, { passive: false })
-                          el.addEventListener('touchmove', handleTouchMove, { passive: false })
                         } else {
                           messageBubbleRefs.current.delete(message.id)
+                        }
+                      }}
+                      onTouchStart={(e) => {
+                        const target = e.currentTarget
+                        const touchTarget = e.target as HTMLElement
+                        
+                        // Don't handle long press on images, links, or buttons
+                        if (touchTarget.tagName === 'IMG' || touchTarget.tagName === 'A' || touchTarget.tagName === 'BUTTON' || touchTarget.closest('button')) {
+                          return
+                        }
+                        
+                        // Store touch start time and position
+                        ;(target as any).touchStartTime = Date.now()
+                        ;(target as any).touchStartX = e.touches[0].clientX
+                        ;(target as any).touchStartY = e.touches[0].clientY
+                        
+                        // Start long press timer (only triggers if held for 500ms without moving)
+                        const timer = setTimeout(() => {
+                          if (!isSwiping) {
+                            // Prevent click event from firing after long press
+                            ;(target as any).preventClick = true
+                            
+                            // Create synthetic event
+                            const syntheticEvent = {
+                              currentTarget: target,
+                              preventDefault: () => {},
+                            } as any
+                            handleLongPress(message.id, syntheticEvent)
+                          }
+                        }, 500)
+                        ;(target as any).longPressTimer = timer
+                      }}
+                      onTouchEnd={(e) => {
+                        const target = e.currentTarget
+                        const timer = (target as any).longPressTimer
+                        if (timer) clearTimeout(timer)
+                        
+                        // Clear preventClick flag after a short delay to allow click to fire
+                        setTimeout(() => {
+                          ;(target as any).preventClick = false
+                        }, 50)
+                      }}
+                      onTouchMove={(e) => {
+                        const target = e.currentTarget
+                        const timer = (target as any).longPressTimer
+                        if (timer) clearTimeout(timer)
+                        
+                        // Check if moved significantly (cancel long press)
+                        const startX = (target as any).touchStartX
+                        const startY = (target as any).touchStartY
+                        if (startX !== undefined && startY !== undefined) {
+                          const deltaX = Math.abs(e.touches[0].clientX - startX)
+                          const deltaY = Math.abs(e.touches[0].clientY - startY)
+                          if (deltaX > 10 || deltaY > 10) {
+                            ;(target as any).preventClick = false
+                          }
                         }
                       }}
                     >
@@ -1457,16 +1568,23 @@ export default function ChatInterface({
                       <button
                         onClick={(e) => {
                           e.stopPropagation()
-                          setModerationMenuMessageId(moderationMenuMessageId === message.id ? null : message.id)
+                          // Toggle menu open/closed
+                          const isOpening = moderationMenuMessageId !== message.id
+                          setModerationMenuMessageId(isOpening ? message.id : null)
+                          // Hide button visibility state when opening menu
+                          if (isOpening) {
+                            setModerationButtonVisibleId(null)
+                          }
                         }}
-                        className={`absolute top-2 right-2 p-2 rounded-full transition-opacity ${
+                        className={`absolute top-1/2 -translate-y-1/2 right-2 p-2 rounded-full transition-opacity ${
                           isCurrentUser 
                             ? 'hover:bg-blue-600' 
                             : 'hover:bg-gray-200 dark:hover:bg-gray-600'
                         } ${
-                          moderationMenuMessageId === message.id 
-                            ? 'opacity-100' 
-                            : 'opacity-0 md:group-hover:opacity-100'
+                          // Show button if menu is open OR on mobile if button visibility toggled
+                          moderationMenuMessageId === message.id || moderationButtonVisibleId === message.id
+                            ? 'opacity-100 pointer-events-auto' 
+                            : 'opacity-0 pointer-events-none'
                         }`}
                       >
                         <MoreVertical size={18} className={isCurrentUser ? 'text-white' : 'text-gray-500 dark:text-gray-400'} />
@@ -1474,7 +1592,7 @@ export default function ChatInterface({
 
                       {/* Moderation menu dropdown */}
                       {moderationMenuMessageId === message.id && (
-                        <div className="absolute top-8 right-0 z-30 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 min-w-[120px]">
+                        <div className="absolute top-1/2 translate-y-4 right-2 z-30 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 min-w-[120px]">
                           <button
                             onClick={async (e) => {
                               e.stopPropagation()

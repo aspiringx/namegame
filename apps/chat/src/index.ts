@@ -65,38 +65,17 @@ async function startChatServer() {
     pgClient.on("notification", async (msg) => {
       try {
         if (msg.channel === "new_message" && msg.payload) {
-          const messageData = JSON.parse(msg.payload);
+          const { messageId, conversationId } = JSON.parse(msg.payload);
           
-          // Broadcast full message to conversation room (for users actively viewing)
-          io.to(`conversation:${messageData.conversationId}`).emit(
-            "message",
-            messageData
-          );
-          
-          // Broadcast notification to user rooms (for unread indicators/green dots)
-          // Only send metadata, not full message content
-          const { PrismaClient } = await import('@namegame/db');
-          const prisma = new PrismaClient();
-          
-          const participants = await prisma.chatParticipant.findMany({
-            where: { conversationId: messageData.conversationId },
-            select: { userId: true }
+          // Broadcast only message ID to conversation room
+          // Clients will fetch full message via HTTP
+          io.to(`conversation:${conversationId}`).emit("message_notification", {
+            messageId,
+            conversationId
           });
-          
-          // Emit notification event to each participant's user room
-          participants.forEach(participant => {
-            io.to(`user:${participant.userId}`).emit("message_notification", {
-              conversationId: messageData.conversationId,
-              messageId: messageData.id,
-              authorId: messageData.authorId,
-              timestamp: messageData.createdAt
-            });
-          });
-          
-          await prisma.$disconnect();
           
           console.log(
-            `[Chat] Broadcasted message to conversation:${messageData.conversationId} and notifications to ${participants.length} participants`
+            `[Chat] Broadcasted message notification: ${messageId} to conversation:${conversationId}`
           );
         } else if (msg.channel === "message_deleted" && msg.payload) {
           const { messageId, conversationId } = JSON.parse(msg.payload);

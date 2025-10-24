@@ -7,7 +7,6 @@ import { useSession } from 'next-auth/react'
 interface SocketContextType {
   socket: Socket | null
   isConnected: boolean
-  sendMessage: (conversationId: string, content: string, options?: { type?: string; metadata?: any }) => void
   joinConversation: (conversationId: string) => void
   leaveConversation: (conversationId: string) => void
 }
@@ -32,7 +31,9 @@ export function SocketProvider({ children }: SocketProviderProps) {
   const { data: session } = useSession()
 
   useEffect(() => {
-    if (!session?.user) return
+    if (!session?.user?.id) return
+
+    console.log('[Socket] Initializing connection for user:', session.user.id)
 
     // Connect to chat service
     // Production: connects to separate chat.namegame.app subdomain
@@ -51,10 +52,12 @@ export function SocketProvider({ children }: SocketProviderProps) {
     })
 
     newSocket.on('connect', () => {
+      console.log('[Socket] Connected to chat server')
       setIsConnected(true)
     })
 
-    newSocket.on('disconnect', () => {
+    newSocket.on('disconnect', (reason) => {
+      console.warn('[Socket] Disconnected:', reason)
       setIsConnected(false)
     })
 
@@ -69,7 +72,7 @@ export function SocketProvider({ children }: SocketProviderProps) {
     })
 
     // Handle typing indicators
-    newSocket.on('user_typing', (_data) => {
+    newSocket.on('typing', (_data) => {
       // TODO: Update typing state in chat components
     })
 
@@ -80,23 +83,10 @@ export function SocketProvider({ children }: SocketProviderProps) {
     setSocket(newSocket)
 
     return () => {
+      console.log('[Socket] Cleaning up connection')
       newSocket.close()
     }
-  }, [session])
-
-  const sendMessage = (conversationId: string, content: string, options?: { type?: string; metadata?: any }) => {
-    if (!socket || !isConnected) {
-      console.error('[Socket] Cannot send message: not connected')
-      return
-    }
-
-    socket.emit('send-message', {
-      conversationId,
-      content,
-      type: options?.type || 'text',
-      metadata: options?.metadata
-    })
-  }
+  }, [session?.user?.id])
 
   const joinConversation = (conversationId: string) => {
     if (!socket || !isConnected) return
@@ -111,7 +101,6 @@ export function SocketProvider({ children }: SocketProviderProps) {
   const value: SocketContextType = {
     socket,
     isConnected,
-    sendMessage,
     joinConversation,
     leaveConversation
   }
