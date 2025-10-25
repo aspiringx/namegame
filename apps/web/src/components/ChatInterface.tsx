@@ -109,6 +109,8 @@ export default function ChatInterface({
   const [viewportOffset, setViewportOffset] = useState({ top: 0, height: 0 })
   const [isMobile, setIsMobile] = useState(false)
   const [isResizingDrawer, setIsResizingDrawer] = useState(false)
+  const [swipeStartX, setSwipeStartX] = useState<number | null>(null)
+  const [swipeOffset, setSwipeOffset] = useState(0)
   const [emojiPickerState, setEmojiPickerState] = useState<{
     isOpen: boolean
     messageId: string | null
@@ -143,6 +145,8 @@ export default function ChatInterface({
   }>({ isOpen: false, type: 'delete', messageId: null })
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null)
   const [editedContent, setEditedContent] = useState('')
+  const [editedImages, setEditedImages] = useState<Array<{ base64: string; width: number; height: number; size: number }>>([])
+  const [editedLinks, setEditedLinks] = useState<Array<{ url: string; title?: string; description?: string; image?: string; siteName?: string }>>([])
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -195,10 +199,63 @@ export default function ChatInterface({
     }
   }, [isEditingName])
 
-  // Focus input when chat opens
+  // Focus input when chat opens and lock background scroll
   useEffect(() => {
     if (isOpen) {
       inputRef.current?.focus()
+      
+      // Lock scroll on body and drawer to prevent background scrolling
+      const scrollY = window.scrollY
+      document.body.style.overflow = 'hidden'
+      document.body.style.position = 'fixed'
+      document.body.style.top = `-${scrollY}px`
+      document.body.style.width = '100%'
+      
+      // Also lock the drawer if it exists
+      const drawer = document.querySelector('[data-chat-drawer]') as HTMLElement
+      if (drawer) {
+        drawer.style.overflow = 'hidden'
+        drawer.style.position = 'fixed'
+      }
+      
+      // Store scroll position
+      document.body.dataset.scrollY = String(scrollY)
+    } else {
+      // Restore scroll when chat closes
+      const scrollY = document.body.dataset.scrollY
+      document.body.style.overflow = ''
+      document.body.style.position = ''
+      document.body.style.top = ''
+      document.body.style.width = ''
+      
+      if (scrollY) {
+        window.scrollTo(0, parseInt(scrollY))
+      }
+      
+      const drawer = document.querySelector('[data-chat-drawer]') as HTMLElement
+      if (drawer) {
+        drawer.style.overflow = ''
+        drawer.style.position = ''
+      }
+    }
+    
+    return () => {
+      // Cleanup on unmount
+      const scrollY = document.body.dataset.scrollY
+      document.body.style.overflow = ''
+      document.body.style.position = ''
+      document.body.style.top = ''
+      document.body.style.width = ''
+      
+      if (scrollY) {
+        window.scrollTo(0, parseInt(scrollY))
+      }
+      
+      const drawer = document.querySelector('[data-chat-drawer]') as HTMLElement
+      if (drawer) {
+        drawer.style.overflow = ''
+        drawer.style.position = ''
+      }
     }
   }, [isOpen])
 
@@ -740,6 +797,22 @@ export default function ChatInterface({
       window.visualViewport?.removeEventListener('resize', handleResize)
       window.visualViewport?.removeEventListener('scroll', handleResize)
       window.removeEventListener('resize', handleResize)
+    }
+  }, [isKeyboardOpen])
+
+  // Scroll to bottom when keyboard opens to show latest messages
+  useEffect(() => {
+    if (isKeyboardOpen && messagesContainerRef.current) {
+      // Use multiple attempts to ensure scroll happens after keyboard animation
+      const scrollToBottom = () => {
+        if (messagesContainerRef.current) {
+          messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight
+        }
+      }
+      
+      setTimeout(scrollToBottom, 50)
+      setTimeout(scrollToBottom, 150)
+      setTimeout(scrollToBottom, 300)
     }
   }, [isKeyboardOpen])
 
@@ -1492,12 +1565,64 @@ export default function ChatInterface({
 
   return (
     <div 
-      className="md:absolute md:inset-0 fixed left-0 right-0 bg-white dark:bg-gray-900 flex flex-col overflow-hidden z-50 transition-all duration-200 ease-out"
+      data-chat-interface
+      className="md:absolute md:inset-0 fixed left-0 right-0 bg-white dark:bg-gray-900 flex flex-col overflow-hidden transition-all duration-200 ease-out"
       style={isMobile ? {
         top: viewportOffset.top > 0 ? `${viewportOffset.top - 1}px` : '0px',
         bottom: '0px',
-        height: viewportOffset.height > 0 ? `${viewportOffset.height}px` : '100vh'
-      } : undefined}
+        height: viewportOffset.height > 0 ? `${viewportOffset.height}px` : '100vh',
+        overscrollBehavior: 'contain', // Prevent overscroll bounce/jitter
+        zIndex: 9999, // Ensure above everything including drawer
+        transform: swipeOffset > 0 ? `translateX(${swipeOffset}px)` : undefined,
+      } : {
+        zIndex: 50,
+      }}
+      onTouchStart={(e) => {
+        if (isMobile && isOpen) {
+          const startX = e.touches[0].clientX
+          const screenWidth = window.innerWidth
+          
+          // Allow swipe from left 2/3 of screen to go back to drawer
+          if (startX < screenWidth * 0.66) {
+            setSwipeStartX(startX)
+          }
+          
+          // Always stop propagation to prevent drawer from handling it
+          e.stopPropagation()
+        }
+      }}
+      onTouchMove={(e) => {
+        if (isMobile) {
+          // Always stop propagation to prevent drawer scroll
+          e.stopPropagation()
+          
+          if (swipeStartX !== null) {
+            const currentX = e.touches[0].clientX
+            const diff = currentX - swipeStartX
+            
+            // Only allow swiping right (positive diff)
+            if (diff > 0) {
+              setSwipeOffset(diff)
+            }
+          }
+        }
+      }}
+      onTouchEnd={(e) => {
+        if (isMobile) {
+          // Always stop propagation to prevent drawer from handling it
+          e.stopPropagation()
+          
+          if (swipeOffset > 0) {
+            // Close if swiped more than 100px - go back to drawer
+            if (swipeOffset > 100) {
+              setHasOtherUnread(false)
+              onBack()
+            }
+            setSwipeOffset(0)
+          }
+          setSwipeStartX(null)
+        }
+      }}
     >
       {/* Resize handle - only on desktop */}
       {onResize && (
@@ -1629,6 +1754,9 @@ export default function ChatInterface({
         ref={messagesContainerRef}
         data-messages-container
         className="flex-1 overflow-y-auto p-4 space-y-4"
+        style={{
+          overscrollBehavior: 'contain', // Prevent overscroll bounce/jitter
+        }}
         onTouchStart={(e) => {
           const container = e.currentTarget
           container.dataset.touchStartX = String(e.touches[0].clientX)
@@ -1639,10 +1767,16 @@ export default function ChatInterface({
           const startX = Number(container.dataset.touchStartX || 0)
           const startY = Number(container.dataset.touchStartY || 0)
           const deltaX = startX - e.touches[0].clientX
-          const deltaY = Math.abs(startY - e.touches[0].clientY)
+          const deltaY = startY - e.touches[0].clientY // Positive = scrolling up
+          const deltaYAbs = Math.abs(deltaY)
+
+          // Dismiss keyboard on scroll up (swipe down gesture)
+          if (deltaY < -30 && deltaYAbs > 30 && inputRef.current) {
+            inputRef.current.blur()
+          }
 
           // Swipe left to reveal all timestamps
-          if (deltaX > 50 && deltaY < 30) {
+          if (deltaX > 50 && deltaYAbs < 30) {
             setShowAllTimestamps(true)
             setIsSwiping(true)
           }
@@ -1995,6 +2129,9 @@ export default function ChatInterface({
                                     onClick={() => {
                                       setEditingMessageId(null)
                                       setEditedContent('')
+                                      setEditedImages([])
+                                      setEditedLinks([])
+                                      setModerationButtonVisibleId(null)
                                     }}
                                     className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 flex items-center gap-2"
                                   >
@@ -2003,14 +2140,44 @@ export default function ChatInterface({
                                   </button>
                                   <button
                                     onClick={async () => {
-                                      if (!editedContent.trim()) return
+                                      // Require at least content or images or links
+                                      if (!editedContent.trim() && editedImages.length === 0 && editedLinks.length === 0) return
+                                      
+                                      // Calculate new message type based on what's left
+                                      let newType: string = 'text'
+                                      const hasText = editedContent.trim().length > 0
+                                      const hasImages = editedImages.length > 0
+                                      const hasLinks = editedLinks.length > 0
+                                      
+                                      if (hasText && hasImages && hasLinks) {
+                                        newType = 'mixed'
+                                      } else if (hasText && hasImages) {
+                                        newType = 'mixed'
+                                      } else if (hasText && hasLinks) {
+                                        newType = 'mixed'
+                                      } else if (hasImages && hasLinks) {
+                                        newType = 'mixed'
+                                      } else if (hasImages) {
+                                        newType = 'image'
+                                      } else if (hasLinks) {
+                                        newType = 'link'
+                                      } else {
+                                        newType = 'text'
+                                      }
                                       
                                       // Save edit
                                       try {
                                         const response = await fetch(`/api/chat/message/${message.id}`, {
                                           method: 'PATCH',
                                           headers: { 'Content-Type': 'application/json' },
-                                          body: JSON.stringify({ content: editedContent.trim() }),
+                                          body: JSON.stringify({ 
+                                            content: editedContent.trim(),
+                                            type: newType,
+                                            metadata: {
+                                              images: editedImages,
+                                              links: editedLinks,
+                                            }
+                                          }),
                                         })
                                         
                                         if (response.ok) {
@@ -2019,7 +2186,16 @@ export default function ChatInterface({
                                           // Optimistic update
                                           setMessages(prev => prev.map(m => 
                                             m.id === message.id 
-                                              ? { ...m, content: editedContent.trim(), updatedAt: new Date(updated.updatedAt) }
+                                              ? { 
+                                                  ...m, 
+                                                  content: editedContent.trim(), 
+                                                  type: newType,
+                                                  metadata: {
+                                                    images: editedImages,
+                                                    links: editedLinks,
+                                                  },
+                                                  updatedAt: new Date(updated.updatedAt) 
+                                                }
                                               : m
                                           ))
                                           
@@ -2029,12 +2205,20 @@ export default function ChatInterface({
                                               messageId: message.id,
                                               conversationId,
                                               content: editedContent.trim(),
+                                              type: newType,
+                                              metadata: {
+                                                images: editedImages,
+                                                links: editedLinks,
+                                              },
                                               updatedAt: updated.updatedAt,
                                             })
                                           }
                                           
                                           setEditingMessageId(null)
                                           setEditedContent('')
+                                          setEditedImages([])
+                                          setEditedLinks([])
+                                          setModerationButtonVisibleId(null)
                                         }
                                       } catch (error) {
                                         console.error('[Chat] Error editing message:', error)
@@ -2075,18 +2259,18 @@ export default function ChatInterface({
                             )}
 
                             {/* Message images */}
-                            {message.metadata?.images &&
-                              message.metadata.images.length > 0 && (
+                            {((editingMessageId === message.id && editedImages.length > 0) ||
+                              (editingMessageId !== message.id && message.metadata?.images && message.metadata.images.length > 0)) && (
                                 <div
                                   className={`mt-2 grid gap-2 ${
-                                    message.metadata.images.length === 1
+                                    (editingMessageId === message.id ? editedImages.length : message.metadata!.images!.length) === 1
                                       ? 'grid-cols-1'
-                                      : message.metadata.images.length === 2
+                                      : (editingMessageId === message.id ? editedImages.length : message.metadata!.images!.length) === 2
                                       ? 'grid-cols-2'
                                       : 'grid-cols-3'
                                   }`}
                                 >
-                                  {message.metadata.images.map((image, idx) => (
+                                  {(editingMessageId === message.id ? editedImages : message.metadata!.images!).map((image, idx) => (
                                     <div
                                       key={idx}
                                       className="relative aspect-square max-w-xs"
@@ -2095,8 +2279,15 @@ export default function ChatInterface({
                                       <img
                                         src={image.base64}
                                         alt={`Image ${idx + 1}`}
-                                        className="w-full h-full object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                                        className={`w-full h-full object-cover rounded-lg ${
+                                          editingMessageId === message.id 
+                                            ? '' 
+                                            : 'cursor-pointer hover:opacity-90'
+                                        } transition-opacity`}
                                         onClick={() => {
+                                          // Don't open lightbox in edit mode
+                                          if (editingMessageId === message.id) return
+                                          
                                           setLightboxState({
                                             isOpen: true,
                                             images: message.metadata!.images!,
@@ -2104,6 +2295,17 @@ export default function ChatInterface({
                                           })
                                         }}
                                       />
+                                      {/* X button in edit mode */}
+                                      {editingMessageId === message.id && (
+                                        <button
+                                          onClick={() => {
+                                            setEditedImages(prev => prev.filter((_, i) => i !== idx))
+                                          }}
+                                          className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 shadow-lg transition-colors"
+                                        >
+                                          <X size={16} />
+                                        </button>
+                                      )}
                                     </div>
                                   ))}
                                 </div>
@@ -2210,6 +2412,8 @@ export default function ChatInterface({
                                       e.stopPropagation()
                                       setEditingMessageId(message.id)
                                       setEditedContent(message.content)
+                                      setEditedImages(message.metadata?.images || [])
+                                      setEditedLinks(message.metadata?.links || [])
                                       setModerationMenuMessageId(null)
                                     }}
                                     className="w-full px-4 py-3 text-left text-base text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3"

@@ -94,7 +94,7 @@ export async function PATCH(
 
     const { messageId } = await params
     const body = await request.json()
-    const { action, content } = body
+    const { action, content, type, metadata } = body
 
     // Get message
     const message = await prisma.chatMessage.findUnique({
@@ -116,11 +116,13 @@ export async function PATCH(
         return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
       }
 
-      // Update message content
+      // Update message content, type, and metadata
       const updated = await prisma.chatMessage.update({
         where: { id: messageId },
         data: {
           content: content.trim(),
+          type: type || 'text',
+          metadata: metadata || {},
           updatedAt: new Date()
         },
         select: {

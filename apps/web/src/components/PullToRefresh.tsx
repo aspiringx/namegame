@@ -19,6 +19,12 @@ export default function PullToRefresh() {
     if (!deviceInfo.isReady || !deviceInfo.isPWA) return
 
     const handleTouchStart = (e: TouchEvent) => {
+      // Don't trigger in chat interface (has its own scroll container)
+      const target = e.target as HTMLElement
+      if (target.closest('[data-messages-container]') || target.closest('[data-chat-interface]')) {
+        return
+      }
+      
       // Only trigger if at top of page
       if (window.scrollY === 0) {
         startY.current = e.touches[0].clientY
