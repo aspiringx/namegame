@@ -35,6 +35,8 @@ export default function Drawer({
   const [drawerWidth, setDrawerWidth] = useState<number | null>(null)
   const [isResizing, setIsResizing] = useState(false)
   const [isDesktop, setIsDesktop] = useState(false)
+  const [swipeStartX, setSwipeStartX] = useState<number | null>(null)
+  const [swipeOffset, setSwipeOffset] = useState(0)
   const drawerRef = useRef<HTMLDivElement>(null)
 
   // Detect desktop on mount
@@ -99,10 +101,39 @@ export default function Drawer({
       <div 
         ref={drawerRef}
         data-chat-drawer
-        className={`fixed top-0 md:top-[64px] right-0 h-full md:h-[calc(100vh-64px)] z-50 bg-white dark:bg-gray-800 shadow-2xl ${!drawerWidth ? widthClasses[width] : 'w-full'} flex flex-col ${isResizing ? '' : 'transition-transform duration-300'} ${
+        className={`fixed top-0 md:top-[64px] right-0 h-full md:h-[calc(100vh-64px)] z-50 bg-white dark:bg-gray-800 shadow-2xl ${!drawerWidth ? widthClasses[width] : 'w-full'} flex flex-col ${isResizing || swipeOffset > 0 ? '' : 'transition-transform duration-300'} ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
-        style={drawerStyle}
+        style={{
+          ...drawerStyle,
+          transform: swipeOffset > 0 ? `translateX(${swipeOffset}px)` : undefined,
+        }}
+        onTouchStart={(e) => {
+          if (!isDesktop && isOpen) {
+            setSwipeStartX(e.touches[0].clientX)
+          }
+        }}
+        onTouchMove={(e) => {
+          if (!isDesktop && swipeStartX !== null) {
+            const currentX = e.touches[0].clientX
+            const diff = currentX - swipeStartX
+            
+            // Only allow swiping right (positive diff)
+            if (diff > 0) {
+              setSwipeOffset(diff)
+            }
+          }
+        }}
+        onTouchEnd={() => {
+          if (!isDesktop && swipeOffset > 0) {
+            // Close if swiped more than 100px
+            if (swipeOffset > 100) {
+              onClose()
+            }
+            setSwipeOffset(0)
+            setSwipeStartX(null)
+          }
+        }}
       >
         {/* Resize handle - only on desktop when resizable */}
         {resizable && (
