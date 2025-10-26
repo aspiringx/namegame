@@ -17,102 +17,102 @@ const MOCK_PEOPLE = [
   {
     id: '1',
     name: 'Alice Johnson',
-    photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alice',
+    photo: 'https://api.dicebear.com/7.x/avataaars/png?seed=Alice&size=256',
   },
   {
     id: '2',
     name: 'Bob Smith',
-    photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Bob',
+    photo: 'https://api.dicebear.com/7.x/avataaars/png?seed=Bob&size=256',
   },
   {
     id: '3',
     name: 'Carol Williams',
-    photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Carol',
+    photo: 'https://api.dicebear.com/7.x/avataaars/png?seed=Carol&size=256',
   },
   {
     id: '4',
     name: 'David Brown',
-    photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=David',
+    photo: 'https://api.dicebear.com/7.x/avataaars/png?seed=David&size=256',
   },
   {
     id: '5',
     name: 'Eve Davis',
-    photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Eve',
+    photo: 'https://api.dicebear.com/7.x/avataaars/png?seed=Eve&size=256',
   },
   {
     id: '6',
     name: 'Frank Miller',
-    photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Frank',
+    photo: 'https://api.dicebear.com/7.x/avataaars/png?seed=Frank&size=256',
   },
   {
     id: '7',
     name: 'Grace Wilson',
-    photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Grace',
+    photo: 'https://api.dicebear.com/7.x/avataaars/png?seed=Grace&size=256',
   },
   {
     id: '8',
     name: 'Henry Moore',
-    photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Henry',
+    photo: 'https://api.dicebear.com/7.x/avataaars/png?seed=Henry&size=256',
   },
   {
     id: '9',
     name: 'Ivy Taylor',
-    photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Ivy',
+    photo: 'https://api.dicebear.com/7.x/avataaars/png?seed=Ivy&size=256',
   },
   {
     id: '10',
     name: 'Jack Anderson',
-    photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jack',
+    photo: 'https://api.dicebear.com/7.x/avataaars/png?seed=Jack&size=256',
   },
   {
     id: '11',
     name: 'Kate Thomas',
-    photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Kate',
+    photo: 'https://api.dicebear.com/7.x/avataaars/png?seed=Kate&size=256',
   },
   {
     id: '12',
     name: 'Leo Jackson',
-    photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Leo',
+    photo: 'https://api.dicebear.com/7.x/avataaars/png?seed=Leo&size=256',
   },
   {
     id: '13',
     name: 'Mia White',
-    photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Mia',
+    photo: 'https://api.dicebear.com/7.x/avataaars/png?seed=Mia&size=256',
   },
   {
     id: '14',
     name: 'Noah Harris',
-    photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Noah',
+    photo: 'https://api.dicebear.com/7.x/avataaars/png?seed=Noah&size=256',
   },
   {
     id: '15',
     name: 'Olivia Martin',
-    photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Olivia',
+    photo: 'https://api.dicebear.com/7.x/avataaars/png?seed=Olivia&size=256',
   },
   {
     id: '16',
     name: 'Paul Thompson',
-    photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Paul',
+    photo: 'https://api.dicebear.com/7.x/avataaars/png?seed=Paul&size=256',
   },
   {
     id: '17',
     name: 'Quinn Garcia',
-    photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Quinn',
+    photo: 'https://api.dicebear.com/7.x/avataaars/png?seed=Quinn&size=256',
   },
   {
     id: '18',
     name: 'Rose Martinez',
-    photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Rose',
+    photo: 'https://api.dicebear.com/7.x/avataaars/png?seed=Rose&size=256',
   },
   {
     id: '19',
     name: 'Sam Robinson',
-    photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sam',
+    photo: 'https://api.dicebear.com/7.x/avataaars/png?seed=Sam&size=256',
   },
   {
     id: '20',
     name: 'Tina Clark',
-    photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Tina',
+    photo: 'https://api.dicebear.com/7.x/avataaars/png?seed=Tina&size=256',
   },
 ]
 
@@ -122,172 +122,93 @@ interface StarProps {
   isNear: boolean
   isTarget: boolean
   placement?: 'inner' | 'close' | 'outer'
+  texture: THREE.Texture
 }
 
-function Star({ person, position, isNear, isTarget, placement }: StarProps) {
-  const meshRef = useRef<THREE.Mesh>(null)
+function Star({ position, isNear, isTarget, placement, texture }: StarProps) {
+  const spriteRef = useRef<THREE.Mesh>(null)
   const groupRef = useRef<THREE.Group>(null)
-  const avatarRef = useRef<THREE.Mesh>(null)
   const [hovered, setHovered] = useState(false)
-  const { camera } = useThree()
 
-  // Size based on placement
-  const baseSize = useRef(
+  // Billboard disabled - causing jumping during flight
+  // TODO: Re-enable after flight is working smoothly
+
+  // Size based on placement - simpler sizing
+  const baseSize =
     placement === 'inner'
-      ? 1.0 + Math.random() * 0.2
+      ? 3.5
       : placement === 'close'
-      ? 0.7 + Math.random() * 0.2
+      ? 2.8
       : placement === 'outer'
-      ? 0.5 + Math.random() * 0.15
-      : 0.4 + Math.random() * 0.8,
-  )
+      ? 2.2
+      : 2.5 // Unrated: medium
 
-  // Load texture once with proper settings for webp
-  const [avatarTexture] = useState(() => {
-    const loader = new THREE.TextureLoader()
-    const texture = loader.load(
-      person.photo,
-      (tex) => {
-        tex.colorSpace = THREE.SRGBColorSpace
-        tex.needsUpdate = true
-        console.log(`✓ Texture loaded: ${person.name}`)
+  // Texture is preloaded and passed as prop - no need to load here
+
+  // Custom shader material for circular clipping - must be before conditional return
+  const circularMaterial = useMemo(() => {
+    return new THREE.ShaderMaterial({
+      uniforms: {
+        map: { value: texture },
+        radius: { value: 0.5 }, // Clip to circle (0.5 = edge of sprite)
       },
-      undefined,
-      (error) => console.error(`✗ Texture failed for ${person.name}:`, error)
-    )
-    return texture
-  })
-
-  // Brightness multiplier based on placement
-  const brightnessMultiplier =
-    placement === 'inner'
-      ? 1.3
-      : placement === 'close'
-      ? 1.1
-      : placement === 'outer'
-      ? 0.9
-      : 1.0 // Unrated: normal
-
-  // Star color based on placement
-  const starColor =
-    placement === 'inner'
-      ? '#ffd700' // Gold for inner circle
-      : placement === 'close'
-      ? '#87ceeb' // Sky blue for close
-      : placement === 'outer'
-      ? '#b19cd9' // Lavender for outer
-      : '#ffffff' // White for unrated
-
-
-  // Calculate distance from camera for scaling and proximity detection
-  useFrame(() => {
-    if (meshRef.current) {
-      const dist = camera.position.distanceTo(meshRef.current.position)
-      // Scale based on distance - closer = bigger
-      // Much more conservative scaling to prevent overlapping stars
-      // Target star gets special treatment via isNear
-      const baseScale = Math.max(0.3, Math.min(1.2, 15 / dist))
-      // Boost target star slightly when near
-      const scale = isNear ? Math.min(1.5, baseScale * 1.2) : baseScale
-      meshRef.current.scale.setScalar(scale)
-
-      // Update brightness based on distance - closer = brighter
-      // Much more dramatic brightness for constellation stars: 0.5 to 2.5
-      const brightness = Math.max(0.5, Math.min(2.5, 30 / dist))
-      const material = meshRef.current.material as THREE.MeshStandardMaterial
-      material.emissiveIntensity =
-        brightness * brightnessMultiplier * (hovered ? 1.2 : 1.0)
-
-      // Fade in avatar as we approach - "man in the moon" effect
-      if (avatarRef.current) {
-        const avatarMaterial = avatarRef.current.material as THREE.MeshBasicMaterial
-        // Start fading in at distance 20, fully visible at distance 8
-        const avatarOpacity = Math.max(0, Math.min(1, (20 - dist) / 12))
-        avatarMaterial.opacity = avatarOpacity
-      }
-    }
-
-    // Billboard effect - make group face camera
-    if (groupRef.current) {
-      groupRef.current.lookAt(camera.position)
-    }
-  })
+      vertexShader: `
+        varying vec2 vUv;
+        void main() {
+          vUv = uv;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: `
+        uniform sampler2D map;
+        uniform float radius;
+        varying vec2 vUv;
+        void main() {
+          vec2 center = vec2(0.5, 0.5);
+          float dist = distance(vUv, center);
+          if (dist > radius) discard;
+          gl_FragColor = texture2D(map, vUv);
+        }
+      `,
+      transparent: true,
+    })
+  }, [texture])
 
   return (
     <group ref={groupRef} position={position}>
-      {/* Outer white glow ring - always visible */}
-      <mesh scale={2.2}>
-        <sphereGeometry args={[0.5, 32, 32]} />
-        <meshBasicMaterial
-          color="#ffffff"
-          transparent
-          opacity={hovered ? 0.4 : 0.2}
-        />
-      </mesh>
-
-      {/* Mid glow - brighter as we approach */}
-      <mesh scale={1.6}>
-        <sphereGeometry args={[0.5, 32, 32]} />
-        <meshBasicMaterial
-          color="#e0e7ff"
-          transparent
-          opacity={hovered ? 0.5 : 0.3}
-        />
-      </mesh>
-
-      {/* Star sphere - white core */}
+      {/* Circular clipped image using mesh + custom shader */}
       <mesh
-        ref={meshRef}
+        ref={spriteRef}
         onPointerOver={() => setHovered(true)}
         onPointerOut={() => setHovered(false)}
       >
-        <sphereGeometry args={[baseSize.current, 32, 32]} />
-        <meshStandardMaterial
-          color={starColor}
-          emissive={isTarget ? '#00ffff' : starColor}
-          emissiveIntensity={hovered ? 1.2 : 0.9}
+        <planeGeometry args={[baseSize, baseSize]} />
+        <primitive object={circularMaterial} attach="material" />
+      </mesh>
+
+      {/* White circular border ring - renders on top to mask sprite edges */}
+      <mesh position={[0, 0, 0.02]}>
+        <ringGeometry args={[baseSize * 0.48, baseSize * 0.52, 64]} />
+        <meshBasicMaterial
+          color="#ffffff"
+          transparent
+          opacity={hovered ? 0.9 : 0.7}
+          depthTest={false}
         />
       </mesh>
 
-      {/* Avatar in center - fades in as we approach */}
-      <mesh ref={avatarRef} position={[0, 0, 0.01]}>
-        <circleGeometry args={[baseSize.current * 0.7, 32]} />
-        <meshBasicMaterial map={avatarTexture} transparent opacity={0} />
-      </mesh>
-
-      {/* Bright cyan ring on target star during flight */}
+      {/* Cyan ring on target star */}
       {isTarget && (
-        <mesh scale={baseSize.current * 3.2}>
-          <ringGeometry args={[0.45, 0.5, 64]} />
+        <mesh position={[0, 0, 0.03]}>
+          <ringGeometry args={[baseSize * 0.55, baseSize * 0.6, 64]} />
           <meshBasicMaterial
             color="#00ffff"
             transparent
             opacity={0.8}
+            depthTest={false}
           />
         </mesh>
       )}
-
-      {/* Bright white ring on arrival - shows when very close */}
-      {isNear && (
-        <mesh scale={baseSize.current * 2.6}>
-          <ringGeometry args={[0.48, 0.52, 64]} />
-          <meshBasicMaterial
-            color="#ffffff"
-            transparent
-            opacity={Math.max(
-              0,
-              Math.min(
-                1,
-                (12 -
-                  camera.position.distanceTo(new THREE.Vector3(...position))) /
-                  4,
-              ),
-            )}
-          />
-        </mesh>
-      )}
-
-      {/* Names and buttons now rendered as 2D overlay outside Canvas */}
     </group>
   )
 }
@@ -635,6 +556,7 @@ function Scene({
 }: SceneProps) {
   const { camera, size } = useThree()
   const [nearestStarId, setNearestStarId] = useState<string | null>(null)
+  const [texturesLoaded, setTexturesLoaded] = useState(false)
   const targetPosition = useRef(new THREE.Vector3())
   const hasInitialized = useRef(false)
   const hasTriggeredApproaching = useRef(false)
@@ -643,6 +565,39 @@ function Scene({
   const flightStartPos = useRef(new THREE.Vector3())
   const flightControlPoint = useRef(new THREE.Vector3())
   const isFlying = useRef(false)
+
+  // Preload all textures before rendering any stars
+  const textures = useMemo(() => {
+    const loader = new THREE.TextureLoader()
+    const textureMap = new Map<string, THREE.Texture>()
+    let loadedCount = 0
+    
+    MOCK_PEOPLE.forEach((person) => {
+      const texture = loader.load(
+        person.photo,
+        (tex) => {
+          tex.colorSpace = THREE.SRGBColorSpace
+          tex.needsUpdate = true
+          loadedCount++
+          if (loadedCount === MOCK_PEOPLE.length) {
+            setTexturesLoaded(true)
+            console.log('✅ All textures loaded')
+          }
+        },
+        undefined,
+        (error) => {
+          console.error(`Failed to load ${person.name}:`, error)
+          loadedCount++
+          if (loadedCount === MOCK_PEOPLE.length) {
+            setTexturesLoaded(true)
+          }
+        }
+      )
+      textureMap.set(person.id, texture)
+    })
+    
+    return textureMap
+  }, [])
 
   // Gaussian random helper for organic clustering
   const gaussianRandom = (mean = 0, stdev = 1) => {
@@ -707,10 +662,10 @@ function Scene({
     if (autoPilotEnabled) {
       // First time in auto-pilot: set overview position
       if (!hasInitialized.current) {
-        // Position camera to center constellation vertically
+        // Position camera further back to show all stars in HUD initially
         // Top UI is ~80px, nav panel is ~200px from bottom
         // Center point should be higher to account for nav panel taking more space
-        camera.position.set(0, -10, 140) // Shift down (y=-10) to center in visible area
+        camera.position.set(0, -10, 180) // Further back (z=180) to show all stars
         camera.lookAt(0, -10, 0) // Look at adjusted center
         hasInitialized.current = true
       }
@@ -723,22 +678,21 @@ function Scene({
       ) {
         const targetPos = new THREE.Vector3(...starPositions[targetStarIndex])
 
-        // Position camera at a good viewing distance from the star
-        // Calculate direction FROM camera TO star
-        const direction = new THREE.Vector3().subVectors(targetPos, camera.position).normalize()
-        const viewDistance = 15 // Distance to fill HUD nicely without being too close
-        targetPosition.current
-          .copy(targetPos)
-          .sub(direction.multiplyScalar(viewDistance))
-
         // Initialize flight path when starting new journey
         const currentDist = camera.position.distanceTo(targetPos)
         if (journeyPhase === 'flying' && !isFlying.current) {
-          // Flight started
+          // Flight started - calculate target position ONCE at start
           isFlying.current = true
           flightProgress.current = 0
           hasTriggeredArrival.current = false // Reset arrival trigger
           flightStartPos.current.copy(camera.position)
+
+          // Calculate direction FROM camera TO star at flight start
+          const direction = new THREE.Vector3().subVectors(targetPos, camera.position).normalize()
+          const viewDistance = 15 // Distance to fill HUD nicely without being too close
+          targetPosition.current
+            .copy(targetPos)
+            .sub(direction.multiplyScalar(viewDistance))
 
           // Straight line flight - no curve, target stays centered
           flightControlPoint.current.copy(camera.position).lerp(targetPosition.current, 0.5)
@@ -766,13 +720,9 @@ function Scene({
             journeyPhase === 'approaching' ||
             journeyPhase === 'arrived')
         ) {
-          // Variable speed: fast when far, slow when near stars with faces
-          // Slow down significantly when within 50 units of target (where avatars are visible)
-          const progressSpeed = currentDist > 50 ? 0.005 : currentDist > 30 ? 0.002 : 0.001
-          flightProgress.current = Math.min(
-            1,
-            flightProgress.current + progressSpeed,
-          )
+          // Constant speed - no easing to prevent any stuttering
+          const baseSpeed = 0.006
+          flightProgress.current = Math.min(1, flightProgress.current + baseSpeed)
 
           // Auto-transition to 'arrived' when we get very close (only once)
           // Trigger later (distance < 14) to avoid premature arrival
@@ -892,8 +842,12 @@ function Scene({
       }
     })
 
-    setNearestStarId(nearestId)
-    onUpdateOverlays(overlays)
+    // Only update state if nearest star changed to prevent unnecessary re-renders
+    if (nearestId !== nearestStarId) {
+      setNearestStarId(nearestId)
+      // Only update overlays when nearest star changes to avoid constant re-renders
+      onUpdateOverlays(overlays)
+    }
   })
 
   return (
@@ -911,8 +865,8 @@ function Scene({
       <ShootingStar />
       <ShootingStar />
 
-      {/* Person stars */}
-      {MOCK_PEOPLE.map((person, index) => {
+      {/* Person stars - only render when all textures loaded */}
+      {texturesLoaded && MOCK_PEOPLE.map((person, index) => {
         // Check if this star is the current target by comparing with the target's originalIndex
         const isTargetStar = index === targetStarIndex && (journeyPhase === 'flying' || journeyPhase === 'approaching')
         
@@ -924,6 +878,7 @@ function Scene({
             isNear={nearestStarId === person.id}
             isTarget={isTargetStar}
             placement={placements.get(person.id)}
+            texture={textures.get(person.id)!}
           />
         )
       })}
