@@ -6,6 +6,13 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 
 // Mock data for demo
+// NOTE: WebP images don't load reliably in Three.js TextureLoader - using dicebear SVGs instead
+// WebP paths for future (need conversion to JPG or different loading approach):
+// Alice: '/uploads/user-photos/cmeg4p6r70002ihd1zt0im435.1757255300867.small.webp'
+// Bob: '/uploads/user-photos/cmeg4pewy0000ihkwmy8voxi9.1759609763448.small.webp'
+// Carol: '/uploads/user-photos/cmeg5liai0003ihzcqi2ppfwd.1755611564561.small.webp'
+// David: '/uploads/user-photos/cmeimf6010005ygjemuhgjxqn.1755612613185.small.webp'
+
 const MOCK_PEOPLE = [
   {
     id: '1',
@@ -113,17 +120,18 @@ interface StarProps {
   person: (typeof MOCK_PEOPLE)[0]
   position: [number, number, number]
   isNear: boolean
+  isTarget: boolean
   placement?: 'inner' | 'close' | 'outer'
 }
 
-function Star({ person, position, isNear, placement }: StarProps) {
+function Star({ person, position, isNear, isTarget, placement }: StarProps) {
   const meshRef = useRef<THREE.Mesh>(null)
   const groupRef = useRef<THREE.Group>(null)
   const avatarRef = useRef<THREE.Mesh>(null)
   const [hovered, setHovered] = useState(false)
   const { camera } = useThree()
 
-  // Size based on placement: inner=largest, close=medium, outer=smaller, unrated=varied
+  // Size based on placement
   const baseSize = useRef(
     placement === 'inner'
       ? 1.0 + Math.random() * 0.2
@@ -131,8 +139,24 @@ function Star({ person, position, isNear, placement }: StarProps) {
       ? 0.7 + Math.random() * 0.2
       : placement === 'outer'
       ? 0.5 + Math.random() * 0.15
-      : 0.4 + Math.random() * 0.8, // Unrated: much more varied for visual interest
+      : 0.4 + Math.random() * 0.8,
   )
+
+  // Load texture once with proper settings for webp
+  const [avatarTexture] = useState(() => {
+    const loader = new THREE.TextureLoader()
+    const texture = loader.load(
+      person.photo,
+      (tex) => {
+        tex.colorSpace = THREE.SRGBColorSpace
+        tex.needsUpdate = true
+        console.log(`✓ Texture loaded: ${person.name}`)
+      },
+      undefined,
+      (error) => console.error(`✗ Texture failed for ${person.name}:`, error)
+    )
+    return texture
+  })
 
   // Brightness multiplier based on placement
   const brightnessMultiplier =
@@ -144,38 +168,42 @@ function Star({ person, position, isNear, placement }: StarProps) {
       ? 0.9
       : 1.0 // Unrated: normal
 
-  const [avatarTexture] = useState(() => {
-    const loader = new THREE.TextureLoader()
-    return loader.load(person.photo)
-  })
+  // Star color based on placement
+  const starColor =
+    placement === 'inner'
+      ? '#ffd700' // Gold for inner circle
+      : placement === 'close'
+      ? '#87ceeb' // Sky blue for close
+      : placement === 'outer'
+      ? '#b19cd9' // Lavender for outer
+      : '#ffffff' // White for unrated
+
 
   // Calculate distance from camera for scaling and proximity detection
   useFrame(() => {
     if (meshRef.current) {
       const dist = camera.position.distanceTo(meshRef.current.position)
       // Scale based on distance - closer = bigger
-      const scale = Math.max(0.3, Math.min(2, 15 / dist))
+      // Much more conservative scaling to prevent overlapping stars
+      // Target star gets special treatment via isNear
+      const baseScale = Math.max(0.3, Math.min(1.2, 15 / dist))
+      // Boost target star slightly when near
+      const scale = isNear ? Math.min(1.5, baseScale * 1.2) : baseScale
       meshRef.current.scale.setScalar(scale)
 
       // Update brightness based on distance - closer = brighter
-      // More dramatic brightness variation: 0.4 to 1.5
-      const brightness = Math.max(0.4, Math.min(1.5, 30 / dist))
+      // Much more dramatic brightness for constellation stars: 0.5 to 2.5
+      const brightness = Math.max(0.5, Math.min(2.5, 30 / dist))
       const material = meshRef.current.material as THREE.MeshStandardMaterial
       material.emissiveIntensity =
-        brightness * brightnessMultiplier * (hovered ? 1.0 : 0.7)
+        brightness * brightnessMultiplier * (hovered ? 1.2 : 1.0)
 
       // Fade in avatar as we approach - "man in the moon" effect
       if (avatarRef.current) {
-        const avatarMaterial = avatarRef.current
-          .material as THREE.MeshBasicMaterial
+        const avatarMaterial = avatarRef.current.material as THREE.MeshBasicMaterial
         // Start fading in at distance 20, fully visible at distance 8
         const avatarOpacity = Math.max(0, Math.min(1, (20 - dist) / 12))
         avatarMaterial.opacity = avatarOpacity
-      }
-
-      // Debug: log when very close
-      if (dist < 8 && isNear) {
-        console.log(`Close to ${person.name}, distance: ${dist.toFixed(2)}`)
       }
     }
 
@@ -215,8 +243,8 @@ function Star({ person, position, isNear, placement }: StarProps) {
       >
         <sphereGeometry args={[baseSize.current, 32, 32]} />
         <meshStandardMaterial
-          color="#ffffff"
-          emissive={hovered ? '#ffffff' : '#f0f4ff'}
+          color={starColor}
+          emissive={isTarget ? '#00ffff' : starColor}
           emissiveIntensity={hovered ? 1.2 : 0.9}
         />
       </mesh>
@@ -226,6 +254,38 @@ function Star({ person, position, isNear, placement }: StarProps) {
         <circleGeometry args={[baseSize.current * 0.7, 32]} />
         <meshBasicMaterial map={avatarTexture} transparent opacity={0} />
       </mesh>
+
+      {/* Bright cyan ring on target star during flight */}
+      {isTarget && (
+        <mesh scale={baseSize.current * 3.2}>
+          <ringGeometry args={[0.45, 0.5, 64]} />
+          <meshBasicMaterial
+            color="#00ffff"
+            transparent
+            opacity={0.8}
+          />
+        </mesh>
+      )}
+
+      {/* Bright white ring on arrival - shows when very close */}
+      {isNear && (
+        <mesh scale={baseSize.current * 2.6}>
+          <ringGeometry args={[0.48, 0.52, 64]} />
+          <meshBasicMaterial
+            color="#ffffff"
+            transparent
+            opacity={Math.max(
+              0,
+              Math.min(
+                1,
+                (12 -
+                  camera.position.distanceTo(new THREE.Vector3(...position))) /
+                  4,
+              ),
+            )}
+          />
+        </mesh>
+      )}
 
       {/* Names and buttons now rendered as 2D overlay outside Canvas */}
     </group>
@@ -548,9 +608,11 @@ function FlyingControls() {
 
 interface SceneProps {
   onUpdateOverlays: (overlays: StarOverlay[]) => void
+  onSetSortedPeople: (people: Array<typeof MOCK_PEOPLE[0] & { originalIndex: number }>) => void
   autoPilotEnabled: boolean
   targetStarIndex: number
   onApproaching: (personName: string) => void
+  onArrived: (personName: string) => void
   journeyPhase:
     | 'intro'
     | 'flying'
@@ -563,9 +625,11 @@ interface SceneProps {
 
 function Scene({
   onUpdateOverlays,
+  onSetSortedPeople,
   autoPilotEnabled,
   targetStarIndex,
   onApproaching,
+  onArrived,
   journeyPhase,
   placements,
 }: SceneProps) {
@@ -574,6 +638,7 @@ function Scene({
   const targetPosition = useRef(new THREE.Vector3())
   const hasInitialized = useRef(false)
   const hasTriggeredApproaching = useRef(false)
+  const hasTriggeredArrival = useRef(false)
   const flightProgress = useRef(0)
   const flightStartPos = useRef(new THREE.Vector3())
   const flightControlPoint = useRef(new THREE.Vector3())
@@ -590,7 +655,7 @@ function Scene({
   // Position stars in organic Gaussian cluster with minimum distance
   const starPositions = useMemo(() => {
     const positions: [number, number, number][] = []
-    const minDistance = 2.5 // Minimum distance between stars to prevent overlap
+    const minDistance = 20 // Minimum distance between stars to prevent overlap (accounting for scaling)
     const spread = 12 // Tighter spread so constellation fits in view
     const maxAttempts = 50 // Max attempts to find non-overlapping position
 
@@ -624,6 +689,19 @@ function Scene({
     return positions
   }, [])
 
+  // Sort people by distance from starting camera position
+  // This creates a visit order from closest to farthest
+  useEffect(() => {
+    const startPos = new THREE.Vector3(0, -10, 140)
+    const sorted = MOCK_PEOPLE.map((person, index) => ({
+      ...person,
+      originalIndex: index,
+      distance: startPos.distanceTo(new THREE.Vector3(...starPositions[index])),
+    })).sort((a, b) => a.distance - b.distance)
+
+    onSetSortedPeople(sorted)
+  }, [starPositions, onSetSortedPeople])
+
   // Auto-pilot: initialize with overview, then move to target star
   useFrame(() => {
     if (autoPilotEnabled) {
@@ -646,8 +724,9 @@ function Scene({
         const targetPos = new THREE.Vector3(...starPositions[targetStarIndex])
 
         // Position camera at a good viewing distance from the star
-        const direction = targetPos.clone().normalize()
-        const viewDistance = 9 // Distance to view star from - close enough to see avatar clearly
+        // Calculate direction FROM camera TO star
+        const direction = new THREE.Vector3().subVectors(targetPos, camera.position).normalize()
+        const viewDistance = 15 // Distance to fill HUD nicely without being too close
         targetPosition.current
           .copy(targetPos)
           .sub(direction.multiplyScalar(viewDistance))
@@ -655,35 +734,14 @@ function Scene({
         // Initialize flight path when starting new journey
         const currentDist = camera.position.distanceTo(targetPos)
         if (journeyPhase === 'flying' && !isFlying.current) {
+          // Flight started
           isFlying.current = true
           flightProgress.current = 0
+          hasTriggeredArrival.current = false // Reset arrival trigger
           flightStartPos.current.copy(camera.position)
 
-          // Create curved flight path with control point
-          // Control point is offset perpendicular to flight path for arc
-          const midPoint = new THREE.Vector3().lerpVectors(
-            camera.position,
-            targetPosition.current,
-            0.5,
-          )
-
-          // Add perpendicular offset for curve (creates banking effect)
-          const flightDir = new THREE.Vector3()
-            .subVectors(targetPosition.current, camera.position)
-            .normalize()
-
-          // Create perpendicular vector for arc
-          const perpendicular = new THREE.Vector3(
-            -flightDir.y,
-            flightDir.x,
-            0,
-          ).normalize()
-
-          // Offset control point to create gentle arc
-          const arcDistance = currentDist * 0.15 // 15% of distance for subtle curve
-          flightControlPoint.current
-            .copy(midPoint)
-            .add(perpendicular.multiplyScalar(arcDistance))
+          // Straight line flight - no curve, target stays centered
+          flightControlPoint.current.copy(camera.position).lerp(targetPosition.current, 0.5)
         }
 
         // Check distance to trigger "approaching" message
@@ -701,15 +759,44 @@ function Scene({
           hasTriggeredApproaching.current = false
         }
 
-        // Bezier curve flight path
-        if (isFlying.current && journeyPhase === 'flying') {
-          // Increment progress - slower for more cinematic feel
-          const progressSpeed = currentDist < 12 ? 0.003 : 0.006
+        // Bezier curve flight path - continue even during 'arrived' to center the star
+        if (
+          isFlying.current &&
+          (journeyPhase === 'flying' ||
+            journeyPhase === 'approaching' ||
+            journeyPhase === 'arrived')
+        ) {
+          // Variable speed: fast when far, slow when near stars with faces
+          // Slow down significantly when within 50 units of target (where avatars are visible)
+          const progressSpeed = currentDist > 50 ? 0.005 : currentDist > 30 ? 0.002 : 0.001
           flightProgress.current = Math.min(
             1,
             flightProgress.current + progressSpeed,
           )
 
+          // Auto-transition to 'arrived' when we get very close (only once)
+          // Trigger later (distance < 14) to avoid premature arrival
+          if (
+            currentDist < 14 &&
+            flightProgress.current > 0.98 &&
+            !hasTriggeredArrival.current
+          ) {
+            console.log(
+              `🎯 Arrival triggered: distance=${currentDist.toFixed(
+                2,
+              )}, progress=${flightProgress.current.toFixed(2)}`,
+            )
+            hasTriggeredArrival.current = true
+            onArrived(MOCK_PEOPLE[targetStarIndex].name)
+            // Don't stop flying yet - let it complete to center the star
+          }
+
+          // Stop flying when we've fully arrived
+          if (flightProgress.current >= 1) {
+            isFlying.current = false
+          }
+
+          // Linear progress - no easing for smooth consistent movement
           const t = flightProgress.current
 
           // Quadratic Bezier curve: B(t) = (1-t)²P0 + 2(1-t)tP1 + t²P2
@@ -745,9 +832,21 @@ function Scene({
             camera.lookAt(targetPos) // Final look at star
             camera.rotation.z = 0 // Reset roll
           }
-        } else if (journeyPhase !== 'flying') {
+        } else if (
+          journeyPhase !== 'flying' &&
+          journeyPhase !== 'approaching'
+        ) {
           // Reset flight state when not flying
           isFlying.current = false
+        }
+
+        // Smooth camera look at target only during flight, not when arrived
+        if (
+          !isFlying.current &&
+          currentDist > 0.1 &&
+          journeyPhase !== 'arrived' &&
+          journeyPhase !== 'placed'
+        ) {
           camera.lookAt(targetPos)
         }
       }
@@ -813,18 +912,24 @@ function Scene({
       <ShootingStar />
 
       {/* Person stars */}
-      {MOCK_PEOPLE.map((person, index) => (
-        <Star
-          key={person.id}
-          person={person}
-          position={starPositions[index]}
-          isNear={nearestStarId === person.id}
-          placement={placements.get(person.id)}
-        />
-      ))}
+      {MOCK_PEOPLE.map((person, index) => {
+        // Check if this star is the current target by comparing with the target's originalIndex
+        const isTargetStar = index === targetStarIndex && (journeyPhase === 'flying' || journeyPhase === 'approaching')
+        
+        return (
+          <Star
+            key={person.id}
+            person={person}
+            position={starPositions[index]}
+            isNear={nearestStarId === person.id}
+            isTarget={isTargetStar}
+            placement={placements.get(person.id)}
+          />
+        )
+      })}
 
-      {/* Flying controls */}
-      <FlyingControls />
+      {/* Flying controls - only in manual mode */}
+      {!autoPilotEnabled && <FlyingControls />}
     </>
   )
 }
@@ -861,98 +966,92 @@ export default function StarField({
     Map<string, 'inner' | 'close' | 'outer'>
   >(new Map())
   const [currentStarIndex, setCurrentStarIndex] = useState(0)
-  const [pendingPlacement, setPendingPlacement] = useState<{
-    personId: string
-    circle: 'inner' | 'close' | 'outer'
-  } | null>(null)
   const [narratorMessage, setNarratorMessage] = useState<string>('')
+  const [displayedMessage, setDisplayedMessage] = useState<string>('')
   const [journeyPhase, setJourneyPhase] = useState<
     'intro' | 'flying' | 'approaching' | 'arrived' | 'placed' | 'complete'
   >('intro')
+  const [introStep, setIntroStep] = useState(0)
+  // Sorted people array with their original indices - starts empty until Scene sorts them
+  const [sortedPeople, setSortedPeople] = useState<Array<typeof MOCK_PEOPLE[0] & { originalIndex: number }>>([])
+
+  // Show message instantly (typing effect removed)
+  useEffect(() => {
+    setDisplayedMessage(narratorMessage)
+  }, [narratorMessage])
 
   // Intro sequence for auto-pilot
   useEffect(() => {
     if (autoPilotEnabled && journeyPhase === 'intro') {
-      // TODO: Replace 'Demo' with actual group name when integrated
-      setNarratorMessage(
+      // Multi-step intro messages
+      const introMessages = [
         "Welcome to your universe. We're looking at your Demo constellation...",
-      )
-    }
-  }, [autoPilotEnabled, journeyPhase])
-
-  const handleProceed = () => {
-    if (journeyPhase === 'intro') {
-      setNarratorMessage(
-        `Preparing to visit ${MOCK_PEOPLE.length} stars. First destination: ${MOCK_PEOPLE[0].name}`,
-      )
-      setJourneyPhase('flying')
-    } else if (journeyPhase === 'approaching') {
-      // When we arrive, update message to show we're at the star
-      setNarratorMessage(
-        `Now at ${MOCK_PEOPLE[currentStarIndex].name}. Choose their circle.`,
-      )
-      setJourneyPhase('arrived')
-    }
+        `You have ${MOCK_PEOPLE.length} stars to chart. Each represents someone in this constellation.`,
+        "We'll visit each star and you'll place them in your circles: Close, Near, or Distant.",
+        'Are you ready?',
+      ]
+      setNarratorMessage(introMessages[introStep])
   }
+}, [autoPilotEnabled, journeyPhase, introStep])
 
-  const handlePlacePerson = (
-    person: (typeof MOCK_PEOPLE)[0],
-    circle: 'inner' | 'close' | 'outer',
-  ) => {
-    console.log(`Placing ${person.name} in ${circle} circle`)
-
-    if (autoPilotEnabled) {
-      // In auto-pilot: show pending placement, then move to next after delay
-      setPendingPlacement({ personId: person.id, circle })
-
-      const circleLabel =
-        circle === 'inner'
-          ? 'Inner Circle'
-          : circle === 'close'
-          ? 'Close Circle'
-          : 'Outer Circle'
-      setNarratorMessage(
-        `${person.name} is now in your ${circleLabel}. Click Proceed to continue.`,
-      )
-
-      setPlacements((prev) => new Map(prev).set(person.id, circle))
-      setPendingPlacement(null)
-      setJourneyPhase('placed')
+const handleProceed = () => {
+  if (journeyPhase === 'intro') {
+    // Progress through intro steps
+    if (introStep < 3) {
+      setIntroStep(introStep + 1)
     } else {
-      // Manual mode: place immediately
-      setPlacements((prev) => new Map(prev).set(person.id, circle))
+      // Start the journey to first star (only if sortedPeople is ready)
+      if (sortedPeople.length === 0) {
+        console.warn('⚠️ sortedPeople not ready yet, waiting...')
+        return
+      }
+      const firstPerson = sortedPeople[0]
+      setNarratorMessage(`Let's begin! Flying to ${firstPerson.name}...`)
+      setJourneyPhase('flying')
     }
   }
+}
 
-  // TODO: Future feature - allow users to change star placements
-  const handleChangePlacement = (_personId: string) => {
-    setPendingPlacement(null)
-  }
+const handlePlacePerson = (
+  person: (typeof MOCK_PEOPLE)[0],
+  circle: 'inner' | 'close' | 'outer',
+) => {
+  console.log(`Placing ${person.name} in ${circle} circle`)
+  setPlacements((prev) => new Map(prev).set(person.id, circle))
 
-  const handleProceedAfterPlacement = () => {
-    // Move to next unplaced star
-    const nextIndex = MOCK_PEOPLE.findIndex(
-      (p, idx) => idx > currentStarIndex && !placements.has(p.id),
+  // Check if this was the last person
+  if (currentStarIndex >= sortedPeople.length - 1) {
+    setNarratorMessage(
+      `Journey complete! You've charted all ${MOCK_PEOPLE.length} stars in your constellation.`,
     )
-    if (nextIndex !== -1) {
-      const nextPerson = MOCK_PEOPLE[nextIndex]
-      const distance = (Math.random() * 5 + 1).toFixed(1) // Mock distance
-      setNarratorMessage(
-        `Next up: ${nextPerson.name}, currently ${distance} light years away.`,
-      )
-      setCurrentStarIndex(nextIndex)
-      setJourneyPhase('flying')
-    } else {
-      setNarratorMessage('Journey complete! All stars have been charted.')
-      setJourneyPhase('complete')
-    }
+    setJourneyPhase('complete')
+  } else {
+    // Move to next person
+    const nextPerson = sortedPeople[currentStarIndex + 1]
+    const circleLabel =
+      circle === 'inner' ? 'Close' : circle === 'close' ? 'Near' : 'Distant'
+    setNarratorMessage(
+      `${person.name} placed as ${circleLabel}. Ready to visit ${nextPerson.name}?`,
+    )
+    setJourneyPhase('placed')
   }
+}
 
-  const navigateToStar = (index: number) => {
-    if (index >= 0 && index < MOCK_PEOPLE.length) {
-      setCurrentStarIndex(index)
-    }
+const handleProceedAfterPlacement = () => {
+  if (currentStarIndex < sortedPeople.length - 1) {
+    const nextIndex = currentStarIndex + 1
+    const nextPerson = sortedPeople[nextIndex]
+    const distance = Math.floor(Math.random() * 20) + 5 // Random distance 5-25 light years
+    setNarratorMessage(
+      `Next up: ${nextPerson.name}, currently ${distance} light years away.`,
+    )
+    setCurrentStarIndex(nextIndex)
+    setJourneyPhase('flying')
+  } else {
+    setNarratorMessage('Journey complete! All stars have been charted.')
+    setJourneyPhase('complete')
   }
+}
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
@@ -962,112 +1061,113 @@ export default function StarField({
       >
         <Scene
           onUpdateOverlays={setOverlays}
+          onSetSortedPeople={setSortedPeople}
           autoPilotEnabled={autoPilotEnabled}
-          targetStarIndex={currentStarIndex}
+          targetStarIndex={sortedPeople[currentStarIndex]?.originalIndex ?? 0}
           onApproaching={(name) => {
             setNarratorMessage(`Approaching ${name}...`)
             setJourneyPhase('approaching')
+          }}
+          onArrived={(name) => {
+            setNarratorMessage(`Arrived at ${name}! Choose their circle.`)
+            setJourneyPhase('arrived')
           }}
           journeyPhase={journeyPhase}
           placements={placements}
         />
       </Canvas>
 
-      {/* 2D Overlay for names and buttons */}
-      {overlays.map((overlay) => {
-        const showOptions = overlay.isNear && overlay.distance < 8
-        const showName = overlay.distance < 12
-        const pending = pendingPlacement?.personId === overlay.person.id
-        const placed = placements.get(overlay.person.id)
-
-        if (!showName) return null
-
-        return (
+      {/* Spaceship HUD - Focus Rectangle with Corner Brackets */}
+      <div
+        className="pointer-events-none absolute inset-0 flex items-center justify-center"
+        style={{
+          paddingTop: '120px',
+          paddingBottom: '280px',
+        }}
+      >
+        <div
+          className="relative"
+          style={{
+            width: 'min(600px, 80vw)',
+            height: 'min(400px, 50vh)',
+          }}
+        >
+          {/* Top-left corner */}
           <div
-            key={overlay.person.id}
+            className="absolute left-0 top-0"
             style={{
-              position: 'absolute',
-              left: `${overlay.screenX}px`,
-              top: `${overlay.screenY + 80}px`, // Position below the star
-              transform: 'translate(-50%, 0)',
-              pointerEvents: showOptions ? 'auto' : 'none',
-              zIndex: 10,
+              width: '40px',
+              height: '40px',
+              borderTop: '2px solid #00ff88',
+              borderLeft: '2px solid #00ff88',
+              boxShadow: '0 0 8px rgba(0, 255, 136, 0.4)',
             }}
-            className="flex flex-col items-center gap-2"
-          >
-            {/* Name */}
-            <div className="whitespace-nowrap rounded-lg bg-black/80 px-3 py-1.5 text-sm font-semibold text-white shadow-lg">
-              {overlay.person.name}
-            </div>
+          />
+          {/* Top-right corner */}
+          <div
+            className="absolute right-0 top-0"
+            style={{
+              width: '40px',
+              height: '40px',
+              borderTop: '2px solid #00ff88',
+              borderRight: '2px solid #00ff88',
+              boxShadow: '0 0 8px rgba(0, 255, 136, 0.4)',
+            }}
+          />
+          {/* Bottom-left corner */}
+          <div
+            className="absolute bottom-0 left-0"
+            style={{
+              width: '40px',
+              height: '40px',
+              borderBottom: '2px solid #00ff88',
+              borderLeft: '2px solid #00ff88',
+              boxShadow: '0 0 8px rgba(0, 255, 136, 0.4)',
+            }}
+          />
+          {/* Bottom-right corner */}
+          <div
+            className="absolute bottom-0 right-0"
+            style={{
+              width: '40px',
+              height: '40px',
+              borderBottom: '2px solid #00ff88',
+              borderRight: '2px solid #00ff88',
+              boxShadow: '0 0 8px rgba(0, 255, 136, 0.4)',
+            }}
+          />
 
-            {/* Pending placement - show selected with change option */}
-            {showOptions && pending && (
-              <div
-                className="flex flex-col gap-1.5"
-                style={{ minWidth: '150px' }}
-              >
-                <div className="w-full rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white shadow-lg">
-                  ✓{' '}
-                  {pendingPlacement.circle === 'inner'
-                    ? 'Inner Circle'
-                    : pendingPlacement.circle === 'close'
-                    ? 'Close'
-                    : 'Outer Circle'}
-                </div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handleChangePlacement(overlay.person.id)
-                  }}
-                  className="w-full whitespace-nowrap rounded-lg border border-white/30 bg-black/50 px-3 py-1.5 text-xs font-medium text-white shadow-lg transition-colors hover:bg-black/70"
-                >
-                  Change
-                </button>
-              </div>
-            )}
-
-            {/* Action buttons - only show if not pending and options should show */}
-            {showOptions && !pending && !placed && (
-              <div
-                className="flex flex-col gap-1.5"
-                style={{ minWidth: '150px' }}
-              >
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handlePlacePerson(overlay.person, 'inner')
-                  }}
-                  className="w-full whitespace-nowrap rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white shadow-lg transition-colors hover:bg-indigo-700 active:bg-indigo-800"
-                >
-                  ⭐ Inner Circle
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handlePlacePerson(overlay.person, 'close')
-                  }}
-                  className="w-full whitespace-nowrap rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white shadow-lg transition-colors hover:bg-indigo-700 active:bg-indigo-800"
-                >
-                  ⭐ Close
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handlePlacePerson(overlay.person, 'outer')
-                  }}
-                  className="w-full whitespace-nowrap rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white shadow-lg transition-colors hover:bg-indigo-700 active:bg-indigo-800"
-                >
-                  ⭐ Outer Circle
-                </button>
-              </div>
-            )}
+          {/* Center crosshair */}
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+            <div
+              className="absolute"
+              style={{
+                width: '20px',
+                height: '2px',
+                backgroundColor: '#00ff88',
+                opacity: 0.1,
+                left: '-10px',
+              }}
+            />
+            <div
+              className="absolute"
+              style={{
+                width: '2px',
+                height: '20px',
+                backgroundColor: '#00ff88',
+                opacity: 0.1,
+                top: '-10px',
+              }}
+            />
           </div>
-        )
-      })}
+        </div>
+      </div>
+
+      {/* 2D Overlay removed - names now shown in Html component with avatar */}
 
       {/* Navigation System - Control Panel Style */}
       {((autoPilotEnabled && narratorMessage) || !autoPilotEnabled) && (
-        <div className="absolute bottom-20 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-3xl px-2 sm:px-4">
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-3xl px-2 sm:px-4">
           <div className="relative overflow-hidden rounded-lg border-2 border-indigo-500/50 bg-gradient-to-b from-slate-900 to-slate-950 shadow-2xl">
             {/* Control panel accent lines */}
             <div className="absolute left-0 top-0 h-full w-1 bg-gradient-to-b from-indigo-500 via-cyan-400 to-indigo-500"></div>
@@ -1097,9 +1197,7 @@ export default function StarField({
                         : 'bg-white/10 text-gray-400 hover:bg-white/20 hover:text-white'
                     }`}
                     title="Auto-Pilot Mode"
-                  >
-                    🚀
-                  </button>
+                  ></button>
                   <button
                     onClick={() => onModeChange?.(false)}
                     className={`rounded px-2 py-1 text-xs transition-colors ${
@@ -1108,19 +1206,47 @@ export default function StarField({
                         : 'bg-white/10 text-gray-400 hover:bg-white/20 hover:text-white'
                     }`}
                     title="Manual Mode"
-                  >
-                    🧑‍🚀
-                  </button>
+                  ></button>
                 </div>
               </div>
               <p
-                className="font-mono text-xs leading-relaxed tracking-wide text-indigo-100 sm:text-sm"
+                className="font-mono text-xs leading-relaxed tracking-wide text-indigo-100 sm:text-sm pt-2"
                 style={{ letterSpacing: '0.03em' }}
               >
                 {autoPilotEnabled
-                  ? narratorMessage
+                  ? displayedMessage
                   : "You're in charge captain! Use your mouse or touch to navigate."}
               </p>
+
+              {/* Placement buttons - show when arrived at a star */}
+              {autoPilotEnabled && journeyPhase === 'arrived' && sortedPeople.length > 0 && (
+                <div className="mt-3 flex gap-2">
+                  <button
+                    onClick={() =>
+                      handlePlacePerson(sortedPeople[currentStarIndex], 'inner')
+                    }
+                    className="flex-1 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg transition-colors hover:bg-indigo-700 active:bg-indigo-800"
+                  >
+                    Close
+                  </button>
+                  <button
+                    onClick={() =>
+                      handlePlacePerson(sortedPeople[currentStarIndex], 'close')
+                    }
+                    className="flex-1 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg transition-colors hover:bg-indigo-700 active:bg-indigo-800"
+                  >
+                    Near
+                  </button>
+                  <button
+                    onClick={() =>
+                      handlePlacePerson(sortedPeople[currentStarIndex], 'outer')
+                    }
+                    className="flex-1 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg transition-colors hover:bg-indigo-700 active:bg-indigo-800"
+                  >
+                    Distant
+                  </button>
+                </div>
+              )}
 
               {/* Proceed button - only show in auto-pilot when waiting for user to advance */}
               {autoPilotEnabled &&
@@ -1136,39 +1262,19 @@ export default function StarField({
                     → Proceed
                   </button>
                 )}
+
+              {/* Star counter footer */}
+              {autoPilotEnabled && (
+                <div className="mt-2 pt-1 pb-1 border-t border-indigo-500/30 text-center">
+                  <span className="text-xs font-mono text-indigo-300">
+                    {journeyPhase === 'intro'
+                      ? `${MOCK_PEOPLE.length} stars detected`
+                      : `Star ${currentStarIndex + 1} of ${MOCK_PEOPLE.length}`}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
-        </div>
-      )}
-
-      {/* Auto-pilot navigation bar */}
-      {autoPilotEnabled && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-3 rounded-full bg-black/80 px-4 py-2 shadow-xl">
-          {journeyPhase === 'intro' ? (
-            <span className="text-sm font-medium text-white px-2">
-              {MOCK_PEOPLE.length} stars detected
-            </span>
-          ) : (
-            <>
-              <button
-                onClick={() => navigateToStar(currentStarIndex - 1)}
-                disabled={currentStarIndex === 0}
-                className="rounded-full p-2 text-white transition-colors hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed"
-              >
-                ←
-              </button>
-              <span className="text-sm font-medium text-white">
-                Star {currentStarIndex + 1} of {MOCK_PEOPLE.length}
-              </span>
-              <button
-                onClick={() => navigateToStar(currentStarIndex + 1)}
-                disabled={currentStarIndex === MOCK_PEOPLE.length - 1}
-                className="rounded-full p-2 text-white transition-colors hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed"
-              >
-                →
-              </button>
-            </>
-          )}
         </div>
       )}
     </div>
