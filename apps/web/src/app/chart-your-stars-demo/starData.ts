@@ -55,7 +55,8 @@ export const getStarPosition = (
   if (useConstellationView && starData.constellationPosition) {
     return starData.constellationPosition
   }
-  return starData.initialPosition
+  // Fallback to origin if initialPosition is null (shouldn't happen after initialization)
+  return starData.initialPosition || [0, 0, 0]
 }
 
 // Count placed stars

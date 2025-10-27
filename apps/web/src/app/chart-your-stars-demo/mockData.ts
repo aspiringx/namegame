@@ -4,7 +4,9 @@
 // Carol: '/uploads/user-photos/cmeg5liai0003ihzcqi2ppfwd.1755611564561.small.webp'
 // David: '/uploads/user-photos/cmeimf6010005ygjemuhgjxqn.1755612613185.small.webp'
 
-export const MOCK_PEOPLE = [
+import { Person } from './types'
+
+export const MOCK_PEOPLE: Person[] = [
   {
     id: '1',
     name: 'Alice Johnson',

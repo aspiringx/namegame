@@ -1,13 +1,19 @@
 // Chart Your Stars - Type definitions
 
 import * as THREE from 'three'
-import { MOCK_PEOPLE } from './mockData'
+
+// Person data structure
+export interface Person {
+  id: string
+  name: string
+  photo: string
+}
 
 // StarData: All state for a single person/star
 export interface StarData {
-  person: (typeof MOCK_PEOPLE)[0]
+  person: Person
   index: number // Index in MOCK_PEOPLE array for ordering
-  initialPosition: [number, number, number] // Random position at journey start
+  initialPosition: [number, number, number] | null // Random position at journey start
   constellationPosition: [number, number, number] | null // Position after placement
   placement: 'inner' | 'close' | 'outer' | null // Which ring (Close/Near/Distant)
   visited: boolean // Has user visited this star yet
@@ -26,7 +32,7 @@ export type JourneyPhase =
 
 // Star overlay for 2D UI
 export interface StarOverlay {
-  person: (typeof MOCK_PEOPLE)[0]
+  person: Person
   screenX: number
   screenY: number
   distance: number
@@ -35,7 +41,7 @@ export interface StarOverlay {
 
 // Star component props
 export interface StarProps {
-  person: (typeof MOCK_PEOPLE)[0]
+  person: Person
   position: [number, number, number]
   isTarget: boolean
   placement?: 'inner' | 'close' | 'outer'
