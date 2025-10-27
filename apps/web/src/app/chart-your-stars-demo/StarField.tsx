@@ -494,8 +494,12 @@ function Star({
   }, [starGlowOpacity])
 
   // Render image and star together during transition
+  // Target star gets LOWER renderOrder to render last (on top)
+  // In Three.js, lower renderOrder = renders later = appears on top
+  const renderOrder = isTarget ? -100 : 0
+  
   return (
-    <group ref={groupRef} position={position}>
+    <group ref={groupRef} position={position} renderOrder={renderOrder}>
       {/* White star glow - visible when far, fades out as image appears */}
       {starGlowOpacity > 0 && (
         <>
