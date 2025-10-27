@@ -196,8 +196,21 @@ function Star({
     const calculatedSize =
       typeof window !== 'undefined' && window.innerWidth < 640 ? 1.8 : 3.0
 
-    if (isLocked) {
-      // Lock size when arrived/placed/takeoff - capture on first lock
+    // During takeoff: gradually shrink based on distance as we pull back
+    if (journeyPhase === 'takeoff') {
+      const shrinkStart = 10 // Start shrinking after 10 units
+      const shrinkEnd = 35 // Minimum size at 35 units (matches pullback)
+      if (distanceToCamera < shrinkStart) {
+        baseSize = calculatedSize
+      } else if (distanceToCamera > shrinkEnd) {
+        baseSize = calculatedSize * 0.4 // Shrink to 40% of original
+      } else {
+        // Gradual shrink from 100% to 40%
+        const shrinkProgress = (distanceToCamera - shrinkStart) / (shrinkEnd - shrinkStart)
+        baseSize = calculatedSize * (1.0 - (shrinkProgress * 0.6))
+      }
+    } else if (isLocked) {
+      // Lock size when arrived/placed - capture on first lock
       if (lockedSize.current === null) {
         lockedSize.current = calculatedSize
       }
@@ -213,6 +226,7 @@ function Star({
   } else {
     // Constellation stars (non-target) - boost size during intro
     const isIntroPhase = journeyPhase === 'intro'
+    const isFlying = journeyPhase === 'flying'
     const maxDist = 100
     const distanceFactor = Math.max(
       0,
@@ -222,6 +236,12 @@ function Star({
     if (isIntroPhase) {
       // During intro: larger and more visible (2.0 to 3.5)
       baseSize = 2.0 + distanceFactor * 1.5
+    } else if (isFlying && distanceToCamera < 40) {
+      // During flying, if close (recently was target): use smaller size to match takeoff end
+      // This prevents jump when transitioning from target to constellation
+      const calculatedSize =
+        typeof window !== 'undefined' && window.innerWidth < 640 ? 1.8 : 3.0
+      baseSize = calculatedSize * 0.4 // Match the takeoff end size
     } else {
       // During journey: smaller to focus on target (1.5 to 3.0)
       baseSize = 1.5 + distanceFactor * 1.5
@@ -259,21 +279,38 @@ function Star({
   // Calculate opacity based on distance for depth perception
   let groupOpacity = 1.0
   if (isTarget) {
-    const calculatedOpacity = 1.0
-
-    if (isLocked) {
-      // Lock opacity when arrived/placed/takeoff - capture on first lock
-      if (lockedOpacity.current === null) {
-        lockedOpacity.current = calculatedOpacity
+    // During takeoff: gradually fade based on distance as we pull back
+    if (journeyPhase === 'takeoff') {
+      // Start at full opacity, fade as distance increases
+      const fadeStart = 10 // Start fading after 10 units
+      const fadeEnd = 35 // Faded at 35 units (matches pullback)
+      if (distanceToCamera < fadeStart) {
+        groupOpacity = 1.0
+      } else if (distanceToCamera > fadeEnd) {
+        groupOpacity = 0.6 // Keep brighter at end of takeoff
+      } else {
+        // Gradual fade from 1.0 to 0.6
+        const fadeProgress = (distanceToCamera - fadeStart) / (fadeEnd - fadeStart)
+        groupOpacity = 1.0 - (fadeProgress * 0.4)
       }
-      groupOpacity = lockedOpacity.current
-    } else if (shouldResetLocks) {
-      // Only reset lock when flying to next star
-      lockedOpacity.current = null
-      groupOpacity = calculatedOpacity
     } else {
-      // Use calculated opacity during approach
-      groupOpacity = calculatedOpacity
+      // Other phases: use locked or calculated opacity
+      const calculatedOpacity = 1.0
+
+      if (isLocked) {
+        // Lock opacity when arrived/placed - capture on first lock
+        if (lockedOpacity.current === null) {
+          lockedOpacity.current = calculatedOpacity
+        }
+        groupOpacity = lockedOpacity.current
+      } else if (shouldResetLocks) {
+        // Only reset lock when flying to next star
+        lockedOpacity.current = null
+        groupOpacity = calculatedOpacity
+      } else {
+        // Use calculated opacity during approach
+        groupOpacity = calculatedOpacity
+      }
     }
   } else {
     // Constellation stars (non-target) - boost visibility during intro
@@ -298,15 +335,16 @@ function Star({
       if (distanceToCamera > 80) {
         // Still far from all stars: keep bright like intro
         groupOpacity = 0.9 + distanceFactor * 0.1
-      } else if (distanceToCamera > 30) {
-        // Getting closer: gradually dim (transition from 80 to 30)
-        const transitionFactor = (distanceToCamera - 30) / 50
+      } else if (distanceToCamera < 40) {
+        // Recently was target (just transitioned from takeoff): keep brighter for visibility
+        // This prevents jump and keeps star visible as it moves out of view
+        groupOpacity = 0.6 // Brighter than takeoff end for better visibility
+      } else if (distanceToCamera > 40) {
+        // Getting farther: gradually dim (transition from 80 to 40)
+        const transitionFactor = (distanceToCamera - 40) / 40
         const brightOpacity = 0.9 + distanceFactor * 0.1
-        const dimOpacity = 0.15 + distanceFactor * 0.55
+        const dimOpacity = 0.3
         groupOpacity = dimOpacity + (brightOpacity - dimOpacity) * transitionFactor
-      } else {
-        // Very close: fully dimmed
-        groupOpacity = 0.15 + distanceFactor * 0.55
       }
     } else {
       // Other phases: dimmer to focus on target (0.15 to 0.7)
@@ -678,6 +716,7 @@ interface SceneProps {
     people: Array<(typeof MOCK_PEOPLE)[0] & { originalIndex: number }>,
   ) => void
   targetStarIndex: number
+  previousStarIndex: number
   onApproaching: (personName: string) => void
   onArrived: (personName: string) => void
   onTakeoffComplete: () => void
@@ -696,6 +735,7 @@ function Scene({
   onUpdateOverlays,
   onSetSortedPeople,
   targetStarIndex,
+  previousStarIndex,
   onApproaching,
   onArrived,
   onTakeoffComplete,
@@ -712,6 +752,8 @@ function Scene({
   const takeoffProgress = useRef(0)
   const takeoffStartPos = useRef(new THREE.Vector3())
   const previousStarPos = useRef(new THREE.Vector3())
+  const takeoffEndLookAt = useRef(new THREE.Vector3())
+  const cameFromTakeoff = useRef(false)
   const flightProgress = useRef(0)
   const flightStartPos = useRef(new THREE.Vector3())
   const flightControlPoint = useRef(new THREE.Vector3())
@@ -841,25 +883,49 @@ function Scene({
     }
 
     // Handle takeoff sequence (pull back from current star before flying to next)
-    if (journeyPhase === 'takeoff') {
-      takeoffProgress.current += 0.02 // Takeoff speed
+    if (journeyPhase === 'takeoff' && targetStarIndex >= 0 && targetStarIndex < MOCK_PEOPLE.length) {
+      const nextTargetPos = new THREE.Vector3(...starPositions[targetStarIndex])
+      takeoffProgress.current += 0.015 // Takeoff speed (balanced for smooth but not too slow)
 
       if (takeoffProgress.current >= 1) {
         // Takeoff complete, transition to flying
         takeoffProgress.current = 0
+        cameFromTakeoff.current = true // Mark that we came from takeoff
+        // Save the lookAt direction at end of takeoff
+        takeoffEndLookAt.current.copy(nextTargetPos)
         onTakeoffComplete() // Trigger transition to flying phase
       } else {
-        // Pull camera back along Z-axis from previous star
-        const pullBackDistance = 15 // Units to pull back
-        const newZ =
-          takeoffStartPos.current.z + pullBackDistance * takeoffProgress.current
-        camera.position.set(
-          takeoffStartPos.current.x,
-          takeoffStartPos.current.y,
-          newZ,
-        )
-        // Keep looking at previous star as we pull back
-        camera.lookAt(previousStarPos.current)
+        const t = takeoffProgress.current
+        
+        // Pull camera back AND move laterally toward next target
+        const pullBackDistance = 30 // Units to pull back
+        
+        // Move camera position: pull back in Z, and gradually move X/Y toward next target
+        const lateralProgress = t * 0.3 // Move 30% of the way laterally during takeoff
+        const newX = takeoffStartPos.current.x + (nextTargetPos.x - takeoffStartPos.current.x) * lateralProgress
+        const newY = takeoffStartPos.current.y + (nextTargetPos.y - takeoffStartPos.current.y) * lateralProgress
+        const newZ = takeoffStartPos.current.z + pullBackDistance * t
+        
+        camera.position.set(newX, newY, newZ)
+        
+        // Gradually rotate camera from previous star to next target
+        // Start rotation after 30% of takeoff, complete by end
+        
+        if (t < 0.3) {
+          // First 30%: keep looking at previous star
+          camera.lookAt(previousStarPos.current)
+        } else {
+          // Remaining 70%: gradually rotate toward next target
+          const rotateProgress = (t - 0.3) / 0.7 // 0 to 1 over remaining time
+          // Ease the rotation for smoother feel
+          const easedProgress = rotateProgress * rotateProgress * (3 - 2 * rotateProgress) // Smoothstep
+          const lookAtPoint = new THREE.Vector3().lerpVectors(
+            previousStarPos.current,
+            nextTargetPos,
+            easedProgress
+          )
+          camera.lookAt(lookAtPoint)
+        }
       }
     }
 
@@ -879,6 +945,11 @@ function Scene({
         flightProgress.current = 0
         hasTriggeredArrival.current = false // Reset arrival trigger
         flightStartPos.current.copy(camera.position)
+        
+        // If NOT coming from takeoff, this is first flight from intro
+        if (!cameFromTakeoff.current) {
+          cameFromTakeoff.current = false // Will use constellation center as start lookAt
+        }
 
         // Position camera straight-on to star for HUD centering
         const isMobile =
@@ -892,17 +963,27 @@ function Scene({
           targetPos.z + viewDistance,
         )
 
-        // Smooth curved flight path with delayed panning
-        // Control point stays near starting position for first half of flight
-        // This keeps target in view but delays the pan until we're closer
-        const startWeight = 0.8 // Keep 80% of start position
-        const targetWeight = 0.2 // Only 20% toward target
-        
-        flightControlPoint.current.set(
-          camera.position.x * startWeight + targetPos.x * targetWeight,
-          camera.position.y * startWeight + targetPos.y * targetWeight,
-          camera.position.z * 0.3 + targetPosition.current.z * 0.7, // Move forward in Z
-        )
+        // Smooth curved flight path
+        if (cameFromTakeoff.current) {
+          // After takeoff: camera is already off-center, create gentle curve toward target
+          // Control point is midway between current position and target
+          flightControlPoint.current.set(
+            (camera.position.x + targetPos.x) / 2,
+            (camera.position.y + targetPos.y) / 2,
+            (camera.position.z + targetPosition.current.z) / 2,
+          )
+        } else {
+          // First flight from intro: delayed panning
+          // Control point stays near starting position for first half of flight
+          const startWeight = 0.8 // Keep 80% of start position
+          const targetWeight = 0.2 // Only 20% toward target
+          
+          flightControlPoint.current.set(
+            camera.position.x * startWeight + targetPos.x * targetWeight,
+            camera.position.y * startWeight + targetPos.y * targetWeight,
+            camera.position.z * 0.3 + targetPosition.current.z * 0.7, // Move forward in Z
+          )
+        }
       }
 
       // Check distance to trigger "approaching" message
@@ -927,20 +1008,22 @@ function Scene({
           journeyPhase === 'approaching' ||
           journeyPhase === 'arrived')
       ) {
-        // Variable speed: fast at start, slow way down when faces appear
-        // Slow down significantly when distance < 60 (when images start appearing)
+        // Variable speed: fast at start, slow down when very close
+        // Slow down when distance < 20 (when very close to star)
         const baseSpeed =
-          currentDist < 60
-            ? 0.001 // Very slow, majestic approach when faces visible
-            : 0.01 // Fast initial flight
+          currentDist < 20
+            ? 0.003 // Slow final approach
+            : currentDist < 40
+            ? 0.006 // Medium speed when getting close
+            : 0.012 // Fast initial flight
 
         flightProgress.current = Math.min(1, flightProgress.current + baseSpeed)
 
         // Auto-transition to 'arrived' when we get very close (only once)
-        // Relaxed conditions: distance < 20 (was 14) and progress > 0.95 (was 0.98)
+        // Stricter conditions: distance < 10 and progress > 0.98
         if (
-          currentDist < 20 &&
-          flightProgress.current > 0.95 &&
+          currentDist < 10 &&
+          flightProgress.current > 0.98 &&
           !hasTriggeredArrival.current
         ) {
           hasTriggeredArrival.current = true
@@ -966,8 +1049,8 @@ function Scene({
         camera.position.copy(newPos)
 
         // Gradually transition look direction with easing
-        // Start: look at constellation center (0, -10, 0)
-        // End: look at target star
+        // If coming from takeoff, camera is already looking at target, so just continue
+        // Otherwise (first flight from intro), start from constellation center
         // Delay the transition and use smooth easing
         const lookProgress = Math.max(0, (t - 0.2) / 0.8) // Start transitioning at t=0.2
         // Ease in-out: slow start, fast middle, slow end
@@ -975,13 +1058,28 @@ function Scene({
           ? 2 * lookProgress * lookProgress
           : 1 - Math.pow(-2 * lookProgress + 2, 2) / 2
         
-        const startLookAt = new THREE.Vector3(0, -10, 0)
-        const lookAtPoint = new THREE.Vector3().lerpVectors(
-          startLookAt,
-          targetPos,
-          easedLookProgress
-        )
-        camera.lookAt(lookAtPoint)
+        // Gradually transition look direction
+        if (cameFromTakeoff.current) {
+          // Coming from takeoff: gradually pan from takeoff end direction to centered on target
+          // This creates the lateral panning sensation
+          const panProgress = Math.min(1, t * 1.5) // Complete pan by t=0.67
+          const easedPanProgress = panProgress * panProgress * (3 - 2 * panProgress) // Smoothstep
+          const lookAtPoint = new THREE.Vector3().lerpVectors(
+            takeoffEndLookAt.current,
+            targetPos,
+            easedPanProgress
+          )
+          camera.lookAt(lookAtPoint)
+        } else {
+          // First flight from intro: interpolate from constellation center to target
+          const startLookAt = new THREE.Vector3(0, -10, 0)
+          const lookAtPoint = new THREE.Vector3().lerpVectors(
+            startLookAt,
+            targetPos,
+            easedLookProgress
+          )
+          camera.lookAt(lookAtPoint)
+        }
 
         // Complete flight when reached
         if (flightProgress.current >= 1) {
@@ -1065,14 +1163,16 @@ function Scene({
       {/* Person stars - only render when all textures loaded */}
       {texturesLoaded &&
         MOCK_PEOPLE.map((person, index) => {
-          // Check if this star is the current target - include all active phases
-          const isTargetStar =
-            index === targetStarIndex &&
-            (journeyPhase === 'flying' ||
-              journeyPhase === 'approaching' ||
-              journeyPhase === 'arrived' ||
-              journeyPhase === 'placed' ||
-              journeyPhase === 'takeoff')
+          // Check if this star is the current target
+          // During takeoff: show previous star as target (we're backing away from it)
+          // During flying/approaching/arrived/placed: show current target
+          const isTargetStar = 
+            (journeyPhase === 'takeoff' && index === previousStarIndex) ||
+            (index === targetStarIndex &&
+              (journeyPhase === 'flying' ||
+                journeyPhase === 'approaching' ||
+                journeyPhase === 'arrived' ||
+                journeyPhase === 'placed'))
 
           return (
             <Star
@@ -1117,6 +1217,9 @@ export default function StarField() {
     Map<string, 'inner' | 'close' | 'outer'>
   >(new Map())
   const [currentStarIndex, setCurrentStarIndex] = useState(0)
+  const [targetStarIndex, setTargetStarIndex] = useState(0)
+  const [previousStarIndex, setPreviousStarIndex] = useState(-1)
+  const [nextStarIndex, setNextStarIndex] = useState(-1)
   const [narratorMessage, setNarratorMessage] = useState<string>('')
   const [displayedMessage, setDisplayedMessage] = useState<string>('')
   const [journeyPhase, setJourneyPhase] = useState<
@@ -1206,11 +1309,14 @@ export default function StarField() {
     if (currentStarIndex < sortedPeople.length - 1) {
       const nextIndex = currentStarIndex + 1
       const nextPerson = sortedPeople[nextIndex]
-      const distance = Math.floor(Math.random() * 20) + 5 // Random distance 5-25 light years
+      const distance = Math.floor(Math.random() * 100) + 50
       setNarratorMessage(
         `Taking off... Next up: ${nextPerson.name}, currently ${distance} light years away.`,
       )
-      setCurrentStarIndex(nextIndex)
+      // Store current star's ORIGINAL index as previous (for Scene component comparison)
+      setPreviousStarIndex(sortedPeople[currentStarIndex].originalIndex)
+      // Store next index but DON'T update currentStarIndex yet (wait for takeoff to complete)
+      setNextStarIndex(nextIndex)
       setJourneyPhase('takeoff') // Start with takeoff, will transition to flying
     } else {
       setNarratorMessage('Journey complete! All stars have been charted.')
@@ -1228,6 +1334,7 @@ export default function StarField() {
           onUpdateOverlays={setOverlays}
           onSetSortedPeople={setSortedPeople}
           targetStarIndex={sortedPeople[currentStarIndex]?.originalIndex ?? 0}
+          previousStarIndex={previousStarIndex}
           onApproaching={(name) => {
             setNarratorMessage(`Approaching ${name}...`)
             setJourneyPhase('approaching')
@@ -1239,8 +1346,14 @@ export default function StarField() {
             setJourneyPhase('arrived')
           }}
           onTakeoffComplete={() => {
-            const nextPerson = sortedPeople[currentStarIndex]
-            setNarratorMessage(`Flying to ${nextPerson.name}...`)
+            // Now update currentStarIndex to the next star
+            if (nextStarIndex >= 0) {
+              setCurrentStarIndex(nextStarIndex)
+              const nextPerson = sortedPeople[nextStarIndex]
+              setNarratorMessage(`Flying to ${nextPerson.name}...`)
+              setTargetStarIndex(sortedPeople[nextStarIndex].originalIndex)
+              setNextStarIndex(-1) // Reset
+            }
             setJourneyPhase('flying')
           }}
           journeyPhase={journeyPhase}

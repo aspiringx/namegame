@@ -216,19 +216,32 @@ git log --oneline --graph chart-your-stars-demo
   4. ✅ Constellation stars stay visible and gradually fade
   5. ✅ Photo appears only when close (distance < 40)
   
+- **Star-to-star transitions (takeoff sequence):**
+  1. ✅ Pull back from current star (30 units in Z)
+  2. ✅ Move laterally toward next target (30% of distance in X/Y)
+  3. ✅ Rotate camera from previous star → next target
+  4. ✅ Previous star fades and shrinks naturally as distance increases
+  5. ✅ Previous star moves out of viewport smoothly (no jump)
+  6. ✅ Smooth transition to flying phase
+  7. ✅ Gradual pan to center next target in HUD during flight
+  
 - **Landing sequence:**
-  1. ✅ Smooth deceleration as approaching
-  2. ✅ Final position: centered in HUD
-  3. ✅ Clean photo display without edge artifacts
+  1. ✅ Variable speed approach (fast → medium → slow)
+  2. ✅ Smooth deceleration as approaching
+  3. ✅ Final position: centered in HUD
+  4. ✅ Clean photo display without edge artifacts
+  5. ✅ Accurate "arrived" trigger (distance < 10, progress > 0.98)
 
-- **Status:** Complete (initial flight)
+- **Status:** Complete
 - **Implementation:**
-  - ✅ Bezier curve flight path with gradual X/Y panning
-  - ✅ Delayed camera look direction transition with easing
-  - ✅ Distance-based constellation dimming (stays bright until distance < 80)
-  - ✅ Delayed photo transition (starts at 40, complete at 20)
-  - ✅ Fixed texture filtering and aspect ratio for clean images
-- **Next:** Need to implement takeoff sequence for star-to-star transitions
+  - ✅ Bezier curve flight path with context-aware control points
+  - ✅ Takeoff sequence with lateral movement and rotation
+  - ✅ Saved takeoff end lookAt direction for smooth flight continuation
+  - ✅ Gradual pan during flight (interpolate lookAt from takeoff end → target)
+  - ✅ Distance-based size/opacity transitions to prevent jumps
+  - ✅ Matched constellation star appearance with takeoff end state
+  - ✅ Fixed texture filtering (LinearFilter, ClampToEdgeWrapping)
+  - ✅ Fixed aspect ratio shader to prevent edge artifacts
 
 ---
 
