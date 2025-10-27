@@ -229,8 +229,8 @@ function Star({
   }
 
   // Distance thresholds for rendering
-  const TRANSITION_START = 60 // Start showing image
-  const TRANSITION_END = 30 // Fully image
+  const TRANSITION_START = 40 // Start showing image (was 60, now closer)
+  const TRANSITION_END = 20 // Fully image (was 30, now closer)
   let transitionProgress = Math.max(
     0,
     Math.min(
@@ -278,6 +278,7 @@ function Star({
   } else {
     // Constellation stars (non-target) - boost visibility during intro
     const isIntroPhase = journeyPhase === 'intro'
+    const isFlying = journeyPhase === 'flying'
 
     // Opacity varies with distance
     const maxDist = 100
@@ -290,8 +291,25 @@ function Star({
       // During intro: very bright and visible (0.9 to 1.0)
       // Should be brighter than background stars to "pop" like Orion
       groupOpacity = 0.9 + distanceFactor * 0.1
+    } else if (isFlying) {
+      // During flight: keep constellation bright until camera gets close to ANY star
+      // Use actual distance to camera for each star
+      
+      if (distanceToCamera > 80) {
+        // Still far from all stars: keep bright like intro
+        groupOpacity = 0.9 + distanceFactor * 0.1
+      } else if (distanceToCamera > 30) {
+        // Getting closer: gradually dim (transition from 80 to 30)
+        const transitionFactor = (distanceToCamera - 30) / 50
+        const brightOpacity = 0.9 + distanceFactor * 0.1
+        const dimOpacity = 0.15 + distanceFactor * 0.55
+        groupOpacity = dimOpacity + (brightOpacity - dimOpacity) * transitionFactor
+      } else {
+        // Very close: fully dimmed
+        groupOpacity = 0.15 + distanceFactor * 0.55
+      }
     } else {
-      // During journey: dimmer to focus on target (0.15 to 0.7)
+      // Other phases: dimmer to focus on target (0.15 to 0.7)
       groupOpacity = 0.15 + distanceFactor * 0.55
     }
 
@@ -345,14 +363,21 @@ function Star({
           if (dist > 0.5) discard;
           
           // Adjust UVs to preserve aspect ratio (cover the circle)
-          vec2 adjustedUv = vUv;
+          // Scale the dimension that's smaller to fill the circle
+          vec2 adjustedUv = vUv - 0.5; // Center at origin
+          
           if (aspect > 1.0) {
-            // Wider than tall: scale height
-            adjustedUv.y = 0.5 + (vUv.y - 0.5) * aspect;
+            // Wider than tall: scale down width to fit
+            adjustedUv.x /= aspect;
           } else {
-            // Taller than wide: scale width
-            adjustedUv.x = 0.5 + (vUv.x - 0.5) / aspect;
+            // Taller than wide: scale down height to fit
+            adjustedUv.y *= aspect;
           }
+          
+          adjustedUv = adjustedUv + 0.5; // Move back to 0-1 range
+          
+          // Clamp to valid texture coordinates to avoid edge sampling
+          adjustedUv = clamp(adjustedUv, 0.01, 0.99);
           
           vec4 texColor = texture2D(map, adjustedUv);
           gl_FragColor = vec4(texColor.rgb, texColor.a * opacity);
@@ -703,6 +728,11 @@ function Scene({
         person.photo,
         (tex) => {
           tex.colorSpace = THREE.SRGBColorSpace
+          // Use better filtering to avoid edge artifacts
+          tex.minFilter = THREE.LinearFilter
+          tex.magFilter = THREE.LinearFilter
+          tex.wrapS = THREE.ClampToEdgeWrapping
+          tex.wrapT = THREE.ClampToEdgeWrapping
           tex.needsUpdate = true
           loadedCount++
           if (loadedCount === MOCK_PEOPLE.length) {
@@ -855,18 +885,24 @@ function Scene({
           typeof window !== 'undefined' && window.innerWidth < 640
         const viewDistance = isMobile ? 5.5 : 6.5 // Mobile: farther for smaller appearance
 
-        // Camera position: directly in front of star along Z axis (straight view)
-        // HUD now centered in viewport, so no Y offset needed
+        // Camera target position: directly in front of star
         targetPosition.current.set(
-          targetPos.x, // X: same as star (horizontally centered)
-          targetPos.y, // Y: same as star (vertically centered)
-          targetPos.z + viewDistance, // Z: in front of star
+          targetPos.x,
+          targetPos.y,
+          targetPos.z + viewDistance,
         )
 
-        // Straight line flight - no curve, target stays centered
-        flightControlPoint.current
-          .copy(camera.position)
-          .lerp(targetPosition.current, 0.5)
+        // Smooth curved flight path with delayed panning
+        // Control point stays near starting position for first half of flight
+        // This keeps target in view but delays the pan until we're closer
+        const startWeight = 0.8 // Keep 80% of start position
+        const targetWeight = 0.2 // Only 20% toward target
+        
+        flightControlPoint.current.set(
+          camera.position.x * startWeight + targetPos.x * targetWeight,
+          camera.position.y * startWeight + targetPos.y * targetWeight,
+          camera.position.z * 0.3 + targetPosition.current.z * 0.7, // Move forward in Z
+        )
       }
 
       // Check distance to trigger "approaching" message
@@ -929,8 +965,23 @@ function Scene({
 
         camera.position.copy(newPos)
 
-        // Simple look at target instead
-        camera.lookAt(targetPos)
+        // Gradually transition look direction with easing
+        // Start: look at constellation center (0, -10, 0)
+        // End: look at target star
+        // Delay the transition and use smooth easing
+        const lookProgress = Math.max(0, (t - 0.2) / 0.8) // Start transitioning at t=0.2
+        // Ease in-out: slow start, fast middle, slow end
+        const easedLookProgress = lookProgress < 0.5
+          ? 2 * lookProgress * lookProgress
+          : 1 - Math.pow(-2 * lookProgress + 2, 2) / 2
+        
+        const startLookAt = new THREE.Vector3(0, -10, 0)
+        const lookAtPoint = new THREE.Vector3().lerpVectors(
+          startLookAt,
+          targetPos,
+          easedLookProgress
+        )
+        camera.lookAt(lookAtPoint)
 
         // Complete flight when reached
         if (flightProgress.current >= 1) {

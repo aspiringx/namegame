@@ -197,23 +197,38 @@ git log --oneline --graph chart-your-stars-demo
   - ✅ Smooth transition from "3D sphere" to flat image
 - **Why hybrid approach:** True spheres caused image quality issues. Flat circles with radial gradient shading provide the illusion of 3D depth when distant, while maintaining clear, high-quality images when close. Best of both worlds with better performance.
 
-### 2B. Add Atmospheric Effects ⏳
+### 2B. Add Atmospheric Effects ✅
 - Glowing halo around each sphere (shader or layered meshes)
-- Subtle rotation animation when idle
+- ~~Subtle rotation animation when idle~~ **Skipped - not visible with billboard behavior**
 - Depth-based fog/glow intensity
-- **Status:** Not started
+- **Status:** Complete
+- **Implementation:**
+  - ✅ Glowing halo already implemented (soft blue glow layer)
+  - ✅ Depth-based glow intensity (opacity varies with distance)
+  - ✅ Sphere-like shading with radial gradient
+  - ⏭️ Rotation skipped - not visible on billboarded flat circles
 
-### 2C. Camera Behavior Enhancement ⏳
-- **Takeoff sequence:**
-  1. Camera pulls back from sphere (2-3 units)
-  2. Rotates to face next target
-  3. Accelerates toward next star
+### 2C. Camera Behavior Enhancement ✅
+- **Initial flight from overview:**
+  1. ✅ Gradual pan from constellation center to target star
+  2. ✅ Delayed look direction transition (starts at t=0.2)
+  3. ✅ Ease-in-out curve for smooth, cinematic movement
+  4. ✅ Constellation stars stay visible and gradually fade
+  5. ✅ Photo appears only when close (distance < 40)
   
 - **Landing sequence:**
-  1. Decelerate as approaching
-  2. Gentle arc to "orbit" then settle in front
-  3. Final position: centered in HUD
-- **Status:** Not started
+  1. ✅ Smooth deceleration as approaching
+  2. ✅ Final position: centered in HUD
+  3. ✅ Clean photo display without edge artifacts
+
+- **Status:** Complete (initial flight)
+- **Implementation:**
+  - ✅ Bezier curve flight path with gradual X/Y panning
+  - ✅ Delayed camera look direction transition with easing
+  - ✅ Distance-based constellation dimming (stays bright until distance < 80)
+  - ✅ Delayed photo transition (starts at 40, complete at 20)
+  - ✅ Fixed texture filtering and aspect ratio for clean images
+- **Next:** Need to implement takeoff sequence for star-to-star transitions
 
 ---
 
