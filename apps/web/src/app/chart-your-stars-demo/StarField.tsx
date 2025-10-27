@@ -129,19 +129,36 @@ function Star({ position, isNear, isTarget, placement, texture }: StarProps) {
   const spriteRef = useRef<THREE.Mesh>(null)
   const groupRef = useRef<THREE.Group>(null)
   const [hovered, setHovered] = useState(false)
+  const { camera } = useThree()
 
-  // Billboard disabled - causing jumping during flight
-  // TODO: Re-enable after flight is working smoothly
+  // Simple billboard - always face camera (no rotation/banking that caused jumping)
+  // For target star, face directly toward camera (perpendicular to camera direction)
+  useFrame(() => {
+    if (groupRef.current) {
+      if (isTarget) {
+        // Get camera's forward direction and make star perpendicular to it
+        const cameraDirection = new THREE.Vector3()
+        camera.getWorldDirection(cameraDirection)
+        // Point star in opposite direction of camera (toward camera)
+        const lookAtPos = groupRef.current.position.clone().sub(cameraDirection)
+        groupRef.current.lookAt(lookAtPos)
+      } else {
+        groupRef.current.lookAt(camera.position)
+      }
+    }
+  })
 
-  // Size based on placement - simpler sizing
-  const baseSize =
-    placement === 'inner'
-      ? 3.5
-      : placement === 'close'
-      ? 2.8
-      : placement === 'outer'
-      ? 2.2
-      : 2.5 // Unrated: medium
+  // Size based on placement and target status
+  // Sized to fit within HUD rectangle
+  const baseSize = isTarget
+    ? typeof window !== 'undefined' && window.innerWidth < 640 ? 1.8 : 3.0
+    : placement === 'inner'
+    ? 3.5
+    : placement === 'close'
+    ? 2.8
+    : placement === 'outer'
+    ? 2.2
+    : 2.5 // Unrated: medium
 
   // Texture is preloaded and passed as prop - no need to load here
 
@@ -176,6 +193,14 @@ function Star({ position, isNear, isTarget, placement, texture }: StarProps) {
 
   return (
     <group ref={groupRef} position={position}>
+      {/* Opaque backing circle - blocks stars behind transparent areas, thin dark border */}
+      {isTarget && (
+        <mesh position={[0, 0, -0.01]}>
+          <circleGeometry args={[baseSize * 0.58, 64]} />
+          <meshBasicMaterial color="#1a1a2e" />
+        </mesh>
+      )}
+
       {/* Circular clipped image using mesh + custom shader */}
       <mesh
         ref={spriteRef}
@@ -186,26 +211,24 @@ function Star({ position, isNear, isTarget, placement, texture }: StarProps) {
         <primitive object={circularMaterial} attach="material" />
       </mesh>
 
-      {/* White circular border ring - renders on top to mask sprite edges */}
-      <mesh position={[0, 0, 0.02]}>
+      {/* White circular border ring - covers sprite edges */}
+      <mesh position={[0, 0, 0.01]}>
         <ringGeometry args={[baseSize * 0.48, baseSize * 0.52, 64]} />
         <meshBasicMaterial
           color="#ffffff"
-          transparent
-          opacity={hovered ? 0.9 : 0.7}
-          depthTest={false}
+          transparent={!isTarget}
+          opacity={isTarget ? 1.0 : hovered ? 0.9 : 0.7}
         />
       </mesh>
 
-      {/* Cyan ring on target star */}
+      {/* Cyan ring on target star - thinner, adjacent to white ring */}
       {isTarget && (
-        <mesh position={[0, 0, 0.03]}>
-          <ringGeometry args={[baseSize * 0.55, baseSize * 0.6, 64]} />
+        <mesh position={[0, 0, 0.01]}>
+          <ringGeometry args={[baseSize * 0.52, baseSize * 0.56, 64]} />
           <meshBasicMaterial
             color="#00ffff"
-            transparent
-            opacity={0.8}
-            depthTest={false}
+            transparent={false}
+            opacity={1.0}
           />
         </mesh>
       )}
@@ -367,170 +390,13 @@ function BackgroundStars() {
   )
 }
 
-function FlyingControls() {
-  const { camera, gl, raycaster, size } = useThree()
-  const velocity = useRef(new THREE.Vector3())
-  const isDragging = useRef(false)
-  const lastTouch = useRef({ x: 0, y: 0 })
-  const touches = useRef<Map<number, { x: number; y: number }>>(new Map())
-
-  useFrame(() => {
-    // Apply velocity with damping
-    camera.position.add(velocity.current)
-    velocity.current.multiplyScalar(0.85) // Stronger damping for more control
-  })
-
-  useEffect(() => {
-    const handlePointerDown = (e: PointerEvent) => {
-      isDragging.current = true
-      lastTouch.current = { x: e.clientX, y: e.clientY }
-    }
-
-    const handlePointerMove = (e: PointerEvent) => {
-      if (!isDragging.current) return
-
-      const deltaX = e.clientX - lastTouch.current.x
-      const deltaY = e.clientY - lastTouch.current.y
-
-      // Convert screen movement to world movement
-      const right = new THREE.Vector3(1, 0, 0).applyQuaternion(
-        camera.quaternion,
-      )
-      const up = new THREE.Vector3(0, 1, 0)
-
-      // Add to velocity for momentum - reduced sensitivity
-      velocity.current.add(right.multiplyScalar(-deltaX * 0.003))
-      velocity.current.add(up.multiplyScalar(deltaY * 0.003))
-
-      // Rotate camera based on drag - reduced sensitivity
-      camera.rotation.y += deltaX * 0.002
-      camera.rotation.x += deltaY * 0.002
-      camera.rotation.x = Math.max(
-        -Math.PI / 2,
-        Math.min(Math.PI / 2, camera.rotation.x),
-      )
-
-      lastTouch.current = { x: e.clientX, y: e.clientY }
-    }
-
-    const handlePointerUp = () => {
-      isDragging.current = false
-    }
-
-    const handleWheel = (e: WheelEvent) => {
-      e.preventDefault()
-
-      // Get mouse position in normalized device coordinates (-1 to +1)
-      const mouse = new THREE.Vector2(
-        (e.clientX / size.width) * 2 - 1,
-        -(e.clientY / size.height) * 2 + 1,
-      )
-
-      // Create ray from camera through mouse position
-      raycaster.setFromCamera(mouse, camera)
-      const direction = raycaster.ray.direction.clone()
-
-      // Zoom toward the point under the cursor - reduced speed
-      const zoomSpeed = e.deltaY * -0.005
-      velocity.current.add(direction.multiplyScalar(zoomSpeed))
-    }
-
-    const handleTouchStart = (e: TouchEvent) => {
-      touches.current.clear()
-      for (let i = 0; i < e.touches.length; i++) {
-        const touch = e.touches[i]
-        touches.current.set(touch.identifier, {
-          x: touch.clientX,
-          y: touch.clientY,
-        })
-      }
-    }
-
-    const handleTouchMove = (e: TouchEvent) => {
-      e.preventDefault()
-
-      if (e.touches.length === 2 && touches.current.size === 2) {
-        // Pinch-to-zoom
-        const touch1 = e.touches[0]
-        const touch2 = e.touches[1]
-
-        const currentDist = Math.hypot(
-          touch2.clientX - touch1.clientX,
-          touch2.clientY - touch1.clientY,
-        )
-
-        const prevTouch1 = touches.current.get(touch1.identifier)
-        const prevTouch2 = touches.current.get(touch2.identifier)
-
-        if (prevTouch1 && prevTouch2) {
-          const prevDist = Math.hypot(
-            prevTouch2.x - prevTouch1.x,
-            prevTouch2.y - prevTouch1.y,
-          )
-
-          const delta = currentDist - prevDist
-
-          // Get center point of pinch
-          const centerX = (touch1.clientX + touch2.clientX) / 2
-          const centerY = (touch1.clientY + touch2.clientY) / 2
-
-          const mouse = new THREE.Vector2(
-            (centerX / size.width) * 2 - 1,
-            -(centerY / size.height) * 2 + 1,
-          )
-
-          raycaster.setFromCamera(mouse, camera)
-          const direction = raycaster.ray.direction.clone()
-
-          // Zoom toward pinch center - reduced speed
-          velocity.current.add(direction.multiplyScalar(delta * -0.005))
-        }
-
-        // Update stored positions
-        touches.current.set(touch1.identifier, {
-          x: touch1.clientX,
-          y: touch1.clientY,
-        })
-        touches.current.set(touch2.identifier, {
-          x: touch2.clientX,
-          y: touch2.clientY,
-        })
-      }
-    }
-
-    const handleTouchEnd = () => {
-      touches.current.clear()
-    }
-
-    const canvas = gl.domElement
-    canvas.addEventListener('pointerdown', handlePointerDown)
-    canvas.addEventListener('pointermove', handlePointerMove)
-    canvas.addEventListener('pointerup', handlePointerUp)
-    canvas.addEventListener('pointerleave', handlePointerUp)
-    canvas.addEventListener('wheel', handleWheel, { passive: false })
-    canvas.addEventListener('touchstart', handleTouchStart, { passive: false })
-    canvas.addEventListener('touchmove', handleTouchMove, { passive: false })
-    canvas.addEventListener('touchend', handleTouchEnd)
-
-    return () => {
-      canvas.removeEventListener('pointerdown', handlePointerDown)
-      canvas.removeEventListener('pointermove', handlePointerMove)
-      canvas.removeEventListener('pointerup', handlePointerUp)
-      canvas.removeEventListener('pointerleave', handlePointerUp)
-      canvas.removeEventListener('wheel', handleWheel)
-      canvas.removeEventListener('touchstart', handleTouchStart)
-      canvas.removeEventListener('touchmove', handleTouchMove)
-      canvas.removeEventListener('touchend', handleTouchEnd)
-    }
-  }, [camera, gl, raycaster, size])
-
-  return null
-}
+// FlyingControls removed - always auto-pilot mode
 
 interface SceneProps {
   onUpdateOverlays: (overlays: StarOverlay[]) => void
-  onSetSortedPeople: (people: Array<typeof MOCK_PEOPLE[0] & { originalIndex: number }>) => void
-  autoPilotEnabled: boolean
+  onSetSortedPeople: (
+    people: Array<(typeof MOCK_PEOPLE)[0] & { originalIndex: number }>,
+  ) => void
   targetStarIndex: number
   onApproaching: (personName: string) => void
   onArrived: (personName: string) => void
@@ -547,7 +413,6 @@ interface SceneProps {
 function Scene({
   onUpdateOverlays,
   onSetSortedPeople,
-  autoPilotEnabled,
   targetStarIndex,
   onApproaching,
   onArrived,
@@ -571,7 +436,7 @@ function Scene({
     const loader = new THREE.TextureLoader()
     const textureMap = new Map<string, THREE.Texture>()
     let loadedCount = 0
-    
+
     MOCK_PEOPLE.forEach((person) => {
       const texture = loader.load(
         person.photo,
@@ -581,7 +446,6 @@ function Scene({
           loadedCount++
           if (loadedCount === MOCK_PEOPLE.length) {
             setTexturesLoaded(true)
-            console.log('✅ All textures loaded')
           }
         },
         undefined,
@@ -591,11 +455,11 @@ function Scene({
           if (loadedCount === MOCK_PEOPLE.length) {
             setTexturesLoaded(true)
           }
-        }
+        },
       )
       textureMap.set(person.id, texture)
     })
-    
+
     return textureMap
   }, [])
 
@@ -659,153 +523,135 @@ function Scene({
 
   // Auto-pilot: initialize with overview, then move to target star
   useFrame(() => {
-    if (autoPilotEnabled) {
-      // First time in auto-pilot: set overview position
-      if (!hasInitialized.current) {
-        // Position camera further back to show all stars in HUD initially
-        // Top UI is ~80px, nav panel is ~200px from bottom
-        // Center point should be higher to account for nav panel taking more space
-        camera.position.set(0, -10, 180) // Further back (z=180) to show all stars
-        camera.lookAt(0, -10, 0) // Look at adjusted center
-        hasInitialized.current = true
+    // First time: set overview position
+    if (!hasInitialized.current) {
+      // Position camera further back to show all stars in HUD initially
+      // Top UI is ~80px, nav panel is ~200px from bottom
+      // Center point should be higher to account for nav panel taking more space
+      camera.position.set(0, -10, 180) // Further back (z=180) to show all stars
+      camera.lookAt(0, -10, 0) // Look at adjusted center
+      hasInitialized.current = true
+    }
+
+    // Fly to target star (only after intro phase)
+    if (
+      journeyPhase !== 'intro' &&
+      targetStarIndex >= 0 &&
+      targetStarIndex < MOCK_PEOPLE.length
+    ) {
+      const targetPos = new THREE.Vector3(...starPositions[targetStarIndex])
+
+      // Initialize flight path when starting new journey
+      const currentDist = camera.position.distanceTo(targetPos)
+      if (journeyPhase === 'flying' && !isFlying.current) {
+        // Flight started - calculate target position ONCE at start
+        isFlying.current = true
+        flightProgress.current = 0
+        hasTriggeredArrival.current = false // Reset arrival trigger
+        flightStartPos.current.copy(camera.position)
+
+        // Position camera straight-on to star for HUD centering
+        const isMobile = typeof window !== 'undefined' && window.innerWidth < 640
+        const viewDistance = isMobile ? 5.5 : 6.5 // Mobile: farther for smaller appearance
+        
+        // Camera position: directly in front of star along Z axis (straight view)
+        // HUD now centered in viewport, so no Y offset needed
+        targetPosition.current.set(
+          targetPos.x, // X: same as star (horizontally centered)
+          targetPos.y, // Y: same as star (vertically centered)
+          targetPos.z + viewDistance // Z: in front of star
+        )
+
+        // Straight line flight - no curve, target stays centered
+        flightControlPoint.current
+          .copy(camera.position)
+          .lerp(targetPosition.current, 0.5)
       }
 
-      // Fly to target star (only after intro phase)
+      // Check distance to trigger "approaching" message
       if (
-        journeyPhase !== 'intro' &&
-        targetStarIndex >= 0 &&
-        targetStarIndex < MOCK_PEOPLE.length
+        currentDist < 15 &&
+        !hasTriggeredApproaching.current &&
+        journeyPhase === 'flying'
       ) {
-        const targetPos = new THREE.Vector3(...starPositions[targetStarIndex])
+        hasTriggeredApproaching.current = true
+        onApproaching(MOCK_PEOPLE[targetStarIndex].name)
+      }
 
-        // Initialize flight path when starting new journey
-        const currentDist = camera.position.distanceTo(targetPos)
-        if (journeyPhase === 'flying' && !isFlying.current) {
-          // Flight started - calculate target position ONCE at start
-          isFlying.current = true
-          flightProgress.current = 0
-          hasTriggeredArrival.current = false // Reset arrival trigger
-          flightStartPos.current.copy(camera.position)
+      // Reset approaching trigger when moving to new star
+      if (journeyPhase === 'flying' && currentDist > 20) {
+        hasTriggeredApproaching.current = false
+      }
 
-          // Calculate direction FROM camera TO star at flight start
-          const direction = new THREE.Vector3().subVectors(targetPos, camera.position).normalize()
-          const viewDistance = 15 // Distance to fill HUD nicely without being too close
-          targetPosition.current
-            .copy(targetPos)
-            .sub(direction.multiplyScalar(viewDistance))
+      // Bezier curve flight path - continue even during 'arrived' to center the star
+      if (
+        isFlying.current &&
+        (journeyPhase === 'flying' ||
+          journeyPhase === 'approaching' ||
+          journeyPhase === 'arrived')
+      ) {
+        // Constant speed - no easing to prevent any stuttering
+        const baseSpeed = 0.006
+        flightProgress.current = Math.min(
+          1,
+          flightProgress.current + baseSpeed,
+        )
 
-          // Straight line flight - no curve, target stays centered
-          flightControlPoint.current.copy(camera.position).lerp(targetPosition.current, 0.5)
-        }
-
-        // Check distance to trigger "approaching" message
+        // Auto-transition to 'arrived' when we get very close (only once)
+        // Relaxed conditions: distance < 20 (was 14) and progress > 0.95 (was 0.98)
         if (
-          currentDist < 15 &&
-          !hasTriggeredApproaching.current &&
-          journeyPhase === 'flying'
+          currentDist < 20 &&
+          flightProgress.current > 0.95 &&
+          !hasTriggeredArrival.current
         ) {
-          hasTriggeredApproaching.current = true
-          onApproaching(MOCK_PEOPLE[targetStarIndex].name)
+          hasTriggeredArrival.current = true
+          onArrived(MOCK_PEOPLE[targetStarIndex].name)
+          // Don't stop flying yet - let it complete to center the star
         }
 
-        // Reset approaching trigger when moving to new star
-        if (journeyPhase === 'flying' && currentDist > 20) {
-          hasTriggeredApproaching.current = false
-        }
-
-        // Bezier curve flight path - continue even during 'arrived' to center the star
-        if (
-          isFlying.current &&
-          (journeyPhase === 'flying' ||
-            journeyPhase === 'approaching' ||
-            journeyPhase === 'arrived')
-        ) {
-          // Constant speed - no easing to prevent any stuttering
-          const baseSpeed = 0.006
-          flightProgress.current = Math.min(1, flightProgress.current + baseSpeed)
-
-          // Auto-transition to 'arrived' when we get very close (only once)
-          // Trigger later (distance < 14) to avoid premature arrival
-          if (
-            currentDist < 14 &&
-            flightProgress.current > 0.98 &&
-            !hasTriggeredArrival.current
-          ) {
-            console.log(
-              `🎯 Arrival triggered: distance=${currentDist.toFixed(
-                2,
-              )}, progress=${flightProgress.current.toFixed(2)}`,
-            )
-            hasTriggeredArrival.current = true
-            onArrived(MOCK_PEOPLE[targetStarIndex].name)
-            // Don't stop flying yet - let it complete to center the star
-          }
-
-          // Stop flying when we've fully arrived
-          if (flightProgress.current >= 1) {
-            isFlying.current = false
-          }
-
-          // Linear progress - no easing for smooth consistent movement
-          const t = flightProgress.current
-
-          // Quadratic Bezier curve: B(t) = (1-t)²P0 + 2(1-t)tP1 + t²P2
-          const oneMinusT = 1 - t
-          const newPos = new THREE.Vector3()
-            .addScaledVector(flightStartPos.current, oneMinusT * oneMinusT)
-            .addScaledVector(flightControlPoint.current, 2 * oneMinusT * t)
-            .addScaledVector(targetPosition.current, t * t)
-
-          camera.position.copy(newPos)
-
-          // Calculate tangent for smooth camera rotation
-          const tangent = new THREE.Vector3()
-            .addScaledVector(flightStartPos.current, -2 * oneMinusT)
-            .addScaledVector(flightControlPoint.current, 2 * (1 - 2 * t))
-            .addScaledVector(targetPosition.current, 2 * t)
-            .normalize()
-
-          // Look along flight path with slight banking
-          const lookTarget = new THREE.Vector3()
-            .copy(camera.position)
-            .add(tangent.multiplyScalar(5))
-
-          camera.lookAt(lookTarget)
-
-          // Add subtle roll/banking during curve
-          const rollAmount = Math.sin(t * Math.PI) * 0.1 // Max 0.1 radians
-          camera.rotation.z = rollAmount
-
-          // Complete flight when reached
-          if (flightProgress.current >= 1) {
-            isFlying.current = false
-            camera.lookAt(targetPos) // Final look at star
-            camera.rotation.z = 0 // Reset roll
-          }
-        } else if (
-          journeyPhase !== 'flying' &&
-          journeyPhase !== 'approaching'
-        ) {
-          // Reset flight state when not flying
+        // Stop flying when we've fully arrived
+        if (flightProgress.current >= 1) {
           isFlying.current = false
         }
 
-        // Smooth camera look at target only during flight, not when arrived
-        if (
-          !isFlying.current &&
-          currentDist > 0.1 &&
-          journeyPhase !== 'arrived' &&
-          journeyPhase !== 'placed'
-        ) {
-          camera.lookAt(targetPos)
+        // Linear progress - no easing for smooth consistent movement
+        const t = flightProgress.current
+
+        // Quadratic Bezier curve: B(t) = (1-t)²P0 + 2(1-t)tP1 + t²P2
+        const oneMinusT = 1 - t
+        const newPos = new THREE.Vector3()
+          .addScaledVector(flightStartPos.current, oneMinusT * oneMinusT)
+          .addScaledVector(flightControlPoint.current, 2 * oneMinusT * t)
+          .addScaledVector(targetPosition.current, t * t)
+
+        camera.position.copy(newPos)
+
+        // Simple look at target instead
+        camera.lookAt(targetPos)
+
+        // Complete flight when reached
+        if (flightProgress.current >= 1) {
+          isFlying.current = false
+          camera.lookAt(targetPos) // Final look at star
+          camera.rotation.z = 0 // Reset roll
         }
+      } else if (
+        journeyPhase !== 'flying' &&
+        journeyPhase !== 'approaching'
+      ) {
+        // Reset flight state when not flying
+        isFlying.current = false
       }
-    } else {
-      // Reset initialization when leaving auto-pilot
-      hasInitialized.current = false
-      hasTriggeredApproaching.current = false
-      isFlying.current = false
-      camera.rotation.z = 0 // Reset any roll
+
+      // Smooth camera look at target only during flight, not when arrived
+      if (
+        !isFlying.current &&
+        currentDist > 0.1 &&
+        journeyPhase !== 'arrived' &&
+        journeyPhase !== 'placed'
+      ) {
+        camera.lookAt(targetPos)
+      }
     }
 
     // Find nearest star and calculate screen positions
@@ -866,25 +712,29 @@ function Scene({
       <ShootingStar />
 
       {/* Person stars - only render when all textures loaded */}
-      {texturesLoaded && MOCK_PEOPLE.map((person, index) => {
-        // Check if this star is the current target by comparing with the target's originalIndex
-        const isTargetStar = index === targetStarIndex && (journeyPhase === 'flying' || journeyPhase === 'approaching')
-        
-        return (
-          <Star
-            key={person.id}
-            person={person}
-            position={starPositions[index]}
-            isNear={nearestStarId === person.id}
-            isTarget={isTargetStar}
-            placement={placements.get(person.id)}
-            texture={textures.get(person.id)!}
-          />
-        )
-      })}
+      {texturesLoaded &&
+        MOCK_PEOPLE.map((person, index) => {
+          // Check if this star is the current target - include 'arrived' so star stays large
+          const isTargetStar =
+            index === targetStarIndex &&
+            (journeyPhase === 'flying' ||
+              journeyPhase === 'approaching' ||
+              journeyPhase === 'arrived')
 
-      {/* Flying controls - only in manual mode */}
-      {!autoPilotEnabled && <FlyingControls />}
+          return (
+            <Star
+              key={person.id}
+              person={person}
+              position={starPositions[index]}
+              isNear={nearestStarId === person.id}
+              isTarget={isTargetStar}
+              placement={placements.get(person.id)}
+              texture={textures.get(person.id)!}
+            />
+          )
+        })}
+
+      {/* Flying controls removed - always auto-pilot */}
     </>
   )
 }
@@ -897,11 +747,6 @@ interface StarOverlay {
   isNear: boolean
 }
 
-interface StarFieldProps {
-  autoPilotEnabled: boolean
-  onModeChange?: (isAutoPilot: boolean) => void
-}
-
 // TODO: Future feature - relationship-based star positioning
 // This will be used to reposition stars based on their assigned circle
 // after the user has rated them. Closer relationships = closer/brighter stars.
@@ -912,10 +757,7 @@ const _getStarRadius = (placement?: 'inner' | 'close' | 'outer') => {
   return { min: 18, max: 25 } // Outer circle - far
 }
 
-export default function StarField({
-  autoPilotEnabled,
-  onModeChange,
-}: StarFieldProps) {
+export default function StarField() {
   const [overlays, setOverlays] = useState<StarOverlay[]>([])
   const [placements, setPlacements] = useState<
     Map<string, 'inner' | 'close' | 'outer'>
@@ -928,85 +770,86 @@ export default function StarField({
   >('intro')
   const [introStep, setIntroStep] = useState(0)
   // Sorted people array with their original indices - starts empty until Scene sorts them
-  const [sortedPeople, setSortedPeople] = useState<Array<typeof MOCK_PEOPLE[0] & { originalIndex: number }>>([])
+  const [sortedPeople, setSortedPeople] = useState<
+    Array<(typeof MOCK_PEOPLE)[0] & { originalIndex: number }>
+  >([])
 
   // Show message instantly (typing effect removed)
   useEffect(() => {
     setDisplayedMessage(narratorMessage)
   }, [narratorMessage])
 
-  // Intro sequence for auto-pilot
+  // Intro sequence
   useEffect(() => {
-    if (autoPilotEnabled && journeyPhase === 'intro') {
+    if (journeyPhase === 'intro') {
       // Multi-step intro messages
       const introMessages = [
-        "Welcome to your universe. We're looking at your Demo constellation...",
-        `You have ${MOCK_PEOPLE.length} stars to chart. Each represents someone in this constellation.`,
-        "We'll visit each star and you'll place them in your circles: Close, Near, or Distant.",
+        'Welcome to your your Demo star chart...',
+        `There are ${MOCK_PEOPLE.length} stars, people in this constellation.`,
+        "We'll visit each star so you can chart them based on your current relationship.",
         'Are you ready?',
       ]
       setNarratorMessage(introMessages[introStep])
-  }
-}, [autoPilotEnabled, journeyPhase, introStep])
+    }
+  }, [journeyPhase, introStep])
 
-const handleProceed = () => {
-  if (journeyPhase === 'intro') {
-    // Progress through intro steps
-    if (introStep < 3) {
-      setIntroStep(introStep + 1)
-    } else {
-      // Start the journey to first star (only if sortedPeople is ready)
-      if (sortedPeople.length === 0) {
-        console.warn('⚠️ sortedPeople not ready yet, waiting...')
-        return
+  const handleProceed = () => {
+    if (journeyPhase === 'intro') {
+      // Progress through intro steps
+      if (introStep < 3) {
+        setIntroStep(introStep + 1)
+      } else {
+        // Start the journey to first star (only if sortedPeople is ready)
+        if (sortedPeople.length === 0) {
+          console.warn('⚠️ sortedPeople not ready yet, waiting...')
+          return
+        }
+        const firstPerson = sortedPeople[0]
+        setNarratorMessage(`Let's begin! Flying to ${firstPerson.name}...`)
+        setJourneyPhase('flying')
       }
-      const firstPerson = sortedPeople[0]
-      setNarratorMessage(`Let's begin! Flying to ${firstPerson.name}...`)
-      setJourneyPhase('flying')
     }
   }
-}
 
-const handlePlacePerson = (
-  person: (typeof MOCK_PEOPLE)[0],
-  circle: 'inner' | 'close' | 'outer',
-) => {
-  console.log(`Placing ${person.name} in ${circle} circle`)
-  setPlacements((prev) => new Map(prev).set(person.id, circle))
+  const handlePlacePerson = (
+    person: (typeof MOCK_PEOPLE)[0],
+    circle: 'inner' | 'close' | 'outer',
+  ) => {
+    setPlacements((prev) => new Map(prev).set(person.id, circle))
 
-  // Check if this was the last person
-  if (currentStarIndex >= sortedPeople.length - 1) {
-    setNarratorMessage(
-      `Journey complete! You've charted all ${MOCK_PEOPLE.length} stars in your constellation.`,
-    )
-    setJourneyPhase('complete')
-  } else {
-    // Move to next person
-    const nextPerson = sortedPeople[currentStarIndex + 1]
-    const circleLabel =
-      circle === 'inner' ? 'Close' : circle === 'close' ? 'Near' : 'Distant'
-    setNarratorMessage(
-      `${person.name} placed as ${circleLabel}. Ready to visit ${nextPerson.name}?`,
-    )
-    setJourneyPhase('placed')
+    // Check if this was the last person
+    if (currentStarIndex >= sortedPeople.length - 1) {
+      setNarratorMessage(
+        `Journey complete! You've charted all ${MOCK_PEOPLE.length} stars in your constellation.`,
+      )
+      setJourneyPhase('complete')
+    } else {
+      // Move to next person
+      const nextPerson = sortedPeople[currentStarIndex + 1]
+      const circleLabel =
+        circle === 'inner' ? 'Close' : circle === 'close' ? 'Near' : 'Distant'
+      setNarratorMessage(
+        `${person.name} placed as ${circleLabel}. Ready to visit ${nextPerson.name}?`,
+      )
+      setJourneyPhase('placed')
+    }
   }
-}
 
-const handleProceedAfterPlacement = () => {
-  if (currentStarIndex < sortedPeople.length - 1) {
-    const nextIndex = currentStarIndex + 1
-    const nextPerson = sortedPeople[nextIndex]
-    const distance = Math.floor(Math.random() * 20) + 5 // Random distance 5-25 light years
-    setNarratorMessage(
-      `Next up: ${nextPerson.name}, currently ${distance} light years away.`,
-    )
-    setCurrentStarIndex(nextIndex)
-    setJourneyPhase('flying')
-  } else {
-    setNarratorMessage('Journey complete! All stars have been charted.')
-    setJourneyPhase('complete')
+  const handleProceedAfterPlacement = () => {
+    if (currentStarIndex < sortedPeople.length - 1) {
+      const nextIndex = currentStarIndex + 1
+      const nextPerson = sortedPeople[nextIndex]
+      const distance = Math.floor(Math.random() * 20) + 5 // Random distance 5-25 light years
+      setNarratorMessage(
+        `Next up: ${nextPerson.name}, currently ${distance} light years away.`,
+      )
+      setCurrentStarIndex(nextIndex)
+      setJourneyPhase('flying')
+    } else {
+      setNarratorMessage('Journey complete! All stars have been charted.')
+      setJourneyPhase('complete')
+    }
   }
-}
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
@@ -1017,14 +860,15 @@ const handleProceedAfterPlacement = () => {
         <Scene
           onUpdateOverlays={setOverlays}
           onSetSortedPeople={setSortedPeople}
-          autoPilotEnabled={autoPilotEnabled}
           targetStarIndex={sortedPeople[currentStarIndex]?.originalIndex ?? 0}
           onApproaching={(name) => {
             setNarratorMessage(`Approaching ${name}...`)
             setJourneyPhase('approaching')
           }}
           onArrived={(name) => {
-            setNarratorMessage(`Arrived at ${name}! Choose their circle.`)
+            setNarratorMessage(
+              `Arrived at ${name}! Mark their place in your star chart based on your current relationship.`,
+            )
             setJourneyPhase('arrived')
           }}
           journeyPhase={journeyPhase}
@@ -1035,16 +879,14 @@ const handleProceedAfterPlacement = () => {
       {/* Spaceship HUD - Focus Rectangle with Corner Brackets */}
       <div
         className="pointer-events-none absolute inset-0 flex items-center justify-center"
-        style={{
-          paddingTop: '120px',
-          paddingBottom: '280px',
-        }}
       >
         <div
           className="relative"
           style={{
-            width: 'min(600px, 80vw)',
-            height: 'min(400px, 50vh)',
+            width: 'min(900px, 80vw)',
+            height: typeof window !== 'undefined' && window.innerWidth < 640 
+              ? 'min(300px, 35vh)' // Smaller on mobile to avoid nav panel overlap
+              : 'min(600px, 50vh)', // Desktop size
           }}
         >
           {/* Top-left corner */}
@@ -1118,10 +960,8 @@ const handleProceedAfterPlacement = () => {
         </div>
       </div>
 
-      {/* 2D Overlay removed - names now shown in Html component with avatar */}
-
       {/* Navigation System - Control Panel Style */}
-      {((autoPilotEnabled && narratorMessage) || !autoPilotEnabled) && (
+      {narratorMessage && (
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-3xl px-2 sm:px-4">
           <div className="relative overflow-hidden rounded-lg border-2 border-indigo-500/50 bg-gradient-to-b from-slate-900 to-slate-950 shadow-2xl">
             {/* Control panel accent lines */}
@@ -1136,76 +976,59 @@ const handleProceedAfterPlacement = () => {
                 <div className="flex items-center gap-2">
                   <div className="h-2 w-2 animate-pulse rounded-full bg-cyan-400"></div>
                   <span className="text-xs font-mono uppercase tracking-wider text-cyan-400/70">
-                    {autoPilotEnabled
-                      ? 'Navigation System'
-                      : 'Manual Navigator Mode'}
+                    Navigation System
                   </span>
-                </div>
-
-                {/* Mode toggle buttons */}
-                <div className="flex gap-1">
-                  <button
-                    onClick={() => onModeChange?.(true)}
-                    className={`rounded px-2 py-1 text-xs transition-colors ${
-                      autoPilotEnabled
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-white/10 text-gray-400 hover:bg-white/20 hover:text-white'
-                    }`}
-                    title="Auto-Pilot Mode"
-                  ></button>
-                  <button
-                    onClick={() => onModeChange?.(false)}
-                    className={`rounded px-2 py-1 text-xs transition-colors ${
-                      !autoPilotEnabled
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-white/10 text-gray-400 hover:bg-white/20 hover:text-white'
-                    }`}
-                    title="Manual Mode"
-                  ></button>
                 </div>
               </div>
               <p
                 className="font-mono text-xs leading-relaxed tracking-wide text-indigo-100 sm:text-sm pt-2"
                 style={{ letterSpacing: '0.03em' }}
               >
-                {autoPilotEnabled
-                  ? displayedMessage
-                  : "You're in charge captain! Use your mouse or touch to navigate."}
+                {displayedMessage}
               </p>
 
               {/* Placement buttons - show when arrived at a star */}
-              {autoPilotEnabled && journeyPhase === 'arrived' && sortedPeople.length > 0 && (
-                <div className="mt-3 flex gap-2">
-                  <button
-                    onClick={() =>
-                      handlePlacePerson(sortedPeople[currentStarIndex], 'inner')
-                    }
-                    className="flex-1 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg transition-colors hover:bg-indigo-700 active:bg-indigo-800"
-                  >
-                    Close
-                  </button>
-                  <button
-                    onClick={() =>
-                      handlePlacePerson(sortedPeople[currentStarIndex], 'close')
-                    }
-                    className="flex-1 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg transition-colors hover:bg-indigo-700 active:bg-indigo-800"
-                  >
-                    Near
-                  </button>
-                  <button
-                    onClick={() =>
-                      handlePlacePerson(sortedPeople[currentStarIndex], 'outer')
-                    }
-                    className="flex-1 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg transition-colors hover:bg-indigo-700 active:bg-indigo-800"
-                  >
-                    Distant
-                  </button>
-                </div>
-              )}
+              {journeyPhase === 'arrived' &&
+                sortedPeople.length > 0 && (
+                  <div className="mt-3 flex gap-2">
+                    <button
+                      onClick={() =>
+                        handlePlacePerson(
+                          sortedPeople[currentStarIndex],
+                          'inner',
+                        )
+                      }
+                      className="flex-1 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg transition-colors hover:bg-indigo-700 active:bg-indigo-800"
+                    >
+                      Close
+                    </button>
+                    <button
+                      onClick={() =>
+                        handlePlacePerson(
+                          sortedPeople[currentStarIndex],
+                          'close',
+                        )
+                      }
+                      className="flex-1 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg transition-colors hover:bg-indigo-700 active:bg-indigo-800"
+                    >
+                      Near
+                    </button>
+                    <button
+                      onClick={() =>
+                        handlePlacePerson(
+                          sortedPeople[currentStarIndex],
+                          'outer',
+                        )
+                      }
+                      className="flex-1 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg transition-colors hover:bg-indigo-700 active:bg-indigo-800"
+                    >
+                      Distant
+                    </button>
+                  </div>
+                )}
 
-              {/* Proceed button - only show in auto-pilot when waiting for user to advance */}
-              {autoPilotEnabled &&
-                (journeyPhase === 'intro' || journeyPhase === 'placed') && (
+              {/* Proceed button - show when waiting for user to advance */}
+              {(journeyPhase === 'intro' || journeyPhase === 'placed') && (
                   <button
                     onClick={
                       journeyPhase === 'placed'
@@ -1219,7 +1042,6 @@ const handleProceedAfterPlacement = () => {
                 )}
 
               {/* Star counter footer */}
-              {autoPilotEnabled && (
                 <div className="mt-2 pt-1 pb-1 border-t border-indigo-500/30 text-center">
                   <span className="text-xs font-mono text-indigo-300">
                     {journeyPhase === 'intro'
@@ -1227,7 +1049,6 @@ const handleProceedAfterPlacement = () => {
                       : `Star ${currentStarIndex + 1} of ${MOCK_PEOPLE.length}`}
                   </span>
                 </div>
-              )}
             </div>
           </div>
         </div>

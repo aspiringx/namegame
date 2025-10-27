@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useState } from 'react'
+import { Suspense } from 'react'
 import dynamic from 'next/dynamic'
 
 // Dynamically import the 3D scene to avoid SSR issues with Three.js
@@ -17,63 +17,7 @@ const StarField = dynamic(() => import('./StarField'), {
 })
 
 export default function ChartYourStars() {
-  const [modeSelected, setModeSelected] = useState(false)
-  const [autoPilotEnabled, setAutoPilotEnabled] = useState(false)
-
-  const handleModeSelect = (isAutoPilot: boolean) => {
-    setAutoPilotEnabled(isAutoPilot)
-    setModeSelected(true)
-  }
-
-  // Show mode selection screen first
-  if (!modeSelected) {
-    return (
-      <div className="relative h-screen w-full overflow-hidden bg-gray-900">
-        <div className="flex h-full w-full items-center justify-center">
-          <div className="mx-6 max-w-md text-center sm:mx-4">
-            <h1 className="mb-2 text-3xl font-bold text-white sm:text-4xl">
-              Chart Your Stars
-            </h1>
-            <p className="mb-8 text-gray-300">
-              How would you like to explore this constellation?
-            </p>
-
-            <div className="flex flex-col gap-4">
-              {/* Auto-Pilot Option */}
-              <button
-                onClick={() => handleModeSelect(true)}
-                className="group rounded-2xl border-2 border-indigo-500 bg-indigo-600 p-6 text-center transition-all hover:scale-105 hover:border-indigo-400 hover:bg-indigo-700"
-              >
-                <div className="mb-3 text-5xl">🚀</div>
-                <h3 className="mb-2 text-xl font-bold text-white">
-                  Auto-Pilot Mode
-                </h3>
-                <p className="text-sm text-indigo-100">
-                  A cosmic guided tour that flies you from star to star with
-                  narration.
-                </p>
-              </button>
-
-              {/* Manual Option */}
-              <button
-                onClick={() => handleModeSelect(false)}
-                className="group rounded-2xl border-2 border-white/20 bg-white/10 p-6 text-center transition-all hover:scale-105 hover:border-white/30 hover:bg-white/20"
-              >
-                <div className="mb-3 text-5xl">🧑‍🚀</div>
-                <h3 className="mb-2 text-xl font-bold text-white">
-                  Manual Mode
-                </h3>
-                <p className="text-sm text-gray-300">
-                  Navigate this constellation at your own pace with mouse and
-                  touch controls.
-                </p>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    )
-  }
+  // Mode selection screen removed - always auto-pilot
 
   return (
     <div className="relative h-screen w-full overflow-hidden bg-gray-900">
@@ -89,17 +33,11 @@ export default function ChartYourStars() {
             </p>
           </div>
 
-          {/* Auto-pilot toggle */}
-          <button
-            onClick={() => setAutoPilotEnabled(!autoPilotEnabled)}
-            className={`rounded-lg px-4 py-2 text-sm font-medium shadow-lg transition-colors ${
-              autoPilotEnabled
-                ? 'bg-indigo-600 text-white hover:bg-indigo-700'
-                : 'bg-white/10 text-white hover:bg-white/20'
-            }`}
-          >
-            {autoPilotEnabled ? '🚀 Auto-Pilot ON' : '🧑‍🚀 Manual Mode'}
-          </button>
+          {/* Auto-pilot status indicator (non-interactive) */}
+          <div className="flex items-center gap-2 rounded-lg bg-indigo-600/20 px-4 py-2 text-sm font-medium border border-indigo-500/30">
+            <span className="text-indigo-400">🚀</span>
+            <span className="text-indigo-300">Auto-Pilot</span>
+          </div>
         </div>
       </div>
 
@@ -116,10 +54,7 @@ export default function ChartYourStars() {
           </div>
         }
       >
-        <StarField 
-          autoPilotEnabled={autoPilotEnabled}
-          onModeChange={setAutoPilotEnabled}
-        />
+        <StarField />
       </Suspense>
     </div>
   )
