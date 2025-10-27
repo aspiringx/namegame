@@ -131,11 +131,16 @@ function Star({ position, isNear, isTarget, placement, texture, journeyPhase }: 
   const groupRef = useRef<THREE.Group>(null)
   const [hovered, setHovered] = useState(false)
   const { camera } = useThree()
+  const [distanceToCamera, setDistanceToCamera] = useState(0)
 
-  // Simple billboard - always face camera (no rotation/banking that caused jumping)
-  // For target star, face directly toward camera (perpendicular to camera direction)
+  // Calculate distance and billboard rotation
   useFrame(() => {
     if (groupRef.current) {
+      // Update distance to camera
+      const dist = camera.position.distanceTo(new THREE.Vector3(...position))
+      setDistanceToCamera(dist)
+      
+      // Billboard - always face camera
       if (isTarget) {
         // Get camera's forward direction and make star perpendicular to it
         const cameraDirection = new THREE.Vector3()
@@ -149,21 +154,44 @@ function Star({ position, isNear, isTarget, placement, texture, journeyPhase }: 
     }
   })
 
-  // Size based on placement and target status
-  // Sized to fit within HUD rectangle
-  const baseSize = isTarget
-    ? typeof window !== 'undefined' && window.innerWidth < 640 ? 1.8 : 3.0
-    : placement === 'inner'
-    ? 3.5
-    : placement === 'close'
-    ? 2.8
-    : placement === 'outer'
-    ? 2.2
-    : 2.5 // Unrated: medium
+  // Size based on distance for depth perception
+  // Closer stars appear larger, farther stars appear smaller
+  let baseSize = 2.5 // Default
+  if (isTarget) {
+    baseSize = typeof window !== 'undefined' && window.innerWidth < 640 ? 1.8 : 3.0
+  } else {
+    // Vary size based on distance: 1.5 (far) to 3.0 (close)
+    const maxDist = 100
+    const distanceFactor = Math.max(0, Math.min(1, 1 - distanceToCamera / maxDist))
+    baseSize = 1.5 + distanceFactor * 1.5 // 1.5 to 3.0
+  }
 
-  // Fade out non-target stars when arrived at target
-  // Default 0.7 for depth/distance feel, 0.1 when arrived at another star
-  const groupOpacity = isTarget ? 1.0 : (journeyPhase === 'arrived' ? 0.1 : 0.7)
+  // Distance thresholds for rendering
+  const TRANSITION_START = 60 // Start showing image
+  const TRANSITION_END = 30 // Fully image
+  const transitionProgress = Math.max(0, Math.min(1, (TRANSITION_START - distanceToCamera) / (TRANSITION_START - TRANSITION_END)))
+  const showOnlyStar = distanceToCamera > TRANSITION_START
+  
+  // Calculate opacity based on distance for depth perception
+  let groupOpacity = 1.0
+  if (isTarget) {
+    groupOpacity = 1.0
+  } else {
+    // Opacity varies with distance: 0.15 (far) to 0.7 (close)
+    const maxDist = 100
+    const distanceFactor = Math.max(0, Math.min(1, 1 - distanceToCamera / maxDist))
+    groupOpacity = 0.15 + distanceFactor * 0.55 // 0.15 to 0.7
+    
+    // Boost opacity during transition to image
+    if (transitionProgress > 0) {
+      groupOpacity = Math.max(groupOpacity, 0.2 + transitionProgress * 0.5) // 0.2 to 0.7
+    }
+    
+    // Dim further when arrived at another star, but keep distance variation
+    if (journeyPhase === 'arrived') {
+      groupOpacity *= 0.3 // Reduce to 30% but maintain relative differences
+    }
+  }
 
   // Texture is preloaded and passed as prop - no need to load here
 
@@ -199,44 +227,74 @@ function Star({ position, isNear, isTarget, placement, texture, journeyPhase }: 
     })
   }, [texture, groupOpacity])
 
+  // Calculate star glow opacity (fades out as image fades in)
+  // Completely hide star when fully transitioned to image
+  const starGlowOpacity = transitionProgress >= 1 ? 0 : groupOpacity * (1 - transitionProgress)
+  
+  // White core size: starts at 0.25, expands to 0.5 as we approach
+  // This fills the glow area before the face appears
+  const whiteCoreSize = baseSize * (0.25 + transitionProgress * 0.25)
+  
+  // Render image and star together during transition
   return (
     <group ref={groupRef} position={position}>
-      {/* Opaque backing circle - blocks stars behind transparent areas */}
-      <mesh position={[0, 0, -0.01]}>
-        <circleGeometry args={[baseSize * 0.58, 64]} />
-        <meshBasicMaterial color="#1a1a2e" transparent opacity={groupOpacity} />
-      </mesh>
+      {/* White star glow - visible when far, fades out as image appears */}
+      {starGlowOpacity > 0 && (
+        <>
+          {/* Bright white star point - expands as we approach */}
+          <mesh position={[0, 0, -0.02]}>
+            <circleGeometry args={[whiteCoreSize, 64]} />
+            <meshBasicMaterial color="#ffffff" transparent opacity={showOnlyStar ? Math.max(0.8, groupOpacity) : starGlowOpacity} />
+          </mesh>
+          {/* Soft glow */}
+          <mesh position={[0, 0, -0.02]}>
+            <circleGeometry args={[baseSize * 0.56, 64]} />
+            <meshBasicMaterial color="#aaccff" transparent opacity={starGlowOpacity * 0.15} />
+          </mesh>
+        </>
+      )}
+      
+      {/* Image - fades in during transition */}
+      {transitionProgress > 0 && (
+        <>
+          {/* Opaque backing circle - blocks stars behind transparent areas */}
+          <mesh position={[0, 0, -0.01]}>
+            <circleGeometry args={[baseSize * 0.58, 64]} />
+            <meshBasicMaterial color="#1a1a2e" transparent opacity={groupOpacity * transitionProgress} />
+          </mesh>
 
-      {/* Circular clipped image using mesh + custom shader */}
-      <mesh
-        ref={spriteRef}
-        onPointerOver={() => setHovered(true)}
-        onPointerOut={() => setHovered(false)}
-      >
-        <planeGeometry args={[baseSize, baseSize]} />
-        <primitive object={circularMaterial} attach="material" />
-      </mesh>
+          {/* Circular clipped image using mesh + custom shader */}
+          <mesh
+            ref={spriteRef}
+            onPointerOver={() => setHovered(true)}
+            onPointerOut={() => setHovered(false)}
+          >
+            <planeGeometry args={[baseSize, baseSize]} />
+            <primitive object={circularMaterial} attach="material" />
+          </mesh>
 
-      {/* White circular border ring - covers sprite edges */}
-      <mesh position={[0, 0, 0.01]}>
-        <ringGeometry args={[baseSize * 0.48, baseSize * 0.52, 64]} />
-        <meshBasicMaterial
-          color="#ffffff"
-          transparent
-          opacity={groupOpacity * (isTarget ? 1.0 : hovered ? 0.9 : 0.7)}
-        />
-      </mesh>
+          {/* White circular border ring - covers sprite edges */}
+          <mesh position={[0, 0, 0.01]}>
+            <ringGeometry args={[baseSize * 0.48, baseSize * 0.52, 64]} />
+            <meshBasicMaterial
+              color="#ffffff"
+              transparent
+              opacity={groupOpacity * transitionProgress * (isTarget ? 1.0 : hovered ? 0.9 : 0.7)}
+            />
+          </mesh>
 
-      {/* Cyan ring on target star - thinner, adjacent to white ring */}
-      {isTarget && (
-        <mesh position={[0, 0, 0.01]}>
-          <ringGeometry args={[baseSize * 0.52, baseSize * 0.56, 64]} />
-          <meshBasicMaterial
-            color="#00ffff"
-            transparent={false}
-            opacity={1.0}
-          />
-        </mesh>
+          {/* Cyan ring on target star - thinner, adjacent to white ring */}
+          {isTarget && (
+            <mesh position={[0, 0, 0.01]}>
+              <ringGeometry args={[baseSize * 0.52, baseSize * 0.56, 64]} />
+              <meshBasicMaterial
+                color="#00ffff"
+                transparent
+                opacity={transitionProgress}
+              />
+            </mesh>
+          )}
+        </>
       )}
     </group>
   )
@@ -596,8 +654,12 @@ function Scene({
           journeyPhase === 'approaching' ||
           journeyPhase === 'arrived')
       ) {
-        // Constant speed - no easing to prevent any stuttering
-        const baseSpeed = 0.006
+        // Variable speed: fast at start, slow way down when faces appear
+        // Slow down significantly when distance < 60 (when images start appearing)
+        const baseSpeed = currentDist < 60 
+          ? 0.001 // Very slow, majestic approach when faces visible
+          : 0.01 // Fast initial flight
+        
         flightProgress.current = Math.min(
           1,
           flightProgress.current + baseSpeed,
