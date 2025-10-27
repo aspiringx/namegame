@@ -123,9 +123,10 @@ interface StarProps {
   isTarget: boolean
   placement?: 'inner' | 'close' | 'outer'
   texture: THREE.Texture
+  journeyPhase?: 'intro' | 'flying' | 'approaching' | 'arrived' | 'placed' | 'complete'
 }
 
-function Star({ position, isNear, isTarget, placement, texture }: StarProps) {
+function Star({ position, isNear, isTarget, placement, texture, journeyPhase }: StarProps) {
   const spriteRef = useRef<THREE.Mesh>(null)
   const groupRef = useRef<THREE.Group>(null)
   const [hovered, setHovered] = useState(false)
@@ -160,6 +161,10 @@ function Star({ position, isNear, isTarget, placement, texture }: StarProps) {
     ? 2.2
     : 2.5 // Unrated: medium
 
+  // Fade out non-target stars when arrived at target
+  // Default 0.7 for depth/distance feel, 0.1 when arrived at another star
+  const groupOpacity = isTarget ? 1.0 : (journeyPhase === 'arrived' ? 0.1 : 0.7)
+
   // Texture is preloaded and passed as prop - no need to load here
 
   // Custom shader material for circular clipping - must be before conditional return
@@ -168,6 +173,7 @@ function Star({ position, isNear, isTarget, placement, texture }: StarProps) {
       uniforms: {
         map: { value: texture },
         radius: { value: 0.5 }, // Clip to circle (0.5 = edge of sprite)
+        opacity: { value: groupOpacity },
       },
       vertexShader: `
         varying vec2 vUv;
@@ -179,27 +185,27 @@ function Star({ position, isNear, isTarget, placement, texture }: StarProps) {
       fragmentShader: `
         uniform sampler2D map;
         uniform float radius;
+        uniform float opacity;
         varying vec2 vUv;
         void main() {
           vec2 center = vec2(0.5, 0.5);
           float dist = distance(vUv, center);
           if (dist > radius) discard;
-          gl_FragColor = texture2D(map, vUv);
+          vec4 texColor = texture2D(map, vUv);
+          gl_FragColor = vec4(texColor.rgb, texColor.a * opacity);
         }
       `,
       transparent: true,
     })
-  }, [texture])
+  }, [texture, groupOpacity])
 
   return (
     <group ref={groupRef} position={position}>
-      {/* Opaque backing circle - blocks stars behind transparent areas, thin dark border */}
-      {isTarget && (
-        <mesh position={[0, 0, -0.01]}>
-          <circleGeometry args={[baseSize * 0.58, 64]} />
-          <meshBasicMaterial color="#1a1a2e" />
-        </mesh>
-      )}
+      {/* Opaque backing circle - blocks stars behind transparent areas */}
+      <mesh position={[0, 0, -0.01]}>
+        <circleGeometry args={[baseSize * 0.58, 64]} />
+        <meshBasicMaterial color="#1a1a2e" transparent opacity={groupOpacity} />
+      </mesh>
 
       {/* Circular clipped image using mesh + custom shader */}
       <mesh
@@ -216,8 +222,8 @@ function Star({ position, isNear, isTarget, placement, texture }: StarProps) {
         <ringGeometry args={[baseSize * 0.48, baseSize * 0.52, 64]} />
         <meshBasicMaterial
           color="#ffffff"
-          transparent={!isTarget}
-          opacity={isTarget ? 1.0 : hovered ? 0.9 : 0.7}
+          transparent
+          opacity={groupOpacity * (isTarget ? 1.0 : hovered ? 0.9 : 0.7)}
         />
       </mesh>
 
@@ -730,6 +736,7 @@ function Scene({
               isTarget={isTargetStar}
               placement={placements.get(person.id)}
               texture={textures.get(person.id)!}
+              journeyPhase={journeyPhase}
             />
           )
         })}
