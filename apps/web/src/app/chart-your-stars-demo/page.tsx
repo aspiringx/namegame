@@ -3,7 +3,7 @@ import ChartYourStars from './ChartYourStars'
 
 export const metadata: Metadata = {
   title: 'Chart Your Stars Demo | RelationStar',
-  description: 'Explore your social universe and chart your relationships',
+  description: 'Explore your universe and chart your relationships',
 }
 
 export default function ChartYourStarsDemoPage() {

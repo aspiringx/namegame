@@ -1,1529 +1,23 @@
 'use client'
 
 // Chart Your Stars - 3D star field with 2D overlay
-import { useRef, useState, useMemo, useEffect } from 'react'
-import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import * as THREE from 'three'
-
-// Mock data for demo
-// Alice: '/uploads/user-photos/cmeg4p6r70002ihd1zt0im435.1757255300867.small.webp'
-// Bob: '/uploads/user-photos/cmeg4pewy0000ihkwmy8voxi9.1759609763448.small.webp'
-// Carol: '/uploads/user-photos/cmeg5liai0003ihzcqi2ppfwd.1755611564561.small.webp'
-// David: '/uploads/user-photos/cmeimf6010005ygjemuhgjxqn.1755612613185.small.webp'
-
-const MOCK_PEOPLE = [
-  {
-    id: '1',
-    name: 'Alice Johnson',
-    photo:
-      '/uploads/user-photos/cmeg4p6r70002ihd1zt0im435.1757255300867.small.webp',
-  },
-  {
-    id: '2',
-    name: 'Bob Smith',
-    photo:
-      '/uploads/user-photos/cmeg4pewy0000ihkwmy8voxi9.1759609763448.small.webp',
-  },
-  {
-    id: '3',
-    name: 'Carol Williams',
-    photo:
-      '/uploads/user-photos/cmeg5liai0003ihzcqi2ppfwd.1755611564561.small.webp',
-  },
-  {
-    id: '4',
-    name: 'David Brown',
-    photo:
-      '/uploads/user-photos/cmeimf6010005ygjemuhgjxqn.1755612613185.small.webp',
-  },
-  {
-    id: '5',
-    name: 'Eve Davis',
-    photo:
-      '/uploads/user-photos/cmeimfkgh0007ygjez1dzqzra.1755612631924.small.webp',
-  },
-  {
-    id: '6',
-    name: 'Frank Miller',
-    photo:
-      '/uploads/user-photos/cmeq3icdd0000ihlv51grw0u6.1756070999426.small.webp',
-  },
-  {
-    id: '7',
-    name: 'Grace Wilson',
-    photo:
-      '/uploads/user-photos/cmf1ohc130000ih8v2rv0zyit.1756767781507.small.webp',
-  },
-  {
-    id: '8',
-    name: 'Henry Moore',
-    photo:
-      '/uploads/user-photos/cmf38lys60000ygbsiagl87us.1756862139772.small.webp',
-  },
-  {
-    id: '9',
-    name: 'Ivy Taylor',
-    photo:
-      '/uploads/user-photos/cmf4bgcuq0000ihvedptmog5d.1756924599827.small.webp',
-  },
-  {
-    id: '10',
-    name: 'Jack Anderson',
-    photo:
-      '/uploads/user-photos/cmf4cjck80001ihveagdtfgwj.1756929266277.small.webp',
-  },
-  {
-    id: '11',
-    name: 'Kate Thomas',
-    photo:
-      '/uploads/user-photos/cmf4ec9be0002ihvexjjta64v.1756929696290.small.webp',
-  },
-  {
-    id: '12',
-    name: 'Leo Jackson',
-    photo:
-      '/uploads/user-photos/cmf6yqezu000gihwhz2dx5uh6.1757277155522.small.webp',
-  },
-  {
-    id: '13',
-    name: 'Mia White',
-    photo:
-      '/uploads/user-photos/cmf7l2cf80002ihoj1s8hp7ng.1757122034525.small.webp',
-  },
-  {
-    id: '14',
-    name: 'Noah Harris',
-    photo:
-      '/uploads/user-photos/cmf9qeepp0000ih461yaqo00m.1757254714887.small.webp',
-  },
-  {
-    id: '15',
-    name: 'Olivia Martin',
-    photo:
-      '/uploads/user-photos/cmfekp7a00000ih9k0xg8j22p.1757680626180.small.webp',
-  },
-]
-
-interface StarProps {
-  person: (typeof MOCK_PEOPLE)[0]
-  position: [number, number, number]
-  isNear: boolean
-  isTarget: boolean
-  placement?: 'inner' | 'close' | 'outer'
-  texture: THREE.Texture
-  journeyPhase?:
-    | 'intro'
-    | 'flying'
-    | 'approaching'
-    | 'arrived'
-    | 'placed'
-    | 'takeoff'
-    | 'complete'
-    | 'returning'
-}
-
-function Star({
-  position,
-  isNear,
-  isTarget,
-  placement,
-  texture,
-  journeyPhase,
-}: StarProps) {
-  const spriteRef = useRef<THREE.Mesh>(null)
-  const groupRef = useRef<THREE.Group>(null)
-  const [hovered, setHovered] = useState(false)
-  const { camera } = useThree()
-  const [distanceToCamera, setDistanceToCamera] = useState(0)
-  const [fadeIn, setFadeIn] = useState(0)
-
-  // Fade in animation on mount
-  useEffect(() => {
-    const startTime = Date.now()
-    const duration = 1000 // 1 second fade in
-
-    const animate = () => {
-      const elapsed = Date.now() - startTime
-      const progress = Math.min(elapsed / duration, 1)
-      setFadeIn(progress)
-
-      if (progress < 1) {
-        requestAnimationFrame(animate)
-      }
-    }
-
-    animate()
-  }, [])
-
-  // Lock appearance when arrived to prevent flickering during UI interaction
-  const lockedSize = useRef<number | null>(null)
-  const lockedOpacity = useRef<number | null>(null)
-  const lockedTransitionProgress = useRef<number | null>(null)
-
-  // Calculate distance and billboard rotation
-  useFrame(() => {
-    if (groupRef.current) {
-      // Update distance to camera
-      const dist = camera.position.distanceTo(new THREE.Vector3(...position))
-      setDistanceToCamera(dist)
-
-      // Billboard - always face camera
-      if (isTarget) {
-        // Get camera's forward direction and make star perpendicular to it
-        const cameraDirection = new THREE.Vector3()
-        camera.getWorldDirection(cameraDirection)
-        // Point star in opposite direction of camera (toward camera)
-        const lookAtPos = groupRef.current.position.clone().sub(cameraDirection)
-        groupRef.current.lookAt(lookAtPos)
-      } else {
-        groupRef.current.lookAt(camera.position)
-      }
-    }
-  })
-
-  // Size based on distance for depth perception
-  // Lock appearance when in arrived/placed/takeoff/complete phase to prevent flickering
-  const isLocked =
-    isTarget &&
-    (journeyPhase === 'arrived' ||
-      journeyPhase === 'placed' ||
-      journeyPhase === 'takeoff' ||
-      journeyPhase === 'complete')
-  const shouldResetLocks =
-    isTarget && (journeyPhase === 'flying' || journeyPhase === 'approaching')
-  
-  // Reset locks when transitioning away from complete/placed to a new journey
-  if (isTarget && journeyPhase === 'returning') {
-    lockedSize.current = null
-    lockedOpacity.current = null
-    lockedTransitionProgress.current = null
-  }
-
-  // Calculate base size
-  let baseSize = 2.5 // Default
-  if (isTarget) {
-    const calculatedSize =
-      typeof window !== 'undefined' && window.innerWidth < 640 ? 1.8 : 3.0
-
-    // During takeoff: gradually shrink based on distance as we pull back
-    if (journeyPhase === 'takeoff') {
-      const shrinkStart = 10 // Start shrinking after 10 units
-      const shrinkEnd = 35 // Minimum size at 35 units (matches pullback)
-      if (distanceToCamera < shrinkStart) {
-        baseSize = calculatedSize
-      } else if (distanceToCamera > shrinkEnd) {
-        baseSize = calculatedSize * 0.4 // Shrink to 40% of original
-      } else {
-        // Gradual shrink from 100% to 40%
-        const shrinkProgress =
-          (distanceToCamera - shrinkStart) / (shrinkEnd - shrinkStart)
-        baseSize = calculatedSize * (1.0 - shrinkProgress * 0.6)
-      }
-    } else if (isLocked) {
-      // Lock size when arrived/placed - capture on first lock
-      if (lockedSize.current === null) {
-        lockedSize.current = calculatedSize
-      }
-      baseSize = lockedSize.current
-    } else if (shouldResetLocks) {
-      // Only reset lock when flying to next star
-      lockedSize.current = null
-      baseSize = calculatedSize
-    } else {
-      // Use calculated size during approach
-      baseSize = calculatedSize
-    }
-  } else {
-    // Constellation stars (non-target) - boost size during intro and returning
-    const isIntroPhase = journeyPhase === 'intro'
-    const isFlying = journeyPhase === 'flying'
-    const isReturning = journeyPhase === 'returning'
-    const maxDist = 100
-    const distanceFactor = Math.max(
-      0,
-      Math.min(1, 1 - distanceToCamera / maxDist),
-    )
-
-    if (isIntroPhase || isReturning) {
-      // During intro/returning: larger and differentiated by placement
-      // Close=largest, Near=medium, Distant=smaller
-      const sizeMultiplier = placement === 'inner' ? 3.5 : placement === 'close' ? 2.8 : 2.2
-      baseSize = sizeMultiplier
-    } else if (isFlying && distanceToCamera < 40) {
-      // During flying, if close (recently was target): use smaller size to match takeoff end
-      // This prevents jump when transitioning from target to constellation
-      const calculatedSize =
-        typeof window !== 'undefined' && window.innerWidth < 640 ? 1.8 : 3.0
-      baseSize = calculatedSize * 0.4 // Match the takeoff end size
-    } else {
-      // During journey: smaller to focus on target (1.5 to 3.0)
-      baseSize = 1.5 + distanceFactor * 1.5
-    }
-  }
-
-  // Distance thresholds for rendering
-  const TRANSITION_START = 40 // Start showing image (was 60, now closer)
-  const TRANSITION_END = 20 // Fully image (was 30, now closer)
-  let transitionProgress = Math.max(
-    0,
-    Math.min(
-      1,
-      (TRANSITION_START - distanceToCamera) /
-        (TRANSITION_START - TRANSITION_END),
-    ),
-  )
-
-  // Lock transition progress when arrived/placed/takeoff
-  if (isLocked) {
-    if (lockedTransitionProgress.current === null) {
-      lockedTransitionProgress.current = transitionProgress
-    }
-    transitionProgress = lockedTransitionProgress.current
-  } else if (shouldResetLocks) {
-    lockedTransitionProgress.current = null
-  }
-
-  // Force images hidden during intro phase to prevent flash
-  const isIntroPhase = journeyPhase === 'intro'
-  if (isIntroPhase) {
-    transitionProgress = 0
-  }
-
-  // Calculate opacity based on distance for depth perception
-  let groupOpacity = 1.0
-  if (isTarget) {
-    // During takeoff: gradually fade based on distance as we pull back
-    if (journeyPhase === 'takeoff') {
-      // Start at full opacity, fade as distance increases
-      const fadeStart = 10 // Start fading after 10 units
-      const fadeEnd = 35 // Faded at 35 units (matches pullback)
-      if (distanceToCamera < fadeStart) {
-        groupOpacity = 1.0
-      } else if (distanceToCamera > fadeEnd) {
-        groupOpacity = 0.6 // Keep brighter at end of takeoff
-      } else {
-        // Gradual fade from 1.0 to 0.6
-        const fadeProgress =
-          (distanceToCamera - fadeStart) / (fadeEnd - fadeStart)
-        groupOpacity = 1.0 - fadeProgress * 0.4
-      }
-    } else {
-      // Other phases: use locked or calculated opacity
-      const calculatedOpacity = 1.0
-
-      if (isLocked) {
-        // Lock opacity when arrived/placed - capture on first lock
-        if (lockedOpacity.current === null) {
-          lockedOpacity.current = calculatedOpacity
-        }
-        groupOpacity = lockedOpacity.current
-      } else if (shouldResetLocks) {
-        // Only reset lock when flying to next star
-        lockedOpacity.current = null
-        groupOpacity = calculatedOpacity
-      } else {
-        // Use calculated opacity during approach
-        groupOpacity = calculatedOpacity
-      }
-    }
-  } else {
-    // Constellation stars (non-target) - boost visibility during intro and returning
-    const isIntroPhase = journeyPhase === 'intro'
-    const isFlying = journeyPhase === 'flying'
-    const isReturning = journeyPhase === 'returning'
-
-    // Opacity varies with distance
-    const maxDist = 100
-    const distanceFactor = Math.max(
-      0,
-      Math.min(1, 1 - distanceToCamera / maxDist),
-    )
-
-    if (isIntroPhase || isReturning) {
-      // During intro/returning: very bright and visible
-      // Differentiate by placement: Close=brightest, Near=bright, Distant=medium
-      const baseBrightness = placement === 'inner' ? 1.0 : placement === 'close' ? 0.85 : 0.7
-      groupOpacity = baseBrightness
-    } else if (isFlying) {
-      // During flight: keep constellation bright until camera gets close to ANY star
-      // Use actual distance to camera for each star
-
-      if (distanceToCamera > 80) {
-        // Still far from all stars: keep bright like intro
-        groupOpacity = 0.9 + distanceFactor * 0.1
-      } else if (distanceToCamera < 40) {
-        // Recently was target (just transitioned from takeoff): keep brighter for visibility
-        // This prevents jump and keeps star visible as it moves out of view
-        groupOpacity = 0.6 // Brighter than takeoff end for better visibility
-      } else if (distanceToCamera > 40) {
-        // Getting farther: gradually dim (transition from 80 to 40)
-        const transitionFactor = (distanceToCamera - 40) / 40
-        const brightOpacity = 0.9 + distanceFactor * 0.1
-        const dimOpacity = 0.3
-        groupOpacity =
-          dimOpacity + (brightOpacity - dimOpacity) * transitionFactor
-      }
-    } else {
-      // Other phases: dimmer to focus on target (0.15 to 0.7)
-      groupOpacity = 0.15 + distanceFactor * 0.55
-    }
-
-    // Boost opacity during transition to image
-    if (transitionProgress > 0) {
-      groupOpacity = Math.max(groupOpacity, 0.2 + transitionProgress * 0.5) // 0.2 to 0.7
-    }
-
-    // Dim further when arrived at another star, but keep distance variation
-    if (journeyPhase === 'arrived') {
-      groupOpacity *= 0.3 // Reduce to 30% but maintain relative differences
-    }
-  }
-
-  // Apply fade-in animation
-  groupOpacity *= fadeIn
-
-  // Texture is preloaded and passed as prop - no need to load here
-
-  // Custom shader for circular clipping with aspect ratio preservation
-  const circleMaterial = useMemo(() => {
-    // Calculate texture aspect ratio
-    const textureAspect = texture.image
-      ? texture.image.width / texture.image.height
-      : 1.0
-
-    return new THREE.ShaderMaterial({
-      uniforms: {
-        map: { value: texture },
-        opacity: { value: groupOpacity * transitionProgress },
-        aspect: { value: textureAspect },
-      },
-      vertexShader: `
-        varying vec2 vUv;
-        void main() {
-          vUv = uv;
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-      `,
-      fragmentShader: `
-        uniform sampler2D map;
-        uniform float opacity;
-        uniform float aspect;
-        varying vec2 vUv;
-        
-        void main() {
-          vec2 center = vec2(0.5, 0.5);
-          
-          // Circular clipping
-          float dist = distance(vUv, center);
-          if (dist > 0.5) discard;
-          
-          // Adjust UVs to preserve aspect ratio (cover the circle)
-          // Scale the dimension that's smaller to fill the circle
-          vec2 adjustedUv = vUv - 0.5; // Center at origin
-          
-          if (aspect > 1.0) {
-            // Wider than tall: scale down width to fit
-            adjustedUv.x /= aspect;
-          } else {
-            // Taller than wide: scale down height to fit
-            adjustedUv.y *= aspect;
-          }
-          
-          adjustedUv = adjustedUv + 0.5; // Move back to 0-1 range
-          
-          // Clamp to valid texture coordinates to avoid edge sampling
-          adjustedUv = clamp(adjustedUv, 0.01, 0.99);
-          
-          vec4 texColor = texture2D(map, adjustedUv);
-          gl_FragColor = vec4(texColor.rgb, texColor.a * opacity);
-        }
-      `,
-      transparent: true,
-    })
-  }, [texture, groupOpacity, transitionProgress])
-
-  // Calculate star glow opacity (fades out as image fades in)
-  // Completely hide star when fully transitioned to image
-  const starGlowOpacity =
-    transitionProgress >= 1 ? 0 : groupOpacity * (1 - transitionProgress)
-
-  // White core size: starts at 0.25, expands to 0.5 as we approach
-  // This fills the glow area before the face appears
-  const whiteCoreSize = baseSize * (0.25 + transitionProgress * 0.25)
-
-  // Sphere-like shading material for 3D effect when distant
-  const sphereShadingMaterial = useMemo(() => {
-    return new THREE.ShaderMaterial({
-      uniforms: {
-        color: { value: new THREE.Color('#ffffff') },
-        opacity: { value: starGlowOpacity },
-      },
-      vertexShader: `
-        varying vec2 vUv;
-        void main() {
-          vUv = uv;
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-      `,
-      fragmentShader: `
-        uniform vec3 color;
-        uniform float opacity;
-        varying vec2 vUv;
-        
-        void main() {
-          vec2 center = vec2(0.5, 0.5);
-          float dist = distance(vUv, center);
-          
-          // Softer radial gradient for sphere effect (brighter overall)
-          // Keep center bright, gentle falloff at edges
-          float radialGradient = 1.0 - smoothstep(0.2, 0.5, dist);
-          radialGradient = mix(0.85, 1.0, radialGradient); // Minimum 85% brightness
-          
-          // Very subtle lighting effect (top-left slightly brighter)
-          vec2 lightDir = normalize(vec2(-0.3, 0.3));
-          vec2 fromCenter = normalize(vUv - center);
-          float lighting = max(0.0, dot(fromCenter, lightDir)) * 0.1 + 0.9;
-          
-          float finalBrightness = radialGradient * lighting;
-          
-          gl_FragColor = vec4(color * finalBrightness, opacity);
-        }
-      `,
-      transparent: true,
-    })
-  }, [starGlowOpacity])
-
-  // Render image and star together during transition
-  // Target star gets LOWER renderOrder to render last (on top)
-  // In Three.js, lower renderOrder = renders later = appears on top
-  const renderOrder = isTarget ? -100 : 0
-  
-  return (
-    <group ref={groupRef} position={position} renderOrder={renderOrder}>
-      {/* White star glow - visible when far, fades out as image appears */}
-      {starGlowOpacity > 0 && (
-        <>
-          {/* Bright white star core with sphere-like shading */}
-          <mesh position={[0, 0, -0.02]}>
-            <circleGeometry args={[whiteCoreSize, 64]} />
-            <primitive object={sphereShadingMaterial} attach="material" />
-          </mesh>
-          {/* Soft glow halo */}
-          <mesh position={[0, 0, -0.02]}>
-            <circleGeometry args={[baseSize * 0.56, 64]} />
-            <meshBasicMaterial
-              color="#aaccff"
-              transparent
-              opacity={starGlowOpacity * 0.15}
-            />
-          </mesh>
-        </>
-      )}
-
-      {/* Image - fades in during transition */}
-      {transitionProgress > 0 && (
-        <>
-          {/* Opaque backing circle - blocks stars behind */}
-          <mesh position={[0, 0, -0.01]}>
-            <circleGeometry args={[baseSize * 0.58, 64]} />
-            <meshBasicMaterial
-              color="#1a1a2e"
-              transparent
-              opacity={groupOpacity * transitionProgress}
-            />
-          </mesh>
-
-          {/* Circular image using plane + custom shader */}
-          <mesh
-            ref={spriteRef}
-            position={[0, 0, 0]}
-            onPointerOver={() => setHovered(true)}
-            onPointerOut={() => setHovered(false)}
-          >
-            <planeGeometry args={[baseSize, baseSize]} />
-            <primitive object={circleMaterial} attach="material" />
-          </mesh>
-
-          {/* White circular border ring - covers sprite edges */}
-          <mesh position={[0, 0, 0.01]}>
-            <ringGeometry args={[baseSize * 0.48, baseSize * 0.52, 64]} />
-            <meshBasicMaterial
-              color="#ffffff"
-              transparent
-              opacity={
-                groupOpacity *
-                transitionProgress *
-                (isTarget ? 1.0 : hovered ? 0.9 : 0.7)
-              }
-            />
-          </mesh>
-
-          {/* Cyan ring on target star - thinner, adjacent to white ring */}
-          {isTarget && (
-            <mesh position={[0, 0, 0.01]}>
-              <ringGeometry args={[baseSize * 0.52, baseSize * 0.56, 64]} />
-              <meshBasicMaterial
-                color="#00ffff"
-                transparent
-                opacity={transitionProgress}
-              />
-            </mesh>
-          )}
-        </>
-      )}
-    </group>
-  )
-}
-
-// Shooting star component
-function ShootingStar() {
-  const ref = useRef<THREE.Points>(null)
-  const [visible, setVisible] = useState(false)
-  const startPos = useRef(new THREE.Vector3())
-  const endPos = useRef(new THREE.Vector3())
-  const progress = useRef(0)
-
-  useEffect(() => {
-    // Random interval between 8-20 seconds
-    const scheduleNext = () => {
-      const delay = 8000 + Math.random() * 12000
-      setTimeout(() => {
-        // Random start position at edge of view
-        const angle = Math.random() * Math.PI * 2
-        const radius = 100
-        startPos.current.set(
-          Math.cos(angle) * radius,
-          Math.sin(angle) * radius,
-          -50 + Math.random() * 100,
-        )
-
-        // Random end position on opposite side
-        endPos.current.set(
-          -startPos.current.x + (Math.random() - 0.5) * 50,
-          -startPos.current.y + (Math.random() - 0.5) * 50,
-          startPos.current.z + (Math.random() - 0.5) * 30,
-        )
-
-        progress.current = 0
-        setVisible(true)
-        scheduleNext()
-      }, delay)
-    }
-    scheduleNext()
-  }, [])
-
-  // Create trail effect with multiple points - must be before conditional return
-  const trailGeometry = useMemo(() => {
-    const positions = new Float32Array(15) // 5 points for trail
-    for (let i = 0; i < 5; i++) {
-      positions[i * 3] = 0
-      positions[i * 3 + 1] = 0
-      positions[i * 3 + 2] = -i * 0.5 // Trail behind
-    }
-    const geo = new THREE.BufferGeometry()
-    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3))
-    return geo
-  }, [])
-
-  useFrame((_, delta) => {
-    if (visible && ref.current) {
-      progress.current += delta * 0.8 // Speed of shooting star
-
-      if (progress.current >= 1) {
-        setVisible(false)
-        return
-      }
-
-      // Interpolate position
-      const pos = new THREE.Vector3().lerpVectors(
-        startPos.current,
-        endPos.current,
-        progress.current,
-      )
-      ref.current.position.copy(pos)
-
-      // Fade in and out
-      const opacity =
-        progress.current < 0.1
-          ? progress.current * 10
-          : progress.current > 0.9
-          ? (1 - progress.current) * 10
-          : 1
-
-      const material = ref.current.material as THREE.PointsMaterial
-      material.opacity = opacity * 0.8
-    }
-  })
-
-  if (!visible) return null
-
-  return (
-    <points ref={ref} geometry={trailGeometry}>
-      <pointsMaterial
-        size={0.3}
-        color="#ffffff"
-        transparent
-        opacity={0.8}
-        blending={THREE.AdditiveBlending}
-      />
-    </points>
-  )
-}
-
-function BackgroundStars() {
-  const { size } = useThree()
-
-  // Responsive star count based on screen size
-  const count = useMemo(() => {
-    const area = size.width * size.height
-    // Mobile (~400x800): ~200 stars, Desktop (~1920x1080): ~600 stars
-    return Math.floor(Math.min(600, Math.max(200, area / 2000)))
-  }, [size.width, size.height])
-
-  const { positions, sizes, opacities } = useMemo(() => {
-    const pos = new Float32Array(count * 3)
-    const starSizes = new Float32Array(count)
-    const starOpacities = new Float32Array(count)
-
-    for (let i = 0; i < count; i++) {
-      // Use spherical distribution to fill entire view uniformly
-      const theta = Math.random() * Math.PI * 2
-      const phi = Math.acos(Math.random() * 2 - 1)
-      const radius = 100 + Math.random() * 100 // Far behind constellation
-
-      pos[i * 3] = radius * Math.sin(phi) * Math.cos(theta)
-      pos[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta)
-      pos[i * 3 + 2] = radius * Math.cos(phi)
-
-      // Much more visible sizes: 0.2 to 0.5
-      starSizes[i] = 0.2 + Math.random() * 0.3
-
-      // Much brighter: 0.7 to 1.0
-      starOpacities[i] = 0.7 + Math.random() * 0.3
-    }
-    return { positions: pos, sizes: starSizes, opacities: starOpacities }
-  }, [count])
-
-  const geometry = useMemo(() => {
-    const geo = new THREE.BufferGeometry()
-    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3))
-    geo.setAttribute('size', new THREE.BufferAttribute(sizes, 1))
-    geo.setAttribute('opacity', new THREE.BufferAttribute(opacities, 1))
-    return geo
-  }, [positions, sizes, opacities])
-
-  // Responsive star size: larger on mobile, smaller on desktop
-  const starSize = size.width < 768 ? 1.5 : 0.5
-
-  return (
-    <points geometry={geometry}>
-      <pointsMaterial
-        size={starSize}
-        color="#ffffff"
-        transparent
-        opacity={1.0}
-        sizeAttenuation={false}
-        vertexColors={false}
-      />
-    </points>
-  )
-}
-
-// FlyingControls removed - always auto-pilot mode
-
-// Constellation lines component - draws lines connecting stars
-function ConstellationLines({ positions }: { positions: [number, number, number][] }) {
-  const points = useMemo(() => {
-    const pts: THREE.Vector3[] = []
-    
-    // Create lines between stars that are close to each other
-    // This forms a constellation pattern
-    for (let i = 0; i < positions.length; i++) {
-      const pos1 = new THREE.Vector3(...positions[i])
-      
-      // Find nearest neighbors to connect
-      const distances = positions
-        .map((pos2, j) => ({
-          index: j,
-          distance: pos1.distanceTo(new THREE.Vector3(...pos2)),
-        }))
-        .filter(d => d.index !== i)
-        .sort((a, b) => a.distance - b.distance)
-      
-      // Connect to 2-3 nearest neighbors to form constellation shape
-      const connectCount = Math.min(2, distances.length)
-      for (let k = 0; k < connectCount; k++) {
-        const neighbor = distances[k]
-        // Only draw if distance is reasonable (not too far)
-        if (neighbor.distance < 30) {
-          pts.push(pos1)
-          pts.push(new THREE.Vector3(...positions[neighbor.index]))
-        }
-      }
-    }
-    
-    return pts
-  }, [positions])
-
-  const geometry = useMemo(() => {
-    const geom = new THREE.BufferGeometry()
-    const positions = new Float32Array(points.flatMap(p => [p.x, p.y, p.z]))
-    geom.setAttribute('position', new THREE.BufferAttribute(positions, 3))
-    return geom
-  }, [points])
-
-  return (
-    <lineSegments geometry={geometry}>
-      <lineBasicMaterial color="#4ade80" opacity={0.6} transparent />
-    </lineSegments>
-  )
-}
-
-interface SceneProps {
-  onUpdateOverlays: (overlays: StarOverlay[]) => void
-  onSetSortedPeople: (
-    people: Array<(typeof MOCK_PEOPLE)[0] & { originalIndex: number }>,
-  ) => void
-  targetStarIndex: number
-  previousStarIndex: number
-  onApproaching: (personName: string) => void
-  onArrived: (personName: string) => void
-  onTakeoffComplete: () => void
-  onReturnComplete: () => void
-  journeyPhase:
-    | 'intro'
-    | 'flying'
-    | 'approaching'
-    | 'arrived'
-    | 'placed'
-    | 'takeoff'
-    | 'complete'
-    | 'returning'
-  placements: Map<string, 'inner' | 'close' | 'outer'>
-  useConstellationPositions: boolean
-}
-
-function Scene({
-  onUpdateOverlays,
-  onSetSortedPeople,
-  targetStarIndex,
-  previousStarIndex,
-  onApproaching,
-  onArrived,
-  onTakeoffComplete,
-  onReturnComplete,
-  journeyPhase,
-  placements,
-  useConstellationPositions,
-}: SceneProps) {
-  const { camera, size } = useThree()
-  const [nearestStarId, setNearestStarId] = useState<string | null>(null)
-  const [texturesLoaded, setTexturesLoaded] = useState(false)
-  const targetPosition = useRef(new THREE.Vector3())
-  const hasInitialized = useRef(false)
-  const hasTriggeredApproaching = useRef(false)
-  const hasTriggeredArrival = useRef(false)
-  const takeoffProgress = useRef(0)
-  const takeoffStartPos = useRef(new THREE.Vector3())
-  const previousStarPos = useRef(new THREE.Vector3())
-  const takeoffEndLookAt = useRef(new THREE.Vector3())
-  const cameFromTakeoff = useRef(false)
-  const flightProgress = useRef(0)
-  const flightStartPos = useRef(new THREE.Vector3())
-  const flightControlPoint = useRef(new THREE.Vector3())
-  const isFlying = useRef(false)
-  const returnProgress = useRef(0)
-  const returnStartPos = useRef(new THREE.Vector3())
-
-  // Preload all textures before rendering any stars
-  const textures = useMemo(() => {
-    const loader = new THREE.TextureLoader()
-    const textureMap = new Map<string, THREE.Texture>()
-    let loadedCount = 0
-
-    MOCK_PEOPLE.forEach((person) => {
-      const texture = loader.load(
-        person.photo,
-        (tex) => {
-          tex.colorSpace = THREE.SRGBColorSpace
-          // Use better filtering to avoid edge artifacts
-          tex.minFilter = THREE.LinearFilter
-          tex.magFilter = THREE.LinearFilter
-          tex.wrapS = THREE.ClampToEdgeWrapping
-          tex.wrapT = THREE.ClampToEdgeWrapping
-          tex.needsUpdate = true
-          loadedCount++
-          if (loadedCount === MOCK_PEOPLE.length) {
-            setTexturesLoaded(true)
-          }
-        },
-        undefined,
-        (error) => {
-          console.error(`Failed to load ${person.name}:`, error)
-          loadedCount++
-          if (loadedCount === MOCK_PEOPLE.length) {
-            setTexturesLoaded(true)
-          }
-        },
-      )
-      textureMap.set(person.id, texture)
-    })
-
-    return textureMap
-  }, [])
-
-  // Gaussian random helper for organic clustering
-  const gaussianRandom = (mean = 0, stdev = 1) => {
-    const u1 = Math.random()
-    const u2 = Math.random()
-    const z0 = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2)
-    return z0 * stdev + mean
-  }
-
-  // Position stars - use placement-based positions only in constellation view
-  const starPositions = useMemo(() => {
-    const positions: [number, number, number][] = []
-    const minDistance = 15 // Minimum distance between stars to prevent overlap
-    const maxAttempts = 50 // Max attempts to find non-overlapping position
-
-    for (let i = 0; i < MOCK_PEOPLE.length; i++) {
-      const person = MOCK_PEOPLE[i]
-      const placement = useConstellationPositions ? placements.get(person.id) : undefined
-      const { min, max } = getStarRadius(placement)
-      
-      let attempts = 0
-      let validPosition = false
-      let newPos: [number, number, number]
-
-      while (!validPosition && attempts < maxAttempts) {
-        // Random angle for spherical distribution
-        // Constrain to a cone to keep stars more clustered
-        const theta = Math.random() * Math.PI * 2 // Full rotation around Y axis
-        // Limit phi to 45 degrees (π/4) for tight clustering that fits in HUD
-        const maxPhi = Math.PI / 4 // 45 degree cone
-        const phi = Math.random() * maxPhi
-        
-        // Random radius within the placement range
-        const radius = min + Math.random() * (max - min)
-        
-        // Convert spherical to Cartesian coordinates
-        newPos = [
-          radius * Math.sin(phi) * Math.cos(theta),
-          -10 + radius * Math.sin(phi) * Math.sin(theta), // Offset Y for nav panel
-          radius * Math.cos(phi),
-        ]
-
-        // Check distance from all existing stars
-        validPosition = positions.every((existingPos) => {
-          const dx = newPos[0] - existingPos[0]
-          const dy = newPos[1] - existingPos[1]
-          const dz = newPos[2] - existingPos[2]
-          const distance = Math.sqrt(dx * dx + dy * dy + dz * dz)
-          return distance >= minDistance
-        })
-
-        attempts++
-      }
-
-      positions.push(newPos!)
-    }
-
-    return positions
-  // Only recalculate when useConstellationPositions changes, not when placements change
-  // This prevents stars from jumping during the journey
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [useConstellationPositions])
-
-  // Sort people by distance from starting camera position
-  // This creates a visit order from closest to farthest
-  useEffect(() => {
-    const startPos = new THREE.Vector3(0, -10, 140)
-    const sorted = MOCK_PEOPLE.map((person, index) => ({
-      ...person,
-      originalIndex: index,
-      distance: startPos.distanceTo(new THREE.Vector3(...starPositions[index])),
-    })).sort((a, b) => a.distance - b.distance)
-
-    onSetSortedPeople(sorted)
-  }, [starPositions, onSetSortedPeople])
-
-  // Initialize takeoff when phase changes to 'takeoff'
-  useEffect(() => {
-    if (journeyPhase === 'takeoff' && targetStarIndex >= 0) {
-      // Store current camera position as takeoff start
-      takeoffStartPos.current.copy(camera.position)
-      // Store previous star position (the one we're leaving)
-      if (targetStarIndex > 0) {
-        const prevStarIndex = targetStarIndex - 1
-        previousStarPos.current.copy(
-          new THREE.Vector3(...starPositions[prevStarIndex]),
-        )
-      }
-      takeoffProgress.current = 0
-    }
-  }, [journeyPhase, targetStarIndex, camera.position, starPositions])
-
-  // Auto-pilot: initialize with overview, then move to target star
-  useFrame(() => {
-    // First time: set overview position
-    if (!hasInitialized.current) {
-      // Position camera further back to show all stars in HUD initially
-      // Top UI is ~80px, nav panel is ~200px from bottom
-      // Center point should be higher to account for nav panel taking more space
-      camera.position.set(0, -10, 180) // Further back (z=180) to show all stars
-      camera.lookAt(0, -10, 0) // Look at adjusted center
-      hasInitialized.current = true
-    }
-
-    // Handle takeoff sequence (pull back from current star before flying to next)
-    if (
-      journeyPhase === 'takeoff' &&
-      targetStarIndex >= 0 &&
-      targetStarIndex < MOCK_PEOPLE.length
-    ) {
-      const nextTargetPos = new THREE.Vector3(...starPositions[targetStarIndex])
-      takeoffProgress.current += 0.015 // Takeoff speed (balanced for smooth but not too slow)
-
-      if (takeoffProgress.current >= 1) {
-        // Takeoff complete, transition to flying
-        takeoffProgress.current = 0
-        cameFromTakeoff.current = true // Mark that we came from takeoff
-        // Save the lookAt direction at end of takeoff
-        takeoffEndLookAt.current.copy(nextTargetPos)
-        onTakeoffComplete() // Trigger transition to flying phase
-      } else {
-        const t = takeoffProgress.current
-
-        // Pull camera back AND move laterally toward next target
-        const pullBackDistance = 30 // Units to pull back
-
-        // Move camera position: pull back in Z, and gradually move X/Y toward next target
-        const lateralProgress = t * 0.3 // Move 30% of the way laterally during takeoff
-        const newX =
-          takeoffStartPos.current.x +
-          (nextTargetPos.x - takeoffStartPos.current.x) * lateralProgress
-        const newY =
-          takeoffStartPos.current.y +
-          (nextTargetPos.y - takeoffStartPos.current.y) * lateralProgress
-        const newZ = takeoffStartPos.current.z + pullBackDistance * t
-
-        camera.position.set(newX, newY, newZ)
-
-        // Gradually rotate camera from previous star to next target
-        // Start rotation after 30% of takeoff, complete by end
-
-        if (t < 0.3) {
-          // First 30%: keep looking at previous star
-          camera.lookAt(previousStarPos.current)
-        } else {
-          // Remaining 70%: gradually rotate toward next target
-          const rotateProgress = (t - 0.3) / 0.7 // 0 to 1 over remaining time
-          // Ease the rotation for smoother feel
-          const easedProgress =
-            rotateProgress * rotateProgress * (3 - 2 * rotateProgress) // Smoothstep
-          const lookAtPoint = new THREE.Vector3().lerpVectors(
-            previousStarPos.current,
-            nextTargetPos,
-            easedProgress,
-          )
-          camera.lookAt(lookAtPoint)
-        }
-      }
-    }
-
-    // Handle return to constellation view
-    if (journeyPhase === 'returning') {
-      if (returnProgress.current === 0) {
-        // Initialize return flight
-        returnStartPos.current.copy(camera.position)
-        returnProgress.current = 0.001 // Start slightly above 0
-      }
-
-      returnProgress.current += 0.008 // Return speed
-
-      if (returnProgress.current >= 1) {
-        // Return complete - stop animating but stay in returning phase
-        if (returnProgress.current < 1.5) {
-          // Only call once
-          returnProgress.current = 1.5 // Lock to prevent re-calling
-          
-          // Calculate bounding box from ALL stars (no filtering needed with 60° cone)
-          let minX = Infinity, maxX = -Infinity
-          let minY = Infinity, maxY = -Infinity
-          let minZ = Infinity, maxZ = -Infinity
-          starPositions.forEach(pos => {
-            minX = Math.min(minX, pos[0])
-            maxX = Math.max(maxX, pos[0])
-            minY = Math.min(minY, pos[1])
-            maxY = Math.max(maxY, pos[1])
-            minZ = Math.min(minZ, pos[2])
-            maxZ = Math.max(maxZ, pos[2])
-          })
-          
-          // Use bounding box center for positioning
-          const centerX = (minX + maxX) / 2
-          const centerY = (minY + maxY) / 2
-          const centerZ = (minZ + maxZ) / 2
-          
-          // Calculate size
-          const width = maxX - minX
-          const height = maxY - minY
-          const depth = maxZ - minZ
-          const maxDimension = Math.max(width, height, depth)
-          
-          // Calculate camera position based on actual viewport and HUD dimensions
-          const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1024
-          const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 768
-          const isMobile = viewportWidth < 640
-          
-          // Nav panel is ~200px on mobile, ~250px on desktop
-          const navPanelHeight = isMobile ? 200 : 250
-          // HUD height (from HUD component): mobile=35vh, desktop=50vh
-          const hudHeightVh = isMobile ? 35 : 50
-          const hudHeightPx = (viewportHeight * hudHeightVh) / 100
-          
-          // Calculate Y offset in world units to center constellation in HUD
-          // HUD center is higher than viewport center by (navPanelHeight / 2) pixels
-          // To make constellation appear at HUD center, move camera DOWN (negative Y)
-          // Convert pixels to world units at the target distance
-          const fovRadians = (60 * Math.PI) / 180
-          
-          // First calculate distance to fit constellation in HUD
-          // Target: constellation fills 75% of HUD for good framing
-          const hudWidthPx = Math.min(900, viewportWidth * 0.8)
-          const targetFillPercent = 0.75
-          
-          // Calculate distance needed to fit width and height separately, use the larger
-          // FOV is vertical, need to calculate horizontal FOV based on aspect ratio
-          const aspectRatio = viewportWidth / viewportHeight
-          const horizontalFov = 2 * Math.atan(Math.tan(fovRadians / 2) * aspectRatio)
-          
-          // Width: need to fit 'width' world units in hudWidthPx * 0.75
-          const worldWidthAtDistance1 = 2 * Math.tan(horizontalFov / 2)
-          const distanceForWidth = (width * viewportWidth) / (hudWidthPx * targetFillPercent * worldWidthAtDistance1)
-          
-          // Height: need to fit 'height' world units in hudHeightPx * 0.75
-          const distanceForHeight = (height * viewportHeight) / (hudHeightPx * targetFillPercent * 2 * Math.tan(fovRadians / 2))
-          
-          // Use the larger distance to ensure both dimensions fit
-          // Add 30% safety margin to guarantee constellation stays within HUD
-          const baseDistance = Math.max(distanceForWidth, distanceForHeight) * 1.3
-          
-          // Ensure minimum distance so all stars show as dots (distance > 40)
-          const maxStarRadius = 10
-          const minDistanceForPhotos = 40 + maxDimension / 2 + maxStarRadius
-          const zDistance = Math.max(baseDistance, minDistanceForPhotos)
-          
-          // Now calculate Y offset at this distance
-          // At distance zDistance, pixels to world units conversion:
-          const worldHeightAtDistance = 2 * zDistance * Math.tan(fovRadians / 2)
-          const pixelsToWorldUnits = worldHeightAtDistance / viewportHeight
-          // HUD center is navPanelHeight/2 pixels higher than viewport center
-          // Move camera DOWN (subtract) to make constellation appear higher
-          // Increase offset for mobile to account for smaller viewport
-          const offsetMultiplier = isMobile ? 1.5 : 1.0
-          const yOffset = -(navPanelHeight / 2) * pixelsToWorldUnits * offsetMultiplier
-          
-          // Position camera at constellation center Y (adjusted for nav panel)
-          // Look straight ahead at world origin for proper centering
-          camera.position.set(0, centerY + yOffset, zDistance)
-          camera.lookAt(0, 0, 0)
-          onReturnComplete()
-        }
-      } else {
-        const t = returnProgress.current
-        // Ease out for smooth deceleration
-        const easedT = 1 - Math.pow(1 - t, 3)
-
-        // Calculate bounding box from ALL stars
-        let minX = Infinity, maxX = -Infinity
-        let minY = Infinity, maxY = -Infinity
-        let minZ = Infinity, maxZ = -Infinity
-        starPositions.forEach(pos => {
-          minX = Math.min(minX, pos[0])
-          maxX = Math.max(maxX, pos[0])
-          minY = Math.min(minY, pos[1])
-          maxY = Math.max(maxY, pos[1])
-          minZ = Math.min(minZ, pos[2])
-          maxZ = Math.max(maxZ, pos[2])
-        })
-        
-        // Use bounding box center for positioning
-        const centerX = (minX + maxX) / 2
-        const centerY = (minY + maxY) / 2
-        const centerZ = (minZ + maxZ) / 2
-        
-        // Calculate size
-        const width = maxX - minX
-        const height = maxY - minY
-        const depth = maxZ - minZ
-        const maxDimension = Math.max(width, height, depth)
-        
-        // Calculate camera position using same logic as final position
-        const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1024
-        const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 768
-        const isMobile = viewportWidth < 640
-        
-        const navPanelHeight = isMobile ? 200 : 250
-        const hudHeightVh = isMobile ? 35 : 50
-        const hudHeightPx = (viewportHeight * hudHeightVh) / 100
-        
-        const fovRadians = (60 * Math.PI) / 180
-        
-        const hudWidthPx = Math.min(900, viewportWidth * 0.8)
-        const targetFillPercent = 0.75
-        
-        // Calculate distance needed to fit width and height separately, use the larger
-        const aspectRatio = viewportWidth / viewportHeight
-        const horizontalFov = 2 * Math.atan(Math.tan(fovRadians / 2) * aspectRatio)
-        
-        const worldWidthAtDistance1 = 2 * Math.tan(horizontalFov / 2)
-        const distanceForWidth = (width * viewportWidth) / (hudWidthPx * targetFillPercent * worldWidthAtDistance1)
-        const distanceForHeight = (height * viewportHeight) / (hudHeightPx * targetFillPercent * 2 * Math.tan(fovRadians / 2))
-        // Add 30% safety margin to guarantee constellation stays within HUD
-        const baseDistance = Math.max(distanceForWidth, distanceForHeight) * 1.3
-        const maxStarRadius = 10
-        const minDistanceForPhotos = 40 + maxDimension / 2 + maxStarRadius
-        const zDistance = Math.max(baseDistance, minDistanceForPhotos)
-        
-        const worldHeightAtDistance = 2 * zDistance * Math.tan(fovRadians / 2)
-        const pixelsToWorldUnits = worldHeightAtDistance / viewportHeight
-        const offsetMultiplier = isMobile ? 1.5 : 1.0
-        const yOffset = -(navPanelHeight / 2) * pixelsToWorldUnits * offsetMultiplier
-        
-        const targetPos = new THREE.Vector3(0, centerY + yOffset, zDistance)
-        const targetLookAt = new THREE.Vector3(0, 0, 0)
-
-        // Interpolate position
-        camera.position.lerpVectors(returnStartPos.current, targetPos, easedT)
-
-        // Interpolate look direction
-        const currentLookAt = new THREE.Vector3()
-        camera.getWorldDirection(currentLookAt)
-        currentLookAt.multiplyScalar(100).add(returnStartPos.current)
-        const lookAtPoint = new THREE.Vector3().lerpVectors(
-          currentLookAt,
-          targetLookAt,
-          easedT,
-        )
-        camera.lookAt(lookAtPoint)
-      }
-    }
-
-    // Fly to target star (only after intro phase)
-    if (
-      journeyPhase !== 'intro' &&
-      targetStarIndex >= 0 &&
-      targetStarIndex < MOCK_PEOPLE.length
-    ) {
-      const targetPos = new THREE.Vector3(...starPositions[targetStarIndex])
-
-      // Initialize flight path when starting new journey
-      const currentDist = camera.position.distanceTo(targetPos)
-      if (journeyPhase === 'flying' && !isFlying.current) {
-        // Flight started - calculate target position ONCE at start
-        isFlying.current = true
-        flightProgress.current = 0
-        hasTriggeredArrival.current = false // Reset arrival trigger
-        flightStartPos.current.copy(camera.position)
-
-        // If NOT coming from takeoff, this is first flight from intro
-        if (!cameFromTakeoff.current) {
-          cameFromTakeoff.current = false // Will use constellation center as start lookAt
-        }
-
-        // Position camera straight-on to star for HUD centering
-        const isMobile =
-          typeof window !== 'undefined' && window.innerWidth < 640
-        const viewDistance = isMobile ? 5.5 : 6.5 // Mobile: farther for smaller appearance
-
-        // Camera target position: directly in front of star
-        targetPosition.current.set(
-          targetPos.x,
-          targetPos.y,
-          targetPos.z + viewDistance,
-        )
-
-        // Smooth curved flight path
-        if (cameFromTakeoff.current) {
-          // After takeoff: camera is already off-center, create gentle curve toward target
-          // Control point is midway between current position and target
-          flightControlPoint.current.set(
-            (camera.position.x + targetPos.x) / 2,
-            (camera.position.y + targetPos.y) / 2,
-            (camera.position.z + targetPosition.current.z) / 2,
-          )
-        } else {
-          // First flight from intro: delayed panning
-          // Control point stays near starting position for first half of flight
-          const startWeight = 0.8 // Keep 80% of start position
-          const targetWeight = 0.2 // Only 20% toward target
-
-          flightControlPoint.current.set(
-            camera.position.x * startWeight + targetPos.x * targetWeight,
-            camera.position.y * startWeight + targetPos.y * targetWeight,
-            camera.position.z * 0.3 + targetPosition.current.z * 0.7, // Move forward in Z
-          )
-        }
-      }
-
-      // Check distance to trigger "approaching" message
-      if (
-        currentDist < 15 &&
-        !hasTriggeredApproaching.current &&
-        journeyPhase === 'flying'
-      ) {
-        hasTriggeredApproaching.current = true
-        onApproaching(MOCK_PEOPLE[targetStarIndex].name)
-      }
-
-      // Reset approaching trigger when moving to new star
-      if (journeyPhase === 'flying' && currentDist > 20) {
-        hasTriggeredApproaching.current = false
-      }
-
-      // Bezier curve flight path - continue even during 'arrived' to center the star
-      if (
-        isFlying.current &&
-        (journeyPhase === 'flying' ||
-          journeyPhase === 'approaching' ||
-          journeyPhase === 'arrived')
-      ) {
-        // Variable speed: fast at start, slow down when very close
-        // Slow down when distance < 20 (when very close to star)
-        const baseSpeed =
-          currentDist < 20
-            ? 0.003 // Slow final approach
-            : currentDist < 40
-            ? 0.006 // Medium speed when getting close
-            : 0.012 // Fast initial flight
-
-        flightProgress.current = Math.min(1, flightProgress.current + baseSpeed)
-
-        // Auto-transition to 'arrived' when we get very close (only once)
-        // Stricter conditions: distance < 10 and progress > 0.98
-        if (
-          currentDist < 10 &&
-          flightProgress.current > 0.98 &&
-          !hasTriggeredArrival.current
-        ) {
-          hasTriggeredArrival.current = true
-          onArrived(MOCK_PEOPLE[targetStarIndex].name)
-          // Don't stop flying yet - let it complete to center the star
-        }
-
-        // Stop flying when we've fully arrived
-        if (flightProgress.current >= 1) {
-          isFlying.current = false
-        }
-
-        // Linear progress - no easing for smooth consistent movement
-        const t = flightProgress.current
-
-        // Quadratic Bezier curve: B(t) = (1-t)²P0 + 2(1-t)tP1 + t²P2
-        const oneMinusT = 1 - t
-        const newPos = new THREE.Vector3()
-          .addScaledVector(flightStartPos.current, oneMinusT * oneMinusT)
-          .addScaledVector(flightControlPoint.current, 2 * oneMinusT * t)
-          .addScaledVector(targetPosition.current, t * t)
-
-        camera.position.copy(newPos)
-
-        // Gradually transition look direction with easing
-        // If coming from takeoff, camera is already looking at target, so just continue
-        // Otherwise (first flight from intro), start from constellation center
-        // Delay the transition and use smooth easing
-        const lookProgress = Math.max(0, (t - 0.2) / 0.8) // Start transitioning at t=0.2
-        // Ease in-out: slow start, fast middle, slow end
-        const easedLookProgress =
-          lookProgress < 0.5
-            ? 2 * lookProgress * lookProgress
-            : 1 - Math.pow(-2 * lookProgress + 2, 2) / 2
-
-        // Gradually transition look direction
-        if (cameFromTakeoff.current) {
-          // Coming from takeoff: gradually pan from takeoff end direction to centered on target
-          // This creates the lateral panning sensation
-          const panProgress = Math.min(1, t * 1.5) // Complete pan by t=0.67
-          const easedPanProgress =
-            panProgress * panProgress * (3 - 2 * panProgress) // Smoothstep
-          const lookAtPoint = new THREE.Vector3().lerpVectors(
-            takeoffEndLookAt.current,
-            targetPos,
-            easedPanProgress,
-          )
-          camera.lookAt(lookAtPoint)
-        } else {
-          // First flight from intro: interpolate from constellation center to target
-          const startLookAt = new THREE.Vector3(0, -10, 0)
-          const lookAtPoint = new THREE.Vector3().lerpVectors(
-            startLookAt,
-            targetPos,
-            easedLookProgress,
-          )
-          camera.lookAt(lookAtPoint)
-        }
-
-        // Complete flight when reached
-        if (flightProgress.current >= 1) {
-          isFlying.current = false
-          camera.lookAt(targetPos) // Final look at star
-          camera.rotation.z = 0 // Reset roll
-        }
-      } else if (journeyPhase !== 'flying' && journeyPhase !== 'approaching') {
-        // Reset flight state when not flying
-        isFlying.current = false
-      }
-
-      // Smooth camera look at target only during flight, not when arrived
-      if (
-        !isFlying.current &&
-        currentDist > 0.1 &&
-        journeyPhase !== 'arrived' &&
-        journeyPhase !== 'placed'
-      ) {
-        camera.lookAt(targetPos)
-      }
-    }
-
-    // Find nearest star and calculate screen positions
-    let minDist = Infinity
-    let nearestId: string | null = null
-
-    const overlays: StarOverlay[] = []
-
-    MOCK_PEOPLE.forEach((person, index) => {
-      const pos = new THREE.Vector3(...starPositions[index])
-      const dist = camera.position.distanceTo(pos)
-
-      if (dist < minDist) {
-        minDist = dist
-        nearestId = person.id
-      }
-
-      // Project 3D position to 2D screen coordinates
-      const screenPos = pos.clone().project(camera)
-
-      // Only show if star is in front of camera (not behind)
-      // screenPos.z ranges from -1 (near) to 1 (far), negative means behind camera
-      if (screenPos.z < 1) {
-        const screenX = (screenPos.x * 0.5 + 0.5) * size.width
-        const screenY = (-(screenPos.y * 0.5) + 0.5) * size.height
-
-        overlays.push({
-          person,
-          screenX,
-          screenY,
-          distance: dist,
-          isNear: nearestId === person.id,
-        })
-      }
-    })
-
-    // Only update state if nearest star changed to prevent unnecessary re-renders
-    if (nearestId !== nearestStarId) {
-      setNearestStarId(nearestId)
-      // Only update overlays when nearest star changes to avoid constant re-renders
-      onUpdateOverlays(overlays)
-    }
-  })
-
-  return (
-    <>
-      {/* Ambient light */}
-      <ambientLight intensity={0.3} />
-
-      {/* Point light at camera position */}
-      <pointLight position={[0, 0, 0]} intensity={1} />
-
-      {/* Background stars */}
-      <BackgroundStars />
-
-      {/* Shooting stars - occasional cosmic magic */}
-      <ShootingStar />
-      <ShootingStar />
-
-      {/* Constellation lines - only show in returning phase */}
-      {journeyPhase === 'returning' && texturesLoaded && (
-        <ConstellationLines positions={starPositions} />
-      )}
-
-      {/* Person stars - only render when all textures loaded */}
-      {texturesLoaded &&
-        MOCK_PEOPLE.map((person, index) => {
-          // Check if this star is the current target
-          // During takeoff: show previous star as target (we're backing away from it)
-          // During flying/approaching/arrived/placed: show current target
-          const isTargetStar =
-            (journeyPhase === 'takeoff' && index === previousStarIndex) ||
-            (index === targetStarIndex &&
-              (journeyPhase === 'flying' ||
-                journeyPhase === 'approaching' ||
-                journeyPhase === 'arrived' ||
-                journeyPhase === 'placed'))
-
-          return (
-            <Star
-              key={person.id}
-              person={person}
-              position={starPositions[index]}
-              isNear={nearestStarId === person.id}
-              isTarget={isTargetStar}
-              placement={placements.get(person.id)}
-              texture={textures.get(person.id)!}
-              journeyPhase={journeyPhase}
-            />
-          )
-        })}
-
-      {/* Flying controls removed - always auto-pilot */}
-    </>
-  )
-}
-
-interface StarOverlay {
-  person: (typeof MOCK_PEOPLE)[0]
-  screenX: number
-  screenY: number
-  distance: number
-  isNear: boolean
-}
-
-// Get star radius range based on placement
-const getStarRadius = (placement?: 'inner' | 'close' | 'outer') => {
-  if (!placement) return { min: 25, max: 35 } // Unrated - very far
-  if (placement === 'inner') return { min: 5, max: 10 } // Inner circle - close
-  if (placement === 'close') return { min: 10, max: 18 } // Close circle - mid
-  return { min: 18, max: 25 } // Outer circle - far
-}
+import { useState, useEffect } from 'react'
+import { Canvas } from '@react-three/fiber'
+import { StarData, StarOverlay } from './types'
+import { MOCK_PEOPLE } from './mockData'
+import { initializeStars } from './starData'
+import Scene from './Scene'
 
 export default function StarField() {
-  const [overlays, setOverlays] = useState<StarOverlay[]>([])
-  const [useConstellationPositions, setUseConstellationPositions] = useState(false)
+  const [_overlays, setOverlays] = useState<StarOverlay[]>([])
+  const [useConstellationPositions, setUseConstellationPositions] =
+    useState(false)
 
-  // Pre-populate 14 of 15 stars with random placements for testing
-  const [placements, setPlacements] = useState<
-    Map<string, 'inner' | 'close' | 'outer'>
-  >(() => {
-    const map = new Map<string, 'inner' | 'close' | 'outer'>()
-    const circles: Array<'inner' | 'close' | 'outer'> = [
-      'inner',
-      'close',
-      'outer',
-    ]
+  // Single source of truth: all star state keyed by person.id
+  const [stars, setStars] = useState<Map<string, StarData>>(initializeStars)
 
-    // Place first 14 people randomly
-    MOCK_PEOPLE.slice(0, 14).forEach((person) => {
-      const randomCircle = circles[Math.floor(Math.random() * circles.length)]
-      map.set(person.id, randomCircle)
-    })
-
-    return map
-  })
-  const [currentStarIndex, setCurrentStarIndex] = useState(0)
   const [targetStarIndex, setTargetStarIndex] = useState(0)
   const [previousStarIndex, setPreviousStarIndex] = useState(-1)
-  const [nextStarIndex, setNextStarIndex] = useState(-1)
   const [narratorMessage, setNarratorMessage] = useState<string>('')
   const [displayedMessage, setDisplayedMessage] = useState<string>('')
   const [journeyPhase, setJourneyPhase] = useState<
@@ -1537,10 +31,13 @@ export default function StarField() {
     | 'returning'
   >('intro')
   const [introStep, setIntroStep] = useState(0)
-  // Sorted people array with their original indices - starts empty until Scene sorts them
-  const [sortedPeople, setSortedPeople] = useState<
-    Array<(typeof MOCK_PEOPLE)[0] & { originalIndex: number }>
-  >([])
+
+  // Derive placements from stars state
+  const placements = new Map(
+    Array.from(stars.entries())
+      .filter(([_, star]) => star.placement)
+      .map(([id, star]) => [id, star.placement!])
+  )
 
   // Show message instantly (typing effect removed)
   useEffect(() => {
@@ -1552,10 +49,10 @@ export default function StarField() {
     if (journeyPhase === 'intro') {
       // Multi-step intro messages
       const introMessages = [
-        `Joe, welcome to the Tippetts Family constellation...`,
-        `This cosmic formation has ${MOCK_PEOPLE.length} stars, each a current or potential relationship...`,
-        `Your mission is to chart the location of each star in your universe as...`,
-        `<i>Close</i>: family/close friend<br /><i>Near</i>: friend/acquaintance<br /><i>Distant</i>: someone you don't yet know`,
+        `Joe, welcome to the Tippetts Family star cluster...`,
+        `This cluster has ${MOCK_PEOPLE.length} stars, each a current or potential relationship...`,
+        `Your mission is to chart each star to form a constellation of people who are...`,
+        `<i>Close</i>: family/close friends<br /><i>Near</i>: friends/acquaintances<br /><i>Distant</i>: those you don't yet know`,
         'Are you ready?',
       ]
       setNarratorMessage(introMessages[introStep])
@@ -1568,28 +65,18 @@ export default function StarField() {
     }
   }
 
+
   const handleProceed = () => {
     if (journeyPhase === 'intro') {
       // Progress through intro steps (0-4, total 5 messages)
       if (introStep < 4) {
         setIntroStep(introStep + 1)
       } else {
-        // Intro complete, find first unplaced star
-        const firstUnplacedIndex = sortedPeople.findIndex(
-          (person) => !placements.has(person.id),
-        )
-
-        if (firstUnplacedIndex >= 0) {
-          const firstPerson = sortedPeople[firstUnplacedIndex]
-          setCurrentStarIndex(firstUnplacedIndex)
-          setNarratorMessage(`Flying to ${firstPerson.name}...`)
-          setTargetStarIndex(firstPerson.originalIndex)
-          setJourneyPhase('flying')
-        } else {
-          // All stars already placed
-          setNarratorMessage('All stars are placed!')
-          setJourneyPhase('complete')
-        }
+        // Intro complete, start with first star (index 0)
+        const firstPerson = MOCK_PEOPLE[0]
+        setTargetStarIndex(0)
+        setNarratorMessage(`Flying to ${firstPerson.name}...`)
+        setJourneyPhase('flying')
       }
     }
   }
@@ -1598,27 +85,37 @@ export default function StarField() {
     person: (typeof MOCK_PEOPLE)[0],
     circle: 'inner' | 'close' | 'outer',
   ) => {
-    const newPlacements = new Map(placements).set(person.id, circle)
-    setPlacements(newPlacements)
+    // Update star data with placement (but don't generate constellation position yet)
+    setStars((prevStars) => {
+      const newStars = new Map(prevStars)
+      const starData = newStars.get(person.id)!
+      newStars.set(person.id, {
+        ...starData,
+        placement: circle,
+        visited: true,
+      })
+      return newStars
+    })
 
     // Check if all stars are now placed
-    const allPlaced = newPlacements.size === MOCK_PEOPLE.length
-    
+    const placedCount =
+      Array.from(stars.values()).filter((s) => s.placement).length + 1
+    const allPlaced = placedCount === MOCK_PEOPLE.length
+
     if (allPlaced) {
       setNarratorMessage(
         `Journey complete! You've charted all ${MOCK_PEOPLE.length} stars in your constellation.`,
       )
-      // Stay in 'placed' phase to keep star appearance locked
-      // Will transition to 'complete' when showing the button
-      setJourneyPhase('placed')
+      setJourneyPhase('complete')
     } else {
-      // Find next unplaced star
-      const nextUnplacedIndex = sortedPeople.findIndex(
-        (p, idx) => idx > currentStarIndex && !newPlacements.has(p.id),
-      )
+      // Find next unvisited star in MOCK_PEOPLE order
+      const nextUnvisitedIndex = MOCK_PEOPLE.findIndex((p) => {
+        const starData = stars.get(p.id)!
+        return !starData.visited
+      })
 
-      if (nextUnplacedIndex >= 0) {
-        const nextPerson = sortedPeople[nextUnplacedIndex]
+      if (nextUnvisitedIndex >= 0) {
+        const nextPerson = MOCK_PEOPLE[nextUnvisitedIndex]
         const circleLabel =
           circle === 'inner' ? 'Close' : circle === 'close' ? 'Near' : 'Distant'
         setNarratorMessage(
@@ -1626,7 +123,7 @@ export default function StarField() {
         )
         setJourneyPhase('placed')
       } else {
-        // No more unplaced stars
+        // No more unvisited stars
         setNarratorMessage(
           `Journey complete! You've charted all ${MOCK_PEOPLE.length} stars in your constellation.`,
         )
@@ -1636,18 +133,23 @@ export default function StarField() {
   }
 
   const handleProceedAfterPlacement = () => {
-    if (currentStarIndex < sortedPeople.length - 1) {
-      const nextIndex = currentStarIndex + 1
-      const nextPerson = sortedPeople[nextIndex]
+    // Find next unvisited star in MOCK_PEOPLE order
+    const nextUnvisitedIndex = MOCK_PEOPLE.findIndex((p) => {
+      const starData = stars.get(p.id)!
+      return !starData.visited
+    })
+
+    if (nextUnvisitedIndex >= 0) {
+      const nextPerson = MOCK_PEOPLE[nextUnvisitedIndex]
       const distance = Math.floor(Math.random() * 100) + 50
       setNarratorMessage(
-        `Taking off... Next up: ${nextPerson.name}, currently ${distance} light years away.`,
+        `Next star: ${nextPerson.name}, currently ${distance} light years away.`,
       )
-      // Store current star's ORIGINAL index as previous (for Scene component comparison)
-      setPreviousStarIndex(sortedPeople[currentStarIndex].originalIndex)
-      // Store next index but DON'T update currentStarIndex yet (wait for takeoff to complete)
-      setNextStarIndex(nextIndex)
-      setJourneyPhase('takeoff') // Start with takeoff, will transition to flying
+      // Store current star's index as previous
+      setPreviousStarIndex(targetStarIndex)
+      // Set next target
+      setTargetStarIndex(nextUnvisitedIndex)
+      setJourneyPhase('takeoff')
     } else {
       setNarratorMessage('Journey complete! All stars have been charted.')
       setJourneyPhase('complete')
@@ -1661,55 +163,57 @@ export default function StarField() {
         style={{ width: '100%', height: '100%' }}
       >
         <Scene
+          stars={stars}
+          onUpdateStars={setStars}
           onUpdateOverlays={setOverlays}
-          onSetSortedPeople={setSortedPeople}
-          targetStarIndex={sortedPeople[currentStarIndex]?.originalIndex ?? 0}
+          targetStarIndex={targetStarIndex}
           previousStarIndex={previousStarIndex}
-          onApproaching={(name) => {
+          onApproaching={(name: string) => {
             setNarratorMessage(`Approaching ${name}...`)
             setJourneyPhase('approaching')
           }}
-          onArrived={(name) => {
+          onArrived={(name: string) => {
             setNarratorMessage(
-              `Arrived at ${name}! Mark their place in your star chart based on your current relationship.`,
+              `Arrived at ${name}! Where is this star in your constellation?`,
             )
             setJourneyPhase('arrived')
           }}
           onTakeoffComplete={() => {
-            // Now update currentStarIndex to the next star
-            if (nextStarIndex >= 0) {
-              setCurrentStarIndex(nextStarIndex)
-              const nextPerson = sortedPeople[nextStarIndex]
-              setNarratorMessage(`Flying to ${nextPerson.name}...`)
-              setTargetStarIndex(sortedPeople[nextStarIndex].originalIndex)
-              setNextStarIndex(-1) // Reset
-            }
+            // Transition to flying phase
             setJourneyPhase('flying')
           }}
           onReturnComplete={() => {
-            setNarratorMessage(
-              'Your constellation is complete. All stars are in their places.',
-            )
+            // Update message based on completion status
+            const chartedCount = placements.size
+            const totalCount = MOCK_PEOPLE.length
+            if (chartedCount === totalCount) {
+              setNarratorMessage(
+                'Your constellation is complete. All stars are in their places.',
+              )
+            } else {
+              setNarratorMessage(
+                `Viewing constellation... ${chartedCount} of ${totalCount} stars charted. You can resume your journey anytime.`,
+              )
+            }
           }}
           journeyPhase={journeyPhase}
-          placements={placements}
           useConstellationPositions={useConstellationPositions}
         />
       </Canvas>
 
       {/* Spaceship HUD - Focus Rectangle with Corner Brackets */}
       <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <div
-            className="relative"
-            style={{
-              width: 'min(900px, 80vw)',
-              height:
-                typeof window !== 'undefined' && window.innerWidth < 640
-                  ? 'min(300px, 35vh)' // Smaller on mobile to avoid nav panel overlap
-                  : 'min(600px, 50vh)', // Desktop size
-            }}
-          >
-            {/* Top-left corner */}
+        <div
+          className="relative"
+          style={{
+            width: 'min(900px, 80vw)',
+            height:
+              typeof window !== 'undefined' && window.innerWidth < 640
+                ? 'min(300px, 35vh)' // Smaller on mobile to avoid nav panel overlap
+                : 'min(600px, 50vh)', // Desktop size
+          }}
+        >
+          {/* Top-left corner */}
           <div
             className="absolute left-0 top-0"
             style={{
@@ -1799,6 +303,23 @@ export default function StarField() {
                     Navigation System
                   </span>
                 </div>
+                {/* View Constellation - small button in header when journey incomplete */}
+                {placements.size > 0 &&
+                  placements.size < MOCK_PEOPLE.length &&
+                  journeyPhase === 'placed' && (
+                    <button
+                      onClick={() => {
+                        setNarratorMessage(
+                          `Viewing constellation... ${placements.size} of ${MOCK_PEOPLE.length} stars charted. You can resume your journey anytime.`,
+                        )
+                        setUseConstellationPositions(true)
+                        setJourneyPhase('returning')
+                      }}
+                      className="text-xs px-2 py-1 rounded border border-indigo-400/50 bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20 hover:border-indigo-400 transition-colors"
+                    >
+                      ✦ Constellation
+                    </button>
+                  )}
               </div>
               <p
                 className="font-mono text-xs leading-relaxed tracking-wide text-indigo-100 sm:text-sm pt-2"
@@ -1807,11 +328,11 @@ export default function StarField() {
               />
 
               {/* Placement buttons - show when arrived at a star */}
-              {journeyPhase === 'arrived' && sortedPeople.length > 0 && (
+              {journeyPhase === 'arrived' && (
                 <div className="mt-3 flex gap-2">
                   <button
                     onClick={() =>
-                      handlePlacePerson(sortedPeople[currentStarIndex], 'inner')
+                      handlePlacePerson(MOCK_PEOPLE[targetStarIndex], 'inner')
                     }
                     className="flex-1 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg transition-colors hover:bg-indigo-700 active:bg-indigo-800"
                   >
@@ -1819,7 +340,7 @@ export default function StarField() {
                   </button>
                   <button
                     onClick={() =>
-                      handlePlacePerson(sortedPeople[currentStarIndex], 'close')
+                      handlePlacePerson(MOCK_PEOPLE[targetStarIndex], 'close')
                     }
                     className="flex-1 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg transition-colors hover:bg-indigo-700 active:bg-indigo-800"
                   >
@@ -1827,7 +348,7 @@ export default function StarField() {
                   </button>
                   <button
                     onClick={() =>
-                      handlePlacePerson(sortedPeople[currentStarIndex], 'outer')
+                      handlePlacePerson(MOCK_PEOPLE[targetStarIndex], 'outer')
                     }
                     className="flex-1 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg transition-colors hover:bg-indigo-700 active:bg-indigo-800"
                   >
@@ -1837,7 +358,9 @@ export default function StarField() {
               )}
 
               {/* Navigation buttons - show when waiting for user to advance */}
-              {(journeyPhase === 'intro' || (journeyPhase === 'placed' && placements.size < MOCK_PEOPLE.length)) && (
+              {(journeyPhase === 'intro' ||
+                (journeyPhase === 'placed' &&
+                  placements.size < MOCK_PEOPLE.length)) && (
                 <div className="mt-3 flex gap-2">
                   {/* Back button - only show during intro if not on first step */}
                   {journeyPhase === 'intro' && introStep > 0 && (
@@ -1863,21 +386,60 @@ export default function StarField() {
                 </div>
               )}
 
-              {/* View Constellation button - show when journey complete */}
-              {(journeyPhase === 'complete' || (journeyPhase === 'placed' && placements.size === MOCK_PEOPLE.length)) && (
-                <div className="mt-3">
-                  <button
-                    onClick={() => {
-                      setNarratorMessage('Returning to constellation view...')
-                      setUseConstellationPositions(true) // Trigger star repositioning
-                      setJourneyPhase('returning')
-                    }}
-                    className="w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg transition-colors hover:bg-indigo-700 active:bg-indigo-800"
-                  >
-                    🌌 View Constellation
-                  </button>
-                </div>
-              )}
+              {/* Resume Journey button - show in constellation view when not all stars charted */}
+              {journeyPhase === 'returning' &&
+                placements.size < MOCK_PEOPLE.length && (
+                  <div className="mt-3">
+                    <button
+                      onClick={() => {
+                        // Find next unvisited star from MOCK_PEOPLE
+                        const nextUnvisitedIndex = MOCK_PEOPLE.findIndex((p) => {
+                          const starData = stars.get(p.id)!
+                          return !starData.visited
+                        })
+
+                        if (nextUnvisitedIndex >= 0) {
+                          const nextPerson = MOCK_PEOPLE[nextUnvisitedIndex]
+                          setTargetStarIndex(nextUnvisitedIndex)
+                          setPreviousStarIndex(-1) // No previous star when resuming from constellation
+                          setNarratorMessage(`Flying to ${nextPerson.name}...`)
+                          setJourneyPhase('flying')
+                          setUseConstellationPositions(false) // Exit constellation view
+                        }
+                      }}
+                      className="w-full rounded-lg bg-cyan-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg transition-colors hover:bg-cyan-700 active:bg-cyan-800"
+                    >
+                      → Resume Journey
+                    </button>
+                  </div>
+                )}
+
+              {/* View Constellation button - large prominent button only when journey complete */}
+              {placements.size === MOCK_PEOPLE.length &&
+                journeyPhase === 'complete' && (
+                  <div className="mt-3">
+                    <button
+                      onClick={() => {
+                        const chartedCount = placements.size
+                        const totalCount = MOCK_PEOPLE.length
+                        if (chartedCount === totalCount) {
+                          setNarratorMessage(
+                            'Your constellation is complete. All stars are in their places.',
+                          )
+                        } else {
+                          setNarratorMessage(
+                            `Viewing constellation... ${chartedCount} of ${totalCount} stars charted. You can resume your journey anytime.`,
+                          )
+                        }
+                        setUseConstellationPositions(true) // Trigger star repositioning
+                        setJourneyPhase('returning')
+                      }}
+                      className="w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg transition-colors hover:bg-indigo-700 active:bg-indigo-800"
+                    >
+                      ✦ View Constellation
+                    </button>
+                  </div>
+                )}
 
               {/* Star counter footer */}
               <div className="mt-2 pt-1 pb-1 border-t border-indigo-500/30 text-center">
@@ -1888,9 +450,16 @@ export default function StarField() {
                       : `${MOCK_PEOPLE.length} stars detected`
                     : journeyPhase === 'returning'
                     ? `${placements.size} of ${MOCK_PEOPLE.length} stars charted`
-                    : `Star ${currentStarIndex + 1} of ${
-                        MOCK_PEOPLE.length
-                      } • ${placements.size} charted`}
+                    : (() => {
+                        const unplacedCount =
+                          MOCK_PEOPLE.length - placements.size
+                        // Count unplaced stars up to and including current target
+                        const unplacedUpToCurrent = MOCK_PEOPLE.slice(
+                          0,
+                          targetStarIndex + 1,
+                        ).filter((p) => !placements.has(p.id)).length
+                        return `Star ${unplacedUpToCurrent} of ${unplacedCount} remaining • ${placements.size} charted`
+                      })()}
                 </span>
               </div>
             </div>

@@ -9,6 +9,24 @@ Transform the Chart Your Stars demo from flat 2D disks to immersive 3D spheres w
 
 ## Terminology and Star Perception Factors
 
+### Core Concepts
+
+**Star:** React component that renders a person's photo as a celestial sphere in 3D space. Each star represents one person from MOCK_PEOPLE.
+
+**StarData:** Object containing all state for a single star, keyed by person.id:
+- `person`: The person object from MOCK_PEOPLE
+- `index`: Position in MOCK_PEOPLE array (for ordering)
+- `initialPosition`: [x, y, z] coordinates at journey start (random, far away)
+- `constellationPosition`: [x, y, z] coordinates after placement (null until placed)
+- `placement`: Which ring the star belongs to ('inner'=Close, 'close'=Near, 'outer'=Distant, null=unplaced)
+- `visited`: Boolean - has user visited this star yet
+
+**Placement:** The ring assignment for a star (Close/Near/Distant), stored as 'inner'/'close'/'outer'. Determines constellation position radius.
+
+**Journey:** The sequence of visiting each star in MOCK_PEOPLE order, placing them in the constellation.
+
+**Constellation View:** When `useConstellationPositions` is true, stars render at their `constellationPosition` instead of `initialPosition`.
+
 ### Critical: These Factors Work Together
 **NEVER adjust just one factor in isolation.** Changes to any of these affect how users perceive star size, position, and distance. Always consider the full system when making adjustments.
 
