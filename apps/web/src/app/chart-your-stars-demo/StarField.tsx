@@ -15,77 +15,92 @@ const MOCK_PEOPLE = [
   {
     id: '1',
     name: 'Alice Johnson',
-    photo: '/uploads/user-photos/cmeg4p6r70002ihd1zt0im435.1757255300867.thumb.webp',
+    photo:
+      '/uploads/user-photos/cmeg4p6r70002ihd1zt0im435.1757255300867.thumb.webp',
   },
   {
     id: '2',
     name: 'Bob Smith',
-    photo: '/uploads/user-photos/cmeg4pewy0000ihkwmy8voxi9.1759609763448.thumb.webp',
+    photo:
+      '/uploads/user-photos/cmeg4pewy0000ihkwmy8voxi9.1759609763448.thumb.webp',
   },
   {
     id: '3',
     name: 'Carol Williams',
-    photo: '/uploads/user-photos/cmeg5liai0003ihzcqi2ppfwd.1755611564561.thumb.webp',
+    photo:
+      '/uploads/user-photos/cmeg5liai0003ihzcqi2ppfwd.1755611564561.thumb.webp',
   },
   {
     id: '4',
     name: 'David Brown',
-    photo: '/uploads/user-photos/cmeimf6010005ygjemuhgjxqn.1755612613185.thumb.webp',
+    photo:
+      '/uploads/user-photos/cmeimf6010005ygjemuhgjxqn.1755612613185.thumb.webp',
   },
   {
     id: '5',
     name: 'Eve Davis',
-    photo: '/uploads/user-photos/cmeimfkgh0007ygjez1dzqzra.1755612631924.thumb.webp',
+    photo:
+      '/uploads/user-photos/cmeimfkgh0007ygjez1dzqzra.1755612631924.thumb.webp',
   },
   {
     id: '6',
     name: 'Frank Miller',
-    photo: '/uploads/user-photos/cmeq3icdd0000ihlv51grw0u6.1756070999426.thumb.webp',
+    photo:
+      '/uploads/user-photos/cmeq3icdd0000ihlv51grw0u6.1756070999426.thumb.webp',
   },
   {
     id: '7',
     name: 'Grace Wilson',
-    photo: '/uploads/user-photos/cmf1ohc130000ih8v2rv0zyit.1756767781507.thumb.webp',
+    photo:
+      '/uploads/user-photos/cmf1ohc130000ih8v2rv0zyit.1756767781507.thumb.webp',
   },
   {
     id: '8',
     name: 'Henry Moore',
-    photo: '/uploads/user-photos/cmf38lys60000ygbsiagl87us.1756862139772.thumb.webp',
+    photo:
+      '/uploads/user-photos/cmf38lys60000ygbsiagl87us.1756862139772.thumb.webp',
   },
   {
     id: '9',
     name: 'Ivy Taylor',
-    photo: '/uploads/user-photos/cmf4bgcuq0000ihvedptmog5d.1756924599827.thumb.webp',
+    photo:
+      '/uploads/user-photos/cmf4bgcuq0000ihvedptmog5d.1756924599827.thumb.webp',
   },
   {
     id: '10',
     name: 'Jack Anderson',
-    photo: '/uploads/user-photos/cmf4cjck80001ihveagdtfgwj.1756929266277.thumb.webp',
+    photo:
+      '/uploads/user-photos/cmf4cjck80001ihveagdtfgwj.1756929266277.thumb.webp',
   },
   {
     id: '11',
     name: 'Kate Thomas',
-    photo: '/uploads/user-photos/cmf4ec9be0002ihvexjjta64v.1756929696290.thumb.webp',
+    photo:
+      '/uploads/user-photos/cmf4ec9be0002ihvexjjta64v.1756929696290.thumb.webp',
   },
   {
     id: '12',
     name: 'Leo Jackson',
-    photo: '/uploads/user-photos/cmf6yqezu000gihwhz2dx5uh6.1757277155522.thumb.webp',
+    photo:
+      '/uploads/user-photos/cmf6yqezu000gihwhz2dx5uh6.1757277155522.thumb.webp',
   },
   {
     id: '13',
     name: 'Mia White',
-    photo: '/uploads/user-photos/cmf7l2cf80002ihoj1s8hp7ng.1757122034525.thumb.webp',
+    photo:
+      '/uploads/user-photos/cmf7l2cf80002ihoj1s8hp7ng.1757122034525.thumb.webp',
   },
   {
     id: '14',
     name: 'Noah Harris',
-    photo: '/uploads/user-photos/cmf9qeepp0000ih461yaqo00m.1757254714887.thumb.webp',
+    photo:
+      '/uploads/user-photos/cmf9qeepp0000ih461yaqo00m.1757254714887.thumb.webp',
   },
   {
     id: '15',
     name: 'Olivia Martin',
-    photo: '/uploads/user-photos/cmfekp7a00000ih9k0xg8j22p.1757680626180.thumb.webp',
+    photo:
+      '/uploads/user-photos/cmfekp7a00000ih9k0xg8j22p.1757680626180.thumb.webp',
   },
 ]
 
@@ -96,10 +111,24 @@ interface StarProps {
   isTarget: boolean
   placement?: 'inner' | 'close' | 'outer'
   texture: THREE.Texture
-  journeyPhase?: 'intro' | 'flying' | 'approaching' | 'arrived' | 'placed' | 'complete'
+  journeyPhase?:
+    | 'intro'
+    | 'flying'
+    | 'approaching'
+    | 'arrived'
+    | 'placed'
+    | 'takeoff'
+    | 'complete'
 }
 
-function Star({ position, isNear, isTarget, placement, texture, journeyPhase }: StarProps) {
+function Star({
+  position,
+  isNear,
+  isTarget,
+  placement,
+  texture,
+  journeyPhase,
+}: StarProps) {
   const spriteRef = useRef<THREE.Mesh>(null)
   const groupRef = useRef<THREE.Group>(null)
   const [hovered, setHovered] = useState(false)
@@ -112,7 +141,7 @@ function Star({ position, isNear, isTarget, placement, texture, journeyPhase }: 
       // Update distance to camera
       const dist = camera.position.distanceTo(new THREE.Vector3(...position))
       setDistanceToCamera(dist)
-      
+
       // Billboard - always face camera
       if (isTarget) {
         // Get camera's forward direction and make star perpendicular to it
@@ -131,20 +160,31 @@ function Star({ position, isNear, isTarget, placement, texture, journeyPhase }: 
   // Closer stars appear larger, farther stars appear smaller
   let baseSize = 2.5 // Default
   if (isTarget) {
-    baseSize = typeof window !== 'undefined' && window.innerWidth < 640 ? 1.8 : 3.0
+    baseSize =
+      typeof window !== 'undefined' && window.innerWidth < 640 ? 1.8 : 3.0
   } else {
     // Vary size based on distance: 1.5 (far) to 3.0 (close)
     const maxDist = 100
-    const distanceFactor = Math.max(0, Math.min(1, 1 - distanceToCamera / maxDist))
+    const distanceFactor = Math.max(
+      0,
+      Math.min(1, 1 - distanceToCamera / maxDist),
+    )
     baseSize = 1.5 + distanceFactor * 1.5 // 1.5 to 3.0
   }
 
   // Distance thresholds for rendering
   const TRANSITION_START = 60 // Start showing image
   const TRANSITION_END = 30 // Fully image
-  const transitionProgress = Math.max(0, Math.min(1, (TRANSITION_START - distanceToCamera) / (TRANSITION_START - TRANSITION_END)))
+  const transitionProgress = Math.max(
+    0,
+    Math.min(
+      1,
+      (TRANSITION_START - distanceToCamera) /
+        (TRANSITION_START - TRANSITION_END),
+    ),
+  )
   const showOnlyStar = distanceToCamera > TRANSITION_START
-  
+
   // Calculate opacity based on distance for depth perception
   let groupOpacity = 1.0
   if (isTarget) {
@@ -152,14 +192,17 @@ function Star({ position, isNear, isTarget, placement, texture, journeyPhase }: 
   } else {
     // Opacity varies with distance: 0.15 (far) to 0.7 (close)
     const maxDist = 100
-    const distanceFactor = Math.max(0, Math.min(1, 1 - distanceToCamera / maxDist))
+    const distanceFactor = Math.max(
+      0,
+      Math.min(1, 1 - distanceToCamera / maxDist),
+    )
     groupOpacity = 0.15 + distanceFactor * 0.55 // 0.15 to 0.7
-    
+
     // Boost opacity during transition to image
     if (transitionProgress > 0) {
       groupOpacity = Math.max(groupOpacity, 0.2 + transitionProgress * 0.5) // 0.2 to 0.7
     }
-    
+
     // Dim further when arrived at another star, but keep distance variation
     if (journeyPhase === 'arrived') {
       groupOpacity *= 0.3 // Reduce to 30% but maintain relative differences
@@ -202,12 +245,13 @@ function Star({ position, isNear, isTarget, placement, texture, journeyPhase }: 
 
   // Calculate star glow opacity (fades out as image fades in)
   // Completely hide star when fully transitioned to image
-  const starGlowOpacity = transitionProgress >= 1 ? 0 : groupOpacity * (1 - transitionProgress)
-  
+  const starGlowOpacity =
+    transitionProgress >= 1 ? 0 : groupOpacity * (1 - transitionProgress)
+
   // White core size: starts at 0.25, expands to 0.5 as we approach
   // This fills the glow area before the face appears
   const whiteCoreSize = baseSize * (0.25 + transitionProgress * 0.25)
-  
+
   // Render image and star together during transition
   return (
     <group ref={groupRef} position={position}>
@@ -217,23 +261,37 @@ function Star({ position, isNear, isTarget, placement, texture, journeyPhase }: 
           {/* Bright white star point - expands as we approach */}
           <mesh position={[0, 0, -0.02]}>
             <circleGeometry args={[whiteCoreSize, 64]} />
-            <meshBasicMaterial color="#ffffff" transparent opacity={showOnlyStar ? Math.max(0.8, groupOpacity) : starGlowOpacity} />
+            <meshBasicMaterial
+              color="#ffffff"
+              transparent
+              opacity={
+                showOnlyStar ? Math.max(0.8, groupOpacity) : starGlowOpacity
+              }
+            />
           </mesh>
           {/* Soft glow */}
           <mesh position={[0, 0, -0.02]}>
             <circleGeometry args={[baseSize * 0.56, 64]} />
-            <meshBasicMaterial color="#aaccff" transparent opacity={starGlowOpacity * 0.15} />
+            <meshBasicMaterial
+              color="#aaccff"
+              transparent
+              opacity={starGlowOpacity * 0.15}
+            />
           </mesh>
         </>
       )}
-      
+
       {/* Image - fades in during transition */}
       {transitionProgress > 0 && (
         <>
           {/* Opaque backing circle - blocks stars behind transparent areas */}
           <mesh position={[0, 0, -0.01]}>
             <circleGeometry args={[baseSize * 0.58, 64]} />
-            <meshBasicMaterial color="#1a1a2e" transparent opacity={groupOpacity * transitionProgress} />
+            <meshBasicMaterial
+              color="#1a1a2e"
+              transparent
+              opacity={groupOpacity * transitionProgress}
+            />
           </mesh>
 
           {/* Circular clipped image using mesh + custom shader */}
@@ -252,7 +310,11 @@ function Star({ position, isNear, isTarget, placement, texture, journeyPhase }: 
             <meshBasicMaterial
               color="#ffffff"
               transparent
-              opacity={groupOpacity * transitionProgress * (isTarget ? 1.0 : hovered ? 0.9 : 0.7)}
+              opacity={
+                groupOpacity *
+                transitionProgress *
+                (isTarget ? 1.0 : hovered ? 0.9 : 0.7)
+              }
             />
           </mesh>
 
@@ -437,12 +499,14 @@ interface SceneProps {
   targetStarIndex: number
   onApproaching: (personName: string) => void
   onArrived: (personName: string) => void
+  onTakeoffComplete: () => void
   journeyPhase:
     | 'intro'
     | 'flying'
     | 'approaching'
     | 'arrived'
     | 'placed'
+    | 'takeoff'
     | 'complete'
   placements: Map<string, 'inner' | 'close' | 'outer'>
 }
@@ -453,6 +517,7 @@ function Scene({
   targetStarIndex,
   onApproaching,
   onArrived,
+  onTakeoffComplete,
   journeyPhase,
   placements,
 }: SceneProps) {
@@ -463,6 +528,9 @@ function Scene({
   const hasInitialized = useRef(false)
   const hasTriggeredApproaching = useRef(false)
   const hasTriggeredArrival = useRef(false)
+  const takeoffProgress = useRef(0)
+  const takeoffStartPos = useRef(new THREE.Vector3())
+  const previousStarPos = useRef(new THREE.Vector3())
   const flightProgress = useRef(0)
   const flightStartPos = useRef(new THREE.Vector3())
   const flightControlPoint = useRef(new THREE.Vector3())
@@ -558,6 +626,22 @@ function Scene({
     onSetSortedPeople(sorted)
   }, [starPositions, onSetSortedPeople])
 
+  // Initialize takeoff when phase changes to 'takeoff'
+  useEffect(() => {
+    if (journeyPhase === 'takeoff' && targetStarIndex >= 0) {
+      // Store current camera position as takeoff start
+      takeoffStartPos.current.copy(camera.position)
+      // Store previous star position (the one we're leaving)
+      if (targetStarIndex > 0) {
+        const prevStarIndex = targetStarIndex - 1
+        previousStarPos.current.copy(
+          new THREE.Vector3(...starPositions[prevStarIndex]),
+        )
+      }
+      takeoffProgress.current = 0
+    }
+  }, [journeyPhase, targetStarIndex, camera.position, starPositions])
+
   // Auto-pilot: initialize with overview, then move to target star
   useFrame(() => {
     // First time: set overview position
@@ -568,6 +652,29 @@ function Scene({
       camera.position.set(0, -10, 180) // Further back (z=180) to show all stars
       camera.lookAt(0, -10, 0) // Look at adjusted center
       hasInitialized.current = true
+    }
+
+    // Handle takeoff sequence (pull back from current star before flying to next)
+    if (journeyPhase === 'takeoff') {
+      takeoffProgress.current += 0.02 // Takeoff speed
+
+      if (takeoffProgress.current >= 1) {
+        // Takeoff complete, transition to flying
+        takeoffProgress.current = 0
+        onTakeoffComplete() // Trigger transition to flying phase
+      } else {
+        // Pull camera back along Z-axis from previous star
+        const pullBackDistance = 15 // Units to pull back
+        const newZ =
+          takeoffStartPos.current.z + pullBackDistance * takeoffProgress.current
+        camera.position.set(
+          takeoffStartPos.current.x,
+          takeoffStartPos.current.y,
+          newZ,
+        )
+        // Keep looking at previous star as we pull back
+        camera.lookAt(previousStarPos.current)
+      }
     }
 
     // Fly to target star (only after intro phase)
@@ -588,15 +695,16 @@ function Scene({
         flightStartPos.current.copy(camera.position)
 
         // Position camera straight-on to star for HUD centering
-        const isMobile = typeof window !== 'undefined' && window.innerWidth < 640
+        const isMobile =
+          typeof window !== 'undefined' && window.innerWidth < 640
         const viewDistance = isMobile ? 5.5 : 6.5 // Mobile: farther for smaller appearance
-        
+
         // Camera position: directly in front of star along Z axis (straight view)
         // HUD now centered in viewport, so no Y offset needed
         targetPosition.current.set(
           targetPos.x, // X: same as star (horizontally centered)
           targetPos.y, // Y: same as star (vertically centered)
-          targetPos.z + viewDistance // Z: in front of star
+          targetPos.z + viewDistance, // Z: in front of star
         )
 
         // Straight line flight - no curve, target stays centered
@@ -629,14 +737,12 @@ function Scene({
       ) {
         // Variable speed: fast at start, slow way down when faces appear
         // Slow down significantly when distance < 60 (when images start appearing)
-        const baseSpeed = currentDist < 60 
-          ? 0.001 // Very slow, majestic approach when faces visible
-          : 0.01 // Fast initial flight
-        
-        flightProgress.current = Math.min(
-          1,
-          flightProgress.current + baseSpeed,
-        )
+        const baseSpeed =
+          currentDist < 60
+            ? 0.001 // Very slow, majestic approach when faces visible
+            : 0.01 // Fast initial flight
+
+        flightProgress.current = Math.min(1, flightProgress.current + baseSpeed)
 
         // Auto-transition to 'arrived' when we get very close (only once)
         // Relaxed conditions: distance < 20 (was 14) and progress > 0.95 (was 0.98)
@@ -676,10 +782,7 @@ function Scene({
           camera.lookAt(targetPos) // Final look at star
           camera.rotation.z = 0 // Reset roll
         }
-      } else if (
-        journeyPhase !== 'flying' &&
-        journeyPhase !== 'approaching'
-      ) {
+      } else if (journeyPhase !== 'flying' && journeyPhase !== 'approaching') {
         // Reset flight state when not flying
         isFlying.current = false
       }
@@ -808,7 +911,13 @@ export default function StarField() {
   const [narratorMessage, setNarratorMessage] = useState<string>('')
   const [displayedMessage, setDisplayedMessage] = useState<string>('')
   const [journeyPhase, setJourneyPhase] = useState<
-    'intro' | 'flying' | 'approaching' | 'arrived' | 'placed' | 'complete'
+    | 'intro'
+    | 'flying'
+    | 'approaching'
+    | 'arrived'
+    | 'placed'
+    | 'takeoff'
+    | 'complete'
   >('intro')
   const [introStep, setIntroStep] = useState(0)
   // Sorted people array with their original indices - starts empty until Scene sorts them
@@ -826,19 +935,26 @@ export default function StarField() {
     if (journeyPhase === 'intro') {
       // Multi-step intro messages
       const introMessages = [
-        'Welcome to your your Demo star chart...',
-        `There are ${MOCK_PEOPLE.length} stars, people in this constellation.`,
-        "We'll visit each star so you can chart them based on your current relationship.",
+        `Joe, welcome to the Tippetts Family constellation...`,
+        `This cosmic formation has ${MOCK_PEOPLE.length} stars, each a current or potential relationship...`,
+        `Your mission is to chart the location of each star in your universe as...`,
+        `<i>Close</i>: family/close friend<br /><i>Near</i>: friend/acquaintance<br /><i>Distant</i>: someone you don't yet know`,
         'Are you ready?',
       ]
       setNarratorMessage(introMessages[introStep])
     }
   }, [journeyPhase, introStep])
 
+  const handleBack = () => {
+    if (journeyPhase === 'intro' && introStep > 0) {
+      setIntroStep(introStep - 1)
+    }
+  }
+
   const handleProceed = () => {
     if (journeyPhase === 'intro') {
-      // Progress through intro steps
-      if (introStep < 3) {
+      // Progress through intro steps (0-4, total 5 messages)
+      if (introStep < 4) {
         setIntroStep(introStep + 1)
       } else {
         // Start the journey to first star (only if sortedPeople is ready)
@@ -883,10 +999,10 @@ export default function StarField() {
       const nextPerson = sortedPeople[nextIndex]
       const distance = Math.floor(Math.random() * 20) + 5 // Random distance 5-25 light years
       setNarratorMessage(
-        `Next up: ${nextPerson.name}, currently ${distance} light years away.`,
+        `Taking off... Next up: ${nextPerson.name}, currently ${distance} light years away.`,
       )
       setCurrentStarIndex(nextIndex)
-      setJourneyPhase('flying')
+      setJourneyPhase('takeoff') // Start with takeoff, will transition to flying
     } else {
       setNarratorMessage('Journey complete! All stars have been charted.')
       setJourneyPhase('complete')
@@ -913,22 +1029,26 @@ export default function StarField() {
             )
             setJourneyPhase('arrived')
           }}
+          onTakeoffComplete={() => {
+            const nextPerson = sortedPeople[currentStarIndex]
+            setNarratorMessage(`Flying to ${nextPerson.name}...`)
+            setJourneyPhase('flying')
+          }}
           journeyPhase={journeyPhase}
           placements={placements}
         />
       </Canvas>
 
       {/* Spaceship HUD - Focus Rectangle with Corner Brackets */}
-      <div
-        className="pointer-events-none absolute inset-0 flex items-center justify-center"
-      >
+      <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
         <div
           className="relative"
           style={{
             width: 'min(900px, 80vw)',
-            height: typeof window !== 'undefined' && window.innerWidth < 640 
-              ? 'min(300px, 35vh)' // Smaller on mobile to avoid nav panel overlap
-              : 'min(600px, 50vh)', // Desktop size
+            height:
+              typeof window !== 'undefined' && window.innerWidth < 640
+                ? 'min(300px, 35vh)' // Smaller on mobile to avoid nav panel overlap
+                : 'min(600px, 50vh)', // Desktop size
           }}
         >
           {/* Top-left corner */}
@@ -1025,72 +1145,74 @@ export default function StarField() {
               <p
                 className="font-mono text-xs leading-relaxed tracking-wide text-indigo-100 sm:text-sm pt-2"
                 style={{ letterSpacing: '0.03em' }}
-              >
-                {displayedMessage}
-              </p>
+                dangerouslySetInnerHTML={{ __html: displayedMessage }}
+              />
 
               {/* Placement buttons - show when arrived at a star */}
-              {journeyPhase === 'arrived' &&
-                sortedPeople.length > 0 && (
-                  <div className="mt-3 flex gap-2">
-                    <button
-                      onClick={() =>
-                        handlePlacePerson(
-                          sortedPeople[currentStarIndex],
-                          'inner',
-                        )
-                      }
-                      className="flex-1 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg transition-colors hover:bg-indigo-700 active:bg-indigo-800"
-                    >
-                      Close
-                    </button>
-                    <button
-                      onClick={() =>
-                        handlePlacePerson(
-                          sortedPeople[currentStarIndex],
-                          'close',
-                        )
-                      }
-                      className="flex-1 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg transition-colors hover:bg-indigo-700 active:bg-indigo-800"
-                    >
-                      Near
-                    </button>
-                    <button
-                      onClick={() =>
-                        handlePlacePerson(
-                          sortedPeople[currentStarIndex],
-                          'outer',
-                        )
-                      }
-                      className="flex-1 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg transition-colors hover:bg-indigo-700 active:bg-indigo-800"
-                    >
-                      Distant
-                    </button>
-                  </div>
-                )}
+              {journeyPhase === 'arrived' && sortedPeople.length > 0 && (
+                <div className="mt-3 flex gap-2">
+                  <button
+                    onClick={() =>
+                      handlePlacePerson(sortedPeople[currentStarIndex], 'inner')
+                    }
+                    className="flex-1 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg transition-colors hover:bg-indigo-700 active:bg-indigo-800"
+                  >
+                    Close
+                  </button>
+                  <button
+                    onClick={() =>
+                      handlePlacePerson(sortedPeople[currentStarIndex], 'close')
+                    }
+                    className="flex-1 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg transition-colors hover:bg-indigo-700 active:bg-indigo-800"
+                  >
+                    Near
+                  </button>
+                  <button
+                    onClick={() =>
+                      handlePlacePerson(sortedPeople[currentStarIndex], 'outer')
+                    }
+                    className="flex-1 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg transition-colors hover:bg-indigo-700 active:bg-indigo-800"
+                  >
+                    Distant
+                  </button>
+                </div>
+              )}
 
-              {/* Proceed button - show when waiting for user to advance */}
+              {/* Navigation buttons - show when waiting for user to advance */}
               {(journeyPhase === 'intro' || journeyPhase === 'placed') && (
+                <div className="mt-3 flex gap-2">
+                  {/* Back button - only show during intro if not on first step */}
+                  {journeyPhase === 'intro' && introStep > 0 && (
+                    <button
+                      onClick={handleBack}
+                      className="rounded border border-cyan-400/50 bg-cyan-500/10 px-3 py-2 font-mono text-sm font-medium text-cyan-400 transition-colors hover:bg-cyan-500/20 hover:border-cyan-400"
+                      title="Previous message"
+                    >
+                      ←
+                    </button>
+                  )}
+                  {/* Proceed button */}
                   <button
                     onClick={
                       journeyPhase === 'placed'
                         ? handleProceedAfterPlacement
                         : handleProceed
                     }
-                    className="mt-3 w-full rounded border border-cyan-400/50 bg-cyan-500/10 px-4 py-2 font-mono text-sm font-medium text-cyan-400 transition-colors hover:bg-cyan-500/20 hover:border-cyan-400"
+                    className="flex-1 rounded border border-cyan-400/50 bg-cyan-500/10 px-4 py-2 font-mono text-sm font-medium text-cyan-400 transition-colors hover:bg-cyan-500/20 hover:border-cyan-400"
                   >
                     → Proceed
                   </button>
-                )}
+                </div>
+              )}
 
               {/* Star counter footer */}
-                <div className="mt-2 pt-1 pb-1 border-t border-indigo-500/30 text-center">
-                  <span className="text-xs font-mono text-indigo-300">
-                    {journeyPhase === 'intro'
-                      ? `${MOCK_PEOPLE.length} stars detected`
-                      : `Star ${currentStarIndex + 1} of ${MOCK_PEOPLE.length}`}
-                  </span>
-                </div>
+              <div className="mt-2 pt-1 pb-1 border-t border-indigo-500/30 text-center">
+                <span className="text-xs font-mono text-indigo-300">
+                  {journeyPhase === 'intro'
+                    ? `${MOCK_PEOPLE.length} stars detected`
+                    : `Star ${currentStarIndex + 1} of ${MOCK_PEOPLE.length}`}
+                </span>
+              </div>
             </div>
           </div>
         </div>

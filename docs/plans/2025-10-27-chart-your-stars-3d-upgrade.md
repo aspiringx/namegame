@@ -137,14 +137,21 @@ git log --oneline --graph chart-your-stars-demo
 ## Phase 1: Fix Critical Bugs (Do First)
 **Goal:** Make current experience smooth and professional
 
-### 1A. Smooth Camera Transitions Between Stars ⏳
+### 1A. Smooth Camera Transitions Between Stars 🔄
 - **Problem:** Stars disappear/reappear, camera jumps
 - **Fix:** Implement smooth camera flight path from star A → star B
   - Keep both stars visible during transition
   - Smooth lerp with easing (slow start, fast middle, slow arrival)
   - "Takeoff" animation: pull back from current star before flying to next
   - "Landing" animation: gentle deceleration as we approach target
-- **Status:** Not started
+- **Status:** In progress
+- **Implementation:**
+  - ✅ Added 'takeoff' phase to journeyPhase state
+  - ✅ Added takeoff refs (takeoffProgress, takeoffStartPos, previousStarPos)
+  - ✅ Implemented takeoff animation in useFrame (pulls camera back 15 units along Z-axis)
+  - ✅ Added onTakeoffComplete callback to transition from takeoff → flying
+  - ✅ Modified handleProceedAfterPlacement to initiate takeoff instead of direct flying
+  - ⏳ Need to test: Camera should pull back from star A, then fly smoothly to star B
 
 ### 1B. Fix Star Scaling/Opacity During UI Interaction ⏳
 - **Problem:** Star becomes bigger/transparent when clicking buttons
