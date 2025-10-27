@@ -16,91 +16,91 @@ const MOCK_PEOPLE = [
     id: '1',
     name: 'Alice Johnson',
     photo:
-      '/uploads/user-photos/cmeg4p6r70002ihd1zt0im435.1757255300867.thumb.webp',
+      '/uploads/user-photos/cmeg4p6r70002ihd1zt0im435.1757255300867.small.webp',
   },
   {
     id: '2',
     name: 'Bob Smith',
     photo:
-      '/uploads/user-photos/cmeg4pewy0000ihkwmy8voxi9.1759609763448.thumb.webp',
+      '/uploads/user-photos/cmeg4pewy0000ihkwmy8voxi9.1759609763448.small.webp',
   },
   {
     id: '3',
     name: 'Carol Williams',
     photo:
-      '/uploads/user-photos/cmeg5liai0003ihzcqi2ppfwd.1755611564561.thumb.webp',
+      '/uploads/user-photos/cmeg5liai0003ihzcqi2ppfwd.1755611564561.small.webp',
   },
   {
     id: '4',
     name: 'David Brown',
     photo:
-      '/uploads/user-photos/cmeimf6010005ygjemuhgjxqn.1755612613185.thumb.webp',
+      '/uploads/user-photos/cmeimf6010005ygjemuhgjxqn.1755612613185.small.webp',
   },
   {
     id: '5',
     name: 'Eve Davis',
     photo:
-      '/uploads/user-photos/cmeimfkgh0007ygjez1dzqzra.1755612631924.thumb.webp',
+      '/uploads/user-photos/cmeimfkgh0007ygjez1dzqzra.1755612631924.small.webp',
   },
   {
     id: '6',
     name: 'Frank Miller',
     photo:
-      '/uploads/user-photos/cmeq3icdd0000ihlv51grw0u6.1756070999426.thumb.webp',
+      '/uploads/user-photos/cmeq3icdd0000ihlv51grw0u6.1756070999426.small.webp',
   },
   {
     id: '7',
     name: 'Grace Wilson',
     photo:
-      '/uploads/user-photos/cmf1ohc130000ih8v2rv0zyit.1756767781507.thumb.webp',
+      '/uploads/user-photos/cmf1ohc130000ih8v2rv0zyit.1756767781507.small.webp',
   },
   {
     id: '8',
     name: 'Henry Moore',
     photo:
-      '/uploads/user-photos/cmf38lys60000ygbsiagl87us.1756862139772.thumb.webp',
+      '/uploads/user-photos/cmf38lys60000ygbsiagl87us.1756862139772.small.webp',
   },
   {
     id: '9',
     name: 'Ivy Taylor',
     photo:
-      '/uploads/user-photos/cmf4bgcuq0000ihvedptmog5d.1756924599827.thumb.webp',
+      '/uploads/user-photos/cmf4bgcuq0000ihvedptmog5d.1756924599827.small.webp',
   },
   {
     id: '10',
     name: 'Jack Anderson',
     photo:
-      '/uploads/user-photos/cmf4cjck80001ihveagdtfgwj.1756929266277.thumb.webp',
+      '/uploads/user-photos/cmf4cjck80001ihveagdtfgwj.1756929266277.small.webp',
   },
   {
     id: '11',
     name: 'Kate Thomas',
     photo:
-      '/uploads/user-photos/cmf4ec9be0002ihvexjjta64v.1756929696290.thumb.webp',
+      '/uploads/user-photos/cmf4ec9be0002ihvexjjta64v.1756929696290.small.webp',
   },
   {
     id: '12',
     name: 'Leo Jackson',
     photo:
-      '/uploads/user-photos/cmf6yqezu000gihwhz2dx5uh6.1757277155522.thumb.webp',
+      '/uploads/user-photos/cmf6yqezu000gihwhz2dx5uh6.1757277155522.small.webp',
   },
   {
     id: '13',
     name: 'Mia White',
     photo:
-      '/uploads/user-photos/cmf7l2cf80002ihoj1s8hp7ng.1757122034525.thumb.webp',
+      '/uploads/user-photos/cmf7l2cf80002ihoj1s8hp7ng.1757122034525.small.webp',
   },
   {
     id: '14',
     name: 'Noah Harris',
     photo:
-      '/uploads/user-photos/cmf9qeepp0000ih461yaqo00m.1757254714887.thumb.webp',
+      '/uploads/user-photos/cmf9qeepp0000ih461yaqo00m.1757254714887.small.webp',
   },
   {
     id: '15',
     name: 'Olivia Martin',
     photo:
-      '/uploads/user-photos/cmfekp7a00000ih9k0xg8j22p.1757680626180.thumb.webp',
+      '/uploads/user-photos/cmfekp7a00000ih9k0xg8j22p.1757680626180.small.webp',
   },
 ]
 
@@ -134,7 +134,26 @@ function Star({
   const [hovered, setHovered] = useState(false)
   const { camera } = useThree()
   const [distanceToCamera, setDistanceToCamera] = useState(0)
-  
+  const [fadeIn, setFadeIn] = useState(0)
+
+  // Fade in animation on mount
+  useEffect(() => {
+    const startTime = Date.now()
+    const duration = 1000 // 1 second fade in
+    
+    const animate = () => {
+      const elapsed = Date.now() - startTime
+      const progress = Math.min(elapsed / duration, 1)
+      setFadeIn(progress)
+      
+      if (progress < 1) {
+        requestAnimationFrame(animate)
+      }
+    }
+    
+    animate()
+  }, [])
+
   // Lock appearance when arrived to prevent flickering during UI interaction
   const lockedSize = useRef<number | null>(null)
   const lockedOpacity = useRef<number | null>(null)
@@ -163,14 +182,20 @@ function Star({
 
   // Size based on distance for depth perception
   // Lock appearance when in arrived/placed/takeoff phase to prevent flickering
-  const isLocked = isTarget && (journeyPhase === 'arrived' || journeyPhase === 'placed' || journeyPhase === 'takeoff')
-  const shouldResetLocks = isTarget && (journeyPhase === 'flying' || journeyPhase === 'approaching')
-  
+  const isLocked =
+    isTarget &&
+    (journeyPhase === 'arrived' ||
+      journeyPhase === 'placed' ||
+      journeyPhase === 'takeoff')
+  const shouldResetLocks =
+    isTarget && (journeyPhase === 'flying' || journeyPhase === 'approaching')
+
   // Calculate base size
   let baseSize = 2.5 // Default
   if (isTarget) {
-    const calculatedSize = typeof window !== 'undefined' && window.innerWidth < 640 ? 1.8 : 3.0
-    
+    const calculatedSize =
+      typeof window !== 'undefined' && window.innerWidth < 640 ? 1.8 : 3.0
+
     if (isLocked) {
       // Lock size when arrived/placed/takeoff - capture on first lock
       if (lockedSize.current === null) {
@@ -193,7 +218,7 @@ function Star({
       0,
       Math.min(1, 1 - distanceToCamera / maxDist),
     )
-    
+
     if (isIntroPhase) {
       // During intro: larger and more visible (2.0 to 3.5)
       baseSize = 2.0 + distanceFactor * 1.5
@@ -214,7 +239,7 @@ function Star({
         (TRANSITION_START - TRANSITION_END),
     ),
   )
-  
+
   // Lock transition progress when arrived/placed/takeoff
   if (isLocked) {
     if (lockedTransitionProgress.current === null) {
@@ -224,20 +249,18 @@ function Star({
   } else if (shouldResetLocks) {
     lockedTransitionProgress.current = null
   }
-  
+
   // Force images hidden during intro phase to prevent flash
   const isIntroPhase = journeyPhase === 'intro'
   if (isIntroPhase) {
     transitionProgress = 0
   }
-  
-  const showOnlyStar = distanceToCamera > TRANSITION_START
 
   // Calculate opacity based on distance for depth perception
   let groupOpacity = 1.0
   if (isTarget) {
     const calculatedOpacity = 1.0
-    
+
     if (isLocked) {
       // Lock opacity when arrived/placed/takeoff - capture on first lock
       if (lockedOpacity.current === null) {
@@ -255,17 +278,18 @@ function Star({
   } else {
     // Constellation stars (non-target) - boost visibility during intro
     const isIntroPhase = journeyPhase === 'intro'
-    
+
     // Opacity varies with distance
     const maxDist = 100
     const distanceFactor = Math.max(
       0,
       Math.min(1, 1 - distanceToCamera / maxDist),
     )
-    
+
     if (isIntroPhase) {
-      // During intro: much brighter and more visible (0.6 to 0.9)
-      groupOpacity = 0.6 + distanceFactor * 0.3
+      // During intro: very bright and visible (0.9 to 1.0)
+      // Should be brighter than background stars to "pop" like Orion
+      groupOpacity = 0.9 + distanceFactor * 0.1
     } else {
       // During journey: dimmer to focus on target (0.15 to 0.7)
       groupOpacity = 0.15 + distanceFactor * 0.55
@@ -281,19 +305,23 @@ function Star({
       groupOpacity *= 0.3 // Reduce to 30% but maintain relative differences
     }
   }
+  
+  // Apply fade-in animation
+  groupOpacity *= fadeIn
 
   // Texture is preloaded and passed as prop - no need to load here
 
-  // Custom shader material for circular clipping with aspect ratio preservation
-  const circularMaterial = useMemo(() => {
+  // Custom shader for circular clipping with aspect ratio preservation
+  const circleMaterial = useMemo(() => {
     // Calculate texture aspect ratio
-    const textureAspect = texture.image ? texture.image.width / texture.image.height : 1.0
-    
+    const textureAspect = texture.image
+      ? texture.image.width / texture.image.height
+      : 1.0
+
     return new THREE.ShaderMaterial({
       uniforms: {
         map: { value: texture },
-        radius: { value: 0.5 }, // Clip to circle (0.5 = edge of sprite)
-        opacity: { value: groupOpacity },
+        opacity: { value: groupOpacity * transitionProgress },
         aspect: { value: textureAspect },
       },
       vertexShader: `
@@ -305,12 +333,16 @@ function Star({
       `,
       fragmentShader: `
         uniform sampler2D map;
-        uniform float radius;
         uniform float opacity;
         uniform float aspect;
         varying vec2 vUv;
+        
         void main() {
           vec2 center = vec2(0.5, 0.5);
+          
+          // Circular clipping
+          float dist = distance(vUv, center);
+          if (dist > 0.5) discard;
           
           // Adjust UVs to preserve aspect ratio (cover the circle)
           vec2 adjustedUv = vUv;
@@ -322,17 +354,13 @@ function Star({
             adjustedUv.x = 0.5 + (vUv.x - 0.5) / aspect;
           }
           
-          // Circular clipping
-          float dist = distance(vUv, center);
-          if (dist > radius) discard;
-          
           vec4 texColor = texture2D(map, adjustedUv);
           gl_FragColor = vec4(texColor.rgb, texColor.a * opacity);
         }
       `,
       transparent: true,
     })
-  }, [texture, groupOpacity])
+  }, [texture, groupOpacity, transitionProgress])
 
   // Calculate star glow opacity (fades out as image fades in)
   // Completely hide star when fully transitioned to image
@@ -343,24 +371,60 @@ function Star({
   // This fills the glow area before the face appears
   const whiteCoreSize = baseSize * (0.25 + transitionProgress * 0.25)
 
+  // Sphere-like shading material for 3D effect when distant
+  const sphereShadingMaterial = useMemo(() => {
+    return new THREE.ShaderMaterial({
+      uniforms: {
+        color: { value: new THREE.Color('#ffffff') },
+        opacity: { value: starGlowOpacity },
+      },
+      vertexShader: `
+        varying vec2 vUv;
+        void main() {
+          vUv = uv;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: `
+        uniform vec3 color;
+        uniform float opacity;
+        varying vec2 vUv;
+        
+        void main() {
+          vec2 center = vec2(0.5, 0.5);
+          float dist = distance(vUv, center);
+          
+          // Softer radial gradient for sphere effect (brighter overall)
+          // Keep center bright, gentle falloff at edges
+          float radialGradient = 1.0 - smoothstep(0.2, 0.5, dist);
+          radialGradient = mix(0.85, 1.0, radialGradient); // Minimum 85% brightness
+          
+          // Very subtle lighting effect (top-left slightly brighter)
+          vec2 lightDir = normalize(vec2(-0.3, 0.3));
+          vec2 fromCenter = normalize(vUv - center);
+          float lighting = max(0.0, dot(fromCenter, lightDir)) * 0.1 + 0.9;
+          
+          float finalBrightness = radialGradient * lighting;
+          
+          gl_FragColor = vec4(color * finalBrightness, opacity);
+        }
+      `,
+      transparent: true,
+    })
+  }, [starGlowOpacity])
+
   // Render image and star together during transition
   return (
     <group ref={groupRef} position={position}>
       {/* White star glow - visible when far, fades out as image appears */}
       {starGlowOpacity > 0 && (
         <>
-          {/* Bright white star point - expands as we approach */}
+          {/* Bright white star core with sphere-like shading */}
           <mesh position={[0, 0, -0.02]}>
             <circleGeometry args={[whiteCoreSize, 64]} />
-            <meshBasicMaterial
-              color="#ffffff"
-              transparent
-              opacity={
-                showOnlyStar ? Math.max(0.8, groupOpacity) : starGlowOpacity
-              }
-            />
+            <primitive object={sphereShadingMaterial} attach="material" />
           </mesh>
-          {/* Soft glow */}
+          {/* Soft glow halo */}
           <mesh position={[0, 0, -0.02]}>
             <circleGeometry args={[baseSize * 0.56, 64]} />
             <meshBasicMaterial
@@ -375,7 +439,7 @@ function Star({
       {/* Image - fades in during transition */}
       {transitionProgress > 0 && (
         <>
-          {/* Opaque backing circle - blocks stars behind transparent areas */}
+          {/* Opaque backing circle - blocks stars behind */}
           <mesh position={[0, 0, -0.01]}>
             <circleGeometry args={[baseSize * 0.58, 64]} />
             <meshBasicMaterial
@@ -385,14 +449,15 @@ function Star({
             />
           </mesh>
 
-          {/* Circular clipped image using mesh + custom shader */}
+          {/* Circular image using plane + custom shader */}
           <mesh
             ref={spriteRef}
+            position={[0, 0, 0]}
             onPointerOver={() => setHovered(true)}
             onPointerOut={() => setHovered(false)}
           >
             <planeGeometry args={[baseSize, baseSize]} />
-            <primitive object={circularMaterial} attach="material" />
+            <primitive object={circleMaterial} attach="material" />
           </mesh>
 
           {/* White circular border ring - covers sprite edges */}

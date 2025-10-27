@@ -182,11 +182,20 @@ git log --oneline --graph chart-your-stars-demo
 ## Phase 2: Convert to 3D Spheres
 **Goal:** Transform flat disks into 3D celestial spheres
 
-### 2A. Replace Geometry ⏳
-- Change `circleGeometry` → `sphereGeometry`
-- Keep texture mapping working
-- Implement billboard behavior (face always points to camera)
-- **Status:** Not started
+### 2A. Hybrid 3D Effect ✅
+- ~~Change `circleGeometry` → `sphereGeometry`~~ **Decision: Keep flat circles with 3D shading**
+- Keep texture mapping working with aspect ratio preservation
+- Maintain billboard behavior (face always points to camera)
+- **Status:** Complete
+- **Decision:** Hybrid approach - flat circles with sphere-like shading when distant
+- **Implementation:**
+  - ✅ Kept circle geometry for performance and image quality
+  - ✅ Added sphere-like shading shader to star core (radial gradient + lighting)
+  - ✅ 3D effect visible when distant, fades as images appear
+  - ✅ Improved shader to preserve aspect ratio (no stretching)
+  - ✅ Billboard behavior maintained through existing lookAt logic
+  - ✅ Smooth transition from "3D sphere" to flat image
+- **Why hybrid approach:** True spheres caused image quality issues. Flat circles with radial gradient shading provide the illusion of 3D depth when distant, while maintaining clear, high-quality images when close. Best of both worlds with better performance.
 
 ### 2B. Add Atmospheric Effects ⏳
 - Glowing halo around each sphere (shader or layered meshes)
