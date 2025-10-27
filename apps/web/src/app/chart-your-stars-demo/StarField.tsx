@@ -6,8 +6,6 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 
 // Mock data for demo
-// NOTE: WebP images don't load reliably in Three.js TextureLoader - using dicebear SVGs instead
-// WebP paths for future (need conversion to JPG or different loading approach):
 // Alice: '/uploads/user-photos/cmeg4p6r70002ihd1zt0im435.1757255300867.small.webp'
 // Bob: '/uploads/user-photos/cmeg4pewy0000ihkwmy8voxi9.1759609763448.small.webp'
 // Carol: '/uploads/user-photos/cmeg5liai0003ihzcqi2ppfwd.1755611564561.small.webp'
@@ -17,102 +15,77 @@ const MOCK_PEOPLE = [
   {
     id: '1',
     name: 'Alice Johnson',
-    photo: 'https://api.dicebear.com/7.x/avataaars/png?seed=Alice&size=256',
+    photo: '/uploads/user-photos/cmeg4p6r70002ihd1zt0im435.1757255300867.thumb.webp',
   },
   {
     id: '2',
     name: 'Bob Smith',
-    photo: 'https://api.dicebear.com/7.x/avataaars/png?seed=Bob&size=256',
+    photo: '/uploads/user-photos/cmeg4pewy0000ihkwmy8voxi9.1759609763448.thumb.webp',
   },
   {
     id: '3',
     name: 'Carol Williams',
-    photo: 'https://api.dicebear.com/7.x/avataaars/png?seed=Carol&size=256',
+    photo: '/uploads/user-photos/cmeg5liai0003ihzcqi2ppfwd.1755611564561.thumb.webp',
   },
   {
     id: '4',
     name: 'David Brown',
-    photo: 'https://api.dicebear.com/7.x/avataaars/png?seed=David&size=256',
+    photo: '/uploads/user-photos/cmeimf6010005ygjemuhgjxqn.1755612613185.thumb.webp',
   },
   {
     id: '5',
     name: 'Eve Davis',
-    photo: 'https://api.dicebear.com/7.x/avataaars/png?seed=Eve&size=256',
+    photo: '/uploads/user-photos/cmeimfkgh0007ygjez1dzqzra.1755612631924.thumb.webp',
   },
   {
     id: '6',
     name: 'Frank Miller',
-    photo: 'https://api.dicebear.com/7.x/avataaars/png?seed=Frank&size=256',
+    photo: '/uploads/user-photos/cmeq3icdd0000ihlv51grw0u6.1756070999426.thumb.webp',
   },
   {
     id: '7',
     name: 'Grace Wilson',
-    photo: 'https://api.dicebear.com/7.x/avataaars/png?seed=Grace&size=256',
+    photo: '/uploads/user-photos/cmf1ohc130000ih8v2rv0zyit.1756767781507.thumb.webp',
   },
   {
     id: '8',
     name: 'Henry Moore',
-    photo: 'https://api.dicebear.com/7.x/avataaars/png?seed=Henry&size=256',
+    photo: '/uploads/user-photos/cmf38lys60000ygbsiagl87us.1756862139772.thumb.webp',
   },
   {
     id: '9',
     name: 'Ivy Taylor',
-    photo: 'https://api.dicebear.com/7.x/avataaars/png?seed=Ivy&size=256',
+    photo: '/uploads/user-photos/cmf4bgcuq0000ihvedptmog5d.1756924599827.thumb.webp',
   },
   {
     id: '10',
     name: 'Jack Anderson',
-    photo: 'https://api.dicebear.com/7.x/avataaars/png?seed=Jack&size=256',
+    photo: '/uploads/user-photos/cmf4cjck80001ihveagdtfgwj.1756929266277.thumb.webp',
   },
   {
     id: '11',
     name: 'Kate Thomas',
-    photo: 'https://api.dicebear.com/7.x/avataaars/png?seed=Kate&size=256',
+    photo: '/uploads/user-photos/cmf4ec9be0002ihvexjjta64v.1756929696290.thumb.webp',
   },
   {
     id: '12',
     name: 'Leo Jackson',
-    photo: 'https://api.dicebear.com/7.x/avataaars/png?seed=Leo&size=256',
+    photo: '/uploads/user-photos/cmf6yqezu000gihwhz2dx5uh6.1757277155522.thumb.webp',
   },
   {
     id: '13',
     name: 'Mia White',
-    photo: 'https://api.dicebear.com/7.x/avataaars/png?seed=Mia&size=256',
+    photo: '/uploads/user-photos/cmf7l2cf80002ihoj1s8hp7ng.1757122034525.thumb.webp',
   },
   {
     id: '14',
     name: 'Noah Harris',
-    photo: 'https://api.dicebear.com/7.x/avataaars/png?seed=Noah&size=256',
+    photo: '/uploads/user-photos/cmf9qeepp0000ih461yaqo00m.1757254714887.thumb.webp',
   },
   {
     id: '15',
     name: 'Olivia Martin',
-    photo: 'https://api.dicebear.com/7.x/avataaars/png?seed=Olivia&size=256',
-  },
-  {
-    id: '16',
-    name: 'Paul Thompson',
-    photo: 'https://api.dicebear.com/7.x/avataaars/png?seed=Paul&size=256',
-  },
-  {
-    id: '17',
-    name: 'Quinn Garcia',
-    photo: 'https://api.dicebear.com/7.x/avataaars/png?seed=Quinn&size=256',
-  },
-  {
-    id: '18',
-    name: 'Rose Martinez',
-    photo: 'https://api.dicebear.com/7.x/avataaars/png?seed=Rose&size=256',
-  },
-  {
-    id: '19',
-    name: 'Sam Robinson',
-    photo: 'https://api.dicebear.com/7.x/avataaars/png?seed=Sam&size=256',
-  },
-  {
-    id: '20',
-    name: 'Tina Clark',
-    photo: 'https://api.dicebear.com/7.x/avataaars/png?seed=Tina&size=256',
+    photo: '/uploads/user-photos/cmfekp7a00000ih9k0xg8j22p.1757680626180.thumb.webp',
   },
 ]
 
