@@ -153,12 +153,17 @@ git log --oneline --graph chart-your-stars-demo
   - ✅ Modified handleProceedAfterPlacement to initiate takeoff instead of direct flying
   - ⏳ Need to test: Camera should pull back from star A, then fly smoothly to star B
 
-### 1B. Fix Star Scaling/Opacity During UI Interaction ⏳
+### 1B. Fix Star Scaling/Opacity During UI Interaction ✅
 - **Problem:** Star becomes bigger/transparent when clicking buttons
 - **Fix:** Lock star appearance when "arrived" state is active
   - Disable transition animations during button interaction
   - Only animate during approach/departure phases
-- **Status:** Not started
+- **Status:** Complete
+- **Implementation:**
+  - ✅ Added locked appearance refs (lockedSize, lockedOpacity, lockedTransitionProgress)
+  - ✅ Lock values when `isTarget && (journeyPhase === 'arrived' || 'placed')`
+  - ✅ Reset locks when transitioning out of arrived/placed phase
+  - ✅ Star now maintains consistent size, opacity, and transition state during UI interaction
 
 ### 1C. Improve Constellation Visibility on Mobile ⏳
 - **Problem:** 15 constellation stars hard to distinguish from background

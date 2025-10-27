@@ -134,6 +134,11 @@ function Star({
   const [hovered, setHovered] = useState(false)
   const { camera } = useThree()
   const [distanceToCamera, setDistanceToCamera] = useState(0)
+  
+  // Lock appearance when arrived to prevent flickering during UI interaction
+  const lockedSize = useRef<number | null>(null)
+  const lockedOpacity = useRef<number | null>(null)
+  const lockedTransitionProgress = useRef<number | null>(null)
 
   // Calculate distance and billboard rotation
   useFrame(() => {
@@ -157,11 +162,29 @@ function Star({
   })
 
   // Size based on distance for depth perception
-  // Closer stars appear larger, farther stars appear smaller
+  // Lock appearance when in arrived/placed/takeoff phase to prevent flickering
+  const isLocked = isTarget && (journeyPhase === 'arrived' || journeyPhase === 'placed' || journeyPhase === 'takeoff')
+  const shouldResetLocks = isTarget && (journeyPhase === 'flying' || journeyPhase === 'approaching')
+  
+  // Calculate base size
   let baseSize = 2.5 // Default
   if (isTarget) {
-    baseSize =
-      typeof window !== 'undefined' && window.innerWidth < 640 ? 1.8 : 3.0
+    const calculatedSize = typeof window !== 'undefined' && window.innerWidth < 640 ? 1.8 : 3.0
+    
+    if (isLocked) {
+      // Lock size when arrived/placed/takeoff - capture on first lock
+      if (lockedSize.current === null) {
+        lockedSize.current = calculatedSize
+      }
+      baseSize = lockedSize.current
+    } else if (shouldResetLocks) {
+      // Only reset lock when flying to next star
+      lockedSize.current = null
+      baseSize = calculatedSize
+    } else {
+      // Use calculated size during approach
+      baseSize = calculatedSize
+    }
   } else {
     // Vary size based on distance: 1.5 (far) to 3.0 (close)
     const maxDist = 100
@@ -175,7 +198,7 @@ function Star({
   // Distance thresholds for rendering
   const TRANSITION_START = 60 // Start showing image
   const TRANSITION_END = 30 // Fully image
-  const transitionProgress = Math.max(
+  let transitionProgress = Math.max(
     0,
     Math.min(
       1,
@@ -183,12 +206,38 @@ function Star({
         (TRANSITION_START - TRANSITION_END),
     ),
   )
+  
+  // Lock transition progress when arrived/placed/takeoff
+  if (isLocked) {
+    if (lockedTransitionProgress.current === null) {
+      lockedTransitionProgress.current = transitionProgress
+    }
+    transitionProgress = lockedTransitionProgress.current
+  } else if (shouldResetLocks) {
+    lockedTransitionProgress.current = null
+  }
+  
   const showOnlyStar = distanceToCamera > TRANSITION_START
 
   // Calculate opacity based on distance for depth perception
   let groupOpacity = 1.0
   if (isTarget) {
-    groupOpacity = 1.0
+    const calculatedOpacity = 1.0
+    
+    if (isLocked) {
+      // Lock opacity when arrived/placed/takeoff - capture on first lock
+      if (lockedOpacity.current === null) {
+        lockedOpacity.current = calculatedOpacity
+      }
+      groupOpacity = lockedOpacity.current
+    } else if (shouldResetLocks) {
+      // Only reset lock when flying to next star
+      lockedOpacity.current = null
+      groupOpacity = calculatedOpacity
+    } else {
+      // Use calculated opacity during approach
+      groupOpacity = calculatedOpacity
+    }
   } else {
     // Opacity varies with distance: 0.15 (far) to 0.7 (close)
     const maxDist = 100
@@ -211,13 +260,17 @@ function Star({
 
   // Texture is preloaded and passed as prop - no need to load here
 
-  // Custom shader material for circular clipping - must be before conditional return
+  // Custom shader material for circular clipping with aspect ratio preservation
   const circularMaterial = useMemo(() => {
+    // Calculate texture aspect ratio
+    const textureAspect = texture.image ? texture.image.width / texture.image.height : 1.0
+    
     return new THREE.ShaderMaterial({
       uniforms: {
         map: { value: texture },
         radius: { value: 0.5 }, // Clip to circle (0.5 = edge of sprite)
         opacity: { value: groupOpacity },
+        aspect: { value: textureAspect },
       },
       vertexShader: `
         varying vec2 vUv;
@@ -230,12 +283,26 @@ function Star({
         uniform sampler2D map;
         uniform float radius;
         uniform float opacity;
+        uniform float aspect;
         varying vec2 vUv;
         void main() {
           vec2 center = vec2(0.5, 0.5);
+          
+          // Adjust UVs to preserve aspect ratio (cover the circle)
+          vec2 adjustedUv = vUv;
+          if (aspect > 1.0) {
+            // Wider than tall: scale height
+            adjustedUv.y = 0.5 + (vUv.y - 0.5) * aspect;
+          } else {
+            // Taller than wide: scale width
+            adjustedUv.x = 0.5 + (vUv.x - 0.5) / aspect;
+          }
+          
+          // Circular clipping
           float dist = distance(vUv, center);
           if (dist > radius) discard;
-          vec4 texColor = texture2D(map, vUv);
+          
+          vec4 texColor = texture2D(map, adjustedUv);
           gl_FragColor = vec4(texColor.rgb, texColor.a * opacity);
         }
       `,
@@ -858,12 +925,14 @@ function Scene({
       {/* Person stars - only render when all textures loaded */}
       {texturesLoaded &&
         MOCK_PEOPLE.map((person, index) => {
-          // Check if this star is the current target - include 'arrived' so star stays large
+          // Check if this star is the current target - include all active phases
           const isTargetStar =
             index === targetStarIndex &&
             (journeyPhase === 'flying' ||
               journeyPhase === 'approaching' ||
-              journeyPhase === 'arrived')
+              journeyPhase === 'arrived' ||
+              journeyPhase === 'placed' ||
+              journeyPhase === 'takeoff')
 
           return (
             <Star
