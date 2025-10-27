@@ -7,6 +7,133 @@ Transform the Chart Your Stars demo from flat 2D disks to immersive 3D spheres w
 
 ---
 
+## Terminology and Star Perception Factors
+
+### Critical: These Factors Work Together
+**NEVER adjust just one factor in isolation.** Changes to any of these affect how users perceive star size, position, and distance. Always consider the full system when making adjustments.
+
+### The HUD (Heads-Up Display)
+- **Definition:** The rectangle bounded by the four green corner markers visible on screen
+- **Center:** The crosshairs in the middle of the HUD rectangle
+- **Important:** "Centering in HUD" means centering in this rectangle, NOT just the viewport
+- **Current state:** HUD center = viewport center (aligned for simplicity)
+
+### Coordinate System & Directions
+- **Three.js coordinates:**
+  - X-axis: left (-) to right (+)
+  - Y-axis: down (-) to up (+)
+  - Z-axis: into screen (-) to out of screen (+)
+- **Camera movement effects:**
+  - Subtracting from `camera.position.y` moves camera DOWN → star appears HIGHER on screen
+  - Adding to `camera.position.y` moves camera UP → star appears LOWER on screen
+  - Subtracting from `camera.position.z` moves camera CLOSER → star appears LARGER
+  - Adding to `camera.position.z` moves camera FARTHER → star appears SMALLER
+- **Language precision:** Always specify "camera moves down" vs "star appears higher" to avoid confusion
+
+### Factors Affecting Star Appearance (Must Consider Together)
+1. **Star size (`baseSize`)** - The 3D object's actual size in world units (currently 3.0)
+2. **Camera distance (`viewDistance`)** - How far camera is from star (currently 6.5)
+3. **Camera FOV (field of view)** - Set at canvas level, affects perspective (60°)
+4. **Camera position:**
+   - X: horizontal alignment (currently `targetPos.x`)
+   - Y: vertical alignment (currently `targetPos.y - 2`)
+   - Z: depth (currently `targetPos.z + 6.5`)
+5. **Camera rotation/angle** - Which way camera is looking (currently `lookAt(targetPos)`)
+6. **Star opacity** - Affects visibility and perceived distance
+7. **Star glow/halo size** - Affects perceived size and brightness
+8. **Transition progress** - Affects multiple properties during animation
+9. **Distance from camera** - Calculated dynamically, affects LOD and rendering
+
+### Depth Perception Factors
+- **Size scaling:** Distant objects appear smaller (perspective)
+- **Opacity:** Distant objects appear dimmer
+- **Glow intensity:** Closer objects have brighter halos
+- **Texture detail:** Faces only visible when close enough
+- **Layering:** Z-position affects render order and occlusion
+
+### Common Mistakes to Avoid
+1. ❌ Adjusting star size without considering camera distance
+2. ❌ Changing camera position without checking HUD alignment
+3. ❌ Modifying one opacity value without checking related opacity calculations
+4. ❌ Using "up/down" without specifying camera vs screen space
+5. ❌ Saying "centered" without specifying HUD vs viewport vs world space
+
+---
+
+## How to Remember Context After Reloads and Restarts
+
+### If Windsurf Crashes or You Need to Restart
+
+**User Actions (do these first):**
+1. ✅ Open this plan doc: `/docs/plans/2025-10-27-chart-your-stars-3d-upgrade.md`
+2. ✅ Share the "Progress Log" section showing what's been completed
+3. ✅ Run: `git log --oneline -10` to see recent commits
+4. ✅ Run: `git diff` to see any uncommitted changes
+5. ✅ If there were specific issues, describe them briefly
+
+**Cascade Actions (I will do these):**
+1. 🤖 Read this entire plan document first
+2. 🤖 Review the "Terminology and Star Perception Factors" section
+3. 🤖 Check my memories for Chart Your Stars context
+4. 🤖 Read the recent git commits you shared
+5. 🤖 Ask clarifying questions about current state before making changes
+
+### Quick Context Recovery Template
+
+**User says:**
+```
+Context recovery needed:
+- Last working on: [Phase/task from plan doc]
+- Recent commits: [paste git log output]
+- Current issue: [if any]
+- Files open: [list key files]
+```
+
+**I will respond:**
+```
+Context recovered. I've reviewed:
+✅ Plan doc progress
+✅ Terminology section
+✅ Recent commits
+✅ Current phase: [X]
+
+Ready to continue with: [specific next step]
+Confirm before I proceed?
+```
+
+### Key Documents to Reference
+1. **This plan:** `/docs/plans/2025-10-27-chart-your-stars-3d-upgrade.md`
+2. **Main files:**
+   - `/apps/web/src/app/chart-your-stars-demo/StarField.tsx`
+   - `/apps/web/src/app/chart-your-stars-demo/ChartYourStars.tsx`
+3. **Memory tag:** Search my memories for `chart_your_stars`
+
+### Git Commands for Context
+```bash
+# See recent commits
+git log --oneline -10
+
+# See what changed in last commit
+git show HEAD
+
+# See uncommitted changes
+git diff
+
+# See which files changed recently
+git log --name-only -5
+
+# See full history of this feature branch
+git log --oneline --graph chart-your-stars-demo
+```
+
+### What NOT to Do After Restart
+- ❌ Don't start making changes immediately
+- ❌ Don't assume I remember the current state
+- ❌ Don't skip reviewing the plan doc
+- ❌ Don't forget to check for uncommitted work
+
+---
+
 ## Phase 1: Fix Critical Bugs (Do First)
 **Goal:** Make current experience smooth and professional
 
