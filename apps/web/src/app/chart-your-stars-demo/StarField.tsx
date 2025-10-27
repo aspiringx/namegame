@@ -186,13 +186,21 @@ function Star({
       baseSize = calculatedSize
     }
   } else {
-    // Vary size based on distance: 1.5 (far) to 3.0 (close)
+    // Constellation stars (non-target) - boost size during intro
+    const isIntroPhase = journeyPhase === 'intro'
     const maxDist = 100
     const distanceFactor = Math.max(
       0,
       Math.min(1, 1 - distanceToCamera / maxDist),
     )
-    baseSize = 1.5 + distanceFactor * 1.5 // 1.5 to 3.0
+    
+    if (isIntroPhase) {
+      // During intro: larger and more visible (2.0 to 3.5)
+      baseSize = 2.0 + distanceFactor * 1.5
+    } else {
+      // During journey: smaller to focus on target (1.5 to 3.0)
+      baseSize = 1.5 + distanceFactor * 1.5
+    }
   }
 
   // Distance thresholds for rendering
@@ -217,6 +225,12 @@ function Star({
     lockedTransitionProgress.current = null
   }
   
+  // Force images hidden during intro phase to prevent flash
+  const isIntroPhase = journeyPhase === 'intro'
+  if (isIntroPhase) {
+    transitionProgress = 0
+  }
+  
   const showOnlyStar = distanceToCamera > TRANSITION_START
 
   // Calculate opacity based on distance for depth perception
@@ -239,13 +253,23 @@ function Star({
       groupOpacity = calculatedOpacity
     }
   } else {
-    // Opacity varies with distance: 0.15 (far) to 0.7 (close)
+    // Constellation stars (non-target) - boost visibility during intro
+    const isIntroPhase = journeyPhase === 'intro'
+    
+    // Opacity varies with distance
     const maxDist = 100
     const distanceFactor = Math.max(
       0,
       Math.min(1, 1 - distanceToCamera / maxDist),
     )
-    groupOpacity = 0.15 + distanceFactor * 0.55 // 0.15 to 0.7
+    
+    if (isIntroPhase) {
+      // During intro: much brighter and more visible (0.6 to 0.9)
+      groupOpacity = 0.6 + distanceFactor * 0.3
+    } else {
+      // During journey: dimmer to focus on target (0.15 to 0.7)
+      groupOpacity = 0.15 + distanceFactor * 0.55
+    }
 
     // Boost opacity during transition to image
     if (transitionProgress > 0) {

@@ -165,13 +165,17 @@ git log --oneline --graph chart-your-stars-demo
   - ✅ Reset locks when transitioning out of arrived/placed phase
   - ✅ Star now maintains consistent size, opacity, and transition state during UI interaction
 
-### 1C. Improve Constellation Visibility on Mobile ⏳
+### 1C. Improve Constellation Visibility on Mobile ✅
 - **Problem:** 15 constellation stars hard to distinguish from background
 - **Fix:** 
   - Increase constellation star brightness (0.9+ opacity vs 0.3 for background)
   - Larger base size for constellation stars
   - Optional: subtle pulsing glow animation
-- **Status:** Not started
+- **Status:** Complete
+- **Implementation:**
+  - ✅ Boosted opacity during intro phase: 0.6-0.9 (was 0.15-0.7)
+  - ✅ Increased size during intro phase: 2.0-3.5 (was 1.5-3.0)
+  - ✅ Stars automatically dim/shrink when journey starts to focus on target star
 
 ---
 
