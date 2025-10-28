@@ -114,12 +114,6 @@ export default function Scene({
 
     if (!needsInitialPositions && !needsConstellationPositions) return
 
-    console.log('🔄 REGENERATING POSITIONS:', {
-      needsInitialPositions,
-      needsConstellationPositions,
-      useConstellationPositions,
-    })
-
     onUpdateStars((prevStars) => {
       const newStars = new Map(prevStars)
       const positions: [number, number, number][] = []
@@ -234,7 +228,9 @@ export default function Scene({
       previousStarIndex >= 0 &&
       previousStarIndex < MOCK_PEOPLE.length
     ) {
-      const currentStarPos = new THREE.Vector3(...starPositions[previousStarIndex])
+      const currentStarPos = new THREE.Vector3(
+        ...starPositions[previousStarIndex],
+      )
       const nextTargetPos = new THREE.Vector3(...starPositions[targetStarIndex])
 
       // Only update once per actual animation frame using frame counter
@@ -250,34 +246,12 @@ export default function Scene({
         if (takeoffProgress.current === 0) {
           takeoffFrameCount.current = 0
           takeoffStartPos.current.copy(camera.position)
-          console.log(
-            'TAKEOFF START - Camera:',
-            camera.position.toArray().map((n) => n.toFixed(1)),
-            'Alice:',
-            currentStarPos.toArray().map((n) => n.toFixed(1)),
-          )
         }
 
         takeoffProgress.current += 0.015 // Takeoff speed (balanced for smooth but not too slow)
-        console.log(
-          'Frame',
-          takeoffFrameCount.current,
-          'progress:',
-          takeoffProgress.current.toFixed(3),
-          'frameId:',
-          frameId.toFixed(2),
-        )
-      } else {
-        console.log(
-          'SKIP frame',
-          takeoffFrameCount.current,
-          'same frameId:',
-          frameId.toFixed(2),
-        )
       }
 
       if (takeoffProgress.current >= 1) {
-        console.log('TAKEOFF COMPLETE at progress:', takeoffProgress.current)
         // Takeoff complete, transition to flying
         takeoffProgress.current = 0
         cameFromTakeoff.current = true // Mark that we came from takeoff
@@ -293,15 +267,6 @@ export default function Scene({
         // Keep X/Y position, only move back in Z
         const newZ = takeoffStartPos.current.z + pullBackDistance * t
 
-        if (t < 0.01) {
-          console.log(
-            '🎬 TAKEOFF FRAME 1 - Setting camera to:',
-            takeoffStartPos.current.x.toFixed(1),
-            takeoffStartPos.current.y.toFixed(1),
-            newZ.toFixed(1),
-          )
-        }
-
         camera.position.set(
           takeoffStartPos.current.x,
           takeoffStartPos.current.y,
@@ -314,12 +279,6 @@ export default function Scene({
 
         if (t < 0.7) {
           // First 70%: keep looking at previous star (Alice)
-          if (takeoffProgress.current < 0.05) {
-            console.log(
-              'LookAt Alice:',
-              currentStarPos.toArray().map((n) => n.toFixed(1)),
-            )
-          }
           camera.lookAt(currentStarPos)
         } else {
           // Final 30%: gradually rotate toward next target (Bob)
@@ -807,19 +766,7 @@ export default function Scene({
                 journeyPhase === 'placed'))
 
           const starData = stars.get(person.id)!
-          
-          // Debug logging for Alice
-          if (person.name === 'Alice Johnson' && journeyPhase === 'takeoff') {
-            console.log('🎬 Rendering Alice during takeoff:', {
-              index,
-              targetStarIndex,
-              previousStarIndex,
-              isTargetStar,
-              journeyPhase,
-              placement: starData.placement
-            })
-          }
-          
+
           return (
             <Star
               key={person.id}

@@ -47,14 +47,15 @@ export default function Star({
       // Update distance to camera
       const dist = camera.position.distanceTo(new THREE.Vector3(...position))
       setDistanceToCamera(dist)
-      
+
       // Debug: Log Alice's actual rendered position during takeoff
-      if (person.name === 'Alice Johnson' && journeyPhase === 'takeoff' && isTarget) {
+      if (
+        person.name === 'Alice Johnson' &&
+        journeyPhase === 'takeoff' &&
+        isTarget
+      ) {
         const worldPos = new THREE.Vector3()
         groupRef.current.getWorldPosition(worldPos)
-        if (Math.random() < 0.1) { // Only log 10% of frames to avoid spam
-          console.log('🎯 Alice world position:', worldPos.toArray().map(n => n.toFixed(1)), 'camera:', camera.position.toArray().map(n => n.toFixed(1)))
-        }
       }
 
       // Billboard - always face camera
@@ -273,7 +274,8 @@ export default function Star({
       } else if (distanceToCamera > fadeEnd) {
         groupOpacity = 0.6
       } else {
-        const fadeProgress = (distanceToCamera - fadeStart) / (fadeEnd - fadeStart)
+        const fadeProgress =
+          (distanceToCamera - fadeStart) / (fadeEnd - fadeStart)
         groupOpacity = 1.0 - fadeProgress * 0.4
       }
     } else if (placement) {
@@ -439,26 +441,6 @@ export default function Star({
   // 3. Uncharted stars: 0 (behind charted)
   const isCharted = placement !== undefined
   const renderOrder = isTarget ? 100 : isCharted ? 50 : 0
-
-  // Log Alice's state during key phases
-  const prevPhase = useRef<string>('')
-  useEffect(() => {
-    if (person.name === 'Alice Johnson' && journeyPhase !== prevPhase.current) {
-      prevPhase.current = journeyPhase || ''
-      console.log('🌟 Alice:', {
-        phase: journeyPhase,
-        isTarget,
-        placement,
-        groupOpacity: groupOpacity.toFixed(2),
-        starGlowOpacity: starGlowOpacity.toFixed(2),
-        transitionProgress: transitionProgress.toFixed(2),
-        baseSize: baseSize.toFixed(2),
-        distanceToCamera: distanceToCamera.toFixed(1),
-        renderOrder,
-        position: position.map(n => n.toFixed(1))
-      })
-    }
-  }, [person.name, placement, journeyPhase, groupOpacity, starGlowOpacity, isTarget, transitionProgress, baseSize, distanceToCamera, renderOrder, position])
 
   return (
     <group ref={groupRef} position={position}>

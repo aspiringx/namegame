@@ -36,7 +36,7 @@ export default function StarField() {
   const placements = new Map(
     Array.from(stars.entries())
       .filter(([_, star]) => star.placement)
-      .map(([id, star]) => [id, star.placement!])
+      .map(([id, star]) => [id, star.placement!]),
   )
 
   // Show message instantly (typing effect removed)
@@ -65,7 +65,6 @@ export default function StarField() {
     }
   }
 
-
   const handleProceed = () => {
     if (journeyPhase === 'intro') {
       // Progress through intro steps (0-4, total 5 messages)
@@ -85,20 +84,18 @@ export default function StarField() {
     person: (typeof MOCK_PEOPLE)[0],
     circle: 'inner' | 'close' | 'outer',
   ) => {
-    console.log('🎯 PLACED:', person.name, 'as', circle)
-    
     // Update star data with placement (but don't generate constellation position yet)
     setStars((prevStars) => {
       const newStars = new Map(prevStars)
       const starData = newStars.get(person.id)!
-      
+
       const updated = {
         ...starData,
         placement: circle,
         visited: true,
       }
       newStars.set(person.id, updated)
-      
+
       return newStars
     })
 
@@ -138,9 +135,6 @@ export default function StarField() {
   }
 
   const handleProceedAfterPlacement = () => {
-    const currentStar = MOCK_PEOPLE[targetStarIndex]
-    console.log('🚀 PROCEED from:', currentStar?.name, '(index', targetStarIndex, ')')
-    
     // Find next unvisited star in MOCK_PEOPLE order
     const nextUnvisitedIndex = MOCK_PEOPLE.findIndex((p) => {
       const starData = stars.get(p.id)!
@@ -150,8 +144,7 @@ export default function StarField() {
     if (nextUnvisitedIndex >= 0) {
       const nextPerson = MOCK_PEOPLE[nextUnvisitedIndex]
       const distance = Math.floor(Math.random() * 100) + 50
-      console.log('   → Next:', nextPerson.name, '(index', nextUnvisitedIndex, ')')
-      
+
       setNarratorMessage(
         `Next star: ${nextPerson.name}, currently ${distance} light years away.`,
       )
@@ -401,10 +394,12 @@ export default function StarField() {
                     <button
                       onClick={() => {
                         // Find next unvisited star from MOCK_PEOPLE
-                        const nextUnvisitedIndex = MOCK_PEOPLE.findIndex((p) => {
-                          const starData = stars.get(p.id)!
-                          return !starData.visited
-                        })
+                        const nextUnvisitedIndex = MOCK_PEOPLE.findIndex(
+                          (p) => {
+                            const starData = stars.get(p.id)!
+                            return !starData.visited
+                          },
+                        )
 
                         if (nextUnvisitedIndex >= 0) {
                           const nextPerson = MOCK_PEOPLE[nextUnvisitedIndex]
