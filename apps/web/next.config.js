@@ -65,6 +65,13 @@ const nextConfig = {
     serverActions: {
       bodySizeLimit: '10mb',
     },
+    // Optimizes Three.js bundle size for (tree-shaking to only use what we
+    // need). Use in both dev and production.
+    optimizePackageImports: [
+      'three',
+      '@react-three/fiber',
+      '@react-three/drei',
+    ],
   },
 }
 
