@@ -11,7 +11,9 @@ import { ConstellationLines } from './ConstellationLines'
 
 interface SceneProps {
   stars: Map<string, StarData>
-  onUpdateStars: (updater: (prev: Map<string, StarData>) => Map<string, StarData>) => void
+  onUpdateStars: (
+    updater: (prev: Map<string, StarData>) => Map<string, StarData>,
+  ) => void
   onUpdateOverlays: (overlays: StarOverlay[]) => void
   targetStarIndex: number
   previousStarIndex: number
@@ -45,9 +47,10 @@ export default function Scene({
   const hasTriggeredArrival = useRef(false)
   const takeoffProgress = useRef(0)
   const takeoffStartPos = useRef(new THREE.Vector3())
-  const previousStarPos = useRef(new THREE.Vector3())
   const takeoffEndLookAt = useRef(new THREE.Vector3())
   const cameFromTakeoff = useRef(false)
+  const lastTakeoffFrame = useRef(-1)
+  const takeoffFrameCount = useRef(0)
   const flightProgress = useRef(0)
   const flightStartPos = useRef(new THREE.Vector3())
   const flightControlPoint = useRef(new THREE.Vector3())
@@ -78,8 +81,9 @@ export default function Scene({
           }
         },
         undefined,
-        (error) => {
-          console.error(`Failed to load ${person.name}:`, error)
+        (_error) => {
+          // Texture load error - will retry or use fallback
+          // Don't log in production as these are expected during initial load
           loadedCount++
           if (loadedCount === MOCK_PEOPLE.length) {
             setTexturesLoaded(true)
@@ -103,10 +107,18 @@ export default function Scene({
   // Generate positions if they don't exist yet
   useEffect(() => {
     const starsArray = Array.from(stars.values())
-    const needsInitialPositions = starsArray.some(s => !s.initialPosition)
-    const needsConstellationPositions = useConstellationPositions && starsArray.some(s => s.placement && !s.constellationPosition)
+    const needsInitialPositions = starsArray.some((s) => !s.initialPosition)
+    const needsConstellationPositions =
+      useConstellationPositions &&
+      starsArray.some((s) => s.placement && !s.constellationPosition)
 
     if (!needsInitialPositions && !needsConstellationPositions) return
+
+    console.log('🔄 REGENERATING POSITIONS:', {
+      needsInitialPositions,
+      needsConstellationPositions,
+      useConstellationPositions,
+    })
 
     onUpdateStars((prevStars) => {
       const newStars = new Map(prevStars)
@@ -116,7 +128,7 @@ export default function Scene({
 
       MOCK_PEOPLE.forEach((person) => {
         const starData = newStars.get(person.id)!
-        
+
         // Generate initial position if missing
         if (!starData.initialPosition) {
           let attempts = 0
@@ -153,7 +165,11 @@ export default function Scene({
         }
 
         // Generate constellation position if placed and missing
-        if (useConstellationPositions && starData.placement && !starData.constellationPosition) {
+        if (
+          useConstellationPositions &&
+          starData.placement &&
+          !starData.constellationPosition
+        ) {
           const { min, max } = getStarRadius(starData.placement)
           const theta = Math.random() * Math.PI * 2
           const maxPhi = Math.PI / 4
@@ -166,7 +182,10 @@ export default function Scene({
             radius * Math.cos(phi),
           ]
 
-          newStars.set(person.id, { ...starData, constellationPosition: constellationPos })
+          newStars.set(person.id, {
+            ...starData,
+            constellationPosition: constellationPos,
+          })
         }
       })
 
@@ -175,33 +194,30 @@ export default function Scene({
   }, [stars, useConstellationPositions, onUpdateStars])
 
   // Get current positions from StarData
+  // During journey: ALWAYS use initialPosition
+  // During constellation view: use constellationPosition if available
   const starPositions = useMemo(() => {
-    return MOCK_PEOPLE.map((person) => {
+    const positions = MOCK_PEOPLE.map((person) => {
       const starData = stars.get(person.id)!
+
+      // ONLY use constellation positions when explicitly in constellation view mode
       if (useConstellationPositions && starData.constellationPosition) {
         return starData.constellationPosition
       }
-      return starData.initialPosition || [0, 0, 0] as [number, number, number]
+
+      // During journey, always use initial position (never changes)
+      const pos =
+        starData.initialPosition || ([0, 0, 0] as [number, number, number])
+      return pos
     })
+    return positions
   }, [stars, useConstellationPositions])
 
   // Stars are visited in MOCK_PEOPLE order, tracked by visitedIndices
 
-  // Initialize takeoff when phase changes to 'takeoff'
-  useEffect(() => {
-    if (journeyPhase === 'takeoff' && previousStarIndex >= 0) {
-      // Store current camera position as takeoff start
-      takeoffStartPos.current.copy(camera.position)
-      // Store previous star position (the one we're leaving)
-      previousStarPos.current.copy(
-        new THREE.Vector3(...starPositions[previousStarIndex]),
-      )
-      takeoffProgress.current = 0
-    }
-  }, [journeyPhase, previousStarIndex, camera.position, starPositions])
-
   // Auto-pilot: initialize with overview, then move to target star
-  useFrame(() => {
+  useFrame((state) => {
+    const frameId = state.clock.elapsedTime
     // First time: set overview position
     if (!hasInitialized.current) {
       // Position camera further back to show all stars in HUD initially
@@ -215,13 +231,53 @@ export default function Scene({
     // Handle takeoff sequence (pull back from current star before flying to next)
     if (
       journeyPhase === 'takeoff' &&
-      targetStarIndex >= 0 &&
-      targetStarIndex < MOCK_PEOPLE.length
+      previousStarIndex >= 0 &&
+      previousStarIndex < MOCK_PEOPLE.length
     ) {
+      const currentStarPos = new THREE.Vector3(...starPositions[previousStarIndex])
       const nextTargetPos = new THREE.Vector3(...starPositions[targetStarIndex])
-      takeoffProgress.current += 0.015 // Takeoff speed (balanced for smooth but not too slow)
+
+      // Only update once per actual animation frame using frame counter
+      takeoffFrameCount.current++
+      const shouldUpdate =
+        takeoffFrameCount.current === 1 ||
+        (takeoffFrameCount.current > 1 && lastTakeoffFrame.current !== frameId)
+
+      if (shouldUpdate) {
+        lastTakeoffFrame.current = frameId
+
+        // Initialize on first frame of takeoff
+        if (takeoffProgress.current === 0) {
+          takeoffFrameCount.current = 0
+          takeoffStartPos.current.copy(camera.position)
+          console.log(
+            'TAKEOFF START - Camera:',
+            camera.position.toArray().map((n) => n.toFixed(1)),
+            'Alice:',
+            currentStarPos.toArray().map((n) => n.toFixed(1)),
+          )
+        }
+
+        takeoffProgress.current += 0.015 // Takeoff speed (balanced for smooth but not too slow)
+        console.log(
+          'Frame',
+          takeoffFrameCount.current,
+          'progress:',
+          takeoffProgress.current.toFixed(3),
+          'frameId:',
+          frameId.toFixed(2),
+        )
+      } else {
+        console.log(
+          'SKIP frame',
+          takeoffFrameCount.current,
+          'same frameId:',
+          frameId.toFixed(2),
+        )
+      }
 
       if (takeoffProgress.current >= 1) {
+        console.log('TAKEOFF COMPLETE at progress:', takeoffProgress.current)
         // Takeoff complete, transition to flying
         takeoffProgress.current = 0
         cameFromTakeoff.current = true // Mark that we came from takeoff
@@ -231,35 +287,48 @@ export default function Scene({
       } else {
         const t = takeoffProgress.current
 
-        // Pull camera back AND move laterally toward next target
+        // Pull camera straight back (no lateral movement during takeoff)
         const pullBackDistance = 30 // Units to pull back
 
-        // Move camera position: pull back in Z, and gradually move X/Y toward next target
-        const lateralProgress = t * 0.3 // Move 30% of the way laterally during takeoff
-        const newX =
-          takeoffStartPos.current.x +
-          (nextTargetPos.x - takeoffStartPos.current.x) * lateralProgress
-        const newY =
-          takeoffStartPos.current.y +
-          (nextTargetPos.y - takeoffStartPos.current.y) * lateralProgress
+        // Keep X/Y position, only move back in Z
         const newZ = takeoffStartPos.current.z + pullBackDistance * t
 
-        camera.position.set(newX, newY, newZ)
+        if (t < 0.01) {
+          console.log(
+            '🎬 TAKEOFF FRAME 1 - Setting camera to:',
+            takeoffStartPos.current.x.toFixed(1),
+            takeoffStartPos.current.y.toFixed(1),
+            newZ.toFixed(1),
+          )
+        }
+
+        camera.position.set(
+          takeoffStartPos.current.x,
+          takeoffStartPos.current.y,
+          newZ,
+        )
 
         // Gradually rotate camera from previous star to next target
-        // Start rotation after 30% of takeoff, complete by end
+        // Start rotation after 70% of takeoff, complete by end
+        // This keeps Alice centered longer during the pullback
 
-        if (t < 0.3) {
-          // First 30%: keep looking at previous star
-          camera.lookAt(previousStarPos.current)
+        if (t < 0.7) {
+          // First 70%: keep looking at previous star (Alice)
+          if (takeoffProgress.current < 0.05) {
+            console.log(
+              'LookAt Alice:',
+              currentStarPos.toArray().map((n) => n.toFixed(1)),
+            )
+          }
+          camera.lookAt(currentStarPos)
         } else {
-          // Remaining 70%: gradually rotate toward next target
-          const rotateProgress = (t - 0.3) / 0.7 // 0 to 1 over remaining time
+          // Final 30%: gradually rotate toward next target (Bob)
+          const rotateProgress = (t - 0.7) / 0.3 // 0 to 1 over remaining time
           // Ease the rotation for smoother feel
           const easedProgress =
             rotateProgress * rotateProgress * (3 - 2 * rotateProgress) // Smoothstep
           const lookAtPoint = new THREE.Vector3().lerpVectors(
-            previousStarPos.current,
+            currentStarPos,
             nextTargetPos,
             easedProgress,
           )
@@ -475,9 +544,10 @@ export default function Scene({
       }
     }
 
-    // Fly to target star (only after intro phase)
+    // Fly to target star (only after intro phase, not during takeoff)
     if (
       journeyPhase !== 'intro' &&
+      journeyPhase !== 'takeoff' &&
       targetStarIndex >= 0 &&
       targetStarIndex < MOCK_PEOPLE.length
     ) {
@@ -712,11 +782,13 @@ export default function Scene({
       {journeyPhase === 'returning' && texturesLoaded && (
         <ConstellationLines
           positions={starPositions}
-          placements={new Map(
-            Array.from(stars.entries())
-              .filter(([_, star]) => star.placement)
-              .map(([id, star]) => [id, star.placement!])
-          )}
+          placements={
+            new Map(
+              Array.from(stars.entries())
+                .filter(([_, star]) => star.placement)
+                .map(([id, star]) => [id, star.placement!]),
+            )
+          }
         />
       )}
 
@@ -735,6 +807,19 @@ export default function Scene({
                 journeyPhase === 'placed'))
 
           const starData = stars.get(person.id)!
+          
+          // Debug logging for Alice
+          if (person.name === 'Alice Johnson' && journeyPhase === 'takeoff') {
+            console.log('🎬 Rendering Alice during takeoff:', {
+              index,
+              targetStarIndex,
+              previousStarIndex,
+              isTargetStar,
+              journeyPhase,
+              placement: starData.placement
+            })
+          }
+          
           return (
             <Star
               key={person.id}

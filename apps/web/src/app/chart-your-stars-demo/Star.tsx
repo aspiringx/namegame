@@ -4,6 +4,7 @@ import * as THREE from 'three'
 import { StarProps } from './types'
 
 export default function Star({
+  person,
   position,
   isTarget,
   placement,
@@ -46,6 +47,15 @@ export default function Star({
       // Update distance to camera
       const dist = camera.position.distanceTo(new THREE.Vector3(...position))
       setDistanceToCamera(dist)
+      
+      // Debug: Log Alice's actual rendered position during takeoff
+      if (person.name === 'Alice Johnson' && journeyPhase === 'takeoff' && isTarget) {
+        const worldPos = new THREE.Vector3()
+        groupRef.current.getWorldPosition(worldPos)
+        if (Math.random() < 0.1) { // Only log 10% of frames to avoid spam
+          console.log('🎯 Alice world position:', worldPos.toArray().map(n => n.toFixed(1)), 'camera:', camera.position.toArray().map(n => n.toFixed(1)))
+        }
+      }
 
       // Billboard - always face camera
       if (isTarget) {
@@ -186,15 +196,15 @@ export default function Star({
   // Calculate opacity based on distance for depth perception
   let groupOpacity = 1.0
   if (isTarget) {
-    // During takeoff: gradually fade based on distance as we pull back
+    // During takeoff: gradually fade as camera zooms away
     if (journeyPhase === 'takeoff') {
-      // Start at full opacity, fade as distance increases
+      // Fade from 1.0 to 0.6 based on distance as we pull back
       const fadeStart = 10 // Start fading after 10 units
       const fadeEnd = 35 // Faded at 35 units (matches pullback)
       if (distanceToCamera < fadeStart) {
         groupOpacity = 1.0
       } else if (distanceToCamera > fadeEnd) {
-        groupOpacity = 0.6 // Keep brighter at end of takeoff
+        groupOpacity = 0.6 // End opacity after takeoff
       } else {
         // Gradual fade from 1.0 to 0.6
         const fadeProgress =
@@ -252,19 +262,33 @@ export default function Star({
           groupOpacity = 0.7
         }
       }
+    } else if (placement && journeyPhase === 'takeoff') {
+      // SPECIAL CASE: Placed star during takeoff phase
+      // This star was just placed and we're backing away from it
+      // Use distance-based fade (same as target star takeoff logic)
+      const fadeStart = 10
+      const fadeEnd = 35
+      if (distanceToCamera < fadeStart) {
+        groupOpacity = 1.0
+      } else if (distanceToCamera > fadeEnd) {
+        groupOpacity = 0.6
+      } else {
+        const fadeProgress = (distanceToCamera - fadeStart) / (fadeEnd - fadeStart)
+        groupOpacity = 1.0 - fadeProgress * 0.4
+      }
+    } else if (placement) {
+      // Placed/charted stars: keep at fade-end opacity (matches takeoff end)
+      groupOpacity = 0.6
     } else if (isFlying) {
-      // During flight: keep constellation bright until camera gets close to ANY star
-      // Use actual distance to camera for each star
-
+      // Unplaced stars during flight: distance-based visibility
       if (distanceToCamera > 80) {
-        // Still far from all stars: keep bright like intro
+        // Unplaced stars far away: keep bright like intro
         groupOpacity = 0.9 + distanceFactor * 0.1
       } else if (distanceToCamera < 40) {
-        // Recently was target (just transitioned from takeoff): keep brighter for visibility
-        // This prevents jump and keeps star visible as it moves out of view
-        groupOpacity = 0.6 // Brighter than takeoff end for better visibility
-      } else if (distanceToCamera > 40) {
-        // Getting farther: gradually dim (transition from 80 to 40)
+        // Unplaced stars nearby: moderate visibility
+        groupOpacity = 0.6
+      } else {
+        // Unplaced stars mid-range: gradually dim (transition from 80 to 40)
         const transitionFactor = (distanceToCamera - 40) / 40
         const brightOpacity = 0.9 + distanceFactor * 0.1
         const dimOpacity = 0.3
@@ -272,20 +296,23 @@ export default function Star({
           dimOpacity + (brightOpacity - dimOpacity) * transitionFactor
       }
     } else {
-      // Other phases: dimmer to focus on target (0.15 to 0.7)
+      // Unplaced stars in other phases: dimmer to focus on target (0.15 to 0.7)
       groupOpacity = 0.15 + distanceFactor * 0.55
     }
 
-    // Boost opacity during transition to image
-    if (transitionProgress > 0) {
+    // Boost opacity during transition to image (only for unplaced stars)
+    if (transitionProgress > 0 && !placement) {
       groupOpacity = Math.max(groupOpacity, 0.2 + transitionProgress * 0.5) // 0.2 to 0.7
     }
 
-    // Dim further when arrived/approaching/placed to focus on target
+    // Dim unplaced stars when arrived/approaching/placed/takeoff to focus on target
+    // But keep placed/charted stars visible
     if (
-      journeyPhase === 'arrived' ||
-      journeyPhase === 'approaching' ||
-      journeyPhase === 'placed'
+      !placement &&
+      (journeyPhase === 'arrived' ||
+        journeyPhase === 'approaching' ||
+        journeyPhase === 'placed' ||
+        journeyPhase === 'takeoff')
     ) {
       groupOpacity *= 0.15 // Reduce to 15% to minimize distraction from target
     }
@@ -412,6 +439,26 @@ export default function Star({
   // 3. Uncharted stars: 0 (behind charted)
   const isCharted = placement !== undefined
   const renderOrder = isTarget ? 100 : isCharted ? 50 : 0
+
+  // Log Alice's state during key phases
+  const prevPhase = useRef<string>('')
+  useEffect(() => {
+    if (person.name === 'Alice Johnson' && journeyPhase !== prevPhase.current) {
+      prevPhase.current = journeyPhase || ''
+      console.log('🌟 Alice:', {
+        phase: journeyPhase,
+        isTarget,
+        placement,
+        groupOpacity: groupOpacity.toFixed(2),
+        starGlowOpacity: starGlowOpacity.toFixed(2),
+        transitionProgress: transitionProgress.toFixed(2),
+        baseSize: baseSize.toFixed(2),
+        distanceToCamera: distanceToCamera.toFixed(1),
+        renderOrder,
+        position: position.map(n => n.toFixed(1))
+      })
+    }
+  }, [person.name, placement, journeyPhase, groupOpacity, starGlowOpacity, isTarget, transitionProgress, baseSize, distanceToCamera, renderOrder, position])
 
   return (
     <group ref={groupRef} position={position}>

@@ -85,15 +85,20 @@ export default function StarField() {
     person: (typeof MOCK_PEOPLE)[0],
     circle: 'inner' | 'close' | 'outer',
   ) => {
+    console.log('🎯 PLACED:', person.name, 'as', circle)
+    
     // Update star data with placement (but don't generate constellation position yet)
     setStars((prevStars) => {
       const newStars = new Map(prevStars)
       const starData = newStars.get(person.id)!
-      newStars.set(person.id, {
+      
+      const updated = {
         ...starData,
         placement: circle,
         visited: true,
-      })
+      }
+      newStars.set(person.id, updated)
+      
       return newStars
     })
 
@@ -133,6 +138,9 @@ export default function StarField() {
   }
 
   const handleProceedAfterPlacement = () => {
+    const currentStar = MOCK_PEOPLE[targetStarIndex]
+    console.log('🚀 PROCEED from:', currentStar?.name, '(index', targetStarIndex, ')')
+    
     // Find next unvisited star in MOCK_PEOPLE order
     const nextUnvisitedIndex = MOCK_PEOPLE.findIndex((p) => {
       const starData = stars.get(p.id)!
@@ -142,12 +150,12 @@ export default function StarField() {
     if (nextUnvisitedIndex >= 0) {
       const nextPerson = MOCK_PEOPLE[nextUnvisitedIndex]
       const distance = Math.floor(Math.random() * 100) + 50
+      console.log('   → Next:', nextPerson.name, '(index', nextUnvisitedIndex, ')')
+      
       setNarratorMessage(
         `Next star: ${nextPerson.name}, currently ${distance} light years away.`,
       )
-      // Store current star's index as previous
       setPreviousStarIndex(targetStarIndex)
-      // Set next target
       setTargetStarIndex(nextUnvisitedIndex)
       setJourneyPhase('takeoff')
     } else {

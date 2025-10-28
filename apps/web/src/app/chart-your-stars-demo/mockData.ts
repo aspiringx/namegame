@@ -47,54 +47,54 @@ export const MOCK_PEOPLE: Person[] = [
     id: '7',
     name: 'Grace Wilson',
     photo:
-      '/uploads/user-photos/cmeq3j6u10002ihlvwvdlqvmh.1756071046858.small.webp',
+      '/uploads/user-photos/cmf1ohc130000ih8v2rv0zyit.1756767781507.small.webp',
   },
   {
     id: '8',
     name: 'Henry Moore',
     photo:
-      '/uploads/user-photos/cmeq3jqr70004ihlvvqwwt7kd.1756071078346.small.webp',
+      '/uploads/user-photos/cmf38lys60000ygbsiagl87us.1756862139772.small.webp',
   },
   {
     id: '9',
     name: 'Ivy Taylor',
     photo:
-      '/uploads/user-photos/cmeq3kbvr0006ihlvvxqxqxqx.1756071109346.small.webp',
+      '/uploads/user-photos/cmf4bgcuq0000ihvedptmog5d.1756924599827.small.webp',
   },
   {
     id: '10',
     name: 'Jack Anderson',
     photo:
-      '/uploads/user-photos/cmeq3kvvr0008ihlvvyqyqyqy.1756071140346.small.webp',
+      '/uploads/user-photos/cmf4cjck80001ihveagdtfgwj.1756929266277.small.webp',
   },
   {
     id: '11',
     name: 'Karen Thomas',
     photo:
-      '/uploads/user-photos/cmeq3lfvr000aihlvvzqzqzqz.1756071171346.small.webp',
+      '/uploads/user-photos/cmf4ec9be0002ihvexjjta64v.1756929696290.small.webp',
   },
   {
     id: '12',
     name: 'Leo Jackson',
     photo:
-      '/uploads/user-photos/cmeq3lvvr000cihlvv0q0q0q0.1756071202346.small.webp',
+      '/uploads/user-photos/cmf6yqezu000gihwhz2dx5uh6.1757277155522.small.webp',
   },
   {
     id: '13',
     name: 'Mia White',
     photo:
-      '/uploads/user-photos/cmeq3mfvr000eihlvv1q1q1q1.1756071233346.small.webp',
+      '/uploads/user-photos/cmf7l2cf80002ihoj1s8hp7ng.1757122034525.small.webp',
   },
   {
     id: '14',
     name: 'Noah Harris',
     photo:
-      '/uploads/user-photos/cmeq3mvvr000gihlvv2q2q2q2.1756071264346.small.webp',
+      '/uploads/user-photos/cmf9qeepp0000ih461yaqo00m.1757254714887.small.webp',
   },
   {
     id: '15',
     name: 'Olivia Martin',
     photo:
-      '/uploads/user-photos/cmeq3nfvr000iihlvv3q3q3q3.1756071295346.small.webp',
+      '/uploads/user-photos/cmfekp7a00000ih9k0xg8j22p.1757680626180.small.webp',
   },
 ]
