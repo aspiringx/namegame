@@ -316,7 +316,7 @@ export default function Star({
         journeyPhase === 'placed' ||
         journeyPhase === 'takeoff')
     ) {
-      groupOpacity *= 0.15 // Reduce to 15% to minimize distraction from target
+      groupOpacity *= 0.05 // Reduce to 5% to minimize distraction from target
     }
   }
 
@@ -380,6 +380,7 @@ export default function Star({
         }
       `,
       transparent: true,
+      depthTest: false,
     })
   }, [texture, groupOpacity, transitionProgress])
 
@@ -431,6 +432,7 @@ export default function Star({
         }
       `,
       transparent: true,
+      depthTest: false,
     })
   }, [starGlowOpacity])
 
@@ -460,6 +462,7 @@ export default function Star({
               color="#aaccff"
               transparent
               opacity={starGlowOpacity * 0.15}
+              depthTest={false}
             />
           </mesh>
         </>
@@ -475,6 +478,7 @@ export default function Star({
               color="#1a1a2e"
               transparent
               opacity={groupOpacity * transitionProgress}
+              depthTest={false}
             />
           </mesh>
 
@@ -501,6 +505,7 @@ export default function Star({
                 transitionProgress *
                 (isTarget ? 1.0 : hovered ? 0.9 : 0.7)
               }
+              depthTest={false}
             />
           </mesh>
 
@@ -512,6 +517,7 @@ export default function Star({
                 color="#00ffff"
                 transparent
                 opacity={groupOpacity * transitionProgress * 0.9}
+                depthTest={false}
               />
             </mesh>
           )}

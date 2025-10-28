@@ -1,100 +1,108 @@
-// Mock data for demo
-// Alice: '/uploads/user-photos/cmeg4p6r70002ihd1zt0im435.1757255300867.small.webp'
-// Bob: '/uploads/user-photos/cmeg4pewy0000ihkwmy8voxi9.1759609763448.small.webp'
-// Carol: '/uploads/user-photos/cmeg5liai0003ihzcqi2ppfwd.1755611564561.small.webp'
-// David: '/uploads/user-photos/cmeimf6010005ygjemuhgjxqn.1755612613185.small.webp'
+// Mock data for demo - 20 diverse people
+// Images location: apps/web/public/images/chart-your-stars-demo/profile-pics/
+// AI-generated faces from thispersondoesnotexist.com (copyright-free)
 
 import { Person } from './types'
 
 export const MOCK_PEOPLE: Person[] = [
   {
     id: '1',
-    name: 'Alice Johnson',
-    photo:
-      '/uploads/user-photos/cmeg4p6r70002ihd1zt0im435.1757255300867.small.webp',
+    name: 'Sophia Chen',
+    photo: '/images/chart-your-stars-demo/profile-pics/person-01-female.jpg',
   },
   {
     id: '2',
-    name: 'Bob Smith',
-    photo:
-      '/uploads/user-photos/cmeg4pewy0000ihkwmy8voxi9.1759609763448.small.webp',
+    name: 'Marcus Johnson',
+    photo: '/images/chart-your-stars-demo/profile-pics/person-02-male.jpg',
   },
   {
     id: '3',
-    name: 'Carol Williams',
-    photo:
-      '/uploads/user-photos/cmeg5liai0003ihzcqi2ppfwd.1755611564561.small.webp',
+    name: 'Aisha Patel',
+    photo: '/images/chart-your-stars-demo/profile-pics/person-03-female.jpg',
   },
   {
     id: '4',
-    name: 'David Brown',
-    photo:
-      '/uploads/user-photos/cmeimf6010005ygjemuhgjxqn.1755612613185.small.webp',
+    name: 'Liam O\'Brien',
+    photo: '/images/chart-your-stars-demo/profile-pics/person-04-male.jpg',
   },
   {
     id: '5',
-    name: 'Eve Davis',
-    photo:
-      '/uploads/user-photos/cmeimfkgh0007ygjez1dzqzra.1755612631924.small.webp',
+    name: 'Yuki Tanaka',
+    photo: '/images/chart-your-stars-demo/profile-pics/person-05-female.jpg',
   },
   {
     id: '6',
-    name: 'Frank Miller',
-    photo:
-      '/uploads/user-photos/cmeq3icdd0000ihlv51grw0u6.1756070999426.small.webp',
+    name: 'Diego Rodriguez',
+    photo: '/images/chart-your-stars-demo/profile-pics/person-06-male.jpg',
   },
   {
     id: '7',
-    name: 'Grace Wilson',
-    photo:
-      '/uploads/user-photos/cmf1ohc130000ih8v2rv0zyit.1756767781507.small.webp',
+    name: 'Amara Okafor',
+    photo: '/images/chart-your-stars-demo/profile-pics/person-07-female.jpg',
   },
   {
     id: '8',
-    name: 'Henry Moore',
-    photo:
-      '/uploads/user-photos/cmf38lys60000ygbsiagl87us.1756862139772.small.webp',
+    name: 'Ethan Williams',
+    photo: '/images/chart-your-stars-demo/profile-pics/person-08-male.jpg',
   },
   {
     id: '9',
-    name: 'Ivy Taylor',
-    photo:
-      '/uploads/user-photos/cmf4bgcuq0000ihvedptmog5d.1756924599827.small.webp',
+    name: 'Priya Sharma',
+    photo: '/images/chart-your-stars-demo/profile-pics/person-09-female.jpg',
   },
   {
     id: '10',
-    name: 'Jack Anderson',
-    photo:
-      '/uploads/user-photos/cmf4cjck80001ihveagdtfgwj.1756929266277.small.webp',
+    name: 'Noah Kim',
+    photo: '/images/chart-your-stars-demo/profile-pics/person-10-male.jpg',
   },
   {
     id: '11',
-    name: 'Karen Thomas',
-    photo:
-      '/uploads/user-photos/cmf4ec9be0002ihvexjjta64v.1756929696290.small.webp',
+    name: 'Isabella Santos',
+    photo: '/images/chart-your-stars-demo/profile-pics/person-11-female.jpg',
   },
   {
     id: '12',
-    name: 'Leo Jackson',
-    photo:
-      '/uploads/user-photos/cmf6yqezu000gihwhz2dx5uh6.1757277155522.small.webp',
+    name: 'James Anderson',
+    photo: '/images/chart-your-stars-demo/profile-pics/person-12-male.jpg',
   },
   {
     id: '13',
-    name: 'Mia White',
-    photo:
-      '/uploads/user-photos/cmf7l2cf80002ihoj1s8hp7ng.1757122034525.small.webp',
+    name: 'Fatima Al-Rashid',
+    photo: '/images/chart-your-stars-demo/profile-pics/person-13-female.jpg',
   },
   {
     id: '14',
-    name: 'Noah Harris',
-    photo:
-      '/uploads/user-photos/cmf9qeepp0000ih461yaqo00m.1757254714887.small.webp',
+    name: 'Oliver Zhang',
+    photo: '/images/chart-your-stars-demo/profile-pics/person-14-male.jpg',
   },
   {
     id: '15',
-    name: 'Olivia Martin',
-    photo:
-      '/uploads/user-photos/cmfekp7a00000ih9k0xg8j22p.1757680626180.small.webp',
+    name: 'Maya Thompson',
+    photo: '/images/chart-your-stars-demo/profile-pics/person-15-female.jpg',
+  },
+  {
+    id: '16',
+    name: 'Hassan Ibrahim',
+    photo: '/images/chart-your-stars-demo/profile-pics/person-16-male.jpg',
+  },
+  {
+    id: '17',
+    name: 'Emma Nguyen',
+    photo: '/images/chart-your-stars-demo/profile-pics/person-17-female.jpg',
+  },
+  {
+    id: '18',
+    name: 'Lucas Silva',
+    photo: '/images/chart-your-stars-demo/profile-pics/person-18-male.jpg',
+  },
+  {
+    id: '19',
+    name: 'Zara Khan',
+    photo: '/images/chart-your-stars-demo/profile-pics/person-19-female.jpg',
+  },
+  {
+    id: '20',
+    name: 'Alexander Petrov',
+    photo: '/images/chart-your-stars-demo/profile-pics/person-20-male.jpg',
   },
 ]

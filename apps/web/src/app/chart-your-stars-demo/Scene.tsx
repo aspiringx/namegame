@@ -756,14 +756,15 @@ export default function Scene({
         MOCK_PEOPLE.map((person, index) => {
           // Check if this star is the current target
           // During takeoff: show previous star as target (we're backing away from it)
-          // During flying/approaching/arrived/placed: show current target
+          // During flying/approaching/arrived/placed/complete: show current target
           const isTargetStar =
             (journeyPhase === 'takeoff' && index === previousStarIndex) ||
             (index === targetStarIndex &&
               (journeyPhase === 'flying' ||
                 journeyPhase === 'approaching' ||
                 journeyPhase === 'arrived' ||
-                journeyPhase === 'placed'))
+                journeyPhase === 'placed' ||
+                journeyPhase === 'complete'))
 
           const starData = stars.get(person.id)!
 

@@ -456,10 +456,24 @@ export default function StarField() {
                     : (() => {
                         const unplacedCount =
                           MOCK_PEOPLE.length - placements.size
-                        // Count unplaced stars up to and including current target
+                        
+                        // During 'placed' phase, find the next unvisited star for accurate count
+                        let countIndex = targetStarIndex
+                        if (journeyPhase === 'placed') {
+                          // Find next unvisited star
+                          const nextUnvisitedIndex = MOCK_PEOPLE.findIndex((p) => {
+                            const starData = stars.get(p.id)!
+                            return !starData.visited
+                          })
+                          if (nextUnvisitedIndex >= 0) {
+                            countIndex = nextUnvisitedIndex
+                          }
+                        }
+                        
+                        // Count unplaced stars up to and including the target/next star
                         const unplacedUpToCurrent = MOCK_PEOPLE.slice(
                           0,
-                          targetStarIndex + 1,
+                          countIndex + 1,
                         ).filter((p) => !placements.has(p.id)).length
                         return `Star ${unplacedUpToCurrent} of ${unplacedCount} remaining • ${placements.size} charted`
                       })()}
