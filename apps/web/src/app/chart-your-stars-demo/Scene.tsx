@@ -706,7 +706,7 @@ export default function Scene({
           const hudOffsetPx = hudCenterY - viewportCenterY
           
           // Visual correction to center star in HUD
-          const visualCorrectionPx = viewportHeight < 800 ? -65 : -30
+          const visualCorrectionPx = viewportHeight < 800 ? -65 : -65
           const fovRadians = (60 * Math.PI) / 180
           const starDistance = 5.5
           const worldHeightAtStarDistance = 2 * starDistance * Math.tan(fovRadians / 2)
@@ -751,39 +751,23 @@ export default function Scene({
         if (flightProgress.current >= 1) {
           isFlying.current = false
           
-          // Calculate HUD-adjusted lookAt point for mobile
-          const isMobile = viewportDimensions.width < 640
-          let finalLookAt = targetPos
+          // Apply visual correction to center star in HUD (same for all screen sizes)
+          const visualCorrectionPx = -65
+          const fovRadians = (60 * Math.PI) / 180
+          const starDistance = 5.5
+          const worldHeightAtStarDistance = 2 * starDistance * Math.tan(fovRadians / 2)
+          const pixelsToWorldUnits = worldHeightAtStarDistance / viewportDimensions.height
+          const yAdjustment = visualCorrectionPx * pixelsToWorldUnits
           
-          if (isMobile) {
-            const viewportHeight = viewportDimensions.height
-            const header = typeof window !== 'undefined' ? document.querySelector('h1')?.parentElement : null
-            const headerRect = header?.getBoundingClientRect()
-            const headerBottom = headerRect ? headerRect.bottom : 0
-            
-            const navPanel = typeof window !== 'undefined' ? document.getElementById('nav-panel') : null
-            const navPanelRect = navPanel?.getBoundingClientRect()
-            const navPanelTop = navPanelRect ? navPanelRect.top : viewportHeight
-            
-            const hudHeight = Math.min(300, viewportHeight * 0.35)
-            const navPanelHeight = viewportHeight - navPanelTop
-            const availableSpace = viewportHeight - headerBottom - navPanelHeight
-            const topPosition = headerBottom + (availableSpace - hudHeight) / 2
-            
-            const hudCenterY = topPosition + hudHeight / 2
-            const viewportCenterY = viewportHeight / 2
-            const hudOffsetPx = hudCenterY - viewportCenterY
-            
-            // Visual correction to center star in HUD
-            const visualCorrectionPx = viewportHeight < 800 ? -65 : -30
-            const fovRadians = (60 * Math.PI) / 180
-            const starDistance = 5.5
-            const worldHeightAtStarDistance = 2 * starDistance * Math.tan(fovRadians / 2)
-            const pixelsToWorldUnits = worldHeightAtStarDistance / viewportHeight
-            const yAdjustment = visualCorrectionPx * pixelsToWorldUnits
-            
-            finalLookAt = new THREE.Vector3(targetPos.x, targetPos.y + yAdjustment, targetPos.z)
-          }
+          console.log('📍 Camera LookAt Adjustment:', {
+            viewportHeight: viewportDimensions.height,
+            visualCorrectionPx,
+            yAdjustment,
+            targetPosY: targetPos.y,
+            finalY: targetPos.y + yAdjustment
+          })
+          
+          const finalLookAt = new THREE.Vector3(targetPos.x, targetPos.y + yAdjustment, targetPos.z)
           
           camera.lookAt(finalLookAt)
           camera.rotation.z = 0 // Reset roll
