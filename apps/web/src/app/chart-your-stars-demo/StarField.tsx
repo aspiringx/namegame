@@ -1,7 +1,7 @@
 'use client'
 
 // Chart Your Stars - 3D star field with 2D overlay
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { StarData, StarOverlay } from './types'
 import { MOCK_PEOPLE } from './mockData'
@@ -15,6 +15,21 @@ export default function StarField() {
 
   // Single source of truth: all star state keyed by person.id
   const [stars, setStars] = useState<Map<string, StarData>>(initializeStars)
+  
+  // Track viewport dimensions for precise positioning
+  const [viewportDimensions, setViewportDimensions] = useState({
+    width: typeof window !== 'undefined' ? window.innerWidth : 1024,
+    height: typeof window !== 'undefined' ? window.innerHeight : 768,
+  })
+  
+  // Track actual measured heights of header and nav panel
+  const [layoutMeasurements, setLayoutMeasurements] = useState({
+    headerHeight: 0,
+    navPanelHeight: 0,
+  })
+  
+  // Store initial nav panel height to prevent HUD jumping when text changes
+  const initialNavPanelHeight = useRef<number>(0)
 
   const [targetStarIndex, setTargetStarIndex] = useState(0)
   const [previousStarIndex, setPreviousStarIndex] = useState(-1)
@@ -38,6 +53,56 @@ export default function StarField() {
       .filter(([_, star]) => star.placement)
       .map(([id, star]) => [id, star.placement!]),
   )
+
+  // Track viewport dimensions and measure actual DOM elements
+  const measureLayout = useCallback(() => {
+      const width = window.innerWidth
+      const height = window.innerHeight
+      
+      setViewportDimensions({ width, height })
+      
+      // Measure actual header bottom position
+      const header = document.querySelector('h1')?.parentElement
+      const headerRect = header?.getBoundingClientRect()
+      const headerBottom = headerRect ? headerRect.bottom : 0
+      
+      // Measure where nav panel actually starts on screen
+      const navPanel = document.getElementById('nav-panel')
+      const navPanelRect = navPanel?.getBoundingClientRect()
+      const navPanelTop = navPanelRect ? navPanelRect.top : height
+      const currentNavPanelHeight = height - navPanelTop
+      
+      // Store initial nav panel height on first measurement
+      if (initialNavPanelHeight.current === 0 && currentNavPanelHeight > 0) {
+        initialNavPanelHeight.current = currentNavPanelHeight
+      }
+      
+      // Use initial height to prevent HUD jumping when nav panel text changes
+      const measurements = {
+        headerHeight: headerBottom,
+        navPanelHeight: initialNavPanelHeight.current || currentNavPanelHeight,
+      }
+      setLayoutMeasurements(measurements)
+  }, [])
+  
+  useEffect(() => {
+    // Measure on mount and resize
+    measureLayout()
+    window.addEventListener('resize', measureLayout)
+    
+    return () => {
+      window.removeEventListener('resize', measureLayout)
+    }
+  }, [measureLayout])
+  
+  // Remeasure when narrator message changes (nav panel appears/updates)
+  useEffect(() => {
+    if (narratorMessage) {
+      // Small delay to ensure nav panel is rendered
+      const timer = setTimeout(measureLayout, 50)
+      return () => clearTimeout(timer)
+    }
+  }, [narratorMessage, measureLayout])
 
   // Show message instantly (typing effect removed)
   useEffect(() => {
@@ -158,10 +223,10 @@ export default function StarField() {
   }
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+    <div style={{ position: 'relative', width: '100%', height: '100dvh' }}>
       <Canvas
         camera={{ position: [0, 0, 25], fov: 60 }}
-        style={{ width: '100%', height: '100%' }}
+        style={{ width: '100%', height: '100dvh' }}
       >
         <Scene
           stars={stars}
@@ -169,6 +234,7 @@ export default function StarField() {
           onUpdateOverlays={setOverlays}
           targetStarIndex={targetStarIndex}
           previousStarIndex={previousStarIndex}
+          viewportDimensions={viewportDimensions}
           onApproaching={(name: string) => {
             setNarratorMessage(`Approaching ${name}...`)
             setJourneyPhase('approaching')
@@ -202,92 +268,13 @@ export default function StarField() {
         />
       </Canvas>
 
-      {/* Spaceship HUD - Focus Rectangle with Corner Brackets */}
-      <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-        <div
-          className="relative"
-          style={{
-            width: 'min(900px, 80vw)',
-            height:
-              typeof window !== 'undefined' && window.innerWidth < 640
-                ? 'min(300px, 35vh)' // Smaller on mobile to avoid nav panel overlap
-                : 'min(600px, 50vh)', // Desktop size
-          }}
-        >
-          {/* Top-left corner */}
-          <div
-            className="absolute left-0 top-0"
-            style={{
-              width: '40px',
-              height: '40px',
-              borderTop: '2px solid #00ff88',
-              borderLeft: '2px solid #00ff88',
-              boxShadow: '0 0 8px rgba(0, 255, 136, 0.4)',
-            }}
-          />
-          {/* Top-right corner */}
-          <div
-            className="absolute right-0 top-0"
-            style={{
-              width: '40px',
-              height: '40px',
-              borderTop: '2px solid #00ff88',
-              borderRight: '2px solid #00ff88',
-              boxShadow: '0 0 8px rgba(0, 255, 136, 0.4)',
-            }}
-          />
-          {/* Bottom-left corner */}
-          <div
-            className="absolute bottom-0 left-0"
-            style={{
-              width: '40px',
-              height: '40px',
-              borderBottom: '2px solid #00ff88',
-              borderLeft: '2px solid #00ff88',
-              boxShadow: '0 0 8px rgba(0, 255, 136, 0.4)',
-            }}
-          />
-          {/* Bottom-right corner */}
-          <div
-            className="absolute bottom-0 right-0"
-            style={{
-              width: '40px',
-              height: '40px',
-              borderBottom: '2px solid #00ff88',
-              borderRight: '2px solid #00ff88',
-              boxShadow: '0 0 8px rgba(0, 255, 136, 0.4)',
-            }}
-          />
-
-          {/* Center crosshair */}
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-            <div
-              className="absolute"
-              style={{
-                width: '20px',
-                height: '2px',
-                backgroundColor: '#00ff88',
-                opacity: 0.1,
-                left: '-10px',
-              }}
-            />
-            <div
-              className="absolute"
-              style={{
-                width: '2px',
-                height: '20px',
-                backgroundColor: '#00ff88',
-                opacity: 0.1,
-                top: '-10px',
-              }}
-            />
-          </div>
-        </div>
-      </div>
-
       {/* Navigation System - Control Panel Style */}
       {narratorMessage && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-3xl px-2 sm:px-4">
+        <div
+          id="nav-panel"
+          className="fixed left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-3xl px-2 sm:px-4"
+          style={{ bottom: '1rem' }}
+        >
           <div className="relative overflow-hidden rounded-lg border-2 border-indigo-500/50 bg-gradient-to-b from-slate-900 to-slate-950 shadow-2xl">
             {/* Control panel accent lines */}
             <div className="absolute left-0 top-0 h-full w-1 bg-gradient-to-b from-indigo-500 via-cyan-400 to-indigo-500"></div>
@@ -456,20 +443,22 @@ export default function StarField() {
                     : (() => {
                         const unplacedCount =
                           MOCK_PEOPLE.length - placements.size
-                        
+
                         // During 'placed' phase, find the next unvisited star for accurate count
                         let countIndex = targetStarIndex
                         if (journeyPhase === 'placed') {
                           // Find next unvisited star
-                          const nextUnvisitedIndex = MOCK_PEOPLE.findIndex((p) => {
-                            const starData = stars.get(p.id)!
-                            return !starData.visited
-                          })
+                          const nextUnvisitedIndex = MOCK_PEOPLE.findIndex(
+                            (p) => {
+                              const starData = stars.get(p.id)!
+                              return !starData.visited
+                            },
+                          )
                           if (nextUnvisitedIndex >= 0) {
                             countIndex = nextUnvisitedIndex
                           }
                         }
-                        
+
                         // Count unplaced stars up to and including the target/next star
                         const unplacedUpToCurrent = MOCK_PEOPLE.slice(
                           0,
