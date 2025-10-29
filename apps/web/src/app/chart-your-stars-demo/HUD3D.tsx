@@ -6,6 +6,8 @@ export default function HUD3D() {
   const { camera, size } = useThree()
   const hudRef = useRef<THREE.Group>(null)
   const [yOffset, setYOffset] = useState(0)
+  const currentYOffset = useRef(0)
+  const initialNavPanelTop = useRef<number | null>(null)
   
   // Measure DOM elements to find vertical center between header and nav panel
   useEffect(() => {
@@ -16,7 +18,13 @@ export default function HUD3D() {
       
       const navPanel = document.getElementById('nav-panel')
       const navPanelRect = navPanel?.getBoundingClientRect()
-      const navPanelTop = navPanelRect ? navPanelRect.top : size.height
+      const currentNavPanelTop = navPanelRect ? navPanelRect.top : size.height
+      
+      // Lock to initial nav panel position to prevent jumping when content changes
+      if (initialNavPanelTop.current === null && navPanelRect) {
+        initialNavPanelTop.current = currentNavPanelTop
+      }
+      const navPanelTop = initialNavPanelTop.current ?? currentNavPanelTop
       
       // Calculate center of available space
       const availableSpace = navPanelTop - headerBottom
@@ -48,14 +56,17 @@ export default function HUD3D() {
     }
   }, [size.height])
   
-  // HUD stays fixed relative to camera with vertical offset
+  // HUD stays fixed relative to camera with smooth vertical offset transitions
   useFrame(() => {
     if (hudRef.current) {
+      // Smoothly interpolate to target Y offset (slower = smoother)
+      currentYOffset.current += (yOffset - currentYOffset.current) * 0.05
+      
       // Position HUD in front of camera
       hudRef.current.position.copy(camera.position)
       hudRef.current.quaternion.copy(camera.quaternion)
       hudRef.current.translateZ(-15) // 15 units in front of camera
-      hudRef.current.translateY(yOffset) // Adjust vertical position
+      hudRef.current.translateY(currentYOffset.current) // Adjust vertical position smoothly
     }
   })
   

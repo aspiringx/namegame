@@ -58,6 +58,7 @@ export default function Scene({
   const flightStartPos = useRef(new THREE.Vector3())
   const flightControlPoint = useRef(new THREE.Vector3())
   const isFlying = useRef(false)
+  const initialFlightDistance = useRef(0)
   const returnProgress = useRef(0)
   const returnStartPos = useRef(new THREE.Vector3())
 
@@ -570,6 +571,9 @@ export default function Scene({
         hasTriggeredArrival.current = false // Reset arrival trigger
         hasTriggeredApproaching.current = false // Reset approaching trigger
         flightStartPos.current.copy(camera.position)
+        
+        // Store initial distance for speed normalization
+        initialFlightDistance.current = currentDist
 
         // If NOT coming from takeoff, this is first flight from intro
         if (!cameFromTakeoff.current) {
@@ -610,9 +614,9 @@ export default function Scene({
         }
       }
 
-      // Check distance to trigger "approaching" message
+      // Check distance to trigger "approaching" message (earlier now)
       if (
-        currentDist < 15 &&
+        currentDist < 20 &&
         !hasTriggeredApproaching.current &&
         journeyPhase === 'flying'
       ) {
@@ -621,7 +625,7 @@ export default function Scene({
       }
 
       // Reset approaching trigger when moving to new star
-      if (journeyPhase === 'flying' && currentDist > 20) {
+      if (journeyPhase === 'flying' && currentDist > 25) {
         hasTriggeredApproaching.current = false
       }
 
@@ -632,21 +636,37 @@ export default function Scene({
           journeyPhase === 'approaching' ||
           journeyPhase === 'arrived')
       ) {
-        // Variable speed: fast at start, slow down when very close
-        // Slow down when distance < 20 (when very close to star)
-        const baseSpeed =
-          currentDist < 20
-            ? 0.008 // Faster final approach (was 0.003)
-            : currentDist < 40
-            ? 0.015 // Faster medium speed (was 0.006)
-            : 0.025 // Faster initial flight (was 0.012)
+        // Variable speed: different behavior for first flight vs subsequent flights
+        let baseSpeed
+        
+        if (initialFlightDistance.current > 40) {
+          // First flight from intro - start fast, slow down as photos become visible
+          baseSpeed =
+            currentDist < 15
+              ? 0.004 // Slow final approach
+              : currentDist < 25
+              ? 0.010 // Medium approach
+              : currentDist < 50
+              ? 0.020 // Fast when photos visible
+              : 0.040 // Very fast when far away
+        } else {
+          // Subsequent flights between stars - faster speeds
+          baseSpeed =
+            currentDist < 15
+              ? 0.006 // Final approach
+              : currentDist < 25
+              ? 0.015 // Approach speed
+              : currentDist < 40
+              ? 0.025 // Medium speed
+              : 0.035 // Fast initial flight
+        }
 
         flightProgress.current = Math.min(1, flightProgress.current + baseSpeed)
 
         // Auto-transition to 'arrived' when we get very close (only once)
-        // Relaxed conditions: distance < 15 OR progress > 0.95
+        // Trigger after "approaching" phase: distance < 8 OR progress > 0.98
         if (
-          (currentDist < 15 || flightProgress.current > 0.95) &&
+          (currentDist < 8 || flightProgress.current > 0.98) &&
           !hasTriggeredArrival.current
         ) {
           hasTriggeredArrival.current = true
@@ -682,47 +702,19 @@ export default function Scene({
             ? 2 * lookProgress * lookProgress
             : 1 - Math.pow(-2 * lookProgress + 2, 2) / 2
 
-        // Calculate final lookAt target (HUD-adjusted on mobile)
-        const isMobileView = viewportDimensions.width < 640
-        let finalTarget = targetPos
+        // Calculate final lookAt target with visual correction
+        // Apply correction for all screen sizes, gradually blend in during second half of flight
+        const visualCorrectionPx = -65
+        const fovRadians = (60 * Math.PI) / 180
+        const starDistance = 5.5
+        const worldHeightAtStarDistance = 2 * starDistance * Math.tan(fovRadians / 2)
+        const pixelsToWorldUnits = worldHeightAtStarDistance / viewportDimensions.height
+        const yAdjustment = visualCorrectionPx * pixelsToWorldUnits
         
-        if (isMobileView && t > 0.5) { // Start adjusting halfway through flight
-          const viewportHeight = viewportDimensions.height
-          const header = typeof window !== 'undefined' ? document.querySelector('h1')?.parentElement : null
-          const headerRect = header?.getBoundingClientRect()
-          const headerBottom = headerRect ? headerRect.bottom : 0
-          
-          const navPanel = typeof window !== 'undefined' ? document.getElementById('nav-panel') : null
-          const navPanelRect = navPanel?.getBoundingClientRect()
-          const navPanelTop = navPanelRect ? navPanelRect.top : viewportHeight
-          
-          const hudHeight = Math.min(300, viewportHeight * 0.35)
-          const navPanelHeight = viewportHeight - navPanelTop
-          const availableSpace = viewportHeight - headerBottom - navPanelHeight
-          const topPosition = headerBottom + (availableSpace - hudHeight) / 2
-          
-          const hudCenterY = topPosition + hudHeight / 2
-          const viewportCenterY = viewportHeight / 2
-          const hudOffsetPx = hudCenterY - viewportCenterY
-          
-          // Visual correction to center star in HUD
-          const visualCorrectionPx = viewportHeight < 800 ? -65 : -65
-          const fovRadians = (60 * Math.PI) / 180
-          const starDistance = 5.5
-          const worldHeightAtStarDistance = 2 * starDistance * Math.tan(fovRadians / 2)
-          const pixelsToWorldUnits = worldHeightAtStarDistance / viewportHeight
-          const yAdjustment = visualCorrectionPx * pixelsToWorldUnits
-          
-          console.log('📍 Camera LookAt Adjustment:', {
-            viewportHeight,
-            visualCorrectionPx,
-            yAdjustment,
-            targetPosY: targetPos.y,
-            finalY: targetPos.y + yAdjustment
-          })
-          
-          finalTarget = new THREE.Vector3(targetPos.x, targetPos.y + yAdjustment, targetPos.z)
-        }
+        // Gradually blend from actual position to adjusted position during second half
+        const adjustProgress = t > 0.5 ? (t - 0.5) / 0.5 : 0 // 0 at t=0.5, 1 at t=1
+        const adjustedY = targetPos.y + (yAdjustment * adjustProgress)
+        const finalTarget = new THREE.Vector3(targetPos.x, adjustedY, targetPos.z)
         
         // Gradually transition look direction
         if (cameFromTakeoff.current) {
@@ -758,14 +750,6 @@ export default function Scene({
           const worldHeightAtStarDistance = 2 * starDistance * Math.tan(fovRadians / 2)
           const pixelsToWorldUnits = worldHeightAtStarDistance / viewportDimensions.height
           const yAdjustment = visualCorrectionPx * pixelsToWorldUnits
-          
-          console.log('📍 Camera LookAt Adjustment:', {
-            viewportHeight: viewportDimensions.height,
-            visualCorrectionPx,
-            yAdjustment,
-            targetPosY: targetPos.y,
-            finalY: targetPos.y + yAdjustment
-          })
           
           const finalLookAt = new THREE.Vector3(targetPos.x, targetPos.y + yAdjustment, targetPos.z)
           
