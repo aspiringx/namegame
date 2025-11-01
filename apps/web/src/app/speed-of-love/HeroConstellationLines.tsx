@@ -1,11 +1,11 @@
 import { useRef, useMemo } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
+import { Line } from '@react-three/drei'
 
 interface HeroConstellationLinesProps {
   heroPosition: [number, number, number]
   starPositions: Float32Array
-  connectionsCount?: number
   color?: string
   opacity?: number
   fadeInDuration?: number
@@ -14,109 +14,142 @@ interface HeroConstellationLinesProps {
 export default function HeroConstellationLines({
   heroPosition,
   starPositions,
-  connectionsCount = 5,
   color = '#22d3ee',
   opacity = 0.6,
   fadeInDuration = 2500,
 }: HeroConstellationLinesProps) {
-  const lineRef = useRef<THREE.LineSegments>(null)
+  const groupRef = useRef<THREE.Group>(null)
   const startTime = useRef(Date.now())
   const currentOpacity = useRef(0)
 
-  // Connect ALL primary stars with straight lines
-  const geometry = useMemo(() => {
+  // Connect ALL primary stars - create line segments
+  const lineSegments = useMemo(() => {
     const heroPos = new THREE.Vector3(...heroPosition)
     const starCount = starPositions.length / 3
-    
+
     // Get all stars with their angles around hero star
     const starsWithAngles: { index: number; angle: number }[] = []
     for (let i = 0; i < starCount; i++) {
       const starPos = new THREE.Vector3(
         starPositions[i * 3],
         starPositions[i * 3 + 1],
-        starPositions[i * 3 + 2]
+        starPositions[i * 3 + 2],
       )
       const dx = starPos.x - heroPos.x
       const dy = starPos.y - heroPos.y
       const angle = Math.atan2(dy, dx)
-      
+
       starsWithAngles.push({ index: i, angle })
     }
-    
+
     // Sort by angle to create a ring around hero star
     starsWithAngles.sort((a, b) => a.angle - b.angle)
-    
-    // Create straight line segments connecting all stars in ring
-    const points: number[] = []
-    
+
+    // Create array of line segments (each segment is a pair of points)
+    const segments: Array<[THREE.Vector3, THREE.Vector3]> = []
+
+    // Ring connections
     starsWithAngles.forEach((star, idx) => {
       const nextIdx = (idx + 1) % starsWithAngles.length
       const nextStar = starsWithAngles[nextIdx]
-      
-      // Line from this star to next star
-      points.push(
-        starPositions[star.index * 3],
-        starPositions[star.index * 3 + 1],
-        starPositions[star.index * 3 + 2]
-      )
-      points.push(
-        starPositions[nextStar.index * 3],
-        starPositions[nextStar.index * 3 + 1],
-        starPositions[nextStar.index * 3 + 2]
-      )
+
+      segments.push([
+        new THREE.Vector3(
+          starPositions[star.index * 3],
+          starPositions[star.index * 3 + 1],
+          starPositions[star.index * 3 + 2],
+        ),
+        new THREE.Vector3(
+          starPositions[nextStar.index * 3],
+          starPositions[nextStar.index * 3 + 1],
+          starPositions[nextStar.index * 3 + 2],
+        ),
+      ])
     })
-    
-    // Connect hero star to 3-4 evenly spaced stars for grounding
+
+    // Hero star connections
     const heroConnections = Math.min(4, starsWithAngles.length)
     for (let i = 0; i < heroConnections; i++) {
-      // Evenly space connections around the ring
-      const starIdx = Math.floor(i * starsWithAngles.length / heroConnections)
+      const starIdx = Math.floor((i * starsWithAngles.length) / heroConnections)
       const star = starsWithAngles[starIdx]
-      points.push(...heroPosition)
-      points.push(
-        starPositions[star.index * 3],
-        starPositions[star.index * 3 + 1],
-        starPositions[star.index * 3 + 2]
-      )
+      segments.push([
+        new THREE.Vector3(...heroPosition),
+        new THREE.Vector3(
+          starPositions[star.index * 3],
+          starPositions[star.index * 3 + 1],
+          starPositions[star.index * 3 + 2],
+        ),
+      ])
     }
-    
-    const geom = new THREE.BufferGeometry()
-    geom.setAttribute('position', new THREE.BufferAttribute(new Float32Array(points), 3))
-    return geom
+
+    return segments
   }, [heroPosition, starPositions])
 
   // Fade in animation
   useFrame(() => {
-    if (!lineRef.current) return
+    if (!groupRef.current) return
 
     const elapsed = Date.now() - startTime.current
     const progress = Math.min(elapsed / fadeInDuration, 1)
-    
+
     // Ease-in-out for smooth fade
-    const eased = progress < 0.5
-      ? 2 * progress * progress
-      : 1 - Math.pow(-2 * progress + 2, 2) / 2
-    
+    const eased =
+      progress < 0.5
+        ? 2 * progress * progress
+        : 1 - Math.pow(-2 * progress + 2, 2) / 2
+
     const targetOpacity = opacity * eased
     currentOpacity.current = THREE.MathUtils.lerp(
       currentOpacity.current,
       targetOpacity,
-      0.1
+      0.1,
     )
-    
-    // Update line opacity
-    const material = lineRef.current.material as THREE.LineBasicMaterial
-    material.opacity = currentOpacity.current
+
+    // Update opacity on all line materials
+    // Each line segment has 2 meshes: glow (first) and main line (second)
+    let meshIndex = 0
+    groupRef.current.traverse((child) => {
+      if (child instanceof THREE.Mesh && child.material) {
+        const material = child.material as THREE.MeshBasicMaterial
+        // First mesh in each pair is glow (lower opacity), second is main line
+        const isGlow = meshIndex % 2 === 0
+        material.opacity = isGlow 
+          ? currentOpacity.current * 0.20 
+          : currentOpacity.current
+        material.needsUpdate = true
+        meshIndex++
+      }
+    })
   })
 
   return (
-    <lineSegments ref={lineRef} geometry={geometry} renderOrder={2}>
-      <lineBasicMaterial
-        color={color}
-        opacity={0}
-        transparent
-        depthWrite={false}
-      />
-    </lineSegments>
+    <group ref={groupRef}>
+      {lineSegments.map((points, idx) => (
+        <group key={idx}>
+          {/* Outer glow layer - very thick and very transparent */}
+          <Line
+            points={points}
+            color={color}
+            lineWidth={12}
+            transparent
+            opacity={0}
+            depthWrite={false}
+            depthTest={false}
+            renderOrder={997}
+          />
+          {/* Inner sharp line - thin and bright */}
+          <Line
+            points={points}
+            color={color}
+            lineWidth={1.5}
+            transparent
+            opacity={0}
+            depthWrite={false}
+            depthTest={false}
+            renderOrder={998}
+          />
+        </group>
+      ))}
+    </group>
   )
 }

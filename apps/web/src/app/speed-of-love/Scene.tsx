@@ -92,7 +92,6 @@ export default function Scene({ activeAnimations, currentScene }: SceneProps) {
         <HeroConstellationLines
           heroPosition={[0, 0, 0]}
           starPositions={primaryStarPositions}
-          connectionsCount={currentScene.connectionsCount || 5}
           color={currentScene.connectionLines?.color || '#22d3ee'}
           opacity={currentScene.connectionLines?.opacity || 0.6}
           fadeInDuration={currentScene.connectionLines?.fadeInDuration || 2500}
