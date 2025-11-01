@@ -26,17 +26,17 @@ export default function ChartYourStars() {
         <div className="flex items-start justify-between">
           <div>
             <h1 className="text-2xl font-bold text-white sm:text-3xl">
-              Chart Your Stars
+              Your Universe
             </h1>
             <p className="mt-1 text-sm text-gray-300 sm:text-base">
-              Explore your universe
+              At the speed of love
             </p>
           </div>
 
           {/* Auto-pilot status indicator (non-interactive) */}
-          <div className="flex items-center gap-2 rounded-lg bg-indigo-600/20 px-4 py-2 text-sm font-medium border border-indigo-500/30">
-            <span className="text-indigo-400">🚀</span>
-            <span className="text-indigo-300">Auto-Pilot</span>
+          <div className="flex items-center gap-2 text-sm font-mono">
+            <span className="text-indigo-400/60">🚀</span>
+            <span className="text-indigo-400/60 uppercase tracking-wider text-xs">Auto-Pilot</span>
           </div>
         </div>
       </div>

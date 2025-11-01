@@ -2,7 +2,7 @@
   {
     "scene": 1,
     "description": "Camera positioned far back (z=150) showing vast starfield. 2000+ tiny background stars create depth, 15 larger primary stars scattered prominently. Dark space background. Stars fade in slowly.",
-    "narration": "A vast universe unfolds—billions of glowing stars scattered across infinite space. Each one unique. Each one alive.",
+    "narration": "Billions of glowing stars are scattered across infinite space, your universe. Each one unique. Each one alive.",
     "sceneType": "cosmicView",
     "cameraPosition": [0, 0, 150],
     "cameraFOV": 50,
@@ -23,7 +23,7 @@
   {
     "scene": 2,
     "description": "Camera moves to z=40, focusing on one central bright star (you). 8-10 other stars visible at varying distances. FOV narrows to 40 for intimacy.",
-    "narration": "You are one of them—a bright star in this endless sky. Some stars flicker far away, while a few shine close, forming constellations of meaning—family, friends, relationships.",
+    "narration": "You are one of them -- a bright star in this endless sky. Some stars flicker far away, while a few shine close, forming constellations of meaning—family, friends, relationships.",
     "sceneType": "focusStar",
     "cameraPosition": [0, 0, 40],
     "cameraFOV": 40,

@@ -1,5 +1,5 @@
-import { useMemo } from 'react'
-import { useThree } from '@react-three/fiber'
+import { useMemo, useState, useEffect } from 'react'
+import { useThree, useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 
 interface PrimaryStarsProps {
@@ -96,6 +96,14 @@ export default function PrimaryStars({
     return texture
   }, [])
 
+  // Fade in animation
+  const [fadeOpacity, setFadeOpacity] = useState(0)
+  
+  useEffect(() => {
+    const timer = setTimeout(() => setFadeOpacity(opacity), 100)
+    return () => clearTimeout(timer)
+  }, [opacity])
+
   // Custom shader material to enable per-star size variation
   const shaderMaterial = useMemo(
     () =>
@@ -103,7 +111,7 @@ export default function PrimaryStars({
         uniforms: {
           baseSize: { value: size },
           map: { value: starTexture },
-          opacity: { value: opacity },
+          opacity: { value: fadeOpacity },
         },
         vertexShader: `
           attribute float size;
@@ -131,8 +139,19 @@ export default function PrimaryStars({
         transparent: true,
         depthWrite: false,
       }),
-    [size, starTexture, opacity]
+    [size, starTexture, fadeOpacity]
   )
+
+  // Smoothly animate opacity in shader
+  useFrame(() => {
+    if (shaderMaterial.uniforms.opacity.value < fadeOpacity) {
+      shaderMaterial.uniforms.opacity.value = THREE.MathUtils.lerp(
+        shaderMaterial.uniforms.opacity.value,
+        fadeOpacity,
+        0.05
+      )
+    }
+  })
 
   return <points geometry={geometry} material={shaderMaterial} />
 }

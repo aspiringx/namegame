@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 
@@ -75,12 +75,20 @@ export default function BackgroundStars({
     return geo
   }, [positions, starColors])
 
+  // Fade in animation
+  const [fadeOpacity, setFadeOpacity] = useState(0)
+  
+  useEffect(() => {
+    const timer = setTimeout(() => setFadeOpacity(opacity), 100)
+    return () => clearTimeout(timer)
+  }, [opacity])
+
   return (
     <points geometry={geometry}>
       <pointsMaterial
         size={size}
         transparent
-        opacity={opacity}
+        opacity={fadeOpacity}
         sizeAttenuation={false}
         depthWrite={false}
         vertexColors={true}
