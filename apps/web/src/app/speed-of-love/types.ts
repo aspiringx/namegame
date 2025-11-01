@@ -87,12 +87,18 @@ export interface Scene {
   }
   
   // Scene 3: constellationForm
+  twinkleEffect?: {
+    duration: number
+    starCount: number
+    intensity: number
+  }
   connectionLines?: {
     color: string
     opacity: number
     width: number
     animated: boolean
     drawSpeed?: number
+    fadeInDuration?: number
   }
   connectionsCount?: number
   

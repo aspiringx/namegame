@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { AnimationCommand, Scene as SceneData } from './types'
@@ -6,6 +6,7 @@ import { PerspectiveCamera } from '@react-three/drei'
 import BackgroundStars from './BackgroundStars'
 import PrimaryStars from './PrimaryStars'
 import CentralStar from './CentralStar'
+import HeroConstellationLines from './HeroConstellationLines'
 
 // The new, simplified props for the scene
 interface SceneProps {
@@ -16,6 +17,16 @@ interface SceneProps {
 export default function Scene({ activeAnimations, currentScene }: SceneProps) {
   const cameraRef = useRef<THREE.PerspectiveCamera>(null)
   const [otherStarsOpacity, setOtherStarsOpacity] = useState(1.0)
+  const [primaryStarPositions, setPrimaryStarPositions] = useState<Float32Array | null>(null)
+  const [twinklingEnabled, setTwinklingEnabled] = useState(false)
+
+  // Fade primary stars back to full brightness in Scene 3
+  useEffect(() => {
+    if (currentScene.sceneType === 'constellationForm') {
+      setOtherStarsOpacity(1.0)
+      setTwinklingEnabled(true) // Start twinkling in Scene 3
+    }
+  }, [currentScene.sceneType])
 
   // The animation loop is now clean and simple.
   // It only executes the commands passed down from StarField.
@@ -56,6 +67,7 @@ export default function Scene({ activeAnimations, currentScene }: SceneProps) {
         colors={[16777215, 16777215]}
         size={3.0}
         opacity={0.8 * otherStarsOpacity}
+        enableTwinkling={twinklingEnabled}
       />
       <PrimaryStars
         key="primary-stars"
@@ -63,14 +75,27 @@ export default function Scene({ activeAnimations, currentScene }: SceneProps) {
         count={15}
         size={8.0}
         opacity={otherStarsOpacity}
+        onPositionsReady={setPrimaryStarPositions}
       />
 
-      {/* Scene 2: Add central star */}
-      {currentScene.sceneType === 'focusStar' && (
+      {/* Scene 2 & 3: Keep hero star visible (don't re-animate in Scene 3) */}
+      {(currentScene.sceneType === 'focusStar' || currentScene.sceneType === 'constellationForm') && (
         <CentralStar
           brightness={currentScene.centralStar?.brightness || 1.5}
-          animationDuration={3000}
-          onProgressChange={setOtherStarsOpacity}
+          animationDuration={currentScene.sceneType === 'focusStar' ? 3000 : 0}
+          onProgressChange={currentScene.sceneType === 'focusStar' ? setOtherStarsOpacity : undefined}
+        />
+      )}
+
+      {/* Scene 3: Add constellation lines */}
+      {currentScene.sceneType === 'constellationForm' && primaryStarPositions && (
+        <HeroConstellationLines
+          heroPosition={[0, 0, 0]}
+          starPositions={primaryStarPositions}
+          connectionsCount={currentScene.connectionsCount || 5}
+          color={currentScene.connectionLines?.color || '#22d3ee'}
+          opacity={currentScene.connectionLines?.opacity || 0.6}
+          fadeInDuration={currentScene.connectionLines?.fadeInDuration || 2500}
         />
       )}
 

@@ -8,14 +8,16 @@ interface BackgroundStarsProps {
   colors?: number[]
   size?: number
   opacity?: number
+  enableTwinkling?: boolean
 }
 
 export default function BackgroundStars({
-  radius = 300,
-  count = 500,
+  radius = 500,
+  count = 2000,
   colors = [0x0a1128, 0x1a2a3a],
-  size = 1.0,
-  opacity = 0.5,
+  size = 1.5,
+  opacity = 0.8,
+  enableTwinkling = false,
 }: BackgroundStarsProps) {
   const { size: viewport } = useThree()
 
@@ -68,14 +70,47 @@ export default function BackgroundStars({
     return { positions: pos, starColors: cols }
   }, []) // Empty deps - generate once and never change
 
-  // Generate random phase offsets for twinkling
-  const twinklePhases = useMemo(() => {
-    const phases = new Float32Array(responsiveCount)
-    for (let i = 0; i < responsiveCount; i++) {
-      phases[i] = Math.random() * Math.PI * 2
+  // Generate random phase offsets and indices for twinkling stars
+  const twinkleData = useMemo(() => {
+    const twinkleCount = Math.floor(responsiveCount * 0.25) // 25% of stars twinkle
+    const indices: number[] = []
+    const phases: number[] = []
+    const baseBrightness: number[] = []
+    
+    // Pick random stars to twinkle
+    const usedIndices = new Set<number>()
+    while (indices.length < twinkleCount) {
+      const idx = Math.floor(Math.random() * responsiveCount)
+      if (!usedIndices.has(idx)) {
+        usedIndices.add(idx)
+        indices.push(idx)
+        phases.push(Math.random() * Math.PI * 2)
+        // Store original brightness
+        baseBrightness.push(starColors[idx * 3])
+      }
     }
-    return phases
-  }, [responsiveCount])
+    
+    return { indices, phases, baseBrightness }
+  }, [])
+
+  // Create circular texture for stars - keep center bright
+  const starTexture = useMemo(() => {
+    const canvas = document.createElement('canvas')
+    canvas.width = 32
+    canvas.height = 32
+    const ctx = canvas.getContext('2d')!
+    
+    const gradient = ctx.createRadialGradient(16, 16, 0, 16, 16, 16)
+    gradient.addColorStop(0, 'rgba(255,255,255,1)')
+    gradient.addColorStop(0.7, 'rgba(255,255,255,1)') // Keep bright longer
+    gradient.addColorStop(0.9, 'rgba(255,255,255,0.5)')
+    gradient.addColorStop(1, 'rgba(255,255,255,0)')
+    
+    ctx.fillStyle = gradient
+    ctx.fillRect(0, 0, 32, 32)
+    
+    return new THREE.CanvasTexture(canvas)
+  }, [])
 
   const geometry = useMemo(() => {
     const geo = new THREE.BufferGeometry()
@@ -100,8 +135,8 @@ export default function BackgroundStars({
     }
   }, [opacity])
 
-  // Smoothly animate opacity changes
-  useFrame(() => {
+  // Smoothly animate opacity changes and twinkling
+  useFrame(({ clock }) => {
     if (!materialRef.current) return
     
     // Lerp to target opacity
@@ -112,6 +147,32 @@ export default function BackgroundStars({
     )
     
     materialRef.current.opacity = currentOpacity.current
+    
+    // Apply twinkling effect if enabled
+    if (enableTwinkling && geometry.attributes.color) {
+      const time = clock.getElapsedTime()
+      const colorAttr = geometry.attributes.color
+      
+      // Debug: log once per second
+      if (Math.floor(time) !== Math.floor(time - 0.016)) {
+        console.log('Twinkling active:', twinkleData.indices.length, 'stars')
+      }
+      
+      twinkleData.indices.forEach((starIdx, i) => {
+        const phase = twinkleData.phases[i]
+        // Very dramatic twinkle: range from 0.1 to 3.5 (very bright at peak)
+        const twinkle = Math.sin(time * 2.5 + phase) * 1.7 + 1.8
+        
+        // Temporarily modify this star's brightness - make it much brighter
+        const baseIdx = starIdx * 3
+        const baseBrightness = twinkleData.baseBrightness[i]
+        colorAttr.array[baseIdx] = baseBrightness * twinkle
+        colorAttr.array[baseIdx + 1] = baseBrightness * twinkle
+        colorAttr.array[baseIdx + 2] = baseBrightness * twinkle
+      })
+      
+      colorAttr.needsUpdate = true
+    }
   })
 
   return (
@@ -119,6 +180,7 @@ export default function BackgroundStars({
       <pointsMaterial
         ref={materialRef}
         size={size}
+        map={starTexture}
         transparent
         opacity={0}
         sizeAttenuation={false}

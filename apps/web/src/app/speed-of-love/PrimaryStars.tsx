@@ -7,6 +7,7 @@ interface PrimaryStarsProps {
   count?: number
   size?: number
   opacity?: number
+  onPositionsReady?: (positions: Float32Array) => void
 }
 
 export default function PrimaryStars({
@@ -14,6 +15,7 @@ export default function PrimaryStars({
   count = 15,
   size = 4.0,
   opacity = 1.0,
+  onPositionsReady,
 }: PrimaryStarsProps) {
   const { size: viewport } = useThree()
 
@@ -70,6 +72,13 @@ export default function PrimaryStars({
     }
     return { positions: pos, colors: cols, sizes: starSizes }
   }, []) // Empty deps - generate once and never change
+
+  // Notify parent of star positions
+  useEffect(() => {
+    if (onPositionsReady) {
+      onPositionsReady(positions)
+    }
+  }, [positions, onPositionsReady])
 
   const geometry = useMemo(() => {
     const geo = new THREE.BufferGeometry()
