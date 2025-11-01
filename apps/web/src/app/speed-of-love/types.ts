@@ -65,6 +65,20 @@ export interface Scene {
   pulseIntensity?: number
   brightness?: number
   logoUrl?: string
+  primaryStars?: {
+    count: number
+    size: number
+    color: number
+    factor?: number
+    radius?: number
+  }
+  backgroundStars?: {
+    count: number
+    size: number
+    colors: number[]
+    radius?: number
+    opacity?: number
+  }
 }
 
 export type AnimationCommand = {

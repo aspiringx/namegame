@@ -1,11 +1,9 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Canvas } from '@react-three/fiber'
 import type { Scene } from './types'
-import { StarData, StarOverlay, AnimationCommand } from './types'
-import { MOCK_PEOPLE } from './mockData'
-import { initializeStars } from './starData'
+import { AnimationCommand } from './types'
 import SceneComponent from './Scene'
 import { loadScript } from './utils/loadScript'
 
@@ -24,40 +22,6 @@ export default function StarField() {
     [scenes, currentSceneIndex],
   )
 
-  // Star field state
-  const [journeyPhase, setJourneyPhase] = useState<
-    | 'intro'
-    | 'flying'
-    | 'approaching'
-    | 'arrived'
-    | 'placed'
-    | 'takeoff'
-    | 'complete'
-    | 'returning'
-  >('intro')
-
-  const [stars, setStars] = useState<Map<string, StarData>>(new Map())
-
-  useEffect(() => {
-    if (journeyPhase !== 'intro') {
-      setStars(initializeStars())
-    }
-  }, [journeyPhase])
-
-  const [_overlays, setOverlays] = useState<StarOverlay[]>([])
-
-  // Viewport dimensions
-  const [viewportDimensions, setViewportDimensions] = useState({
-    width: typeof window !== 'undefined' ? window.innerWidth : 1024,
-    height: typeof window !== 'undefined' ? window.innerHeight : 768,
-  })
-
-  const initialNavPanelHeight = useRef<number>(0)
-
-  const [_targetStarIndex, _setTargetStarIndex] = useState(0)
-  const [_previousStarIndex, _setPreviousStarIndex] = useState(-1)
-  const [_useConstellationPositions, _setUseConstellationPositions] =
-    useState(false)
 
   const [activeAnimations, setActiveAnimations] = useState<AnimationCommand[]>(
     [],
@@ -68,39 +32,7 @@ export default function StarField() {
     loadScript().then((data) => setScenes(data))
   }, [])
 
-  useEffect(() => {
-    if (scenes.length > 0 && currentSceneIndex === 1) {
-      setIsPlaying(true)
-      // Trigger initial animation
-      setActiveAnimations([
-        {
-          type: 'moveCamera',
-          params: { position: [0, 0, 50], fov: 60 },
-        },
-      ])
-    }
-  }, [scenes, currentSceneIndex])
 
-  // Viewport measurement
-  const measureLayout = useCallback(() => {
-    const width = window.innerWidth
-    const height = window.innerHeight
-    setViewportDimensions({ width, height })
-
-    const navPanel = document.getElementById('nav-panel')
-    const navPanelRect = navPanel?.getBoundingClientRect()
-    const currentNavPanelHeight = height - (navPanelRect?.top || height)
-
-    if (initialNavPanelHeight.current === 0 && currentNavPanelHeight > 0) {
-      initialNavPanelHeight.current = currentNavPanelHeight
-    }
-  }, [])
-
-  useEffect(() => {
-    measureLayout()
-    window.addEventListener('resize', measureLayout)
-    return () => window.removeEventListener('resize', measureLayout)
-  }, [measureLayout])
 
   useEffect(() => {
     if (!currentScene) return
@@ -135,28 +67,8 @@ export default function StarField() {
         style={{ width: '100%', height: '100dvh', background: '#00000a' }}
       >
         <SceneComponent
-          stars={journeyPhase === 'intro' ? new Map() : stars}
-          onUpdateStars={setStars}
-          onUpdateOverlays={setOverlays}
-          targetStarIndex={_targetStarIndex}
-          previousStarIndex={_previousStarIndex}
-          useConstellationPositions={_useConstellationPositions}
-          viewportDimensions={viewportDimensions}
-          journeyPhase={journeyPhase}
           currentScene={currentScene}
           activeAnimations={activeAnimations}
-          onAnimationsComplete={() => setIsPlaying(false)}
-          onApproaching={() => setJourneyPhase('approaching')}
-          onArrived={() => setJourneyPhase('arrived')}
-          onTakeoffComplete={() => setJourneyPhase('flying')}
-          onReturnComplete={() => {
-            const chartedCount = Array.from(stars.values()).filter(
-              (s) => s.placement,
-            ).length
-            setJourneyPhase(
-              chartedCount === MOCK_PEOPLE.length ? 'complete' : 'returning',
-            )
-          }}
         />
       </Canvas>
 
