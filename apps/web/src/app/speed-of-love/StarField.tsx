@@ -13,6 +13,7 @@ export default function StarField() {
   const [currentSceneIndex, setCurrentSceneIndex] = useState(1) // First scene is now index 1
   const [backgroundOpacity, setBackgroundOpacity] = useState(0)
   const [pulseNavPanel, setPulseNavPanel] = useState(false)
+  const [animationComplete, setAnimationComplete] = useState(true)
   const currentScene = useMemo(
     () =>
       scenes[currentSceneIndex - 1] || {
@@ -39,6 +40,14 @@ export default function StarField() {
   useEffect(() => {
     if (!currentScene) return
 
+    // Mark animation as incomplete when scene starts
+    setAnimationComplete(false)
+    
+    // Set animation complete after scene duration
+    const timer = setTimeout(() => {
+      setAnimationComplete(true)
+    }, currentScene.animationDuration || 0)
+
     const commands: AnimationCommand[] = []
 
     if (currentScene.cameraPosition && currentScene.cameraFOV) {
@@ -54,6 +63,12 @@ export default function StarField() {
     // Add other effect commands based on scene properties
     setActiveAnimations(commands)
 
+    return () => {
+      clearTimeout(timer)
+    }
+  }, [currentScene, currentSceneIndex])
+
+  useEffect(() => {
     // Trigger nav-panel pulse on scene change
     // Add 1.5s delay on first scene so user notices stars first
     const isFirstScene = currentSceneIndex === 1
@@ -146,11 +161,18 @@ export default function StarField() {
             <div className="mt-3">
               <button
                 onClick={() => {
-                  setCurrentSceneIndex((prev) =>
-                    Math.min(prev + 1, scenes.length),
-                  )
+                  if (animationComplete) {
+                    setCurrentSceneIndex((prev) =>
+                      Math.min(prev + 1, scenes.length),
+                    )
+                  }
                 }}
-                className="w-full rounded border border-cyan-400/50 bg-cyan-500/10 px-4 py-2 font-mono text-sm font-medium text-cyan-400 transition-colors hover:bg-cyan-500/20 hover:border-cyan-400"
+                disabled={!animationComplete}
+                className={`w-full rounded border px-4 py-2 font-mono text-sm font-medium transition-colors ${
+                  animationComplete
+                    ? 'border-cyan-400/50 bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 hover:border-cyan-400 cursor-pointer'
+                    : 'border-cyan-400/20 bg-cyan-500/5 text-cyan-400/40 cursor-not-allowed'
+                }`}
               >
                 → Proceed
               </button>

@@ -176,7 +176,7 @@ export default function BackgroundStars({
   })
 
   return (
-    <points geometry={geometry}>
+    <points geometry={geometry} renderOrder={0}>
       <pointsMaterial
         ref={materialRef}
         size={size}

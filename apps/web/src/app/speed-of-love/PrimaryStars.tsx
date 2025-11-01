@@ -19,11 +19,11 @@ export default function PrimaryStars({
 }: PrimaryStarsProps) {
   const { size: viewport } = useThree()
 
-  // Responsive star count: 4 min, 15 max based on viewport width
+  // Responsive star count: 6 min, 15 max based on viewport width
   const responsiveCount = useMemo(() => {
     const ratio = viewport.width / 2560 // 2560 is max desktop width
     const calculated = Math.round(ratio * count)
-    return Math.min(Math.max(calculated, 4), count)
+    return Math.min(Math.max(calculated, 6), count)
   }, [viewport.width, count])
 
   const { positions, colors, sizes } = useMemo(() => {
@@ -108,7 +108,7 @@ export default function PrimaryStars({
   // Smooth opacity animation
   const currentOpacity = useRef(0)
   const targetOpacity = useRef(opacity)
-  
+
   useEffect(() => {
     // Update target when prop changes
     targetOpacity.current = opacity
@@ -155,7 +155,7 @@ export default function PrimaryStars({
         transparent: true,
         depthWrite: false,
       }),
-    [size, starTexture]
+    [size, starTexture],
   )
 
   // Smoothly animate opacity in shader
@@ -164,11 +164,13 @@ export default function PrimaryStars({
     currentOpacity.current = THREE.MathUtils.lerp(
       currentOpacity.current,
       targetOpacity.current,
-      0.05
+      0.05,
     )
-    
+
     shaderMaterial.uniforms.opacity.value = currentOpacity.current
   })
 
-  return <points geometry={geometry} material={shaderMaterial} />
+  return (
+    <points geometry={geometry} material={shaderMaterial} renderOrder={3} />
+  )
 }

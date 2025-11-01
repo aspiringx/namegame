@@ -23,12 +23,12 @@ export default function HeroConstellationLines({
   const startTime = useRef(Date.now())
   const currentOpacity = useRef(0)
 
-  // Connect ALL primary stars sorted by angle to form complete ring
+  // Connect ALL primary stars with straight lines
   const geometry = useMemo(() => {
     const heroPos = new THREE.Vector3(...heroPosition)
     const starCount = starPositions.length / 3
     
-    // Get all stars with their angles around hero star (in XY plane)
+    // Get all stars with their angles around hero star
     const starsWithAngles: { index: number; angle: number }[] = []
     for (let i = 0; i < starCount; i++) {
       const starPos = new THREE.Vector3(
@@ -36,7 +36,6 @@ export default function HeroConstellationLines({
         starPositions[i * 3 + 1],
         starPositions[i * 3 + 2]
       )
-      // Calculate angle around hero star
       const dx = starPos.x - heroPos.x
       const dy = starPos.y - heroPos.y
       const angle = Math.atan2(dy, dx)
@@ -44,14 +43,13 @@ export default function HeroConstellationLines({
       starsWithAngles.push({ index: i, angle })
     }
     
-    // Sort by angle to create a ring going around the hero star
+    // Sort by angle to create a ring around hero star
     starsWithAngles.sort((a, b) => a.angle - b.angle)
     
-    // Create line segments connecting stars in angular order
+    // Create straight line segments connecting all stars in ring
     const points: number[] = []
     
     starsWithAngles.forEach((star, idx) => {
-      // Connect to next star in ring (wrap around at end)
       const nextIdx = (idx + 1) % starsWithAngles.length
       const nextStar = starsWithAngles[nextIdx]
       
@@ -68,9 +66,10 @@ export default function HeroConstellationLines({
       )
     })
     
-    // Connect hero star to nearest 3-4 stars for grounding
+    // Connect hero star to 3-4 evenly spaced stars for grounding
     const heroConnections = Math.min(4, starsWithAngles.length)
     for (let i = 0; i < heroConnections; i++) {
+      // Evenly space connections around the ring
       const starIdx = Math.floor(i * starsWithAngles.length / heroConnections)
       const star = starsWithAngles[starIdx]
       points.push(...heroPosition)
@@ -105,17 +104,17 @@ export default function HeroConstellationLines({
       0.1
     )
     
+    // Update line opacity
     const material = lineRef.current.material as THREE.LineBasicMaterial
     material.opacity = currentOpacity.current
   })
 
   return (
-    <lineSegments ref={lineRef} geometry={geometry} renderOrder={-1}>
+    <lineSegments ref={lineRef} geometry={geometry} renderOrder={2}>
       <lineBasicMaterial
         color={color}
         opacity={0}
         transparent
-        linewidth={1.5}
         depthWrite={false}
       />
     </lineSegments>
