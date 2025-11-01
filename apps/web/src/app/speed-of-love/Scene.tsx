@@ -2,8 +2,9 @@ import { useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { AnimationCommand, Scene as SceneData } from './types'
-import { PerspectiveCamera, Stars } from '@react-three/drei'
+import { PerspectiveCamera } from '@react-three/drei'
 import BackgroundStars from './BackgroundStars'
+import PrimaryStars from './PrimaryStars'
 
 // The new, simplified props for the scene
 interface SceneProps {
@@ -61,15 +62,11 @@ export default function Scene({ activeAnimations, currentScene }: SceneProps) {
               opacity={currentScene.backgroundStars?.opacity || 0.8}
             />
             {/* The primary stars for the cosmic view - no scaling wrapper */}
-            {(() => {
-              return null
-            })()}
-            <Stars
-              radius={currentScene.primaryStars?.radius || 200}
+            <PrimaryStars
+              radius={currentScene.primaryStars?.radius || 100}
               count={currentScene.primaryStars?.count || 15}
-              factor={currentScene.primaryStars?.factor || 6}
-              fade
-              speed={0}
+              size={8.0}
+              opacity={1.0}
             />
           </>
         )}
