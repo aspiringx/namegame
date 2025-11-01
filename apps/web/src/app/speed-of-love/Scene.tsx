@@ -1,7 +1,7 @@
 import { useRef, useState, useMemo, useEffect } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
-import { StarOverlay, StarData, JourneyPhase } from './types'
+import { StarOverlay, StarData, JourneyPhase, AnimationCommand } from './types'
 import { MOCK_PEOPLE } from './mockData'
 import { getStarRadius } from './starData'
 import Star from './Star'
@@ -9,6 +9,7 @@ import BackgroundStars from './BackgroundStars'
 import ShootingStar from './ShootingStar'
 import { ConstellationLines } from './ConstellationLines'
 import HUD3D from './HUD3D'
+import { PerspectiveCamera } from '@react-three/drei'
 
 interface SceneProps {
   stars: Map<string, StarData>
@@ -25,6 +26,8 @@ interface SceneProps {
   journeyPhase: JourneyPhase
   useConstellationPositions: boolean
   viewportDimensions: { width: number; height: number }
+  activeAnimations?: AnimationCommand[]
+  onAnimationsComplete?: () => void
 }
 
 export default function Scene({
@@ -40,6 +43,8 @@ export default function Scene({
   journeyPhase,
   useConstellationPositions,
   viewportDimensions,
+  activeAnimations,
+  onAnimationsComplete,
 }: SceneProps) {
   const { camera, size } = useThree()
   const [nearestStarId, setNearestStarId] = useState<string | null>(null)
@@ -61,6 +66,20 @@ export default function Scene({
   const initialFlightDistance = useRef(0)
   const returnProgress = useRef(0)
   const returnStartPos = useRef(new THREE.Vector3())
+  const cameraRef = useRef<THREE.PerspectiveCamera>(null)
+  const [currentAnimations, setCurrentAnimations] = useState<AnimationCommand[]>([])
+
+  useEffect(() => {
+    if (activeAnimations?.length) {
+      setCurrentAnimations(activeAnimations)
+    }
+  }, [activeAnimations])
+
+  useEffect(() => {
+    if (currentAnimations.length === 0 && onAnimationsComplete) {
+      onAnimationsComplete()
+    }
+  }, [currentAnimations, onAnimationsComplete])
 
   // Preload all textures before rendering any stars
   const textures = useMemo(() => {
@@ -814,6 +833,39 @@ export default function Scene({
     }
   })
 
+  useFrame(() => {
+    if (!cameraRef.current || !activeAnimations?.length) return
+    
+    const camera = cameraRef.current
+    
+    activeAnimations.forEach(anim => {
+      switch(anim.type) {
+        case 'moveCamera':
+          if (anim.params.position) {
+            camera.position.lerp(
+              new THREE.Vector3(...anim.params.position),
+              0.1
+            )
+          }
+          if (anim.params.fov !== undefined) {
+            camera.fov = THREE.MathUtils.lerp(camera.fov, anim.params.fov, 0.1)
+            camera.updateProjectionMatrix()
+          }
+          break
+        
+        case 'showConnections':
+          // Implementation for connection lines
+          break
+        
+        case 'dimStars':
+          // Implementation for dimming effect
+          break
+        
+        // Other animation types...
+      }
+    })
+  })
+
   return (
     <>
       {/* 3D HUD - follows camera */}
@@ -877,6 +929,14 @@ export default function Scene({
         })}
 
       {/* Flying controls removed - always auto-pilot */}
+      <PerspectiveCamera 
+        makeDefault 
+        ref={cameraRef}
+        position={[0, 0, 25]}
+        fov={60}
+        near={0.1}
+        far={1000}
+      />
     </>
   )
 }

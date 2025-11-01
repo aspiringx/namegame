@@ -48,3 +48,31 @@ export interface StarProps {
   texture: THREE.Texture
   journeyPhase?: JourneyPhase
 }
+
+// Scene data structure
+export interface Scene {
+  scene: number
+  description: string
+  narration: string
+  sceneType: string
+  cameraPosition?: [number, number, number]
+  cameraFOV?: number
+  animationDuration?: number
+  showConnections?: boolean
+  dimAmount?: number
+  pulseIntensity?: number
+  brightness?: number
+  logoUrl?: string
+}
+
+export type AnimationCommand = {
+  type:
+    | 'moveCamera'
+    | 'adjustFOV'
+    | 'starPulse'
+    | 'showLogo'
+    | 'showConnections'
+    | 'dimStars'
+    | 'pulseEffect'
+  params: Record<string, any>
+}
