@@ -5,11 +5,12 @@ import { StarOverlay, StarData, JourneyPhase, AnimationCommand } from './types'
 import { MOCK_PEOPLE } from './mockData'
 import { getStarRadius } from './starData'
 import Star from './Star'
-import BackgroundStars from './BackgroundStars'
 import ShootingStar from './ShootingStar'
 import { ConstellationLines } from './ConstellationLines'
 import HUD3D from './HUD3D'
 import { PerspectiveCamera } from '@react-three/drei'
+import { Stars } from '@react-three/drei'
+import BackgroundStars from './BackgroundStars'
 
 interface SceneProps {
   stars: Map<string, StarData>
@@ -28,6 +29,7 @@ interface SceneProps {
   viewportDimensions: { width: number; height: number }
   activeAnimations?: AnimationCommand[]
   onAnimationsComplete?: () => void
+  currentScene: any
 }
 
 export default function Scene({
@@ -45,6 +47,7 @@ export default function Scene({
   viewportDimensions,
   activeAnimations,
   onAnimationsComplete,
+  currentScene,
 }: SceneProps) {
   const { camera, size } = useThree()
   const [nearestStarId, setNearestStarId] = useState<string | null>(null)
@@ -67,7 +70,9 @@ export default function Scene({
   const returnProgress = useRef(0)
   const returnStartPos = useRef(new THREE.Vector3())
   const cameraRef = useRef<THREE.PerspectiveCamera>(null)
+  const primaryStarsRef = useRef<THREE.Group>(null)
   const [currentAnimations, setCurrentAnimations] = useState<AnimationCommand[]>([])
+  const meshRef = useRef<THREE.Mesh>(null)
 
   useEffect(() => {
     if (activeAnimations?.length) {
@@ -215,17 +220,14 @@ export default function Scene({
   // During constellation view: use constellationPosition if available
   const starPositions = useMemo(() => {
     const positions = MOCK_PEOPLE.map((person) => {
-      const starData = stars.get(person.id)!
-
-      // ONLY use constellation positions when explicitly in constellation view mode
+      const starData = stars.get(person.id)
+      if (!starData) return [0, 0, 0] as [number, number, number]
+      
       if (useConstellationPositions && starData.constellationPosition) {
         return starData.constellationPosition
       }
-
-      // During journey, always use initial position (never changes)
-      const pos =
-        starData.initialPosition || ([0, 0, 0] as [number, number, number])
-      return pos
+      
+      return starData.initialPosition || [0, 0, 0]
     })
     return positions
   }, [stars, useConstellationPositions])
@@ -861,6 +863,30 @@ export default function Scene({
           // Implementation for dimming effect
           break
         
+        case 'cosmicView': {
+          if (meshRef.current) {
+            const material = meshRef.current.material
+            if (Array.isArray(material)) {
+              material.forEach(mat => {
+                if ('opacity' in mat) {
+                  mat.opacity = THREE.MathUtils.lerp(
+                    mat.opacity,
+                    anim.params.opacity || 0.8,
+                    0.01
+                  )
+                }
+              })
+            } else if (material && 'opacity' in material) {
+              material.opacity = THREE.MathUtils.lerp(
+                material.opacity,
+                anim.params.opacity || 0.8,
+                0.01
+              )
+            }
+          }
+          break
+        }
+        
         // Other animation types...
       }
     })
@@ -878,7 +904,24 @@ export default function Scene({
       <pointLight position={[0, 0, 0]} intensity={1} />
 
       {/* Background stars */}
-      <BackgroundStars />
+      <BackgroundStars 
+        radius={currentScene.backgroundStars?.radius || 300}
+        count={currentScene.backgroundStars?.count || 500}
+        colors={currentScene.backgroundStars?.colors || [0x0a1128, 0x1a2a3a]}
+        size={currentScene.backgroundStars?.size || 1.0}
+        opacity={currentScene.backgroundStars?.opacity || 0.5}
+      />
+
+      {/* Primary stars (8 prominent ones) */}
+      <group scale={[currentScene.primaryStars?.size || 0.8, currentScene.primaryStars?.size || 0.8, currentScene.primaryStars?.size || 0.8]}>
+        <Stars
+          radius={currentScene.primaryStars?.radius || 100}
+          count={currentScene.primaryStars?.count || 8}
+          factor={currentScene.primaryStars?.factor || 2}
+          fade
+          speed={0}
+        />
+      </group>
 
       {/* Shooting stars - occasional cosmic magic */}
       <ShootingStar />
@@ -899,35 +942,19 @@ export default function Scene({
       )}
 
       {/* Person stars - only render when all textures loaded */}
-      {texturesLoaded &&
-        MOCK_PEOPLE.map((person, index) => {
-          // Check if this star is the current target
-          // During takeoff: show previous star as target (we're backing away from it)
-          // During flying/approaching/arrived/placed/complete: show current target
-          const isTargetStar =
-            (journeyPhase === 'takeoff' && index === previousStarIndex) ||
-            (index === targetStarIndex &&
-              (journeyPhase === 'flying' ||
-                journeyPhase === 'approaching' ||
-                journeyPhase === 'arrived' ||
-                journeyPhase === 'placed' ||
-                journeyPhase === 'complete'))
-
-          const starData = stars.get(person.id)!
-
-          return (
-            <Star
-              key={person.id}
-              person={person}
-              position={starPositions[index]}
-              isTarget={isTargetStar}
-              placement={starData.placement || undefined}
-              texture={textures.get(person.id)!}
-              journeyPhase={journeyPhase}
-            />
-          )
-        })}
-
+      {journeyPhase !== 'intro' && Array.from(stars.entries()).map(([id, star]) => (
+        <Star 
+          key={id}
+          id={id}
+          data={star}
+          position={starPositions[MOCK_PEOPLE.findIndex(person => person.id === id)]}
+          isTarget={id === MOCK_PEOPLE[targetStarIndex].id}
+          placement={star.placement || undefined}
+          texture={textures.get(id)!}
+          journeyPhase={journeyPhase}
+        />
+      ))}
+      
       {/* Flying controls removed - always auto-pilot */}
       <PerspectiveCamera 
         makeDefault 

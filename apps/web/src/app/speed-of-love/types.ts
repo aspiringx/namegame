@@ -1,6 +1,7 @@
 // Chart Your Stars - Type definitions
 
 import * as THREE from 'three'
+import { Dispatch, SetStateAction } from 'react'
 
 // Person data structure
 export interface Person {
@@ -41,12 +42,13 @@ export interface StarOverlay {
 
 // Star component props
 export interface StarProps {
-  person: Person
+  id: string
+  data: StarData
   position: [number, number, number]
   isTarget: boolean
   placement?: 'inner' | 'close' | 'outer'
   texture: THREE.Texture
-  journeyPhase?: JourneyPhase
+  journeyPhase: JourneyPhase
 }
 
 // Scene data structure
@@ -74,5 +76,13 @@ export type AnimationCommand = {
     | 'showConnections'
     | 'dimStars'
     | 'pulseEffect'
+    | 'cosmicView'
   params: Record<string, any>
+}
+
+export interface SceneProps {
+  stars: Map<string, StarData>
+  onUpdateStars: Dispatch<SetStateAction<Map<string, StarData>>>
+  onUpdateOverlays: Dispatch<SetStateAction<StarOverlay[]>>
+  currentScene: Scene
 }

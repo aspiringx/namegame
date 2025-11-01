@@ -4,9 +4,19 @@
     "description": "Wide view of the cosmos",
     "narration": "A vast universe unfolds—billions of glowing stars scattered across infinite space. Each one unique. Each one alive.",
     "sceneType": "cosmicView",
-    "cameraPosition": [0, 0, 50],
-    "cameraFOV": 60,
-    "animationDuration": 5000
+    "cameraPosition": [0, 0, 150],
+    "cameraFOV": 45,
+    "primaryStars": {
+      "count": 8,
+      "size": 0.8,
+      "color": 15790320
+    },
+    "backgroundStars": {
+      "count": 500,
+      "size": 0.5,
+      "colors": [657672, 1716018]
+    },
+    "animationDuration": 8000
   },
   {
     "scene": 2,

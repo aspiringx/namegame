@@ -25,16 +25,6 @@ export default function StarField() {
   )
 
   // Star field state
-  const [_overlays, setOverlays] = useState<StarOverlay[]>([])
-  const [stars, setStars] = useState<Map<string, StarData>>(initializeStars)
-
-  // Viewport dimensions
-  const [viewportDimensions, setViewportDimensions] = useState({
-    width: typeof window !== 'undefined' ? window.innerWidth : 1024,
-    height: typeof window !== 'undefined' ? window.innerHeight : 768,
-  })
-
-  const initialNavPanelHeight = useRef<number>(0)
   const [journeyPhase, setJourneyPhase] = useState<
     | 'intro'
     | 'flying'
@@ -45,6 +35,24 @@ export default function StarField() {
     | 'complete'
     | 'returning'
   >('intro')
+
+  const [stars, setStars] = useState<Map<string, StarData>>(new Map())
+
+  useEffect(() => {
+    if (journeyPhase !== 'intro') {
+      setStars(initializeStars())
+    }
+  }, [journeyPhase])
+
+  const [_overlays, setOverlays] = useState<StarOverlay[]>([])
+
+  // Viewport dimensions
+  const [viewportDimensions, setViewportDimensions] = useState({
+    width: typeof window !== 'undefined' ? window.innerWidth : 1024,
+    height: typeof window !== 'undefined' ? window.innerHeight : 768,
+  })
+
+  const initialNavPanelHeight = useRef<number>(0)
 
   const [_targetStarIndex, _setTargetStarIndex] = useState(0)
   const [_previousStarIndex, _setPreviousStarIndex] = useState(-1)
@@ -127,7 +135,7 @@ export default function StarField() {
         style={{ width: '100%', height: '100dvh' }}
       >
         <SceneComponent
-          stars={stars}
+          stars={journeyPhase === 'intro' ? new Map() : stars}
           onUpdateStars={setStars}
           onUpdateOverlays={setOverlays}
           targetStarIndex={_targetStarIndex}
@@ -135,6 +143,7 @@ export default function StarField() {
           useConstellationPositions={_useConstellationPositions}
           viewportDimensions={viewportDimensions}
           journeyPhase={journeyPhase}
+          currentScene={currentScene}
           activeAnimations={activeAnimations}
           onAnimationsComplete={() => setIsPlaying(false)}
           onApproaching={() => setJourneyPhase('approaching')}
