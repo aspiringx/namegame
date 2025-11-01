@@ -218,19 +218,22 @@ export default function Scene({
   // Get current positions from StarData
   // During journey: ALWAYS use initialPosition
   // During constellation view: use constellationPosition if available
-  const starPositions = useMemo(() => {
-    const positions = MOCK_PEOPLE.map((person) => {
+  const starPositions: [number, number, number][] = useMemo(() => {
+    if (journeyPhase === 'intro') {
+      return [] // Do not calculate positions during the intro
+    }
+    const positions = MOCK_PEOPLE.map((person): [number, number, number] => {
       const starData = stars.get(person.id)
-      if (!starData) return [0, 0, 0] as [number, number, number]
-      
+      if (!starData) return [0, 0, 0]
+
       if (useConstellationPositions && starData.constellationPosition) {
         return starData.constellationPosition
       }
-      
+
       return starData.initialPosition || [0, 0, 0]
     })
     return positions
-  }, [stars, useConstellationPositions])
+  }, [stars, useConstellationPositions, journeyPhase])
 
   // Stars are visited in MOCK_PEOPLE order, tracked by visitedIndices
 

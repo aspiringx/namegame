@@ -132,7 +132,7 @@ export default function StarField() {
     <div style={{ position: 'relative', width: '100%', height: '100dvh' }}>
       <Canvas
         camera={{ position: [0, 0, 25], fov: 60 }}
-        style={{ width: '100%', height: '100dvh' }}
+        style={{ width: '100%', height: '100dvh', background: '#00000a' }}
       >
         <SceneComponent
           stars={journeyPhase === 'intro' ? new Map() : stars}
