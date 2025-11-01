@@ -72,7 +72,7 @@ export default function BackgroundStars({
 
   // Generate random phase offsets and indices for twinkling stars
   const twinkleData = useMemo(() => {
-    const twinkleCount = Math.floor(responsiveCount * 0.25) // 25% of stars twinkle
+    const twinkleCount = Math.floor(responsiveCount * 0.40) // 40% of stars twinkle
     const indices: number[] = []
     const phases: number[] = []
     const baseBrightness: number[] = []
