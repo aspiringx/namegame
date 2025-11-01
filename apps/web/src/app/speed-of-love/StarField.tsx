@@ -22,17 +22,16 @@ export default function StarField() {
     [scenes, currentSceneIndex],
   )
 
-
   const [activeAnimations, setActiveAnimations] = useState<AnimationCommand[]>(
     [],
   )
 
   // Load script
   useEffect(() => {
-    loadScript().then((data) => setScenes(data))
+    loadScript().then((data) => {
+      setScenes(data)
+    })
   }, [])
-
-
 
   useEffect(() => {
     if (!currentScene) return

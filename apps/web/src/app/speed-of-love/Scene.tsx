@@ -2,7 +2,6 @@ import { useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { AnimationCommand, Scene as SceneData } from './types'
-import HUD3D from './HUD3D'
 import { PerspectiveCamera, Stars } from '@react-three/drei'
 import BackgroundStars from './BackgroundStars'
 
@@ -43,34 +42,37 @@ export default function Scene({ activeAnimations, currentScene }: SceneProps) {
 
   return (
     <>
-      <HUD3D />
       <ambientLight intensity={0.3} />
       <pointLight position={[0, 0, 0]} intensity={1} />
 
       {/* Conditionally render stars based on the sceneType from the JSON script */}
-      {currentScene.sceneType === 'cosmicView' && (
-        <>
-          <BackgroundStars
-            radius={currentScene.backgroundStars?.radius || 300}
-            count={currentScene.backgroundStars?.count || 500}
-            colors={
-              currentScene.backgroundStars?.colors || [0x0a1128, 0x1a2a3a]
-            }
-            size={currentScene.backgroundStars?.size || 0.5} 
-            opacity={currentScene.backgroundStars?.opacity || 0.8} 
-          />
-          {/* The primary stars for the cosmic view */}
-          <group scale={[0.8, 0.8, 0.8]}>
+      {currentScene.sceneType === 'cosmicView' &&
+        (() => {
+          return true
+        })() && (
+          <>
+            <BackgroundStars
+              radius={currentScene.backgroundStars?.radius || 500}
+              count={currentScene.backgroundStars?.count || 2000}
+              colors={
+                currentScene.backgroundStars?.colors || [0x0a1128, 0x1a2a3a]
+              }
+              size={currentScene.backgroundStars?.size || 1.5}
+              opacity={currentScene.backgroundStars?.opacity || 0.8}
+            />
+            {/* The primary stars for the cosmic view - no scaling wrapper */}
+            {(() => {
+              return null
+            })()}
             <Stars
-              radius={currentScene.primaryStars?.radius || 100}
-              count={currentScene.primaryStars?.count || 8}
-              factor={currentScene.primaryStars?.factor || 2}
+              radius={currentScene.primaryStars?.radius || 200}
+              count={currentScene.primaryStars?.count || 15}
+              factor={currentScene.primaryStars?.factor || 6}
               fade
               speed={0}
             />
-          </group>
-        </>
-      )}
+          </>
+        )}
 
       {/* Note: The data-driven <Star> components and <ConstellationLines>
           are no longer rendered by default. They will be added back
@@ -79,10 +81,10 @@ export default function Scene({ activeAnimations, currentScene }: SceneProps) {
       <PerspectiveCamera
         makeDefault
         ref={cameraRef}
-        position={[0, 0, 150]} // Default start position
-        fov={60}
+        position={currentScene.cameraPosition || [0, 0, 150]}
+        fov={currentScene.cameraFOV || 60}
         near={0.1}
-        far={1000}
+        far={2000}
       />
     </>
   )

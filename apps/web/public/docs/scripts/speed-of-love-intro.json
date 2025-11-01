@@ -1,86 +1,132 @@
 [
   {
     "scene": 1,
-    "description": "Wide view of the cosmos",
+    "description": "Camera positioned far back (z=150) showing vast starfield. 2000+ tiny background stars create depth, 15 larger primary stars scattered prominently. Dark space background. Stars fade in slowly.",
     "narration": "A vast universe unfolds—billions of glowing stars scattered across infinite space. Each one unique. Each one alive.",
     "sceneType": "cosmicView",
     "cameraPosition": [0, 0, 150],
-    "cameraFOV": 45,
+    "cameraFOV": 50,
     "primaryStars": {
-      "count": 8,
-      "size": 0.8,
-      "color": 15790320
+      "count": 15,
+      "radius": 100,
+      "factor": 6
     },
     "backgroundStars": {
-      "count": 500,
-      "size": 0.5,
-      "colors": [657672, 1716018]
+      "count": 2000,
+      "radius": 400,
+      "size": 3.0,
+      "opacity": 1.0,
+      "colors": [16777215, 16777215]
     },
     "animationDuration": 8000
   },
   {
     "scene": 2,
-    "description": "Camera slowly zooms toward a single star",
+    "description": "Camera moves to z=40, focusing on one central bright star (you). 8-10 other stars visible at varying distances. FOV narrows to 40 for intimacy.",
     "narration": "You are one of them—a bright star in this endless sky. Some stars flicker far away, while a few shine close, forming constellations of meaning—family, friends, relationships.",
     "sceneType": "focusStar",
-    "cameraPosition": [0, 0, 30],
-    "cameraFOV": 45,
-    "animationDuration": 5000
+    "cameraPosition": [0, 0, 40],
+    "cameraFOV": 40,
+    "centralStar": {
+      "position": [0, 0, 0],
+      "brightness": 1.5
+    },
+    "nearbyStars": {
+      "count": 10,
+      "minDistance": 15,
+      "maxDistance": 60
+    },
+    "animationDuration": 6000
   },
   {
     "scene": 3,
-    "description": "Stars cluster and connect with glowing lines, forming constellations",
+    "description": "Glowing cyan lines animate from central star to 4-5 nearby stars, forming constellation. Lines pulse gently.",
     "narration": "As you move through life, your orbit changes. New interests, new connections, new directions pull you into different patterns of light.",
     "sceneType": "constellationForm",
-    "showConnections": true,
+    "connectionLines": {
+      "color": "#00ffff",
+      "opacity": 0.5,
+      "width": 1.5,
+      "animated": true
+    },
+    "connectionsCount": 5,
     "animationDuration": 5000
   },
   {
     "scene": 4,
-    "description": "Stars drift apart gently; one glides into a new region of space",
+    "description": "Camera pulls back to z=50. 2-3 stars slowly drift outward. One star moves to new position. Connection lines fade.",
     "narration": "Sometimes you drift away from familiar stars. It's not loss—it's expansion. Your universe is growing.",
     "sceneType": "starDrift",
-    "cameraPosition": [0, -10, 35],
-    "cameraFOV": 50,
-    "animationDuration": 5000
+    "cameraPosition": [0, -5, 50],
+    "cameraFOV": 45,
+    "driftingStars": {
+      "count": 3,
+      "speed": 0.02,
+      "fadeConnections": true
+    },
+    "animationDuration": 6000
   },
   {
     "scene": 5,
-    "description": "Subtle waves or ripples move through the stars, altering their paths",
+    "description": "Wave effect ripples through starfield from left to right. Stars oscillate gently as wave passes. 2-3 waves total.",
     "narration": "Unseen forces shift your trajectory—chance meetings, unexpected moments, collisions that send you toward the unknown.",
     "sceneType": "ripples",
+    "waveEffect": {
+      "amplitude": 3,
+      "frequency": 0.5,
+      "speed": 0.8,
+      "waveCount": 3
+    },
     "animationDuration": 5000
   },
   {
     "scene": 6,
-    "description": "The screen dims slightly; a single star glows faintly, alone in the dark",
+    "description": "All stars except central one fade to 30% brightness. Central star dims to 50%. Ambient light reduces. Slow, melancholy transition.",
     "narration": "At times, your light feels dim, your signal quiet. Every star experiences this space of distance and reflection.",
     "sceneType": "dimStar",
-    "dimAmount": 0.3,
+    "centralStarBrightness": 0.5,
+    "otherStarsBrightness": 0.3,
+    "ambientDim": 0.4,
     "animationDuration": 5000
   },
   {
     "scene": 7,
-    "description": "A soft pulse of light; threads of light connect distant stars",
+    "description": "Central star pulses bright (2x). Pulse wave emanates outward. Connection lines rapidly draw to distant stars. Warm glow spreads.",
     "narration": "But you have a rare gift: you can travel at the speed of love. With a thought, a message, a moment—you reconnect.",
     "sceneType": "lovePulse",
-    "pulseIntensity": 2,
+    "pulseEffect": {
+      "intensity": 2,
+      "speed": 1.5,
+      "color": "#ffaa00"
+    },
+    "connectionLines": {
+      "drawSpeed": 0.3,
+      "color": "#ffaa00",
+      "opacity": 0.7
+    },
     "animationDuration": 5000
   },
   {
     "scene": 8,
-    "description": "Stars flare brighter as constellations reform; warmth and color return",
+    "description": "All stars flare to 150% brightness. Constellation lines glow bright. Warm color tint (#ffeecc) overlays scene. Quick, joyful transition.",
     "narration": "The gravity, warmth, and light of connection return—instantly.",
-    "sceneType": "constellationForm",
-    "brightness": 1.5,
-    "animationDuration": 5000
+    "sceneType": "constellationReform",
+    "starBrightness": 1.5,
+    "connectionBrightness": 1.8,
+    "colorTint": "#ffeecc",
+    "tintOpacity": 0.2,
+    "animationDuration": 3000
   },
   {
     "scene": 9,
-    "description": "The camera pulls back to reveal a glowing, connected network of stars forming the Relation Star logo",
+    "description": "Camera pulls back to z=200 over 3s. Constellation pattern morphs to form logo shape. Logo image fades in center at 80% opacity.",
     "narration": "Relation Star helps you explore, nurture, and navigate the constellations that make your world shine.",
     "sceneType": "logoReveal",
+    "cameraPosition": [0, 0, 200],
+    "cameraFOV": 60,
     "logoUrl": "/images/logos/relationstar_dark-400x268.png",
+    "logoOpacity": 0.8,
+    "logoFadeIn": 2000,
     "animationDuration": 5000
   }
 ]

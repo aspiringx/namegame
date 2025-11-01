@@ -60,17 +60,12 @@ export interface Scene {
   cameraPosition?: [number, number, number]
   cameraFOV?: number
   animationDuration?: number
-  showConnections?: boolean
-  dimAmount?: number
-  pulseIntensity?: number
-  brightness?: number
-  logoUrl?: string
+  
+  // Scene 1: cosmicView
   primaryStars?: {
     count: number
-    size: number
-    color: number
-    factor?: number
     radius?: number
+    factor?: number
   }
   backgroundStars?: {
     count: number
@@ -79,6 +74,65 @@ export interface Scene {
     radius?: number
     opacity?: number
   }
+  
+  // Scene 2: focusStar
+  centralStar?: {
+    position: [number, number, number]
+    brightness: number
+  }
+  nearbyStars?: {
+    count: number
+    minDistance: number
+    maxDistance: number
+  }
+  
+  // Scene 3: constellationForm
+  connectionLines?: {
+    color: string
+    opacity: number
+    width: number
+    animated: boolean
+    drawSpeed?: number
+  }
+  connectionsCount?: number
+  
+  // Scene 4: starDrift
+  driftingStars?: {
+    count: number
+    speed: number
+    fadeConnections: boolean
+  }
+  
+  // Scene 5: ripples
+  waveEffect?: {
+    amplitude: number
+    frequency: number
+    speed: number
+    waveCount: number
+  }
+  
+  // Scene 6: dimStar
+  centralStarBrightness?: number
+  otherStarsBrightness?: number
+  ambientDim?: number
+  
+  // Scene 7: lovePulse
+  pulseEffect?: {
+    intensity: number
+    speed: number
+    color: string
+  }
+  
+  // Scene 8: constellationReform
+  starBrightness?: number
+  connectionBrightness?: number
+  colorTint?: string
+  tintOpacity?: number
+  
+  // Scene 9: logoReveal
+  logoUrl?: string
+  logoOpacity?: number
+  logoFadeIn?: number
 }
 
 export type AnimationCommand = {
