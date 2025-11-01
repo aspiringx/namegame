@@ -22,11 +22,11 @@
   },
   {
     "scene": 2,
-    "description": "Camera moves to z=40, focusing on one central bright star (you). 8-10 other stars visible at varying distances. FOV narrows to 40 for intimacy.",
-    "narration": "You are one of them -- a bright star in this endless sky. Some stars flicker far away, while a few shine close, forming constellations of meaning—family, friends, relationships.",
+    "description": "Hero star appears at center of viewport among existing stars. Camera stays at z=150 so all Scene 1 stars remain in place.",
+    "narration": "You are one of them -- a bright star in this endless sky. Some stars flicker far away, while a few shine close, forming constellations of meaning: family, friends, relationships.",
     "sceneType": "focusStar",
-    "cameraPosition": [0, 0, 40],
-    "cameraFOV": 40,
+    "cameraPosition": [0, 0, 150],
+    "cameraFOV": 50,
     "centralStar": {
       "position": [0, 0, 0],
       "brightness": 1.5

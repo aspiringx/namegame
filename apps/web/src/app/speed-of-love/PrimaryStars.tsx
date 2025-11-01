@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react'
+import { useMemo, useEffect, useRef } from 'react'
 import { useThree, useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 
@@ -69,7 +69,7 @@ export default function PrimaryStars({
       }
     }
     return { positions: pos, colors: cols, sizes: starSizes }
-  }, [responsiveCount, radius, viewport.width, viewport.height])
+  }, []) // Empty deps - generate once and never change
 
   const geometry = useMemo(() => {
     const geo = new THREE.BufferGeometry()
@@ -96,12 +96,19 @@ export default function PrimaryStars({
     return texture
   }, [])
 
-  // Fade in animation
-  const [fadeOpacity, setFadeOpacity] = useState(0)
+  // Smooth opacity animation
+  const currentOpacity = useRef(0)
+  const targetOpacity = useRef(opacity)
   
   useEffect(() => {
-    const timer = setTimeout(() => setFadeOpacity(opacity), 100)
-    return () => clearTimeout(timer)
+    // Update target when prop changes
+    targetOpacity.current = opacity
+    // Initial fade in
+    if (currentOpacity.current === 0) {
+      setTimeout(() => {
+        targetOpacity.current = opacity
+      }, 100)
+    }
   }, [opacity])
 
   // Custom shader material to enable per-star size variation
@@ -111,7 +118,7 @@ export default function PrimaryStars({
         uniforms: {
           baseSize: { value: size },
           map: { value: starTexture },
-          opacity: { value: fadeOpacity },
+          opacity: { value: 0 },
         },
         vertexShader: `
           attribute float size;
@@ -139,18 +146,19 @@ export default function PrimaryStars({
         transparent: true,
         depthWrite: false,
       }),
-    [size, starTexture, fadeOpacity]
+    [size, starTexture]
   )
 
   // Smoothly animate opacity in shader
   useFrame(() => {
-    if (shaderMaterial.uniforms.opacity.value < fadeOpacity) {
-      shaderMaterial.uniforms.opacity.value = THREE.MathUtils.lerp(
-        shaderMaterial.uniforms.opacity.value,
-        fadeOpacity,
-        0.05
-      )
-    }
+    // Lerp to target opacity
+    currentOpacity.current = THREE.MathUtils.lerp(
+      currentOpacity.current,
+      targetOpacity.current,
+      0.05
+    )
+    
+    shaderMaterial.uniforms.opacity.value = currentOpacity.current
   })
 
   return <points geometry={geometry} material={shaderMaterial} />

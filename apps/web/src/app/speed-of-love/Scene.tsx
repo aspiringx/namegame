@@ -1,10 +1,11 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { AnimationCommand, Scene as SceneData } from './types'
 import { PerspectiveCamera } from '@react-three/drei'
 import BackgroundStars from './BackgroundStars'
 import PrimaryStars from './PrimaryStars'
+import CentralStar from './CentralStar'
 
 // The new, simplified props for the scene
 interface SceneProps {
@@ -14,6 +15,7 @@ interface SceneProps {
 
 export default function Scene({ activeAnimations, currentScene }: SceneProps) {
   const cameraRef = useRef<THREE.PerspectiveCamera>(null)
+  const [otherStarsOpacity, setOtherStarsOpacity] = useState(1.0)
 
   // The animation loop is now clean and simple.
   // It only executes the commands passed down from StarField.
@@ -46,30 +48,31 @@ export default function Scene({ activeAnimations, currentScene }: SceneProps) {
       <ambientLight intensity={0.3} />
       <pointLight position={[0, 0, 0]} intensity={1} />
 
-      {/* Conditionally render stars based on the sceneType from the JSON script */}
-      {currentScene.sceneType === 'cosmicView' &&
-        (() => {
-          return true
-        })() && (
-          <>
-            <BackgroundStars
-              radius={currentScene.backgroundStars?.radius || 500}
-              count={currentScene.backgroundStars?.count || 2000}
-              colors={
-                currentScene.backgroundStars?.colors || [0x0a1128, 0x1a2a3a]
-              }
-              size={currentScene.backgroundStars?.size || 1.5}
-              opacity={currentScene.backgroundStars?.opacity || 0.8}
-            />
-            {/* The primary stars for the cosmic view - no scaling wrapper */}
-            <PrimaryStars
-              radius={currentScene.primaryStars?.radius || 100}
-              count={currentScene.primaryStars?.count || 15}
-              size={8.0}
-              opacity={1.0}
-            />
-          </>
-        )}
+      {/* Always render background and primary stars, adjust opacity by scene */}
+      <BackgroundStars
+        key="background-stars"
+        radius={400}
+        count={2000}
+        colors={[16777215, 16777215]}
+        size={3.0}
+        opacity={0.8 * otherStarsOpacity}
+      />
+      <PrimaryStars
+        key="primary-stars"
+        radius={100}
+        count={15}
+        size={8.0}
+        opacity={otherStarsOpacity}
+      />
+
+      {/* Scene 2: Add central star */}
+      {currentScene.sceneType === 'focusStar' && (
+        <CentralStar
+          brightness={currentScene.centralStar?.brightness || 1.5}
+          animationDuration={3000}
+          onProgressChange={setOtherStarsOpacity}
+        />
+      )}
 
       {/* Note: The data-driven <Star> components and <ConstellationLines>
           are no longer rendered by default. They will be added back

@@ -1,5 +1,5 @@
-import { useMemo, useState, useEffect } from 'react'
-import { useThree } from '@react-three/fiber'
+import { useMemo, useEffect, useRef } from 'react'
+import { useThree, useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 
 interface BackgroundStarsProps {
@@ -66,7 +66,16 @@ export default function BackgroundStars({
       }
     }
     return { positions: pos, starColors: cols }
-  }, [responsiveCount, radius])
+  }, []) // Empty deps - generate once and never change
+
+  // Generate random phase offsets for twinkling
+  const twinklePhases = useMemo(() => {
+    const phases = new Float32Array(responsiveCount)
+    for (let i = 0; i < responsiveCount; i++) {
+      phases[i] = Math.random() * Math.PI * 2
+    }
+    return phases
+  }, [responsiveCount])
 
   const geometry = useMemo(() => {
     const geo = new THREE.BufferGeometry()
@@ -75,20 +84,43 @@ export default function BackgroundStars({
     return geo
   }, [positions, starColors])
 
-  // Fade in animation
-  const [fadeOpacity, setFadeOpacity] = useState(0)
+  // Smooth opacity animation
+  const currentOpacity = useRef(0)
+  const targetOpacity = useRef(opacity)
+  const materialRef = useRef<THREE.PointsMaterial>(null)
   
   useEffect(() => {
-    const timer = setTimeout(() => setFadeOpacity(opacity), 100)
-    return () => clearTimeout(timer)
+    // Update target when prop changes
+    targetOpacity.current = opacity
+    // Initial fade in
+    if (currentOpacity.current === 0) {
+      setTimeout(() => {
+        targetOpacity.current = opacity
+      }, 100)
+    }
   }, [opacity])
+
+  // Smoothly animate opacity changes
+  useFrame(() => {
+    if (!materialRef.current) return
+    
+    // Lerp to target opacity
+    currentOpacity.current = THREE.MathUtils.lerp(
+      currentOpacity.current,
+      targetOpacity.current,
+      0.05
+    )
+    
+    materialRef.current.opacity = currentOpacity.current
+  })
 
   return (
     <points geometry={geometry}>
       <pointsMaterial
+        ref={materialRef}
         size={size}
         transparent
-        opacity={fadeOpacity}
+        opacity={0}
         sizeAttenuation={false}
         depthWrite={false}
         vertexColors={true}
