@@ -13,11 +13,27 @@ import { getProject, types } from '@theatre/core'
 if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
   import('@theatre/studio').then(({ default: studio }) => {
     studio.initialize()
+    
+    // Add export button to window for easy access
+    ;(window as any).exportTheatreState = () => {
+      const state = studio.createContentOfSaveFile('Speed of Love')
+      const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'speed-of-love-theatre-state.json'
+      a.click()
+      console.log('Theatre.js state exported!')
+    }
+    console.log('💡 To export Theatre.js state, run: exportTheatreState()')
   })
 }
 
+// Import Theatre.js state (exported keyframes and animation data)
+import theatreState from '../../../public/docs/scripts/speed-of-love-theatre-state.json'
+
 // Create Theatre.js project (container for all timelines)
-const theatreProject = getProject('Speed of Love')
+const theatreProject = getProject('Speed of Love', { state: theatreState })
 
 // Create sheets and objects outside the component to avoid re-creation on re-renders
 const scene1Sheet = theatreProject.sheet('Scene 1')
@@ -64,6 +80,16 @@ export default function Scene({ activeAnimations, currentScene }: SceneProps) {
   const targetCameraZOffset = useRef(0)
   const travelDistance = useRef(0) // Track how far we've traveled for fade calculation
   const heroStarGroupRef = useRef<THREE.Group>(null)
+
+  // Theatre.js: Auto-play Scene 1 animation when it loads
+  useEffect(() => {
+    if (currentScene.scene === 1) {
+      // Wait for Theatre.js project to load before playing
+      theatreProject.ready.then(() => {
+        scene1Sheet.sequence.play({ range: [0, 2] })
+      })
+    }
+  }, [currentScene.scene])
 
   // Fade primary stars back to full brightness in Scene 3
   useEffect(() => {

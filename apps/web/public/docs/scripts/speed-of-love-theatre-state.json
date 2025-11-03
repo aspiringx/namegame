@@ -1,0 +1,63 @@
+{
+  "sheetsById": {
+    "Scene 1": {
+      "staticOverrides": {
+        "byObject": {
+          "Scene 1 Animation": {
+            "starsOpacity": 0
+          }
+        }
+      },
+      "sequence": {
+        "subUnitsPerUnit": 30,
+        "length": 10,
+        "type": "PositionalSequence",
+        "tracksByObject": {
+          "Scene 1 Animation": {
+            "trackData": {
+              "ASnwz1b_90": {
+                "type": "BasicKeyframedTrack",
+                "__debugName": "Scene 1 Animation:[\"starsOpacity\"]",
+                "keyframes": [
+                  {
+                    "id": "K7wzPwT63h",
+                    "position": 0,
+                    "connectedRight": true,
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
+                    "type": "bezier",
+                    "value": 0
+                  },
+                  {
+                    "id": "kh0q_65b4F",
+                    "position": 2,
+                    "connectedRight": true,
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
+                    "type": "bezier",
+                    "value": 1
+                  }
+                ]
+              }
+            },
+            "trackIdByPropPath": {
+              "[\"starsOpacity\"]": "ASnwz1b_90"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitionVersion": "0.4.0",
+  "revisionHistory": [
+    "31T_Gsovn5G5vWOL"
+  ]
+}
