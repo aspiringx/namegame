@@ -65,11 +65,18 @@ export interface Scene {
   primaryStars?: {
     count: number
     radius?: number
-    factor?: number
+    baseSize?: number
+  }
+  newPrimaryStars?: {
+    count: number
+    radius?: number
+    baseSize?: number
+    xOffset?: number
+    zOffset?: number
   }
   backgroundStars?: {
     count: number
-    size: number
+    baseSize: number
     colors: number[]
     radius?: number
     opacity?: number

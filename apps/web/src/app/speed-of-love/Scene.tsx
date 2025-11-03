@@ -332,9 +332,9 @@ export default function Scene({ activeAnimations, currentScene }: SceneProps) {
       {/* Background stars - Scene 1 uses Theatre.js, others use old approach */}
       <BackgroundStars
         key="background-stars"
-        radius={400}
-        count={2000}
-        size={3.0}
+        radius={currentScene.backgroundStars?.radius || 400}
+        count={currentScene.backgroundStars?.count || 2000}
+        size={currentScene.backgroundStars?.baseSize || 3.0}
         opacity={currentScene.scene === 1 ? 0.8 * theatreStarsOpacity : 0.8 * otherStarsOpacity}
         enableTwinkling={twinklingEnabled}
       />
@@ -343,9 +343,9 @@ export default function Scene({ activeAnimations, currentScene }: SceneProps) {
       {currentScene.scene === 1 && (
         <PrimaryStars
           key="primary-stars-1"
-          radius={100}
-          count={15}
-          size={8.0}
+          radius={currentScene.primaryStars?.radius || 100}
+          count={currentScene.primaryStars?.count || 15}
+          size={currentScene.primaryStars?.baseSize || 12.0}
           opacity={theatreStarsOpacity}
           onPositionsReady={setPrimaryStarPositions}
         />
@@ -355,9 +355,9 @@ export default function Scene({ activeAnimations, currentScene }: SceneProps) {
       {currentScene.scene === 2 && (
         <PrimaryStars
           key="primary-stars-1"
-          radius={100}
-          count={15}
-          size={8.0}
+          radius={currentScene.primaryStars?.radius || 100}
+          count={currentScene.primaryStars?.count || 15}
+          size={currentScene.primaryStars?.baseSize || 12.0}
           opacity={otherStarsOpacity}
           onPositionsReady={setPrimaryStarPositions}
         />
@@ -367,9 +367,9 @@ export default function Scene({ activeAnimations, currentScene }: SceneProps) {
       {currentScene.scene === 3 && (
         <PrimaryStars
           key="primary-stars-1"
-          radius={100}
-          count={15}
-          size={8.0}
+          radius={currentScene.primaryStars?.radius || 100}
+          count={currentScene.primaryStars?.count || 15}
+          size={currentScene.primaryStars?.baseSize || 12.0}
           opacity={theatrePrimaryStarsOpacity}
           onPositionsReady={setPrimaryStarPositions}
         />
@@ -426,11 +426,11 @@ export default function Scene({ activeAnimations, currentScene }: SceneProps) {
       {currentScene.scene === 4 && (
         <PrimaryStars
           key="primary-stars-2"
-          radius={100}
-          count={15}
-          size={8}
-          xOffset={150}
-          zOffset={0}
+          radius={currentScene.newPrimaryStars?.radius || 100}
+          count={currentScene.newPrimaryStars?.count || 15}
+          size={currentScene.newPrimaryStars?.baseSize || 12.0}
+          xOffset={currentScene.newPrimaryStars?.xOffset || 150}
+          zOffset={currentScene.newPrimaryStars?.zOffset || 0}
           opacity={theatreNewPrimaryStarsOpacity}
           onPositionsReady={(positions) => {
             newPrimaryStarPositionsRef.current = positions
@@ -443,9 +443,9 @@ export default function Scene({ activeAnimations, currentScene }: SceneProps) {
       {currentScene.scene === 4 && theatreOldPrimaryStarsOpacity > 0.05 && (
         <PrimaryStars
           key="old-primary-stars-scene4"
-          radius={100}
-          count={15}
-          size={8.0}
+          radius={currentScene.primaryStars?.radius || 100}
+          count={currentScene.primaryStars?.count || 15}
+          size={currentScene.primaryStars?.baseSize || 12.0}
           opacity={theatreOldPrimaryStarsOpacity}
           onPositionsReady={() => {}} // Don't update positions - keep the ones from Scene 3
         />

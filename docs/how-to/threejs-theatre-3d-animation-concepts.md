@@ -366,6 +366,145 @@ Scene 4 (one sheet with all phases on one timeline)
 - **Sheet** = Container for one scene's timeline and objects
 - **Sequence** = The playback controller (`sheet.sequence`)
 
+## Star Configuration Parameters
+
+Our star rendering system uses several configuration parameters that work together to control appearance and distribution. All values come from JSON configuration files (`speed-of-love-intro.json` and `speed-of-love-animation-config.json`).
+
+### Primary Configuration Parameters
+
+#### `count` (integer)
+**What it does:** Number of stars to render.
+
+**Example:** `"count": 15` creates 15 primary stars.
+
+**Usage:**
+- Primary stars: 15 (prominent, larger stars)
+- Background stars: 2000 (tiny, depth-creating stars)
+
+---
+
+#### `radius` (number, world units)
+**What it does:** Defines the spherical distribution volume for star placement.
+
+**How it works:** Stars are randomly positioned within a sphere of this radius centered at the origin (or offset position).
+
+**Example:** `"radius": 100` places stars within a 100-unit sphere.
+
+**Important:** This does NOT directly affect visual size, but affects **perceived size** because:
+- Larger radius = stars further from camera = appear smaller
+- Smaller radius = stars closer to camera = appear larger
+
+**Usage:**
+- Primary stars: `radius: 100` (closer, more prominent)
+- Background stars: `radius: 400` (distant, creates depth)
+
+**Camera relationship:** With camera at `z=150`, primary stars at `radius=100` are roughly 50-150 units away, while background stars at `radius=400` are 250-550 units away.
+
+---
+
+#### `baseSize` (number, screen pixels)
+**What it does:** Controls the base rendered size of star points on screen, before variation is applied.
+
+**How it works:** This is the base value for `gl_PointSize` in the shader. Each star gets a random size multiplier (0.8x to 1.4x) applied to this base, creating organic variation.
+
+**Formula:** `actualSize = baseSize × randomMultiplier(0.8 to 1.4)`
+
+**Example:** `"baseSize": 12.0` renders stars at:
+- **Minimum:** 9.6 pixels (12.0 × 0.8)
+- **Maximum:** 16.8 pixels (12.0 × 1.4)
+- **Average:** 13.2 pixels
+
+**Important:** This is in **screen pixels**, not world units. Stars maintain their pixel size regardless of distance from camera (unlike real 3D objects that get smaller with distance).
+
+**Usage:**
+- Primary stars: `baseSize: 12.0` → actual range 9.6-16.8px (prominent, easily visible)
+- Background stars: `baseSize: 3.0` → actual range 2.4-4.2px (subtle, depth layer)
+
+**Why pixel-based?** Using screen pixels ensures stars remain visible and don't become microscopic dots when far from camera. This is standard for particle systems.
+
+**Why variation?** The 0.8x-1.4x multiplier creates realistic, organic appearance - mimicking how real stars vary in brightness and apparent size.
+
+---
+
+#### `xOffset` / `zOffset` (number, world units)
+**What it does:** Shifts the entire star distribution sphere along X or Z axis.
+
+**Example:** `"xOffset": 150` moves all stars 150 units to the right.
+
+**Usage:** Scene 4 new stars use `xOffset: 150` to position them at the hero's destination, creating the "travel to new location" effect.
+
+---
+
+### Deprecated Parameters
+
+#### `factor` ❌ (REMOVED)
+**What it was:** An early design parameter intended to scale star sizes.
+
+**Why removed:** 
+- Redundant with `size` parameter
+- Unclear relationship to actual rendering
+- `size` directly maps to shader `gl_PointSize`, making it more explicit
+
+**Migration:** All `factor` values replaced with `size` in configuration files.
+
+---
+
+### How Parameters Work Together
+
+**Example: Primary Stars Configuration**
+```json
+"primaryStars": {
+  "count": 15,        // 15 stars total
+  "radius": 100,      // Distributed within 100-unit sphere
+  "baseSize": 12.0    // Base size before variation
+}
+```
+
+**Visual Result:**
+1. 15 stars are randomly positioned within a 100-unit sphere around origin
+2. Each star is 50-150 units from camera (at z=150)
+3. Each star gets random multiplier 0.8x-1.4x applied to baseSize
+4. **Actual rendered sizes:** 9.6-16.8 pixels (baseSize 12.0 × 0.8-1.4)
+5. Stars appear prominent, easily distinguishable, with realistic size variation
+
+**Example: Background Stars Configuration**
+```json
+"backgroundStars": {
+  "count": 2000,      // 2000 stars for depth
+  "radius": 400,      // Distributed within 400-unit sphere  
+  "baseSize": 3.0     // Base size before variation
+}
+```
+
+**Visual Result:**
+1. 2000 stars create a dense starfield
+2. Stars are 250-550 units from camera
+3. Each star gets random multiplier 0.8x-1.4x applied to baseSize
+4. **Actual rendered sizes:** 2.4-4.2 pixels (baseSize 3.0 × 0.8-1.4)
+5. Creates depth and cosmic atmosphere without overwhelming primary stars
+
+---
+
+### Design Rationale
+
+**Why separate primary and background stars?**
+- **Visual hierarchy:** Primary stars (baseSize 12px) are 4x larger than background (baseSize 3px)
+- **Size ranges don't overlap:** Primary 9.6-16.8px vs Background 2.4-4.2px
+- **Depth perception:** Different radii create foreground/background layers
+- **Performance:** Can optimize background stars separately (simpler shaders, no individual tracking)
+
+**Why pixel-based sizing?**
+- Ensures stars remain visible at all distances
+- Consistent with particle system conventions
+- Simpler than world-space sizing with distance attenuation
+
+**Why random size variation (0.8x-1.4x)?**
+- Creates organic, natural appearance
+- Prevents uniform "grid-like" feel
+- Mimics real stars of varying brightness/size
+
+---
+
 ## Resources
 
 - [Theatre.js Documentation](https://www.theatrejs.com/docs/latest/getting-started)

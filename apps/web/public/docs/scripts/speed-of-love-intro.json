@@ -9,12 +9,12 @@
     "primaryStars": {
       "count": 15,
       "radius": 100,
-      "factor": 6
+      "baseSize": 12.0
     },
     "backgroundStars": {
       "count": 2000,
       "radius": 400,
-      "size": 3.0,
+      "baseSize": 3.0,
       "opacity": 1.0,
       "colors": [16777215, 16777215]
     },
@@ -30,6 +30,16 @@
     "centralStar": {
       "position": [0, 0, 0],
       "brightness": 1.5
+    },
+    "primaryStars": {
+      "count": 15,
+      "radius": 100,
+      "baseSize": 12.0
+    },
+    "backgroundStars": {
+      "count": 2000,
+      "radius": 400,
+      "baseSize": 3.0
     },
     "animationDuration": 2500
   },
@@ -53,6 +63,16 @@
       "fadeInDuration": 1500
     },
     "connectionsCount": 5,
+    "primaryStars": {
+      "count": 15,
+      "radius": 100,
+      "baseSize": 12.0
+    },
+    "backgroundStars": {
+      "count": 2000,
+      "radius": 400,
+      "baseSize": 3.0
+    },
     "animationDuration": 2500
   },
   {
@@ -75,7 +95,19 @@
     "primaryStars": {
       "count": 15,
       "radius": 100,
-      "factor": 6
+      "baseSize": 12.0
+    },
+    "newPrimaryStars": {
+      "count": 15,
+      "radius": 100,
+      "baseSize": 12.0,
+      "xOffset": 150,
+      "zOffset": 0
+    },
+    "backgroundStars": {
+      "count": 2000,
+      "radius": 400,
+      "baseSize": 3.0
     },
     "connectionLines": {
       "color": "#22d3ee",
