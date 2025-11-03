@@ -7,6 +7,8 @@ interface PrimaryStarsProps {
   count?: number
   size?: number
   opacity?: number
+  xOffset?: number // Shift all stars by this amount on X axis
+  zOffset?: number // Shift all stars by this amount on Z axis
   onPositionsReady?: (positions: Float32Array) => void
 }
 
@@ -15,8 +17,11 @@ export default function PrimaryStars({
   count = 15,
   size = 4.0,
   opacity = 1.0,
+  xOffset = 0,
+  zOffset = 0,
   onPositionsReady,
 }: PrimaryStarsProps) {
+  // Load the size as `viewport`.
   const { size: viewport } = useThree()
 
   // Responsive star count: 6 min, 15 max based on viewport width
@@ -40,9 +45,9 @@ export default function PrimaryStars({
 
     for (let i = 0; i < responsiveCount; i++) {
       // Distribute stars across full visible viewport
-      pos[i * 3] = (Math.random() - 0.5) * frustumWidth // X: full width
+      pos[i * 3] = (Math.random() - 0.5) * frustumWidth + xOffset // X: full width + offset
       pos[i * 3 + 1] = (Math.random() - 0.5) * frustumHeight // Y: full height
-      pos[i * 3 + 2] = (Math.random() - 0.5) * radius * 0.4 // Z: depth variation around z=0
+      pos[i * 3 + 2] = (Math.random() - 0.5) * radius * 0.4 + 0 // zOffset // Z: depth variation + offset
 
       // Organic size variation (0.8x to 1.4x base size)
       const sizeMultiplier = 0.8 + Math.random() * 0.6
@@ -71,10 +76,22 @@ export default function PrimaryStars({
       }
     }
     return { positions: pos, colors: cols, sizes: starSizes }
-  }, []) // Empty deps - generate once and never change
+  }, [
+    responsiveCount,
+    xOffset,
+    zOffset,
+    radius,
+    viewport.width,
+    viewport.height,
+  ]) // Regenerate if these change
 
   // Notify parent of star positions
   useEffect(() => {
+    console.log(
+      'PrimaryStars useEffect: Calling onPositionsReady with',
+      positions.length,
+      'positions',
+    )
     if (onPositionsReady) {
       onPositionsReady(positions)
     }

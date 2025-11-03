@@ -12,7 +12,6 @@ export default function StarField() {
   const [scenes, setScenes] = useState<Scene[]>([])
   const [currentSceneIndex, setCurrentSceneIndex] = useState(1) // First scene is now index 1
   const [backgroundOpacity, setBackgroundOpacity] = useState(0)
-  const [pulseNavPanel, setPulseNavPanel] = useState(false)
   const [animationComplete, setAnimationComplete] = useState(true)
   const currentScene = useMemo(
     () =>
@@ -28,7 +27,7 @@ export default function StarField() {
     [],
   )
 
-  // Load script
+  // Load scene script once (no dependencies).
   useEffect(() => {
     loadScript().then((data) => {
       setScenes(data)
@@ -42,7 +41,7 @@ export default function StarField() {
 
     // Mark animation as incomplete when scene starts
     setAnimationComplete(false)
-    
+
     // Set animation complete after scene duration
     const timer = setTimeout(() => {
       setAnimationComplete(true)
@@ -68,21 +67,6 @@ export default function StarField() {
     }
   }, [currentScene, currentSceneIndex])
 
-  useEffect(() => {
-    // Trigger nav-panel pulse on scene change
-    // Add 1.5s delay on first scene so user notices stars first
-    const isFirstScene = currentSceneIndex === 1
-    const pulseDelay = isFirstScene ? 1500 : 0
-    
-    const startPulseTimer = setTimeout(() => {
-      setPulseNavPanel(true)
-      const endPulseTimer = setTimeout(() => setPulseNavPanel(false), 2000)
-      return () => clearTimeout(endPulseTimer)
-    }, pulseDelay)
-    
-    return () => clearTimeout(startPulseTimer)
-  }, [currentScene, currentSceneIndex])
-
   return (
     <div style={{ position: 'relative', width: '100%', height: '100dvh' }}>
       <style jsx>{`
@@ -96,20 +80,6 @@ export default function StarField() {
         }
         .animate-fade-in {
           animation: fade-in 0.4s ease-in-out;
-        }
-        @keyframes pulse-glow {
-          0% {
-            box-shadow: 0 0 5px rgba(34, 211, 238, 0.4), 0 0 10px rgba(34, 211, 238, 0.2);
-          }
-          50% {
-            box-shadow: 0 0 8px rgba(34, 211, 238, 0.6), 0 0 15px rgba(34, 211, 238, 0.3);
-          }
-          100% {
-            box-shadow: 0 0 5px rgba(34, 211, 238, 0.4), 0 0 10px rgba(34, 211, 238, 0.2);
-          }
-        }
-        .pulse-glow {
-          animation: pulse-glow 1.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
       `}</style>
       <Canvas
@@ -133,7 +103,9 @@ export default function StarField() {
         className="fixed left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-3xl px-2 sm:px-4"
         style={{ bottom: '1rem' }}
       >
-        <div className={`relative overflow-hidden rounded-lg border-2 border-indigo-500/50 bg-gradient-to-b from-slate-900 to-slate-950 shadow-2xl ${pulseNavPanel ? 'pulse-glow' : ''}`}>
+        <div
+          className={`relative overflow-hidden rounded-lg border-2 border-indigo-500/50 bg-gradient-to-b from-slate-900 to-slate-950 shadow-2xl`}
+        >
           {/* Control panel accent lines */}
           <div className="absolute left-0 top-0 h-full w-1 bg-gradient-to-b from-indigo-500 via-cyan-400 to-indigo-500"></div>
           <div className="absolute right-0 top-0 h-full w-1 bg-gradient-to-b from-indigo-500 via-cyan-400 to-indigo-500"></div>
@@ -143,7 +115,6 @@ export default function StarField() {
           {/* Content */}
           <div className="relative px-4 py-3 sm:px-6 sm:py-4 transition-all duration-300 ease-in-out">
             <div className="mb-1 flex items-center gap-2">
-              <div className="h-2 w-2 animate-pulse rounded-full bg-cyan-400"></div>
               <span className="text-xs font-mono uppercase tracking-wider text-cyan-400/70">
                 Navigation System
               </span>
@@ -161,11 +132,9 @@ export default function StarField() {
             <div className="mt-3">
               <button
                 onClick={() => {
-                  if (animationComplete) {
-                    setCurrentSceneIndex((prev) =>
-                      Math.min(prev + 1, scenes.length),
-                    )
-                  }
+                  setCurrentSceneIndex((prev) =>
+                    Math.min(prev + 1, scenes.length),
+                  )
                 }}
                 disabled={!animationComplete}
                 className={`w-full rounded border px-4 py-2 font-mono text-sm font-medium transition-colors ${

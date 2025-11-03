@@ -2,7 +2,7 @@
   {
     "scene": 1,
     "description": "Camera positioned far back (z=150) showing vast starfield. 2000+ tiny background stars create depth, 15 larger primary stars scattered prominently. Dark space background. Stars fade in slowly.",
-    "narration": "Billions of glowing stars are scattered across infinite space, your universe. Each one unique. Each one alive.",
+    "narration": "Your universe has billions of stars. Each is unique and alive.",
     "sceneType": "cosmicView",
     "cameraPosition": [0, 0, 150],
     "cameraFOV": 50,
@@ -18,12 +18,12 @@
       "opacity": 1.0,
       "colors": [16777215, 16777215]
     },
-    "animationDuration": 3000
+    "animationDuration": 2000
   },
   {
     "scene": 2,
     "description": "Hero star appears at center of viewport among existing stars. Camera stays at z=150 so all Scene 1 stars remain in place.",
-    "narration": "You are one of them -- a bright star in this endless sky.",
+    "narration": "You are one of them, a bright star in the vast expanse.",
     "sceneType": "focusStar",
     "cameraPosition": [0, 0, 150],
     "cameraFOV": 50,
@@ -31,12 +31,12 @@
       "position": [0, 0, 0],
       "brightness": 1.5
     },
-    "animationDuration": 3000
+    "animationDuration": 2500
   },
   {
     "scene": 3,
     "description": "Background stars twinkle for 3s, then primary stars fade back in and constellation lines appear around hero star.",
-    "narration": "Some stars twinkle in the distance, while a few shine close, forming constellations of meaning: family, friends, relationships.",
+    "narration": "Most stars twinkle distantly. A few shine close, forming constellations of meaning: family, friends, relationships.",
     "sceneType": "constellationForm",
     "cameraPosition": [0, 0, 150],
     "cameraFOV": 50,
@@ -50,41 +50,42 @@
       "opacity": 0.6,
       "width": 1.5,
       "animated": true,
-      "fadeInDuration": 2500
+      "fadeInDuration": 1500
     },
     "connectionsCount": 5,
-    "animationDuration": 6000
+    "animationDuration": 2500
   },
   {
     "scene": 4,
-    "description": "Glowing cyan lines animate from central star to 4-5 nearby stars, forming constellation. Lines pulse gently.",
-    "narration": "As you move through life, your orbit changes. New interests, new connections, new directions pull you into different patterns of light.",
+    "description": "Hero star travels through space. Old constellation fades, primary stars recede. Hero travels alone with twinkling background. New primary stars appear, then new constellation forms.",
+    "narration": "As you orbit, interests and opportunities pull you away from familiar places. You encounter new stars and form new constellations.",
     "sceneType": "orbitChange",
-    "connectionLines": {
-      "color": "#00ffff",
-      "opacity": 0.5,
-      "width": 1.5,
-      "animated": true
+    "cameraPosition": [0, 0, 150],
+    "cameraFOV": 50,
+    "phases": {
+      "fadeOutConstellation": 1500,
+      "travelDuration": 6000,
+      "arrivalPause": 1000,
+      "newConstellationFadeIn": 1000
     },
-    "connectionsCount": 5,
-    "animationDuration": 5000
-  },
-  {
-    "scene": 5,
-    "description": "Camera pulls back to z=50. 2-3 stars slowly drift outward. One star moves to new position. Connection lines fade.",
-    "narration": "Sometimes you drift away from familiar stars. It's not loss—it's expansion. Your universe is growing.",
-    "sceneType": "starDrift",
-    "cameraPosition": [0, -5, 50],
-    "cameraFOV": 45,
-    "driftingStars": {
-      "count": 3,
-      "speed": 0.02,
-      "fadeConnections": true
+    "centralStar": {
+      "position": [0, 0, 0],
+      "brightness": 1.5
+    },
+    "primaryStars": {
+      "count": 15,
+      "radius": 100,
+      "factor": 6
+    },
+    "connectionLines": {
+      "color": "#22d3ee",
+      "opacity": 0.6,
+      "fadeInDuration": 1500
     },
     "animationDuration": 6000
   },
   {
-    "scene": 6,
+    "scene": 5,
     "description": "Wave effect ripples through starfield from left to right. Stars oscillate gently as wave passes. 2-3 waves total.",
     "narration": "Unseen forces shift your trajectory—chance meetings, unexpected moments, collisions that send you toward the unknown.",
     "sceneType": "ripples",
@@ -97,7 +98,7 @@
     "animationDuration": 5000
   },
   {
-    "scene": 7,
+    "scene": 6,
     "description": "All stars except central one fade to 30% brightness. Central star dims to 50%. Ambient light reduces. Slow, melancholy transition.",
     "narration": "At times, your light feels dim, your signal quiet. Every star experiences this space of distance and reflection.",
     "sceneType": "dimStar",
@@ -107,7 +108,7 @@
     "animationDuration": 5000
   },
   {
-    "scene": 8,
+    "scene": 7,
     "description": "Central star pulses bright (2x). Pulse wave emanates outward. Connection lines rapidly draw to distant stars. Warm glow spreads.",
     "narration": "But you have a rare gift: you can travel at the speed of love. With a thought, a message, a moment—you reconnect.",
     "sceneType": "lovePulse",
@@ -124,7 +125,7 @@
     "animationDuration": 5000
   },
   {
-    "scene": 9,
+    "scene": 8,
     "description": "All stars flare to 150% brightness. Constellation lines glow bright. Warm color tint (#ffeecc) overlays scene. Quick, joyful transition.",
     "narration": "The gravity, warmth, and light of connection return—instantly.",
     "sceneType": "constellationReform",
@@ -135,7 +136,7 @@
     "animationDuration": 3000
   },
   {
-    "scene": 10,
+    "scene": 9,
     "description": "Camera pulls back to z=200 over 3s. Constellation pattern morphs to form logo shape. Logo image fades in center at 80% opacity.",
     "narration": "Relation Star helps you explore, nurture, and navigate the constellations that make your world shine.",
     "sceneType": "logoReveal",

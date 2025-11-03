@@ -1,14 +1,14 @@
 import { Metadata } from 'next'
-import ChartYourStars from './ChartYourStars'
+import SpeedOfLove from './SpeedOfLove'
 
 export const metadata: Metadata = {
-  title: 'Chart Your Stars Demo | RelationStar',
-  description: 'Explore your universe and chart your relationships',
+  title: 'RelationStar',
+  description: 'Your universe at the speed of love',
 }
 
 // Disable static generation for this page (client-side only with Three.js)
 export const dynamic = 'force-dynamic'
 
-export default function ChartYourStarsDemoPage() {
-  return <ChartYourStars />
+export default function SpeedOfLovePage() {
+  return <SpeedOfLove />
 }

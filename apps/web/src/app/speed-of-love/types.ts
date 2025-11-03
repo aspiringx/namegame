@@ -102,7 +102,15 @@ export interface Scene {
   }
   connectionsCount?: number
   
-  // Scene 4: starDrift
+  // Scene 4: orbitChange
+  phases?: {
+    fadeOutConstellation: number
+    travelDuration: number
+    arrivalPause: number
+    newConstellationFadeIn: number
+  }
+  
+  // Scene 5: starDrift
   driftingStars?: {
     count: number
     speed: number

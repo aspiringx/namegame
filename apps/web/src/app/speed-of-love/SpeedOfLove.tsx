@@ -16,7 +16,7 @@ const StarField = dynamic(() => import('./StarField'), {
   ),
 })
 
-export default function ChartYourStars() {
+export default function SpeedOfLove() {
   // Mode selection screen removed - always auto-pilot
 
   return (
@@ -36,7 +36,9 @@ export default function ChartYourStars() {
           {/* Auto-pilot status indicator (non-interactive) */}
           <div className="flex items-center gap-2 text-sm font-mono">
             <span className="text-indigo-400/60">🚀</span>
-            <span className="text-indigo-400/60 uppercase tracking-wider text-xs">Auto-Pilot</span>
+            <span className="text-indigo-400/60 uppercase tracking-wider text-xs">
+              Auto-Pilot
+            </span>
           </div>
         </div>
       </div>

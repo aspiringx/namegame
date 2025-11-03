@@ -1,0 +1,308 @@
+{
+  "version": "1.0.0",
+  "projectName": "Speed of Love",
+  "assets": [
+    {
+      "assetId": "orbit-change-timeline",
+      "assetName": "Orbit Change Animation",
+      "description": "Hero star travels through space, old constellation fades, new constellation forms",
+      "frameRate": 60,
+      "duration": 486,
+      "tracks": [
+        {
+          "trackType": "camera",
+          "trackName": "Main Camera",
+          "clips": [
+            {
+              "clipId": "camera-travel",
+              "startFrame": 6,
+              "duration": 366,
+              "position": [150, 0, 150],
+              "fov": 50,
+              "easing": "easeInOut"
+            }
+          ]
+        },
+        {
+          "trackType": "transform",
+          "trackName": "Hero Star Movement",
+          "targetBinding": "hero-star-group",
+          "clips": [
+            {
+              "clipId": "hero-travel",
+              "startFrame": 6,
+              "duration": 366,
+              "position": [150, 0, 0],
+              "easing": "easeInOut"
+            }
+          ]
+        },
+        {
+          "trackType": "opacity",
+          "trackName": "Old Constellation Fade",
+          "targetBinding": "old-constellation-lines",
+          "clips": [
+            {
+              "clipId": "old-constellation-fadeout",
+              "startFrame": 0,
+              "duration": 90,
+              "opacity": 0,
+              "easing": "easeOut"
+            }
+          ]
+        },
+        {
+          "trackType": "opacity",
+          "trackName": "Old Primary Stars Fade",
+          "targetBinding": "old-primary-stars",
+          "clips": [
+            {
+              "clipId": "old-stars-fadeout",
+              "startFrame": 6,
+              "duration": 366,
+              "opacity": 0,
+              "easing": "linear"
+            }
+          ]
+        },
+        {
+          "trackType": "opacity",
+          "trackName": "New Primary Stars Fade In",
+          "targetBinding": "new-primary-stars",
+          "clips": [
+            {
+              "clipId": "new-stars-fadein",
+              "startFrame": 120,
+              "duration": 252,
+              "opacity": 1,
+              "easing": "easeIn"
+            }
+          ]
+        },
+        {
+          "trackType": "activation",
+          "trackName": "New Constellation Activation",
+          "targetBinding": "new-constellation-lines",
+          "clips": [
+            {
+              "clipId": "new-constellation-show",
+              "startFrame": 426,
+              "duration": 60,
+              "active": true
+            }
+          ]
+        },
+        {
+          "trackType": "narration",
+          "trackName": "Narration",
+          "clips": [
+            {
+              "clipId": "orbit-narration",
+              "startFrame": 0,
+              "duration": 486,
+              "text": "As you orbit, interests and opportunities pull you away from familiar places. You encounter new stars and form new constellations."
+            }
+          ]
+        },
+        {
+          "trackType": "effect",
+          "trackName": "Background Twinkle",
+          "targetBinding": "background-stars",
+          "clips": [
+            {
+              "clipId": "twinkle-effect",
+              "startFrame": 0,
+              "duration": 486,
+              "effectType": "twinkle",
+              "parameters": {
+                "intensity": 0.6,
+                "frequency": 0.5
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "assetId": "constellation-form-timeline",
+      "assetName": "Constellation Formation",
+      "description": "Background stars twinkle, then constellation lines appear around hero star",
+      "frameRate": 60,
+      "duration": 330,
+      "tracks": [
+        {
+          "trackType": "camera",
+          "trackName": "Main Camera",
+          "clips": [
+            {
+              "clipId": "camera-static",
+              "startFrame": 0,
+              "duration": 330,
+              "position": [0, 0, 150],
+              "fov": 50
+            }
+          ]
+        },
+        {
+          "trackType": "effect",
+          "trackName": "Background Twinkle",
+          "targetBinding": "background-stars",
+          "clips": [
+            {
+              "clipId": "initial-twinkle",
+              "startFrame": 0,
+              "duration": 180,
+              "effectType": "twinkle",
+              "parameters": {
+                "intensity": 0.6,
+                "starCount": 10
+              }
+            }
+          ]
+        },
+        {
+          "trackType": "opacity",
+          "trackName": "Primary Stars Fade In",
+          "targetBinding": "primary-stars",
+          "clips": [
+            {
+              "clipId": "stars-fadein",
+              "startFrame": 0,
+              "duration": 180,
+              "opacity": 1,
+              "easing": "easeIn"
+            }
+          ]
+        },
+        {
+          "trackType": "activation",
+          "trackName": "Constellation Lines",
+          "targetBinding": "hero-constellation-lines",
+          "clips": [
+            {
+              "clipId": "constellation-appear",
+              "startFrame": 180,
+              "duration": 90,
+              "active": true
+            }
+          ]
+        },
+        {
+          "trackType": "narration",
+          "trackName": "Narration",
+          "clips": [
+            {
+              "clipId": "constellation-narration",
+              "startFrame": 0,
+              "duration": 330,
+              "text": "Most stars twinkle distantly. A few shine close, forming constellations of meaning: family, friends, relationships."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "instances": [
+    {
+      "instanceId": "scene-3-instance",
+      "timelineAssetRef": "constellation-form-timeline",
+      "sceneNumber": 3,
+      "bindings": [
+        {
+          "bindingId": "background-stars",
+          "componentType": "BackgroundStars",
+          "instanceProps": {
+            "radius": 400,
+            "count": 2000,
+            "size": 3.0,
+            "opacity": 0.8
+          }
+        },
+        {
+          "bindingId": "primary-stars",
+          "componentType": "PrimaryStars",
+          "instanceProps": {
+            "radius": 100,
+            "count": 15,
+            "size": 8.0,
+            "xOffset": 0,
+            "zOffset": 0
+          }
+        },
+        {
+          "bindingId": "hero-constellation-lines",
+          "componentType": "HeroConstellationLines",
+          "instanceProps": {
+            "heroPosition": [0, 0, 0],
+            "color": "#22d3ee",
+            "opacity": 0.6,
+            "fadeInDuration": 1500
+          }
+        }
+      ]
+    },
+    {
+      "instanceId": "scene-4-instance",
+      "timelineAssetRef": "orbit-change-timeline",
+      "sceneNumber": 4,
+      "bindings": [
+        {
+          "bindingId": "background-stars",
+          "componentType": "BackgroundStars",
+          "instanceProps": {
+            "radius": 400,
+            "count": 2000,
+            "size": 3.0,
+            "opacity": 0.8
+          }
+        },
+        {
+          "bindingId": "old-primary-stars",
+          "componentType": "PrimaryStars",
+          "instanceProps": {
+            "radius": 100,
+            "count": 15,
+            "size": 8.0,
+            "xOffset": 0,
+            "zOffset": 0
+          }
+        },
+        {
+          "bindingId": "new-primary-stars",
+          "componentType": "PrimaryStars",
+          "instanceProps": {
+            "radius": 100,
+            "count": 15,
+            "size": 8.0,
+            "xOffset": 150,
+            "zOffset": 0
+          }
+        },
+        {
+          "bindingId": "hero-star-group",
+          "componentType": "CentralStar",
+          "instanceProps": {
+            "brightness": 1.5
+          }
+        },
+        {
+          "bindingId": "old-constellation-lines",
+          "componentType": "HeroConstellationLines",
+          "instanceProps": {
+            "color": "#22d3ee",
+            "opacity": 0.6
+          }
+        },
+        {
+          "bindingId": "new-constellation-lines",
+          "componentType": "HeroConstellationLines",
+          "instanceProps": {
+            "color": "#22d3ee",
+            "opacity": 0.6,
+            "fadeInDuration": 1000
+          }
+        }
+      ]
+    }
+  ]
+}

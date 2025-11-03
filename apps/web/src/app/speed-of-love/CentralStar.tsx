@@ -26,7 +26,7 @@ export default function CentralStar({
     canvas.width = 128
     canvas.height = 128
     const ctx = canvas.getContext('2d')!
-    
+
     // Create radial gradient with golden glow
     const gradient = ctx.createRadialGradient(64, 64, 0, 64, 64, 64)
     gradient.addColorStop(0, 'rgba(255, 255, 255, 1)') // Bright white center
@@ -34,10 +34,10 @@ export default function CentralStar({
     gradient.addColorStop(0.5, 'rgba(255, 230, 180, 0.9)') // Warm glow
     gradient.addColorStop(0.8, 'rgba(255, 200, 120, 0.4)') // Outer glow
     gradient.addColorStop(1, 'rgba(255, 180, 80, 0)') // Fade to transparent
-    
+
     ctx.fillStyle = gradient
     ctx.fillRect(0, 0, 128, 128)
-    
+
     const texture = new THREE.CanvasTexture(canvas)
     return texture
   }, [])
@@ -48,17 +48,17 @@ export default function CentralStar({
     canvas.width = 256
     canvas.height = 256
     const ctx = canvas.getContext('2d')!
-    
+
     // Create large radial gradient for halo - brighter colors
     const gradient = ctx.createRadialGradient(128, 128, 0, 128, 128, 128)
     gradient.addColorStop(0, 'rgba(255, 250, 220, 0.8)')
     gradient.addColorStop(0.3, 'rgba(255, 240, 200, 0.6)')
     gradient.addColorStop(0.6, 'rgba(255, 220, 150, 0.3)')
     gradient.addColorStop(1, 'rgba(255, 200, 100, 0)')
-    
+
     ctx.fillStyle = gradient
     ctx.fillRect(0, 0, 256, 256)
-    
+
     const texture = new THREE.CanvasTexture(canvas)
     return texture
   }, [])
@@ -77,34 +77,46 @@ export default function CentralStar({
 
     const elapsed = Date.now() - startTime.current
     const progress = Math.min(elapsed / animationDuration, 1)
-    
+
     // Ease-out cubic for smooth growth
     const eased = 1 - Math.pow(1 - progress, 3)
-    
+
     // Grow core from 0 to 24 (much larger and closer feeling)
     const targetSize = 24 * brightness
-    currentSize.current = THREE.MathUtils.lerp(currentSize.current, targetSize * eased, 0.1)
-    
+    currentSize.current = THREE.MathUtils.lerp(
+      currentSize.current,
+      targetSize * eased,
+      0.1,
+    )
+
     // Halo grows even larger and expands more slowly
     const targetHaloSize = 48 * brightness
     const haloEased = 1 - Math.pow(1 - progress, 2) // Slower ease for halo
-    currentHaloSize.current = THREE.MathUtils.lerp(currentHaloSize.current, targetHaloSize * haloEased, 0.08)
-    
+    currentHaloSize.current = THREE.MathUtils.lerp(
+      currentHaloSize.current,
+      targetHaloSize * haloEased,
+      0.08,
+    )
+
     // Fade in opacity
     const targetOpacity = 1.0 * brightness
-    currentOpacity.current = THREE.MathUtils.lerp(currentOpacity.current, targetOpacity * eased, 0.1)
-    
+    currentOpacity.current = THREE.MathUtils.lerp(
+      currentOpacity.current,
+      targetOpacity * eased,
+      0.1,
+    )
+
     const material = meshRef.current.material as THREE.PointsMaterial
     material.size = currentSize.current
     material.opacity = currentOpacity.current
-    
+
     const haloMaterial = haloRef.current.material as THREE.PointsMaterial
     haloMaterial.size = currentHaloSize.current
     haloMaterial.opacity = currentOpacity.current * 0.7 // Visible golden halo
-    
+
     // Fade other stars as hero star appears (from 1.0 to 0.6)
     if (onProgressChange) {
-      const otherStarsOpacity = 1.0 - (eased * 0.4) // Fade to 60%
+      const otherStarsOpacity = 1.0 - eased * 0.4 // Fade to 60%
       onProgressChange(otherStarsOpacity)
     }
   })
@@ -123,7 +135,7 @@ export default function CentralStar({
           blending={THREE.AdditiveBlending}
         />
       </points>
-      
+
       {/* Bright core star */}
       <points ref={meshRef} geometry={geometry} renderOrder={1000}>
         <pointsMaterial
