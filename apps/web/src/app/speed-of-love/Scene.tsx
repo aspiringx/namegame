@@ -7,6 +7,25 @@ import BackgroundStars from './BackgroundStars'
 import PrimaryStars from './PrimaryStars'
 import CentralStar from './CentralStar'
 import HeroConstellationLines from './HeroConstellationLines'
+import { getProject, types } from '@theatre/core'
+
+// Initialize Theatre.js Studio in development mode only
+if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+  import('@theatre/studio').then(({ default: studio }) => {
+    studio.initialize()
+  })
+}
+
+// Create Theatre.js project (container for all timelines)
+const theatreProject = getProject('Speed of Love')
+
+// Create sheets and objects outside the component to avoid re-creation on re-renders
+const scene1Sheet = theatreProject.sheet('Scene 1')
+const scene1Animation = scene1Sheet.object('Scene 1 Animation', {
+  // Stars fade in from 0 to 1 over 2 seconds
+  // range() constrains the value between min and max
+  starsOpacity: types.number(0, { range: [0, 1] }),
+})
 
 // The new, simplified props for the scene
 interface SceneProps {
@@ -16,6 +35,10 @@ interface SceneProps {
 
 export default function Scene({ activeAnimations, currentScene }: SceneProps) {
   const cameraRef = useRef<THREE.PerspectiveCamera>(null)
+  
+  // State to hold Theatre.js animated values
+  const [theatreStarsOpacity, setTheatreStarsOpacity] = useState(0)
+  
   const [otherStarsOpacity, setOtherStarsOpacity] = useState(1.0)
   const [primaryStarPositions, setPrimaryStarPositions] =
     useState<Float32Array | null>(null)
@@ -112,6 +135,15 @@ export default function Scene({ activeAnimations, currentScene }: SceneProps) {
       setShowNewConstellation(false)
     }
   }, [currentScene.sceneType, currentScene.phases, newPrimaryStarPositions])
+
+  // Theatre.js: Read animated values every frame and update React state
+  useFrame(() => {
+    // For Scene 1, read the starsOpacity value from Theatre.js
+    if (currentScene.scene === 1) {
+      const opacity = scene1Animation.value.starsOpacity
+      setTheatreStarsOpacity(opacity)
+    }
+  })
 
   // The animation loop is now clean and simple.
   // It only executes the commands passed down from StarField.
@@ -211,20 +243,30 @@ export default function Scene({ activeAnimations, currentScene }: SceneProps) {
       <ambientLight intensity={0.3} />
       <pointLight position={[0, 0, 0]} intensity={1} />
 
-      {/* Always render background stars */}
+      {/* Background stars - Scene 1 uses Theatre.js, others use old approach */}
       <BackgroundStars
         key="background-stars"
         radius={400}
         count={2000}
         size={3.0}
-        opacity={0.8 * otherStarsOpacity}
+        opacity={currentScene.scene === 1 ? 0.8 * theatreStarsOpacity : 0.8 * otherStarsOpacity}
         enableTwinkling={twinklingEnabled}
       />
 
-      {/* Scene 1 & 2: Normal primary stars */}
-      {/* {currentScene.sceneType !== 'orbitChange' &&
-        currentScene.sceneType !== 'constellationForm' && ( */}
-      {currentScene.scene < 4 && (
+      {/* Scene 1: Stars controlled by Theatre.js */}
+      {currentScene.scene === 1 && (
+        <PrimaryStars
+          key="primary-stars-1"
+          radius={100}
+          count={15}
+          size={8.0}
+          opacity={theatreStarsOpacity}
+          onPositionsReady={setPrimaryStarPositions}
+        />
+      )}
+
+      {/* Scene 2 & 3: Normal primary stars */}
+      {currentScene.scene >= 2 && currentScene.scene < 4 && (
         <PrimaryStars
           key="primary-stars-1"
           radius={100}

@@ -87,11 +87,6 @@ export default function PrimaryStars({
 
   // Notify parent of star positions
   useEffect(() => {
-    console.log(
-      'PrimaryStars useEffect: Calling onPositionsReady with',
-      positions.length,
-      'positions',
-    )
     if (onPositionsReady) {
       onPositionsReady(positions)
     }
