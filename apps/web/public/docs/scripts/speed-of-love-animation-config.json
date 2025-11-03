@@ -1,0 +1,175 @@
+{
+  "$schema": "./speed-of-love-timeline-schema.json",
+  "projectName": "Speed of Love",
+  "scenes": [
+    {
+      "scene": 1,
+      "description": "Stars fade in slowly",
+      "narration": "Your universe has billions of stars. Each is unique and alive.",
+      "sceneType": "cosmicView",
+      "cameraPosition": [0, 0, 150],
+      "cameraFOV": 50,
+      "primaryStars": {
+        "count": 15,
+        "radius": 100,
+        "factor": 6
+      },
+      "backgroundStars": {
+        "count": 2000,
+        "radius": 400,
+        "size": 3.0,
+        "opacity": 1.0,
+        "colors": [16777215, 16777215]
+      },
+      "animation": {
+        "duration": 2.0,
+        "properties": {
+          "starsOpacity": {
+            "type": "number",
+            "range": [0, 1],
+            "default": 0
+          }
+        }
+      }
+    },
+    {
+      "scene": 2,
+      "description": "Hero star appears and grows",
+      "narration": "You are one of them, a bright star in the vast expanse.",
+      "sceneType": "focusStar",
+      "cameraPosition": [0, 0, 150],
+      "cameraFOV": 50,
+      "centralStar": {
+        "position": [0, 0, 0],
+        "brightness": 1.5
+      },
+      "animation": {
+        "duration": 2.5,
+        "properties": {
+          "heroStarOpacity": {
+            "type": "number",
+            "range": [0, 1],
+            "default": 0
+          },
+          "heroStarScale": {
+            "type": "number",
+            "range": [0, 2],
+            "default": 0
+          }
+        }
+      }
+    },
+    {
+      "scene": 3,
+      "description": "Primary stars brighten and constellation forms",
+      "narration": "Most stars twinkle distantly. A few shine close, forming constellations of meaning: family, friends, relationships.",
+      "sceneType": "constellationForm",
+      "cameraPosition": [0, 0, 150],
+      "cameraFOV": 50,
+      "twinkleEffect": {
+        "duration": 3000,
+        "starCount": 10,
+        "intensity": 0.6
+      },
+      "connectionLines": {
+        "color": "#22d3ee",
+        "opacity": 0.6,
+        "width": 1.5,
+        "animated": true
+      },
+      "connectionsCount": 5,
+      "animation": {
+        "duration": 2.5,
+        "properties": {
+          "primaryStarsOpacity": {
+            "type": "number",
+            "range": [0, 1],
+            "default": 0.3,
+            "description": "Primary stars start dimmed from Scene 2"
+          },
+          "constellationOpacity": {
+            "type": "number",
+            "range": [0, 1],
+            "default": 0
+          },
+          "heroStarOpacity": {
+            "type": "number",
+            "range": [0, 1],
+            "default": 1.0,
+            "static": true,
+            "description": "Hero star stays at full opacity"
+          },
+          "heroStarScale": {
+            "type": "number",
+            "range": [0, 2],
+            "default": 1.0,
+            "static": true,
+            "description": "Hero star stays at full scale"
+          }
+        }
+      }
+    },
+    {
+      "scene": 4,
+      "description": "Hero travels, old constellation fades, new constellation forms",
+      "narration": "As you orbit, interests and opportunities pull you away from familiar places. You encounter new stars and form new constellations.",
+      "sceneType": "orbitChange",
+      "cameraPosition": [0, 0, 150],
+      "cameraFOV": 50,
+      "phases": {
+        "fadeOutConstellation": 1500,
+        "travelDuration": 6000,
+        "arrivalPause": 1000,
+        "newConstellationFadeIn": 1000
+      },
+      "centralStar": {
+        "position": [0, 0, 0],
+        "brightness": 1.5
+      },
+      "primaryStars": {
+        "count": 15,
+        "radius": 100,
+        "factor": 6
+      },
+      "connectionLines": {
+        "color": "#22d3ee",
+        "opacity": 0.6
+      },
+      "animation": {
+        "duration": 10.0,
+        "properties": {
+          "oldConstellationOpacity": {
+            "type": "number",
+            "range": [0, 1],
+            "default": 1.0
+          },
+          "oldPrimaryStarsOpacity": {
+            "type": "number",
+            "range": [0, 1],
+            "default": 1.0
+          },
+          "cameraX": {
+            "type": "number",
+            "range": [-200, 200],
+            "default": 0
+          },
+          "heroStarX": {
+            "type": "number",
+            "range": [-200, 200],
+            "default": 0
+          },
+          "newPrimaryStarsOpacity": {
+            "type": "number",
+            "range": [0, 1],
+            "default": 0
+          },
+          "newConstellationOpacity": {
+            "type": "number",
+            "range": [0, 1],
+            "default": 0
+          }
+        }
+      }
+    }
+  ]
+}

@@ -7,7 +7,14 @@ import BackgroundStars from './BackgroundStars'
 import PrimaryStars from './PrimaryStars'
 import CentralStar from './CentralStar'
 import HeroConstellationLines from './HeroConstellationLines'
-import { getProject, types } from '@theatre/core'
+// Import Theatre.js configuration and utilities
+import {
+  theatreProject,
+  initializeTheatreFromConfig,
+  getSceneAnimation,
+  getSceneSheet,
+  getSceneDuration,
+} from './theatreConfig'
 
 // Initialize Theatre.js Studio in development mode only
 if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
@@ -29,26 +36,16 @@ if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
   })
 }
 
-// Import Theatre.js state (exported keyframes and animation data)
-import theatreState from '../../../public/docs/scripts/speed-of-love-theatre-state.json'
-
-// Create Theatre.js project (container for all timelines)
-const theatreProject = getProject('Speed of Love', { state: theatreState })
-
-// Create sheets and objects outside the component to avoid re-creation on re-renders
-const scene1Sheet = theatreProject.sheet('Scene 1')
-const scene1Animation = scene1Sheet.object('Scene 1 Animation', {
-  // Stars fade in from 0 to 1 over 2 seconds
-  // range() constrains the value between min and max
-  starsOpacity: types.number(0, { range: [0, 1] }),
+// Load Theatre.js state and initialize sheets/objects from config
+theatreProject.ready.then(() => {
+  // @ts-ignore - Theatre.js types don't include this method
+  if (theatreProject.isReady) return
+  // @ts-ignore
+  theatreProject.sheet('__temp').sequence.play() // Trigger state load
 })
 
-const scene2Sheet = theatreProject.sheet('Scene 2')
-const scene2Animation = scene2Sheet.object('Scene 2 Animation', {
-  // Hero star fades in and grows
-  heroStarOpacity: types.number(0, { range: [0, 1] }),
-  heroStarScale: types.number(0, { range: [0, 2] }),
-})
+// Initialize Theatre.js objects from animation config
+initializeTheatreFromConfig()
 
 // The new, simplified props for the scene
 interface SceneProps {
@@ -63,6 +60,8 @@ export default function Scene({ activeAnimations, currentScene }: SceneProps) {
   const [theatreStarsOpacity, setTheatreStarsOpacity] = useState(0)
   const [theatreHeroStarOpacity, setTheatreHeroStarOpacity] = useState(0)
   const [theatreHeroStarScale, setTheatreHeroStarScale] = useState(0)
+  const [theatrePrimaryStarsOpacity, setTheatrePrimaryStarsOpacity] = useState(0.3)
+  const [theatreConstellationOpacity, setTheatreConstellationOpacity] = useState(0)
   
   const [otherStarsOpacity, setOtherStarsOpacity] = useState(1.0)
   const [primaryStarPositions, setPrimaryStarPositions] =
@@ -92,25 +91,20 @@ export default function Scene({ activeAnimations, currentScene }: SceneProps) {
 
   // Theatre.js: Auto-play animations when scenes load
   useEffect(() => {
-    let cleanup: (() => void) | undefined
+    const sheet = getSceneSheet(currentScene.scene)
+    const duration = getSceneDuration(currentScene.scene)
     
-    if (currentScene.scene === 1) {
-      // Wait for Theatre.js project to load before playing
-      theatreProject.ready.then(() => {
-        scene1Sheet.sequence.play({ range: [0, 2] })
-      })
-      cleanup = () => scene1Sheet.sequence.pause()
-    }
+    if (!sheet || !duration) return
     
-    if (currentScene.scene === 2) {
-      theatreProject.ready.then(() => {
-        scene2Sheet.sequence.play({ range: [0, 2.5] })
-      })
-      cleanup = () => scene2Sheet.sequence.pause()
-    }
+    // Wait for Theatre.js project to load before playing
+    theatreProject.ready.then(() => {
+      sheet.sequence.play({ range: [0, duration] })
+    })
     
     // Cleanup: pause sequence when scene changes
-    return cleanup
+    return () => {
+      sheet.sequence.pause()
+    }
   }, [currentScene.scene])
 
   // Fade primary stars back to full brightness in Scene 3
@@ -186,16 +180,24 @@ export default function Scene({ activeAnimations, currentScene }: SceneProps) {
 
   // Theatre.js: Read animated values every frame and update React state
   useFrame(() => {
+    const animation = getSceneAnimation(currentScene.scene)
+    if (!animation) return
+    
     // Scene 1: Read stars opacity
     if (currentScene.scene === 1) {
-      const opacity = scene1Animation.value.starsOpacity
-      setTheatreStarsOpacity(opacity)
+      setTheatreStarsOpacity(animation.value.starsOpacity)
     }
     
     // Scene 2: Read hero star opacity and scale
     if (currentScene.scene === 2) {
-      setTheatreHeroStarOpacity(scene2Animation.value.heroStarOpacity)
-      setTheatreHeroStarScale(scene2Animation.value.heroStarScale)
+      setTheatreHeroStarOpacity(animation.value.heroStarOpacity)
+      setTheatreHeroStarScale(animation.value.heroStarScale)
+    }
+    
+    // Scene 3: Read primary stars and constellation opacity
+    if (currentScene.scene === 3) {
+      setTheatrePrimaryStarsOpacity(animation.value.primaryStarsOpacity)
+      setTheatreConstellationOpacity(animation.value.constellationOpacity)
     }
   })
 
@@ -319,8 +321,8 @@ export default function Scene({ activeAnimations, currentScene }: SceneProps) {
         />
       )}
 
-      {/* Scene 2 & 3: Normal primary stars */}
-      {currentScene.scene >= 2 && currentScene.scene < 4 && (
+      {/* Scene 2: Primary stars dimmed */}
+      {currentScene.scene === 2 && (
         <PrimaryStars
           key="primary-stars-1"
           radius={100}
@@ -331,29 +333,29 @@ export default function Scene({ activeAnimations, currentScene }: SceneProps) {
         />
       )}
 
-      {/* Scene 3: Constellation at origin with hero star */}
-      {currentScene.sceneType === 'constellationForm' && (
-        <>
-          {/* Primary stars at origin */}
-          {/* <PrimaryStars
-            key="primary-stars-1"
-            radius={100}
-            count={15}
-            size={8.0}
-            opacity={1.0}
-            onPositionsReady={setPrimaryStarPositions}
-          /> */}
+      {/* Scene 3: Primary stars controlled by Theatre.js */}
+      {currentScene.scene === 3 && (
+        <PrimaryStars
+          key="primary-stars-1"
+          radius={100}
+          count={15}
+          size={8.0}
+          opacity={theatrePrimaryStarsOpacity}
+          onPositionsReady={setPrimaryStarPositions}
+        />
+      )}
 
+      {/* Scene 3: Constellation forms around hero star */}
+      {currentScene.scene === 3 && (
+        <>
           {/* Constellation lines connecting to hero at origin */}
           {primaryStarPositions && (
             <HeroConstellationLines
               heroPosition={[0, 0, 0]}
               starPositions={primaryStarPositions}
               color={currentScene.connectionLines?.color || '#22d3ee'}
-              opacity={currentScene.connectionLines?.opacity || 0.6}
-              fadeInDuration={
-                currentScene.connectionLines?.fadeInDuration || 2500
-              }
+              opacity={theatreConstellationOpacity}
+              fadeInDuration={0} // Theatre.js controls the fade
             />
           )}
         </>
@@ -376,8 +378,16 @@ export default function Scene({ activeAnimations, currentScene }: SceneProps) {
                 ? setOtherStarsOpacity
                 : undefined
             }
-            opacity={currentScene.scene === 2 ? theatreHeroStarOpacity : undefined}
-            scale={currentScene.scene === 2 ? theatreHeroStarScale : undefined}
+            opacity={
+              currentScene.scene === 2 ? theatreHeroStarOpacity :
+              currentScene.scene === 3 ? 1.0 : // Stay at full opacity in Scene 3
+              undefined
+            }
+            scale={
+              currentScene.scene === 2 ? theatreHeroStarScale :
+              currentScene.scene === 3 ? 1.0 : // Stay at full scale in Scene 3
+              undefined
+            }
           />
         </group>
       )}

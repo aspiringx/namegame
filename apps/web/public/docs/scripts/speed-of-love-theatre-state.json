@@ -138,10 +138,95 @@
           }
         }
       }
+    },
+    "Scene 3": {
+      "staticOverrides": {
+        "byObject": {}
+      },
+      "sequence": {
+        "subUnitsPerUnit": 30,
+        "length": 10,
+        "type": "PositionalSequence",
+        "tracksByObject": {
+          "Scene 3 Animation": {
+            "trackData": {
+              "f_mfuDO_UC": {
+                "type": "BasicKeyframedTrack",
+                "__debugName": "Scene 3 Animation:[\"primaryStarsOpacity\"]",
+                "keyframes": [
+                  {
+                    "id": "isLtZZeAWa",
+                    "position": 0,
+                    "connectedRight": true,
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
+                    "type": "bezier",
+                    "value": 0.3
+                  },
+                  {
+                    "id": "0gl_xqT09f",
+                    "position": 1.467,
+                    "connectedRight": true,
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
+                    "type": "bezier",
+                    "value": 1
+                  }
+                ]
+              },
+              "NWP6Pg4IwK": {
+                "type": "BasicKeyframedTrack",
+                "__debugName": "Scene 3 Animation:[\"constellationOpacity\"]",
+                "keyframes": [
+                  {
+                    "id": "Mb2OAIJy3p",
+                    "position": 1,
+                    "connectedRight": true,
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
+                    "type": "bezier",
+                    "value": 0
+                  },
+                  {
+                    "id": "sCFN0kZRqc",
+                    "position": 2.5,
+                    "connectedRight": true,
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
+                    "type": "bezier",
+                    "value": 1
+                  }
+                ]
+              }
+            },
+            "trackIdByPropPath": {
+              "[\"primaryStarsOpacity\"]": "f_mfuDO_UC",
+              "[\"constellationOpacity\"]": "NWP6Pg4IwK"
+            }
+          }
+        }
+      }
     }
   },
   "definitionVersion": "0.4.0",
   "revisionHistory": [
+    "f2-u_xvvrl7K5wPY",
     "_qQD4_moRpcDCCCD",
     "31T_Gsovn5G5vWOL"
   ]
