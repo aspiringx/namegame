@@ -63,6 +63,14 @@ export default function Scene({ activeAnimations, currentScene }: SceneProps) {
   const [theatrePrimaryStarsOpacity, setTheatrePrimaryStarsOpacity] = useState(0.3)
   const [theatreConstellationOpacity, setTheatreConstellationOpacity] = useState(0)
   
+  // Scene 4: Theatre.js animated values
+  const [theatreOldConstellationOpacity, setTheatreOldConstellationOpacity] = useState(1.0)
+  const [theatreOldPrimaryStarsOpacity, setTheatreOldPrimaryStarsOpacity] = useState(1.0)
+  const [theatreCameraX, setTheatreCameraX] = useState(0)
+  const [theatreHeroStarX, setTheatreHeroStarX] = useState(0)
+  const [theatreNewPrimaryStarsOpacity, setTheatreNewPrimaryStarsOpacity] = useState(0)
+  const [theatreNewConstellationOpacity, setTheatreNewConstellationOpacity] = useState(0)
+  
   const [otherStarsOpacity, setOtherStarsOpacity] = useState(1.0)
   const [primaryStarPositions, setPrimaryStarPositions] =
     useState<Float32Array | null>(null)
@@ -199,14 +207,36 @@ export default function Scene({ activeAnimations, currentScene }: SceneProps) {
       setTheatrePrimaryStarsOpacity(animation.value.primaryStarsOpacity)
       setTheatreConstellationOpacity(animation.value.constellationOpacity)
     }
+    
+    // Scene 4: Read all orbit change animation values
+    if (currentScene.scene === 4) {
+      setTheatreOldConstellationOpacity(animation.value.oldConstellationOpacity)
+      setTheatreOldPrimaryStarsOpacity(animation.value.oldPrimaryStarsOpacity)
+      setTheatreCameraX(animation.value.cameraX)
+      setTheatreHeroStarX(animation.value.heroStarX)
+      setTheatreNewPrimaryStarsOpacity(animation.value.newPrimaryStarsOpacity)
+      setTheatreNewConstellationOpacity(animation.value.newConstellationOpacity)
+    }
   })
 
-  // The animation loop is now clean and simple.
-  // It only executes the commands passed down from StarField.
+  // Scene 4: Apply Theatre.js camera and hero star positions
+  useFrame(() => {
+    if (currentScene.scene === 4 && cameraRef.current) {
+      // Apply Theatre.js camera position directly
+      cameraRef.current.position.x = theatreCameraX
+      
+      // Update hero star group position to match Theatre.js value
+      if (heroStarGroupRef.current) {
+        heroStarGroupRef.current.position.x = theatreHeroStarX
+      }
+    }
+  })
+
+  // OLD Scene 4 animation loop (will be removed once Theatre.js is working)
   useFrame(() => {
     // Scene 4: Camera travels away from old constellation
     // if (currentScene.sceneType === 'orbitChange' && cameraRef.current) {
-    if (currentScene.scene === 4 && cameraRef.current) {
+    if (false && currentScene.scene === 4 && cameraRef.current) {
       // Animate camera movement
       cameraXOffset.current = THREE.MathUtils.lerp(
         cameraXOffset.current,
@@ -393,16 +423,15 @@ export default function Scene({ activeAnimations, currentScene }: SceneProps) {
       )}
 
       {/* Scene 4: New primary stars at hero's final position */}
-      {/* {currentScene.sceneType === 'orbitChange' && ( */}
       {currentScene.scene === 4 && (
         <PrimaryStars
-          key="`primary-stars-2"
+          key="primary-stars-2"
           radius={100}
           count={15}
-          size={8} // 8 - Same as primary-stars-1
-          xOffset={150} // Same X as camera/hero final position
-          zOffset={0} // 200 - Same Z as camera's final position
-          opacity={newPrimaryOpacity.current}
+          size={8}
+          xOffset={150}
+          zOffset={0}
+          opacity={theatreNewPrimaryStarsOpacity}
           onPositionsReady={(positions) => {
             newPrimaryStarPositionsRef.current = positions
             setNewPrimaryStarPositions(positions)
@@ -411,22 +440,33 @@ export default function Scene({ activeAnimations, currentScene }: SceneProps) {
       )}
 
       {/* Scene 4: Old constellation at origin (fades as camera moves away) */}
-      {/* No lines - hero has left this constellation */}
-      {/* {currentScene.sceneType === 'orbitChange' && */}
-      {currentScene.scene === 4 && oldPrimaryOpacity.current > 0.05 && (
+      {currentScene.scene === 4 && theatreOldPrimaryStarsOpacity > 0.05 && (
         <PrimaryStars
           key="old-primary-stars-scene4"
           radius={100}
           count={15}
           size={8.0}
-          opacity={oldPrimaryOpacity.current}
+          opacity={theatreOldPrimaryStarsOpacity}
           onPositionsReady={() => {}} // Don't update positions - keep the ones from Scene 3
         />
       )}
 
+      {/* Scene 4: Old constellation lines (fade out as hero leaves) */}
+      {currentScene.scene === 4 &&
+        theatreOldConstellationOpacity > 0.05 &&
+        primaryStarPositions && (
+          <HeroConstellationLines
+            heroPosition={[0, 0, 0]}
+            starPositions={primaryStarPositions}
+            color={currentScene.connectionLines?.color || '#22d3ee'}
+            opacity={theatreOldConstellationOpacity}
+            fadeInDuration={0}
+          />
+        )}
+
       {/* Scene 4: New constellation (fading in) - connects hero to new stars */}
-      {currentScene.sceneType === 'orbitChange' &&
-        showNewConstellation &&
+      {currentScene.scene === 4 &&
+        theatreNewConstellationOpacity > 0.05 &&
         newPrimaryStarPositionsRef.current &&
         newPrimaryStarPositionsRef.current.length > 0 &&
         heroStarGroupRef.current && (
@@ -438,10 +478,8 @@ export default function Scene({ activeAnimations, currentScene }: SceneProps) {
             ]}
             starPositions={newPrimaryStarPositionsRef.current}
             color={currentScene.connectionLines?.color || '#22d3ee'}
-            opacity={currentScene.connectionLines?.opacity || 0.6}
-            fadeInDuration={
-              currentScene.connectionLines?.fadeInDuration || 2500
-            }
+            opacity={theatreNewConstellationOpacity}
+            fadeInDuration={0}
           />
         )}
 
