@@ -43,6 +43,13 @@ const scene1Animation = scene1Sheet.object('Scene 1 Animation', {
   starsOpacity: types.number(0, { range: [0, 1] }),
 })
 
+const scene2Sheet = theatreProject.sheet('Scene 2')
+const scene2Animation = scene2Sheet.object('Scene 2 Animation', {
+  // Hero star fades in and grows
+  heroStarOpacity: types.number(0, { range: [0, 1] }),
+  heroStarScale: types.number(0, { range: [0, 2] }),
+})
+
 // The new, simplified props for the scene
 interface SceneProps {
   activeAnimations?: AnimationCommand[]
@@ -54,6 +61,8 @@ export default function Scene({ activeAnimations, currentScene }: SceneProps) {
   
   // State to hold Theatre.js animated values
   const [theatreStarsOpacity, setTheatreStarsOpacity] = useState(0)
+  const [theatreHeroStarOpacity, setTheatreHeroStarOpacity] = useState(0)
+  const [theatreHeroStarScale, setTheatreHeroStarScale] = useState(0)
   
   const [otherStarsOpacity, setOtherStarsOpacity] = useState(1.0)
   const [primaryStarPositions, setPrimaryStarPositions] =
@@ -81,14 +90,27 @@ export default function Scene({ activeAnimations, currentScene }: SceneProps) {
   const travelDistance = useRef(0) // Track how far we've traveled for fade calculation
   const heroStarGroupRef = useRef<THREE.Group>(null)
 
-  // Theatre.js: Auto-play Scene 1 animation when it loads
+  // Theatre.js: Auto-play animations when scenes load
   useEffect(() => {
+    let cleanup: (() => void) | undefined
+    
     if (currentScene.scene === 1) {
       // Wait for Theatre.js project to load before playing
       theatreProject.ready.then(() => {
         scene1Sheet.sequence.play({ range: [0, 2] })
       })
+      cleanup = () => scene1Sheet.sequence.pause()
     }
+    
+    if (currentScene.scene === 2) {
+      theatreProject.ready.then(() => {
+        scene2Sheet.sequence.play({ range: [0, 2.5] })
+      })
+      cleanup = () => scene2Sheet.sequence.pause()
+    }
+    
+    // Cleanup: pause sequence when scene changes
+    return cleanup
   }, [currentScene.scene])
 
   // Fade primary stars back to full brightness in Scene 3
@@ -164,10 +186,16 @@ export default function Scene({ activeAnimations, currentScene }: SceneProps) {
 
   // Theatre.js: Read animated values every frame and update React state
   useFrame(() => {
-    // For Scene 1, read the starsOpacity value from Theatre.js
+    // Scene 1: Read stars opacity
     if (currentScene.scene === 1) {
       const opacity = scene1Animation.value.starsOpacity
       setTheatreStarsOpacity(opacity)
+    }
+    
+    // Scene 2: Read hero star opacity and scale
+    if (currentScene.scene === 2) {
+      setTheatreHeroStarOpacity(scene2Animation.value.heroStarOpacity)
+      setTheatreHeroStarScale(scene2Animation.value.heroStarScale)
     }
   })
 
@@ -348,6 +376,8 @@ export default function Scene({ activeAnimations, currentScene }: SceneProps) {
                 ? setOtherStarsOpacity
                 : undefined
             }
+            opacity={currentScene.scene === 2 ? theatreHeroStarOpacity : undefined}
+            scale={currentScene.scene === 2 ? theatreHeroStarScale : undefined}
           />
         </group>
       )}

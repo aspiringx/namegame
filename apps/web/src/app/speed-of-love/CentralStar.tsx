@@ -6,12 +6,16 @@ interface CentralStarProps {
   brightness?: number
   animationDuration?: number
   onProgressChange?: (opacity: number) => void
+  opacity?: number // Theatre.js controlled opacity
+  scale?: number // Theatre.js controlled scale
 }
 
 export default function CentralStar({
   brightness = 1.5,
   animationDuration = 2000,
   onProgressChange,
+  opacity,
+  scale,
 }: CentralStarProps) {
   const meshRef = useRef<THREE.Points>(null)
   const haloRef = useRef<THREE.Points>(null)
@@ -75,6 +79,28 @@ export default function CentralStar({
   useFrame(() => {
     if (!meshRef.current || !haloRef.current) return
 
+    // If Theatre.js provides opacity and scale, use those directly
+    if (opacity !== undefined && scale !== undefined) {
+      const baseSize = 24 * brightness
+      const baseHaloSize = 48 * brightness
+      
+      const material = meshRef.current.material as THREE.PointsMaterial
+      material.size = baseSize * scale
+      material.opacity = opacity * brightness
+      
+      const haloMaterial = haloRef.current.material as THREE.PointsMaterial
+      haloMaterial.size = baseHaloSize * scale
+      haloMaterial.opacity = opacity * brightness * 0.7
+      
+      if (onProgressChange) {
+        // Dim background stars to 30% as hero star appears (not fully invisible)
+        const backgroundOpacity = 1.0 - (opacity * 0.7)
+        onProgressChange(backgroundOpacity)
+      }
+      return
+    }
+
+    // Otherwise use the old animation system
     const elapsed = Date.now() - startTime.current
     const progress = Math.min(elapsed / animationDuration, 1)
 

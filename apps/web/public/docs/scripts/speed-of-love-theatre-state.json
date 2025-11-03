@@ -54,10 +54,95 @@
           }
         }
       }
+    },
+    "Scene 2": {
+      "staticOverrides": {
+        "byObject": {}
+      },
+      "sequence": {
+        "subUnitsPerUnit": 30,
+        "length": 10,
+        "type": "PositionalSequence",
+        "tracksByObject": {
+          "Scene 2 Animation": {
+            "trackData": {
+              "Pq4MKvEIi8": {
+                "type": "BasicKeyframedTrack",
+                "__debugName": "Scene 2 Animation:[\"heroStarOpacity\"]",
+                "keyframes": [
+                  {
+                    "id": "Q1JCL1QLDt",
+                    "position": 0,
+                    "connectedRight": true,
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
+                    "type": "bezier",
+                    "value": 0
+                  },
+                  {
+                    "id": "zDDIZ4fyFQ",
+                    "position": 2.5,
+                    "connectedRight": true,
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
+                    "type": "bezier",
+                    "value": 1
+                  }
+                ]
+              },
+              "tTQ62eedT7": {
+                "type": "BasicKeyframedTrack",
+                "__debugName": "Scene 2 Animation:[\"heroStarScale\"]",
+                "keyframes": [
+                  {
+                    "id": "QbwuJ6i6Ad",
+                    "position": 0,
+                    "connectedRight": true,
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
+                    "type": "bezier",
+                    "value": 0
+                  },
+                  {
+                    "id": "mIOGr977ou",
+                    "position": 2.5,
+                    "connectedRight": true,
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
+                    "type": "bezier",
+                    "value": 1
+                  }
+                ]
+              }
+            },
+            "trackIdByPropPath": {
+              "[\"heroStarOpacity\"]": "Pq4MKvEIi8",
+              "[\"heroStarScale\"]": "tTQ62eedT7"
+            }
+          }
+        }
+      }
     }
   },
   "definitionVersion": "0.4.0",
   "revisionHistory": [
+    "_qQD4_moRpcDCCCD",
     "31T_Gsovn5G5vWOL"
   ]
 }
