@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
-import { AnimationCommand, Scene as SceneData } from './types'
+import { Scene as SceneData } from './types'
 import { PerspectiveCamera } from '@react-three/drei'
 import BackgroundStars from './BackgroundStars'
 import PrimaryStars from './PrimaryStars'
@@ -51,19 +51,20 @@ initializeTheatreFromConfig()
 
 // The new, simplified props for the scene
 interface SceneProps {
-  activeAnimations?: AnimationCommand[]
   currentScene: SceneData
 }
 
-export default function Scene({ activeAnimations, currentScene }: SceneProps) {
+export default function Scene({ currentScene }: SceneProps) {
   const cameraRef = useRef<THREE.PerspectiveCamera>(null)
 
   // State to hold Theatre.js animated values
   const [theatreStarsOpacity, setTheatreStarsOpacity] = useState(0)
   const [theatreHeroStarOpacity, setTheatreHeroStarOpacity] = useState(0)
   const [theatreHeroStarScale, setTheatreHeroStarScale] = useState(0)
-  const [theatreScene2PrimaryStarsOpacity, setTheatreScene2PrimaryStarsOpacity] =
-    useState(1.0)
+  const [
+    theatreScene2PrimaryStarsOpacity,
+    setTheatreScene2PrimaryStarsOpacity,
+  ] = useState(1.0)
   const [theatrePrimaryStarsOpacity, setTheatrePrimaryStarsOpacity] =
     useState(0.3)
   const [theatreConstellationOpacity, setTheatreConstellationOpacity] =
@@ -171,29 +172,8 @@ export default function Scene({ activeAnimations, currentScene }: SceneProps) {
     }
   })
 
-  useFrame(() => {
-    if (!cameraRef.current || !activeAnimations?.length) return
-
-    const camera = cameraRef.current
-
-    activeAnimations.forEach((anim) => {
-      switch (anim.type) {
-        case 'moveCamera':
-          if (anim.params.position) {
-            camera.position.lerp(
-              new THREE.Vector3(...anim.params.position),
-              0.05,
-            )
-          }
-          if (anim.params.fov !== undefined) {
-            camera.fov = THREE.MathUtils.lerp(camera.fov, anim.params.fov, 0.05)
-            camera.updateProjectionMatrix()
-          }
-          break
-        // Future animation handlers will be added here.
-      }
-    })
-  })
+  // Note: All animations now controlled by Theatre.js
+  // Camera movement, opacity changes, etc. are handled via Theatre.js properties
 
   return (
     <>
@@ -216,39 +196,26 @@ export default function Scene({ activeAnimations, currentScene }: SceneProps) {
         enableTwinkling={twinklingEnabled}
       />
 
-      {/* Scene 1: Stars controlled by Theatre.js */}
-      {currentScene.scene === 1 && (
+      {/* Scenes 1-4: Primary stars at origin (old constellation) */}
+      {currentScene.scene >= 1 && currentScene.scene <= 4 && (
         <PrimaryStars
           key="primary-stars-1"
           radius={currentScene.primaryStars?.radius || 100}
           count={currentScene.primaryStars?.count || 15}
-          size={currentScene.primaryStars?.baseSize || 12.0}
-          opacity={theatreStarsOpacity}
-          onPositionsReady={setPrimaryStarPositions}
-        />
-      )}
-
-      {/* Scene 2: Primary stars controlled by Theatre.js */}
-      {currentScene.scene === 2 && (
-        <PrimaryStars
-          key="primary-stars-1"
-          radius={currentScene.primaryStars?.radius || 100}
-          count={currentScene.primaryStars?.count || 15}
-          size={currentScene.primaryStars?.baseSize || 12.0}
-          opacity={theatreScene2PrimaryStarsOpacity}
-          onPositionsReady={setPrimaryStarPositions}
-        />
-      )}
-
-      {/* Scene 3: Primary stars controlled by Theatre.js */}
-      {currentScene.scene === 3 && (
-        <PrimaryStars
-          key="primary-stars-1"
-          radius={currentScene.primaryStars?.radius || 100}
-          count={currentScene.primaryStars?.count || 15}
-          size={currentScene.primaryStars?.baseSize || 12.0}
-          opacity={theatrePrimaryStarsOpacity}
-          onPositionsReady={setPrimaryStarPositions}
+          size={currentScene.primaryStars?.baseSize || 8.0}
+          seed={12345} // Same seed ensures same star positions across scenes
+          opacity={
+            currentScene.scene === 1
+              ? theatreStarsOpacity
+              : currentScene.scene === 2
+              ? theatreScene2PrimaryStarsOpacity
+              : currentScene.scene === 3
+              ? theatrePrimaryStarsOpacity
+              : theatreOldPrimaryStarsOpacity // Scene 4
+          }
+          onPositionsReady={
+            currentScene.scene <= 4 ? setPrimaryStarPositions : () => {}
+          }
         />
       )}
 
@@ -275,14 +242,10 @@ export default function Scene({ activeAnimations, currentScene }: SceneProps) {
           <HeroStar
             brightness={currentScene.heroStar?.brightness || 1.5}
             opacity={
-              currentScene.scene === 2
-                ? theatreHeroStarOpacity
-                : 1.0 // Stay at full opacity in Scene 3 and 4
+              currentScene.scene === 2 ? theatreHeroStarOpacity : 1.0 // Stay at full opacity in Scene 3 and 4
             }
             scale={
-              currentScene.scene === 2
-                ? theatreHeroStarScale
-                : 1.0 // Stay at full scale in Scene 3 and 4
+              currentScene.scene === 2 ? theatreHeroStarScale : 1.0 // Stay at full scale in Scene 3 and 4
             }
           />
         </group>
@@ -294,25 +257,14 @@ export default function Scene({ activeAnimations, currentScene }: SceneProps) {
           key="primary-stars-2"
           radius={currentScene.newPrimaryStars?.radius || 100}
           count={currentScene.newPrimaryStars?.count || 15}
-          size={currentScene.newPrimaryStars?.baseSize || 12.0}
+          size={currentScene.newPrimaryStars?.baseSize || 8.0}
+          seed={67890} // Different seed for different star positions
           xOffset={currentScene.newPrimaryStars?.xOffset || 150}
           zOffset={currentScene.newPrimaryStars?.zOffset || 0}
           opacity={theatreNewPrimaryStarsOpacity}
           onPositionsReady={(positions) => {
             newPrimaryStarPositionsRef.current = positions
           }}
-        />
-      )}
-
-      {/* Scene 4: Old constellation at origin (fades as camera moves away) */}
-      {currentScene.scene === 4 && theatreOldPrimaryStarsOpacity > 0.05 && (
-        <PrimaryStars
-          key="old-primary-stars-scene4"
-          radius={currentScene.primaryStars?.radius || 100}
-          count={currentScene.primaryStars?.count || 15}
-          size={currentScene.primaryStars?.baseSize || 12.0}
-          opacity={theatreOldPrimaryStarsOpacity}
-          onPositionsReady={() => {}} // Don't update positions - keep the ones from Scene 3
         />
       )}
 

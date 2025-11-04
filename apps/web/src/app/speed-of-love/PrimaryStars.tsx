@@ -9,6 +9,7 @@ interface PrimaryStarsProps {
   opacity?: number
   xOffset?: number // Shift all stars by this amount on X axis
   zOffset?: number // Shift all stars by this amount on Z axis
+  seed?: number // Seed for deterministic random positions
   onPositionsReady?: (positions: Float32Array) => void
 }
 
@@ -19,8 +20,17 @@ export default function PrimaryStars({
   opacity = 1.0,
   xOffset = 0,
   zOffset = 0,
+  seed = 12345,
   onPositionsReady,
 }: PrimaryStarsProps) {
+  // Seeded random number generator for deterministic positions
+  const seededRandom = (s: number) => {
+    let seed = s
+    return () => {
+      seed = (seed * 9301 + 49297) % 233280
+      return seed / 233280
+    }
+  }
   // Load the size as `viewport`.
   const { size: viewport } = useThree()
 
@@ -35,6 +45,7 @@ export default function PrimaryStars({
     const pos = new Float32Array(responsiveCount * 3)
     const cols = new Float32Array(responsiveCount * 3)
     const starSizes = new Float32Array(responsiveCount)
+    const random = seededRandom(seed)
 
     // Calculate frustum bounds at the radius distance
     const aspect = viewport.width / viewport.height
@@ -45,19 +56,19 @@ export default function PrimaryStars({
 
     for (let i = 0; i < responsiveCount; i++) {
       // Distribute stars across full visible viewport
-      pos[i * 3] = (Math.random() - 0.5) * frustumWidth + xOffset // X: full width + offset
-      pos[i * 3 + 1] = (Math.random() - 0.5) * frustumHeight // Y: full height
-      pos[i * 3 + 2] = (Math.random() - 0.5) * radius * 0.4 + 0 // zOffset // Z: depth variation + offset
+      pos[i * 3] = (random() - 0.5) * frustumWidth + xOffset // X: full width + offset
+      pos[i * 3 + 1] = (random() - 0.5) * frustumHeight // Y: full height
+      pos[i * 3 + 2] = (random() - 0.5) * radius * 0.4 + 0 // zOffset // Z: depth variation + offset
 
       // Organic size variation (0.8x to 1.4x base size)
-      const sizeMultiplier = 0.8 + Math.random() * 0.6
+      const sizeMultiplier = 0.8 + random() * 0.6
       starSizes[i] = sizeMultiplier
 
       // Brightness variation (70-100%)
-      const brightness = 0.7 + Math.random() * 0.3
+      const brightness = 0.7 + random() * 0.3
 
       // Color temperature variation
-      const temp = Math.random()
+      const temp = random()
       if (temp > 0.7) {
         // Warmer stars (30% chance) - yellowish
         cols[i * 3] = brightness * 1.0
@@ -81,6 +92,7 @@ export default function PrimaryStars({
     xOffset,
     zOffset,
     radius,
+    seed,
     viewport.width,
     viewport.height,
   ]) // Regenerate if these change

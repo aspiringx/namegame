@@ -258,7 +258,20 @@
     },
     "Scene 4": {
       "staticOverrides": {
-        "byObject": {}
+        "byObject": {
+          "Scene 4 Animation": {
+            "oldConstellationOpacity": 1.0,
+            "oldPrimaryStarsOpacity": 1.0,
+            "cameraX": 0,
+            "cameraY": 0,
+            "cameraZ": 150,
+            "heroStarX": 0,
+            "heroStarY": 0,
+            "heroStarZ": 0,
+            "newPrimaryStarsOpacity": 0,
+            "newConstellationOpacity": 0
+          }
+        }
       },
       "sequence": {
         "subUnitsPerUnit": 30,

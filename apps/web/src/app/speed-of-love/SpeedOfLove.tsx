@@ -29,7 +29,7 @@ export default function SpeedOfLove() {
               Your Universe
             </h1>
             <p className="mt-1 text-sm text-gray-300 sm:text-base">
-              At the speed of love
+              {/* At the speed of love */}
             </p>
           </div>
 

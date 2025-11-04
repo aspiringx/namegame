@@ -59,7 +59,6 @@ export interface Scene {
   sceneType: string
   cameraPosition?: [number, number, number]
   cameraFOV?: number
-  animationDuration?: number
 
   // Scene 1: cosmicView
   primaryStars?: {
@@ -103,19 +102,11 @@ export interface Scene {
     color: string
     opacity: number
     width: number
-    animated: boolean
     drawSpeed?: number
-    fadeInDuration?: number
   }
   connectionsCount?: number
 
-  // Scene 4: orbitChange
-  phases?: {
-    fadeOutConstellation: number
-    travelDuration: number
-    arrivalPause: number
-    newConstellationFadeIn: number
-  }
+  // Scene 4: orbitChange (timing controlled by Theatre.js)
 
   // Scene 5: starDrift
   driftingStars?: {
@@ -156,16 +147,10 @@ export interface Scene {
   logoFadeIn?: number
 }
 
+// Note: AnimationCommand is deprecated - Theatre.js handles all animations
+// Keeping type for backward compatibility during migration
 export type AnimationCommand = {
-  type:
-    | 'moveCamera'
-    | 'adjustFOV'
-    | 'starPulse'
-    | 'showLogo'
-    | 'showConnections'
-    | 'dimStars'
-    | 'pulseEffect'
-    | 'cosmicView'
+  type: string
   params: Record<string, any>
 }
 

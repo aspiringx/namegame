@@ -79,12 +79,11 @@
       "connectionLines": {
         "color": "#22d3ee",
         "opacity": 0.6,
-        "width": 1.5,
-        "animated": true
+        "width": 1.5
       },
       "connectionsCount": 5,
       "animation": {
-        "duration": 2.5,
+        "duration": 3,
         "properties": {
           "primaryStarsOpacity": {
             "type": "number",
@@ -96,20 +95,6 @@
             "type": "number",
             "range": [0, 1],
             "default": 0
-          },
-          "heroStarOpacity": {
-            "type": "number",
-            "range": [0, 1],
-            "default": 1.0,
-            "static": true,
-            "description": "Hero star stays at full opacity"
-          },
-          "heroStarScale": {
-            "type": "number",
-            "range": [0, 2],
-            "default": 1.0,
-            "static": true,
-            "description": "Hero star stays at full scale"
           }
         }
       }
@@ -121,12 +106,6 @@
       "sceneType": "orbitChange",
       "cameraPosition": [0, 0, 150],
       "cameraFOV": 50,
-      "phases": {
-        "fadeOutConstellation": 1500,
-        "travelDuration": 6000,
-        "arrivalPause": 1000,
-        "newConstellationFadeIn": 1000
-      },
       "heroStar": {
         "position": [0, 0, 0],
         "brightness": 1.5

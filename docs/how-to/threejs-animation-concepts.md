@@ -1,209 +1,183 @@
-# Three.js + Theatre.js Animation Concepts
+# Three.js + Theatre.js Animation Architecture
 
 ## Overview
 
-We're building a cinematic 3D animation sequence called "Speed of Love" using
-Three.js for 3D rendering and Theatre.js for timeline-based animation
-management.
+The "Speed of Love" animation sequence uses **Theatre.js as the single source of truth** for all animation orchestration. Theatre.js provides a visual timeline editor that controls timing, easing, and property values, while Three.js handles 3D rendering.
 
-**The Problem:** Managing complex animation sequences with manual timing
-(setTimeout, lerp calculations) is error-prone and hard to debug. We can't
-visually see what's happening when.
-
-**The Solution:** Theatre.js provides a visual timeline editor that lets us:
-
-- Scrub through animations frame-by-frame to debug issues
-- Adjust timing visually without code changes
-- Export timeline data as JSON for runtime playback
-- Separate animation logic from rendering logic
+**Key Principle:** All animations are controlled by Theatre.js. No manual timing (setTimeout), no React state-based animations, no lerp calculations in code.
 
 ## Architecture
 
-### Current Setup (Pre-Theatre.js)
+### Current Setup (Theatre.js Only)
 
 ```
+animations.json (single config source)
+         ↓
+    theatreConfig.ts (Theatre.js initialization)
+         ↓
+    theatre-state.json (keyframes & timing)
+         ↓
+    Scene.tsx (reads Theatre.js values, renders)
+         ↓
+    Three.js (3D rendering)
+```
+
+### Component Flow
+
+```
+StarField.tsx
+├── Loads scenes from animations.json
+├── Gets duration from Theatre.js (getSceneDuration)
+└── Passes currentScene to Scene.tsx
+
 Scene.tsx
-├── Manual timing with setTimeout()
-├── useFrame() for lerp animations
-├── React state for opacity/position
-└── Conditional rendering based on scene type
-```
+├── Reads Theatre.js animated values via useFrame
+├── Updates React state with Theatre.js values
+└── Renders components with Theatre.js-controlled properties
 
-### New Setup (With Theatre.js)
-
-```
-Scene.tsx
-├── Theatre.js Project (container for all timelines)
-├── Theatre.js Sheet (timeline for current scene)
-├── Theatre.js Objects (animated properties)
-└── useFrame() syncs Theatre.js time with Three.js
+Theatre.js
+├── Auto-plays timeline when scene loads
+├── Provides animated values every frame
+└── Handles all timing, easing, and interpolation
 ```
 
 ## Key Concepts
 
-**Timeline Asset (Reusable):** Animation definition with tracks and clips. Can
-be used across multiple scenes.
+### Theatre.js Terminology
 
-**Timeline Instance (Scene-Specific):** Binds a Timeline Asset to specific
-components in a scene. Contains the "who" (which stars, which camera).
+**Project:** Top-level container for all animations (e.g., "Speed of Love")
 
-**Track:** A single property being animated over time (e.g., camera position,
-star opacity).
+**Sheet:** Timeline for a single scene (e.g., "Scene 1", "Scene 2")
+- One sheet = one scene
+- Each sheet has its own timeline and duration
 
-**Clip:** A segment of animation on a track with start/end frames and easing.
+**Object:** Container for animated properties (e.g., "Scene 1 Animation")
+- Properties like `starsOpacity`, `heroStarScale`, `cameraX`
 
-**Binding:** Connection between a track and an actual Three.js object/component.
+**Track:** Animation data for a single property over time
+- Contains keyframes with positions (time) and values
 
-**Frame-Based Timing:** Using frames (1/60th second at 60fps) instead of
-milliseconds. Frame 60 = 1 second, Frame 120 = 2 seconds.
+**Keyframe:** A point in time with a specific value
+- Position: Time in seconds
+- Value: Property value at that time
+- Handles: Bezier curve for easing
 
-## Implementation Plan
+**Static Override:** Initial value for a property before animation starts
 
-1. **Install Theatre.js** (✓ Complete)
+### Timing
 
-   - `@theatre/core` - Runtime (production)
-   - `@theatre/studio` - Visual editor (dev only)
+- **Duration:** Defined in `animations.json` in **seconds** (e.g., 2.5)
+- **Keyframe Position:** Time in **seconds** (e.g., 0, 1.5, 2.5)
+- **FPS:** Theatre.js editor uses 30 fps for visual scrubbing
+- **Playback:** Runtime uses `requestAnimationFrame` (smooth, frame-independent)
 
-2. **Set up Theatre.js in Scene.tsx** (✓ Complete)
+## Configuration Files
 
-   - Initialize project and sheet
-   - Create Theatre.js objects for animated properties
-   - Load studio in development mode only
-
-3. **Refactor to config-driven architecture** (✓ Complete)
-
-   - Created `speed-of-love-animation-config.json` with animation properties for
-     all scenes
-   - Created `theatreConfig.ts` to dynamically generate Theatre.js objects from
-     config
-   - Refactored `Scene.tsx` to use config helpers instead of hard-coded values
-   - All animation durations, property ranges, and defaults now come from config
-   - Theatre.js state (keyframes) loaded automatically from JSON
-
-4. **Convert Scenes 1-3 to Theatre.js** (✓ Complete)
-
-   - **Scene 1:** Stars fade in (starsOpacity: 0→1)
-   - **Scene 2:** Hero star appears and grows (heroStarOpacity, heroStarScale:
-     0→1)
-   - **Scene 3:** Primary stars brighten, constellation forms
-     (primaryStarsOpacity: 0.3→1, constellationOpacity: 0→0.6)
-   - All scenes auto-play on load
-   - All scenes use config-driven approach
-
-5. **Convert remaining scenes** (Scene 4, 5, 6, 7, 8, 9)
-
-   - Apply same pattern to each scene
-   - Build up complexity incrementally
-
-## Configuration Files Overview
-
-The Speed of Love animation uses three JSON configuration files, each with a
-specific purpose:
-
-### 1. `scenes.json` - Scene Definitions
-
-**Location:** `/apps/web/public/docs/scripts/scenes.json`
-
-**Purpose:** Defines the high-level structure and content of each scene.
-
-**Contains:**
-
-- Scene metadata (description, narration, scene type)
-- Camera settings (position, FOV)
-- Visual elements (stars, colors, effects)
-- Scene-specific configurations (twinkle effects, connection lines, etc.)
-
-**Used by:** `StarField.tsx` to manage scene progression and pass scene data to
-components.
-
-**Example:**
-
-```json
-{
-  "scene": 1,
-  "description": "Stars fade in slowly",
-  "narration": "Your universe has billions of stars...",
-  "cameraPosition": [0, 0, 150],
-  "cameraFOV": 50,
-  "primaryStars": { "count": 15, "radius": 100 }
-}
-```
-
-### 2. `animations.json` - Animation Properties
+### 1. `animations.json` - Single Source of Truth
 
 **Location:** `/apps/web/public/docs/scripts/animations.json`
 
-**Purpose:** Defines Theatre.js animation properties, types, ranges, and
-defaults for each scene.
+**Purpose:** Defines all scene content AND animation properties
 
 **Contains:**
+- Scene metadata (description, narration, sceneType)
+- Camera settings (position, FOV)
+- Visual elements (stars, colors, effects)
+- Animation duration (in seconds)
+- Theatre.js property definitions (types, ranges, defaults)
 
-- Animation duration for each scene
-- Property definitions (opacity, scale, position, etc.)
-- Property types and value ranges
-- Default/initial values
-
-**Used by:** `theatreConfig.ts` to dynamically create Theatre.js objects and
-sheets.
-
-**Example:**
-
+**Structure:**
 ```json
 {
-  "scene": 1,
-  "animation": {
-    "duration": 2.0,
-    "properties": {
-      "starsOpacity": {
-        "type": "number",
-        "range": [0, 1],
-        "default": 0
+  "projectName": "Speed of Love",
+  "scenes": [
+    {
+      "scene": 1,
+      "description": "Stars fade in slowly",
+      "narration": "Your universe has billions of stars...",
+      "sceneType": "cosmicView",
+      "cameraPosition": [0, 0, 150],
+      "cameraFOV": 50,
+      "primaryStars": { "count": 15, "radius": 100 },
+      "animation": {
+        "duration": 2.0,
+        "properties": {
+          "starsOpacity": {
+            "type": "number",
+            "range": [0, 1],
+            "default": 0
+          }
+        }
       }
     }
-  }
+  ]
 }
 ```
 
-**Why separate from scene definitions?** This file focuses purely on animation
-mechanics, while `scenes.json` focuses on scene content. This separation allows
-animation properties to be modified without touching scene structure.
+**Used by:**
+- `loadScript()` - Loads scene data
+- `theatreConfig.ts` - Creates Theatre.js objects from animation properties
+- `StarField.tsx` - Scene progression and UI
+- `Scene.tsx` - Rendering configuration
 
-### 3. `theatre-state.json` - Keyframe Data
+### 2. `theatre-state.json` - Keyframe Data
 
 **Location:** `/apps/web/public/docs/scripts/theatre-state.json`
 
-**Purpose:** Stores Theatre.js keyframes and timeline data created in the visual
-editor.
+**Purpose:** Stores keyframes and timeline data created in Theatre.js Studio
 
 **Contains:**
-
-- Keyframe positions (time in seconds)
-- Keyframe values (property values at specific times)
+- Keyframe positions and values
 - Easing curves (Bezier handles)
 - Static overrides (initial values)
+- Track IDs and property mappings
 
-**Generated by:** Theatre.js Studio (exported via `exportTheatreState()` in
-browser console)
+**Generated by:** Theatre.js Studio visual editor
+- Export via `exportTheatreState()` in browser console (dev mode only)
 
-**Used by:** `theatreConfig.ts` loads this when creating the Theatre.js project.
-
-**Example:**
-
+**Structure:**
 ```json
 {
   "sheetsById": {
     "Scene 1": {
       "staticOverrides": {
-        "byObject": { "Scene 1 Animation": { "starsOpacity": 0 } }
+        "byObject": {
+          "Scene 1 Animation": {
+            "starsOpacity": 0
+          }
+        }
       },
       "sequence": {
+        "subUnitsPerUnit": 30,
+        "length": 2.0,
+        "type": "PositionalSequence",
         "tracksByObject": {
           "Scene 1 Animation": {
             "trackData": {
-              "keyframes": [
-                { "position": 0, "value": 0 },
-                { "position": 2, "value": 1 }
-              ]
+              "ASnwz1b_90": {
+                "type": "BasicKeyframedTrack",
+                "__debugName": "Scene 1 Animation:[\"starsOpacity\"]",
+                "keyframes": [
+                  {
+                    "id": "K7wzPwT63h",
+                    "position": 0,
+                    "value": 0,
+                    "connectedRight": true,
+                    "handles": [0.5, 1, 0.5, 0],
+                    "type": "bezier"
+                  },
+                  {
+                    "id": "zDDIZ4fyFQ",
+                    "position": 2.0,
+                    "value": 1,
+                    "handles": [0.5, 1, 0.5, 0],
+                    "type": "bezier"
+                  }
+                ]
+              }
+            },
+            "trackIdByPropPath": {
+              "[\"starsOpacity\"]": "ASnwz1b_90"
             }
           }
         }
@@ -213,548 +187,163 @@ browser console)
 }
 ```
 
-## File Relationships
+**Used by:** `theatreConfig.ts` loads this when initializing the Theatre.js project
 
-```
-scenes.json (scene content)
-         ↓
-    StarField.tsx (scene management)
-         ↓
-    Scene.tsx (rendering)
-         ↓
-animations.json (animation properties)
-         ↓
-    theatreConfig.ts (Theatre.js setup)
-         ↓
-theatre-state.json (keyframes)
-         ↓
-    Theatre.js (animation playback)
-```
+## Implementation Pattern
 
-## Theatre.js State File Structure (Detailed)
+### Scene Setup (theatreConfig.ts)
 
-### File Location
+1. **Load animations.json** - Get scene definitions and animation properties
+2. **Create Theatre.js project** - Initialize with theatre-state.json
+3. **Create sheets** - One per scene (e.g., "Scene 1", "Scene 2")
+4. **Create objects** - Dynamically generate from animation.properties
+5. **Export helpers** - `getSceneSheet()`, `getSceneAnimation()`, `getSceneDuration()`
 
-```
-/apps/web/public/docs/scripts/theatre-state.json
-```
+### Scene Rendering (Scene.tsx)
 
-### Structure Overview
+1. **Auto-play on mount** - When scene loads, play Theatre.js timeline
+2. **Read values in useFrame** - Every frame, read Theatre.js animated values
+3. **Update React state** - Store Theatre.js values in state for rendering
+4. **Render with values** - Pass Theatre.js values to components as props
 
-```json
-{
-  "sheetsById": {
-    "Scene 1": {
-      /* Sheet for Scene 1 */
-    },
-    "Scene 2": {
-      /* Sheet for Scene 2 */
-    }
-    // ... one sheet per scene
+**Example:**
+```tsx
+// Read Theatre.js values every frame
+useFrame(() => {
+  const animation = getSceneAnimation(currentScene.scene)
+  if (!animation) return
+  
+  if (currentScene.scene === 1) {
+    setTheatreStarsOpacity(animation.value.starsOpacity)
   }
-}
+})
+
+// Render with Theatre.js values
+<PrimaryStars opacity={theatreStarsOpacity} />
 ```
 
-### Sheet Structure
+### Adding a New Animated Property
+
+1. **Add to animations.json** - Define property type, range, default
+2. **Add state in Scene.tsx** - Create React state to hold Theatre.js value
+3. **Read in useFrame** - Read from Theatre.js animation object
+4. **Use in render** - Pass to component as prop
+5. **Create keyframes in Studio** - Open dev mode, adjust timeline, export state
+
+## Scene-by-Scene Implementation
+
+### Scene 1: Cosmic View (Stars Fade In)
+- **Duration:** 2.0 seconds
+- **Properties:** `starsOpacity` (0 → 1)
+- **Renders:** BackgroundStars, PrimaryStars
+
+### Scene 2: Focus Star (Hero Star Appears)
+- **Duration:** 2.5 seconds
+- **Properties:** 
+  - `heroStarOpacity` (0 → 1)
+  - `heroStarScale` (0 → 1)
+  - `primaryStarsOpacity` (1.0 → 0.3) - dims other stars
+- **Renders:** BackgroundStars, PrimaryStars, HeroStar
+
+### Scene 3: Constellation Form
+- **Duration:** 3.0 seconds
+- **Properties:**
+  - `primaryStarsOpacity` (0.3 → 1.0) - brighten stars
+  - `constellationOpacity` (0 → 1.0) - fade in lines
+- **Renders:** BackgroundStars, PrimaryStars, HeroStar, HeroConstellationLines
+- **Special:** Twinkling enabled via sceneType check
+
+### Scene 4: Orbit Change (Hero Travels)
+- **Duration:** 10.0 seconds
+- **Properties:**
+  - `oldConstellationOpacity` (1.0 → 0) - fade out old lines
+  - `oldPrimaryStarsOpacity` (1.0 → 0) - fade out old stars
+  - `cameraX`, `cameraY`, `cameraZ` - camera movement
+  - `heroStarX`, `heroStarY`, `heroStarZ` - hero star movement
+  - `newPrimaryStarsOpacity` (0 → 1.0) - fade in new stars
+  - `newConstellationOpacity` (0 → 1.0) - fade in new lines
+- **Renders:** All components with dual constellations
+- **Special:** Camera and hero star positions controlled by Theatre.js
+
+## Best Practices
+
+### ✅ DO
+
+- **Define all timing in Theatre.js** - Use keyframes, not setTimeout
+- **Use seeded random** - For deterministic star positions across scenes
+- **Read Theatre.js values in useFrame** - Single source of truth for animation
+- **Export state after changes** - Run `exportTheatreState()` in console
+- **Use seconds for duration** - Consistent with Theatre.js
+- **Add static overrides** - Set initial values in theatre-state.json
+
+### ❌ DON'T
+
+- **Don't use setTimeout** - Theatre.js handles all timing
+- **Don't use React state for animation** - Theatre.js controls values
+- **Don't use lerp in code** - Theatre.js handles interpolation
+- **Don't duplicate config** - Single source of truth in animations.json
+- **Don't hardcode timing** - Use Theatre.js keyframes
+- **Don't mix animation systems** - Theatre.js only
+
+## Development Workflow
+
+### Editing Animations
+
+1. **Start dev server** - Theatre.js Studio loads automatically
+2. **Open browser** - Studio UI appears at top of page
+3. **Select scene sheet** - Choose which scene to edit
+4. **Scrub timeline** - Preview animation at any point
+5. **Add/edit keyframes** - Click to add, drag to adjust
+6. **Adjust easing** - Modify Bezier handles for smooth curves
+7. **Export state** - Run `exportTheatreState()` in console
+8. **Save file** - Replace theatre-state.json with exported JSON
+
+### Adding New Scenes
+
+1. **Add to animations.json** - Define scene config and animation properties
+2. **Add to Scene.tsx** - Create state variables and useFrame logic
+3. **Add to theatre-state.json** - Create sheet with staticOverrides
+4. **Open Studio** - Create keyframes visually
+5. **Export and save** - Update theatre-state.json
+
+## Troubleshooting
+
+### Animation not playing
+- Check Theatre.js duration matches scene duration
+- Verify sheet name matches scene number
+- Check staticOverrides are set correctly
+
+### Values not updating
+- Ensure useFrame is reading correct scene animation
+- Check property name matches animations.json exactly
+- Verify React state is being updated
+
+### Timing feels wrong
+- Check keyframe positions in theatre-state.json
+- Verify duration in animations.json (seconds, not milliseconds)
+- Adjust easing curves in Theatre.js Studio
+
+### Stars regenerating on scene change
+- Ensure `seed` prop is set on PrimaryStars
+- Same seed = same positions across scenes
+- Different seed = different positions
 
-Each sheet contains:
+## File Checklist
 
-**`staticOverrides.byObject`** - Initial/default values for properties
+When adding/modifying animations, update these files:
 
-```json
-"byObject": {
-  "Scene 1 Animation": {
-    "starsOpacity": 0  // Starting value
-  }
-}
-```
+- [ ] `animations.json` - Add/modify animation properties
+- [ ] `theatre-state.json` - Add/modify keyframes (export from Studio)
+- [ ] `Scene.tsx` - Add state variables and useFrame logic
+- [ ] `types.ts` - Update Scene interface if adding new scene properties
 
-**`sequence`** - Timeline and keyframe data
+## Summary
 
-- `subUnitsPerUnit`: Time subdivision (30 = 30 frames per second in the editor)
-- `length`: Total duration in seconds
-- `type`: "PositionalSequence" (time-based animation)
-- `tracksByObject`: Keyframe data for each animated object
+**Theatre.js is the single animation orchestrator.** All timing, easing, and property values come from Theatre.js. React components read these values and render accordingly. No manual timing, no state-based animations, no conflicts.
 
-**`trackData`** - Individual property animations
-
-```json
-"trackData": {
-  "ASnwz1b_90": {  // Internal ID
-    "type": "BasicKeyframedTrack",
-    "__debugName": "Scene 1 Animation:[\"starsOpacity\"]",
-    "keyframes": [
-      {
-        "id": "K7wzPwT63h",
-        "position": 0,      // Time in seconds
-        "value": 0,         // Property value at this time
-        "handles": [...]    // Bezier curve handles for easing
-      },
-      {
-        "position": 2,
-        "value": 1
-      }
-    ]
-  }
-}
-```
-
-### Key Terms
-
-**sheetsById** - Map of all sheets (scenes) in the project. Key = sheet name.
-
-**staticOverrides** - Default/initial values before animation starts.
-
-**sequence** - The timeline containing all keyframes and playback settings.
-
-**tracksByObject** - Groups tracks by the Theatre.js object they animate.
-
-**trackData** - Individual property animations with keyframes.
-
-**keyframes** - Specific values at specific times. Theatre.js interpolates
-between them.
-
-**handles** - Bezier curve control points defining easing between keyframes.
-
-**position** - Time in seconds where a keyframe occurs.
-
-**value** - The property value at that keyframe.
-
-### Workflow
-
-1. **Create keyframes in Studio** - Drag playhead, set values, click diamond
-   icon
-2. **Export state** - Run `exportTheatreState()` in console
-3. **Save to file** - Move downloaded JSON to `/public/docs/scripts/`
-4. **Load in code** - Import and pass to
-   `getProject('Name', { state: theatreState })`
-5. **Repeat** - As you add scenes, re-export to update the file
-
-### Important Notes
-
-- **One file for all scenes** - All sheets live in the same state file
-- **Manual export required** - Changes in Studio don't auto-save to the file
-- **Production uses this file** - No Studio UI in production, just loads the
-  JSON
-- **Version control friendly** - JSON format works well with git
-
-## Handling Multi-Phase Scenes (e.g., Scene 4)
-
-Some scenes have multiple phases (Scene 4 has 5: fade, travel, arrive, pause,
-form). Theatre.js handles this within a **single sheet** using one continuous
-timeline.
-
-### Approach: Single Timeline with Time Ranges
-
-**One sheet = one scene**, regardless of complexity. Phases are just different
-time segments on the same timeline.
-
-**Example: Scene 4 (10 seconds total)**
-
-```
-Scene 4 Sheet Timeline:
-├─ 0.0-1.5s: Phase 1 - Fade out old constellation
-├─ 1.5-7.5s: Phase 2 - Camera travels to new location
-├─ 7.5-8.5s: Phase 3 - Arrival pause
-└─ 8.5-10.0s: Phase 4 - New constellation fades in
-```
-
-**In code:**
-
-```javascript
-// Play the entire scene (all phases)
-scene4Sheet.sequence.play({ range: [0, 10] })
-
-// Or play specific phases if needed
-scene4Sheet.sequence.play({ range: [1.5, 7.5] }) // Just the travel phase
-```
-
-### Why Not Separate Sheets Per Phase?
-
-❌ **Don't do this:**
-
-```
-Scene 4 Phase 1 (separate sheet)
-Scene 4 Phase 2 (separate sheet)
-Scene 4 Phase 3 (separate sheet)
-```
-
-✅ **Do this:**
-
-```
-Scene 4 (one sheet with all phases on one timeline)
-```
-
-**Reasons:**
-
-- **Visual continuity** - See the entire scene flow in one timeline view
-- **Easier timing** - Drag keyframes to adjust when phases transition
-- **Better debugging** - Scrub through the whole scene to find issues
-- **Simpler code** - One `play()` call instead of coordinating multiple
-  sequences
-- **Natural overlaps** - Phases can overlap (e.g., new stars start fading in
-  before old ones finish fading out)
-
-### Theatre.js Terminology Clarification
-
-**Important:** In Theatre.js, "sequence" has two meanings:
-
-1. **`sheet.sequence`** - The playback controller for a sheet's timeline
-   (singular)
-   - Every sheet has ONE sequence
-   - You call `.play()`, `.pause()`, `.position` on it
-2. **"Sequence" (concept)** - A series of animations over time
-   - This is what we mean when we say "animation sequence"
-   - Not a separate Theatre.js object, just the timeline itself
-
-**Our terminology:**
-
-- **Scene** = One Theatre.js sheet
-- **Phase** = A time range within a scene's timeline
-- **Sheet** = Container for one scene's timeline and objects
-- **Sequence** = The playback controller (`sheet.sequence`)
-
-## Star Configuration Parameters
-
-Our star rendering system uses several configuration parameters that work
-together to control appearance and distribution. All values come from JSON
-configuration files (`speed-of-love-intro.json` and
-`speed-of-love-animation-config.json`).
-
-### Primary Configuration Parameters
-
-#### `count` (integer)
-
-**What it does:** Number of stars to render.
-
-**Example:** `"count": 15` creates 15 primary stars.
-
-**Usage:**
-
-- Primary stars: 15 (prominent, larger stars)
-- Background stars: 2000 (tiny, depth-creating stars)
-
----
-
-#### `radius` (number, world units)
-
-**What it does:** Defines the spherical distribution volume for star placement.
-
-**How it works:** Stars are randomly positioned within a sphere of this radius
-centered at the origin (or offset position).
-
-**Example:** `"radius": 100` places stars within a 100-unit sphere.
-
-**Important:** This does NOT directly affect visual size, but affects
-**perceived size** because:
-
-- Larger radius = stars further from camera = appear smaller
-- Smaller radius = stars closer to camera = appear larger
-
-**Usage:**
-
-- Primary stars: `radius: 100` (closer, more prominent)
-- Background stars: `radius: 400` (distant, creates depth)
-
-**Camera relationship:** With camera at `z=150`, primary stars at `radius=100`
-are roughly 50-150 units away, while background stars at `radius=400` are
-250-550 units away.
-
----
-
-#### `baseSize` (number, screen pixels)
-
-**What it does:** Controls the base rendered size of star points on screen,
-before variation is applied.
-
-**How it works:** This is the base value for `gl_PointSize` in the shader. Each
-star gets a random size multiplier (0.8x to 1.4x) applied to this base, creating
-organic variation.
-
-**Formula:** `actualSize = baseSize × randomMultiplier(0.8 to 1.4)`
-
-**Example:** `"baseSize": 12.0` renders stars at:
-
-- **Minimum:** 9.6 pixels (12.0 × 0.8)
-- **Maximum:** 16.8 pixels (12.0 × 1.4)
-- **Average:** 13.2 pixels
-
-**Important:** This is in **screen pixels**, not world units. Stars maintain
-their pixel size regardless of distance from camera (unlike real 3D objects that
-get smaller with distance).
-
-**Usage:**
-
-- Primary stars: `baseSize: 12.0` → actual range 9.6-16.8px (prominent, easily
-  visible)
-- Background stars: `baseSize: 3.0` → actual range 2.4-4.2px (subtle, depth
-  layer)
-
-**Why pixel-based?** Using screen pixels ensures stars remain visible and don't
-become microscopic dots when far from camera. This is standard for particle
-systems.
-
-**Why variation?** The 0.8x-1.4x multiplier creates realistic, organic
-appearance - mimicking how real stars vary in brightness and apparent size.
-
----
-
-#### `xOffset` / `zOffset` (number, world units)
-
-**What it does:** Shifts the entire star distribution sphere along X or Z axis.
-
-**Example:** `"xOffset": 150` moves all stars 150 units to the right.
-
-**Usage:** Scene 4 new stars use `xOffset: 150` to position them at the hero's
-destination, creating the "travel to new location" effect.
-
----
-
-### Deprecated Parameters
-
-#### `factor` ❌ (REMOVED)
-
-**What it was:** An early design parameter intended to scale star sizes.
-
-**Why removed:**
-
-- Redundant with `size` parameter
-- Unclear relationship to actual rendering
-- `size` directly maps to shader `gl_PointSize`, making it more explicit
-
-**Migration:** All `factor` values replaced with `size` in configuration files.
-
----
-
-### How Parameters Work Together
-
-**Example: Primary Stars Configuration**
-
-```json
-"primaryStars": {
-  "count": 15,        // 15 stars total
-  "radius": 100,      // Distributed within 100-unit sphere
-  "baseSize": 12.0    // Base size before variation
-}
-```
-
-**Visual Result:**
-
-1. 15 stars are randomly positioned within a 100-unit sphere around origin
-2. Each star is 50-150 units from camera (at z=150)
-3. Each star gets random multiplier 0.8x-1.4x applied to baseSize
-4. **Actual rendered sizes:** 9.6-16.8 pixels (baseSize 12.0 × 0.8-1.4)
-5. Stars appear prominent, easily distinguishable, with realistic size variation
-
-**Example: Background Stars Configuration**
-
-```json
-"backgroundStars": {
-  "count": 2000,      // 2000 stars for depth
-  "radius": 400,      // Distributed within 400-unit sphere
-  "baseSize": 3.0     // Base size before variation
-}
-```
-
-**Visual Result:**
-
-1. 2000 stars create a dense starfield
-2. Stars are 250-550 units from camera
-3. Each star gets random multiplier 0.8x-1.4x applied to baseSize
-4. **Actual rendered sizes:** 2.4-4.2 pixels (baseSize 3.0 × 0.8-1.4)
-5. Creates depth and cosmic atmosphere without overwhelming primary stars
-
----
-
-### Design Rationale
-
-**Why separate primary and background stars?**
-
-- **Visual hierarchy:** Primary stars (baseSize 12px) are 4x larger than
-  background (baseSize 3px)
-- **Size ranges don't overlap:** Primary 9.6-16.8px vs Background 2.4-4.2px
-- **Depth perception:** Different radii create foreground/background layers
-- **Performance:** Can optimize background stars separately (simpler shaders, no
-  individual tracking)
-
-**Why pixel-based sizing?**
-
-- Ensures stars remain visible at all distances
-- Consistent with particle system conventions
-- Simpler than world-space sizing with distance attenuation
-
-**Why random size variation (0.8x-1.4x)?**
-
-- Creates organic, natural appearance
-- Prevents uniform "grid-like" feel
-- Mimics real stars of varying brightness/size
-
----
-
-## Resources
-
-- [Theatre.js Documentation](https://www.theatrejs.com/docs/latest/getting-started)
-- [Theatre.js + React Three Fiber](https://www.theatrejs.com/docs/latest/manual/react-three-fiber)
-- [Unity Timeline Concepts](https://docs.unity3d.com/Packages/com.unity.timeline@1.7/manual/index.html) -
-  Visual reference for timeline concepts
-- [Three.js Animation System](https://discoverthreejs.com/book/first-steps/animation-system/)
-- [Universal Scene Description (USD)](https://openusd.org/docs/api/_usd__overview_and_purpose.html)
-
----
-
-## Glossary
-
-### Three.js Technical Terms
-
-**Mesh** - A 3D object combining geometry (shape) and material (appearance). Our
-stars are meshes.
-
-**Geometry** - The shape/structure of a 3D object (vertices, faces). We use
-`SphereGeometry` for stars.
-
-**Material** - Defines how a surface looks (color, shininess, transparency). We
-use `MeshStandardMaterial`.
-
-**Scene** - Container holding all 3D objects, lights, and cameras. The root of
-the 3D world.
-
-**Camera** - Defines the viewpoint. We use `PerspectiveCamera` (mimics human eye
-perspective).
-
-**FOV (Field of View)** - Camera's viewing angle in degrees. Higher = wider
-view, lower = zoomed in. We use 50-60°.
-
-**Vector3** - A 3D coordinate `[x, y, z]`. Used for position, rotation, scale.
-
-**Position** - Location in 3D space. `[0, 0, 0]` is the origin/center.
-
-**Lerp (Linear Interpolation)** - Smoothly transitioning between two values.
-`lerp(0, 100, 0.5) = 50`.
-
-**useFrame** - React Three Fiber hook that runs every frame (~60 times/second).
-Used for animations.
-
-**Group** - Container for multiple objects that move together. Our hero star is
-in a group.
-
-**Opacity** - Transparency level. 0 = invisible, 1 = fully visible.
-
-**Ref** - React reference to access a component's underlying object directly.
-
-### Animation Concepts
-
-**Animation** - The process of changing properties over time to create the
-illusion of movement. In Three.js, this means updating object positions,
-rotations, scales, colors, or other properties each frame.
-
-**Render** - The process of converting 3D scene data (meshes, lights, camera)
-into a 2D image displayed on screen. Three.js renders ~60 times per second
-(60fps) to create smooth motion.
-
-**Timeline** - Visual representation of animation over time, with multiple
-tracks running in parallel.
-
-**Track** - A single property being animated (e.g., camera position track,
-opacity track).
-
-**Clip** - A segment of animation on a track with defined start/end times.
-
-**Keyframe** - A specific value at a specific time. Animation interpolates
-between keyframes.
-
-**Easing** - How animation accelerates/decelerates. Linear = constant speed,
-easeInOut = slow start/end.
-
-- [Easing Functions Reference](https://easings.net/)
-
-**Frame** - Single image in animation sequence. At 60fps, 1 frame = 1/60th
-second.
-
-**FPS (Frames Per Second)** - Animation speed. 60fps = 60 frames shown per
-second (standard for web).
-
-**Duration** - How long an animation lasts, measured in frames or milliseconds.
-
-**Sequence** - Series of animations that play one after another or overlap.
-
-**Phase** - A distinct stage within a scene (e.g., Scene 4 has 5 phases: fade,
-travel, arrive, pause, form).
-
-### Theatre.js Specific
-
-**Project** - Top-level container for all Theatre.js timelines in your app.
-
-**Sheet** - A single timeline within a project. Each scene typically has one
-sheet.
-
-**Theatre Object** - A set of properties that Theatre.js can animate (position,
-opacity, etc.).
-
-**Studio** - Theatre.js visual editor UI (dev only). Provides timeline scrubbing
-and keyframe editing.
-
-**Playhead** - The blue vertical line in the timeline showing current time
-position. Drag it left/right to preview animation at any point (this action is
-called "scrubbing").
-
-**Scrubbing** - Dragging the playhead left/right along the timeline to manually
-preview the animation. Lets you see exactly what's happening at any moment
-without playing the full sequence.
-
-**Sequence (Theatre.js)** - Theatre.js API for programmatic animation control.
-Can play, pause, or control timeline playback programmatically.
-
-### Unity Timeline Terms (Reference)
-
-**Timeline Asset** - Reusable animation definition (like a recipe).
-
-**Timeline Instance** - Specific use of a Timeline Asset in a scene (like
-cooking that recipe).
-
-**Playable Director** - Unity component that plays Timeline Assets (similar to
-Theatre.js sheet.sequence).
-
-**Binding** - Connection between a track and a specific GameObject/Component.
-
-**Activation Track** - Track that shows/hides objects at specific times.
-
-### Film Production Terms
-
-**Script Breakdown** - Scene-by-scene analysis identifying all required elements
-(cast, props, effects).
-
-**Dope Sheet / Exposure Sheet** - Frame-by-frame animation planning document
-from traditional animation.
-
-- [Exposure Sheet Explanation](https://en.wikipedia.org/wiki/Exposure_sheet)
-
-**Scene** - A continuous sequence in one location/time. Our animation has 9
-scenes.
-
-**Shot** - A single camera angle/position. We mostly use one continuous shot per
-scene.
-
-**Narration** - Voice-over text that accompanies the visuals.
-
-### React Three Fiber
-
-**Canvas** - Root component that creates the Three.js renderer and scene.
-
-**Fiber** - React renderer for Three.js. Lets us use Three.js with React
-components.
-
-**Drei** - Helper library for common Three.js patterns (cameras, controls,
-etc.).
-
-### Performance Terms
-
-**Bundle Size** - Total JavaScript file size sent to browser. Smaller = faster
-load.
-
-**Tree Shaking** - Removing unused code from production bundle.
-
-**Lazy Loading** - Loading code only when needed (e.g., studio only in dev
-mode).
-
-**Frame Rate** - How many frames rendered per second. 60fps = smooth, <30fps =
-choppy.
+This architecture provides:
+- ✅ Visual timeline editing
+- ✅ Frame-by-frame debugging
+- ✅ Consistent timing across all scenes
+- ✅ Easy adjustment without code changes
+- ✅ Single source of truth for animation

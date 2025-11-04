@@ -3,9 +3,9 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Canvas } from '@react-three/fiber'
 import type { Scene } from './types'
-import { AnimationCommand } from './types'
 import SceneComponent from './Scene'
 import { loadScript } from './utils/loadScript'
+import { getSceneDuration } from './theatreConfig'
 
 export default function StarField() {
   // Scene management
@@ -16,16 +16,14 @@ export default function StarField() {
   const currentScene = useMemo(
     () =>
       scenes[currentSceneIndex - 1] || {
+        scene: 0,
+        description: '',
         narration: 'Loading...',
         sceneType: '',
-        animationDuration: 0,
       },
     [scenes, currentSceneIndex],
   )
 
-  const [activeAnimations, setActiveAnimations] = useState<AnimationCommand[]>(
-    [],
-  )
 
   // Load scene script once (no dependencies).
   useEffect(() => {
@@ -42,25 +40,13 @@ export default function StarField() {
     // Mark animation as incomplete when scene starts
     setAnimationComplete(false)
 
+    // Get Theatre.js duration (in seconds) and convert to milliseconds
+    const durationMs = (getSceneDuration(currentScene.scene) || 0) * 1000
+
     // Set animation complete after scene duration
     const timer = setTimeout(() => {
       setAnimationComplete(true)
-    }, currentScene.animationDuration || 0)
-
-    const commands: AnimationCommand[] = []
-
-    if (currentScene.cameraPosition && currentScene.cameraFOV) {
-      commands.push({
-        type: 'moveCamera',
-        params: {
-          position: currentScene.cameraPosition,
-          fov: currentScene.cameraFOV,
-        },
-      } as const)
-    }
-
-    // Add other effect commands based on scene properties
-    setActiveAnimations(commands)
+    }, durationMs)
 
     return () => {
       clearTimeout(timer)
@@ -92,10 +78,7 @@ export default function StarField() {
           transition: 'opacity 800ms ease-in-out',
         }}
       >
-        <SceneComponent
-          currentScene={currentScene}
-          activeAnimations={activeAnimations}
-        />
+        <SceneComponent currentScene={currentScene} />
       </Canvas>
 
       <div
