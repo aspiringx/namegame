@@ -471,13 +471,73 @@
                     "value": 0.6
                   }
                 ]
+              },
+              "cameraY_static": {
+                "type": "BasicKeyframedTrack",
+                "__debugName": "Scene 4 Animation:[\"cameraY\"]",
+                "keyframes": [
+                  {
+                    "id": "cameraY_k1",
+                    "position": 0,
+                    "connectedRight": true,
+                    "handles": [0.5, 1, 0.5, 0],
+                    "type": "bezier",
+                    "value": 0
+                  }
+                ]
+              },
+              "cameraZ_static": {
+                "type": "BasicKeyframedTrack",
+                "__debugName": "Scene 4 Animation:[\"cameraZ\"]",
+                "keyframes": [
+                  {
+                    "id": "cameraZ_k1",
+                    "position": 0,
+                    "connectedRight": true,
+                    "handles": [0.5, 1, 0.5, 0],
+                    "type": "bezier",
+                    "value": 150
+                  }
+                ]
+              },
+              "heroStarY_static": {
+                "type": "BasicKeyframedTrack",
+                "__debugName": "Scene 4 Animation:[\"heroStarY\"]",
+                "keyframes": [
+                  {
+                    "id": "heroStarY_k1",
+                    "position": 0,
+                    "connectedRight": true,
+                    "handles": [0.5, 1, 0.5, 0],
+                    "type": "bezier",
+                    "value": 0
+                  }
+                ]
+              },
+              "heroStarZ_static": {
+                "type": "BasicKeyframedTrack",
+                "__debugName": "Scene 4 Animation:[\"heroStarZ\"]",
+                "keyframes": [
+                  {
+                    "id": "heroStarZ_k1",
+                    "position": 0,
+                    "connectedRight": true,
+                    "handles": [0.5, 1, 0.5, 0],
+                    "type": "bezier",
+                    "value": 0
+                  }
+                ]
               }
             },
             "trackIdByPropPath": {
               "[\"oldConstellationOpacity\"]": "QZ9NIOpIsw",
               "[\"oldPrimaryStarsOpacity\"]": "W6Pwm0tBwT",
               "[\"cameraX\"]": "PaRpwcGxOW",
+              "[\"cameraY\"]": "cameraY_static",
+              "[\"cameraZ\"]": "cameraZ_static",
               "[\"heroStarX\"]": "TWlK5XCDbU",
+              "[\"heroStarY\"]": "heroStarY_static",
+              "[\"heroStarZ\"]": "heroStarZ_static",
               "[\"newPrimaryStarsOpacity\"]": "wbm1N-LttC",
               "[\"newConstellationOpacity\"]": "3IxDIbrBTD"
             }
