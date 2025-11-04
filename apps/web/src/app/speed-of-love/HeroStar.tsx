@@ -2,27 +2,19 @@ import { useRef, useMemo } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 
-interface CentralStarProps {
+interface HeroStarProps {
   brightness?: number
-  animationDuration?: number
-  onProgressChange?: (opacity: number) => void
-  opacity?: number // Theatre.js controlled opacity
-  scale?: number // Theatre.js controlled scale
+  opacity: number // Theatre.js controlled opacity
+  scale: number // Theatre.js controlled scale
 }
 
-export default function CentralStar({
+export default function HeroStar({
   brightness = 1.5,
-  animationDuration = 2000,
-  onProgressChange,
   opacity,
   scale,
-}: CentralStarProps) {
+}: HeroStarProps) {
   const meshRef = useRef<THREE.Points>(null)
   const haloRef = useRef<THREE.Points>(null)
-  const startTime = useRef(Date.now())
-  const currentSize = useRef(0)
-  const currentHaloSize = useRef(0)
-  const currentOpacity = useRef(0)
 
   // Create golden/white gradient texture for the star core
   const starTexture = useMemo(() => {
@@ -75,76 +67,20 @@ export default function CentralStar({
     return geo
   }, [])
 
-  // Animate size and opacity for both core and halo
+  // Apply Theatre.js controlled size and opacity
   useFrame(() => {
     if (!meshRef.current || !haloRef.current) return
 
-    // If Theatre.js provides opacity and scale, use those directly
-    if (opacity !== undefined && scale !== undefined) {
-      const baseSize = 24 * brightness
-      const baseHaloSize = 48 * brightness
-      
-      const material = meshRef.current.material as THREE.PointsMaterial
-      material.size = baseSize * scale
-      material.opacity = opacity * brightness
-      
-      const haloMaterial = haloRef.current.material as THREE.PointsMaterial
-      haloMaterial.size = baseHaloSize * scale
-      haloMaterial.opacity = opacity * brightness * 0.7
-      
-      if (onProgressChange) {
-        // Dim background stars to 30% as hero star appears (not fully invisible)
-        const backgroundOpacity = 1.0 - (opacity * 0.7)
-        onProgressChange(backgroundOpacity)
-      }
-      return
-    }
-
-    // Otherwise use the old animation system
-    const elapsed = Date.now() - startTime.current
-    const progress = Math.min(elapsed / animationDuration, 1)
-
-    // Ease-out cubic for smooth growth
-    const eased = 1 - Math.pow(1 - progress, 3)
-
-    // Grow core from 0 to 24 (much larger and closer feeling)
-    const targetSize = 24 * brightness
-    currentSize.current = THREE.MathUtils.lerp(
-      currentSize.current,
-      targetSize * eased,
-      0.1,
-    )
-
-    // Halo grows even larger and expands more slowly
-    const targetHaloSize = 48 * brightness
-    const haloEased = 1 - Math.pow(1 - progress, 2) // Slower ease for halo
-    currentHaloSize.current = THREE.MathUtils.lerp(
-      currentHaloSize.current,
-      targetHaloSize * haloEased,
-      0.08,
-    )
-
-    // Fade in opacity
-    const targetOpacity = 1.0 * brightness
-    currentOpacity.current = THREE.MathUtils.lerp(
-      currentOpacity.current,
-      targetOpacity * eased,
-      0.1,
-    )
+    const baseSize = 24 * brightness
+    const baseHaloSize = 48 * brightness
 
     const material = meshRef.current.material as THREE.PointsMaterial
-    material.size = currentSize.current
-    material.opacity = currentOpacity.current
+    material.size = baseSize * scale
+    material.opacity = opacity * brightness
 
     const haloMaterial = haloRef.current.material as THREE.PointsMaterial
-    haloMaterial.size = currentHaloSize.current
-    haloMaterial.opacity = currentOpacity.current * 0.7 // Visible golden halo
-
-    // Fade other stars as hero star appears (from 1.0 to 0.6)
-    if (onProgressChange) {
-      const otherStarsOpacity = 1.0 - eased * 0.4 // Fade to 60%
-      onProgressChange(otherStarsOpacity)
-    }
+    haloMaterial.size = baseHaloSize * scale
+    haloMaterial.opacity = opacity * brightness * 0.7
   })
 
   return (

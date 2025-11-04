@@ -5,7 +5,7 @@ import { AnimationCommand, Scene as SceneData } from './types'
 import { PerspectiveCamera } from '@react-three/drei'
 import BackgroundStars from './BackgroundStars'
 import PrimaryStars from './PrimaryStars'
-import CentralStar from './CentralStar'
+import HeroStar from './HeroStar'
 import HeroConstellationLines from './HeroConstellationLines'
 // Import Theatre.js configuration and utilities
 import {
@@ -62,6 +62,8 @@ export default function Scene({ activeAnimations, currentScene }: SceneProps) {
   const [theatreStarsOpacity, setTheatreStarsOpacity] = useState(0)
   const [theatreHeroStarOpacity, setTheatreHeroStarOpacity] = useState(0)
   const [theatreHeroStarScale, setTheatreHeroStarScale] = useState(0)
+  const [theatreScene2PrimaryStarsOpacity, setTheatreScene2PrimaryStarsOpacity] =
+    useState(1.0)
   const [theatrePrimaryStarsOpacity, setTheatrePrimaryStarsOpacity] =
     useState(0.3)
   const [theatreConstellationOpacity, setTheatreConstellationOpacity] =
@@ -83,30 +85,10 @@ export default function Scene({ activeAnimations, currentScene }: SceneProps) {
   const [theatreNewConstellationOpacity, setTheatreNewConstellationOpacity] =
     useState(0)
 
-  const [otherStarsOpacity, setOtherStarsOpacity] = useState(1.0)
   const [primaryStarPositions, setPrimaryStarPositions] =
-    useState<Float32Array | null>(null)
-  const [newPrimaryStarPositions, setNewPrimaryStarPositions] =
     useState<Float32Array | null>(null)
   const newPrimaryStarPositionsRef = useRef<Float32Array | null>(null) // Immediate access, no React delay
   const [twinklingEnabled, setTwinklingEnabled] = useState(false)
-
-  // Scene 4: Orbit change animation states (using refs for smooth lerping)
-  const constellationOpacity = useRef(1.0)
-  const targetConstellationOpacity = useRef(1.0)
-  const oldPrimaryOpacity = useRef(1.0)
-  const targetOldPrimaryOpacity = useRef(1.0)
-  const newPrimaryOpacity = useRef(0.0)
-  const targetNewPrimaryOpacity = useRef(0.0)
-  const [_showNewConstellation, setShowNewConstellation] = useState(false)
-  const orbitChangeStartTime = useRef<number>(0)
-  const cameraXOffset = useRef(0)
-  const targetCameraXOffset = useRef(0)
-  const cameraYOffset = useRef(0)
-  const targetCameraYOffset = useRef(0)
-  const cameraZOffset = useRef(0)
-  const targetCameraZOffset = useRef(0)
-  const travelDistance = useRef(0) // Track how far we've traveled for fade calculation
   const heroStarGroupRef = useRef<THREE.Group>(null)
 
   // Theatre.js: Auto-play animations when scenes load
@@ -127,76 +109,12 @@ export default function Scene({ activeAnimations, currentScene }: SceneProps) {
     }
   }, [currentScene.scene])
 
-  // Fade primary stars back to full brightness in Scene 3
+  // Enable twinkling in Scene 3
   useEffect(() => {
     if (currentScene.sceneType === 'constellationForm') {
-      setOtherStarsOpacity(1.0)
-      setTwinklingEnabled(true) // Start twinkling in Scene 3
-      // Reset Scene 4 animation state when entering Scene 3
-      oldPrimaryOpacity.current = 1.0
-      targetOldPrimaryOpacity.current = 1.0
+      setTwinklingEnabled(true)
     }
   }, [currentScene.sceneType])
-
-  // Scene 4: Orbit change animation sequence
-  useEffect(() => {
-    if (currentScene.sceneType === 'orbitChange') {
-      orbitChangeStartTime.current = Date.now()
-      const phases = currentScene.phases || {
-        fadeOutConstellation: 1500,
-        travelDuration: 6000,
-        arrivalPause: 1000,
-        newConstellationFadeIn: 1000,
-      }
-
-      // Reset to initial state
-      constellationOpacity.current = 1.0
-      targetConstellationOpacity.current = 1.0
-      oldPrimaryOpacity.current = 1.0
-      targetOldPrimaryOpacity.current = 1.0
-      newPrimaryOpacity.current = 0.0
-      targetNewPrimaryOpacity.current = 0.0
-      cameraXOffset.current = 0
-      targetCameraXOffset.current = 0
-      cameraYOffset.current = 0
-      targetCameraYOffset.current = 0
-      cameraZOffset.current = 0
-      targetCameraZOffset.current = 0
-      travelDistance.current = 0
-      setShowNewConstellation(false)
-
-      // Phase 1: Start traveling - move camera (and hero star with it) away from old constellation
-      setTimeout(() => {
-        // Camera moves in new direction (right and down and forward)
-        targetCameraXOffset.current = 150 // Move right
-        targetCameraYOffset.current = 0 // -80 // Move down
-        targetCameraZOffset.current = 0 // 200 // Move forward (away from old constellation at Z=0)
-      }, 100)
-
-      // Phase 2: New stars start fading in early during travel
-      setTimeout(() => {
-        targetNewPrimaryOpacity.current = 1.0
-      }, 2000) // Start 2 seconds in, during travel
-
-      // Phase 4: Show new constellation after pause
-      setTimeout(() => {
-        setShowNewConstellation(true)
-      }, phases.fadeOutConstellation + phases.travelDuration + phases.arrivalPause)
-    } else {
-      // Reset for other scenes
-      constellationOpacity.current = 1.0
-      targetConstellationOpacity.current = 1.0
-      oldPrimaryOpacity.current = 1.0
-      targetOldPrimaryOpacity.current = 1.0
-      newPrimaryOpacity.current = 0.0
-      targetNewPrimaryOpacity.current = 0.0
-      cameraXOffset.current = 0
-      cameraYOffset.current = 0
-      cameraZOffset.current = 0
-      travelDistance.current = 0
-      setShowNewConstellation(false)
-    }
-  }, [currentScene.sceneType, currentScene.phases, newPrimaryStarPositions])
 
   // Theatre.js: Read animated values every frame and update React state
   useFrame(() => {
@@ -208,10 +126,11 @@ export default function Scene({ activeAnimations, currentScene }: SceneProps) {
       setTheatreStarsOpacity(animation.value.starsOpacity)
     }
 
-    // Scene 2: Read hero star opacity and scale
+    // Scene 2: Read hero star opacity, scale, and primary stars opacity
     if (currentScene.scene === 2) {
       setTheatreHeroStarOpacity(animation.value.heroStarOpacity)
       setTheatreHeroStarScale(animation.value.heroStarScale)
+      setTheatreScene2PrimaryStarsOpacity(animation.value.primaryStarsOpacity)
     }
 
     // Scene 3: Read primary stars and constellation opacity
@@ -281,7 +200,7 @@ export default function Scene({ activeAnimations, currentScene }: SceneProps) {
       <ambientLight intensity={0.3} />
       <pointLight position={[0, 0, 0]} intensity={1} />
 
-      {/* Background stars - Scene 1 uses Theatre.js, others use old approach */}
+      {/* Background stars - All scenes use Theatre.js or static values */}
       <BackgroundStars
         key="background-stars"
         radius={currentScene.backgroundStars?.radius || 400}
@@ -290,7 +209,9 @@ export default function Scene({ activeAnimations, currentScene }: SceneProps) {
         opacity={
           currentScene.scene === 1
             ? 0.8 * theatreStarsOpacity
-            : 0.8 * otherStarsOpacity
+            : currentScene.scene === 2
+            ? 0.8 * theatreScene2PrimaryStarsOpacity
+            : 0.8
         }
         enableTwinkling={twinklingEnabled}
       />
@@ -307,14 +228,14 @@ export default function Scene({ activeAnimations, currentScene }: SceneProps) {
         />
       )}
 
-      {/* Scene 2: Primary stars dimmed */}
+      {/* Scene 2: Primary stars controlled by Theatre.js */}
       {currentScene.scene === 2 && (
         <PrimaryStars
           key="primary-stars-1"
           radius={currentScene.primaryStars?.radius || 100}
           count={currentScene.primaryStars?.count || 15}
           size={currentScene.primaryStars?.baseSize || 12.0}
-          opacity={otherStarsOpacity}
+          opacity={theatreScene2PrimaryStarsOpacity}
           onPositionsReady={setPrimaryStarPositions}
         />
       )}
@@ -349,34 +270,19 @@ export default function Scene({ activeAnimations, currentScene }: SceneProps) {
 
       {/* Scene 2, 3, 4: Keep hero star visible */}
       {/* Hero star - moves with camera in Scene 4 to stay centered */}
-      {/* {(currentScene.sceneType === 'focusStar' ||
-        currentScene.sceneType === 'constellationForm' ||
-        currentScene.sceneType === 'orbitChange') && ( */}
       {currentScene.scene > 1 && currentScene.scene < 5 && (
         <group ref={heroStarGroupRef}>
-          <CentralStar
-            brightness={currentScene.centralStar?.brightness || 1.5}
-            animationDuration={
-              currentScene.sceneType === 'focusStar' ? 3000 : 0
-            }
-            onProgressChange={
-              currentScene.sceneType === 'focusStar'
-                ? setOtherStarsOpacity
-                : undefined
-            }
+          <HeroStar
+            brightness={currentScene.heroStar?.brightness || 1.5}
             opacity={
               currentScene.scene === 2
                 ? theatreHeroStarOpacity
-                : currentScene.scene === 3
-                ? 1.0 // Stay at full opacity in Scene 3
-                : undefined
+                : 1.0 // Stay at full opacity in Scene 3 and 4
             }
             scale={
               currentScene.scene === 2
                 ? theatreHeroStarScale
-                : currentScene.scene === 3
-                ? 1.0 // Stay at full scale in Scene 3
-                : undefined
+                : 1.0 // Stay at full scale in Scene 3 and 4
             }
           />
         </group>
@@ -394,7 +300,6 @@ export default function Scene({ activeAnimations, currentScene }: SceneProps) {
           opacity={theatreNewPrimaryStarsOpacity}
           onPositionsReady={(positions) => {
             newPrimaryStarPositionsRef.current = positions
-            setNewPrimaryStarPositions(positions)
           }}
         />
       )}

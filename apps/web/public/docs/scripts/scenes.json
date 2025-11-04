@@ -27,7 +27,7 @@
     "sceneType": "focusStar",
     "cameraPosition": [0, 0, 150],
     "cameraFOV": 50,
-    "centralStar": {
+    "heroStar": {
       "position": [0, 0, 0],
       "brightness": 1.5
     },
@@ -88,7 +88,7 @@
       "arrivalPause": 1000,
       "newConstellationFadeIn": 1000
     },
-    "centralStar": {
+    "heroStar": {
       "position": [0, 0, 0],
       "brightness": 1.5
     },
@@ -131,17 +131,17 @@
   },
   {
     "scene": 6,
-    "description": "All stars except central one fade to 30% brightness. Central star dims to 50%. Ambient light reduces. Slow, melancholy transition.",
+    "description": "All stars except central one fade to 30% brightness. Hero star dims to 50%. Ambient light reduces. Slow, melancholy transition.",
     "narration": "At times, your light feels dim, your signal quiet. Every star experiences this space of distance and reflection.",
     "sceneType": "dimStar",
-    "centralStarBrightness": 0.5,
+    "heroStarBrightness": 0.5,
     "otherStarsBrightness": 0.3,
     "ambientDim": 0.4,
     "animationDuration": 5000
   },
   {
     "scene": 7,
-    "description": "Central star pulses bright (2x). Pulse wave emanates outward. Connection lines rapidly draw to distant stars. Warm glow spreads.",
+    "description": "Hero star pulses bright (2x). Pulse wave emanates outward. Connection lines rapidly draw to distant stars. Warm glow spreads.",
     "narration": "But you have a rare gift: you can travel at the speed of love. With a thought, a message, a moment—you reconnect.",
     "sceneType": "lovePulse",
     "pulseEffect": {

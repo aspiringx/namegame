@@ -60,7 +60,7 @@ export interface Scene {
   cameraPosition?: [number, number, number]
   cameraFOV?: number
   animationDuration?: number
-  
+
   // Scene 1: cosmicView
   primaryStars?: {
     count: number
@@ -81,9 +81,9 @@ export interface Scene {
     radius?: number
     opacity?: number
   }
-  
+
   // Scene 2: focusStar
-  centralStar?: {
+  heroStar?: {
     position: [number, number, number]
     brightness: number
   }
@@ -92,7 +92,7 @@ export interface Scene {
     minDistance: number
     maxDistance: number
   }
-  
+
   // Scene 3: constellationForm
   twinkleEffect?: {
     duration: number
@@ -108,7 +108,7 @@ export interface Scene {
     fadeInDuration?: number
   }
   connectionsCount?: number
-  
+
   // Scene 4: orbitChange
   phases?: {
     fadeOutConstellation: number
@@ -116,14 +116,14 @@ export interface Scene {
     arrivalPause: number
     newConstellationFadeIn: number
   }
-  
+
   // Scene 5: starDrift
   driftingStars?: {
     count: number
     speed: number
     fadeConnections: boolean
   }
-  
+
   // Scene 5: ripples
   waveEffect?: {
     amplitude: number
@@ -131,25 +131,25 @@ export interface Scene {
     speed: number
     waveCount: number
   }
-  
+
   // Scene 6: dimStar
-  centralStarBrightness?: number
+  heroStarBrightness?: number
   otherStarsBrightness?: number
   ambientDim?: number
-  
+
   // Scene 7: lovePulse
   pulseEffect?: {
     intensity: number
     speed: number
     color: string
   }
-  
+
   // Scene 8: constellationReform
   starBrightness?: number
   connectionBrightness?: number
   colorTint?: string
   tintOpacity?: number
-  
+
   // Scene 9: logoReveal
   logoUrl?: string
   logoOpacity?: number

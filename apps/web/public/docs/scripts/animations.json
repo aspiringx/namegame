@@ -38,7 +38,7 @@
       "sceneType": "focusStar",
       "cameraPosition": [0, 0, 150],
       "cameraFOV": 50,
-      "centralStar": {
+      "heroStar": {
         "position": [0, 0, 0],
         "brightness": 1.5
       },
@@ -54,6 +54,12 @@
             "type": "number",
             "range": [0, 2],
             "default": 0
+          },
+          "primaryStarsOpacity": {
+            "type": "number",
+            "range": [0, 1],
+            "default": 1.0,
+            "description": "Primary stars dim as hero star appears"
           }
         }
       }
@@ -121,7 +127,7 @@
         "arrivalPause": 1000,
         "newConstellationFadeIn": 1000
       },
-      "centralStar": {
+      "heroStar": {
         "position": [0, 0, 0],
         "brightness": 1.5
       },

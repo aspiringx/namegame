@@ -129,11 +129,44 @@
                     "value": 1
                   }
                 ]
+              },
+              "S2PrimaryStars": {
+                "type": "BasicKeyframedTrack",
+                "__debugName": "Scene 2 Animation:[\"primaryStarsOpacity\"]",
+                "keyframes": [
+                  {
+                    "id": "S2PrimStart",
+                    "position": 0,
+                    "connectedRight": true,
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
+                    "type": "bezier",
+                    "value": 1.0
+                  },
+                  {
+                    "id": "S2PrimEnd",
+                    "position": 2.5,
+                    "connectedRight": true,
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
+                    "type": "bezier",
+                    "value": 0.3
+                  }
+                ]
               }
             },
             "trackIdByPropPath": {
               "[\"heroStarOpacity\"]": "Pq4MKvEIi8",
-              "[\"heroStarScale\"]": "tTQ62eedT7"
+              "[\"heroStarScale\"]": "tTQ62eedT7",
+              "[\"primaryStarsOpacity\"]": "S2PrimaryStars"
             }
           }
         }
