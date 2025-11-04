@@ -1,6 +1,12 @@
-import { getProject, types, IProject, ISheet, ISheetObject } from '@theatre/core'
-import animationConfig from '../../../public/docs/scripts/speed-of-love-animation-config.json'
-import theatreState from '../../../public/docs/scripts/speed-of-love-theatre-state.json'
+import {
+  getProject,
+  types,
+  IProject,
+  ISheet,
+  ISheetObject,
+} from '@theatre/core'
+import animationConfig from '../../../public/docs/scripts/animations.json'
+import theatreState from '../../../public/docs/scripts/theatre-state.json'
 
 // Type definitions for our animation config
 interface AnimationProperty {
@@ -35,7 +41,9 @@ interface AnimationConfig {
 const config = animationConfig as unknown as AnimationConfig
 
 // Create Theatre.js project with state
-export const theatreProject: IProject = getProject(config.projectName, { state: theatreState })
+export const theatreProject: IProject = getProject(config.projectName, {
+  state: theatreState,
+})
 
 // Store sheets and animation objects
 export const sheets: Map<number, ISheet> = new Map()
@@ -50,17 +58,22 @@ export function initializeTheatreFromConfig() {
 
     // Build Theatre.js property types from config
     const props: Record<string, any> = {}
-    Object.entries(sceneConfig.animation.properties).forEach(([propName, propConfig]) => {
-      if (propConfig.type === 'number' && propConfig.range) {
-        props[propName] = types.number(propConfig.default as number, {
-          range: propConfig.range,
-        })
-      }
-      // Add other types as needed (boolean, string, etc.)
-    })
+    Object.entries(sceneConfig.animation.properties).forEach(
+      ([propName, propConfig]) => {
+        if (propConfig.type === 'number' && propConfig.range) {
+          props[propName] = types.number(propConfig.default as number, {
+            range: propConfig.range,
+          })
+        }
+        // Add other types as needed (boolean, string, etc.)
+      },
+    )
 
     // Create animation object
-    const animationObject = sheet.object(`Scene ${sceneConfig.scene} Animation`, props)
+    const animationObject = sheet.object(
+      `Scene ${sceneConfig.scene} Animation`,
+      props,
+    )
     animations.set(sceneConfig.scene, animationObject)
   })
 }
@@ -77,7 +90,9 @@ export function getSceneDuration(sceneNumber: number): number {
 }
 
 // Get animation object for a scene
-export function getSceneAnimation(sceneNumber: number): ISheetObject<any> | undefined {
+export function getSceneAnimation(
+  sceneNumber: number,
+): ISheetObject<any> | undefined {
   return animations.get(sceneNumber)
 }
 

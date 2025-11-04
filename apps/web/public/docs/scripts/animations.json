@@ -1,5 +1,4 @@
 {
-  "$schema": "./speed-of-love-timeline-schema.json",
   "projectName": "Speed of Love",
   "scenes": [
     {
@@ -12,7 +11,7 @@
       "primaryStars": {
         "count": 15,
         "radius": 100,
-        "baseSize": 12.0
+        "baseSize": 8.0
       },
       "backgroundStars": {
         "count": 2000,
@@ -153,9 +152,29 @@
             "range": [-200, 200],
             "default": 0
           },
+          "cameraY": {
+            "type": "number",
+            "range": [-100, 100],
+            "default": 0
+          },
+          "cameraZ": {
+            "type": "number",
+            "range": [100, 250],
+            "default": 150
+          },
           "heroStarX": {
             "type": "number",
             "range": [-200, 200],
+            "default": 0
+          },
+          "heroStarY": {
+            "type": "number",
+            "range": [-100, 100],
+            "default": 0
+          },
+          "heroStarZ": {
+            "type": "number",
+            "range": [-100, 100],
             "default": 0
           },
           "newPrimaryStarsOpacity": {

@@ -20,11 +20,13 @@ import {
 if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
   import('@theatre/studio').then(({ default: studio }) => {
     studio.initialize()
-    
+
     // Add export button to window for easy access
     ;(window as any).exportTheatreState = () => {
       const state = studio.createContentOfSaveFile('Speed of Love')
-      const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' })
+      const blob = new Blob([JSON.stringify(state, null, 2)], {
+        type: 'application/json',
+      })
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
@@ -55,22 +57,32 @@ interface SceneProps {
 
 export default function Scene({ activeAnimations, currentScene }: SceneProps) {
   const cameraRef = useRef<THREE.PerspectiveCamera>(null)
-  
+
   // State to hold Theatre.js animated values
   const [theatreStarsOpacity, setTheatreStarsOpacity] = useState(0)
   const [theatreHeroStarOpacity, setTheatreHeroStarOpacity] = useState(0)
   const [theatreHeroStarScale, setTheatreHeroStarScale] = useState(0)
-  const [theatrePrimaryStarsOpacity, setTheatrePrimaryStarsOpacity] = useState(0.3)
-  const [theatreConstellationOpacity, setTheatreConstellationOpacity] = useState(0)
-  
+  const [theatrePrimaryStarsOpacity, setTheatrePrimaryStarsOpacity] =
+    useState(0.3)
+  const [theatreConstellationOpacity, setTheatreConstellationOpacity] =
+    useState(0)
+
   // Scene 4: Theatre.js animated values
-  const [theatreOldConstellationOpacity, setTheatreOldConstellationOpacity] = useState(1.0)
-  const [theatreOldPrimaryStarsOpacity, setTheatreOldPrimaryStarsOpacity] = useState(1.0)
+  const [theatreOldConstellationOpacity, setTheatreOldConstellationOpacity] =
+    useState(1.0)
+  const [theatreOldPrimaryStarsOpacity, setTheatreOldPrimaryStarsOpacity] =
+    useState(1.0)
   const [theatreCameraX, setTheatreCameraX] = useState(0)
+  const [theatreCameraY, setTheatreCameraY] = useState(0)
+  const [theatreCameraZ, setTheatreCameraZ] = useState(150)
   const [theatreHeroStarX, setTheatreHeroStarX] = useState(0)
-  const [theatreNewPrimaryStarsOpacity, setTheatreNewPrimaryStarsOpacity] = useState(0)
-  const [theatreNewConstellationOpacity, setTheatreNewConstellationOpacity] = useState(0)
-  
+  const [theatreHeroStarY, setTheatreHeroStarY] = useState(0)
+  const [theatreHeroStarZ, setTheatreHeroStarZ] = useState(0)
+  const [theatreNewPrimaryStarsOpacity, setTheatreNewPrimaryStarsOpacity] =
+    useState(0)
+  const [theatreNewConstellationOpacity, setTheatreNewConstellationOpacity] =
+    useState(0)
+
   const [otherStarsOpacity, setOtherStarsOpacity] = useState(1.0)
   const [primaryStarPositions, setPrimaryStarPositions] =
     useState<Float32Array | null>(null)
@@ -86,7 +98,7 @@ export default function Scene({ activeAnimations, currentScene }: SceneProps) {
   const targetOldPrimaryOpacity = useRef(1.0)
   const newPrimaryOpacity = useRef(0.0)
   const targetNewPrimaryOpacity = useRef(0.0)
-  const [showNewConstellation, setShowNewConstellation] = useState(false)
+  const [_showNewConstellation, setShowNewConstellation] = useState(false)
   const orbitChangeStartTime = useRef<number>(0)
   const cameraXOffset = useRef(0)
   const targetCameraXOffset = useRef(0)
@@ -101,14 +113,14 @@ export default function Scene({ activeAnimations, currentScene }: SceneProps) {
   useEffect(() => {
     const sheet = getSceneSheet(currentScene.scene)
     const duration = getSceneDuration(currentScene.scene)
-    
+
     if (!sheet || !duration) return
-    
+
     // Wait for Theatre.js project to load before playing
     theatreProject.ready.then(() => {
       sheet.sequence.play({ range: [0, duration] })
     })
-    
+
     // Cleanup: pause sequence when scene changes
     return () => {
       sheet.sequence.pause()
@@ -190,30 +202,34 @@ export default function Scene({ activeAnimations, currentScene }: SceneProps) {
   useFrame(() => {
     const animation = getSceneAnimation(currentScene.scene)
     if (!animation) return
-    
+
     // Scene 1: Read stars opacity
     if (currentScene.scene === 1) {
       setTheatreStarsOpacity(animation.value.starsOpacity)
     }
-    
+
     // Scene 2: Read hero star opacity and scale
     if (currentScene.scene === 2) {
       setTheatreHeroStarOpacity(animation.value.heroStarOpacity)
       setTheatreHeroStarScale(animation.value.heroStarScale)
     }
-    
+
     // Scene 3: Read primary stars and constellation opacity
     if (currentScene.scene === 3) {
       setTheatrePrimaryStarsOpacity(animation.value.primaryStarsOpacity)
       setTheatreConstellationOpacity(animation.value.constellationOpacity)
     }
-    
+
     // Scene 4: Read all orbit change animation values
     if (currentScene.scene === 4) {
       setTheatreOldConstellationOpacity(animation.value.oldConstellationOpacity)
       setTheatreOldPrimaryStarsOpacity(animation.value.oldPrimaryStarsOpacity)
       setTheatreCameraX(animation.value.cameraX)
+      setTheatreCameraY(animation.value.cameraY)
+      setTheatreCameraZ(animation.value.cameraZ)
       setTheatreHeroStarX(animation.value.heroStarX)
+      setTheatreHeroStarY(animation.value.heroStarY)
+      setTheatreHeroStarZ(animation.value.heroStarZ)
       setTheatreNewPrimaryStarsOpacity(animation.value.newPrimaryStarsOpacity)
       setTheatreNewConstellationOpacity(animation.value.newConstellationOpacity)
     }
@@ -222,85 +238,21 @@ export default function Scene({ activeAnimations, currentScene }: SceneProps) {
   // Scene 4: Apply Theatre.js camera and hero star positions
   useFrame(() => {
     if (currentScene.scene === 4 && cameraRef.current) {
-      // Apply Theatre.js camera position directly
+      // Apply Theatre.js camera position directly (3D movement)
       cameraRef.current.position.x = theatreCameraX
-      
-      // Update hero star group position to match Theatre.js value
+      cameraRef.current.position.y = theatreCameraY
+      cameraRef.current.position.z = theatreCameraZ
+
+      // Update hero star group position to match Theatre.js value (3D movement)
       if (heroStarGroupRef.current) {
         heroStarGroupRef.current.position.x = theatreHeroStarX
+        heroStarGroupRef.current.position.y = theatreHeroStarY
+        heroStarGroupRef.current.position.z = theatreHeroStarZ
       }
     }
   })
 
-  // OLD Scene 4 animation loop (will be removed once Theatre.js is working)
   useFrame(() => {
-    // Scene 4: Camera travels away from old constellation
-    // if (currentScene.sceneType === 'orbitChange' && cameraRef.current) {
-    if (false && currentScene.scene === 4 && cameraRef.current) {
-      // Animate camera movement
-      cameraXOffset.current = THREE.MathUtils.lerp(
-        cameraXOffset.current,
-        targetCameraXOffset.current,
-        0.008,
-      )
-      cameraYOffset.current = THREE.MathUtils.lerp(
-        cameraYOffset.current,
-        targetCameraYOffset.current,
-        0.008,
-      )
-      cameraZOffset.current = THREE.MathUtils.lerp(
-        cameraZOffset.current,
-        targetCameraZOffset.current,
-        0.008,
-      )
-
-      // Calculate travel distance for fade
-      travelDistance.current = Math.sqrt(
-        cameraXOffset.current ** 2 +
-          cameraYOffset.current ** 2 +
-          cameraZOffset.current ** 2,
-      )
-
-      // Fade old constellation based on distance (fade out over 250 units)
-      constellationOpacity.current = Math.max(
-        0,
-        1.0 - travelDistance.current / 250,
-      )
-      oldPrimaryOpacity.current = Math.max(
-        0,
-        1.0 - travelDistance.current / 250,
-      )
-
-      // Apply camera offset
-      const basePos = currentScene.cameraPosition || [0, 0, 150]
-      cameraRef.current.position.set(
-        basePos[0] + cameraXOffset.current,
-        basePos[1] + cameraYOffset.current,
-        basePos[2] + cameraZOffset.current,
-      )
-
-      // Move hero star with camera so it stays centered
-      if (heroStarGroupRef.current) {
-        heroStarGroupRef.current.position.set(
-          cameraXOffset.current,
-          cameraYOffset.current,
-          cameraZOffset.current,
-        )
-      }
-
-      // New stars are at fixed position (X=200), camera moves toward them
-
-      // Fade in new stars
-      newPrimaryOpacity.current = THREE.MathUtils.lerp(
-        newPrimaryOpacity.current,
-        targetNewPrimaryOpacity.current,
-        0.015,
-      )
-
-      // Minimal debug logging - only log significant state changes
-      // (Removed spammy per-frame logging)
-    }
-
     if (!cameraRef.current || !activeAnimations?.length) return
 
     const camera = cameraRef.current
@@ -335,7 +287,11 @@ export default function Scene({ activeAnimations, currentScene }: SceneProps) {
         radius={currentScene.backgroundStars?.radius || 400}
         count={currentScene.backgroundStars?.count || 2000}
         size={currentScene.backgroundStars?.baseSize || 3.0}
-        opacity={currentScene.scene === 1 ? 0.8 * theatreStarsOpacity : 0.8 * otherStarsOpacity}
+        opacity={
+          currentScene.scene === 1
+            ? 0.8 * theatreStarsOpacity
+            : 0.8 * otherStarsOpacity
+        }
         enableTwinkling={twinklingEnabled}
       />
 
@@ -409,14 +365,18 @@ export default function Scene({ activeAnimations, currentScene }: SceneProps) {
                 : undefined
             }
             opacity={
-              currentScene.scene === 2 ? theatreHeroStarOpacity :
-              currentScene.scene === 3 ? 1.0 : // Stay at full opacity in Scene 3
-              undefined
+              currentScene.scene === 2
+                ? theatreHeroStarOpacity
+                : currentScene.scene === 3
+                ? 1.0 // Stay at full opacity in Scene 3
+                : undefined
             }
             scale={
-              currentScene.scene === 2 ? theatreHeroStarScale :
-              currentScene.scene === 3 ? 1.0 : // Stay at full scale in Scene 3
-              undefined
+              currentScene.scene === 2
+                ? theatreHeroStarScale
+                : currentScene.scene === 3
+                ? 1.0 // Stay at full scale in Scene 3
+                : undefined
             }
           />
         </group>

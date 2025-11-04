@@ -7,19 +7,23 @@ Scene 4 is now fully configured to use Theatre.js for animation. All the code is
 ### 1. Configuration Added
 - ✅ Scene 4 is already defined in `speed-of-love-animation-config.json`
 - ✅ Duration: 10 seconds
-- ✅ 6 animated properties defined:
+- ✅ 10 animated properties defined:
   - `oldConstellationOpacity` (1.0 → 0)
   - `oldPrimaryStarsOpacity` (1.0 → 0)
-  - `cameraX` (0 → 150)
-  - `heroStarX` (0 → 150)
+  - `cameraX` (0 → 150) - move right
+  - `cameraY` (0 → ?) - move up/down
+  - `cameraZ` (150 → ?) - pull back
+  - `heroStarX` (0 → 150) - move right
+  - `heroStarY` (0 → ?) - move up/down
+  - `heroStarZ` (0 → ?) - move forward/back
   - `newPrimaryStarsOpacity` (0 → 1.0)
   - `newConstellationOpacity` (0 → 0.6)
 
 ### 2. Code Changes in Scene.tsx
-- ✅ Added 6 Theatre.js state variables for Scene 4
+- ✅ Added 10 Theatre.js state variables for Scene 4
 - ✅ Added useFrame hook to read Scene 4 animation values
-- ✅ Updated camera position to use `theatreCameraX`
-- ✅ Updated hero star position to use `theatreHeroStarX`
+- ✅ Updated camera position to use `theatreCameraX`, `theatreCameraY`, `theatreCameraZ` (full 3D movement)
+- ✅ Updated hero star position to use `theatreHeroStarX`, `theatreHeroStarY`, `theatreHeroStarZ` (full 3D movement)
 - ✅ Updated old primary stars opacity
 - ✅ Added old constellation lines with fade out
 - ✅ Updated new primary stars opacity
@@ -33,9 +37,13 @@ Based on the 10-second timeline, here's the suggested keyframe timing:
 - `oldConstellationOpacity`: 1.0 → 0
 - `oldPrimaryStarsOpacity`: 1.0 → 0.3
 
-**Phase 2: Travel (1.5-7.5s)**
-- `cameraX`: 0 → 150
-- `heroStarX`: 0 → 150
+**Phase 2: Travel (1.5-7.5s)** - 3D cinematic movement
+- `cameraX`: 0 → 150 (move right)
+- `cameraY`: 0 → 30 (move up - suggested)
+- `cameraZ`: 150 → 200 (pull back - suggested)
+- `heroStarX`: 0 → 150 (move right)
+- `heroStarY`: 0 → 30 (move up - suggested)
+- `heroStarZ`: 0 → 0 (stay at origin depth)
 - `oldPrimaryStarsOpacity`: 0.3 → 0
 
 **Phase 3: Arrival Pause (7.5-8.5s)**
@@ -59,13 +67,13 @@ Based on the 10-second timeline, here's the suggested keyframe timing:
 
 4. **Create keyframes for Scene 4 Animation:**
    
-   You'll see "Scene 4 Animation" in the Outline with 6 properties. For each property, create keyframes at the suggested times above:
+   You'll see "Scene 4 Animation" in the Outline with 10 properties. For each property, create keyframes at the suggested times above:
 
    **At 0 seconds:**
    - oldConstellationOpacity: 1.0
    - oldPrimaryStarsOpacity: 1.0
-   - cameraX: 0
-   - heroStarX: 0
+   - cameraX: 0, cameraY: 0, cameraZ: 150
+   - heroStarX: 0, heroStarY: 0, heroStarZ: 0
    - newPrimaryStarsOpacity: 0
    - newConstellationOpacity: 0
    - Click diamond icons for all
@@ -76,8 +84,8 @@ Based on the 10-second timeline, here's the suggested keyframe timing:
    - Click diamond icons
 
    **At 7.5 seconds:**
-   - cameraX: 150
-   - heroStarX: 150
+   - cameraX: 150, cameraY: 30, cameraZ: 200 (3D arc movement)
+   - heroStarX: 150, heroStarY: 30, heroStarZ: 0
    - oldPrimaryStarsOpacity: 0
    - Click diamond icons
 
