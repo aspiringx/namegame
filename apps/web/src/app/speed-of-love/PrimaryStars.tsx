@@ -31,10 +31,12 @@ export default function PrimaryStars({
       return seed / 233280
     }
   }
-  // Load the size as `viewport`.
-  const { size: viewport } = useThree()
+  // Load the size as `viewport` and gl for pixel ratio.
+  const { size: viewport, gl } = useThree()
 
-  // Responsive star count: 6 min, 15 max based on viewport width
+  // Responsive star count: 6 min, 15 max based on viewport width. i.e. screens
+  // 2560 and larger will have 15 primary stars. Smaller screens will have
+  // fewer down to 6 (mobile).
   const responsiveCount = useMemo(() => {
     const ratio = viewport.width / 2560 // 2560 is max desktop width
     const calculated = Math.round(ratio * count)
@@ -150,6 +152,7 @@ export default function PrimaryStars({
       new THREE.ShaderMaterial({
         uniforms: {
           baseSize: { value: size },
+          pixelRatio: { value: gl.getPixelRatio() },
           map: { value: starTexture },
           opacity: { value: 0 },
         },
@@ -158,11 +161,12 @@ export default function PrimaryStars({
           attribute vec3 color;
           varying vec3 vColor;
           uniform float baseSize;
+          uniform float pixelRatio;
           
           void main() {
             vColor = color;
             vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-            gl_PointSize = baseSize * size;
+            gl_PointSize = baseSize * size * pixelRatio;
             gl_Position = projectionMatrix * mvPosition;
           }
         `,
@@ -179,7 +183,7 @@ export default function PrimaryStars({
         transparent: true,
         depthWrite: false,
       }),
-    [size, starTexture],
+    [size, starTexture, gl],
   )
 
   // Smoothly animate opacity in shader
