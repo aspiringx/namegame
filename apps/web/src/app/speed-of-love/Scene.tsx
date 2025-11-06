@@ -83,6 +83,9 @@ export default function Scene({ currentScene }: SceneProps) {
     useState(0)
   const [theatreNewConstellationOpacity, setTheatreNewConstellationOpacity] =
     useState(0)
+  const [theatreBackgroundStarsOpacity, setTheatreBackgroundStarsOpacity] =
+    useState(0.8)
+  const [theatreWavePhase, setTheatreWavePhase] = useState(0)
 
   const [primaryStarPositions, setPrimaryStarPositions] =
     useState<Float32Array | null>(null)
@@ -115,9 +118,9 @@ export default function Scene({ currentScene }: SceneProps) {
     }
   }, [currentScene.sceneType])
 
-  // Scene 4 & 5: Initialize camera position from Theatre.js static overrides
+  // Scene 4, 5, 6: Initialize camera position from Theatre.js static overrides
   useEffect(() => {
-    if ((currentScene.scene === 4 || currentScene.scene === 5) && cameraRef.current) {
+    if ((currentScene.scene === 4 || currentScene.scene === 5 || currentScene.scene === 6) && cameraRef.current) {
       // Set initial camera position immediately from static overrides
       cameraRef.current.position.set(
         theatreCameraX,
@@ -166,6 +169,7 @@ export default function Scene({ currentScene }: SceneProps) {
 
     // Scene 5: Read cosmic wave animation values
     if (currentScene.scene === 5) {
+      setTheatreWavePhase(animation.value.wavePhase)
       setTheatreCameraX(animation.value.cameraX)
       setTheatreCameraY(animation.value.cameraY)
       setTheatreCameraZ(animation.value.cameraZ)
@@ -174,13 +178,25 @@ export default function Scene({ currentScene }: SceneProps) {
       setTheatreHeroStarZ(animation.value.heroStarZ)
       setTheatreNewPrimaryStarsOpacity(animation.value.newPrimaryStarsOpacity)
       setTheatreNewConstellationOpacity(animation.value.newConstellationOpacity)
-      // wavePhase is available in animation.value.wavePhase if needed for effects
+    }
+
+    // Scene 6: Read dimStar animation values
+    if (currentScene.scene === 6) {
+      setTheatreHeroStarOpacity(animation.value.heroStarOpacity)
+      setTheatreHeroStarScale(animation.value.heroStarScale)
+      setTheatreBackgroundStarsOpacity(animation.value.backgroundStarsOpacity)
+      setTheatreCameraX(animation.value.cameraX)
+      setTheatreCameraY(animation.value.cameraY)
+      setTheatreCameraZ(animation.value.cameraZ)
+      setTheatreHeroStarX(animation.value.heroStarX)
+      setTheatreHeroStarY(animation.value.heroStarY)
+      setTheatreHeroStarZ(animation.value.heroStarZ)
     }
   })
 
-  // Scene 4 & 5: Apply Theatre.js camera and hero star positions
+  // Scene 4, 5, 6: Apply Theatre.js camera and hero star positions
   useFrame(() => {
-    if ((currentScene.scene === 4 || currentScene.scene === 5) && cameraRef.current) {
+    if ((currentScene.scene === 4 || currentScene.scene === 5 || currentScene.scene === 6) && cameraRef.current) {
       // Apply Theatre.js camera position directly (3D movement)
       cameraRef.current.position.x = theatreCameraX
       cameraRef.current.position.y = theatreCameraY
@@ -214,6 +230,8 @@ export default function Scene({ currentScene }: SceneProps) {
             ? 0.8 * theatreStarsOpacity
             : currentScene.scene === 2
             ? 0.8 * theatreScene2PrimaryStarsOpacity
+            : currentScene.scene === 6
+            ? theatreBackgroundStarsOpacity
             : 0.8
         }
         enableTwinkling={twinklingEnabled}
@@ -260,10 +278,14 @@ export default function Scene({ currentScene }: SceneProps) {
           <HeroStar
             brightness={currentScene.heroStar?.brightness || 1.5}
             opacity={
-              currentScene.scene === 2 ? theatreHeroStarOpacity : 1.0 // Stay at full opacity in Scene 3 and 4
+              currentScene.scene === 2 || currentScene.scene === 6
+                ? theatreHeroStarOpacity
+                : 1.0
             }
             scale={
-              currentScene.scene === 2 ? theatreHeroStarScale : 1.0 // Stay at full scale in Scene 3 and 4
+              currentScene.scene === 2 || currentScene.scene === 6
+                ? theatreHeroStarScale
+                : 1.0
             }
           />
         </group>
@@ -280,6 +302,7 @@ export default function Scene({ currentScene }: SceneProps) {
           xOffset={currentScene.newPrimaryStars?.xOffset || 150}
           zOffset={currentScene.newPrimaryStars?.zOffset || 0}
           opacity={theatreNewPrimaryStarsOpacity}
+          wavePhase={currentScene.scene === 5 ? theatreWavePhase : 0}
           onPositionsReady={(positions) => {
             newPrimaryStarPositionsRef.current = positions
           }}
@@ -313,8 +336,8 @@ export default function Scene({ currentScene }: SceneProps) {
         makeDefault
         ref={cameraRef}
         position={
-          currentScene.scene === 4 || currentScene.scene === 5
-            ? undefined // Theatre.js controls position in Scene 4 & 5
+          currentScene.scene === 4 || currentScene.scene === 5 || currentScene.scene === 6
+            ? undefined // Theatre.js controls position in Scene 4, 5, 6
             : currentScene.cameraPosition || [0, 0, 150]
         }
         fov={currentScene.cameraFOV || 60}

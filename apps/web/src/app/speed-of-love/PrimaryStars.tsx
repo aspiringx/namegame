@@ -10,6 +10,7 @@ interface PrimaryStarsProps {
   xOffset?: number // Shift all stars by this amount on X axis
   zOffset?: number // Shift all stars by this amount on Z axis
   seed?: number // Seed for deterministic random positions
+  wavePhase?: number // 0-1 cosmic wave ripple effect
   onPositionsReady?: (positions: Float32Array) => void
 }
 
@@ -21,6 +22,7 @@ export default function PrimaryStars({
   xOffset = 0,
   zOffset = 0,
   seed = 12345,
+  wavePhase = 0,
   onPositionsReady,
 }: PrimaryStarsProps) {
   // Seeded random number generator for deterministic positions
@@ -134,6 +136,10 @@ export default function PrimaryStars({
   // Smooth opacity animation
   const currentOpacity = useRef(0)
   const targetOpacity = useRef(opacity)
+  
+  // Store original positions for wave displacement
+  const originalPositions = useRef(positions.slice())
+  const pointsRef = useRef<THREE.Points>(null)
 
   useEffect(() => {
     // Update target when prop changes
@@ -186,7 +192,7 @@ export default function PrimaryStars({
     [size, starTexture, gl],
   )
 
-  // Smoothly animate opacity in shader
+  // Smoothly animate opacity and apply cosmic wave displacement
   useFrame(() => {
     // Lerp to target opacity
     currentOpacity.current = THREE.MathUtils.lerp(
@@ -196,9 +202,45 @@ export default function PrimaryStars({
     )
 
     shaderMaterial.uniforms.opacity.value = currentOpacity.current
+    
+    // Apply cosmic wave displacement if wavePhase > 0
+    if (wavePhase > 0 && pointsRef.current) {
+      const posAttr = pointsRef.current.geometry.attributes.position
+      
+      for (let i = 0; i < responsiveCount; i++) {
+        const idx = i * 3
+        const origX = originalPositions.current[idx]
+        const origY = originalPositions.current[idx + 1]
+        const origZ = originalPositions.current[idx + 2]
+        
+        // Calculate distance from wave origin (xOffset, 0, zOffset)
+        const dx = origX - xOffset
+        const dy = origY
+        const dz = origZ - zOffset
+        const dist = Math.sqrt(dx * dx + dy * dy + dz * dz)
+        
+        // Wave travels outward: stars at distance D are displaced when wave reaches them
+        // Wave speed: travels ~150 units over phase 0-1
+        const waveRadius = wavePhase * 150
+        const distFromWave = Math.abs(dist - waveRadius)
+        
+        // Displacement magnitude: peaks when wave is at star's distance
+        // Falls off quickly (within 30 units of wave front)
+        const displacement = Math.max(0, 1 - distFromWave / 30) * 20 * Math.sin(wavePhase * Math.PI)
+        
+        // Displace radially outward from origin
+        const direction = new THREE.Vector3(dx, dy, dz).normalize()
+        
+        posAttr.array[idx] = origX + direction.x * displacement
+        posAttr.array[idx + 1] = origY + direction.y * displacement
+        posAttr.array[idx + 2] = origZ + direction.z * displacement
+      }
+      
+      posAttr.needsUpdate = true
+    }
   })
 
   return (
-    <points geometry={geometry} material={shaderMaterial} renderOrder={3} />
+    <points ref={pointsRef} geometry={geometry} material={shaderMaterial} renderOrder={3} />
   )
 }

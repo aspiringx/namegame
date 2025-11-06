@@ -285,6 +285,78 @@
           }
         }
       }
+    },
+    {
+      "scene": 6,
+      "description": "The HeroStar looks smaller and all background stars get dimmer. The hero star glows faintly, alone in the dark.",
+      "narration": "At times, your light feels dim, your signal quiet. Times of loneliness and reflection.",
+      "sceneType": "dimStar",
+      "cameraPosition": [0, 0, 150],
+      "cameraFOV": 50,
+      "visibility": {
+        "heroStar": true,
+        "primaryStars": false,
+        "oldConstellation": false,
+        "newPrimaryStars": false,
+        "newConstellation": false
+      },
+      "heroStar": {
+        "position": [0, 0, 0],
+        "brightness": 1.5
+      },
+      "animation": {
+        "duration": 4.0,
+        "properties": {
+          "heroStarOpacity": {
+            "type": "number",
+            "range": [0, 1],
+            "default": 1.0,
+            "description": "Hero star fades to dim glow"
+          },
+          "heroStarScale": {
+            "type": "number",
+            "range": [0, 2],
+            "default": 1.0,
+            "description": "Hero star shrinks"
+          },
+          "backgroundStarsOpacity": {
+            "type": "number",
+            "range": [0, 1],
+            "default": 0.8,
+            "description": "Background stars dim"
+          },
+          "cameraX": {
+            "type": "number",
+            "range": [-200, 200],
+            "default": 0
+          },
+          "cameraY": {
+            "type": "number",
+            "range": [-100, 100],
+            "default": 50
+          },
+          "cameraZ": {
+            "type": "number",
+            "range": [100, 250],
+            "default": 120
+          },
+          "heroStarX": {
+            "type": "number",
+            "range": [-200, 200],
+            "default": 0
+          },
+          "heroStarY": {
+            "type": "number",
+            "range": [-100, 100],
+            "default": 50
+          },
+          "heroStarZ": {
+            "type": "number",
+            "range": [-100, 100],
+            "default": -30
+          }
+        }
+      }
     }
   ]
 }
