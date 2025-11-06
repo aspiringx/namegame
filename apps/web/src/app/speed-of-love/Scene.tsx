@@ -30,7 +30,7 @@ if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = 'speed-of-love-theatre-state.json'
+      a.download = 'theatre-state.json'
       a.click()
       console.log('Theatre.js state exported!')
     }

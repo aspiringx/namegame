@@ -145,7 +145,7 @@
                       0
                     ],
                     "type": "bezier",
-                    "value": 1.0
+                    "value": 1
                   },
                   {
                     "id": "S2PrimEnd",
@@ -260,8 +260,8 @@
       "staticOverrides": {
         "byObject": {
           "Scene 4 Animation": {
-            "oldConstellationOpacity": 1.0,
-            "oldPrimaryStarsOpacity": 1.0,
+            "oldConstellationOpacity": 1,
+            "oldPrimaryStarsOpacity": 1,
             "cameraX": 0,
             "cameraY": 0,
             "cameraZ": 150,
@@ -299,7 +299,7 @@
                   },
                   {
                     "id": "YrncW0LJRv",
-                    "position": 2.5,
+                    "position": 4,
                     "connectedRight": true,
                     "handles": [
                       0.5,
@@ -331,7 +331,7 @@
                   },
                   {
                     "id": "e_QLUuEl3T",
-                    "position": 3.567,
+                    "position": 4,
                     "connectedRight": true,
                     "handles": [
                       0.5,
@@ -414,7 +414,7 @@
                 "keyframes": [
                   {
                     "id": "ixIXQ2NLfG",
-                    "position": 3.6,
+                    "position": 4,
                     "connectedRight": true,
                     "handles": [
                       0.5,
@@ -427,7 +427,7 @@
                   },
                   {
                     "id": "_F-O7RcC1B",
-                    "position": 8.5,
+                    "position": 7.5,
                     "connectedRight": true,
                     "handles": [
                       0.5,
@@ -446,7 +446,7 @@
                 "keyframes": [
                   {
                     "id": "qAJew6SPGu",
-                    "position": 7.933,
+                    "position": 7.5,
                     "connectedRight": true,
                     "handles": [
                       0.5,
@@ -480,7 +480,12 @@
                     "id": "cameraY_k1",
                     "position": 0,
                     "connectedRight": true,
-                    "handles": [0.5, 1, 0.5, 0],
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
                     "type": "bezier",
                     "value": 0
                   }
@@ -494,7 +499,12 @@
                     "id": "cameraZ_k1",
                     "position": 0,
                     "connectedRight": true,
-                    "handles": [0.5, 1, 0.5, 0],
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
                     "type": "bezier",
                     "value": 150
                   }
@@ -508,7 +518,12 @@
                     "id": "heroStarY_k1",
                     "position": 0,
                     "connectedRight": true,
-                    "handles": [0.5, 1, 0.5, 0],
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
                     "type": "bezier",
                     "value": 0
                   }
@@ -522,7 +537,12 @@
                     "id": "heroStarZ_k1",
                     "position": 0,
                     "connectedRight": true,
-                    "handles": [0.5, 1, 0.5, 0],
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
                     "type": "bezier",
                     "value": 0
                   }
@@ -548,6 +568,7 @@
   },
   "definitionVersion": "0.4.0",
   "revisionHistory": [
+    "CLr5O3JwLqVTlOt7",
     "0pkkUDiOPWF7LeAM",
     "WJxhb4qimWjwL1H2",
     "SaWwraSn5KEtb4FS",

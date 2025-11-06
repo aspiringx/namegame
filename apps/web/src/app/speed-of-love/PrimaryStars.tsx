@@ -62,7 +62,7 @@ export default function PrimaryStars({
       pos[i * 3 + 1] = (random() - 0.5) * frustumHeight // Y: full height
       pos[i * 3 + 2] = (random() - 0.5) * radius * 0.4 + 0 // zOffset // Z: depth variation + offset
 
-      // Organic size variation (0.8x to 1.4x base size)
+      // Organic size variation (0.6x to 1.4x base size)
       const sizeMultiplier = 0.8 + random() * 0.6
       starSizes[i] = sizeMultiplier
 
