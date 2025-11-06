@@ -115,9 +115,9 @@ export default function Scene({ currentScene }: SceneProps) {
     }
   }, [currentScene.sceneType])
 
-  // Scene 4: Initialize camera position from Theatre.js static overrides
+  // Scene 4 & 5: Initialize camera position from Theatre.js static overrides
   useEffect(() => {
-    if (currentScene.scene === 4 && cameraRef.current) {
+    if ((currentScene.scene === 4 || currentScene.scene === 5) && cameraRef.current) {
       // Set initial camera position immediately from static overrides
       cameraRef.current.position.set(
         theatreCameraX,
@@ -163,11 +163,24 @@ export default function Scene({ currentScene }: SceneProps) {
       setTheatreNewPrimaryStarsOpacity(animation.value.newPrimaryStarsOpacity)
       setTheatreNewConstellationOpacity(animation.value.newConstellationOpacity)
     }
+
+    // Scene 5: Read cosmic wave animation values
+    if (currentScene.scene === 5) {
+      setTheatreCameraX(animation.value.cameraX)
+      setTheatreCameraY(animation.value.cameraY)
+      setTheatreCameraZ(animation.value.cameraZ)
+      setTheatreHeroStarX(animation.value.heroStarX)
+      setTheatreHeroStarY(animation.value.heroStarY)
+      setTheatreHeroStarZ(animation.value.heroStarZ)
+      setTheatreNewPrimaryStarsOpacity(animation.value.newPrimaryStarsOpacity)
+      setTheatreNewConstellationOpacity(animation.value.newConstellationOpacity)
+      // wavePhase is available in animation.value.wavePhase if needed for effects
+    }
   })
 
-  // Scene 4: Apply Theatre.js camera and hero star positions
+  // Scene 4 & 5: Apply Theatre.js camera and hero star positions
   useFrame(() => {
-    if (currentScene.scene === 4 && cameraRef.current) {
+    if ((currentScene.scene === 4 || currentScene.scene === 5) && cameraRef.current) {
       // Apply Theatre.js camera position directly (3D movement)
       cameraRef.current.position.x = theatreCameraX
       cameraRef.current.position.y = theatreCameraY
@@ -206,8 +219,8 @@ export default function Scene({ currentScene }: SceneProps) {
         enableTwinkling={twinklingEnabled}
       />
 
-      {/* Scenes 1-4: Primary stars at origin (old constellation) */}
-      {currentScene.scene >= 1 && currentScene.scene <= 4 && (
+      {/* Primary stars at origin (old constellation) */}
+      {currentScene.visibility?.primaryStars && (
         <PrimaryStars
           key="primary-stars-1"
           radius={currentScene.primaryStars?.radius || 100}
@@ -215,21 +228,19 @@ export default function Scene({ currentScene }: SceneProps) {
           size={currentScene.primaryStars?.baseSize || 8.0}
           seed={12345} // Same seed ensures same star positions across scenes
           opacity={
-            currentScene.scene === 1
-              ? theatreStarsOpacity
-              : currentScene.scene === 2
-              ? theatreScene2PrimaryStarsOpacity
-              : currentScene.scene === 3 || currentScene.scene === 4
-              ? theatrePrimaryStarsOpacity // Use same state for scenes 3 & 4 to prevent flash
+            currentScene.visibility?.primaryStars
+              ? theatrePrimaryStarsOpacity
               : 1.0
           }
           onPositionsReady={setPrimaryStarPositions}
         />
       )}
 
-      {/* Scene 3 & 4: Constellation at origin (old constellation) */}
-      {(currentScene.scene === 3 || currentScene.scene === 4) &&
-        primaryStarPositions && (
+      {/* Constellation lines connecting hero to primary stars (old constellation) */}
+      {currentScene.visibility?.oldConstellation &&
+        primaryStarPositions &&
+        primaryStarPositions.length > 0 &&
+        heroStarGroupRef.current && (
           <HeroConstellationLines
             heroPosition={[0, 0, 0]}
             starPositions={primaryStarPositions}
@@ -243,9 +254,8 @@ export default function Scene({ currentScene }: SceneProps) {
           />
         )}
 
-      {/* Scene 2, 3, 4: Keep hero star visible */}
-      {/* Hero star - moves with camera in Scene 4 to stay centered */}
-      {currentScene.scene > 1 && currentScene.scene < 5 && (
+      {/* Hero star - moves with camera in Scene 4 & 5 */}
+      {currentScene.visibility?.heroStar && (
         <group ref={heroStarGroupRef}>
           <HeroStar
             brightness={currentScene.heroStar?.brightness || 1.5}
@@ -259,8 +269,8 @@ export default function Scene({ currentScene }: SceneProps) {
         </group>
       )}
 
-      {/* Scene 4: New primary stars at hero's final position */}
-      {currentScene.scene === 4 && (
+      {/* New primary stars at hero's final position */}
+      {currentScene.visibility?.newPrimaryStars && (
         <PrimaryStars
           key="primary-stars-2"
           radius={currentScene.newPrimaryStars?.radius || 100}
@@ -276,8 +286,8 @@ export default function Scene({ currentScene }: SceneProps) {
         />
       )}
 
-      {/* Scene 4: New constellation (fading in) - connects hero to new stars */}
-      {currentScene.scene === 4 &&
+      {/* New constellation - connects hero to new stars */}
+      {currentScene.visibility?.newConstellation &&
         theatreNewConstellationOpacity > 0.05 &&
         newPrimaryStarPositionsRef.current &&
         newPrimaryStarPositionsRef.current.length > 0 &&
@@ -303,8 +313,8 @@ export default function Scene({ currentScene }: SceneProps) {
         makeDefault
         ref={cameraRef}
         position={
-          currentScene.scene === 4
-            ? undefined // Theatre.js controls position in Scene 4
+          currentScene.scene === 4 || currentScene.scene === 5
+            ? undefined // Theatre.js controls position in Scene 4 & 5
             : currentScene.cameraPosition || [0, 0, 150]
         }
         fov={currentScene.cameraFOV || 60}

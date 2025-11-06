@@ -2,6 +2,9 @@ Relation Star
 
 Your universe moves at the speed of love
 
+See [animations.json](../../apps/web/public/docs/scripts/animations.json) for
+final implementation of this script.
+
 [Scene 1 – Wide view of the cosmos] A vast universe unfolds—billions of glowing
 stars scattered across infinite space. Each one unique. Each one alive.
 

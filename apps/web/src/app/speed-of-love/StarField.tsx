@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Canvas } from '@react-three/fiber'
 import type { Scene } from './types'
 import SceneComponent from './Scene'
 import { loadScript } from './utils/loadScript'
-import { getSceneDuration } from './theatreConfig'
+import { getSceneDuration, getSceneSheet } from './theatreConfig'
 
 export default function StarField() {
   // Scene management
@@ -34,6 +34,21 @@ export default function StarField() {
     })
   }, [])
 
+  // Expose console helper for jumping to scenes
+  useEffect(() => {
+    if (typeof window !== 'undefined' && scenes.length > 0) {
+      (window as any).goToScene = (sceneNumber: number) => {
+        if (sceneNumber < 1 || sceneNumber > scenes.length) {
+          console.error(`Scene ${sceneNumber} not found. Valid range: 1-${scenes.length}`)
+          return
+        }
+        setCurrentSceneIndex(sceneNumber)
+        console.log(`Jumped to Scene ${sceneNumber}`)
+      }
+      console.log(`💡 Test helper: goToScene(1-${scenes.length}) to jump to any scene`)
+    }
+  }, [scenes])
+
   useEffect(() => {
     if (!currentScene) return
 
@@ -52,6 +67,27 @@ export default function StarField() {
       clearTimeout(timer)
     }
   }, [currentScene, currentSceneIndex])
+
+  // Navigate to next scene
+  const handleNext = useCallback(() => {
+    if (currentSceneIndex < scenes.length) {
+      setCurrentSceneIndex((prev) => prev + 1)
+    }
+  }, [currentSceneIndex, scenes.length])
+
+  // Navigate to previous scene
+  const handleBack = useCallback(() => {
+    if (currentSceneIndex > 1) {
+      const prevIndex = currentSceneIndex - 1
+      setCurrentSceneIndex(prevIndex)
+      
+      // Reset Theatre.js sequence to beginning of previous scene
+      const sheet = getSceneSheet(prevIndex)
+      if (sheet) {
+        sheet.sequence.position = 0
+      }
+    }
+  }, [currentSceneIndex])
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100dvh' }}>
@@ -112,16 +148,23 @@ export default function StarField() {
               </p>
             </div>
 
-            <div className="mt-3">
+            <div className="mt-3 flex gap-2">
+              {/* Back button - only show if not on first scene */}
+              {currentSceneIndex > 1 && (
+                <button
+                  onClick={handleBack}
+                  className="rounded border border-cyan-400/50 bg-cyan-500/10 px-3 py-2 font-mono text-sm font-medium text-cyan-400 transition-colors hover:bg-cyan-500/20 hover:border-cyan-400"
+                  title="Previous scene"
+                >
+                  ←
+                </button>
+              )}
+              {/* Proceed button */}
               <button
-                onClick={() => {
-                  setCurrentSceneIndex((prev) =>
-                    Math.min(prev + 1, scenes.length),
-                  )
-                }}
-                disabled={!animationComplete}
-                className={`w-full rounded border px-4 py-2 font-mono text-sm font-medium transition-colors ${
-                  animationComplete
+                onClick={handleNext}
+                disabled={!animationComplete || currentSceneIndex >= scenes.length}
+                className={`flex-1 rounded border px-4 py-2 font-mono text-sm font-medium transition-colors ${
+                  animationComplete && currentSceneIndex < scenes.length
                     ? 'border-cyan-400/50 bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 hover:border-cyan-400 cursor-pointer'
                     : 'border-cyan-400/20 bg-cyan-500/5 text-cyan-400/40 cursor-not-allowed'
                 }`}

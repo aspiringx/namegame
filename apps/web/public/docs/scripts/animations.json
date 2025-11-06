@@ -8,6 +8,13 @@
       "sceneType": "cosmicView",
       "cameraPosition": [0, 0, 150],
       "cameraFOV": 50,
+      "visibility": {
+        "heroStar": false,
+        "primaryStars": true,
+        "oldConstellation": false,
+        "newPrimaryStars": false,
+        "newConstellation": false
+      },
       "primaryStars": {
         "count": 15,
         "radius": 100,
@@ -38,6 +45,13 @@
       "sceneType": "focusStar",
       "cameraPosition": [0, 0, 150],
       "cameraFOV": 50,
+      "visibility": {
+        "heroStar": true,
+        "primaryStars": true,
+        "oldConstellation": false,
+        "newPrimaryStars": false,
+        "newConstellation": false
+      },
       "heroStar": {
         "position": [0, 0, 0],
         "brightness": 1.5
@@ -71,6 +85,13 @@
       "sceneType": "constellationForm",
       "cameraPosition": [0, 0, 150],
       "cameraFOV": 50,
+      "visibility": {
+        "heroStar": true,
+        "primaryStars": true,
+        "oldConstellation": true,
+        "newPrimaryStars": false,
+        "newConstellation": false
+      },
       "twinkleEffect": {
         "duration": 3000,
         "starCount": 10,
@@ -106,6 +127,13 @@
       "sceneType": "orbitChange",
       "cameraPosition": [0, 0, 150],
       "cameraFOV": 50,
+      "visibility": {
+        "heroStar": true,
+        "primaryStars": true,
+        "oldConstellation": true,
+        "newPrimaryStars": true,
+        "newConstellation": true
+      },
       "heroStar": {
         "position": [0, 0, 0],
         "brightness": 1.5
@@ -171,6 +199,89 @@
             "type": "number",
             "range": [0, 1],
             "default": 0
+          }
+        }
+      }
+    },
+    {
+      "scene": 5,
+      "description": "Waves or ripples move through the stars and shifts the HeroStar. The constellation from scene 4 fades and gets smaller.",
+      "narration": "Unseen forces shift your trajectory—chance meetings, unexpected moments, collisions that send you toward the unknown.",
+      "sceneType": "cosmicWave",
+      "cameraPosition": [0, 0, 150],
+      "cameraFOV": 50,
+      "visibility": {
+        "heroStar": true,
+        "primaryStars": false,
+        "oldConstellation": false,
+        "newPrimaryStars": true,
+        "newConstellation": true
+      },
+      "heroStar": {
+        "position": [0, 0, 0],
+        "brightness": 1.5
+      },
+      "newPrimaryStars": {
+        "count": 15,
+        "radius": 100,
+        "baseSize": 6.0,
+        "xOffset": 150,
+        "zOffset": 0
+      },
+      "connectionLines": {
+        "color": "#22d3ee",
+        "opacity": 0.6
+      },
+      "animation": {
+        "duration": 5.0,
+        "properties": {
+          "wavePhase": {
+            "type": "number",
+            "range": [0, 1],
+            "default": 0,
+            "description": "Drives the cosmic wave ripple effect"
+          },
+          "cameraX": {
+            "type": "number",
+            "range": [-200, 200],
+            "default": 150
+          },
+          "cameraY": {
+            "type": "number",
+            "range": [-100, 100],
+            "default": 0
+          },
+          "cameraZ": {
+            "type": "number",
+            "range": [100, 250],
+            "default": 150
+          },
+          "heroStarX": {
+            "type": "number",
+            "range": [-200, 200],
+            "default": 150
+          },
+          "heroStarY": {
+            "type": "number",
+            "range": [-100, 100],
+            "default": 0
+          },
+          "heroStarZ": {
+            "type": "number",
+            "range": [-100, 100],
+            "default": 0
+          },
+          "newPrimaryStarsOpacity": {
+            "type": "number",
+            "range": [0, 1],
+            "default": 1.0,
+            "description": "Scene 4's new primary stars that need to persist"
+          },
+          "newConstellationOpacity": {
+            "type": "number",
+            "range": [0, 1],
+            "default": 0.6,
+            "description": "Scene 4's new constellation - fades as camera moves away"
           }
         }
       }

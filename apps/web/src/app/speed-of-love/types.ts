@@ -59,6 +59,15 @@ export interface Scene {
   sceneType: string
   cameraPosition?: [number, number, number]
   cameraFOV?: number
+  
+  // Visibility flags - controls which elements render in this scene
+  visibility?: {
+    heroStar?: boolean
+    primaryStars?: boolean
+    oldConstellation?: boolean
+    newPrimaryStars?: boolean
+    newConstellation?: boolean
+  }
 
   // Scene 1: cosmicView
   primaryStars?: {
