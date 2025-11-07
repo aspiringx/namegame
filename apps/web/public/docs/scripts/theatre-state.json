@@ -2432,7 +2432,7 @@
                   },
                   {
                     "id": "iU2KQuAWU0",
-                    "position": 1.5,
+                    "position": 3.333,
                     "connectedRight": true,
                     "handles": [
                       0.5,
@@ -2512,6 +2512,7 @@
   },
   "definitionVersion": "0.4.0",
   "revisionHistory": [
+    "xEQluW0PIM6s_ulq",
     "7ln4rt5bsQ9gwEEl",
     "n3fT9-a4xp1a0nE5",
     "1LoRkD5woqkI71Dw",

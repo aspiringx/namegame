@@ -455,16 +455,14 @@ export default function Scene({ currentScene, randomSeed }: SceneProps) {
           />
         )}
 
-      {/* Logo (Scene 8) */}
-      {currentScene.visibility?.logo && currentScene.logo && (
-        <Logo
-          url={currentScene.logo.url}
-          width={currentScene.logo.width}
-          height={currentScene.logo.height}
-          position={currentScene.logo.position as [number, number, number]}
-          opacity={theatreLogoOpacity}
-        />
-      )}
+      {/* Logo (Scene 8) - Always render with opacity 0 until Scene 8, loads at start to avoid mid-experience loading */}
+      <Logo
+        url="/images/logos/relationstar_dark-400x268.png"
+        width={100}
+        height={67}
+        position={[-100, -250, 150]}
+        opacity={theatreLogoOpacity}
+      />
 
       {/* Note: The data-driven <Star> components and <ConstellationLines>
           are no longer rendered by default. They will be added back

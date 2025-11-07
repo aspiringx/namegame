@@ -4,13 +4,14 @@ import * as THREE from 'three'
 import { StarProps } from './types'
 
 export default function Star({
-  person,
+  data,
   position,
   isTarget,
   placement,
   texture,
   journeyPhase,
 }: StarProps) {
+  const { person } = data
   const spriteRef = useRef<THREE.Mesh>(null)
   const groupRef = useRef<THREE.Group>(null)
   const [hovered, setHovered] = useState(false)

@@ -130,7 +130,7 @@
     {
       "scene": 4,
       "description": "Hero travels, old constellation fades, new constellation forms",
-      "narration": "As you orbit, interests and opportunities pull you away from familiar places. You encounter new stars and become part of new constellations.",
+      "narration": "As you orbit, you encounter new stars and join new constellations.",
       "sceneType": "orbitChange",
       "cameraPosition": [0, 0, 150],
       "cameraFOV": 50,

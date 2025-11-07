@@ -11,7 +11,7 @@ import { getSceneDuration } from './theatreConfig'
 export default function StarField() {
   // Generate random seed once per session for star positions
   const [randomSeed] = useState(() => Math.floor(Math.random() * 1000000))
-  
+
   // Scene management
   const [scenes, setScenes] = useState<Scene[]>([])
   const [currentSceneIndex, setCurrentSceneIndex] = useState(1) // First scene is now index 1
@@ -116,7 +116,7 @@ export default function StarField() {
         style={{ bottom: '1rem' }}
       >
         <div
-          className={`relative overflow-hidden rounded-lg border-2 border-indigo-500/50 bg-gradient-to-b from-slate-900 to-slate-950 shadow-2xl`}
+          className={`relative overflow-hidden rounded-lg border-2 border-indigo-500/50 bg-gradient-to-b from-slate-900/50 to-slate-950/50 shadow-2xl backdrop-blur-sm`}
         >
           {/* Control panel accent lines */}
           <div className="absolute left-0 top-0 h-full w-1 bg-gradient-to-b from-indigo-500 via-cyan-400 to-indigo-500"></div>
