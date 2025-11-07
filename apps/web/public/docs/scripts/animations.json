@@ -471,6 +471,123 @@
           }
         }
       }
+    },
+    {
+      "scene": 8,
+      "description": "Camera pulls back and logo fades in with twinkling stars",
+      "narration": "Relation Star helps you discover, explore, and nurture the stars in your universe at the speed of love!",
+      "sceneType": "logoReveal",
+      "cameraPosition": [0, 0, 150],
+      "cameraFOV": 50,
+      "visibility": {
+        "heroStar": true,
+        "primaryStars": true,
+        "oldConstellation": true,
+        "newPrimaryStars": false,
+        "newConstellation": false,
+        "logo": true
+      },
+      "heroStar": {
+        "position": [0, 0, 0],
+        "brightness": 1.5
+      },
+      "primaryStars": {
+        "count": 15,
+        "radius": 100,
+        "baseSize": 6.0,
+        "xOffset": 0,
+        "yOffset": 0,
+        "zOffset": 0
+      },
+      "backgroundStars": {
+        "count": 2000,
+        "baseSize": 3.0,
+        "colors": ["0xffffff", "0xaaccff", "0xffddaa"],
+        "radius": 400,
+        "opacity": 1
+      },
+      "logo": {
+        "url": "/images/logos/relationstar_dark-400x268.png",
+        "width": 100,
+        "height": 67,
+        "position": [-100, -250, 150]
+      },
+      "animation": {
+        "properties": {
+          "cameraX": {
+            "type": "number",
+            "range": [-1000, 1000],
+            "default": 0,
+            "description": "Camera pulls back to the left"
+          },
+          "cameraY": {
+            "type": "number",
+            "range": [-1000, 1000],
+            "default": 0,
+            "description": "Camera pulls down"
+          },
+          "cameraZ": {
+            "type": "number",
+            "range": [-1000, 1000],
+            "default": -150,
+            "description": "Camera pulls back"
+          },
+          "heroStarX": {
+            "type": "number",
+            "range": [-1000, 1000],
+            "default": 0,
+            "description": "Hero star retreats"
+          },
+          "heroStarY": {
+            "type": "number",
+            "range": [-1000, 1000],
+            "default": 0,
+            "description": "Hero star retreats"
+          },
+          "heroStarZ": {
+            "type": "number",
+            "range": [-1000, 1000],
+            "default": 0,
+            "description": "Hero star retreats"
+          },
+          "heroStarOpacity": {
+            "type": "number",
+            "range": [0, 1],
+            "default": 1,
+            "description": "Hero star fades out"
+          },
+          "heroStarScale": {
+            "type": "number",
+            "range": [0, 2],
+            "default": 1,
+            "description": "Hero star shrinks"
+          },
+          "primaryStarsOpacity": {
+            "type": "number",
+            "range": [0, 1],
+            "default": 1,
+            "description": "Primary stars fade out"
+          },
+          "constellationOpacity": {
+            "type": "number",
+            "range": [0, 1],
+            "default": 1,
+            "description": "Constellation fades out"
+          },
+          "logoOpacity": {
+            "type": "number",
+            "range": [0, 1],
+            "default": 0,
+            "description": "Logo fades in"
+          },
+          "backgroundStarsOpacity": {
+            "type": "number",
+            "range": [0, 1],
+            "default": 1,
+            "description": "Background stars remain visible"
+          }
+        }
+      }
     }
   ]
 }

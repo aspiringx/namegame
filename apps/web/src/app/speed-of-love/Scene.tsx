@@ -7,6 +7,7 @@ import BackgroundStars from './BackgroundStars'
 import PrimaryStars from './PrimaryStars'
 import HeroStar from './HeroStar'
 import HeroConstellationLines from './HeroConstellationLines'
+import Logo from './Logo'
 // Import Theatre.js configuration and utilities
 import {
   theatreProject,
@@ -83,6 +84,7 @@ export default function Scene({ currentScene, randomSeed }: SceneProps) {
     useState(0)
   const [theatreWavePhase, setTheatreWavePhase] = useState(0)
   const [theatreFlashIntensity, setTheatreFlashIntensity] = useState(0)
+  const [theatreLogoOpacity, setTheatreLogoOpacity] = useState(0)
 
   const [primaryStarPositions, setPrimaryStarPositions] =
     useState<Float32Array | null>(null)
@@ -315,6 +317,11 @@ export default function Scene({ currentScene, randomSeed }: SceneProps) {
     if (values.flashIntensity !== undefined) {
       setTheatreFlashIntensity(values.flashIntensity)
     }
+    
+    // Logo opacity (Scene 8)
+    if (values.logoOpacity !== undefined) {
+      setTheatreLogoOpacity(values.logoOpacity)
+    }
   })
 
   // Apply Theatre.js camera and hero star positions for scenes that animate them
@@ -447,6 +454,17 @@ export default function Scene({ currentScene, randomSeed }: SceneProps) {
             fadeInDuration={0}
           />
         )}
+
+      {/* Logo (Scene 8) */}
+      {currentScene.visibility?.logo && currentScene.logo && (
+        <Logo
+          url={currentScene.logo.url}
+          width={currentScene.logo.width}
+          height={currentScene.logo.height}
+          position={currentScene.logo.position as [number, number, number]}
+          opacity={theatreLogoOpacity}
+        />
+      )}
 
       {/* Note: The data-driven <Star> components and <ConstellationLines>
           are no longer rendered by default. They will be added back

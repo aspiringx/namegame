@@ -67,6 +67,7 @@ export interface Scene {
     oldConstellation?: boolean
     newPrimaryStars?: boolean
     newConstellation?: boolean
+    logo?: boolean
   }
 
   // Scene 1: cosmicView
@@ -154,10 +155,13 @@ export interface Scene {
   colorTint?: string
   tintOpacity?: number
 
-  // Scene 9: logoReveal
-  logoUrl?: string
-  logoOpacity?: number
-  logoFadeIn?: number
+  // Scene 8: logoReveal
+  logo?: {
+    url: string
+    width: number
+    height: number
+    position: [number, number, number]
+  }
 }
 
 // Note: AnimationCommand is deprecated - Theatre.js handles all animations

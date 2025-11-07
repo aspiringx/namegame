@@ -1659,6 +1659,19 @@
                     ],
                     "type": "bezier",
                     "value": 0.8
+                  },
+                  {
+                    "id": "v8MrGiTSoq",
+                    "position": 6.4,
+                    "connectedRight": true,
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
+                    "type": "bezier",
+                    "value": 1
                   }
                 ]
               }
@@ -1678,11 +1691,830 @@
             }
           }
         }
+      },
+      "Scene 8 Animation": {
+        "type": "Theatre_SheetState_Historic",
+        "objectKey": "Scene 8 Animation",
+        "sequence": {
+          "type": "TrackData",
+          "tracksByObject": {
+            "Scene 8 Animation": {
+              "trackData": {
+                "S8_cameraX": {
+                  "type": "BasicKeyframedTrack",
+                  "__debugName": "Scene 8 Animation:[\"cameraX\"]",
+                  "keyframes": [
+                    {
+                      "id": "S8_camX_start",
+                      "position": 0,
+                      "connectedRight": true,
+                      "handles": [
+                        0.5,
+                        1,
+                        0.5,
+                        0
+                      ],
+                      "type": "bezier",
+                      "value": -300
+                    },
+                    {
+                      "id": "S8_camX_end",
+                      "position": 4,
+                      "connectedRight": true,
+                      "handles": [
+                        0.5,
+                        1,
+                        0.5,
+                        0
+                      ],
+                      "type": "bezier",
+                      "value": -500
+                    }
+                  ]
+                },
+                "S8_cameraY": {
+                  "type": "BasicKeyframedTrack",
+                  "__debugName": "Scene 8 Animation:[\"cameraY\"]",
+                  "keyframes": [
+                    {
+                      "id": "S8_camY_start",
+                      "position": 0,
+                      "connectedRight": true,
+                      "handles": [
+                        0.5,
+                        1,
+                        0.5,
+                        0
+                      ],
+                      "type": "bezier",
+                      "value": 300
+                    },
+                    {
+                      "id": "S8_camY_end",
+                      "position": 4,
+                      "connectedRight": true,
+                      "handles": [
+                        0.5,
+                        1,
+                        0.5,
+                        0
+                      ],
+                      "type": "bezier",
+                      "value": 500
+                    }
+                  ]
+                },
+                "S8_cameraZ": {
+                  "type": "BasicKeyframedTrack",
+                  "__debugName": "Scene 8 Animation:[\"cameraZ\"]",
+                  "keyframes": [
+                    {
+                      "id": "S8_camZ_start",
+                      "position": 0,
+                      "connectedRight": true,
+                      "handles": [
+                        0.5,
+                        1,
+                        0.5,
+                        0
+                      ],
+                      "type": "bezier",
+                      "value": -150
+                    },
+                    {
+                      "id": "S8_camZ_end",
+                      "position": 4,
+                      "connectedRight": true,
+                      "handles": [
+                        0.5,
+                        1,
+                        0.5,
+                        0
+                      ],
+                      "type": "bezier",
+                      "value": 300
+                    }
+                  ]
+                },
+                "S8_heroStarX": {
+                  "type": "BasicKeyframedTrack",
+                  "__debugName": "Scene 8 Animation:[\"heroStarX\"]",
+                  "keyframes": [
+                    {
+                      "id": "S8_heroX_start",
+                      "position": 0,
+                      "connectedRight": true,
+                      "handles": [
+                        0.5,
+                        1,
+                        0.5,
+                        0
+                      ],
+                      "type": "bezier",
+                      "value": -300
+                    },
+                    {
+                      "id": "S8_heroX_end",
+                      "position": 3,
+                      "connectedRight": true,
+                      "handles": [
+                        0.5,
+                        1,
+                        0.5,
+                        0
+                      ],
+                      "type": "bezier",
+                      "value": -600
+                    }
+                  ]
+                },
+                "S8_heroStarY": {
+                  "type": "BasicKeyframedTrack",
+                  "__debugName": "Scene 8 Animation:[\"heroStarY\"]",
+                  "keyframes": [
+                    {
+                      "id": "S8_heroY_start",
+                      "position": 0,
+                      "connectedRight": true,
+                      "handles": [
+                        0.5,
+                        1,
+                        0.5,
+                        0
+                      ],
+                      "type": "bezier",
+                      "value": 300
+                    },
+                    {
+                      "id": "S8_heroY_end",
+                      "position": 3,
+                      "connectedRight": true,
+                      "handles": [
+                        0.5,
+                        1,
+                        0.5,
+                        0
+                      ],
+                      "type": "bezier",
+                      "value": 600
+                    }
+                  ]
+                },
+                "S8_heroStarZ": {
+                  "type": "BasicKeyframedTrack",
+                  "__debugName": "Scene 8 Animation:[\"heroStarZ\"]",
+                  "keyframes": [
+                    {
+                      "id": "S8_heroZ_start",
+                      "position": 0,
+                      "connectedRight": true,
+                      "handles": [
+                        0.5,
+                        1,
+                        0.5,
+                        0
+                      ],
+                      "type": "bezier",
+                      "value": -300
+                    },
+                    {
+                      "id": "S8_heroZ_end",
+                      "position": 3,
+                      "connectedRight": true,
+                      "handles": [
+                        0.5,
+                        1,
+                        0.5,
+                        0
+                      ],
+                      "type": "bezier",
+                      "value": -600
+                    }
+                  ]
+                },
+                "S8_heroStarOpacity": {
+                  "type": "BasicKeyframedTrack",
+                  "__debugName": "Scene 8 Animation:[\"heroStarOpacity\"]",
+                  "keyframes": [
+                    {
+                      "id": "S8_heroOp_start",
+                      "position": 0,
+                      "connectedRight": true,
+                      "handles": [
+                        0.5,
+                        1,
+                        0.5,
+                        0
+                      ],
+                      "type": "bezier",
+                      "value": 1
+                    },
+                    {
+                      "id": "S8_heroOp_end",
+                      "position": 2.5,
+                      "connectedRight": true,
+                      "handles": [
+                        0.5,
+                        1,
+                        0.5,
+                        0
+                      ],
+                      "type": "bezier",
+                      "value": 0
+                    }
+                  ]
+                },
+                "S8_heroStarScale": {
+                  "type": "BasicKeyframedTrack",
+                  "__debugName": "Scene 8 Animation:[\"heroStarScale\"]",
+                  "keyframes": [
+                    {
+                      "id": "S8_heroScale_start",
+                      "position": 0,
+                      "connectedRight": true,
+                      "handles": [
+                        0.5,
+                        1,
+                        0.5,
+                        0
+                      ],
+                      "type": "bezier",
+                      "value": 0.3
+                    },
+                    {
+                      "id": "S8_heroScale_end",
+                      "position": 2.5,
+                      "connectedRight": true,
+                      "handles": [
+                        0.5,
+                        1,
+                        0.5,
+                        0
+                      ],
+                      "type": "bezier",
+                      "value": 0.1
+                    }
+                  ]
+                },
+                "S8_primaryStarsOpacity": {
+                  "type": "BasicKeyframedTrack",
+                  "__debugName": "Scene 8 Animation:[\"primaryStarsOpacity\"]",
+                  "keyframes": [
+                    {
+                      "id": "S8_primOp_start",
+                      "position": 0,
+                      "connectedRight": true,
+                      "handles": [
+                        0.5,
+                        1,
+                        0.5,
+                        0
+                      ],
+                      "type": "bezier",
+                      "value": 1
+                    },
+                    {
+                      "id": "S8_primOp_end",
+                      "position": 2.5,
+                      "connectedRight": true,
+                      "handles": [
+                        0.5,
+                        1,
+                        0.5,
+                        0
+                      ],
+                      "type": "bezier",
+                      "value": 0
+                    }
+                  ]
+                },
+                "S8_constellationOpacity": {
+                  "type": "BasicKeyframedTrack",
+                  "__debugName": "Scene 8 Animation:[\"constellationOpacity\"]",
+                  "keyframes": [
+                    {
+                      "id": "S8_constOp_start",
+                      "position": 0,
+                      "connectedRight": true,
+                      "handles": [
+                        0.5,
+                        1,
+                        0.5,
+                        0
+                      ],
+                      "type": "bezier",
+                      "value": 1
+                    },
+                    {
+                      "id": "S8_constOp_end",
+                      "position": 2.5,
+                      "connectedRight": true,
+                      "handles": [
+                        0.5,
+                        1,
+                        0.5,
+                        0
+                      ],
+                      "type": "bezier",
+                      "value": 0
+                    }
+                  ]
+                },
+                "S8_logoOpacity": {
+                  "type": "BasicKeyframedTrack",
+                  "__debugName": "Scene 8 Animation:[\"logoOpacity\"]",
+                  "keyframes": [
+                    {
+                      "id": "S8_logoOp_start",
+                      "position": 1.5,
+                      "connectedRight": true,
+                      "handles": [
+                        0.5,
+                        1,
+                        0.5,
+                        0
+                      ],
+                      "type": "bezier",
+                      "value": 0
+                    },
+                    {
+                      "id": "S8_logoOp_end",
+                      "position": 4,
+                      "connectedRight": true,
+                      "handles": [
+                        0.5,
+                        1,
+                        0.5,
+                        0
+                      ],
+                      "type": "bezier",
+                      "value": 1
+                    }
+                  ]
+                },
+                "S8_backgroundStarsOpacity": {
+                  "type": "BasicKeyframedTrack",
+                  "__debugName": "Scene 8 Animation:[\"backgroundStarsOpacity\"]",
+                  "keyframes": [
+                    {
+                      "id": "S8_bgOp_start",
+                      "position": 0,
+                      "connectedRight": true,
+                      "handles": [
+                        0.5,
+                        1,
+                        0.5,
+                        0
+                      ],
+                      "type": "bezier",
+                      "value": 0.8
+                    }
+                  ]
+                }
+              },
+              "trackIdByPropPath": {
+                "[\"cameraX\"]": "S8_cameraX",
+                "[\"cameraY\"]": "S8_cameraY",
+                "[\"cameraZ\"]": "S8_cameraZ",
+                "[\"heroStarX\"]": "S8_heroStarX",
+                "[\"heroStarY\"]": "S8_heroStarY",
+                "[\"heroStarZ\"]": "S8_heroStarZ",
+                "[\"heroStarOpacity\"]": "S8_heroStarOpacity",
+                "[\"heroStarScale\"]": "S8_heroStarScale",
+                "[\"primaryStarsOpacity\"]": "S8_primaryStarsOpacity",
+                "[\"constellationOpacity\"]": "S8_constellationOpacity",
+                "[\"logoOpacity\"]": "S8_logoOpacity",
+                "[\"backgroundStarsOpacity\"]": "S8_backgroundStarsOpacity"
+              }
+            }
+          }
+        }
+      }
+    },
+    "Scene 8": {
+      "staticOverrides": {
+        "byObject": {
+          "Scene 8 Animation": {
+            "cameraZ": 150
+          }
+        }
+      },
+      "sequence": {
+        "subUnitsPerUnit": 30,
+        "length": 10,
+        "type": "PositionalSequence",
+        "tracksByObject": {
+          "Scene 8 Animation": {
+            "trackData": {
+              "Z4aBMxyoD_": {
+                "type": "BasicKeyframedTrack",
+                "__debugName": "Scene 8 Animation:[\"cameraX\"]",
+                "keyframes": [
+                  {
+                    "id": "CSPCCpFL2e",
+                    "position": 0,
+                    "connectedRight": true,
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
+                    "type": "bezier",
+                    "value": 0
+                  },
+                  {
+                    "id": "l1r--SrAYH",
+                    "position": 3.5,
+                    "connectedRight": true,
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
+                    "type": "bezier",
+                    "value": -100
+                  }
+                ]
+              },
+              "5BswWIqW5G": {
+                "type": "BasicKeyframedTrack",
+                "__debugName": "Scene 8 Animation:[\"cameraY\"]",
+                "keyframes": [
+                  {
+                    "id": "KxyKdcYXdf",
+                    "position": 0,
+                    "connectedRight": true,
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
+                    "type": "bezier",
+                    "value": 0
+                  },
+                  {
+                    "id": "MwC1K3EVTg",
+                    "position": 3.5,
+                    "connectedRight": true,
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
+                    "type": "bezier",
+                    "value": -250
+                  }
+                ]
+              },
+              "0HOxk8xxI1": {
+                "type": "BasicKeyframedTrack",
+                "__debugName": "Scene 8 Animation:[\"cameraZ\"]",
+                "keyframes": [
+                  {
+                    "id": "q8U4XdL-jx",
+                    "position": 0,
+                    "connectedRight": true,
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
+                    "type": "bezier",
+                    "value": 150
+                  },
+                  {
+                    "id": "RI5ioYmk3M",
+                    "position": 3.5,
+                    "connectedRight": true,
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
+                    "type": "bezier",
+                    "value": 300
+                  }
+                ]
+              },
+              "rdPhRS5aAJ": {
+                "type": "BasicKeyframedTrack",
+                "__debugName": "Scene 8 Animation:[\"heroStarX\"]",
+                "keyframes": [
+                  {
+                    "id": "rkeKm7tmlF",
+                    "position": 0,
+                    "connectedRight": true,
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
+                    "type": "bezier",
+                    "value": 0
+                  },
+                  {
+                    "id": "2cw2slklc_",
+                    "position": 3.5,
+                    "connectedRight": true,
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
+                    "type": "bezier",
+                    "value": 0
+                  }
+                ]
+              },
+              "M-BYM0T_ox": {
+                "type": "BasicKeyframedTrack",
+                "__debugName": "Scene 8 Animation:[\"heroStarY\"]",
+                "keyframes": [
+                  {
+                    "id": "d86IjLiSvr",
+                    "position": 0,
+                    "connectedRight": true,
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
+                    "type": "bezier",
+                    "value": 0
+                  },
+                  {
+                    "id": "toNmY3QGtD",
+                    "position": 3.5,
+                    "connectedRight": true,
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
+                    "type": "bezier",
+                    "value": 0
+                  }
+                ]
+              },
+              "2fjhxEvCkz": {
+                "type": "BasicKeyframedTrack",
+                "__debugName": "Scene 8 Animation:[\"heroStarZ\"]",
+                "keyframes": [
+                  {
+                    "id": "WuZI1rRJsm",
+                    "position": 0,
+                    "connectedRight": true,
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
+                    "type": "bezier",
+                    "value": 0
+                  }
+                ]
+              },
+              "2GJiYe88wC": {
+                "type": "BasicKeyframedTrack",
+                "__debugName": "Scene 8 Animation:[\"heroStarOpacity\"]",
+                "keyframes": [
+                  {
+                    "id": "GCxUOzonAd",
+                    "position": 0,
+                    "connectedRight": true,
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
+                    "type": "bezier",
+                    "value": 1
+                  },
+                  {
+                    "id": "7zY8uxyw3H",
+                    "position": 3.5,
+                    "connectedRight": true,
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
+                    "type": "bezier",
+                    "value": 0
+                  }
+                ]
+              },
+              "nOGKrXvlBV": {
+                "type": "BasicKeyframedTrack",
+                "__debugName": "Scene 8 Animation:[\"heroStarScale\"]",
+                "keyframes": [
+                  {
+                    "id": "8t1BWS1iT-",
+                    "position": 0,
+                    "connectedRight": true,
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
+                    "type": "bezier",
+                    "value": 1
+                  },
+                  {
+                    "id": "TQCLDUO-7Q",
+                    "position": 3.5,
+                    "connectedRight": true,
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
+                    "type": "bezier",
+                    "value": 1
+                  }
+                ]
+              },
+              "ZKiIgHW1uf": {
+                "type": "BasicKeyframedTrack",
+                "__debugName": "Scene 8 Animation:[\"primaryStarsOpacity\"]",
+                "keyframes": [
+                  {
+                    "id": "rXbpUhzyof",
+                    "position": 0,
+                    "connectedRight": true,
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
+                    "type": "bezier",
+                    "value": 1
+                  },
+                  {
+                    "id": "9RCL0K0AlJ",
+                    "position": 1.5,
+                    "connectedRight": true,
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
+                    "type": "bezier",
+                    "value": 0
+                  }
+                ]
+              },
+              "i1eUtqZsBk": {
+                "type": "BasicKeyframedTrack",
+                "__debugName": "Scene 8 Animation:[\"constellationOpacity\"]",
+                "keyframes": [
+                  {
+                    "id": "BadBxiT6sD",
+                    "position": 0,
+                    "connectedRight": true,
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
+                    "type": "bezier",
+                    "value": 1
+                  },
+                  {
+                    "id": "1r4tx1btb0",
+                    "position": 1.5,
+                    "connectedRight": true,
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
+                    "type": "bezier",
+                    "value": 0
+                  }
+                ]
+              },
+              "I2-o5M7jy3": {
+                "type": "BasicKeyframedTrack",
+                "__debugName": "Scene 8 Animation:[\"logoOpacity\"]",
+                "keyframes": [
+                  {
+                    "id": "7Q1VTyXUGp",
+                    "position": 0,
+                    "connectedRight": true,
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
+                    "type": "bezier",
+                    "value": 0
+                  },
+                  {
+                    "id": "iU2KQuAWU0",
+                    "position": 1.5,
+                    "connectedRight": true,
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
+                    "type": "bezier",
+                    "value": 0.2
+                  },
+                  {
+                    "id": "8bKNJuE1yc",
+                    "position": 5,
+                    "connectedRight": true,
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
+                    "type": "bezier",
+                    "value": 1
+                  }
+                ]
+              },
+              "Pcdu69uV5A": {
+                "type": "BasicKeyframedTrack",
+                "__debugName": "Scene 8 Animation:[\"backgroundStarsOpacity\"]",
+                "keyframes": [
+                  {
+                    "id": "voK4LB4l_m",
+                    "position": 0,
+                    "connectedRight": true,
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
+                    "type": "bezier",
+                    "value": 1
+                  },
+                  {
+                    "id": "eIQEoXDki4",
+                    "position": 1.5,
+                    "connectedRight": true,
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
+                    "type": "bezier",
+                    "value": 0.8
+                  }
+                ]
+              }
+            },
+            "trackIdByPropPath": {
+              "[\"cameraX\"]": "Z4aBMxyoD_",
+              "[\"cameraY\"]": "5BswWIqW5G",
+              "[\"cameraZ\"]": "0HOxk8xxI1",
+              "[\"heroStarX\"]": "rdPhRS5aAJ",
+              "[\"heroStarY\"]": "M-BYM0T_ox",
+              "[\"heroStarZ\"]": "2fjhxEvCkz",
+              "[\"heroStarOpacity\"]": "2GJiYe88wC",
+              "[\"heroStarScale\"]": "nOGKrXvlBV",
+              "[\"primaryStarsOpacity\"]": "ZKiIgHW1uf",
+              "[\"constellationOpacity\"]": "i1eUtqZsBk",
+              "[\"logoOpacity\"]": "I2-o5M7jy3",
+              "[\"backgroundStarsOpacity\"]": "Pcdu69uV5A"
+            }
+          }
+        }
       }
     }
   },
   "definitionVersion": "0.4.0",
   "revisionHistory": [
+    "7ln4rt5bsQ9gwEEl",
+    "n3fT9-a4xp1a0nE5",
+    "1LoRkD5woqkI71Dw",
     "hKTtzwGtXT4i8svA",
     "e_6dsQSCA7m3FQlw",
     "INdUOU9wVSY7Etty",
