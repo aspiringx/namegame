@@ -30,10 +30,17 @@
       "animation": {
         "duration": 2.0,
         "properties": {
-          "starsOpacity": {
+          "backgroundStarsOpacity": {
             "type": "number",
             "range": [0, 1],
-            "default": 0
+            "default": 0,
+            "description": "Background stars fade in"
+          },
+          "primaryStarsOpacity": {
+            "type": "number",
+            "range": [0, 1],
+            "default": 0,
+            "description": "Primary stars fade in"
           }
         }
       }
@@ -386,7 +393,7 @@
         "opacity": 0.6
       },
       "animation": {
-        "duration": 3.0,
+        "duration": 4.0,
         "properties": {
           "cameraX": {
             "type": "number",

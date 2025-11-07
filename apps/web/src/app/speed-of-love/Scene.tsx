@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from 'react'
+import { useRef, useState, useEffect, useMemo } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { Scene as SceneData } from './types'
@@ -58,15 +58,12 @@ export default function Scene({ currentScene }: SceneProps) {
   const cameraRef = useRef<THREE.PerspectiveCamera>(null)
 
   // State to hold Theatre.js animated values
-  const [theatreStarsOpacity, setTheatreStarsOpacity] = useState(0)
+  const [theatreBackgroundStarsOpacity, setTheatreBackgroundStarsOpacity] =
+    useState(0)
   const [theatreHeroStarOpacity, setTheatreHeroStarOpacity] = useState(0)
   const [theatreHeroStarScale, setTheatreHeroStarScale] = useState(0)
-  const [
-    theatreScene2PrimaryStarsOpacity,
-    setTheatreScene2PrimaryStarsOpacity,
-  ] = useState(1.0)
   const [theatrePrimaryStarsOpacity, setTheatrePrimaryStarsOpacity] =
-    useState(0.3)
+    useState(0)
   const [theatreConstellationOpacity, setTheatreConstellationOpacity] =
     useState(0)
 
@@ -83,8 +80,6 @@ export default function Scene({ currentScene }: SceneProps) {
     useState(0)
   const [theatreNewConstellationOpacity, setTheatreNewConstellationOpacity] =
     useState(0)
-  const [theatreBackgroundStarsOpacity, setTheatreBackgroundStarsOpacity] =
-    useState(0.8)
   const [theatreWavePhase, setTheatreWavePhase] = useState(0)
 
   const [primaryStarPositions, setPrimaryStarPositions] =
@@ -92,6 +87,86 @@ export default function Scene({ currentScene }: SceneProps) {
   const newPrimaryStarPositionsRef = useRef<Float32Array | null>(null) // Immediate access, no React delay
   const [twinklingEnabled, setTwinklingEnabled] = useState(false)
   const heroStarGroupRef = useRef<THREE.Group>(null)
+
+  // ============================================================================
+  // PROPERTY-BASED HELPERS
+  // Instead of hardcoding scene numbers (e.g., if scene === 3 || scene === 7),
+  // these helpers check which animation properties are defined in Theatre.js.
+  // This makes the code automatically work for any scene that defines those properties.
+  // ============================================================================
+
+  // Helper: Check if current scene animates camera/hero position
+  const sceneAnimatesPosition = useMemo(() => {
+    const animation = getSceneAnimation(currentScene.scene)
+    if (!animation) return false
+    const values = animation.value
+    return (
+      values.cameraX !== undefined ||
+      values.cameraY !== undefined ||
+      values.cameraZ !== undefined ||
+      values.heroStarX !== undefined ||
+      values.heroStarY !== undefined ||
+      values.heroStarZ !== undefined
+    )
+  }, [currentScene.scene])
+
+  // Helper: Get hero star opacity (checks if scene animates it)
+  const getHeroStarOpacity = useMemo(() => {
+    const animation = getSceneAnimation(currentScene.scene)
+    if (!animation) return 1.0
+    return animation.value.heroStarOpacity !== undefined
+      ? theatreHeroStarOpacity
+      : 1.0
+  }, [currentScene.scene, theatreHeroStarOpacity])
+
+  // Helper: Get hero star scale (checks if scene animates it)
+  const getHeroStarScale = useMemo(() => {
+    const animation = getSceneAnimation(currentScene.scene)
+    if (!animation) return 1.0
+    return animation.value.heroStarScale !== undefined
+      ? theatreHeroStarScale
+      : 1.0
+  }, [currentScene.scene, theatreHeroStarScale])
+
+  // Helper: Get constellation opacity (Scene 3/7 use constellationOpacity, Scene 4 uses oldConstellationOpacity)
+  const getConstellationOpacity = useMemo(() => {
+    const animation = getSceneAnimation(currentScene.scene)
+    if (!animation) return 0
+    const values = animation.value
+    if (values.constellationOpacity !== undefined) {
+      return theatreConstellationOpacity
+    }
+    if (values.oldConstellationOpacity !== undefined) {
+      return theatreOldConstellationOpacity
+    }
+    return 0
+  }, [
+    currentScene.scene,
+    theatreConstellationOpacity,
+    theatreOldConstellationOpacity,
+  ])
+
+  // Helper: Get background stars opacity
+  const getBackgroundStarsOpacity = useMemo(() => {
+    const animation = getSceneAnimation(currentScene.scene)
+    if (!animation) return 0.8
+    const values = animation.value
+
+    // Scene 1, 6, 7: backgroundStarsOpacity
+    if (values.backgroundStarsOpacity !== undefined) {
+      return theatreBackgroundStarsOpacity
+    }
+    // Scene 2: Dim background stars with primary stars (scaled by 0.8)
+    if (currentScene.scene === 2 && values.primaryStarsOpacity !== undefined) {
+      return 0.8 * theatrePrimaryStarsOpacity
+    }
+
+    return 0.8 // Default
+  }, [
+    currentScene.scene,
+    theatreBackgroundStarsOpacity,
+    theatrePrimaryStarsOpacity,
+  ])
 
   // Theatre.js: Auto-play animations when scenes load
   useEffect(() => {
@@ -118,15 +193,9 @@ export default function Scene({ currentScene }: SceneProps) {
     }
   }, [currentScene.sceneType])
 
-  // Scene 4, 5, 6, 7: Initialize camera position from Theatre.js static overrides
+  // Initialize camera position from Theatre.js for scenes that animate it
   useEffect(() => {
-    if (
-      (currentScene.scene === 4 ||
-        currentScene.scene === 5 ||
-        currentScene.scene === 6 ||
-        currentScene.scene === 7) &&
-      cameraRef.current
-    ) {
+    if (sceneAnimatesPosition && cameraRef.current) {
       // Set initial camera position immediately from static overrides
       cameraRef.current.position.set(
         theatreCameraX,
@@ -134,81 +203,103 @@ export default function Scene({ currentScene }: SceneProps) {
         theatreCameraZ,
       )
     }
-  }, [currentScene.scene, theatreCameraX, theatreCameraY, theatreCameraZ])
+  }, [
+    currentScene.scene,
+    theatreCameraX,
+    theatreCameraY,
+    theatreCameraZ,
+    sceneAnimatesPosition,
+  ])
 
-  // Theatre.js: Read animated values every frame and update React state
+  // ============================================================================
+  // THEATRE.JS VALUE READING (Property-Based)
+  // Reads animated values every frame and updates React state.
+  // Instead of checking scene numbers, we check if each property exists in the
+  // current scene's animation. This makes it work automatically for any scene.
+  // ============================================================================
   useFrame(() => {
     const animation = getSceneAnimation(currentScene.scene)
     if (!animation) return
 
-    // Scene 1: Read stars opacity
-    if (currentScene.scene === 1) {
-      setTheatreStarsOpacity(animation.value.starsOpacity)
+    const values = animation.value
+
+    // Background stars opacity (Scene 1, 6, 7)
+    if (values.backgroundStarsOpacity !== undefined) {
+      setTheatreBackgroundStarsOpacity(values.backgroundStarsOpacity)
     }
 
-    // Scene 2: Read hero star opacity, scale, and primary stars opacity
-    if (currentScene.scene === 2) {
-      setTheatreHeroStarOpacity(animation.value.heroStarOpacity)
-      setTheatreHeroStarScale(animation.value.heroStarScale)
-      setTheatreScene2PrimaryStarsOpacity(animation.value.primaryStarsOpacity)
+    // Hero star appearance (Scene 2, 6, 7)
+    if (values.heroStarOpacity !== undefined) {
+      setTheatreHeroStarOpacity(values.heroStarOpacity)
+    }
+    if (values.heroStarScale !== undefined) {
+      setTheatreHeroStarScale(values.heroStarScale)
     }
 
-    // Scene 3 & 7: Read primary stars and constellation opacity
-    if (currentScene.scene === 3 || currentScene.scene === 7) {
-      setTheatrePrimaryStarsOpacity(animation.value.primaryStarsOpacity)
-      setTheatreConstellationOpacity(animation.value.constellationOpacity)
+    // Primary stars opacity (Scene 1, 2, 3, 7)
+    if (values.primaryStarsOpacity !== undefined) {
+      setTheatrePrimaryStarsOpacity(values.primaryStarsOpacity)
     }
 
-    // Scene 4: Read all orbit change animation values
-    if (currentScene.scene === 4) {
-      setTheatreOldConstellationOpacity(animation.value.oldConstellationOpacity)
-      setTheatrePrimaryStarsOpacity(animation.value.oldPrimaryStarsOpacity) // Reuse Scene 3's state to prevent flash
-      setTheatreCameraX(animation.value.cameraX)
-      setTheatreCameraY(animation.value.cameraY)
-      setTheatreCameraZ(animation.value.cameraZ)
-      setTheatreHeroStarX(animation.value.heroStarX)
-      setTheatreHeroStarY(animation.value.heroStarY)
-      setTheatreHeroStarZ(animation.value.heroStarZ)
-      setTheatreNewPrimaryStarsOpacity(animation.value.newPrimaryStarsOpacity)
-      setTheatreNewConstellationOpacity(animation.value.newConstellationOpacity)
+    // Scene 4 special case: oldPrimaryStarsOpacity maps to same state var as Scene 3
+    if (values.oldPrimaryStarsOpacity !== undefined) {
+      setTheatrePrimaryStarsOpacity(values.oldPrimaryStarsOpacity)
     }
 
-    // Scene 5: Read cosmic wave animation values
-    if (currentScene.scene === 5) {
-      setTheatreWavePhase(animation.value.wavePhase)
-      setTheatreCameraX(animation.value.cameraX)
-      setTheatreCameraY(animation.value.cameraY)
-      setTheatreCameraZ(animation.value.cameraZ)
-      setTheatreHeroStarX(animation.value.heroStarX)
-      setTheatreHeroStarY(animation.value.heroStarY)
-      setTheatreHeroStarZ(animation.value.heroStarZ)
-      setTheatreNewPrimaryStarsOpacity(animation.value.newPrimaryStarsOpacity)
-      setTheatreNewConstellationOpacity(animation.value.newConstellationOpacity)
+    // Constellation opacity (Scene 3, 7)
+    if (values.constellationOpacity !== undefined) {
+      setTheatreConstellationOpacity(values.constellationOpacity)
     }
 
-    // Scene 6 & 7: Read hero star and background animation values
-    if (currentScene.scene === 6 || currentScene.scene === 7) {
-      setTheatreHeroStarOpacity(animation.value.heroStarOpacity)
-      setTheatreHeroStarScale(animation.value.heroStarScale)
-      setTheatreBackgroundStarsOpacity(animation.value.backgroundStarsOpacity)
-      setTheatreCameraX(animation.value.cameraX)
-      setTheatreCameraY(animation.value.cameraY)
-      setTheatreCameraZ(animation.value.cameraZ)
-      setTheatreHeroStarX(animation.value.heroStarX)
-      setTheatreHeroStarY(animation.value.heroStarY)
-      setTheatreHeroStarZ(animation.value.heroStarZ)
+    // Old constellation opacity (Scene 4)
+    if (values.oldConstellationOpacity !== undefined) {
+      setTheatreOldConstellationOpacity(values.oldConstellationOpacity)
+    }
+
+    // New primary stars and constellation (Scene 4, 5)
+    if (values.newPrimaryStarsOpacity !== undefined) {
+      setTheatreNewPrimaryStarsOpacity(values.newPrimaryStarsOpacity)
+    }
+    if (values.newConstellationOpacity !== undefined) {
+      setTheatreNewConstellationOpacity(values.newConstellationOpacity)
+    }
+
+    // Background stars opacity (Scene 6, 7)
+    if (values.backgroundStarsOpacity !== undefined) {
+      setTheatreBackgroundStarsOpacity(values.backgroundStarsOpacity)
+    }
+
+    // Camera position (Scene 4, 5, 6, 7)
+    if (values.cameraX !== undefined) {
+      setTheatreCameraX(values.cameraX)
+    }
+    if (values.cameraY !== undefined) {
+      setTheatreCameraY(values.cameraY)
+    }
+    if (values.cameraZ !== undefined) {
+      setTheatreCameraZ(values.cameraZ)
+    }
+
+    // Hero star position (Scene 4, 5, 6, 7)
+    if (values.heroStarX !== undefined) {
+      setTheatreHeroStarX(values.heroStarX)
+    }
+    if (values.heroStarY !== undefined) {
+      setTheatreHeroStarY(values.heroStarY)
+    }
+    if (values.heroStarZ !== undefined) {
+      setTheatreHeroStarZ(values.heroStarZ)
+    }
+
+    // Cosmic wave phase (Scene 5)
+    if (values.wavePhase !== undefined) {
+      setTheatreWavePhase(values.wavePhase)
     }
   })
 
-  // Scene 4, 5, 6, 7: Apply Theatre.js camera and hero star positions
+  // Apply Theatre.js camera and hero star positions for scenes that animate them
   useFrame(() => {
-    if (
-      (currentScene.scene === 4 ||
-        currentScene.scene === 5 ||
-        currentScene.scene === 6 ||
-        currentScene.scene === 7) &&
-      cameraRef.current
-    ) {
+    if (sceneAnimatesPosition && cameraRef.current) {
       // Apply Theatre.js camera position directly (3D movement)
       cameraRef.current.position.x = theatreCameraX
       cameraRef.current.position.y = theatreCameraY
@@ -237,15 +328,7 @@ export default function Scene({ currentScene }: SceneProps) {
         radius={currentScene.backgroundStars?.radius || 400}
         count={currentScene.backgroundStars?.count || 2000}
         size={currentScene.backgroundStars?.baseSize || 3.0}
-        opacity={
-          currentScene.scene === 1
-            ? 0.8 * theatreStarsOpacity
-            : currentScene.scene === 2
-            ? 0.8 * theatreScene2PrimaryStarsOpacity
-            : currentScene.scene === 6 || currentScene.scene === 7
-            ? theatreBackgroundStarsOpacity
-            : 0.8
-        }
+        opacity={getBackgroundStarsOpacity}
         enableTwinkling={twinklingEnabled}
       />
 
@@ -255,7 +338,7 @@ export default function Scene({ currentScene }: SceneProps) {
           key="primary-stars-1"
           radius={currentScene.primaryStars?.radius || 100}
           count={currentScene.primaryStars?.count || 15}
-          size={currentScene.primaryStars?.baseSize || 8.0}
+          size={currentScene.primaryStars?.baseSize || 6.0}
           seed={12345} // Same seed ensures same star positions across scenes
           opacity={
             currentScene.visibility?.primaryStars
@@ -275,11 +358,7 @@ export default function Scene({ currentScene }: SceneProps) {
             heroPosition={[0, 0, 0]}
             starPositions={primaryStarPositions}
             color={currentScene.connectionLines?.color || '#22d3ee'}
-            opacity={
-              currentScene.scene === 3 || currentScene.scene === 7
-                ? theatreConstellationOpacity
-                : theatreOldConstellationOpacity
-            }
+            opacity={getConstellationOpacity}
             fadeInDuration={0} // Theatre.js controls the fade
           />
         )}
@@ -289,20 +368,8 @@ export default function Scene({ currentScene }: SceneProps) {
         <group ref={heroStarGroupRef}>
           <HeroStar
             brightness={currentScene.heroStar?.brightness || 1.5}
-            opacity={
-              currentScene.scene === 2 ||
-              currentScene.scene === 6 ||
-              currentScene.scene === 7
-                ? theatreHeroStarOpacity
-                : 1.0
-            }
-            scale={
-              currentScene.scene === 2 ||
-              currentScene.scene === 6 ||
-              currentScene.scene === 7
-                ? theatreHeroStarScale
-                : 1.0
-            }
+            opacity={getHeroStarOpacity}
+            scale={getHeroStarScale}
           />
         </group>
       )}
@@ -313,7 +380,7 @@ export default function Scene({ currentScene }: SceneProps) {
           key="primary-stars-2"
           radius={currentScene.newPrimaryStars?.radius || 100}
           count={currentScene.newPrimaryStars?.count || 15}
-          size={currentScene.newPrimaryStars?.baseSize || 8.0}
+          size={currentScene.newPrimaryStars?.baseSize || 6.0}
           seed={67890} // Different seed for different star positions
           xOffset={currentScene.newPrimaryStars?.xOffset || 150}
           zOffset={currentScene.newPrimaryStars?.zOffset || 0}
@@ -352,11 +419,8 @@ export default function Scene({ currentScene }: SceneProps) {
         makeDefault
         ref={cameraRef}
         position={
-          currentScene.scene === 4 ||
-          currentScene.scene === 5 ||
-          currentScene.scene === 6 ||
-          currentScene.scene === 7
-            ? undefined // Theatre.js controls position in Scene 4, 5, 6, 7
+          sceneAnimatesPosition
+            ? undefined // Theatre.js controls position for scenes that animate it
             : currentScene.cameraPosition || [0, 0, 150]
         }
         fov={currentScene.cameraFOV || 60}

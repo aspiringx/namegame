@@ -46,10 +46,76 @@
                     "value": 1
                   }
                 ]
+              },
+              "Q72EM831bi": {
+                "type": "BasicKeyframedTrack",
+                "__debugName": "Scene 1 Animation:[\"backgroundStarsOpacity\"]",
+                "keyframes": [
+                  {
+                    "id": "MPWK7DQFe0",
+                    "position": 0,
+                    "connectedRight": true,
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
+                    "type": "bezier",
+                    "value": 0
+                  },
+                  {
+                    "id": "TrDIUsV0hr",
+                    "position": 2,
+                    "connectedRight": true,
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
+                    "type": "bezier",
+                    "value": 1
+                  }
+                ]
+              },
+              "yYQm1zqB9B": {
+                "type": "BasicKeyframedTrack",
+                "__debugName": "Scene 1 Animation:[\"primaryStarsOpacity\"]",
+                "keyframes": [
+                  {
+                    "id": "HDlR_sQpY9",
+                    "position": 0,
+                    "connectedRight": true,
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
+                    "type": "bezier",
+                    "value": 0
+                  },
+                  {
+                    "id": "YxQ8viRW33",
+                    "position": 2,
+                    "connectedRight": true,
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
+                    "type": "bezier",
+                    "value": 1
+                  }
+                ]
               }
             },
             "trackIdByPropPath": {
-              "[\"starsOpacity\"]": "ASnwz1b_90"
+              "[\"starsOpacity\"]": "ASnwz1b_90",
+              "[\"backgroundStarsOpacity\"]": "Q72EM831bi",
+              "[\"primaryStarsOpacity\"]": "yYQm1zqB9B"
             }
           }
         }
@@ -1058,7 +1124,12 @@
                     "id": "S7_camX_start",
                     "position": 0,
                     "connectedRight": true,
-                    "handles": [0.5, 1, 0.5, 0],
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
                     "type": "bezier",
                     "value": 0
                   }
@@ -1072,7 +1143,12 @@
                     "id": "S7_camY_start",
                     "position": 0,
                     "connectedRight": true,
-                    "handles": [0.5, 1, 0.5, 0],
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
                     "type": "bezier",
                     "value": 50
                   },
@@ -1080,7 +1156,12 @@
                     "id": "S7_camY_end",
                     "position": 3,
                     "connectedRight": true,
-                    "handles": [0.5, 1, 0.5, 0],
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
                     "type": "bezier",
                     "value": 0
                   }
@@ -1094,7 +1175,12 @@
                     "id": "S7_camZ_start",
                     "position": 0,
                     "connectedRight": true,
-                    "handles": [0.5, 1, 0.5, 0],
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
                     "type": "bezier",
                     "value": 120
                   },
@@ -1102,7 +1188,12 @@
                     "id": "S7_camZ_end",
                     "position": 3,
                     "connectedRight": true,
-                    "handles": [0.5, 1, 0.5, 0],
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
                     "type": "bezier",
                     "value": 150
                   }
@@ -1116,7 +1207,12 @@
                     "id": "S7_heroX_start",
                     "position": 0,
                     "connectedRight": true,
-                    "handles": [0.5, 1, 0.5, 0],
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
                     "type": "bezier",
                     "value": 0
                   }
@@ -1130,7 +1226,12 @@
                     "id": "S7_heroY_start",
                     "position": 0,
                     "connectedRight": true,
-                    "handles": [0.5, 1, 0.5, 0],
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
                     "type": "bezier",
                     "value": 50
                   },
@@ -1138,7 +1239,12 @@
                     "id": "S7_heroY_end",
                     "position": 3,
                     "connectedRight": true,
-                    "handles": [0.5, 1, 0.5, 0],
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
                     "type": "bezier",
                     "value": 0
                   }
@@ -1152,7 +1258,12 @@
                     "id": "S7_heroZ_start",
                     "position": 0,
                     "connectedRight": true,
-                    "handles": [0.5, 1, 0.5, 0],
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
                     "type": "bezier",
                     "value": -30
                   },
@@ -1160,7 +1271,12 @@
                     "id": "S7_heroZ_end",
                     "position": 3,
                     "connectedRight": true,
-                    "handles": [0.5, 1, 0.5, 0],
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
                     "type": "bezier",
                     "value": 0
                   }
@@ -1174,7 +1290,12 @@
                     "id": "S7_heroOp_start",
                     "position": 0,
                     "connectedRight": true,
-                    "handles": [0.5, 1, 0.5, 0],
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
                     "type": "bezier",
                     "value": 0.4
                   },
@@ -1182,9 +1303,14 @@
                     "id": "S7_heroOp_end",
                     "position": 3,
                     "connectedRight": true,
-                    "handles": [0.5, 1, 0.5, 0],
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
                     "type": "bezier",
-                    "value": 1.0
+                    "value": 1
                   }
                 ]
               },
@@ -1196,7 +1322,12 @@
                     "id": "S7_heroScale_start",
                     "position": 0,
                     "connectedRight": true,
-                    "handles": [0.5, 1, 0.5, 0],
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
                     "type": "bezier",
                     "value": 0.6
                   },
@@ -1204,9 +1335,14 @@
                     "id": "S7_heroScale_end",
                     "position": 3,
                     "connectedRight": true,
-                    "handles": [0.5, 1, 0.5, 0],
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
                     "type": "bezier",
-                    "value": 1.0
+                    "value": 1
                   }
                 ]
               },
@@ -1218,17 +1354,27 @@
                     "id": "S7_primOp_start",
                     "position": 0,
                     "connectedRight": true,
-                    "handles": [0.5, 1, 0.5, 0],
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
                     "type": "bezier",
                     "value": 0
                   },
                   {
                     "id": "S7_primOp_end",
-                    "position": 3,
+                    "position": 3.633,
                     "connectedRight": true,
-                    "handles": [0.5, 1, 0.5, 0],
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
                     "type": "bezier",
-                    "value": 1.0
+                    "value": 1
                   }
                 ]
               },
@@ -1238,17 +1384,27 @@
                 "keyframes": [
                   {
                     "id": "S7_constOp_start",
-                    "position": 0,
+                    "position": 3,
                     "connectedRight": true,
-                    "handles": [0.5, 1, 0.5, 0],
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
                     "type": "bezier",
                     "value": 0
                   },
                   {
                     "id": "S7_constOp_end",
-                    "position": 3,
+                    "position": 4,
                     "connectedRight": true,
-                    "handles": [0.5, 1, 0.5, 0],
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
                     "type": "bezier",
                     "value": 0.6
                   }
@@ -1262,7 +1418,12 @@
                     "id": "S7_bgOp_start",
                     "position": 0,
                     "connectedRight": true,
-                    "handles": [0.5, 1, 0.5, 0],
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
                     "type": "bezier",
                     "value": 0.2
                   },
@@ -1270,7 +1431,12 @@
                     "id": "S7_bgOp_end",
                     "position": 3,
                     "connectedRight": true,
-                    "handles": [0.5, 1, 0.5, 0],
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
                     "type": "bezier",
                     "value": 0.8
                   }
@@ -1297,6 +1463,8 @@
   },
   "definitionVersion": "0.4.0",
   "revisionHistory": [
+    "5pCFPbEP9VMX7CFW",
+    "wHfP1ehMll_XkfEr",
     "Xggnw_SrKyJqWq5R",
     "jsKpyFR-NDfA5hhA",
     "5FlaXzKzjWaPiIx0",
