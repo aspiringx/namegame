@@ -81,6 +81,7 @@ export default function Scene({ currentScene }: SceneProps) {
   const [theatreNewConstellationOpacity, setTheatreNewConstellationOpacity] =
     useState(0)
   const [theatreWavePhase, setTheatreWavePhase] = useState(0)
+  const [theatreFlashIntensity, setTheatreFlashIntensity] = useState(0)
 
   const [primaryStarPositions, setPrimaryStarPositions] =
     useState<Float32Array | null>(null)
@@ -308,6 +309,11 @@ export default function Scene({ currentScene }: SceneProps) {
     if (values.wavePhase !== undefined) {
       setTheatreWavePhase(values.wavePhase)
     }
+    
+    // Flash intensity (Scene 5)
+    if (values.flashIntensity !== undefined) {
+      setTheatreFlashIntensity(values.flashIntensity)
+    }
   })
 
   // Apply Theatre.js camera and hero star positions for scenes that animate them
@@ -334,6 +340,19 @@ export default function Scene({ currentScene }: SceneProps) {
     <>
       <ambientLight intensity={0.3} />
       <pointLight position={[0, 0, 0]} intensity={1} />
+      
+      {/* Flash overlay for explosion effect (Scene 5) */}
+      {theatreFlashIntensity > 0 && (
+        <mesh position={[0, 0, -10]} renderOrder={999}>
+          <planeGeometry args={[1000, 1000]} />
+          <meshBasicMaterial
+            color="#ffffff"
+            transparent
+            opacity={theatreFlashIntensity}
+            depthWrite={false}
+          />
+        </mesh>
+      )}
 
       {/* Background stars - All scenes use Theatre.js or static values */}
       <BackgroundStars

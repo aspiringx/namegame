@@ -11,7 +11,7 @@ interface PrimaryStarsProps {
   yOffset?: number // Shift all stars by this amount on Y axis
   zOffset?: number // Shift all stars by this amount on Z axis
   seed?: number // Seed for deterministic random positions
-  wavePhase?: number // 0-1 cosmic wave ripple effect
+  wavePhase?: number // 0-1 explosion effect (stars fly outward)
   onPositionsReady?: (positions: Float32Array) => void
 }
 
@@ -140,9 +140,37 @@ export default function PrimaryStars({
   const currentOpacity = useRef(0)
   const targetOpacity = useRef(opacity)
 
-  // Store original positions for wave displacement
+  // Store original positions and random explosion directions
   const originalPositions = useRef(positions.slice())
+  const explosionDirections = useRef<Float32Array | null>(null)
+  const explosionSpeeds = useRef<Float32Array | null>(null)
   const pointsRef = useRef<THREE.Points>(null)
+  const trailsRef = useRef<THREE.Group>(null)
+
+  // Initialize random explosion directions (seeded for consistency)
+  useEffect(() => {
+    if (!explosionDirections.current) {
+      const random = seededRandom(seed + 999) // Different seed for directions
+      const dirs = new Float32Array(responsiveCount * 3)
+      const speeds = new Float32Array(responsiveCount)
+      
+      for (let i = 0; i < responsiveCount; i++) {
+        // Random direction vector
+        const theta = random() * Math.PI * 2
+        const phi = Math.acos(2 * random() - 1)
+        
+        dirs[i * 3] = Math.sin(phi) * Math.cos(theta)
+        dirs[i * 3 + 1] = Math.sin(phi) * Math.sin(theta)
+        dirs[i * 3 + 2] = Math.cos(phi)
+        
+        // Random speed multiplier (0.5 to 1.5)
+        speeds[i] = 0.5 + random() * 1.0
+      }
+      
+      explosionDirections.current = dirs
+      explosionSpeeds.current = speeds
+    }
+  }, [responsiveCount, seed])
 
   useEffect(() => {
     // Update target when prop changes
@@ -195,7 +223,7 @@ export default function PrimaryStars({
     [size, starTexture, gl],
   )
 
-  // Smoothly animate opacity and apply cosmic wave displacement
+  // Smoothly animate opacity and apply explosion displacement
   useFrame(() => {
     // Lerp to target opacity
     currentOpacity.current = THREE.MathUtils.lerp(
@@ -204,11 +232,17 @@ export default function PrimaryStars({
       0.05,
     )
 
-    shaderMaterial.uniforms.opacity.value = currentOpacity.current
-
-    // Apply cosmic wave displacement if wavePhase > 0
-    if (wavePhase > 0 && pointsRef.current) {
+    // Apply explosion effect if wavePhase > 0
+    if (wavePhase > 0 && pointsRef.current && explosionDirections.current && explosionSpeeds.current) {
       const posAttr = pointsRef.current.geometry.attributes.position
+      
+      // Accelerating displacement: phase² for acceleration feel
+      const explosionProgress = wavePhase * wavePhase
+      const maxDistance = 500 // Stars fly up to 500 units away
+      
+      // Fade out stars as they fly away
+      const fadeOut = Math.max(0, 1 - wavePhase * 0.8)
+      shaderMaterial.uniforms.opacity.value = currentOpacity.current * fadeOut
 
       for (let i = 0; i < responsiveCount; i++) {
         const idx = i * 3
@@ -216,42 +250,105 @@ export default function PrimaryStars({
         const origY = originalPositions.current[idx + 1]
         const origZ = originalPositions.current[idx + 2]
 
-        // Calculate distance from wave origin (xOffset, yOffset, zOffset)
-        const dx = origX - xOffset
-        const dy = origY - yOffset
-        const dz = origZ - zOffset
-        const dist = Math.sqrt(dx * dx + dy * dy + dz * dz)
+        // Get this star's random direction and speed
+        const dirX = explosionDirections.current[idx]
+        const dirY = explosionDirections.current[idx + 1]
+        const dirZ = explosionDirections.current[idx + 2]
+        const speed = explosionSpeeds.current[i]
 
-        // Wave travels outward: stars at distance D are displaced when wave reaches them
-        // Wave speed: travels ~150 units over phase 0-1
-        const waveRadius = wavePhase * 150
-        const distFromWave = Math.abs(dist - waveRadius)
+        // Calculate displacement with acceleration
+        const displacement = explosionProgress * maxDistance * speed
 
-        // Displacement magnitude: peaks when wave is at star's distance
-        // Falls off quickly (within 30 units of wave front)
-        const displacement =
-          Math.max(0, 1 - distFromWave / 30) *
-          200 *
-          Math.sin(wavePhase * Math.PI)
-
-        // Displace radially outward from origin
-        const direction = new THREE.Vector3(dx, dy, dz).normalize()
-
-        posAttr.array[idx] = origX + direction.x * displacement
-        posAttr.array[idx + 1] = origY + direction.y * displacement
-        posAttr.array[idx + 2] = origZ + direction.z * displacement
+        // Apply displacement in random direction
+        posAttr.array[idx] = origX + dirX * displacement
+        posAttr.array[idx + 1] = origY + dirY * displacement
+        posAttr.array[idx + 2] = origZ + dirZ * displacement
       }
 
       posAttr.needsUpdate = true
+      
+      // Update trails
+      if (trailsRef.current) {
+        trailsRef.current.children.forEach((line, i) => {
+          const lineMesh = line as THREE.Line
+          const lineGeo = lineMesh.geometry as THREE.BufferGeometry
+          const linePos = lineGeo.attributes.position
+          
+          const idx = i * 3
+          const origX = originalPositions.current[idx]
+          const origY = originalPositions.current[idx + 1]
+          const origZ = originalPositions.current[idx + 2]
+          
+          const dirX = explosionDirections.current![idx]
+          const dirY = explosionDirections.current![idx + 1]
+          const dirZ = explosionDirections.current![idx + 2]
+          const speed = explosionSpeeds.current![i]
+          
+          const displacement = explosionProgress * maxDistance * speed
+          const trailLength = Math.min(displacement * 0.3, 50) // Trail is 30% of travel distance, max 50 units
+          
+          // Current position (end of trail)
+          const currentX = origX + dirX * displacement
+          const currentY = origY + dirY * displacement
+          const currentZ = origZ + dirZ * displacement
+          
+          // Trail start (behind the star)
+          const trailStartX = currentX - dirX * trailLength
+          const trailStartY = currentY - dirY * trailLength
+          const trailStartZ = currentZ - dirZ * trailLength
+          
+          // Update line geometry
+          linePos.array[0] = trailStartX
+          linePos.array[1] = trailStartY
+          linePos.array[2] = trailStartZ
+          linePos.array[3] = currentX
+          linePos.array[4] = currentY
+          linePos.array[5] = currentZ
+          linePos.needsUpdate = true
+          
+          // Fade trail with explosion
+          const material = lineMesh.material as THREE.LineBasicMaterial
+          material.opacity = fadeOut * 0.6
+        })
+      }
+    } else {
+      // Normal opacity when not exploding
+      shaderMaterial.uniforms.opacity.value = currentOpacity.current
+      
+      // Hide trails when not exploding
+      if (trailsRef.current) {
+        trailsRef.current.visible = false
+      }
     }
   })
 
   return (
-    <points
-      ref={pointsRef}
-      geometry={geometry}
-      material={shaderMaterial}
-      renderOrder={3}
-    />
+    <>
+      <points
+        ref={pointsRef}
+        geometry={geometry}
+        material={shaderMaterial}
+        renderOrder={3}
+      />
+      {/* Star trails for explosion effect */}
+      <group ref={trailsRef} visible={wavePhase > 0}>
+        {Array.from({ length: responsiveCount }).map((_, i) => {
+          const trailGeometry = new THREE.BufferGeometry()
+          const trailPositions = new Float32Array(6) // 2 points (start and end)
+          trailGeometry.setAttribute('position', new THREE.BufferAttribute(trailPositions, 3))
+          
+          const trailMaterial = new THREE.LineBasicMaterial({
+            color: 0xffffff,
+            opacity: 0.6,
+            transparent: true,
+            blending: THREE.AdditiveBlending,
+          })
+          
+          return (
+            <primitive key={i} object={new THREE.Line(trailGeometry, trailMaterial)} />
+          )
+        })}
+      </group>
+    </>
   )
 }

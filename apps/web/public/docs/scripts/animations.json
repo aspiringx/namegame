@@ -222,7 +222,7 @@
     },
     {
       "scene": 5,
-      "description": "Waves or ripples move through the stars and shifts the HeroStar. The constellation from scene 4 fades and gets smaller.",
+      "description": "Explosive disruption sends stars flying in all directions. The constellation from scene 4 shatters.",
       "narration": "Unseen forces shift your trajectory—chance meetings, unexpected moments, collisions that send you toward the unknown.",
       "sceneType": "cosmicWave",
       "cameraPosition": [250, -100, 100],
@@ -253,7 +253,13 @@
             "type": "number",
             "range": [0, 1],
             "default": 0,
-            "description": "Drives the cosmic wave ripple effect"
+            "description": "Drives the explosion effect (0=calm, 1=fully exploded)"
+          },
+          "flashIntensity": {
+            "type": "number",
+            "range": [0, 1],
+            "default": 0,
+            "description": "Background flash brightness (0=dark, 1=bright white)"
           },
           "cameraX": {
             "type": "number",
