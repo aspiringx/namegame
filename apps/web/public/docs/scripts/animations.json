@@ -357,6 +357,99 @@
           }
         }
       }
+    },
+    {
+      "scene": 7,
+      "description": "A soft pulse of light and HeroStar flies quickly back to the PrimaryStars in scene 1. They fade in from the left and the first constellation fades in quickly, like going home. Warmth and color return.",
+      "narration": "But you have a rare gift: human stars can travel at the speed of love. With a thought, a message, a moment—you can reconnect.",
+      "sceneType": "lovePulse",
+      "cameraPosition": [0, 0, 150],
+      "cameraFOV": 50,
+      "visibility": {
+        "heroStar": true,
+        "primaryStars": true,
+        "oldConstellation": true,
+        "newPrimaryStars": false,
+        "newConstellation": false
+      },
+      "heroStar": {
+        "position": [0, 0, 0],
+        "brightness": 1.5
+      },
+      "primaryStars": {
+        "count": 15,
+        "radius": 100,
+        "baseSize": 6.0
+      },
+      "connectionLines": {
+        "color": "#22d3ee",
+        "opacity": 0.6
+      },
+      "animation": {
+        "duration": 3.0,
+        "properties": {
+          "cameraX": {
+            "type": "number",
+            "range": [-200, 200],
+            "default": 0
+          },
+          "cameraY": {
+            "type": "number",
+            "range": [-100, 100],
+            "default": 50
+          },
+          "cameraZ": {
+            "type": "number",
+            "range": [100, 250],
+            "default": 120
+          },
+          "heroStarX": {
+            "type": "number",
+            "range": [-200, 200],
+            "default": 0
+          },
+          "heroStarY": {
+            "type": "number",
+            "range": [-100, 100],
+            "default": 50
+          },
+          "heroStarZ": {
+            "type": "number",
+            "range": [-100, 100],
+            "default": -30
+          },
+          "heroStarOpacity": {
+            "type": "number",
+            "range": [0, 1],
+            "default": 0.4,
+            "description": "Hero star brightens as it returns home"
+          },
+          "heroStarScale": {
+            "type": "number",
+            "range": [0, 2],
+            "default": 0.6,
+            "description": "Hero star grows as it returns"
+          },
+          "primaryStarsOpacity": {
+            "type": "number",
+            "range": [0, 1],
+            "default": 0,
+            "description": "Original primary stars fade back in"
+          },
+          "constellationOpacity": {
+            "type": "number",
+            "range": [0, 1],
+            "default": 0,
+            "description": "Original constellation reconnects"
+          },
+          "backgroundStarsOpacity": {
+            "type": "number",
+            "range": [0, 1],
+            "default": 0.2,
+            "description": "Background stars brighten"
+          }
+        }
+      }
     }
   ]
 }

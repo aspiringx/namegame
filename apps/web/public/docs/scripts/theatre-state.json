@@ -1038,6 +1038,261 @@
           }
         }
       }
+    },
+    "Scene 7": {
+      "staticOverrides": {
+        "byObject": {}
+      },
+      "sequence": {
+        "subUnitsPerUnit": 30,
+        "length": 10,
+        "type": "PositionalSequence",
+        "tracksByObject": {
+          "Scene 7 Animation": {
+            "trackData": {
+              "S7_cameraX": {
+                "type": "BasicKeyframedTrack",
+                "__debugName": "Scene 7 Animation:[\"cameraX\"]",
+                "keyframes": [
+                  {
+                    "id": "S7_camX_start",
+                    "position": 0,
+                    "connectedRight": true,
+                    "handles": [0.5, 1, 0.5, 0],
+                    "type": "bezier",
+                    "value": 0
+                  }
+                ]
+              },
+              "S7_cameraY": {
+                "type": "BasicKeyframedTrack",
+                "__debugName": "Scene 7 Animation:[\"cameraY\"]",
+                "keyframes": [
+                  {
+                    "id": "S7_camY_start",
+                    "position": 0,
+                    "connectedRight": true,
+                    "handles": [0.5, 1, 0.5, 0],
+                    "type": "bezier",
+                    "value": 50
+                  },
+                  {
+                    "id": "S7_camY_end",
+                    "position": 3,
+                    "connectedRight": true,
+                    "handles": [0.5, 1, 0.5, 0],
+                    "type": "bezier",
+                    "value": 0
+                  }
+                ]
+              },
+              "S7_cameraZ": {
+                "type": "BasicKeyframedTrack",
+                "__debugName": "Scene 7 Animation:[\"cameraZ\"]",
+                "keyframes": [
+                  {
+                    "id": "S7_camZ_start",
+                    "position": 0,
+                    "connectedRight": true,
+                    "handles": [0.5, 1, 0.5, 0],
+                    "type": "bezier",
+                    "value": 120
+                  },
+                  {
+                    "id": "S7_camZ_end",
+                    "position": 3,
+                    "connectedRight": true,
+                    "handles": [0.5, 1, 0.5, 0],
+                    "type": "bezier",
+                    "value": 150
+                  }
+                ]
+              },
+              "S7_heroStarX": {
+                "type": "BasicKeyframedTrack",
+                "__debugName": "Scene 7 Animation:[\"heroStarX\"]",
+                "keyframes": [
+                  {
+                    "id": "S7_heroX_start",
+                    "position": 0,
+                    "connectedRight": true,
+                    "handles": [0.5, 1, 0.5, 0],
+                    "type": "bezier",
+                    "value": 0
+                  }
+                ]
+              },
+              "S7_heroStarY": {
+                "type": "BasicKeyframedTrack",
+                "__debugName": "Scene 7 Animation:[\"heroStarY\"]",
+                "keyframes": [
+                  {
+                    "id": "S7_heroY_start",
+                    "position": 0,
+                    "connectedRight": true,
+                    "handles": [0.5, 1, 0.5, 0],
+                    "type": "bezier",
+                    "value": 50
+                  },
+                  {
+                    "id": "S7_heroY_end",
+                    "position": 3,
+                    "connectedRight": true,
+                    "handles": [0.5, 1, 0.5, 0],
+                    "type": "bezier",
+                    "value": 0
+                  }
+                ]
+              },
+              "S7_heroStarZ": {
+                "type": "BasicKeyframedTrack",
+                "__debugName": "Scene 7 Animation:[\"heroStarZ\"]",
+                "keyframes": [
+                  {
+                    "id": "S7_heroZ_start",
+                    "position": 0,
+                    "connectedRight": true,
+                    "handles": [0.5, 1, 0.5, 0],
+                    "type": "bezier",
+                    "value": -30
+                  },
+                  {
+                    "id": "S7_heroZ_end",
+                    "position": 3,
+                    "connectedRight": true,
+                    "handles": [0.5, 1, 0.5, 0],
+                    "type": "bezier",
+                    "value": 0
+                  }
+                ]
+              },
+              "S7_heroStarOpacity": {
+                "type": "BasicKeyframedTrack",
+                "__debugName": "Scene 7 Animation:[\"heroStarOpacity\"]",
+                "keyframes": [
+                  {
+                    "id": "S7_heroOp_start",
+                    "position": 0,
+                    "connectedRight": true,
+                    "handles": [0.5, 1, 0.5, 0],
+                    "type": "bezier",
+                    "value": 0.4
+                  },
+                  {
+                    "id": "S7_heroOp_end",
+                    "position": 3,
+                    "connectedRight": true,
+                    "handles": [0.5, 1, 0.5, 0],
+                    "type": "bezier",
+                    "value": 1.0
+                  }
+                ]
+              },
+              "S7_heroStarScale": {
+                "type": "BasicKeyframedTrack",
+                "__debugName": "Scene 7 Animation:[\"heroStarScale\"]",
+                "keyframes": [
+                  {
+                    "id": "S7_heroScale_start",
+                    "position": 0,
+                    "connectedRight": true,
+                    "handles": [0.5, 1, 0.5, 0],
+                    "type": "bezier",
+                    "value": 0.6
+                  },
+                  {
+                    "id": "S7_heroScale_end",
+                    "position": 3,
+                    "connectedRight": true,
+                    "handles": [0.5, 1, 0.5, 0],
+                    "type": "bezier",
+                    "value": 1.0
+                  }
+                ]
+              },
+              "S7_primaryStarsOpacity": {
+                "type": "BasicKeyframedTrack",
+                "__debugName": "Scene 7 Animation:[\"primaryStarsOpacity\"]",
+                "keyframes": [
+                  {
+                    "id": "S7_primOp_start",
+                    "position": 0,
+                    "connectedRight": true,
+                    "handles": [0.5, 1, 0.5, 0],
+                    "type": "bezier",
+                    "value": 0
+                  },
+                  {
+                    "id": "S7_primOp_end",
+                    "position": 3,
+                    "connectedRight": true,
+                    "handles": [0.5, 1, 0.5, 0],
+                    "type": "bezier",
+                    "value": 1.0
+                  }
+                ]
+              },
+              "S7_constellationOpacity": {
+                "type": "BasicKeyframedTrack",
+                "__debugName": "Scene 7 Animation:[\"constellationOpacity\"]",
+                "keyframes": [
+                  {
+                    "id": "S7_constOp_start",
+                    "position": 0,
+                    "connectedRight": true,
+                    "handles": [0.5, 1, 0.5, 0],
+                    "type": "bezier",
+                    "value": 0
+                  },
+                  {
+                    "id": "S7_constOp_end",
+                    "position": 3,
+                    "connectedRight": true,
+                    "handles": [0.5, 1, 0.5, 0],
+                    "type": "bezier",
+                    "value": 0.6
+                  }
+                ]
+              },
+              "S7_backgroundStarsOpacity": {
+                "type": "BasicKeyframedTrack",
+                "__debugName": "Scene 7 Animation:[\"backgroundStarsOpacity\"]",
+                "keyframes": [
+                  {
+                    "id": "S7_bgOp_start",
+                    "position": 0,
+                    "connectedRight": true,
+                    "handles": [0.5, 1, 0.5, 0],
+                    "type": "bezier",
+                    "value": 0.2
+                  },
+                  {
+                    "id": "S7_bgOp_end",
+                    "position": 3,
+                    "connectedRight": true,
+                    "handles": [0.5, 1, 0.5, 0],
+                    "type": "bezier",
+                    "value": 0.8
+                  }
+                ]
+              }
+            },
+            "trackIdByPropPath": {
+              "[\"cameraX\"]": "S7_cameraX",
+              "[\"cameraY\"]": "S7_cameraY",
+              "[\"cameraZ\"]": "S7_cameraZ",
+              "[\"heroStarX\"]": "S7_heroStarX",
+              "[\"heroStarY\"]": "S7_heroStarY",
+              "[\"heroStarZ\"]": "S7_heroStarZ",
+              "[\"heroStarOpacity\"]": "S7_heroStarOpacity",
+              "[\"heroStarScale\"]": "S7_heroStarScale",
+              "[\"primaryStarsOpacity\"]": "S7_primaryStarsOpacity",
+              "[\"constellationOpacity\"]": "S7_constellationOpacity",
+              "[\"backgroundStarsOpacity\"]": "S7_backgroundStarsOpacity"
+            }
+          }
+        }
+      }
     }
   },
   "definitionVersion": "0.4.0",

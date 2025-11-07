@@ -118,9 +118,15 @@ export default function Scene({ currentScene }: SceneProps) {
     }
   }, [currentScene.sceneType])
 
-  // Scene 4, 5, 6: Initialize camera position from Theatre.js static overrides
+  // Scene 4, 5, 6, 7: Initialize camera position from Theatre.js static overrides
   useEffect(() => {
-    if ((currentScene.scene === 4 || currentScene.scene === 5 || currentScene.scene === 6) && cameraRef.current) {
+    if (
+      (currentScene.scene === 4 ||
+        currentScene.scene === 5 ||
+        currentScene.scene === 6 ||
+        currentScene.scene === 7) &&
+      cameraRef.current
+    ) {
       // Set initial camera position immediately from static overrides
       cameraRef.current.position.set(
         theatreCameraX,
@@ -147,8 +153,8 @@ export default function Scene({ currentScene }: SceneProps) {
       setTheatreScene2PrimaryStarsOpacity(animation.value.primaryStarsOpacity)
     }
 
-    // Scene 3: Read primary stars and constellation opacity
-    if (currentScene.scene === 3) {
+    // Scene 3 & 7: Read primary stars and constellation opacity
+    if (currentScene.scene === 3 || currentScene.scene === 7) {
       setTheatrePrimaryStarsOpacity(animation.value.primaryStarsOpacity)
       setTheatreConstellationOpacity(animation.value.constellationOpacity)
     }
@@ -180,8 +186,8 @@ export default function Scene({ currentScene }: SceneProps) {
       setTheatreNewConstellationOpacity(animation.value.newConstellationOpacity)
     }
 
-    // Scene 6: Read dimStar animation values
-    if (currentScene.scene === 6) {
+    // Scene 6 & 7: Read hero star and background animation values
+    if (currentScene.scene === 6 || currentScene.scene === 7) {
       setTheatreHeroStarOpacity(animation.value.heroStarOpacity)
       setTheatreHeroStarScale(animation.value.heroStarScale)
       setTheatreBackgroundStarsOpacity(animation.value.backgroundStarsOpacity)
@@ -194,9 +200,15 @@ export default function Scene({ currentScene }: SceneProps) {
     }
   })
 
-  // Scene 4, 5, 6: Apply Theatre.js camera and hero star positions
+  // Scene 4, 5, 6, 7: Apply Theatre.js camera and hero star positions
   useFrame(() => {
-    if ((currentScene.scene === 4 || currentScene.scene === 5 || currentScene.scene === 6) && cameraRef.current) {
+    if (
+      (currentScene.scene === 4 ||
+        currentScene.scene === 5 ||
+        currentScene.scene === 6 ||
+        currentScene.scene === 7) &&
+      cameraRef.current
+    ) {
       // Apply Theatre.js camera position directly (3D movement)
       cameraRef.current.position.x = theatreCameraX
       cameraRef.current.position.y = theatreCameraY
@@ -230,7 +242,7 @@ export default function Scene({ currentScene }: SceneProps) {
             ? 0.8 * theatreStarsOpacity
             : currentScene.scene === 2
             ? 0.8 * theatreScene2PrimaryStarsOpacity
-            : currentScene.scene === 6
+            : currentScene.scene === 6 || currentScene.scene === 7
             ? theatreBackgroundStarsOpacity
             : 0.8
         }
@@ -264,7 +276,7 @@ export default function Scene({ currentScene }: SceneProps) {
             starPositions={primaryStarPositions}
             color={currentScene.connectionLines?.color || '#22d3ee'}
             opacity={
-              currentScene.scene === 3
+              currentScene.scene === 3 || currentScene.scene === 7
                 ? theatreConstellationOpacity
                 : theatreOldConstellationOpacity
             }
@@ -278,12 +290,16 @@ export default function Scene({ currentScene }: SceneProps) {
           <HeroStar
             brightness={currentScene.heroStar?.brightness || 1.5}
             opacity={
-              currentScene.scene === 2 || currentScene.scene === 6
+              currentScene.scene === 2 ||
+              currentScene.scene === 6 ||
+              currentScene.scene === 7
                 ? theatreHeroStarOpacity
                 : 1.0
             }
             scale={
-              currentScene.scene === 2 || currentScene.scene === 6
+              currentScene.scene === 2 ||
+              currentScene.scene === 6 ||
+              currentScene.scene === 7
                 ? theatreHeroStarScale
                 : 1.0
             }
@@ -336,8 +352,11 @@ export default function Scene({ currentScene }: SceneProps) {
         makeDefault
         ref={cameraRef}
         position={
-          currentScene.scene === 4 || currentScene.scene === 5 || currentScene.scene === 6
-            ? undefined // Theatre.js controls position in Scene 4, 5, 6
+          currentScene.scene === 4 ||
+          currentScene.scene === 5 ||
+          currentScene.scene === 6 ||
+          currentScene.scene === 7
+            ? undefined // Theatre.js controls position in Scene 4, 5, 6, 7
             : currentScene.cameraPosition || [0, 0, 150]
         }
         fov={currentScene.cameraFOV || 60}
