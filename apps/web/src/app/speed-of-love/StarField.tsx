@@ -2,12 +2,16 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Canvas } from '@react-three/fiber'
+import { RotateCcw } from 'lucide-react'
 import type { Scene } from './types'
 import SceneComponent from './Scene'
 import { loadScript } from './utils/loadScript'
-import { getSceneDuration, getSceneSheet } from './theatreConfig'
+import { getSceneDuration } from './theatreConfig'
 
 export default function StarField() {
+  // Generate random seed once per session for star positions
+  const [randomSeed] = useState(() => Math.floor(Math.random() * 1000000))
+  
   // Scene management
   const [scenes, setScenes] = useState<Scene[]>([])
   const [currentSceneIndex, setCurrentSceneIndex] = useState(1) // First scene is now index 1
@@ -24,7 +28,6 @@ export default function StarField() {
     [scenes, currentSceneIndex],
   )
 
-
   // Load scene script once (no dependencies).
   useEffect(() => {
     loadScript().then((data) => {
@@ -37,15 +40,19 @@ export default function StarField() {
   // Expose console helper for jumping to scenes
   useEffect(() => {
     if (typeof window !== 'undefined' && scenes.length > 0) {
-      (window as any).goToScene = (sceneNumber: number) => {
+      ;(window as any).goToScene = (sceneNumber: number) => {
         if (sceneNumber < 1 || sceneNumber > scenes.length) {
-          console.error(`Scene ${sceneNumber} not found. Valid range: 1-${scenes.length}`)
+          console.error(
+            `Scene ${sceneNumber} not found. Valid range: 1-${scenes.length}`,
+          )
           return
         }
         setCurrentSceneIndex(sceneNumber)
         console.log(`Jumped to Scene ${sceneNumber}`)
       }
-      console.log(`💡 Test helper: goToScene(1-${scenes.length}) to jump to any scene`)
+      console.log(
+        `💡 Test helper: goToScene(1-${scenes.length}) to jump to any scene`,
+      )
     }
   }, [scenes])
 
@@ -75,20 +82,6 @@ export default function StarField() {
     }
   }, [currentSceneIndex, scenes.length])
 
-  // Navigate to previous scene
-  const handleBack = useCallback(() => {
-    if (currentSceneIndex > 1) {
-      const prevIndex = currentSceneIndex - 1
-      setCurrentSceneIndex(prevIndex)
-      
-      // Reset Theatre.js sequence to beginning of previous scene
-      const sheet = getSceneSheet(prevIndex)
-      if (sheet) {
-        sheet.sequence.position = 0
-      }
-    }
-  }, [currentSceneIndex])
-
   return (
     <div style={{ position: 'relative', width: '100%', height: '100dvh' }}>
       <style jsx>{`
@@ -114,7 +107,7 @@ export default function StarField() {
           transition: 'opacity 800ms ease-in-out',
         }}
       >
-        <SceneComponent currentScene={currentScene} />
+        <SceneComponent currentScene={currentScene} randomSeed={randomSeed} />
       </Canvas>
 
       <div
@@ -133,10 +126,17 @@ export default function StarField() {
 
           {/* Content */}
           <div className="relative px-4 py-3 sm:px-6 sm:py-4 transition-all duration-300 ease-in-out">
-            <div className="mb-1 flex items-center gap-2">
+            <div className="mb-1 flex items-center justify-between gap-2">
               <span className="text-xs font-mono uppercase tracking-wider text-cyan-400/70">
                 Navigation System
               </span>
+              <button
+                onClick={() => window.location.reload()}
+                className="rounded border border-cyan-400/50 bg-cyan-500/10 p-1.5 text-cyan-400 transition-colors hover:bg-cyan-500/20 hover:border-cyan-400"
+                title="Restart"
+              >
+                <RotateCcw size={16} />
+              </button>
             </div>
             <div className="relative min-h-[3rem] transition-all duration-300 ease-in-out">
               <p
@@ -148,22 +148,14 @@ export default function StarField() {
               </p>
             </div>
 
-            <div className="mt-3 flex gap-2">
-              {/* Back button - only show if not on first scene */}
-              {currentSceneIndex > 1 && (
-                <button
-                  onClick={handleBack}
-                  className="rounded border border-cyan-400/50 bg-cyan-500/10 px-3 py-2 font-mono text-sm font-medium text-cyan-400 transition-colors hover:bg-cyan-500/20 hover:border-cyan-400"
-                  title="Previous scene"
-                >
-                  ←
-                </button>
-              )}
+            <div className="mt-3">
               {/* Proceed button */}
               <button
                 onClick={handleNext}
-                disabled={!animationComplete || currentSceneIndex >= scenes.length}
-                className={`flex-1 rounded border px-4 py-2 font-mono text-sm font-medium transition-colors ${
+                disabled={
+                  !animationComplete || currentSceneIndex >= scenes.length
+                }
+                className={`w-full rounded border px-4 py-2 font-mono text-sm font-medium transition-colors ${
                   animationComplete && currentSceneIndex < scenes.length
                     ? 'border-cyan-400/50 bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 hover:border-cyan-400 cursor-pointer'
                     : 'border-cyan-400/20 bg-cyan-500/5 text-cyan-400/40 cursor-not-allowed'

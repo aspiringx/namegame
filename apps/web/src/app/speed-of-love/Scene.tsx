@@ -52,9 +52,10 @@ initializeTheatreFromConfig()
 // The new, simplified props for the scene
 interface SceneProps {
   currentScene: SceneData
+  randomSeed: number
 }
 
-export default function Scene({ currentScene }: SceneProps) {
+export default function Scene({ currentScene, randomSeed }: SceneProps) {
   const cameraRef = useRef<THREE.PerspectiveCamera>(null)
 
   // State to hold Theatre.js animated values
@@ -371,7 +372,7 @@ export default function Scene({ currentScene }: SceneProps) {
           radius={currentScene.primaryStars?.radius || 100}
           count={currentScene.primaryStars?.count || 15}
           size={currentScene.primaryStars?.baseSize || 6.0}
-          seed={12345} // Same seed ensures same star positions across scenes
+          seed={randomSeed} // Random seed per session, consistent across scenes
           xOffset={currentScene.primaryStars?.xOffset || 0}
           yOffset={currentScene.primaryStars?.yOffset || 0}
           zOffset={currentScene.primaryStars?.zOffset || 0}
@@ -416,7 +417,7 @@ export default function Scene({ currentScene }: SceneProps) {
           radius={currentScene.newPrimaryStars?.radius || 100}
           count={currentScene.newPrimaryStars?.count || 15}
           size={currentScene.newPrimaryStars?.baseSize || 6.0}
-          seed={67890} // Different seed for different star positions
+          seed={randomSeed + 1000} // Offset from primary stars seed for different positions
           xOffset={currentScene.newPrimaryStars?.xOffset || 250}
           yOffset={currentScene.newPrimaryStars?.yOffset || -100}
           zOffset={currentScene.newPrimaryStars?.zOffset || -50}

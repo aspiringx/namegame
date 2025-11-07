@@ -240,8 +240,8 @@ export default function PrimaryStars({
       const explosionProgress = wavePhase * wavePhase
       const maxDistance = 500 // Stars fly up to 500 units away
       
-      // Fade out stars as they fly away
-      const fadeOut = Math.max(0, 1 - wavePhase * 0.8)
+      // Fade out stars as they fly away (reaches 0 at wavePhase = 1)
+      const fadeOut = Math.max(0, 1 - wavePhase)
       shaderMaterial.uniforms.opacity.value = currentOpacity.current * fadeOut
 
       for (let i = 0; i < responsiveCount; i++) {
@@ -306,9 +306,9 @@ export default function PrimaryStars({
           linePos.array[5] = currentZ
           linePos.needsUpdate = true
           
-          // Fade trail with explosion
+          // Fade trail with explosion (trails fade out completely with stars)
           const material = lineMesh.material as THREE.LineBasicMaterial
-          material.opacity = fadeOut * 0.6
+          material.opacity = fadeOut * 0.6 // Max 0.6 opacity, reaches 0 when fadeOut = 0
         })
       }
     } else {
@@ -318,6 +318,28 @@ export default function PrimaryStars({
       // Hide trails when not exploding
       if (trailsRef.current) {
         trailsRef.current.visible = false
+      }
+      
+      // Reset star positions to original when wavePhase is 0
+      if (pointsRef.current) {
+        const posAttr = pointsRef.current.geometry.attributes.position
+        let needsReset = false
+        
+        // Check if positions differ from original (explosion happened)
+        for (let i = 0; i < responsiveCount * 3; i++) {
+          if (Math.abs(posAttr.array[i] - originalPositions.current[i]) > 0.01) {
+            needsReset = true
+            break
+          }
+        }
+        
+        // Reset positions if needed
+        if (needsReset) {
+          for (let i = 0; i < responsiveCount * 3; i++) {
+            posAttr.array[i] = originalPositions.current[i]
+          }
+          posAttr.needsUpdate = true
+        }
       }
     }
   })
