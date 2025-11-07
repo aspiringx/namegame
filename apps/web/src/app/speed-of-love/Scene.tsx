@@ -170,19 +170,32 @@ export default function Scene({ currentScene }: SceneProps) {
 
   // Theatre.js: Auto-play animations when scenes load
   useEffect(() => {
-    const sheet = getSceneSheet(currentScene.scene)
-    const duration = getSceneDuration(currentScene.scene)
-
-    if (!sheet || !duration) return
+    // Skip if scene hasn't been initialized yet (scenes are 1-indexed)
+    if (currentScene.scene === 0) return
 
     // Wait for Theatre.js project to load before playing
     theatreProject.ready.then(() => {
-      sheet.sequence.play({ range: [0, duration] })
+      const sheet = getSceneSheet(currentScene.scene)
+      if (!sheet) {
+        console.warn(`Sheet not found for scene ${currentScene.scene}`)
+        return
+      }
+
+      // Calculate duration AFTER Theatre.js is ready and sheets are initialized
+      const duration = getSceneDuration(currentScene.scene)
+      console.log(`Scene ${currentScene.scene} duration:`, duration)
+      
+      if (duration > 0) {
+        sheet.sequence.play({ range: [0, duration] })
+      }
     })
 
     // Cleanup: pause sequence when scene changes
     return () => {
-      sheet.sequence.pause()
+      const sheet = getSceneSheet(currentScene.scene)
+      if (sheet) {
+        sheet.sequence.pause()
+      }
     }
   }, [currentScene.scene])
 

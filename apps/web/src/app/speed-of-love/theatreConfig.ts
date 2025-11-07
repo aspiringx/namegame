@@ -18,7 +18,7 @@ interface AnimationProperty {
 }
 
 interface SceneAnimation {
-  duration: number
+  duration?: number // Optional - calculated dynamically from keyframes if not provided
   properties: Record<string, AnimationProperty>
 }
 
@@ -83,10 +83,38 @@ export function getSceneConfig(sceneNumber: number): SceneConfig | undefined {
   return config.scenes.find((s) => s.scene === sceneNumber)
 }
 
-// Get animation duration for a scene
+// Get animation duration for a scene by finding the last keyframe position
 export function getSceneDuration(sceneNumber: number): number {
-  const sceneConfig = getSceneConfig(sceneNumber)
-  return sceneConfig?.animation.duration || 0
+  // Read keyframes directly from the theatre state file
+  const state = theatreState as any
+  const sheetName = `Scene ${sceneNumber}`
+  const sheetData = state.sheetsById?.[sheetName]
+  
+  if (!sheetData) return 0
+
+  let maxPosition = 0
+
+  // Access the sequence tracksByObject from the state file
+  const tracksByObject = sheetData.sequence?.tracksByObject || {}
+  
+  // Iterate through all objects in the sequence
+  Object.values(tracksByObject).forEach((objectTracks: any) => {
+    const trackData = objectTracks?.trackData || {}
+    
+    // Iterate through all tracks (properties) for this object
+    Object.values(trackData).forEach((track: any) => {
+      const keyframes = track?.keyframes || []
+      
+      // Find the maximum position across all keyframes
+      keyframes.forEach((keyframe: any) => {
+        if (keyframe.position > maxPosition) {
+          maxPosition = keyframe.position
+        }
+      })
+    })
+  })
+
+  return maxPosition
 }
 
 // Get animation object for a scene

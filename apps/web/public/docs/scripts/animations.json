@@ -28,7 +28,6 @@
         "colors": [16777215, 16777215]
       },
       "animation": {
-        "duration": 2.0,
         "properties": {
           "backgroundStarsOpacity": {
             "type": "number",
@@ -64,7 +63,6 @@
         "brightness": 1.5
       },
       "animation": {
-        "duration": 2.5,
         "properties": {
           "heroStarOpacity": {
             "type": "number",
@@ -111,7 +109,6 @@
       },
       "connectionsCount": 5,
       "animation": {
-        "duration": 3,
         "properties": {
           "primaryStarsOpacity": {
             "type": "number",
@@ -155,7 +152,6 @@
         "opacity": 0.6
       },
       "animation": {
-        "duration": 10.0,
         "properties": {
           "oldConstellationOpacity": {
             "type": "number",
@@ -240,7 +236,6 @@
         "opacity": 0.6
       },
       "animation": {
-        "duration": 5.0,
         "properties": {
           "wavePhase": {
             "type": "number",
@@ -312,7 +307,6 @@
         "brightness": 1.5
       },
       "animation": {
-        "duration": 4.0,
         "properties": {
           "heroStarOpacity": {
             "type": "number",
@@ -393,7 +387,6 @@
         "opacity": 0.6
       },
       "animation": {
-        "duration": 4.0,
         "properties": {
           "cameraX": {
             "type": "number",
