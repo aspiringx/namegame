@@ -18,7 +18,10 @@
       "primaryStars": {
         "count": 15,
         "radius": 100,
-        "baseSize": 6.0
+        "baseSize": 6.0,
+        "xOffset": 0,
+        "yOffset": 0,
+        "zOffset": 0
       },
       "backgroundStars": {
         "count": 2000,
@@ -127,7 +130,7 @@
     {
       "scene": 4,
       "description": "Hero travels, old constellation fades, new constellation forms",
-      "narration": "As you orbit, interests and opportunities pull you away from familiar places. You encounter new stars and form new constellations.",
+      "narration": "As you orbit, interests and opportunities pull you away from familiar places. You encounter new stars... new constellations form.",
       "sceneType": "orbitChange",
       "cameraPosition": [0, 0, 150],
       "cameraFOV": 50,
@@ -145,7 +148,18 @@
       "primaryStars": {
         "count": 15,
         "radius": 100,
-        "baseSize": 6.0
+        "baseSize": 6.0,
+        "xOffset": 0,
+        "yOffset": 0,
+        "zOffset": 0
+      },
+      "newPrimaryStars": {
+        "count": 15,
+        "radius": 100,
+        "baseSize": 6.0,
+        "xOffset": 250,
+        "yOffset": -100,
+        "zOffset": -50
       },
       "connectionLines": {
         "color": "#22d3ee",
@@ -165,32 +179,32 @@
           },
           "cameraX": {
             "type": "number",
-            "range": [-200, 200],
+            "range": [-360, 360],
             "default": 0
           },
           "cameraY": {
             "type": "number",
-            "range": [-100, 100],
+            "range": [-360, 360],
             "default": 0
           },
           "cameraZ": {
             "type": "number",
-            "range": [100, 250],
+            "range": [-360, 360],
             "default": 150
           },
           "heroStarX": {
             "type": "number",
-            "range": [-200, 200],
+            "range": [-360, 360],
             "default": 0
           },
           "heroStarY": {
             "type": "number",
-            "range": [-100, 100],
+            "range": [-360, 360],
             "default": 0
           },
           "heroStarZ": {
             "type": "number",
-            "range": [-100, 100],
+            "range": [-360, 360],
             "default": 0
           },
           "newPrimaryStarsOpacity": {
@@ -211,7 +225,7 @@
       "description": "Waves or ripples move through the stars and shifts the HeroStar. The constellation from scene 4 fades and gets smaller.",
       "narration": "Unseen forces shift your trajectory—chance meetings, unexpected moments, collisions that send you toward the unknown.",
       "sceneType": "cosmicWave",
-      "cameraPosition": [0, 0, 150],
+      "cameraPosition": [250, -100, 100],
       "cameraFOV": 50,
       "visibility": {
         "heroStar": true,
@@ -221,15 +235,13 @@
         "newConstellation": true
       },
       "heroStar": {
-        "position": [0, 0, 0],
+        "position": [250, -100, -50],
         "brightness": 1.5
       },
       "newPrimaryStars": {
         "count": 15,
         "radius": 100,
-        "baseSize": 6.0,
-        "xOffset": 150,
-        "zOffset": 0
+        "baseSize": 6.0
       },
       "connectionLines": {
         "color": "#22d3ee",
@@ -245,32 +257,32 @@
           },
           "cameraX": {
             "type": "number",
-            "range": [-200, 200],
-            "default": 150
+            "range": [-360, 360],
+            "default": 0
           },
           "cameraY": {
             "type": "number",
-            "range": [-100, 100],
+            "range": [-360, 360],
             "default": 0
           },
           "cameraZ": {
             "type": "number",
-            "range": [100, 250],
+            "range": [-360, 360],
             "default": 150
           },
           "heroStarX": {
             "type": "number",
-            "range": [-200, 200],
-            "default": 150
+            "range": [-360, 360],
+            "default": 0
           },
           "heroStarY": {
             "type": "number",
-            "range": [-100, 100],
+            "range": [-360, 360],
             "default": 0
           },
           "heroStarZ": {
             "type": "number",
-            "range": [-100, 100],
+            "range": [-360, 360],
             "default": 0
           },
           "newPrimaryStarsOpacity": {
@@ -293,7 +305,7 @@
       "description": "The HeroStar looks smaller and all background stars get dimmer. The hero star glows faintly, alone in the dark.",
       "narration": "At times, your light feels dim, your signal quiet. Times of loneliness and reflection.",
       "sceneType": "dimStar",
-      "cameraPosition": [0, 0, 150],
+      "cameraPosition": [125, 100, -100],
       "cameraFOV": 50,
       "visibility": {
         "heroStar": true,
@@ -303,7 +315,7 @@
         "newConstellation": false
       },
       "heroStar": {
-        "position": [0, 0, 0],
+        "position": [125, 100, -250],
         "brightness": 1.5
       },
       "animation": {
@@ -328,33 +340,33 @@
           },
           "cameraX": {
             "type": "number",
-            "range": [-200, 200],
-            "default": 0
+            "range": [-360, 360],
+            "default": 125
           },
           "cameraY": {
             "type": "number",
-            "range": [-100, 100],
-            "default": 50
+            "range": [-360, 360],
+            "default": 100
           },
           "cameraZ": {
             "type": "number",
-            "range": [100, 250],
-            "default": 120
+            "range": [-360, 360],
+            "default": -100
           },
           "heroStarX": {
             "type": "number",
-            "range": [-200, 200],
-            "default": 0
+            "range": [-360, 360],
+            "default": 125
           },
           "heroStarY": {
             "type": "number",
-            "range": [-100, 100],
-            "default": 50
+            "range": [-360, 360],
+            "default": 100
           },
           "heroStarZ": {
             "type": "number",
-            "range": [-100, 100],
-            "default": -30
+            "range": [-360, 360],
+            "default": -250
           }
         }
       }
@@ -364,7 +376,7 @@
       "description": "A soft pulse of light and HeroStar flies quickly back to the PrimaryStars in scene 1. They fade in from the left and the first constellation fades in quickly, like going home. Warmth and color return.",
       "narration": "But you have a rare gift: human stars can travel at the speed of love. With a thought, a message, a moment—you can reconnect.",
       "sceneType": "lovePulse",
-      "cameraPosition": [0, 0, 150],
+      "cameraPosition": [125, 100, -100],
       "cameraFOV": 50,
       "visibility": {
         "heroStar": true,
@@ -374,13 +386,16 @@
         "newConstellation": false
       },
       "heroStar": {
-        "position": [0, 0, 0],
+        "position": [125, 100, -250],
         "brightness": 1.5
       },
       "primaryStars": {
         "count": 15,
         "radius": 100,
-        "baseSize": 6.0
+        "baseSize": 6.0,
+        "xOffset": 0,
+        "yOffset": 0,
+        "zOffset": 0
       },
       "connectionLines": {
         "color": "#22d3ee",
@@ -390,33 +405,33 @@
         "properties": {
           "cameraX": {
             "type": "number",
-            "range": [-200, 200],
-            "default": 0
+            "range": [-360, 360],
+            "default": 125
           },
           "cameraY": {
             "type": "number",
-            "range": [-100, 100],
-            "default": 50
+            "range": [-360, 360],
+            "default": 100
           },
           "cameraZ": {
             "type": "number",
-            "range": [100, 250],
-            "default": 120
+            "range": [-360, 360],
+            "default": -100
           },
           "heroStarX": {
             "type": "number",
-            "range": [-200, 200],
-            "default": 0
+            "range": [-360, 360],
+            "default": 125
           },
           "heroStarY": {
             "type": "number",
-            "range": [-100, 100],
-            "default": 50
+            "range": [-360, 360],
+            "default": 100
           },
           "heroStarZ": {
             "type": "number",
-            "range": [-100, 100],
-            "default": -30
+            "range": [-360, 360],
+            "default": -250
           },
           "heroStarOpacity": {
             "type": "number",

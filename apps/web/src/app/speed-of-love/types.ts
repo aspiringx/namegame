@@ -59,7 +59,7 @@ export interface Scene {
   sceneType: string
   cameraPosition?: [number, number, number]
   cameraFOV?: number
-  
+
   // Visibility flags - controls which elements render in this scene
   visibility?: {
     heroStar?: boolean
@@ -74,12 +74,16 @@ export interface Scene {
     count: number
     radius?: number
     baseSize?: number
+    xOffset?: number
+    yOffset?: number
+    zOffset?: number
   }
   newPrimaryStars?: {
     count: number
     radius?: number
     baseSize?: number
     xOffset?: number
+    yOffset?: number
     zOffset?: number
   }
   backgroundStars?: {

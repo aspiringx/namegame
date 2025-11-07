@@ -184,7 +184,7 @@ export default function Scene({ currentScene }: SceneProps) {
       // Calculate duration AFTER Theatre.js is ready and sheets are initialized
       const duration = getSceneDuration(currentScene.scene)
       console.log(`Scene ${currentScene.scene} duration:`, duration)
-      
+
       if (duration > 0) {
         sheet.sequence.play({ range: [0, duration] })
       }
@@ -353,6 +353,9 @@ export default function Scene({ currentScene }: SceneProps) {
           count={currentScene.primaryStars?.count || 15}
           size={currentScene.primaryStars?.baseSize || 6.0}
           seed={12345} // Same seed ensures same star positions across scenes
+          xOffset={currentScene.primaryStars?.xOffset || 0}
+          yOffset={currentScene.primaryStars?.yOffset || 0}
+          zOffset={currentScene.primaryStars?.zOffset || 0}
           opacity={
             currentScene.visibility?.primaryStars
               ? theatrePrimaryStarsOpacity
@@ -395,8 +398,9 @@ export default function Scene({ currentScene }: SceneProps) {
           count={currentScene.newPrimaryStars?.count || 15}
           size={currentScene.newPrimaryStars?.baseSize || 6.0}
           seed={67890} // Different seed for different star positions
-          xOffset={currentScene.newPrimaryStars?.xOffset || 150}
-          zOffset={currentScene.newPrimaryStars?.zOffset || 0}
+          xOffset={currentScene.newPrimaryStars?.xOffset || 250}
+          yOffset={currentScene.newPrimaryStars?.yOffset || -100}
+          zOffset={currentScene.newPrimaryStars?.zOffset || -50}
           opacity={theatreNewPrimaryStarsOpacity}
           wavePhase={currentScene.scene === 5 ? theatreWavePhase : 0}
           onPositionsReady={(positions) => {

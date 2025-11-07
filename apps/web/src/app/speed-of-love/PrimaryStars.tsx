@@ -8,6 +8,7 @@ interface PrimaryStarsProps {
   size?: number
   opacity?: number
   xOffset?: number // Shift all stars by this amount on X axis
+  yOffset?: number // Shift all stars by this amount on Y axis
   zOffset?: number // Shift all stars by this amount on Z axis
   seed?: number // Seed for deterministic random positions
   wavePhase?: number // 0-1 cosmic wave ripple effect
@@ -20,6 +21,7 @@ export default function PrimaryStars({
   size = 4.0,
   opacity = 1.0,
   xOffset = 0,
+  yOffset = 0,
   zOffset = 0,
   seed = 12345,
   wavePhase = 0,
@@ -61,8 +63,8 @@ export default function PrimaryStars({
     for (let i = 0; i < responsiveCount; i++) {
       // Distribute stars across full visible viewport
       pos[i * 3] = (random() - 0.5) * frustumWidth + xOffset // X: full width + offset
-      pos[i * 3 + 1] = (random() - 0.5) * frustumHeight // Y: full height
-      pos[i * 3 + 2] = (random() - 0.5) * radius * 0.4 + 0 // zOffset // Z: depth variation + offset
+      pos[i * 3 + 1] = (random() - 0.5) * frustumHeight + yOffset // Y: full height + offset
+      pos[i * 3 + 2] = (random() - 0.5) * radius * 0.4 + zOffset // Z: depth variation + offset
 
       // Organic size variation (0.6x to 1.4x base size)
       const sizeMultiplier = 0.8 + random() * 0.6
@@ -94,7 +96,8 @@ export default function PrimaryStars({
   }, [
     responsiveCount,
     xOffset,
-    // zOffset,
+    yOffset,
+    zOffset,
     radius,
     seed,
     viewport.width,
@@ -213,9 +216,9 @@ export default function PrimaryStars({
         const origY = originalPositions.current[idx + 1]
         const origZ = originalPositions.current[idx + 2]
 
-        // Calculate distance from wave origin (xOffset, 0, zOffset)
+        // Calculate distance from wave origin (xOffset, yOffset, zOffset)
         const dx = origX - xOffset
-        const dy = origY
+        const dy = origY - yOffset
         const dz = origZ - zOffset
         const dist = Math.sqrt(dx * dx + dy * dy + dz * dz)
 
@@ -228,7 +231,7 @@ export default function PrimaryStars({
         // Falls off quickly (within 30 units of wave front)
         const displacement =
           Math.max(0, 1 - distFromWave / 30) *
-          20 *
+          200 *
           Math.sin(wavePhase * Math.PI)
 
         // Displace radially outward from origin
