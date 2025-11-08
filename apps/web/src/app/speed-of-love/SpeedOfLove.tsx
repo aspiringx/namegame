@@ -22,10 +22,10 @@ export default function SpeedOfLove() {
   return (
     <div className="relative h-screen w-full overflow-hidden bg-gray-900">
       {/* Header */}
-      <div className="absolute left-0 right-0 top-0 z-10 bg-gradient-to-b from-gray-900/90 to-transparent p-4 sm:p-6">
+      <div className="absolute left-0 right-0 top-0 z-10 p-4 sm:p-6">
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-white sm:text-3xl">
+            <h1 className="text-xl font-bold text-white sm:text-xl">
               Your Universe
             </h1>
             <p className="mt-1 text-sm text-gray-300 sm:text-base">

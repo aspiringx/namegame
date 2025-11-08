@@ -17,6 +17,7 @@ export default function StarField() {
   const [currentSceneIndex, setCurrentSceneIndex] = useState(1) // First scene is now index 1
   const [backgroundOpacity, setBackgroundOpacity] = useState(0)
   const [animationComplete, setAnimationComplete] = useState(true)
+  const [isFullyLoaded, setIsFullyLoaded] = useState(false)
   const currentScene = useMemo(
     () =>
       scenes[currentSceneIndex - 1] || {
@@ -32,8 +33,11 @@ export default function StarField() {
   useEffect(() => {
     loadScript().then((data) => {
       setScenes(data)
-      // Fade in background after scenes load
-      setTimeout(() => setBackgroundOpacity(1), 100)
+      // Wait a bit for Theatre.js and textures to initialize
+      setTimeout(() => {
+        setBackgroundOpacity(1)
+        setIsFullyLoaded(true)
+      }, 500)
     })
   }, [])
 
@@ -84,6 +88,17 @@ export default function StarField() {
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100dvh' }}>
+      {/* Loading overlay - stays visible until fully loaded */}
+      {!isFullyLoaded && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-gray-900">
+          <div className="text-center">
+            <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-gray-700 border-t-indigo-500"></div>
+            <p className="mt-4 text-sm text-gray-400">
+              Loading your universe...
+            </p>
+          </div>
+        </div>
+      )}
       <style jsx>{`
         @keyframes fade-in {
           from {
@@ -106,15 +121,30 @@ export default function StarField() {
           opacity: backgroundOpacity,
           transition: 'opacity 800ms ease-in-out',
         }}
+        gl={{
+          preserveDrawingBuffer: true,
+          powerPreference: 'high-performance',
+        }}
+        onCreated={({ gl }) => {
+          // Handle context loss/restore
+          gl.domElement.addEventListener('webglcontextlost', (event) => {
+            event.preventDefault()
+            console.log('WebGL context lost')
+          })
+          gl.domElement.addEventListener('webglcontextrestored', () => {
+            console.log('WebGL context restored')
+          })
+        }}
       >
         <SceneComponent currentScene={currentScene} randomSeed={randomSeed} />
       </Canvas>
 
-      <div
-        id="nav-panel"
-        className="fixed left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-3xl px-2 sm:px-4"
-        style={{ bottom: '1rem' }}
-      >
+      {isFullyLoaded && (
+        <div
+          id="nav-panel"
+          className="fixed left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-3xl px-2 sm:px-4"
+          style={{ bottom: '1rem' }}
+        >
         <div
           className={`relative overflow-hidden rounded-lg border-2 border-indigo-500/50 bg-gradient-to-b from-slate-900/50 to-slate-950/50 shadow-2xl backdrop-blur-sm`}
         >
@@ -167,6 +197,7 @@ export default function StarField() {
           </div>
         </div>
       </div>
+      )}
     </div>
   )
 }
