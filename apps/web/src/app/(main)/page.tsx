@@ -21,7 +21,7 @@ export default function Home() {
             className="mx-auto -mt-6 h-auto md:max-w-[500px]"
           />
           <p className="mx-auto max-w-[240px] text-xl text-gray-600 italic sm:max-w-[500px] dark:text-gray-400">
-            The relationship game that starts with a name
+            Your universe at the speed of love
           </p>
         </header>
 

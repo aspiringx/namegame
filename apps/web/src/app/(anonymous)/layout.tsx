@@ -12,11 +12,11 @@ function AnonymousHeader() {
           className="flex items-center text-xl font-bold text-gray-600 dark:text-gray-200"
         >
           <Image
-            src="/images/logos/relationstar_icon_purple-light-256.png"
+            src="/images/logos/relationstar_icon_purple-star-256.png"
             alt="Relation Star: Your Universe at the Speed of Love"
             width={32}
             height={32}
-            className="mx-auto h-auto md:max-w-[32px]"
+            className="mx-auto h-auto md:max-w-[32px] mr-1"
           />
           Relation Star
         </Link>
