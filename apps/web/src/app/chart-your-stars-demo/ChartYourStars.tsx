@@ -26,10 +26,10 @@ export default function ChartYourStars() {
         <div className="flex items-start justify-between">
           <div>
             <h1 className="text-2xl font-bold text-white sm:text-3xl">
-              Chart Your Stars
+              Relation Star
             </h1>
             <p className="mt-1 text-sm text-gray-300 sm:text-base">
-              Explore your universe
+              Chart your constellation
             </p>
           </div>
 

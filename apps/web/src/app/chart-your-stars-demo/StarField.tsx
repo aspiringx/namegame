@@ -15,19 +15,19 @@ export default function StarField() {
 
   // Single source of truth: all star state keyed by person.id
   const [stars, setStars] = useState<Map<string, StarData>>(initializeStars)
-  
+
   // Track viewport dimensions for precise positioning
   const [viewportDimensions, setViewportDimensions] = useState({
     width: typeof window !== 'undefined' ? window.innerWidth : 1024,
     height: typeof window !== 'undefined' ? window.innerHeight : 768,
   })
-  
+
   // Track actual measured heights of header and nav panel
   const [layoutMeasurements, setLayoutMeasurements] = useState({
     headerHeight: 0,
     navPanelHeight: 0,
   })
-  
+
   // Store initial nav panel height to prevent HUD jumping when text changes
   const initialNavPanelHeight = useRef<number>(0)
 
@@ -56,45 +56,45 @@ export default function StarField() {
 
   // Track viewport dimensions and measure actual DOM elements
   const measureLayout = useCallback(() => {
-      const width = window.innerWidth
-      const height = window.innerHeight
-      
-      setViewportDimensions({ width, height })
-      
-      // Measure actual header bottom position
-      const header = document.querySelector('h1')?.parentElement
-      const headerRect = header?.getBoundingClientRect()
-      const headerBottom = headerRect ? headerRect.bottom : 0
-      
-      // Measure where nav panel actually starts on screen
-      const navPanel = document.getElementById('nav-panel')
-      const navPanelRect = navPanel?.getBoundingClientRect()
-      const navPanelTop = navPanelRect ? navPanelRect.top : height
-      const currentNavPanelHeight = height - navPanelTop
-      
-      // Store initial nav panel height on first measurement
-      if (initialNavPanelHeight.current === 0 && currentNavPanelHeight > 0) {
-        initialNavPanelHeight.current = currentNavPanelHeight
-      }
-      
-      // Use initial height to prevent HUD jumping when nav panel text changes
-      const measurements = {
-        headerHeight: headerBottom,
-        navPanelHeight: initialNavPanelHeight.current || currentNavPanelHeight,
-      }
-      setLayoutMeasurements(measurements)
+    const width = window.innerWidth
+    const height = window.innerHeight
+
+    setViewportDimensions({ width, height })
+
+    // Measure actual header bottom position
+    const header = document.querySelector('h1')?.parentElement
+    const headerRect = header?.getBoundingClientRect()
+    const headerBottom = headerRect ? headerRect.bottom : 0
+
+    // Measure where nav panel actually starts on screen
+    const navPanel = document.getElementById('nav-panel')
+    const navPanelRect = navPanel?.getBoundingClientRect()
+    const navPanelTop = navPanelRect ? navPanelRect.top : height
+    const currentNavPanelHeight = height - navPanelTop
+
+    // Store initial nav panel height on first measurement
+    if (initialNavPanelHeight.current === 0 && currentNavPanelHeight > 0) {
+      initialNavPanelHeight.current = currentNavPanelHeight
+    }
+
+    // Use initial height to prevent HUD jumping when nav panel text changes
+    const measurements = {
+      headerHeight: headerBottom,
+      navPanelHeight: initialNavPanelHeight.current || currentNavPanelHeight,
+    }
+    setLayoutMeasurements(measurements)
   }, [])
-  
+
   useEffect(() => {
     // Measure on mount and resize
     measureLayout()
     window.addEventListener('resize', measureLayout)
-    
+
     return () => {
       window.removeEventListener('resize', measureLayout)
     }
   }, [measureLayout])
-  
+
   // Remeasure when narrator message changes (nav panel appears/updates)
   useEffect(() => {
     if (narratorMessage) {
@@ -114,10 +114,10 @@ export default function StarField() {
     if (journeyPhase === 'intro') {
       // Multi-step intro messages
       const introMessages = [
-        `Joe, welcome to the Tippetts Family star cluster...`,
-        `This cluster has ${MOCK_PEOPLE.length} stars, each a current or potential relationship...`,
-        `Your mission is to chart each star to form a constellation of people who are...`,
-        `<i>Close</i>: family/close friends<br /><i>Near</i>: friends/acquaintances<br /><i>Distant</i>: those you don't yet know`,
+        `Mindy, welcome to the Trail Blazers star cluster!`,
+        `It has ${MOCK_PEOPLE.length} stars. Each is a person in this sector of your universe.`,
+        `Your mission is to chart the <i>current</i> position of each star to form a constellation. Each may be...`,
+        `<i>Close</i>: tight family/friends/like-family<br /><i>Familiar</i>: near, but passively close<br /><i>Distant</i>: unfamiliar or feels far`,
         'Are you ready?',
       ]
       setNarratorMessage(introMessages[introStep])
@@ -139,34 +139,26 @@ export default function StarField() {
         // Intro complete, start with first star (index 0)
         const firstPerson = MOCK_PEOPLE[0]
         setTargetStarIndex(0)
-        setNarratorMessage(`Flying to ${firstPerson.name}...`)
+        setNarratorMessage(`Travelling to ${firstPerson.name}...`)
         setJourneyPhase('flying')
       }
     }
   }
 
-  const handlePlacePerson = (
-    person: (typeof MOCK_PEOPLE)[0],
-    circle: 'inner' | 'close' | 'outer',
-  ) => {
-    // Update star data with placement (but don't generate constellation position yet)
-    setStars((prevStars) => {
-      const newStars = new Map(prevStars)
-      const starData = newStars.get(person.id)!
+  const handlePlacePerson = (circle: 'inner' | 'close' | 'outer') => {
+    const person = MOCK_PEOPLE[targetStarIndex]
 
-      const updated = {
-        ...starData,
-        placement: circle,
-        visited: true,
-      }
-      newStars.set(person.id, updated)
-
-      return newStars
-    })
+    // Update star with placement and mark as visited
+    const updatedStars = new Map(stars)
+    const starData = updatedStars.get(person.id)!
+    starData.placement = circle
+    starData.visited = true
+    setStars(updatedStars)
 
     // Check if all stars are now placed
-    const placedCount =
-      Array.from(stars.values()).filter((s) => s.placement).length + 1
+    const placedCount = Array.from(updatedStars.values()).filter(
+      (s) => s.placement,
+    ).length
     const allPlaced = placedCount === MOCK_PEOPLE.length
 
     if (allPlaced) {
@@ -175,18 +167,22 @@ export default function StarField() {
       )
       setJourneyPhase('complete')
     } else {
-      // Find next unvisited star in MOCK_PEOPLE order
+      // Find next unvisited star in MOCK_PEOPLE order using the UPDATED stars map
       const nextUnvisitedIndex = MOCK_PEOPLE.findIndex((p) => {
-        const starData = stars.get(p.id)!
+        const starData = updatedStars.get(p.id)!
         return !starData.visited
       })
 
       if (nextUnvisitedIndex >= 0) {
         const nextPerson = MOCK_PEOPLE[nextUnvisitedIndex]
         const circleLabel =
-          circle === 'inner' ? 'Close' : circle === 'close' ? 'Near' : 'Distant'
+          circle === 'inner'
+            ? 'Close'
+            : circle === 'close'
+            ? 'Familiar'
+            : 'Distant'
         setNarratorMessage(
-          `${person.name} placed as ${circleLabel}. Ready to visit ${nextPerson.name}?`,
+          `${person.name} charted as ${circleLabel}. Next up: ${nextPerson.name}`,
         )
         setJourneyPhase('placed')
       } else {
@@ -240,9 +236,7 @@ export default function StarField() {
             setJourneyPhase('approaching')
           }}
           onArrived={(name: string) => {
-            setNarratorMessage(
-              `Arrived at ${name}! Where is this star in your constellation?`,
-            )
+            setNarratorMessage(`Arrived at ${name}! Where is this star today?`)
             setJourneyPhase('arrived')
           }}
           onTakeoffComplete={() => {
@@ -305,7 +299,7 @@ export default function StarField() {
                       }}
                       className="text-xs px-2 py-1 rounded border border-indigo-400/50 bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20 hover:border-indigo-400 transition-colors"
                     >
-                      ✦ Constellation
+                      ✦ Zoom Out
                     </button>
                   )}
               </div>
@@ -319,25 +313,19 @@ export default function StarField() {
               {journeyPhase === 'arrived' && (
                 <div className="mt-3 flex gap-2">
                   <button
-                    onClick={() =>
-                      handlePlacePerson(MOCK_PEOPLE[targetStarIndex], 'inner')
-                    }
+                    onClick={() => handlePlacePerson('inner')}
                     className="flex-1 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg transition-colors hover:bg-indigo-700 active:bg-indigo-800"
                   >
                     Close
                   </button>
                   <button
-                    onClick={() =>
-                      handlePlacePerson(MOCK_PEOPLE[targetStarIndex], 'close')
-                    }
+                    onClick={() => handlePlacePerson('close')}
                     className="flex-1 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg transition-colors hover:bg-indigo-700 active:bg-indigo-800"
                   >
-                    Near
+                    Familiar
                   </button>
                   <button
-                    onClick={() =>
-                      handlePlacePerson(MOCK_PEOPLE[targetStarIndex], 'outer')
-                    }
+                    onClick={() => handlePlacePerson('outer')}
                     className="flex-1 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg transition-colors hover:bg-indigo-700 active:bg-indigo-800"
                   >
                     Distant

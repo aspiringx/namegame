@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { Canvas } from '@react-three/fiber'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { RotateCcw } from 'lucide-react'
 import type { Scene } from './types'
 import SceneComponent from './Scene'
@@ -46,7 +48,9 @@ export default function StarField() {
       scenes[currentSceneIndex - 1] || {
         scene: 0,
         description: '',
-        narration: isInitialLoad ? 'Loading your universe...' : 'Reconnecting...',
+        narration: isInitialLoad
+          ? 'Loading your universe...'
+          : 'Reconnecting...',
         sceneType: '',
       },
     [scenes, currentSceneIndex, isInitialLoad],
@@ -98,7 +102,9 @@ export default function StarField() {
         const waitForSheets = new Promise<void>((resolve) => {
           const checkSheets = () => {
             // Check if all scene sheets exist
-            const allSheetsReady = data.every((scene) => sheets.has(scene.scene))
+            const allSheetsReady = data.every((scene) =>
+              sheets.has(scene.scene),
+            )
             if (allSheetsReady) {
               resolve()
             } else {
@@ -209,23 +215,29 @@ export default function StarField() {
     }
   }, [currentScene, currentSceneIndex])
 
-  // Navigate to next scene
+  const router = useRouter()
+
+  // Navigate to next scene or home page if on last scene
   const handleNext = useCallback(() => {
-    if (currentSceneIndex < scenes.length) {
+    const isLastScene = currentSceneIndex >= scenes.length
+    if (isLastScene) {
+      // Navigate to home page
+      router.push('/')
+    } else {
       setCurrentSceneIndex((prev) => prev + 1)
     }
-  }, [currentSceneIndex, scenes.length])
+  }, [currentSceneIndex, scenes.length, router])
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100dvh' }}>
       {/* Full loading overlay - only on initial load */}
       {showLoadingOverlay && isInitialLoad && (
-        <div 
+        <div
           className="absolute inset-0 z-50 flex items-center justify-center bg-gray-900"
           style={{
             opacity: isFullyLoaded ? 0 : 1,
             transition: 'opacity 400ms ease-out',
-            pointerEvents: isFullyLoaded ? 'none' : 'auto'
+            pointerEvents: isFullyLoaded ? 'none' : 'auto',
           }}
         >
           <div className="text-center">
@@ -247,19 +259,21 @@ export default function StarField() {
 
       {/* Header - fade in after loading completes */}
       {showHeader && (
-        <div 
+        <div
           className="absolute left-0 right-0 top-0 z-10 p-4 sm:p-6"
           style={{
-            animation: 'fadeIn 0.6s ease-out'
+            animation: 'fadeIn 0.6s ease-out',
           }}
         >
           <div className="flex items-start justify-between">
             <div>
-              <h1 className="text-xl font-bold text-white sm:text-xl">
-                Your Universe
-              </h1>
+              <Link href="/" className="hover:opacity-80 transition-opacity">
+                <h1 className="text-xl font-bold text-white sm:text-xl">
+                  Relation Star
+                </h1>
+              </Link>
               <p className="mt-1 text-sm text-gray-300 sm:text-base">
-                {/* At the speed of love */}
+                Your universe at the speed of love
               </p>
             </div>
 
@@ -328,73 +342,73 @@ export default function StarField() {
         <div
           id="nav-panel"
           className="fixed left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-3xl px-2 sm:px-4"
-          style={{ 
+          style={{
             bottom: '1rem',
-            animation: 'fadeIn 1s ease-out'
+            animation: 'fadeIn 1s ease-out',
           }}
         >
-        <div
-          className={`relative overflow-hidden rounded-lg border-2 border-indigo-500/50 bg-gradient-to-b from-slate-900/50 to-slate-950/50 shadow-2xl backdrop-blur-sm`}
-        >
-          {/* Control panel accent lines */}
-          <div className="absolute left-0 top-0 h-full w-1 bg-gradient-to-b from-indigo-500 via-cyan-400 to-indigo-500"></div>
-          <div className="absolute right-0 top-0 h-full w-1 bg-gradient-to-b from-indigo-500 via-cyan-400 to-indigo-500"></div>
-          <div className="absolute left-0 bottom-0 h-1 w-full bg-gradient-to-r from-indigo-500 via-cyan-400 to-indigo-500"></div>
-          <div className="absolute right-0 bottom-0 h-1 w-full bg-gradient-to-l from-indigo-500 via-cyan-400 to-indigo-500"></div>
+          <div
+            className={`relative overflow-hidden rounded-lg border-2 border-indigo-500/50 bg-gradient-to-b from-slate-900/50 to-slate-950/50 shadow-2xl backdrop-blur-sm`}
+          >
+            {/* Control panel accent lines */}
+            <div className="absolute left-0 top-0 h-full w-1 bg-gradient-to-b from-indigo-500 via-cyan-400 to-indigo-500"></div>
+            <div className="absolute right-0 top-0 h-full w-1 bg-gradient-to-b from-indigo-500 via-cyan-400 to-indigo-500"></div>
+            <div className="absolute left-0 bottom-0 h-1 w-full bg-gradient-to-r from-indigo-500 via-cyan-400 to-indigo-500"></div>
+            <div className="absolute right-0 bottom-0 h-1 w-full bg-gradient-to-l from-indigo-500 via-cyan-400 to-indigo-500"></div>
 
-          {/* Content */}
-          <div className="relative px-4 py-3 sm:px-6 sm:py-4 transition-all duration-300 ease-in-out">
-            <div className="mb-1 flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <div className="h-2 w-2 animate-pulse rounded-full bg-cyan-400"></div>
-                <span className="text-xs font-mono uppercase tracking-wider text-cyan-400/70">
-                  Navigation System
-                </span>
+            {/* Content */}
+            <div className="relative px-4 py-3 sm:px-6 sm:py-4 transition-all duration-300 ease-in-out">
+              <div className="mb-1 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-2 animate-pulse rounded-full bg-cyan-400"></div>
+                  <span className="text-xs font-mono uppercase tracking-wider text-cyan-400/70">
+                    Navigation System
+                  </span>
+                </div>
+                <button
+                  onClick={() => {
+                    // Clear session storage to restart from beginning
+                    if (typeof window !== 'undefined') {
+                      sessionStorage.removeItem(SCENE_PROGRESS_KEY)
+                      sessionStorage.removeItem(HAS_LOADED_KEY)
+                    }
+                    window.location.reload()
+                  }}
+                  className="rounded border border-cyan-400/50 bg-cyan-500/10 p-1.5 text-cyan-400 transition-colors hover:bg-cyan-500/20 hover:border-cyan-400"
+                  title="Restart from beginning"
+                >
+                  <RotateCcw size={16} />
+                </button>
               </div>
-              <button
-                onClick={() => {
-                  // Clear session storage to restart from beginning
-                  if (typeof window !== 'undefined') {
-                    sessionStorage.removeItem(SCENE_PROGRESS_KEY)
-                    sessionStorage.removeItem(HAS_LOADED_KEY)
-                  }
-                  window.location.reload()
-                }}
-                className="rounded border border-cyan-400/50 bg-cyan-500/10 p-1.5 text-cyan-400 transition-colors hover:bg-cyan-500/20 hover:border-cyan-400"
-                title="Restart from beginning"
-              >
-                <RotateCcw size={16} />
-              </button>
-            </div>
-            <div className="relative min-h-[3rem] transition-all duration-300 ease-in-out">
-              <p
-                key={currentScene.scene}
-                className="font-mono text-xs leading-relaxed tracking-wide text-indigo-100 sm:text-sm pt-2 animate-fade-in"
-                style={{ letterSpacing: '0.03em' }}
-              >
-                {currentScene.narration}
-              </p>
-            </div>
+              <div className="relative min-h-[3rem] transition-all duration-300 ease-in-out">
+                <p
+                  key={currentScene.scene}
+                  className="font-mono text-xs leading-relaxed tracking-wide text-indigo-100 sm:text-sm pt-2 animate-fade-in"
+                  style={{ letterSpacing: '0.03em' }}
+                >
+                  {currentScene.narration}
+                </p>
+              </div>
 
-            <div className="mt-3">
-              {/* Proceed button */}
-              <button
-                onClick={handleNext}
-                disabled={
-                  !animationComplete || currentSceneIndex >= scenes.length
-                }
-                className={`w-full rounded border px-4 py-2 font-mono text-sm font-medium transition-colors ${
-                  animationComplete && currentSceneIndex < scenes.length
-                    ? 'border-cyan-400/50 bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 hover:border-cyan-400 cursor-pointer'
-                    : 'border-cyan-400/20 bg-cyan-500/5 text-cyan-400/40 cursor-not-allowed'
-                }`}
-              >
-                → Proceed
-              </button>
+              <div className="mt-3">
+                {/* Proceed button - shows different text on last scene */}
+                <button
+                  onClick={handleNext}
+                  disabled={!animationComplete}
+                  className={`w-full rounded border px-4 py-2 font-mono text-sm font-medium transition-colors ${
+                    animationComplete
+                      ? 'border-cyan-400/50 bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 hover:border-cyan-400 cursor-pointer'
+                      : 'border-cyan-400/20 bg-cyan-500/5 text-cyan-400/40 cursor-not-allowed'
+                  }`}
+                >
+                  {currentSceneIndex >= scenes.length
+                    ? '→ Fly Back Home'
+                    : '→ Proceed'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
       )}
     </div>
   )

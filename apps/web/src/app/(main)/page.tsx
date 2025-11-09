@@ -27,15 +27,22 @@ export default function Home() {
 
         <section className="space-y-4 text-lg leading-relaxed">
           <p>
-            Relation Star helps you discover, explore, and nurture relationships
-            at the speed of love!
+            Relation Star helps you discover, remember, and nurture
+            relationships at the speed of love!
           </p>
-          <p>Watch the speed of love intro to understand</p>
+          <div className="flex justify-center pt-2">
+            <Link
+              href="/speed-of-love"
+              className="rounded border border-cyan-400/50 bg-cyan-500/10 px-6 py-3 font-mono text-sm font-medium text-cyan-400 transition-colors hover:border-cyan-400 hover:bg-cyan-500/20"
+            >
+              ⭐ Speed of Love Intro ⭐
+            </Link>
+          </div>
         </section>
 
         <section className="mt-8 space-y-4 text-lg leading-relaxed">
           <Image
-            src="/images/butterflies.png"
+            src="/images/logos/relationstar_icon_purple-128.png"
             alt="NameGame social butterflies"
             width={70}
             height={70}
@@ -44,8 +51,13 @@ export default function Home() {
         </section>
 
         <section className="mt-8 space-y-4 text-lg leading-relaxed">
-          <h2 className="mb-6 text-center text-3xl font-bold">How to Play</h2>
-          <p>Start with people you know.</p>
+          <h2 className="mb-6 text-center text-3xl font-bold">
+            Where to Begin
+          </h2>
+          <p>
+            Start with familiar constellations. Family, friends, or a community
+            you belong to.
+          </p>
           <ul className="ml-4 list-inside list-disc">
             <li>
               <Link
@@ -90,7 +102,7 @@ export default function Home() {
           </p>
           <p>What happens next depends on the type of group you make.</p>
           <Image
-            src="/images/butterflies.png"
+            src="/images/logos/relationstar_icon_purple-128.png"
             alt="NameGame social butterflies"
             width={48}
             height={48}
@@ -207,7 +219,7 @@ export default function Home() {
           </div>
           <p>
             <Image
-              src="/images/butterflies.png"
+              src="/images/logos/relationstar_icon_purple-128.png"
               alt="NameGame social butterflies"
               width={48}
               height={48}

@@ -89,7 +89,7 @@
     {
       "scene": 3,
       "description": "Primary stars brighten and constellation forms",
-      "narration": "Most stars twinkle distantly. A few shine close, forming constellations of meaning: family, friends, relationships.",
+      "narration": "Most stars twinkle distantly. A few shine close, constellations of meaning: family, friends, etc.",
       "sceneType": "constellationForm",
       "cameraPosition": [0, 0, 150],
       "cameraFOV": 50,
@@ -130,7 +130,7 @@
     {
       "scene": 4,
       "description": "Hero travels, old constellation fades, new constellation forms",
-      "narration": "As you orbit, you encounter new stars and join new constellations.",
+      "narration": "You orbit through life, encountering new stars and joining new constellations.",
       "sceneType": "orbitChange",
       "cameraPosition": [0, 0, 150],
       "cameraFOV": 50,
@@ -223,7 +223,7 @@
     {
       "scene": 5,
       "description": "Explosive disruption sends stars flying in all directions. The constellation from scene 4 shatters.",
-      "narration": "But things change, sometimes suddenly, sending you to unknown places.",
+      "narration": "But the universe can be unpredictible. Change can hurl you to faraway places.",
       "sceneType": "cosmicWave",
       "cameraPosition": [250, -100, 100],
       "cameraFOV": 50,
@@ -309,7 +309,7 @@
     {
       "scene": 6,
       "description": "The HeroStar looks smaller and all background stars get dimmer. The hero star glows faintly, alone in the dark.",
-      "narration": "At times, your light feels dim, your signal quiet. Periods of loneliness and reflection.",
+      "narration": "At times, your light feels dim, your signal quiet. Seasons of reflection. Periods of loneliness.",
       "sceneType": "dimStar",
       "cameraPosition": [-300, 300, -150],
       "cameraFOV": 50,
@@ -380,7 +380,7 @@
     {
       "scene": 7,
       "description": "A soft pulse of light and HeroStar flies quickly back to the PrimaryStars in scene 1. They fade in from the left and the first constellation fades in quickly, like going home. Warmth and color return.",
-      "narration": "But you have a rare gift: stars can travel at the speed of love. With only a thought, distant stars can reunite.",
+      "narration": "But stars can travel at the speed of love, bridging space and time with just a thought.",
       "sceneType": "lovePulse",
       "cameraPosition": [-300, 300, -150],
       "cameraFOV": 50,
@@ -475,7 +475,7 @@
     {
       "scene": 8,
       "description": "Camera pulls back and logo fades in with twinkling stars",
-      "narration": "Relation Star helps you discover, explore, and nurture the stars in your universe at the speed of love!",
+      "narration": "Relation Star helps you discover, remember, and nurture relationships in your universe... at the speed of love!",
       "sceneType": "logoReveal",
       "cameraPosition": [0, 0, 150],
       "cameraFOV": 50,
