@@ -1,6 +1,10 @@
 'use client'
 
-import { sendNotification, getSubscriptions, sendDailyChatNotifications } from '@/actions/push'
+import {
+  sendNotification,
+  getSubscriptions,
+  sendDailyChatNotifications,
+} from '@/actions/push'
 import { Button } from '@/components/ui/button'
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { Input } from '@/components/ui/input'
@@ -35,7 +39,7 @@ export function PushTestClientPage() {
   const [selectedEndpoints, setSelectedEndpoints] = useState<string[]>([])
   const [title, setTitle] = useState('Test Notification')
   const [body, setBody] = useState(
-    'This is a test notification from the NameGame app!',
+    'This is a test notification from the Relation Star app!',
   )
   const [url, setUrl] = useState('/me')
   const [search, setSearch] = useState('')
@@ -45,35 +49,42 @@ export function PushTestClientPage() {
   const observerRef = useRef<IntersectionObserver | null>(null)
   const loadMoreRef = useRef<HTMLDivElement | null>(null)
 
-  const loadSubscriptions = useCallback(async (searchTerm: string, cursor?: string) => {
-    setIsLoading(true)
-    try {
-      const result = await getSubscriptions({
-        search: searchTerm || undefined,
-        cursor,
-        limit: 20,
-      })
-      
-      if (cursor) {
-        // Append to existing subscriptions
-        setSubscriptions(prev => [...prev, ...result.subscriptions])
-      } else {
-        // Replace subscriptions (new search or initial load)
-        setSubscriptions(result.subscriptions)
-        
-        // Clean up selected endpoints that no longer exist
-        const validEndpoints = new Set(result.subscriptions.map(s => s.endpoint))
-        setSelectedEndpoints(prev => prev.filter(endpoint => validEndpoints.has(endpoint)))
+  const loadSubscriptions = useCallback(
+    async (searchTerm: string, cursor?: string) => {
+      setIsLoading(true)
+      try {
+        const result = await getSubscriptions({
+          search: searchTerm || undefined,
+          cursor,
+          limit: 20,
+        })
+
+        if (cursor) {
+          // Append to existing subscriptions
+          setSubscriptions((prev) => [...prev, ...result.subscriptions])
+        } else {
+          // Replace subscriptions (new search or initial load)
+          setSubscriptions(result.subscriptions)
+
+          // Clean up selected endpoints that no longer exist
+          const validEndpoints = new Set(
+            result.subscriptions.map((s) => s.endpoint),
+          )
+          setSelectedEndpoints((prev) =>
+            prev.filter((endpoint) => validEndpoints.has(endpoint)),
+          )
+        }
+
+        setHasMore(result.hasMore)
+        setNextCursor(result.nextCursor)
+      } catch (error) {
+        console.error('Error loading subscriptions:', error)
+      } finally {
+        setIsLoading(false)
       }
-      
-      setHasMore(result.hasMore)
-      setNextCursor(result.nextCursor)
-    } catch (error) {
-      console.error('Error loading subscriptions:', error)
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
+    },
+    [],
+  )
 
   // Initial load
   useEffect(() => {
@@ -120,7 +131,7 @@ export function PushTestClientPage() {
 
     // Use the actual origin without forcing HTTPS
     const baseUrl = window.location.origin
-    
+
     // HACK: Uncomment for Android Emulator testing
     // const baseUrl = 'https://10.0.2.2:3001'
     // HACK: Uncomment for local iPhone testing (update IP as needed)
@@ -148,7 +159,9 @@ export function PushTestClientPage() {
       }
     }
 
-    alert(`Sent ${successCount} notifications successfully. ${failCount} failed.`)
+    alert(
+      `Sent ${successCount} notifications successfully. ${failCount} failed.`,
+    )
   }
 
   const handleSendDailyChatNotifications = async () => {
@@ -166,17 +179,17 @@ export function PushTestClientPage() {
   }
 
   const toggleEndpoint = (endpoint: string) => {
-    setSelectedEndpoints(prev =>
+    setSelectedEndpoints((prev) =>
       prev.includes(endpoint)
-        ? prev.filter(e => e !== endpoint)
-        : [...prev, endpoint]
+        ? prev.filter((e) => e !== endpoint)
+        : [...prev, endpoint],
     )
   }
 
   return (
     <div className="container mx-auto p-4 max-w-2xl">
       <h1 className="mb-6 text-2xl font-bold">Push Notification Test</h1>
-      
+
       {/* Device Selection */}
       <div className="mb-6 rounded-lg border p-4 dark:border-gray-700">
         <div className="mb-6 flex items-center justify-between">
@@ -192,7 +205,9 @@ export function PushTestClientPage() {
               onClick={() => loadSubscriptions(search)}
               disabled={isLoading}
             >
-              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+              <RefreshCw
+                className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`}
+              />
             </Button>
             <Button
               variant="outline"
@@ -228,10 +243,12 @@ export function PushTestClientPage() {
         <div className="max-h-96 overflow-y-auto space-y-2 pr-2">
           {subscriptions.length === 0 && !isLoading && (
             <p className="text-sm text-gray-500 text-center py-4">
-              {search ? 'No subscriptions found matching your search.' : 'No subscriptions yet.'}
+              {search
+                ? 'No subscriptions found matching your search.'
+                : 'No subscriptions yet.'}
             </p>
           )}
-          
+
           {subscriptions.map((sub) => (
             <div key={sub.endpoint} className="flex items-center space-x-2">
               <Checkbox
@@ -243,18 +260,19 @@ export function PushTestClientPage() {
                 htmlFor={sub.endpoint}
                 className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex-1"
               >
-                {sub.userName} - {getBrowserInfo(sub.endpoint)} - {new Date(sub.createdAt).toLocaleString()}
+                {sub.userName} - {getBrowserInfo(sub.endpoint)} -{' '}
+                {new Date(sub.createdAt).toLocaleString()}
               </label>
             </div>
           ))}
-          
+
           {/* Infinite scroll trigger */}
           {hasMore && (
             <div ref={loadMoreRef} className="flex justify-center py-4">
               <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
             </div>
           )}
-          
+
           {isLoading && subscriptions.length === 0 && (
             <div className="flex justify-center py-4">
               <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
@@ -265,15 +283,17 @@ export function PushTestClientPage() {
 
       {/* Daily Chat Notification Button */}
       <div className="mb-6">
-        <Button 
-          onClick={handleSendDailyChatNotifications} 
+        <Button
+          onClick={handleSendDailyChatNotifications}
           disabled={selectedEndpoints.length === 0}
           className="w-full"
         >
-          Send {selectedEndpoints.length} Daily Chat Notification{selectedEndpoints.length !== 1 ? 's' : ''}
+          Send {selectedEndpoints.length} Daily Chat Notification
+          {selectedEndpoints.length !== 1 ? 's' : ''}
         </Button>
         <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-          Sends the same notification as the daily job: &quot;New Messages&quot; with link to chat
+          Sends the same notification as the daily job: &quot;New Messages&quot;
+          with link to chat
         </p>
       </div>
 
@@ -281,7 +301,7 @@ export function PushTestClientPage() {
 
       {/* Custom Notification Section */}
       <h2 className="mb-4 text-xl font-semibold">Custom Notification</h2>
-      
+
       <div className="mb-4 space-y-2">
         <label
           htmlFor="title-input"
@@ -295,7 +315,7 @@ export function PushTestClientPage() {
           onChange={(e) => setTitle(e.target.value)}
         />
       </div>
-      
+
       <div className="mb-4 space-y-2">
         <label
           htmlFor="body-textarea"
@@ -313,7 +333,7 @@ export function PushTestClientPage() {
           rows={3}
         />
       </div>
-      
+
       <div className="mb-4 space-y-2">
         <label
           htmlFor="url-input"
@@ -327,23 +347,41 @@ export function PushTestClientPage() {
           onChange={(e) => setUrl(e.target.value)}
         />
       </div>
-      
-      <Button 
-        onClick={handleSendNotification} 
+
+      <Button
+        onClick={handleSendNotification}
         disabled={selectedEndpoints.length === 0}
         className="w-full"
       >
-        Send {selectedEndpoints.length} Custom Notification{selectedEndpoints.length !== 1 ? 's' : ''}
+        Send {selectedEndpoints.length} Custom Notification
+        {selectedEndpoints.length !== 1 ? 's' : ''}
       </Button>
-      
+
       <div className="mt-6 rounded-md bg-gray-100 p-4 text-xs text-gray-600 dark:bg-gray-800 dark:text-gray-400">
         <p className="mb-2 font-semibold">Developer Notes:</p>
         <ul className="list-inside list-disc space-y-1">
-          <li>File: <code className="rounded bg-gray-200 px-1 dark:bg-gray-700">apps/web/src/app/(main)/me/push-test/push-test-client.tsx</code></li>
-          <li>Chrome uses Firebase Cloud Messaging (FCM) - tokens stored in IndexedDB</li>
-          <li>Edge/Safari/Firefox use standard Web Push API - subscriptions in browser</li>
-          <li>Manual refresh: Click the refresh button to update the subscription list</li>
-          <li>For Android Emulator or iPhone testing, uncomment baseUrl hacks in handleSendNotification()</li>
+          <li>
+            File:{' '}
+            <code className="rounded bg-gray-200 px-1 dark:bg-gray-700">
+              apps/web/src/app/(main)/me/push-test/push-test-client.tsx
+            </code>
+          </li>
+          <li>
+            Chrome uses Firebase Cloud Messaging (FCM) - tokens stored in
+            IndexedDB
+          </li>
+          <li>
+            Edge/Safari/Firefox use standard Web Push API - subscriptions in
+            browser
+          </li>
+          <li>
+            Manual refresh: Click the refresh button to update the subscription
+            list
+          </li>
+          <li>
+            For Android Emulator or iPhone testing, uncomment baseUrl hacks in
+            handleSendNotification()
+          </li>
         </ul>
       </div>
     </div>

@@ -14,10 +14,10 @@ export default function Home() {
       <div className="container mx-auto max-w-3xl p-8 pt-4">
         <header className="mt-2 mb-8 text-center">
           <Image
-            src="/images/NameGame-600x267.png"
-            alt="NameGame logo"
-            width={600}
-            height={267}
+            src="/images/logos/relationstar_dark-400x268.png"
+            alt="Relation Star logo"
+            width={400}
+            height={268}
             className="mx-auto -mt-6 h-auto md:max-w-[500px]"
           />
           <p className="mx-auto max-w-[240px] text-xl text-gray-600 italic sm:max-w-[500px] dark:text-gray-400">
@@ -27,8 +27,8 @@ export default function Home() {
 
         <section className="space-y-4 text-lg leading-relaxed">
           <p>
-            NameGame is the fun, easy, non-scary, no-stress way for people in
-            groups to:
+            Relation Star is the fun, easy, non-scary, no-stress way for people
+            in groups to:
           </p>
           <ul className="ml-4 list-inside list-disc">
             <li>Meet</li>
@@ -191,7 +191,7 @@ export default function Home() {
                   <i>parent / child</i> or <i>spouse / partner</i>.
                 </p>
                 <p>
-                  NameGame does the rest, connecting everyone to your{' '}
+                  Relation Star does the rest, connecting everyone to your{' '}
                   <i>shared roots</i> and showing how everyone is related.
                 </p>
                 <p>
@@ -200,8 +200,8 @@ export default function Home() {
                   their own account, etc.
                 </p>
                 <p>
-                  NameGame helps extended families stay connected, learn names,
-                  communicate, plan events, share memories, and more.
+                  Relation Star helps extended families stay connected, learn
+                  names, communicate, plan events, share memories, and more.
                 </p>
                 <button
                   type="button"

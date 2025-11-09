@@ -157,9 +157,12 @@ export default function StarField() {
           {/* Content */}
           <div className="relative px-4 py-3 sm:px-6 sm:py-4 transition-all duration-300 ease-in-out">
             <div className="mb-1 flex items-center justify-between gap-2">
-              <span className="text-xs font-mono uppercase tracking-wider text-cyan-400/70">
-                Navigation System
-              </span>
+              <div className="flex items-center gap-2">
+                <div className="h-2 w-2 animate-pulse rounded-full bg-cyan-400"></div>
+                <span className="text-xs font-mono uppercase tracking-wider text-cyan-400/70">
+                  Navigation System
+                </span>
+              </div>
               <button
                 onClick={() => window.location.reload()}
                 className="rounded border border-cyan-400/50 bg-cyan-500/10 p-1.5 text-cyan-400 transition-colors hover:bg-cyan-500/20 hover:border-cyan-400"

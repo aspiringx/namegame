@@ -116,14 +116,14 @@ export default function Header({
                 className="flex items-center gap-1 text-xl font-bold text-gray-600 dark:text-gray-200"
               >
                 <Image
-                  src="/images/butterfly.png"
-                  alt="NameGame social butterfly"
+                  src="/images/logos/relationstar_icon_purple-light-256.png"
+                  alt="Relation Star: Your Universe at the Speed of Love"
                   width={32}
                   height={32}
                   className="h-auto md:max-w-[32px]"
                 />
                 {/* Show app name text only on desktop */}
-                <span className="hidden md:inline">NameGame</span>
+                <span className="hidden md:inline">Relation Star</span>
               </Link>
             )}
           </div>

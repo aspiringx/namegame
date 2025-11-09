@@ -187,8 +187,8 @@ export const steps: StepType[] = [
       <div className="flex flex-col items-center gap-4 text-center">
         <Lock size={32} className="text-orange-500" />
         <p className="text-left">
-          NameGame is private. Your personal and family information is never
-          shared or sold. No ads.
+          Relation Star is private. Your personal and family information is
+          never shared or sold. No ads.
         </p>
       </div>
     ),

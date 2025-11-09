@@ -25,7 +25,7 @@ export const steps: StepType[] = [
           height={64}
           className="mx-auto h-auto w-auto"
         />
-        <p>Welcome to your NameGame group!</p>
+        <p>Welcome to your Relation Star group!</p>
         <p className="text-left">
           A fun place to meet, get acquainted, play, and do stuff together.
         </p>
@@ -111,7 +111,7 @@ export const steps: StepType[] = [
     content: (
       <div className="flex flex-col items-center gap-4 text-center">
         <Gamepad2 size={32} className="text-orange-500" />
-        <p className="text-left">NameGame is a game!</p>
+        <p className="text-left">Relation Star</p>
         <p className="text-left">
           Go here to play games, starting with the Name Quiz.
         </p>
