@@ -402,7 +402,7 @@ export default function StarField() {
                   }`}
                 >
                   {currentSceneIndex >= scenes.length
-                    ? '→ Fly Back Home'
+                    ? '→ Fly Home'
                     : '→ Proceed'}
                 </button>
               </div>

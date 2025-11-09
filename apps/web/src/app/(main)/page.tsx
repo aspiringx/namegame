@@ -14,11 +14,11 @@ export default function Home() {
       <div className="container mx-auto max-w-3xl p-8 pt-4">
         <header className="mt-2 mb-8 text-center">
           <Image
-            src="/images/logos/relationstar_dark-400x268.png"
+            src="/images/logos/relationstar_dark-400x268.png?x=2"
             alt="Relation Star logo"
-            width={400}
-            height={268}
-            className="mx-auto -mt-6 h-auto md:max-w-[500px]"
+            width={200}
+            height={134}
+            className="mx-auto -mt-6 w-[200px] h-[134px]"
           />
           <p className="mx-auto max-w-[240px] text-xl text-gray-600 italic sm:max-w-[500px] dark:text-gray-400">
             Your universe at the speed of love
@@ -27,9 +27,22 @@ export default function Home() {
 
         <section className="space-y-4 text-lg leading-relaxed">
           <p>
-            Relation Star helps you discover, remember, and nurture
-            relationships at the speed of love!
+            Discover, explore, and build real relationships at the speed of
+            love!
           </p>
+          <div className="italic my-6 py-4 border-t border-b border-gray-300 dark:border-gray-600 space-y-2">
+            <p>
+              <b>Question:</b> Is this another invasive, life-sucking, social
+              media app?
+            </p>
+            <p>
+              <b>Answer:</b> If so, it's trash.
+            </p>
+            <p className="not-italic">
+              You're here because someone you really know and trust shared it.
+              Check out the intro and decide for yourself.
+            </p>
+          </div>
           <div className="flex justify-center pt-2">
             <Link
               href="/speed-of-love"
@@ -38,12 +51,20 @@ export default function Home() {
               ⭐ Speed of Love Intro ⭐
             </Link>
           </div>
+          <div className="flex justify-center pt-2">
+            <Link
+              href="/chart-your-stars-demo"
+              className="rounded border border-cyan-400/50 bg-cyan-500/10 px-6 py-3 font-mono text-sm font-medium text-cyan-400 transition-colors hover:border-cyan-400 hover:bg-cyan-500/20"
+            >
+              ⭐ Chart Your Stars Demo ⭐
+            </Link>
+          </div>
         </section>
 
         <section className="mt-8 space-y-4 text-lg leading-relaxed">
           <Image
             src="/images/logos/relationstar_icon_purple-128.png"
-            alt="NameGame social butterflies"
+            alt="Relation Star"
             width={70}
             height={70}
             className="center mx-auto h-auto w-auto"
@@ -103,7 +124,7 @@ export default function Home() {
           <p>What happens next depends on the type of group you make.</p>
           <Image
             src="/images/logos/relationstar_icon_purple-128.png"
-            alt="NameGame social butterflies"
+            alt="Relation Star"
             width={48}
             height={48}
             className="mx-auto mt-8 h-auto w-auto"
@@ -220,7 +241,7 @@ export default function Home() {
           <p>
             <Image
               src="/images/logos/relationstar_icon_purple-128.png"
-              alt="NameGame social butterflies"
+              alt="Relation Star"
               width={48}
               height={48}
               className="mx-auto mt-12 h-auto w-auto"

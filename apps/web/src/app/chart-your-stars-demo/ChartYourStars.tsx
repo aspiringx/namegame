@@ -29,7 +29,7 @@ export default function ChartYourStars() {
               Relation Star
             </h1>
             <p className="mt-1 text-sm text-gray-300 sm:text-base">
-              Chart your constellation
+              Chart your stars
             </p>
           </div>
 

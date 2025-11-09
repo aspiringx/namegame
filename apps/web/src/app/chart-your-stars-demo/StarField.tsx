@@ -122,7 +122,7 @@ export default function StarField() {
       // Multi-step intro messages
       const introMessages = [
         `Mindy, welcome to the Trail Blazers star cluster!`,
-        `It has ${MOCK_PEOPLE.length} stars. Each is a person in this corner of your universe.`,
+        `There are ${MOCK_PEOPLE.length} stars, people in this corner of your universe.`,
         `Your mission is to chart the relative position of each star to you, forming your constellation. Each may be...`,
         `<i>Close</i>: tight family/friends/like-family<br /><i>Familiar</i>: near, passively close<br /><i>Distant</i>: unfamiliar or feels far away`,
         "Next, you'll choose stars to visit or select all to let auto-pilot guide you.",
@@ -184,7 +184,7 @@ export default function StarField() {
     const starData = updatedStars.get(person.id)!
     starData.placement = circle
     starData.visited = true
-    
+
     // Generate constellation position immediately to prevent shifts during zoom out
     if (!starData.constellationPosition) {
       const getStarRadius = (placement: 'inner' | 'close' | 'outer') => {
@@ -192,20 +192,27 @@ export default function StarField() {
         if (placement === 'close') return { min: 10, max: 18 }
         return { min: 18, max: 28 }
       }
-      
+
+      // Z-depth ranges: closer stars have higher z-values (toward camera)
+      const getZRange = (placement: 'inner' | 'close' | 'outer') => {
+        if (placement === 'inner') return { min: 8, max: 12 } // Closest to camera
+        if (placement === 'close') return { min: 3, max: 7 } // Middle depth
+        return { min: -2, max: 2 } // Farthest from camera
+      }
+
       const { min, max } = getStarRadius(circle)
+      const zRange = getZRange(circle)
       const theta = Math.random() * Math.PI * 2
-      const maxPhi = Math.PI / 4
-      const phi = Math.random() * maxPhi
-      const radius = min + Math.random() * (max - min)
-      
+      const xyRadius = min + Math.random() * (max - min)
+      const zPosition = zRange.min + Math.random() * (zRange.max - zRange.min)
+
       starData.constellationPosition = [
-        radius * Math.sin(phi) * Math.cos(theta),
-        -10 + radius * Math.sin(phi) * Math.sin(theta),
-        radius * Math.cos(phi),
+        xyRadius * Math.cos(theta),
+        -10 + xyRadius * Math.sin(theta),
+        zPosition,
       ]
     }
-    
+
     setStars(updatedStars)
 
     const circleLabel =
@@ -524,19 +531,22 @@ export default function StarField() {
                   <div className="mt-3 space-y-2">
                     <button
                       onClick={() => {
-                        // Find next unvisited star from MOCK_PEOPLE
-                        const nextUnvisitedIndex = MOCK_PEOPLE.findIndex(
-                          (p) => {
-                            const starData = stars.get(p.id)!
-                            return !starData.visited
-                          },
-                        )
+                        // Add all remaining unvisited stars to queue
+                        const unvisitedIds = MOCK_PEOPLE.filter((p) => {
+                          const starData = stars.get(p.id)!
+                          return !starData.visited
+                        }).map((p) => p.id)
 
-                        if (nextUnvisitedIndex >= 0) {
-                          const nextPerson = MOCK_PEOPLE[nextUnvisitedIndex]
-                          setTargetStarIndex(nextUnvisitedIndex)
+                        if (unvisitedIds.length > 0) {
+                          setVisitQueue(unvisitedIds)
+                          const firstPersonId = unvisitedIds[0]
+                          const firstPersonIndex = MOCK_PEOPLE.findIndex(
+                            (p) => p.id === firstPersonId,
+                          )
+                          const firstPerson = MOCK_PEOPLE[firstPersonIndex]
+                          setTargetStarIndex(firstPersonIndex)
                           setPreviousStarIndex(-1)
-                          setNarratorMessage(`Flying to ${nextPerson.name}...`)
+                          setNarratorMessage(`Flying to ${firstPerson.name}...`)
                           setJourneyPhase('flying')
                           setUseConstellationPositions(false)
                         }

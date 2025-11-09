@@ -309,7 +309,7 @@
     {
       "scene": 6,
       "description": "The HeroStar looks smaller and all background stars get dimmer. The hero star glows faintly, alone in the dark.",
-      "narration": "At times, your light feels dim, your signal quiet. Seasons of reflection. Periods of loneliness.",
+      "narration": "At times, your light feels dim, your signal quiet. Periods of reflection, and maybe loneliness.",
       "sceneType": "dimStar",
       "cameraPosition": [-300, 300, -150],
       "cameraFOV": 50,
@@ -475,7 +475,7 @@
     {
       "scene": 8,
       "description": "Camera pulls back and logo fades in with twinkling stars",
-      "narration": "Relation Star helps you discover, remember, and nurture relationships in your universe... at the speed of love!",
+      "narration": "Relation Star helps you discover, explore, and build relationships in your universe... at the speed of love!",
       "sceneType": "logoReveal",
       "cameraPosition": [0, 0, 150],
       "cameraFOV": 50,

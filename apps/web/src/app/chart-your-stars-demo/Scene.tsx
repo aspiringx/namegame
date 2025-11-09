@@ -169,15 +169,23 @@ export default function Scene({
           !starData.constellationPosition
         ) {
           const { min, max } = getStarRadius(starData.placement)
+          
+          // Z-depth ranges: closer stars have higher z-values (toward camera)
+          const getZRange = (placement: 'inner' | 'close' | 'outer') => {
+            if (placement === 'inner') return { min: 8, max: 12 }   // Closest to camera
+            if (placement === 'close') return { min: 3, max: 7 }    // Middle depth
+            return { min: -2, max: 2 }                               // Farthest from camera
+          }
+          
+          const zRange = getZRange(starData.placement)
           const theta = Math.random() * Math.PI * 2
-          const maxPhi = Math.PI / 4
-          const phi = Math.random() * maxPhi
-          const radius = min + Math.random() * (max - min)
+          const xyRadius = min + Math.random() * (max - min)
+          const zPosition = zRange.min + Math.random() * (zRange.max - zRange.min)
 
           const constellationPos: [number, number, number] = [
-            radius * Math.sin(phi) * Math.cos(theta),
-            -10 + radius * Math.sin(phi) * Math.sin(theta),
-            radius * Math.cos(phi),
+            xyRadius * Math.cos(theta),
+            -10 + xyRadius * Math.sin(theta),
+            zPosition,
           ]
 
           newStars.set(person.id, {
@@ -476,8 +484,8 @@ export default function Scene({
           const yOffset = hudOffsetPx * pixelsToWorldUnits * adjustmentFactor
           
           // Position camera at constellation center with Y offset for HUD alignment
-          camera.position.set(0, _centerY + yOffset, zDistance)
-          camera.lookAt(0, _centerY + yOffset, 0)
+          camera.position.set(_centerX, _centerY + yOffset, zDistance)
+          camera.lookAt(_centerX, _centerY + yOffset, 0)
           onReturnComplete()
         }
       } else {
@@ -575,8 +583,8 @@ export default function Scene({
         const yOffset =
           -(navPanelHeight / 2) * pixelsToWorldUnits * offsetMultiplier
 
-        const targetPos = new THREE.Vector3(0, _centerY + yOffset, zDistance)
-        const targetLookAt = new THREE.Vector3(0, _centerY + yOffset, 0)
+        const targetPos = new THREE.Vector3(_centerX, _centerY + yOffset, zDistance)
+        const targetLookAt = new THREE.Vector3(_centerX, _centerY + yOffset, 0)
 
         // Interpolate position
         camera.position.lerpVectors(returnStartPos.current, targetPos, easedT)
