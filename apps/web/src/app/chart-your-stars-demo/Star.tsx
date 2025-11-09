@@ -190,8 +190,17 @@ export default function Star({
 
   // Force images hidden during intro phase to prevent flash
   const isIntroPhase = journeyPhase === 'intro'
+  const isReturning = journeyPhase === 'returning'
+  
   if (isIntroPhase) {
     transitionProgress = 0
+  } else if (isReturning) {
+    // During constellation view: charted stars show photos, uncharted stay as dots
+    if (placement) {
+      transitionProgress = 1.0 // Force charted stars to show photos
+    } else {
+      transitionProgress = 0 // Force uncharted stars to stay as white dots
+    }
   }
 
   // Calculate opacity based on distance for depth perception

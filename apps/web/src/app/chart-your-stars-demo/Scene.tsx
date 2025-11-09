@@ -356,21 +356,39 @@ export default function Scene({
           // Only call once
           returnProgress.current = 1.5 // Lock to prevent re-calling
 
-          // Calculate bounding box from ALL stars (no filtering needed with 60° cone)
+          // Calculate bounding box from stars with constellation positions only
+          // This excludes unplaced stars that are still at far initial positions
           let minX = Infinity,
             maxX = -Infinity
           let minY = Infinity,
             maxY = -Infinity
           let minZ = Infinity,
             maxZ = -Infinity
-          starPositions.forEach((pos) => {
-            minX = Math.min(minX, pos[0])
-            maxX = Math.max(maxX, pos[0])
-            minY = Math.min(minY, pos[1])
-            maxY = Math.max(maxY, pos[1])
-            minZ = Math.min(minZ, pos[2])
-            maxZ = Math.max(maxZ, pos[2])
+          
+          // Only include stars that have constellation positions
+          let placedStarCount = 0
+          starPositions.forEach((pos, index) => {
+            const person = MOCK_PEOPLE[index]
+            const starData = stars.get(person.id)
+            // Only include if star has a constellation position (placed stars)
+            if (starData?.constellationPosition) {
+              minX = Math.min(minX, pos[0])
+              maxX = Math.max(maxX, pos[0])
+              minY = Math.min(minY, pos[1])
+              maxY = Math.max(maxY, pos[1])
+              minZ = Math.min(minZ, pos[2])
+              maxZ = Math.max(maxZ, pos[2])
+              placedStarCount++
+            }
           })
+
+          // If no stars placed yet, return to initial camera position
+          if (placedStarCount === 0) {
+            camera.position.set(0, 0, 25)
+            camera.lookAt(0, 0, 0)
+            onReturnComplete()
+            return
+          }
 
           // Use bounding box center for positioning
           const _centerX = (minX + maxX) / 2
@@ -467,21 +485,44 @@ export default function Scene({
         // Ease out for smooth deceleration
         const easedT = 1 - Math.pow(1 - t, 3)
 
-        // Calculate bounding box from ALL stars
+        // Calculate bounding box from stars with constellation positions only (same as final position)
         let minX = Infinity,
           maxX = -Infinity
         let minY = Infinity,
           maxY = -Infinity
         let minZ = Infinity,
           maxZ = -Infinity
-        starPositions.forEach((pos) => {
-          minX = Math.min(minX, pos[0])
-          maxX = Math.max(maxX, pos[0])
-          minY = Math.min(minY, pos[1])
-          maxY = Math.max(maxY, pos[1])
-          minZ = Math.min(minZ, pos[2])
-          maxZ = Math.max(maxZ, pos[2])
+        
+        // Only include stars that have constellation positions
+        let placedStarCount = 0
+        starPositions.forEach((pos, index) => {
+          const person = MOCK_PEOPLE[index]
+          const starData = stars.get(person.id)
+          // Only include if star has a constellation position (placed stars)
+          if (starData?.constellationPosition) {
+            minX = Math.min(minX, pos[0])
+            maxX = Math.max(maxX, pos[0])
+            minY = Math.min(minY, pos[1])
+            maxY = Math.max(maxY, pos[1])
+            minZ = Math.min(minZ, pos[2])
+            maxZ = Math.max(maxZ, pos[2])
+            placedStarCount++
+          }
         })
+
+        // If no stars placed yet, return to initial camera position
+        if (placedStarCount === 0) {
+          const targetPos = new THREE.Vector3(0, 0, 25)
+          const targetLookAt = new THREE.Vector3(0, 0, 0)
+          camera.position.lerpVectors(returnStartPos.current, targetPos, easedT)
+          camera.lookAt(targetLookAt)
+          
+          // Check if animation is complete
+          if (easedT >= 0.99) {
+            returnProgress.current = 1.5 // Lock to trigger completion block
+          }
+          return
+        }
 
         // Use bounding box center for positioning
         const _centerX = (minX + maxX) / 2
@@ -535,7 +576,7 @@ export default function Scene({
           -(navPanelHeight / 2) * pixelsToWorldUnits * offsetMultiplier
 
         const targetPos = new THREE.Vector3(0, _centerY + yOffset, zDistance)
-        const targetLookAt = new THREE.Vector3(0, 0, 0)
+        const targetLookAt = new THREE.Vector3(0, _centerY + yOffset, 0)
 
         // Interpolate position
         camera.position.lerpVectors(returnStartPos.current, targetPos, easedT)
@@ -766,7 +807,8 @@ export default function Scene({
         !isFlying.current &&
         currentDist > 0.1 &&
         journeyPhase !== 'arrived' &&
-        journeyPhase !== 'placed'
+        journeyPhase !== 'placed' &&
+        journeyPhase !== 'complete'
       ) {
         camera.lookAt(targetPos)
       }

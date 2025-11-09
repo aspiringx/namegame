@@ -37,6 +37,7 @@ export default function StarField() {
   const [displayedMessage, setDisplayedMessage] = useState<string>('')
   const [journeyPhase, setJourneyPhase] = useState<
     | 'intro'
+    | 'selecting'
     | 'flying'
     | 'approaching'
     | 'arrived'
@@ -44,8 +45,14 @@ export default function StarField() {
     | 'takeoff'
     | 'complete'
     | 'returning'
+    | 'constellation-review'
   >('intro')
   const [introStep, setIntroStep] = useState(0)
+
+  // Phase 1: Star selection state
+  const [selectedStarIds, setSelectedStarIds] = useState<Set<string>>(new Set())
+  const [visitQueue, setVisitQueue] = useState<string[]>([])
+  const [showConstellationModal, setShowConstellationModal] = useState(false)
 
   // Derive placements from stars state
   const placements = new Map(
@@ -115,10 +122,10 @@ export default function StarField() {
       // Multi-step intro messages
       const introMessages = [
         `Mindy, welcome to the Trail Blazers star cluster!`,
-        `It has ${MOCK_PEOPLE.length} stars. Each is a person in this sector of your universe.`,
-        `Your mission is to chart the <i>current</i> position of each star to form a constellation. Each may be...`,
-        `<i>Close</i>: tight family/friends/like-family<br /><i>Familiar</i>: near, but passively close<br /><i>Distant</i>: unfamiliar or feels far`,
-        'Are you ready?',
+        `It has ${MOCK_PEOPLE.length} stars. Each is a person in this corner of your universe.`,
+        `Your mission is to chart the relative position of each star to you, forming your constellation. Each may be...`,
+        `<i>Close</i>: tight family/friends/like-family<br /><i>Familiar</i>: near, passively close<br /><i>Distant</i>: unfamiliar or feels far away`,
+        "Next, you'll choose stars to visit or select all to let auto-pilot guide you.",
       ]
       setNarratorMessage(introMessages[introStep])
     }
@@ -130,18 +137,42 @@ export default function StarField() {
     }
   }
 
+  const startVisitingStars = () => {
+    if (selectedStarIds.size === 0) {
+      setNarratorMessage('Please select at least one star to visit.')
+      return
+    }
+
+    // Create randomized queue from selected stars
+    const selectedIds = Array.from(selectedStarIds)
+    const shuffled = selectedIds.sort(() => Math.random() - 0.5)
+    setVisitQueue(shuffled)
+
+    // Start with first star in queue
+    const firstPersonId = shuffled[0]
+    const firstPersonIndex = MOCK_PEOPLE.findIndex(
+      (p) => p.id === firstPersonId,
+    )
+    const firstPerson = MOCK_PEOPLE[firstPersonIndex]
+
+    setTargetStarIndex(firstPersonIndex)
+    setNarratorMessage(`Travelling to ${firstPerson.name}...`)
+    setJourneyPhase('flying')
+  }
+
   const handleProceed = () => {
     if (journeyPhase === 'intro') {
       // Progress through intro steps (0-4, total 5 messages)
       if (introStep < 4) {
         setIntroStep(introStep + 1)
       } else {
-        // Intro complete, start with first star (index 0)
-        const firstPerson = MOCK_PEOPLE[0]
-        setTargetStarIndex(0)
-        setNarratorMessage(`Travelling to ${firstPerson.name}...`)
-        setJourneyPhase('flying')
+        // Intro complete, move to star selection
+        setNarratorMessage('Select the stars you want to visit first...')
+        setJourneyPhase('selecting')
       }
+    } else if (journeyPhase === 'selecting') {
+      // Start visiting selected stars in random order
+      startVisitingStars()
     }
   }
 
@@ -153,7 +184,36 @@ export default function StarField() {
     const starData = updatedStars.get(person.id)!
     starData.placement = circle
     starData.visited = true
+    
+    // Generate constellation position immediately to prevent shifts during zoom out
+    if (!starData.constellationPosition) {
+      const getStarRadius = (placement: 'inner' | 'close' | 'outer') => {
+        if (placement === 'inner') return { min: 5, max: 10 }
+        if (placement === 'close') return { min: 10, max: 18 }
+        return { min: 18, max: 28 }
+      }
+      
+      const { min, max } = getStarRadius(circle)
+      const theta = Math.random() * Math.PI * 2
+      const maxPhi = Math.PI / 4
+      const phi = Math.random() * maxPhi
+      const radius = min + Math.random() * (max - min)
+      
+      starData.constellationPosition = [
+        radius * Math.sin(phi) * Math.cos(theta),
+        -10 + radius * Math.sin(phi) * Math.sin(theta),
+        radius * Math.cos(phi),
+      ]
+    }
+    
     setStars(updatedStars)
+
+    const circleLabel =
+      circle === 'inner' ? 'Close' : circle === 'close' ? 'Familiar' : 'Distant'
+
+    // Remove current person from visit queue
+    const updatedQueue = visitQueue.filter((id) => id !== person.id)
+    setVisitQueue(updatedQueue)
 
     // Check if all stars are now placed
     const placedCount = Array.from(updatedStars.values()).filter(
@@ -166,54 +226,61 @@ export default function StarField() {
         `Journey complete! You've charted all ${MOCK_PEOPLE.length} stars in your constellation.`,
       )
       setJourneyPhase('complete')
-    } else {
-      // Find next unvisited star in MOCK_PEOPLE order using the UPDATED stars map
-      const nextUnvisitedIndex = MOCK_PEOPLE.findIndex((p) => {
-        const starData = updatedStars.get(p.id)!
-        return !starData.visited
-      })
+    } else if (updatedQueue.length > 0) {
+      // Continue with next star in queue - auto-proceed
+      const nextPersonId = updatedQueue[0]
+      const nextPersonIndex = MOCK_PEOPLE.findIndex(
+        (p) => p.id === nextPersonId,
+      )
+      const nextPerson = MOCK_PEOPLE[nextPersonIndex]
 
-      if (nextUnvisitedIndex >= 0) {
-        const nextPerson = MOCK_PEOPLE[nextUnvisitedIndex]
-        const circleLabel =
-          circle === 'inner'
-            ? 'Close'
-            : circle === 'close'
-            ? 'Familiar'
-            : 'Distant'
+      setNarratorMessage(
+        `${person.name} charted as ${circleLabel}. Flying to ${nextPerson.name}...`,
+      )
+      setPreviousStarIndex(targetStarIndex)
+      setTargetStarIndex(nextPersonIndex)
+      setJourneyPhase('takeoff')
+    } else {
+      // Queue is empty - all selected stars visited
+      const unchartedCount = MOCK_PEOPLE.length - placedCount
+      if (unchartedCount > 0) {
         setNarratorMessage(
-          `${person.name} charted as ${circleLabel}. Next up: ${nextPerson.name}`,
+          `You've charted ${placedCount} stars! ${unchartedCount} 
+          remain${
+            unchartedCount === 1 ? 's' : ''
+          } uncharted. Continue your journey or review your constellation?`,
         )
-        setJourneyPhase('placed')
       } else {
-        // No more unvisited stars
         setNarratorMessage(
           `Journey complete! You've charted all ${MOCK_PEOPLE.length} stars in your constellation.`,
         )
-        setJourneyPhase('complete')
       }
+      setJourneyPhase('complete')
     }
   }
 
   const handleProceedAfterPlacement = () => {
-    // Find next unvisited star in MOCK_PEOPLE order
-    const nextUnvisitedIndex = MOCK_PEOPLE.findIndex((p) => {
-      const starData = stars.get(p.id)!
-      return !starData.visited
-    })
-
-    if (nextUnvisitedIndex >= 0) {
-      const nextPerson = MOCK_PEOPLE[nextUnvisitedIndex]
-      const distance = Math.floor(Math.random() * 100) + 50
-
-      setNarratorMessage(
-        `Next star: ${nextPerson.name}, currently ${distance} light years away.`,
+    // Check if there are more stars in the visit queue
+    if (visitQueue.length > 0) {
+      const nextPersonId = visitQueue[0]
+      const nextUnvisitedIndex = MOCK_PEOPLE.findIndex(
+        (p) => p.id === nextPersonId,
       )
-      setPreviousStarIndex(targetStarIndex)
-      setTargetStarIndex(nextUnvisitedIndex)
-      setJourneyPhase('takeoff')
+
+      if (nextUnvisitedIndex >= 0) {
+        const nextPerson = MOCK_PEOPLE[nextUnvisitedIndex]
+        const distance = Math.floor(Math.random() * 100) + 50
+
+        setNarratorMessage(
+          `Next star: ${nextPerson.name}, currently ${distance} light years away.`,
+        )
+        setPreviousStarIndex(targetStarIndex)
+        setTargetStarIndex(nextUnvisitedIndex)
+        setJourneyPhase('takeoff')
+      }
     } else {
-      setNarratorMessage('Journey complete! All stars have been charted.')
+      // No more stars in queue - should not reach here normally
+      setNarratorMessage('All selected stars visited.')
       setJourneyPhase('complete')
     }
   }
@@ -285,21 +352,24 @@ export default function StarField() {
                     Navigation System
                   </span>
                 </div>
-                {/* View Constellation - small button in header when journey incomplete */}
+                {/* Zoom Out button - show during journey when stars are charted */}
                 {placements.size > 0 &&
                   placements.size < MOCK_PEOPLE.length &&
-                  journeyPhase === 'placed' && (
+                  (journeyPhase === 'flying' ||
+                    journeyPhase === 'approaching' ||
+                    journeyPhase === 'arrived' ||
+                    journeyPhase === 'takeoff') && (
                     <button
                       onClick={() => {
                         setNarratorMessage(
-                          `Viewing constellation... ${placements.size} of ${MOCK_PEOPLE.length} stars charted. You can resume your journey anytime.`,
+                          `Viewing constellation... ${placements.size} of ${MOCK_PEOPLE.length} stars charted.`,
                         )
                         setUseConstellationPositions(true)
                         setJourneyPhase('returning')
                       }}
                       className="text-xs px-2 py-1 rounded border border-indigo-400/50 bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20 hover:border-indigo-400 transition-colors"
                     >
-                      ✦ Zoom Out
+                      ⊙ Zoom Out
                     </button>
                   )}
               </div>
@@ -308,6 +378,80 @@ export default function StarField() {
                 style={{ letterSpacing: '0.03em' }}
                 dangerouslySetInnerHTML={{ __html: displayedMessage }}
               />
+
+              {/* Star selection grid - show during selection phase */}
+              {journeyPhase === 'selecting' && (
+                <div className="mt-4 space-y-3">
+                  <div className="flex items-center justify-between text-xs text-indigo-300">
+                    <span>{selectedStarIds.size} selected</span>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() =>
+                          setSelectedStarIds(
+                            new Set(MOCK_PEOPLE.map((p) => p.id)),
+                          )
+                        }
+                        className="px-2 py-1 rounded border border-indigo-400/30 bg-indigo-500/10 hover:bg-indigo-500/20 transition-colors"
+                      >
+                        Select All
+                      </button>
+                      <button
+                        onClick={() => setSelectedStarIds(new Set())}
+                        className="px-2 py-1 rounded border border-indigo-400/30 bg-indigo-500/10 hover:bg-indigo-500/20 transition-colors"
+                      >
+                        Clear
+                      </button>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-[40vh] overflow-y-auto pr-2">
+                    {MOCK_PEOPLE.slice()
+                      .sort((a, b) => {
+                        const aLast = a.name.split(' ').slice(-1)[0]
+                        const aFirst = a.name.split(' ').slice(0, -1).join(' ')
+                        const bLast = b.name.split(' ').slice(-1)[0]
+                        const bFirst = b.name.split(' ').slice(0, -1).join(' ')
+                        const lastCompare = aLast.localeCompare(bLast)
+                        return lastCompare !== 0
+                          ? lastCompare
+                          : aFirst.localeCompare(bFirst)
+                      })
+                      .map((person) => {
+                        const isSelected = selectedStarIds.has(person.id)
+                        return (
+                          <button
+                            key={person.id}
+                            onClick={() => {
+                              const newSelection = new Set(selectedStarIds)
+                              if (isSelected) {
+                                newSelection.delete(person.id)
+                              } else {
+                                newSelection.add(person.id)
+                              }
+                              setSelectedStarIds(newSelection)
+                            }}
+                            className={`flex items-center gap-2 p-2 rounded-lg border-2 transition-all ${
+                              isSelected
+                                ? 'border-cyan-400 bg-cyan-500/20'
+                                : 'border-indigo-400/30 bg-indigo-500/10 hover:border-indigo-400/50'
+                            }`}
+                          >
+                            <img
+                              src={person.photo}
+                              alt={person.name}
+                              className="w-10 h-10 rounded-full object-cover"
+                            />
+                            <span className="text-xs text-left text-white flex-1">
+                              {person.name}
+                            </span>
+                            {isSelected && (
+                              <span className="text-cyan-400">✓</span>
+                            )}
+                          </button>
+                        )
+                      })}
+                  </div>
+                </div>
+              )}
 
               {/* Placement buttons - show when arrived at a star */}
               {journeyPhase === 'arrived' && (
@@ -335,6 +479,7 @@ export default function StarField() {
 
               {/* Navigation buttons - show when waiting for user to advance */}
               {(journeyPhase === 'intro' ||
+                journeyPhase === 'selecting' ||
                 (journeyPhase === 'placed' &&
                   placements.size < MOCK_PEOPLE.length)) && (
                 <div className="mt-3 flex gap-2">
@@ -355,17 +500,28 @@ export default function StarField() {
                         ? handleProceedAfterPlacement
                         : handleProceed
                     }
-                    className="flex-1 rounded border border-cyan-400/50 bg-cyan-500/10 px-4 py-2 font-mono text-sm font-medium text-cyan-400 transition-colors hover:bg-cyan-500/20 hover:border-cyan-400"
+                    disabled={
+                      journeyPhase === 'selecting' && selectedStarIds.size === 0
+                    }
+                    className={`flex-1 rounded border px-4 py-2 font-mono text-sm font-medium transition-colors ${
+                      journeyPhase === 'selecting' && selectedStarIds.size === 0
+                        ? 'border-cyan-400/20 bg-cyan-500/5 text-cyan-400/40 cursor-not-allowed'
+                        : 'border-cyan-400/50 bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 hover:border-cyan-400'
+                    }`}
                   >
-                    → Proceed
+                    {journeyPhase === 'selecting'
+                      ? `→ Visit ${selectedStarIds.size} Star${
+                          selectedStarIds.size !== 1 ? 's' : ''
+                        }`
+                      : '→ Proceed'}
                   </button>
                 </div>
               )}
 
-              {/* Resume Journey button - show in constellation view when not all stars charted */}
+              {/* Buttons in constellation view when not all stars charted */}
               {journeyPhase === 'returning' &&
                 placements.size < MOCK_PEOPLE.length && (
-                  <div className="mt-3">
+                  <div className="mt-3 space-y-2">
                     <button
                       onClick={() => {
                         // Find next unvisited star from MOCK_PEOPLE
@@ -379,36 +535,93 @@ export default function StarField() {
                         if (nextUnvisitedIndex >= 0) {
                           const nextPerson = MOCK_PEOPLE[nextUnvisitedIndex]
                           setTargetStarIndex(nextUnvisitedIndex)
-                          setPreviousStarIndex(-1) // No previous star when resuming from constellation
+                          setPreviousStarIndex(-1)
                           setNarratorMessage(`Flying to ${nextPerson.name}...`)
                           setJourneyPhase('flying')
-                          setUseConstellationPositions(false) // Exit constellation view
+                          setUseConstellationPositions(false)
                         }
                       }}
                       className="w-full rounded-lg bg-cyan-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg transition-colors hover:bg-cyan-700 active:bg-cyan-800"
                     >
-                      → Resume Journey
+                      → Proceed
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSelectedStarIds(new Set())
+                        setShowConstellationModal(true)
+                      }}
+                      className="w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg transition-colors hover:bg-indigo-700 active:bg-indigo-800"
+                    >
+                      ✦ Review
                     </button>
                   </div>
                 )}
 
-              {/* View Constellation button - large prominent button only when journey complete */}
+              {/* Action buttons when selected stars complete but uncharted remain */}
+              {journeyPhase === 'complete' &&
+                placements.size < MOCK_PEOPLE.length &&
+                visitQueue.length === 0 && (
+                  <div className="mt-3 space-y-2">
+                    <button
+                      onClick={() => {
+                        // Add all remaining unvisited stars to queue and start
+                        const unvisitedIds = MOCK_PEOPLE.filter((p) => {
+                          const starData = stars.get(p.id)!
+                          return !starData.visited
+                        }).map((p) => p.id)
+
+                        if (unvisitedIds.length > 0) {
+                          setVisitQueue(unvisitedIds)
+                          const firstPersonId = unvisitedIds[0]
+                          const firstPersonIndex = MOCK_PEOPLE.findIndex(
+                            (p) => p.id === firstPersonId,
+                          )
+                          const firstPerson = MOCK_PEOPLE[firstPersonIndex]
+                          setTargetStarIndex(firstPersonIndex)
+                          setPreviousStarIndex(-1)
+                          setNarratorMessage(`Flying to ${firstPerson.name}...`)
+                          setJourneyPhase('flying')
+                        }
+                      }}
+                      className="w-full rounded-lg bg-cyan-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg transition-colors hover:bg-cyan-700 active:bg-cyan-800"
+                    >
+                      → Continue Journey
+                    </button>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        onClick={() => {
+                          setSelectedStarIds(new Set())
+                          setShowConstellationModal(true)
+                        }}
+                        className="rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg transition-colors hover:bg-indigo-700 active:bg-indigo-800"
+                      >
+                        ✦ Review
+                      </button>
+                      <button
+                        onClick={() => {
+                          setNarratorMessage(
+                            `Viewing constellation... ${placements.size} of ${MOCK_PEOPLE.length} stars charted.`,
+                          )
+                          setUseConstellationPositions(true)
+                          setJourneyPhase('returning')
+                        }}
+                        className="rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg transition-colors hover:bg-indigo-700 active:bg-indigo-800"
+                      >
+                        ⊙ Zoom Out
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+              {/* View Constellation button - large prominent button only when ALL stars charted */}
               {placements.size === MOCK_PEOPLE.length &&
                 journeyPhase === 'complete' && (
                   <div className="mt-3">
                     <button
                       onClick={() => {
-                        const chartedCount = placements.size
-                        const totalCount = MOCK_PEOPLE.length
-                        if (chartedCount === totalCount) {
-                          setNarratorMessage(
-                            'Your constellation is complete. All stars are in their places.',
-                          )
-                        } else {
-                          setNarratorMessage(
-                            `Viewing constellation... ${chartedCount} of ${totalCount} stars charted. You can resume your journey anytime.`,
-                          )
-                        }
+                        setNarratorMessage(
+                          'Your constellation is complete. All stars are in their places.',
+                        )
                         setUseConstellationPositions(true) // Trigger star repositioning
                         setJourneyPhase('returning')
                       }}
@@ -456,6 +669,280 @@ export default function StarField() {
                       })()}
                 </span>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Constellation Review Modal */}
+      {showConstellationModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+          <div className="relative w-[90%] max-w-2xl max-h-[80vh] overflow-y-auto rounded-lg border-2 border-indigo-500/50 bg-gradient-to-b from-slate-900/95 to-slate-950/95 shadow-2xl">
+            {/* Header */}
+            <div className="sticky top-0 bg-slate-900/95 border-b border-indigo-500/30 p-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-bold text-white">
+                  Your Constellation ({placements.size}/{MOCK_PEOPLE.length}{' '}
+                  charted)
+                </h2>
+                <button
+                  onClick={() => setShowConstellationModal(false)}
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="p-4 space-y-4">
+              {/* Close stars */}
+              {Array.from(stars.entries()).filter(
+                ([_, s]) => s.placement === 'inner',
+              ).length > 0 && (
+                <div>
+                  <h3 className="text-sm font-bold text-cyan-400 mb-2">
+                    ● Close (
+                    {
+                      Array.from(stars.entries()).filter(
+                        ([_, s]) => s.placement === 'inner',
+                      ).length
+                    }
+                    )
+                  </h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {Array.from(stars.entries())
+                      .filter(([_, s]) => s.placement === 'inner')
+                      .map(([id]) => {
+                        const person = MOCK_PEOPLE.find((p) => p.id === id)!
+                        const isSelected = selectedStarIds.has(id)
+                        return (
+                          <button
+                            key={id}
+                            onClick={() => {
+                              const newSelection = new Set(selectedStarIds)
+                              if (isSelected) {
+                                newSelection.delete(id)
+                              } else {
+                                newSelection.add(id)
+                              }
+                              setSelectedStarIds(newSelection)
+                            }}
+                            className={`flex items-center gap-2 p-2 rounded border-2 transition-all ${
+                              isSelected
+                                ? 'border-cyan-400 bg-cyan-500/20'
+                                : 'border-indigo-400/30 bg-indigo-500/10 hover:border-indigo-400/50'
+                            }`}
+                          >
+                            <img
+                              src={person.photo}
+                              alt={person.name}
+                              className="w-8 h-8 rounded-full object-cover"
+                            />
+                            <span className="text-xs text-white flex-1 text-left">
+                              {person.name}
+                            </span>
+                            {isSelected && (
+                              <span className="text-cyan-400">✓</span>
+                            )}
+                          </button>
+                        )
+                      })}
+                  </div>
+                </div>
+              )}
+
+              {/* Familiar stars */}
+              {Array.from(stars.entries()).filter(
+                ([_, s]) => s.placement === 'close',
+              ).length > 0 && (
+                <div>
+                  <h3 className="text-sm font-bold text-indigo-400 mb-2">
+                    ● Familiar (
+                    {
+                      Array.from(stars.entries()).filter(
+                        ([_, s]) => s.placement === 'close',
+                      ).length
+                    }
+                    )
+                  </h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {Array.from(stars.entries())
+                      .filter(([_, s]) => s.placement === 'close')
+                      .map(([id]) => {
+                        const person = MOCK_PEOPLE.find((p) => p.id === id)!
+                        const isSelected = selectedStarIds.has(id)
+                        return (
+                          <button
+                            key={id}
+                            onClick={() => {
+                              const newSelection = new Set(selectedStarIds)
+                              if (isSelected) {
+                                newSelection.delete(id)
+                              } else {
+                                newSelection.add(id)
+                              }
+                              setSelectedStarIds(newSelection)
+                            }}
+                            className={`flex items-center gap-2 p-2 rounded border-2 transition-all ${
+                              isSelected
+                                ? 'border-cyan-400 bg-cyan-500/20'
+                                : 'border-indigo-400/30 bg-indigo-500/10 hover:border-indigo-400/50'
+                            }`}
+                          >
+                            <img
+                              src={person.photo}
+                              alt={person.name}
+                              className="w-8 h-8 rounded-full object-cover"
+                            />
+                            <span className="text-xs text-white flex-1 text-left">
+                              {person.name}
+                            </span>
+                            {isSelected && (
+                              <span className="text-cyan-400">✓</span>
+                            )}
+                          </button>
+                        )
+                      })}
+                  </div>
+                </div>
+              )}
+
+              {/* Distant stars */}
+              {Array.from(stars.entries()).filter(
+                ([_, s]) => s.placement === 'outer',
+              ).length > 0 && (
+                <div>
+                  <h3 className="text-sm font-bold text-gray-400 mb-2">
+                    ● Distant (
+                    {
+                      Array.from(stars.entries()).filter(
+                        ([_, s]) => s.placement === 'outer',
+                      ).length
+                    }
+                    )
+                  </h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {Array.from(stars.entries())
+                      .filter(([_, s]) => s.placement === 'outer')
+                      .map(([id]) => {
+                        const person = MOCK_PEOPLE.find((p) => p.id === id)!
+                        const isSelected = selectedStarIds.has(id)
+                        return (
+                          <button
+                            key={id}
+                            onClick={() => {
+                              const newSelection = new Set(selectedStarIds)
+                              if (isSelected) {
+                                newSelection.delete(id)
+                              } else {
+                                newSelection.add(id)
+                              }
+                              setSelectedStarIds(newSelection)
+                            }}
+                            className={`flex items-center gap-2 p-2 rounded border-2 transition-all ${
+                              isSelected
+                                ? 'border-cyan-400 bg-cyan-500/20'
+                                : 'border-indigo-400/30 bg-indigo-500/10 hover:border-indigo-400/50'
+                            }`}
+                          >
+                            <img
+                              src={person.photo}
+                              alt={person.name}
+                              className="w-8 h-8 rounded-full object-cover"
+                            />
+                            <span className="text-xs text-white flex-1 text-left">
+                              {person.name}
+                            </span>
+                            {isSelected && (
+                              <span className="text-cyan-400">✓</span>
+                            )}
+                          </button>
+                        )
+                      })}
+                  </div>
+                </div>
+              )}
+
+              {/* Uncharted stars - only show if there are any */}
+              {Array.from(stars.entries()).filter(([_, s]) => !s.placement)
+                .length > 0 && (
+                <div>
+                  <h3 className="text-sm font-bold text-gray-500 mb-2">
+                    Uncharted (
+                    {
+                      Array.from(stars.entries()).filter(
+                        ([_, s]) => !s.placement,
+                      ).length
+                    }
+                    )
+                  </h3>
+                  <p className="text-xs text-gray-400 mb-2">
+                    Select stars to visit next:
+                  </p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {Array.from(stars.entries())
+                      .filter(([_, s]) => !s.placement)
+                      .map(([id]) => {
+                        const person = MOCK_PEOPLE.find((p) => p.id === id)!
+                        const isSelected = selectedStarIds.has(id)
+                        return (
+                          <button
+                            key={id}
+                            onClick={() => {
+                              const newSelection = new Set(selectedStarIds)
+                              if (isSelected) {
+                                newSelection.delete(id)
+                              } else {
+                                newSelection.add(id)
+                              }
+                              setSelectedStarIds(newSelection)
+                            }}
+                            className={`flex items-center gap-2 p-2 rounded border-2 transition-all ${
+                              isSelected
+                                ? 'border-cyan-400 bg-cyan-500/20'
+                                : 'border-gray-600 bg-gray-800/50 hover:border-gray-500'
+                            }`}
+                          >
+                            <img
+                              src={person.photo}
+                              alt={person.name}
+                              className="w-8 h-8 rounded-full object-cover"
+                            />
+                            <span className="text-xs text-white flex-1 text-left">
+                              {person.name}
+                            </span>
+                            {isSelected && (
+                              <span className="text-cyan-400">✓</span>
+                            )}
+                          </button>
+                        )
+                      })}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer with action buttons */}
+            <div className="sticky bottom-0 bg-slate-900/95 border-t border-indigo-500/30 p-4">
+              {selectedStarIds.size > 0 && (
+                <button
+                  onClick={() => {
+                    setShowConstellationModal(false)
+                    startVisitingStars()
+                  }}
+                  className="w-full rounded-lg bg-cyan-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg transition-colors hover:bg-cyan-700 active:bg-cyan-800"
+                >
+                  → Visit {selectedStarIds.size} Selected Star
+                  {selectedStarIds.size !== 1 ? 's' : ''}
+                </button>
+              )}
+              <button
+                onClick={() => setShowConstellationModal(false)}
+                className="w-full mt-2 rounded border border-indigo-400/50 bg-indigo-500/10 px-4 py-2 text-sm font-medium text-indigo-300 transition-colors hover:bg-indigo-500/20"
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>
