@@ -5,7 +5,7 @@
   "engines": {
     "node": "20.x"
   },
-  "packageManager": "pnpm@10.17.1",
+  "packageManager": "pnpm@10.20.0",
   "scripts": {
     "dev": "concurrently --names \"web,worker,chat\" --prefix-colors \"blue,green,yellow\" \"pnpm dev:web\" \"pnpm dev:worker\" \"pnpm dev:chat\"",
     "dev:all-mobile": "concurrently --names \"web,worker,chat\" --prefix-colors \"blue,green,yellow\" \"pnpm dev:mobile\" \"pnpm dev:worker\" \"pnpm dev:chat\"",

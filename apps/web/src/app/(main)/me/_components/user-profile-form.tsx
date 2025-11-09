@@ -604,11 +604,15 @@ export default function UserProfileForm({
                 </h3>
                 <div className="mt-2 text-sm text-red-700 dark:text-red-200">
                   <ul role="list" className="list-disc space-y-1 pl-5">
-                    {Object.entries(state.errors).flatMap(([field, messages]) =>
-                      messages.map((message, index) => (
-                        <li key={`${field}-${index}`}>{message}</li>
-                      )),
-                    )}
+                    {state.errors &&
+                      (Object.entries(state.errors) as [string, string[] | undefined][]).flatMap(
+                        ([field, messages]) =>
+                          messages
+                            ? messages.map((message: string, index: number) => (
+                                <li key={`${field}-${index}`}>{message}</li>
+                              ))
+                            : [],
+                      )}
                   </ul>
                 </div>
               </div>
