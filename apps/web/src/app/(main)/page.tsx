@@ -27,19 +27,10 @@ export default function Home() {
 
         <section className="space-y-4 text-lg leading-relaxed">
           <p>
-            Relation Star is the fun, easy, non-scary, no-stress way for people
-            in groups to:
+            Relation Star helps you discover, explore, and nurture relationships
+            at the speed of love!
           </p>
-          <ul className="ml-4 list-inside list-disc">
-            <li>Meet</li>
-            <li>Remember names</li>
-            <li>Get to know each other</li>
-            <li>Do stuff together</li>
-          </ul>
-          <p>
-            You don&apos;t have to be a social butterfly to break the ice or get
-            to know people. Just play.
-          </p>
+          <p>Watch the speed of love intro to understand</p>
         </section>
 
         <section className="mt-8 space-y-4 text-lg leading-relaxed">
