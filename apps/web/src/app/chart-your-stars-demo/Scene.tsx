@@ -1,6 +1,7 @@
 import { useRef, useState, useMemo, useEffect } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
+import { OrbitControls } from '@react-three/drei'
 import { StarOverlay, StarData, JourneyPhase } from './types'
 import { MOCK_PEOPLE } from './mockData'
 import { getStarRadius } from './starData'
@@ -25,6 +26,7 @@ interface SceneProps {
   journeyPhase: JourneyPhase
   useConstellationPositions: boolean
   viewportDimensions: { width: number; height: number }
+  manualControlsEnabled: boolean
 }
 
 export default function Scene({
@@ -40,6 +42,7 @@ export default function Scene({
   journeyPhase,
   useConstellationPositions,
   viewportDimensions,
+  manualControlsEnabled,
 }: SceneProps) {
   const { camera, size } = useThree()
   const [nearestStarId, setNearestStarId] = useState<string | null>(null)
@@ -61,6 +64,7 @@ export default function Scene({
   const initialFlightDistance = useRef(0)
   const returnProgress = useRef(0)
   const returnStartPos = useRef(new THREE.Vector3())
+  const constellationCenter = useRef(new THREE.Vector3(0, 0, 0))
 
   // Preload all textures before rendering any stars
   const textures = useMemo(() => {
@@ -169,18 +173,19 @@ export default function Scene({
           !starData.constellationPosition
         ) {
           const { min, max } = getStarRadius(starData.placement)
-          
+
           // Z-depth ranges: closer stars have higher z-values (toward camera)
           const getZRange = (placement: 'inner' | 'close' | 'outer') => {
-            if (placement === 'inner') return { min: 8, max: 12 }   // Closest to camera
-            if (placement === 'close') return { min: 3, max: 7 }    // Middle depth
-            return { min: -2, max: 2 }                               // Farthest from camera
+            if (placement === 'inner') return { min: 8, max: 12 } // Closest to camera
+            if (placement === 'close') return { min: 3, max: 7 } // Middle depth
+            return { min: -2, max: 2 } // Farthest from camera
           }
-          
+
           const zRange = getZRange(starData.placement)
           const theta = Math.random() * Math.PI * 2
           const xyRadius = min + Math.random() * (max - min)
-          const zPosition = zRange.min + Math.random() * (zRange.max - zRange.min)
+          const zPosition =
+            zRange.min + Math.random() * (zRange.max - zRange.min)
 
           const constellationPos: [number, number, number] = [
             xyRadius * Math.cos(theta),
@@ -228,42 +233,54 @@ export default function Scene({
     if (!hasInitialized.current) {
       // Position camera further back to show all stars in HUD initially
       const isMobile = viewportDimensions.width < 640
-      
+
       // Measure actual DOM elements to match StarField.tsx
-      const header = typeof window !== 'undefined' ? document.querySelector('h1')?.parentElement : null
+      const header =
+        typeof window !== 'undefined'
+          ? document.querySelector('h1')?.parentElement
+          : null
       const headerRect = header?.getBoundingClientRect()
       const headerBottom = headerRect ? headerRect.bottom : 0
-      
-      const navPanel = typeof window !== 'undefined' ? document.getElementById('nav-panel') : null
+
+      const navPanel =
+        typeof window !== 'undefined'
+          ? document.getElementById('nav-panel')
+          : null
       const navPanelRect = navPanel?.getBoundingClientRect()
-      const navPanelTop = navPanelRect ? navPanelRect.top : viewportDimensions.height
-      
+      const navPanelTop = navPanelRect
+        ? navPanelRect.top
+        : viewportDimensions.height
+
       // HUD dimensions (matches StarField.tsx)
-      const hudHeight = isMobile ? Math.min(300, viewportDimensions.height * 0.35) : Math.min(600, viewportDimensions.height * 0.5)
-      
+      const hudHeight = isMobile
+        ? Math.min(300, viewportDimensions.height * 0.35)
+        : Math.min(600, viewportDimensions.height * 0.5)
+
       // Calculate available space and HUD position (matches StarField.tsx exactly)
       const navPanelHeight = viewportDimensions.height - navPanelTop
-      const availableSpace = viewportDimensions.height - headerBottom - navPanelHeight
+      const availableSpace =
+        viewportDimensions.height - headerBottom - navPanelHeight
       const topPosition = headerBottom + (availableSpace - hudHeight) / 2
-      
+
       // HUD center in screen space
       const hudCenterY = topPosition + hudHeight / 2
       const viewportCenterY = viewportDimensions.height / 2
       const hudOffsetPx = hudCenterY - viewportCenterY
-      
+
       // Convert HUD offset to world space
       const fovRadians = (60 * Math.PI) / 180
       const zDistance = 180
       const worldHeightAtDistance = 2 * zDistance * Math.tan(fovRadians / 2)
-      const pixelsToWorldUnits = worldHeightAtDistance / viewportDimensions.height
-      
+      const pixelsToWorldUnits =
+        worldHeightAtDistance / viewportDimensions.height
+
       // Screen Y increases downward, World Y increases upward
       // If HUD is BELOW viewport center (positive offset), camera moves UP (positive Y)
       // to make stars appear higher on screen
       // Add adjustment to center better (larger on mobile due to URL bar)
       const adjustmentFactor = isMobile ? 1.3 : 1.15
       const yOffset = hudOffsetPx * pixelsToWorldUnits * adjustmentFactor
-      
+
       camera.position.set(0, yOffset, zDistance)
       camera.lookAt(0, yOffset, 0)
       hasInitialized.current = true
@@ -348,147 +365,168 @@ export default function Scene({
       returnProgress.current = 0
     }
 
+    // Reset return progress when switching from manual back to auto-pilot
+    // This allows the smooth return animation to play again
+    if (
+      journeyPhase === 'returning' &&
+      !manualControlsEnabled &&
+      returnProgress.current >= 1
+    ) {
+      returnProgress.current = 0
+    }
+
     // Handle return to constellation view
-    if (journeyPhase === 'returning') {
+    if (journeyPhase === 'returning' && !manualControlsEnabled) {
       if (returnProgress.current === 0) {
         // Initialize return flight
         returnStartPos.current.copy(camera.position)
         returnProgress.current = 0.001 // Start slightly above 0
       }
 
-      returnProgress.current += 0.008 // Return speed
-
-      if (returnProgress.current >= 1) {
+      // Only animate if not yet complete
+      if (returnProgress.current >= 1 && returnProgress.current < 1.5) {
         // Return complete - stop animating but stay in returning phase
-        if (returnProgress.current < 1.5) {
-          // Only call once
-          returnProgress.current = 1.5 // Lock to prevent re-calling
+        // Only call once
+        returnProgress.current = 1.5 // Lock to prevent re-calling
 
-          // Calculate bounding box from stars with constellation positions only
-          // This excludes unplaced stars that are still at far initial positions
-          let minX = Infinity,
-            maxX = -Infinity
-          let minY = Infinity,
-            maxY = -Infinity
-          let minZ = Infinity,
-            maxZ = -Infinity
-          
-          // Only include stars that have constellation positions
-          let placedStarCount = 0
-          starPositions.forEach((pos, index) => {
-            const person = MOCK_PEOPLE[index]
-            const starData = stars.get(person.id)
-            // Only include if star has a constellation position (placed stars)
-            if (starData?.constellationPosition) {
-              minX = Math.min(minX, pos[0])
-              maxX = Math.max(maxX, pos[0])
-              minY = Math.min(minY, pos[1])
-              maxY = Math.max(maxY, pos[1])
-              minZ = Math.min(minZ, pos[2])
-              maxZ = Math.max(maxZ, pos[2])
-              placedStarCount++
-            }
-          })
+        // Calculate bounding box from stars with constellation positions only
+        // This excludes unplaced stars that are still at far initial positions
+        let minX = Infinity,
+          maxX = -Infinity
+        let minY = Infinity,
+          maxY = -Infinity
+        let minZ = Infinity,
+          maxZ = -Infinity
 
-          // If no stars placed yet, return to initial camera position
-          if (placedStarCount === 0) {
-            camera.position.set(0, 0, 25)
-            camera.lookAt(0, 0, 0)
-            onReturnComplete()
-            return
+        // Only include stars that have constellation positions
+        let placedStarCount = 0
+        starPositions.forEach((pos, index) => {
+          const person = MOCK_PEOPLE[index]
+          const starData = stars.get(person.id)
+          // Only include if star has a constellation position (placed stars)
+          if (starData?.constellationPosition) {
+            minX = Math.min(minX, pos[0])
+            maxX = Math.max(maxX, pos[0])
+            minY = Math.min(minY, pos[1])
+            maxY = Math.max(maxY, pos[1])
+            minZ = Math.min(minZ, pos[2])
+            maxZ = Math.max(maxZ, pos[2])
+            placedStarCount++
           }
+        })
 
-          // Use bounding box center for positioning
-          const _centerX = (minX + maxX) / 2
-          const _centerY = (minY + maxY) / 2
-          const _centerZ = (minZ + maxZ) / 2
-
-          // Calculate size
-          const width = maxX - minX
-          const height = maxY - minY
-          const depth = maxZ - minZ
-          const maxDimension = Math.max(width, height, depth)
-
-          // Calculate camera position based on actual viewport and HUD dimensions
-          const viewportWidth = viewportDimensions.width
-          const viewportHeight = viewportDimensions.height
-          const isMobile = viewportWidth < 640
-          
-          // Measure actual DOM elements to match StarField.tsx
-          const header = typeof window !== 'undefined' ? document.querySelector('h1')?.parentElement : null
-          const headerRect = header?.getBoundingClientRect()
-          const headerBottom = headerRect ? headerRect.bottom : 0
-          
-          const navPanel = typeof window !== 'undefined' ? document.getElementById('nav-panel') : null
-          const navPanelRect = navPanel?.getBoundingClientRect()
-          const navPanelTop = navPanelRect ? navPanelRect.top : viewportHeight
-          
-          // HUD dimensions (matches StarField.tsx)
-          const hudHeight = isMobile ? Math.min(300, viewportHeight * 0.35) : Math.min(600, viewportHeight * 0.5)
-          
-          // Calculate available space and HUD position (matches StarField.tsx exactly)
-          const navPanelHeight = viewportHeight - navPanelTop
-          const availableSpace = viewportHeight - headerBottom - navPanelHeight
-          const topPosition = headerBottom + (availableSpace - hudHeight) / 2
-          
-          // HUD center in screen space
-          const hudCenterY = topPosition + hudHeight / 2
-          const viewportCenterY = viewportHeight / 2
-          const hudOffsetPx = hudCenterY - viewportCenterY
-          
-          const fovRadians = (60 * Math.PI) / 180
-
-          // First calculate distance to fit constellation in HUD
-          // Target: constellation fills 75% of HUD for good framing
-          const hudWidthPx = Math.min(900, viewportWidth * 0.8)
-          const targetFillPercent = 0.75
-
-          // Calculate distance needed to fit width and height separately, use the larger
-          // FOV is vertical, need to calculate horizontal FOV based on aspect ratio
-          const aspectRatio = viewportWidth / viewportHeight
-          const horizontalFov =
-            2 * Math.atan(Math.tan(fovRadians / 2) * aspectRatio)
-
-          // Width: need to fit 'width' world units in hudWidthPx * 0.75
-          const worldWidthAtDistance1 = 2 * Math.tan(horizontalFov / 2)
-          const distanceForWidth =
-            (width * viewportWidth) /
-            (hudWidthPx * targetFillPercent * worldWidthAtDistance1)
-
-          // Height: need to fit 'height' world units in hudHeight * 0.75
-          const distanceForHeight =
-            (height * viewportHeight) /
-            (hudHeight * targetFillPercent * 2 * Math.tan(fovRadians / 2))
-
-          // Use the larger distance to ensure both dimensions fit
-          // Add 30% safety margin to guarantee constellation stays within HUD
-          const baseDistance =
-            Math.max(distanceForWidth, distanceForHeight) * 1.3
-
-          // Ensure minimum distance so all stars show as dots (distance > 40)
-          const maxStarRadius = 10
-          const minDistanceForPhotos = 40 + maxDimension / 2 + maxStarRadius
-          const zDistance = Math.max(baseDistance, minDistanceForPhotos)
-
-          // Now calculate Y offset at this distance
-          // At distance zDistance, pixels to world units conversion:
-          const worldHeightAtDistance = 2 * zDistance * Math.tan(fovRadians / 2)
-          const pixelsToWorldUnits = worldHeightAtDistance / viewportHeight
-          
-          // Convert HUD offset to world space
-          // Screen Y increases downward, World Y increases upward
-          // If HUD is BELOW viewport center (positive offset), camera moves UP (positive Y)
-          // to make stars appear higher on screen
-          // Add adjustment to center better (larger on mobile due to URL bar)
-          const adjustmentFactor = isMobile ? 1.3 : 1.15
-          const yOffset = hudOffsetPx * pixelsToWorldUnits * adjustmentFactor
-          
-          // Position camera at constellation center with Y offset for HUD alignment
-          camera.position.set(_centerX, _centerY + yOffset, zDistance)
-          camera.lookAt(_centerX, _centerY + yOffset, 0)
+        // If no stars placed yet, return to initial camera position
+        if (placedStarCount === 0) {
+          camera.position.set(0, 0, 25)
+          camera.lookAt(0, 0, 0)
           onReturnComplete()
+          return
         }
+
+        // Use bounding box center for positioning
+        const _centerX = (minX + maxX) / 2
+        const _centerY = (minY + maxY) / 2
+        const _centerZ = (minZ + maxZ) / 2
+
+        // Store constellation center for OrbitControls
+        constellationCenter.current.set(_centerX, _centerY, _centerZ)
+
+        // Calculate size
+        const width = maxX - minX
+        const height = maxY - minY
+        const depth = maxZ - minZ
+        const maxDimension = Math.max(width, height, depth)
+
+        // Calculate camera position based on actual viewport and HUD dimensions
+        const viewportWidth = viewportDimensions.width
+        const viewportHeight = viewportDimensions.height
+        const isMobile = viewportWidth < 640
+
+        // Measure actual DOM elements to match StarField.tsx
+        const header =
+          typeof window !== 'undefined'
+            ? document.querySelector('h1')?.parentElement
+            : null
+        const headerRect = header?.getBoundingClientRect()
+        const headerBottom = headerRect ? headerRect.bottom : 0
+
+        const navPanel =
+          typeof window !== 'undefined'
+            ? document.getElementById('nav-panel')
+            : null
+        const navPanelRect = navPanel?.getBoundingClientRect()
+        const navPanelTop = navPanelRect ? navPanelRect.top : viewportHeight
+
+        // HUD dimensions (matches StarField.tsx)
+        const hudHeight = isMobile
+          ? Math.min(300, viewportHeight * 0.35)
+          : Math.min(600, viewportHeight * 0.5)
+
+        // Calculate available space and HUD position (matches StarField.tsx exactly)
+        const navPanelHeight = viewportHeight - navPanelTop
+        const availableSpace = viewportHeight - headerBottom - navPanelHeight
+        const topPosition = headerBottom + (availableSpace - hudHeight) / 2
+
+        // HUD center in screen space
+        const hudCenterY = topPosition + hudHeight / 2
+        const viewportCenterY = viewportHeight / 2
+        const hudOffsetPx = hudCenterY - viewportCenterY
+
+        const fovRadians = (60 * Math.PI) / 180
+
+        // First calculate distance to fit constellation in HUD
+        // Target: constellation fills 65% of HUD for good framing with extra margin
+        const hudWidthPx = Math.min(900, viewportWidth * 0.8)
+        const targetFillPercent = 0.65
+
+        // Calculate distance needed to fit width and height separately, use the larger
+        // FOV is vertical, need to calculate horizontal FOV based on aspect ratio
+        const aspectRatio = viewportWidth / viewportHeight
+        const horizontalFov =
+          2 * Math.atan(Math.tan(fovRadians / 2) * aspectRatio)
+
+        // Width: need to fit 'width' world units in hudWidthPx * 0.65
+        const worldWidthAtDistance1 = 2 * Math.tan(horizontalFov / 2)
+        const distanceForWidth =
+          (width * viewportWidth) /
+          (hudWidthPx * targetFillPercent * worldWidthAtDistance1)
+
+        // Height: need to fit 'height' world units in hudHeight * 0.65
+        const distanceForHeight =
+          (height * viewportHeight) /
+          (hudHeight * targetFillPercent * 2 * Math.tan(fovRadians / 2))
+
+        // Use the larger distance to ensure both dimensions fit
+        // Add 60% safety margin and account for depth to guarantee constellation stays within HUD
+        const baseDistance =
+          Math.max(distanceForWidth, distanceForHeight, depth * 2) * 1.6
+
+        // Ensure minimum distance so all stars show as dots (distance > 40)
+        const maxStarRadius = 10
+        const minDistanceForPhotos = 40 + maxDimension / 2 + maxStarRadius
+        const zDistance = Math.max(baseDistance, minDistanceForPhotos)
+
+        // Now calculate yOffset using the calculated zDistance
+        const worldHeightAtDistance = 2 * zDistance * Math.tan(fovRadians / 2)
+        const pixelsToWorldUnits = worldHeightAtDistance / viewportHeight
+
+        // Convert HUD offset to world space
+        // Screen Y increases downward, World Y increases upward
+        // If HUD is BELOW viewport center (positive offset), camera moves UP (positive Y)
+        // to make stars appear higher on screen
+        const adjustmentFactor = isMobile ? 1.3 : 1.15
+        const yOffset = hudOffsetPx * pixelsToWorldUnits * adjustmentFactor
+
+        // Position camera at constellation center with Y offset for HUD alignment
+        // Camera is positioned far back on Z axis, looking at constellation center
+        camera.position.set(_centerX, _centerY + yOffset, _centerZ + zDistance)
+        camera.lookAt(_centerX, _centerY, _centerZ)
+        onReturnComplete()
       } else {
+        // Animate return (progress < 1)
+        returnProgress.current += 0.008 // Return speed
+        returnProgress.current = Math.min(returnProgress.current, 1) // Cap at 1
+
         const t = returnProgress.current
         // Ease out for smooth deceleration
         const easedT = 1 - Math.pow(1 - t, 3)
@@ -500,7 +538,7 @@ export default function Scene({
           maxY = -Infinity
         let minZ = Infinity,
           maxZ = -Infinity
-        
+
         // Only include stars that have constellation positions
         let placedStarCount = 0
         starPositions.forEach((pos, index) => {
@@ -524,7 +562,7 @@ export default function Scene({
           const targetLookAt = new THREE.Vector3(0, 0, 0)
           camera.position.lerpVectors(returnStartPos.current, targetPos, easedT)
           camera.lookAt(targetLookAt)
-          
+
           // Check if animation is complete
           if (easedT >= 0.99) {
             returnProgress.current = 1.5 // Lock to trigger completion block
@@ -557,7 +595,7 @@ export default function Scene({
         const fovRadians = (60 * Math.PI) / 180
 
         const hudWidthPx = Math.min(900, viewportWidth * 0.8)
-        const targetFillPercent = 0.75
+        const targetFillPercent = 0.65
 
         // Calculate distance needed to fit width and height separately, use the larger
         const aspectRatio = viewportWidth / viewportHeight
@@ -571,8 +609,9 @@ export default function Scene({
         const distanceForHeight =
           (height * viewportHeight) /
           (hudHeightPx * targetFillPercent * 2 * Math.tan(fovRadians / 2))
-        // Add 30% safety margin to guarantee constellation stays within HUD
-        const baseDistance = Math.max(distanceForWidth, distanceForHeight) * 1.3
+        // Add 60% safety margin and account for depth to guarantee constellation stays within HUD
+        const baseDistance =
+          Math.max(distanceForWidth, distanceForHeight, depth * 2) * 1.6
         const maxStarRadius = 10
         const minDistanceForPhotos = 40 + maxDimension / 2 + maxStarRadius
         const zDistance = Math.max(baseDistance, minDistanceForPhotos)
@@ -581,10 +620,18 @@ export default function Scene({
         const pixelsToWorldUnits = worldHeightAtDistance / viewportHeight
         const offsetMultiplier = isMobile ? 1.5 : 1.0
         const yOffset =
-          -(navPanelHeight / 2) * pixelsToWorldUnits * offsetMultiplier
+          (navPanelHeight / 2) * pixelsToWorldUnits * offsetMultiplier
 
-        const targetPos = new THREE.Vector3(_centerX, _centerY + yOffset, zDistance)
-        const targetLookAt = new THREE.Vector3(_centerX, _centerY + yOffset, 0)
+        const targetPos = new THREE.Vector3(
+          _centerX,
+          _centerY + yOffset,
+          _centerZ + zDistance,
+        )
+        const targetLookAt = new THREE.Vector3(
+          _centerX,
+          _centerY,
+          _centerZ,
+        )
 
         // Interpolate position
         camera.position.lerpVectors(returnStartPos.current, targetPos, easedT)
@@ -620,7 +667,7 @@ export default function Scene({
         hasTriggeredArrival.current = false // Reset arrival trigger
         hasTriggeredApproaching.current = false // Reset approaching trigger
         flightStartPos.current.copy(camera.position)
-        
+
         // Store initial distance for speed normalization
         initialFlightDistance.current = currentDist
 
@@ -687,17 +734,17 @@ export default function Scene({
       ) {
         // Variable speed: different behavior for first flight vs subsequent flights
         let baseSpeed
-        
+
         if (initialFlightDistance.current > 40) {
           // First flight from intro - start fast, slow down as photos become visible
           baseSpeed =
             currentDist < 15
               ? 0.004 // Slow final approach
               : currentDist < 25
-              ? 0.010 // Medium approach
+              ? 0.01 // Medium approach
               : currentDist < 50
-              ? 0.020 // Fast when photos visible
-              : 0.040 // Very fast when far away
+              ? 0.02 // Fast when photos visible
+              : 0.04 // Very fast when far away
         } else {
           // Subsequent flights between stars - faster speeds
           baseSpeed =
@@ -756,15 +803,21 @@ export default function Scene({
         const visualCorrectionPx = -65
         const fovRadians = (60 * Math.PI) / 180
         const starDistance = 5.5
-        const worldHeightAtStarDistance = 2 * starDistance * Math.tan(fovRadians / 2)
-        const pixelsToWorldUnits = worldHeightAtStarDistance / viewportDimensions.height
+        const worldHeightAtStarDistance =
+          2 * starDistance * Math.tan(fovRadians / 2)
+        const pixelsToWorldUnits =
+          worldHeightAtStarDistance / viewportDimensions.height
         const yAdjustment = visualCorrectionPx * pixelsToWorldUnits
-        
+
         // Gradually blend from actual position to adjusted position during second half
         const adjustProgress = t > 0.5 ? (t - 0.5) / 0.5 : 0 // 0 at t=0.5, 1 at t=1
-        const adjustedY = targetPos.y + (yAdjustment * adjustProgress)
-        const finalTarget = new THREE.Vector3(targetPos.x, adjustedY, targetPos.z)
-        
+        const adjustedY = targetPos.y + yAdjustment * adjustProgress
+        const finalTarget = new THREE.Vector3(
+          targetPos.x,
+          adjustedY,
+          targetPos.z,
+        )
+
         // Gradually transition look direction
         if (cameFromTakeoff.current) {
           // Coming from takeoff: gradually pan from takeoff end direction to centered on target
@@ -791,17 +844,23 @@ export default function Scene({
         // Complete flight when reached
         if (flightProgress.current >= 1) {
           isFlying.current = false
-          
+
           // Apply visual correction to center star in HUD (same for all screen sizes)
           const visualCorrectionPx = -65
           const fovRadians = (60 * Math.PI) / 180
           const starDistance = 5.5
-          const worldHeightAtStarDistance = 2 * starDistance * Math.tan(fovRadians / 2)
-          const pixelsToWorldUnits = worldHeightAtStarDistance / viewportDimensions.height
+          const worldHeightAtStarDistance =
+            2 * starDistance * Math.tan(fovRadians / 2)
+          const pixelsToWorldUnits =
+            worldHeightAtStarDistance / viewportDimensions.height
           const yAdjustment = visualCorrectionPx * pixelsToWorldUnits
-          
-          const finalLookAt = new THREE.Vector3(targetPos.x, targetPos.y + yAdjustment, targetPos.z)
-          
+
+          const finalLookAt = new THREE.Vector3(
+            targetPos.x,
+            targetPos.y + yAdjustment,
+            targetPos.z,
+          )
+
           camera.lookAt(finalLookAt)
           camera.rotation.z = 0 // Reset roll
         }
@@ -868,7 +927,25 @@ export default function Scene({
     <>
       {/* 3D HUD - follows camera */}
       <HUD3D />
-      
+
+      {/* Orbit controls - only enabled when manual mode is active */}
+      {journeyPhase === 'returning' && manualControlsEnabled && (
+        <OrbitControls
+          target={constellationCenter.current}
+          enableZoom={true}
+          enablePan={false}
+          enableRotate={true}
+          minDistance={30}
+          maxDistance={80}
+          minPolarAngle={Math.PI / 6}
+          maxPolarAngle={(Math.PI * 5) / 6}
+          enableDamping={true}
+          dampingFactor={0.05}
+          rotateSpeed={0.5}
+          zoomSpeed={0.8}
+        />
+      )}
+
       {/* Ambient light */}
       <ambientLight intensity={0.3} />
 

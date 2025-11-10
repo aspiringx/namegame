@@ -12,6 +12,7 @@ export default function StarField() {
   const [_overlays, setOverlays] = useState<StarOverlay[]>([])
   const [useConstellationPositions, setUseConstellationPositions] =
     useState(false)
+  const [manualControlsEnabled, setManualControlsEnabled] = useState(false)
 
   // Single source of truth: all star state keyed by person.id
   const [stars, setStars] = useState<Map<string, StarData>>(initializeStars)
@@ -122,10 +123,10 @@ export default function StarField() {
       // Multi-step intro messages
       const introMessages = [
         `Mindy, welcome to the Trail Blazers star cluster!`,
-        `There are ${MOCK_PEOPLE.length} stars, people in this corner of your universe.`,
-        `Your mission is to chart the relative position of each star to you, forming your constellation. Each may be...`,
-        `<i>Close</i>: tight family/friends/like-family<br /><i>Familiar</i>: near, passively close<br /><i>Distant</i>: unfamiliar or feels far away`,
-        "Next, you'll choose stars to visit or select all to let auto-pilot guide you.",
+        `There are ${MOCK_PEOPLE.length} stars in this nook of your universe.`,
+        `Each star's position relative to you reflects your current relationship, as follows...`,
+        `<i>Close</i>: family, friends, like-family<br /><i>Familiar</i>: near, but not close<br /><i>Distant</i>: unknown, unfamiliar, far away`,
+        'Start with the stars you know or select all and let the Auto-Pilot guide you. Ready?',
       ]
       setNarratorMessage(introMessages[introStep])
     }
@@ -167,7 +168,7 @@ export default function StarField() {
         setIntroStep(introStep + 1)
       } else {
         // Intro complete, move to star selection
-        setNarratorMessage('Select the stars you want to visit first...')
+        setNarratorMessage('Select the stars you want to chart first...')
         setJourneyPhase('selecting')
       }
     } else if (journeyPhase === 'selecting') {
@@ -327,14 +328,64 @@ export default function StarField() {
               )
             } else {
               setNarratorMessage(
-                `Viewing constellation... ${chartedCount} of ${totalCount} stars charted. You can resume your journey anytime.`,
+                `Viewing constellation... ${chartedCount} of ${totalCount} stars charted. Proceed with your journey or 
+                turn off Auto-Pilot to manually explore.`,
               )
             }
           }}
           journeyPhase={journeyPhase}
           useConstellationPositions={useConstellationPositions}
+          manualControlsEnabled={manualControlsEnabled}
         />
       </Canvas>
+
+      {/* Manual Controls Toggle - Only in constellation view */}
+      {journeyPhase === 'returning' && (
+        <div className="fixed right-4 top-4 sm:right-6 sm:top-6 z-20">
+          <button
+            onClick={() => {
+              if (manualControlsEnabled) {
+                // Switching back to auto-pilot: trigger smooth return animation
+                setManualControlsEnabled(false)
+                // Trigger return animation by toggling journey phase
+                setJourneyPhase('complete')
+                setTimeout(() => {
+                  setUseConstellationPositions(true)
+                  setJourneyPhase('returning')
+                }, 50)
+              } else {
+                // Enable manual controls
+                setManualControlsEnabled(true)
+              }
+            }}
+            className={`group relative rounded-lg px-4 py-2.5 font-mono text-xs uppercase tracking-wider backdrop-blur-sm border-2 shadow-lg transition-all ${
+              manualControlsEnabled
+                ? 'bg-cyan-500/40 border-cyan-400 text-cyan-100 shadow-cyan-500/60 hover:bg-cyan-500/50'
+                : 'bg-indigo-500/40 border-indigo-400 text-indigo-100 shadow-indigo-500/60 hover:bg-indigo-500/50'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-base">
+                {manualControlsEnabled ? '🎮' : '🚀'}
+              </span>
+              <span>{manualControlsEnabled ? 'Manual' : 'Auto-Pilot'}</span>
+            </div>
+
+            {/* Hint tooltip - shows on hover when manual mode is active */}
+            {manualControlsEnabled && (
+              <div className="absolute top-full right-0 mt-2 w-40 rounded-lg bg-slate-900/95 px-3 py-2 text-xs text-cyan-300 border border-cyan-500/30 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                <div className="space-y-1">
+                  <div>🖱️ Drag to rotate</div>
+                  <div>🔍 Scroll to zoom</div>
+                  <div className="pt-1 border-t border-cyan-500/30 text-cyan-400">
+                    Click to reset
+                  </div>
+                </div>
+              </div>
+            )}
+          </button>
+        </div>
+      )}
 
       {/* Navigation System - Control Panel Style */}
       {narratorMessage && (
@@ -343,7 +394,9 @@ export default function StarField() {
           className="fixed left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-3xl px-2 sm:px-4"
           style={{ bottom: '1rem' }}
         >
-          <div className="relative overflow-hidden rounded-lg border-2 border-indigo-500/50 bg-gradient-to-b from-slate-900 to-slate-950 shadow-2xl">
+          <div
+            className={`relative overflow-hidden rounded-lg border-2 border-indigo-500/50 bg-gradient-to-b from-slate-900/50 to-slate-950/50 shadow-2xl backdrop-blur-sm`}
+          >
             {/* Control panel accent lines */}
             <div className="absolute left-0 top-0 h-full w-1 bg-gradient-to-b from-indigo-500 via-cyan-400 to-indigo-500"></div>
             <div className="absolute right-0 top-0 h-full w-1 bg-gradient-to-b from-indigo-500 via-cyan-400 to-indigo-500"></div>
@@ -531,6 +584,9 @@ export default function StarField() {
                   <div className="mt-3 space-y-2">
                     <button
                       onClick={() => {
+                        // Disable manual controls and return to auto-pilot
+                        setManualControlsEnabled(false)
+
                         // Add all remaining unvisited stars to queue
                         const unvisitedIds = MOCK_PEOPLE.filter((p) => {
                           const starData = stars.get(p.id)!

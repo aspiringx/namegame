@@ -273,7 +273,7 @@ export default function StarField() {
                 </h1>
               </Link>
               <p className="mt-1 text-sm text-gray-300 sm:text-base">
-                Your universe at the speed of love
+                Speed of love
               </p>
             </div>
 

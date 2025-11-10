@@ -38,12 +38,17 @@ export default function Home() {
             <p>
               <b>Answer:</b> If so, it's trash.
             </p>
-            <p className="not-italic">
-              You're here because someone you really know and trust shared it.
-              Check out the intro and decide for yourself.
-            </p>
           </div>
-          <div className="flex justify-center pt-2">
+          <p>
+            We think this is different, about enhancing a few <i>real</i>{' '}
+            relationships in <i>real</i> life. Not piling up more vacant{' '}
+            <i>virtual</i> ones.
+          </p>
+          <p>
+            Check out the intro to see if you agree. If you like it, try the
+            demo.
+          </p>
+          <div className="flex flex-col pt-2 w-full sm:w-1/2 sm:mx-auto text-center">
             <Link
               href="/speed-of-love"
               className="rounded border border-cyan-400/50 bg-cyan-500/10 px-6 py-3 font-mono text-sm font-medium text-cyan-400 transition-colors hover:border-cyan-400 hover:bg-cyan-500/20"
@@ -51,7 +56,7 @@ export default function Home() {
               ⭐ Speed of Love Intro ⭐
             </Link>
           </div>
-          <div className="flex justify-center pt-2">
+          <div className="flex flex-col pt-2 w-full sm:w-1/2 sm:mx-auto text-center">
             <Link
               href="/chart-your-stars-demo"
               className="rounded border border-cyan-400/50 bg-cyan-500/10 px-6 py-3 font-mono text-sm font-medium text-cyan-400 transition-colors hover:border-cyan-400 hover:bg-cyan-500/20"
