@@ -65,6 +65,9 @@ export default function Scene({
   const returnProgress = useRef(0)
   const returnStartPos = useRef(new THREE.Vector3())
   const constellationCenter = useRef(new THREE.Vector3(0, 0, 0))
+  const autoPilotCameraPos = useRef(new THREE.Vector3())
+  const autoPilotCameraTarget = useRef(new THREE.Vector3())
+  const previousManualControlsEnabled = useRef(manualControlsEnabled)
 
   // Preload all textures before rendering any stars
   const textures = useMemo(() => {
@@ -229,6 +232,27 @@ export default function Scene({
   // Auto-pilot: initialize with overview, then move to target star
   useFrame((state) => {
     const frameId = state.clock.elapsedTime
+    
+    // Handle manual controls toggle
+    if (manualControlsEnabled !== previousManualControlsEnabled.current) {
+      if (manualControlsEnabled) {
+        // Switching TO manual mode: save current auto-pilot camera state
+        autoPilotCameraPos.current.copy(camera.position)
+        camera.getWorldDirection(autoPilotCameraTarget.current)
+        autoPilotCameraTarget.current.multiplyScalar(10).add(camera.position)
+      } else {
+        // Switching FROM manual mode back to auto-pilot: restore saved camera state
+        camera.position.copy(autoPilotCameraPos.current)
+        camera.lookAt(autoPilotCameraTarget.current)
+      }
+      previousManualControlsEnabled.current = manualControlsEnabled
+    }
+    
+    // Skip auto-pilot camera updates when manual controls are enabled
+    if (manualControlsEnabled) {
+      return
+    }
+    
     // First time: set overview position
     if (!hasInitialized.current) {
       // Position camera further back to show all stars in HUD initially

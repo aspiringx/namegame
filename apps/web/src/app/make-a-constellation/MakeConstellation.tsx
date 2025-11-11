@@ -17,7 +17,7 @@ const StarField = dynamic(() => import('./StarField'), {
   ),
 })
 
-export default function ChartYourStars() {
+export default function MakeConstellation() {
   // Mode selection screen removed - always auto-pilot
 
   return (
@@ -32,7 +32,7 @@ export default function ChartYourStars() {
               </h1>
             </Link>
             <p className="mt-1 text-sm text-gray-300 sm:text-base">
-              Chart your stars
+              Make a constellation
             </p>
           </div>
         </div>

@@ -122,11 +122,11 @@ export default function StarField() {
     if (journeyPhase === 'intro') {
       // Multi-step intro messages
       const introMessages = [
-        `Mindy, welcome to the Trail Blazers star cluster!`,
-        `There are ${MOCK_PEOPLE.length} stars in this nook of your universe.`,
-        `Each star's position relative to you reflects your current relationship, as follows...`,
-        `<i>Close</i>: family, friends, like-family<br /><i>Familiar</i>: near, but not close<br /><i>Distant</i>: unknown, unfamiliar, far away`,
-        'Start with the stars you know or select all and let the Auto-Pilot guide you. Ready?',
+        `Mindy, welcome to the Hypothetical Star Cluster!`,
+        `Our sensors detect ${MOCK_PEOPLE.length} uncharted stars in this vicinity.`,
+        `Chart the position of each star relative to you today, as follows:`,
+        `<b>Close</b>: Close friend, family<br /><b>Near</b>: Passive friend, acquaintance<br /><b>Far</b>: Unknown, distant, estranged`,
+        'Your constellation takes shape as you chart each star. Ready?',
       ]
       setNarratorMessage(introMessages[introStep])
     }
@@ -168,7 +168,9 @@ export default function StarField() {
         setIntroStep(introStep + 1)
       } else {
         // Intro complete, move to star selection
-        setNarratorMessage('Select the stars you want to chart first...')
+        setNarratorMessage(
+          'Select stars, beginning with those you know best...',
+        )
         setJourneyPhase('selecting')
       }
     } else if (journeyPhase === 'selecting') {
@@ -186,38 +188,14 @@ export default function StarField() {
     starData.placement = circle
     starData.visited = true
 
-    // Generate constellation position immediately to prevent shifts during zoom out
-    if (!starData.constellationPosition) {
-      const getStarRadius = (placement: 'inner' | 'close' | 'outer') => {
-        if (placement === 'inner') return { min: 5, max: 10 }
-        if (placement === 'close') return { min: 10, max: 18 }
-        return { min: 18, max: 28 }
-      }
-
-      // Z-depth ranges: closer stars have higher z-values (toward camera)
-      const getZRange = (placement: 'inner' | 'close' | 'outer') => {
-        if (placement === 'inner') return { min: 8, max: 12 } // Closest to camera
-        if (placement === 'close') return { min: 3, max: 7 } // Middle depth
-        return { min: -2, max: 2 } // Farthest from camera
-      }
-
-      const { min, max } = getStarRadius(circle)
-      const zRange = getZRange(circle)
-      const theta = Math.random() * Math.PI * 2
-      const xyRadius = min + Math.random() * (max - min)
-      const zPosition = zRange.min + Math.random() * (zRange.max - zRange.min)
-
-      starData.constellationPosition = [
-        xyRadius * Math.cos(theta),
-        -10 + xyRadius * Math.sin(theta),
-        zPosition,
-      ]
-    }
+    // Don't generate constellation position yet - let Scene.tsx handle it
+    // when useConstellationPositions becomes true (on zoom out)
+    // This prevents stars from jumping position immediately upon placement
 
     setStars(updatedStars)
 
     const circleLabel =
-      circle === 'inner' ? 'Close' : circle === 'close' ? 'Familiar' : 'Distant'
+      circle === 'inner' ? 'Close' : circle === 'close' ? 'Near' : 'Far'
 
     // Remove current person from visit queue
     const updatedQueue = visitQueue.filter((id) => id !== person.id)
@@ -344,19 +322,8 @@ export default function StarField() {
         <div className="fixed right-4 top-4 sm:right-6 sm:top-6 z-20">
           <button
             onClick={() => {
-              if (manualControlsEnabled) {
-                // Switching back to auto-pilot: trigger smooth return animation
-                setManualControlsEnabled(false)
-                // Trigger return animation by toggling journey phase
-                setJourneyPhase('complete')
-                setTimeout(() => {
-                  setUseConstellationPositions(true)
-                  setJourneyPhase('returning')
-                }, 50)
-              } else {
-                // Enable manual controls
-                setManualControlsEnabled(true)
-              }
+              // Simply toggle manual controls - Scene.tsx handles camera state
+              setManualControlsEnabled(!manualControlsEnabled)
             }}
             className={`group relative rounded-lg px-4 py-2.5 font-mono text-xs uppercase tracking-wider backdrop-blur-sm border-2 shadow-lg transition-all ${
               manualControlsEnabled
@@ -366,7 +333,7 @@ export default function StarField() {
           >
             <div className="flex items-center gap-2">
               <span className="text-base">
-                {manualControlsEnabled ? '🎮' : '🚀'}
+                {manualControlsEnabled ? '🧑‍🚀' : '🚀'}
               </span>
               <span>{manualControlsEnabled ? 'Manual' : 'Auto-Pilot'}</span>
             </div>
@@ -526,13 +493,13 @@ export default function StarField() {
                     onClick={() => handlePlacePerson('close')}
                     className="flex-1 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg transition-colors hover:bg-indigo-700 active:bg-indigo-800"
                   >
-                    Familiar
+                    Near
                   </button>
                   <button
                     onClick={() => handlePlacePerson('outer')}
                     className="flex-1 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg transition-colors hover:bg-indigo-700 active:bg-indigo-800"
                   >
-                    Distant
+                    Far
                   </button>
                 </div>
               )}
@@ -630,6 +597,10 @@ export default function StarField() {
                   <div className="mt-3 space-y-2">
                     <button
                       onClick={() => {
+                        // Disable manual controls when continuing journey
+                        setManualControlsEnabled(false)
+                        setUseConstellationPositions(false)
+                        
                         // Add all remaining unvisited stars to queue and start
                         const unvisitedIds = MOCK_PEOPLE.filter((p) => {
                           const starData = stars.get(p.id)!
@@ -818,13 +789,13 @@ export default function StarField() {
                 </div>
               )}
 
-              {/* Familiar stars */}
+              {/* Familiar/warm stars */}
               {Array.from(stars.entries()).filter(
                 ([_, s]) => s.placement === 'close',
               ).length > 0 && (
                 <div>
                   <h3 className="text-sm font-bold text-indigo-400 mb-2">
-                    ● Familiar (
+                    ● Near (
                     {
                       Array.from(stars.entries()).filter(
                         ([_, s]) => s.placement === 'close',
@@ -874,13 +845,13 @@ export default function StarField() {
                 </div>
               )}
 
-              {/* Distant stars */}
+              {/* Distant/cold stars */}
               {Array.from(stars.entries()).filter(
                 ([_, s]) => s.placement === 'outer',
               ).length > 0 && (
                 <div>
                   <h3 className="text-sm font-bold text-gray-400 mb-2">
-                    ● Distant (
+                    ● Far (
                     {
                       Array.from(stars.entries()).filter(
                         ([_, s]) => s.placement === 'outer',

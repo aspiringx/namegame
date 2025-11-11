@@ -26,28 +26,6 @@ export default function Home() {
         </header>
 
         <section className="space-y-4 text-lg leading-relaxed">
-          <p>
-            Discover, explore, and build real relationships at the speed of
-            love!
-          </p>
-          <div className="italic my-6 py-4 border-t border-b border-gray-300 dark:border-gray-600 space-y-2">
-            <p>
-              <b>Question:</b> Is this another invasive, life-sucking, social
-              media app?
-            </p>
-            <p>
-              <b>Answer:</b> If so, it's trash.
-            </p>
-          </div>
-          <p>
-            We think this is different, about enhancing a few <i>real</i>{' '}
-            relationships in <i>real</i> life. Not piling up more vacant{' '}
-            <i>virtual</i> ones.
-          </p>
-          <p>
-            Check out the intro to see if you agree. If you like it, try the
-            demo.
-          </p>
           <div className="flex flex-col pt-2 w-full sm:w-1/2 sm:mx-auto text-center">
             <Link
               href="/speed-of-love"
@@ -58,10 +36,10 @@ export default function Home() {
           </div>
           <div className="flex flex-col pt-2 w-full sm:w-1/2 sm:mx-auto text-center">
             <Link
-              href="/chart-your-stars-demo"
+              href="/make-a-constellation"
               className="rounded border border-cyan-400/50 bg-cyan-500/10 px-6 py-3 font-mono text-sm font-medium text-cyan-400 transition-colors hover:border-cyan-400 hover:bg-cyan-500/20"
             >
-              ⭐ Chart Your Stars Demo ⭐
+              ⭐ Make a Constellation ⭐
             </Link>
           </div>
         </section>

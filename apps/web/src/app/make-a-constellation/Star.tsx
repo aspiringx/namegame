@@ -316,14 +316,15 @@ export default function Star({
       groupOpacity = Math.max(groupOpacity, 0.2 + transitionProgress * 0.5) // 0.2 to 0.7
     }
 
-    // Dim unplaced stars when arrived/approaching/placed/takeoff to focus on target
+    // Dim unplaced stars when arrived/approaching/placed/takeoff/complete to focus on target
     // But keep placed/charted stars visible
     if (
       !placement &&
       (journeyPhase === 'arrived' ||
         journeyPhase === 'approaching' ||
         journeyPhase === 'placed' ||
-        journeyPhase === 'takeoff')
+        journeyPhase === 'takeoff' ||
+        journeyPhase === 'complete')
     ) {
       groupOpacity *= 0.05 // Reduce to 5% to minimize distraction from target
     }
