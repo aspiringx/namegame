@@ -124,9 +124,9 @@ export default function StarField() {
       const introMessages = [
         `Hi Mindy, welcome to the Hypothetical Group star cluster!`,
         `Our sensors vaguely detect ${MOCK_PEOPLE.length} stars you may (or may not) know.`,
-        `<b>Your mission:</b> Chart the <i>current position</i> of stars in relation to you to make a constellation.`,
-        `Positions are:<br /><br /><b>• Close</b>: Close friend, family<br /><b>• Near</b>: Passive friend, acquaintance<br /><b>• Far</b>: Unknown, distant`,
-        'As you chart each star, a constellation will form, shaped by relationships as you perceive them today.<br /><br />Ready?',
+        `<b>Your mission:</b> Chart the <i>current position</i> of stars in this cluster, in relation to you, to make a constellation.`,
+        `Positions:<br /><br /><b>• Close</b>: Close friend, family<br /><b>• Near</b>: Passive friend, acquaintance<br /><b>• Far</b>: Unknown, distant`,
+        'As you chart each star, a constellation will form, shaped by how you perceive relationships today.<br /><br />Ready?',
       ]
       setNarratorMessage(introMessages[introStep])
     }

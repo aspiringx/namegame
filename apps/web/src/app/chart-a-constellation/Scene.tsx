@@ -334,7 +334,7 @@ export default function Scene({
           takeoffStartPos.current.copy(camera.position)
         }
 
-        takeoffProgress.current += 0.015 // Takeoff speed (balanced for smooth but not too slow)
+        takeoffProgress.current += 0.0225 // Takeoff speed (1.5x faster for snappier feel)
       }
 
       if (takeoffProgress.current >= 1) {
@@ -767,22 +767,22 @@ export default function Scene({
           // First flight from intro - start fast, slow down as photos become visible
           baseSpeed =
             currentDist < 15
-              ? 0.004 // Slow final approach
+              ? 0.006 // Slow final approach (1.5x)
               : currentDist < 25
-              ? 0.01 // Medium approach
+              ? 0.015 // Medium approach (1.5x)
               : currentDist < 50
-              ? 0.02 // Fast when photos visible
-              : 0.04 // Very fast when far away
+              ? 0.03 // Fast when photos visible (1.5x)
+              : 0.06 // Very fast when far away (1.5x)
         } else {
           // Subsequent flights between stars - faster speeds
           baseSpeed =
             currentDist < 15
-              ? 0.006 // Final approach
+              ? 0.009 // Final approach (1.5x)
               : currentDist < 25
-              ? 0.015 // Approach speed
+              ? 0.0225 // Approach speed (1.5x)
               : currentDist < 40
-              ? 0.025 // Medium speed
-              : 0.035 // Fast initial flight
+              ? 0.0375 // Medium speed (1.5x)
+              : 0.0525 // Fast initial flight (1.5x)
         }
 
         flightProgress.current = Math.min(1, flightProgress.current + baseSpeed)
