@@ -68,6 +68,10 @@ export default function Scene({
   const autoPilotCameraPos = useRef(new THREE.Vector3())
   const autoPilotCameraTarget = useRef(new THREE.Vector3())
   const previousManualControlsEnabled = useRef(manualControlsEnabled)
+  const orbitControlsRef = useRef<any>(null)
+
+  // OrbitControls is always enabled to stay in sync, but user interaction is controlled
+  // by enableZoom and enableRotate props based on manualControlsEnabled
 
   // Preload all textures before rendering any stars
   const textures = useMemo(() => {
@@ -192,7 +196,7 @@ export default function Scene({
 
           const constellationPos: [number, number, number] = [
             xyRadius * Math.cos(theta),
-            -10 + xyRadius * Math.sin(theta),
+            xyRadius * Math.sin(theta),
             zPosition,
           ]
 
@@ -450,7 +454,7 @@ export default function Scene({
         const _centerY = (minY + maxY) / 2
         const _centerZ = (minZ + maxZ) / 2
 
-        // Store constellation center for OrbitControls
+        // Store constellation center for OrbitControls (will be updated with Y offset later)
         constellationCenter.current.set(_centerX, _centerY, _centerZ)
 
         // Calculate size
@@ -534,15 +538,24 @@ export default function Scene({
 
         // Convert HUD offset to world space
         // Screen Y increases downward, World Y increases upward
-        // If HUD is BELOW viewport center (positive offset), camera moves UP (positive Y)
-        // to make stars appear higher on screen
+        // If HUD is BELOW viewport center (positive offset), we offset the target UP (positive Y)
+        // to make constellation appear centered in HUD
         const adjustmentFactor = isMobile ? 1.3 : 1.15
         const yOffset = hudOffsetPx * pixelsToWorldUnits * adjustmentFactor
 
-        // Position camera at constellation center with Y offset for HUD alignment
-        // Camera is positioned far back on Z axis, looking at constellation center
+        // Calculate the offset target point that aligns with HUD center
+        const targetX = _centerX
+        const targetY = _centerY + yOffset
+        const targetZ = _centerZ
+
+        // Position camera behind the constellation, looking at the offset target
+        // This centers the constellation in the HUD (not viewport center)
         camera.position.set(_centerX, _centerY + yOffset, _centerZ + zDistance)
-        camera.lookAt(_centerX, _centerY, _centerZ)
+        camera.lookAt(targetX, targetY, targetZ)
+        
+        // Update constellation center for OrbitControls to use the same offset target
+        // This ensures no jump when switching to manual mode
+        constellationCenter.current.set(targetX, targetY, targetZ)
         
         // Save the final auto-pilot camera position for manual mode toggle
         // This prevents stars from jumping when user switches to manual mode
@@ -956,10 +969,12 @@ export default function Scene({
       {/* 3D HUD - follows camera */}
       <HUD3D />
 
-      {/* Orbit controls - always present in returning phase, but only enabled in manual mode */}
+      {/* Orbit controls - only enabled in manual mode to prevent interference with auto-pilot */}
       {journeyPhase === 'returning' && (
         <OrbitControls
+          ref={orbitControlsRef}
           makeDefault={false}
+          regress={false}
           target={constellationCenter.current}
           enabled={manualControlsEnabled}
           enableZoom={manualControlsEnabled}
