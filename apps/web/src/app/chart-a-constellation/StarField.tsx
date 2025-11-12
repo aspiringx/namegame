@@ -122,11 +122,11 @@ export default function StarField() {
     if (journeyPhase === 'intro') {
       // Multi-step intro messages
       const introMessages = [
-        `Mindy, welcome to the Hypothetical Star Cluster!`,
-        `Our sensors detect ${MOCK_PEOPLE.length} uncharted stars in this vicinity.`,
-        `Chart the position of each star relative to you today, as follows:`,
-        `<b>Close</b>: Close friend, family<br /><b>Near</b>: Passive friend, acquaintance<br /><b>Far</b>: Unknown, distant, estranged`,
-        'Your constellation takes shape as you chart each star. Ready?',
+        `Hi Mindy, welcome to the Hypothetical Group star cluster!`,
+        `Our sensors vaguely detect ${MOCK_PEOPLE.length} stars you may (or may not) know.`,
+        `<b>Your mission:</b> Chart the <i>current position</i> of stars in relation to you to make a constellation.`,
+        `Positions are:<br /><br /><b>• Close</b>: Close friend, family<br /><b>• Near</b>: Passive friend, acquaintance<br /><b>• Far</b>: Unknown, distant`,
+        'As you chart each star, a constellation will form, shaped by relationships as you perceive them today.<br /><br />Ready?',
       ]
       setNarratorMessage(introMessages[introStep])
     }
@@ -169,7 +169,7 @@ export default function StarField() {
       } else {
         // Intro complete, move to star selection
         setNarratorMessage(
-          'Select stars, beginning with those you know best...',
+          'Select stars to chart. You can begin with those you know or select all.',
         )
         setJourneyPhase('selecting')
       }
@@ -234,7 +234,7 @@ export default function StarField() {
           `You've charted ${placedCount} stars! ${unchartedCount} 
           remain${
             unchartedCount === 1 ? 's' : ''
-          } uncharted. Continue your journey or review your constellation?`,
+          } uncharted. Continue your journey, review stars, or zoom out to see your current constellation.`,
         )
       } else {
         setNarratorMessage(
@@ -600,7 +600,7 @@ export default function StarField() {
                         // Disable manual controls when continuing journey
                         setManualControlsEnabled(false)
                         setUseConstellationPositions(false)
-                        
+
                         // Add all remaining unvisited stars to queue and start
                         const unvisitedIds = MOCK_PEOPLE.filter((p) => {
                           const starData = stars.get(p.id)!

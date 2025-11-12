@@ -385,9 +385,8 @@ export default function StarField() {
                   key={currentScene.scene}
                   className="font-mono text-xs leading-relaxed tracking-wide text-indigo-100 sm:text-sm pt-2 animate-fade-in"
                   style={{ letterSpacing: '0.03em' }}
-                >
-                  {currentScene.narration}
-                </p>
+                  dangerouslySetInnerHTML={{ __html: currentScene.narration }}
+                />
               </div>
 
               <div className="mt-3">

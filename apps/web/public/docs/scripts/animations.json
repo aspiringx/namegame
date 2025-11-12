@@ -223,7 +223,7 @@
     {
       "scene": 5,
       "description": "Explosive disruption sends stars flying in all directions. The constellation from scene 4 shatters.",
-      "narration": "But the universe can be unpredictible. Change can hurl you to faraway places.",
+      "narration": "But life can be unpredictable, hurling you to unknown places when you least expect it.",
       "sceneType": "cosmicWave",
       "cameraPosition": [250, -100, 100],
       "cameraFOV": 50,
@@ -309,7 +309,7 @@
     {
       "scene": 6,
       "description": "The HeroStar looks smaller and all background stars get dimmer. The hero star glows faintly, alone in the dark.",
-      "narration": "At times, your light feels dim, your signal quiet. Periods of reflection, and maybe loneliness.",
+      "narration": "At times, your light feels dim, your signal quiet. The energy of familiar stars seems distant, unreachable.",
       "sceneType": "dimStar",
       "cameraPosition": [-300, 300, -150],
       "cameraFOV": 50,
@@ -380,7 +380,7 @@
     {
       "scene": 7,
       "description": "A soft pulse of light and HeroStar flies quickly back to the PrimaryStars in scene 1. They fade in from the left and the first constellation fades in quickly, like going home. Warmth and color return.",
-      "narration": "But stars can travel at the speed of love, bridging space and time with just a thought.",
+      "narration": "But stars have a unique power: you can travel at the speed of love, bridging space and time with just a <i>thought</i>.",
       "sceneType": "lovePulse",
       "cameraPosition": [-300, 300, -150],
       "cameraFOV": 50,
@@ -475,7 +475,7 @@
     {
       "scene": 8,
       "description": "Camera pulls back and logo fades in with twinkling stars",
-      "narration": "Relation Star helps you discover, explore, and build relationships in your universe... at the speed of love!",
+      "narration": "What is Relation Star? A simple way to see, remember, and be with the stars in your universe... at the speed of love.",
       "sceneType": "logoReveal",
       "cameraPosition": [0, 0, 150],
       "cameraFOV": 50,

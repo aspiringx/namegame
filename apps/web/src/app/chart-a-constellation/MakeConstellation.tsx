@@ -32,7 +32,7 @@ export default function MakeConstellation() {
               </h1>
             </Link>
             <p className="mt-1 text-sm text-gray-300 sm:text-base">
-              Make a constellation
+              Chart a constellation
             </p>
           </div>
         </div>

@@ -3,7 +3,7 @@ import MakeConstellation from './MakeConstellation'
 
 export const metadata: Metadata = {
   title: 'RelationStar',
-  description: 'Make a constellation',
+  description: 'Chart a constellation',
 }
 
 // Disable static generation for this page (client-side only with Three.js)

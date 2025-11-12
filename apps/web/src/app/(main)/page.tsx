@@ -26,20 +26,30 @@ export default function Home() {
         </header>
 
         <section className="space-y-4 text-lg leading-relaxed">
-          <div className="flex flex-col pt-2 w-full sm:w-1/2 sm:mx-auto text-center">
+          <p className="text-center italic">NameGame is now Relation Star.</p>
+          <div className="flex flex-col w-full sm:mx-auto text-center space-y-4">
+            <p className="text-left mt-4">What is Relation Star?</p>
             <Link
               href="/speed-of-love"
-              className="rounded border border-cyan-400/50 bg-cyan-500/10 px-6 py-3 font-mono text-sm font-medium text-cyan-400 transition-colors hover:border-cyan-400 hover:bg-cyan-500/20"
+              className="rounded border border-cyan-400/50 bg-cyan-500/10 px-6 py-3 font-mono text-sm font-medium text-cyan-400 transition-colors hover:border-cyan-400 hover:bg-cyan-500/20 sm:w-[300px]"
             >
               ⭐ Speed of Love Intro ⭐
             </Link>
-          </div>
-          <div className="flex flex-col pt-2 w-full sm:w-1/2 sm:mx-auto text-center">
+            <p className="text-left mt-4">
+              What does it mean to chart a constellation?
+            </p>
             <Link
-              href="/make-a-constellation"
-              className="rounded border border-cyan-400/50 bg-cyan-500/10 px-6 py-3 font-mono text-sm font-medium text-cyan-400 transition-colors hover:border-cyan-400 hover:bg-cyan-500/20"
+              href="/chart-a-constellation"
+              className="rounded border border-cyan-400/50 bg-cyan-500/10 px-6 py-3 font-mono text-sm font-medium text-cyan-400 transition-colors hover:border-cyan-400 hover:bg-cyan-500/20 sm:w-[300px]"
             >
-              ⭐ Make a Constellation ⭐
+              ⭐ Chart a Constellation ⭐
+            </Link>
+            <p className="text-left mt-4">What does it mean to chart a star?</p>
+            <Link
+              href="/relation-star-demo"
+              className="rounded border border-cyan-400/50 bg-cyan-500/10 px-6 py-3 font-mono text-sm font-medium text-cyan-400 transition-colors hover:border-cyan-400 hover:bg-cyan-500/20 sm:w-[300px]"
+            >
+              ⭐ Chart a Star ⭐
             </Link>
           </div>
         </section>
