@@ -551,9 +551,9 @@ export default function Scene({
         const fovRadians = (60 * Math.PI) / 180
 
         // First calculate distance to fit constellation in HUD
-        // Target: constellation fills 65% of HUD for good framing with extra margin
+        // Target: constellation fills 95% of HUD for maximum visibility
         const hudWidthPx = Math.min(900, viewportWidth * 0.8)
-        const targetFillPercent = 0.65
+        const targetFillPercent = 0.95
 
         // Calculate distance needed to fit width and height separately, use the larger
         // FOV is vertical, need to calculate horizontal FOV based on aspect ratio
@@ -573,13 +573,13 @@ export default function Scene({
           (hudHeight * targetFillPercent * 2 * Math.tan(fovRadians / 2))
 
         // Use the larger distance to ensure both dimensions fit
-        // Add 60% safety margin and account for depth to guarantee constellation stays within HUD
+        // No safety margin - maximize constellation size
         const baseDistance =
-          Math.max(distanceForWidth, distanceForHeight, depth * 2) * 1.6
+          Math.max(distanceForWidth, distanceForHeight, depth * 2) * 1.0
 
-        // Ensure minimum distance so all stars show as dots (distance > 40)
+        // Ensure minimum distance so all stars show as dots (distance > 20)
         const maxStarRadius = 10
-        const minDistanceForPhotos = 40 + maxDimension / 2 + maxStarRadius
+        const minDistanceForPhotos = 20 + maxDimension / 2 + maxStarRadius
         const zDistance = Math.max(baseDistance, minDistanceForPhotos)
 
         // Now calculate yOffset using the calculated zDistance
@@ -588,10 +588,10 @@ export default function Scene({
 
         // Convert HUD offset to world space
         // Screen Y increases downward, World Y increases upward
-        // If HUD is BELOW viewport center (positive offset), we offset the target UP (positive Y)
-        // to make constellation appear centered in HUD
-        const adjustmentFactor = isMobile ? 1.3 : 1.15
-        const yOffset = hudOffsetPx * pixelsToWorldUnits * adjustmentFactor
+        // If HUD is BELOW viewport center (positive offset), we offset the target DOWN (negative Y)
+        // so constellation appears higher on screen and centered in HUD
+        const adjustmentFactor = isMobile ? 1.8 : 1.5
+        const yOffset = -hudOffsetPx * pixelsToWorldUnits * adjustmentFactor
 
         // Calculate the offset target point that aligns with HUD center
         const targetX = _centerX
@@ -1030,10 +1030,9 @@ export default function Scene({
           enableZoom={manualControlsEnabled}
           enablePan={false}
           enableRotate={manualControlsEnabled}
-          minDistance={30}
-          maxDistance={100}
-          enableDamping={true}
-          dampingFactor={0.05}
+          minDistance={15}
+          maxDistance={150}
+          enableDamping={false}
           rotateSpeed={0.5}
           zoomSpeed={0.8}
         />
