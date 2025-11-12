@@ -11,7 +11,7 @@ export function ConstellationLines({
   positions: [number, number, number][]
   placements: Map<string, 'inner' | 'close' | 'outer'>
 }) {
-  // Create line segments (pairs of points)
+  // Create line segments using minimum spanning tree to ensure all stars are connected
   const lineSegments = useMemo(() => {
     const segments: Array<[THREE.Vector3, THREE.Vector3]> = []
 
@@ -28,34 +28,51 @@ export function ConstellationLines({
       return segments
     }
 
-    // Create lines between charted stars that are close to each other
-    for (let i = 0; i < chartedIndices.length; i++) {
-      const starIndex = chartedIndices[i]
-      const pos1 = new THREE.Vector3(...positions[starIndex])
+    // Build minimum spanning tree using Prim's algorithm
+    // This ensures all stars are connected in a single network
+    const inTree = new Set<number>()
+    const edges: Array<{ from: number; to: number; distance: number }> = []
 
-      // Find nearest charted neighbors to connect
-      const distances = chartedIndices
-        .map((otherIndex) => ({
-          index: otherIndex,
-          distance: pos1.distanceTo(
-            new THREE.Vector3(...positions[otherIndex]),
-          ),
-        }))
-        .filter((d) => d.index !== starIndex)
-        .sort((a, b) => a.distance - b.distance)
+    // Start with first charted star
+    inTree.add(chartedIndices[0])
 
-      // Connect to 2 nearest charted neighbors
-      const connectCount = Math.min(2, distances.length)
-      for (let k = 0; k < connectCount; k++) {
-        const neighbor = distances[k]
-        // Only draw if distance is reasonable (not too far)
-        if (neighbor.distance < 30) {
-          segments.push([
-            pos1.clone(),
-            new THREE.Vector3(...positions[neighbor.index]),
-          ])
+    // Keep adding nearest star to the tree until all are connected
+    while (inTree.size < chartedIndices.length) {
+      let minDistance = Infinity
+      let bestEdge: { from: number; to: number; distance: number } | null = null
+
+      // Find the shortest edge from tree to a non-tree star
+      for (const inIndex of inTree) {
+        const pos1 = new THREE.Vector3(...positions[inIndex])
+        
+        for (const outIndex of chartedIndices) {
+          if (inTree.has(outIndex)) continue
+          
+          const pos2 = new THREE.Vector3(...positions[outIndex])
+          const distance = pos1.distanceTo(pos2)
+          
+          if (distance < minDistance) {
+            minDistance = distance
+            bestEdge = { from: inIndex, to: outIndex, distance }
+          }
         }
       }
+
+      // Add the best edge to the tree
+      if (bestEdge) {
+        edges.push(bestEdge)
+        inTree.add(bestEdge.to)
+      } else {
+        break // Safety: shouldn't happen but prevents infinite loop
+      }
+    }
+
+    // Convert edges to line segments
+    for (const edge of edges) {
+      segments.push([
+        new THREE.Vector3(...positions[edge.from]),
+        new THREE.Vector3(...positions[edge.to]),
+      ])
     }
 
     return segments

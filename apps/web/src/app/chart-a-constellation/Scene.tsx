@@ -189,16 +189,66 @@ export default function Scene({
           }
 
           const zRange = getZRange(starData.placement)
-          const theta = Math.random() * Math.PI * 2
-          const xyRadius = min + Math.random() * (max - min)
-          const zPosition =
-            zRange.min + Math.random() * (zRange.max - zRange.min)
+          
+          // Collect existing constellation positions to avoid clustering
+          const existingPositions: [number, number, number][] = []
+          newStars.forEach((star) => {
+            if (star.constellationPosition) {
+              existingPositions.push(star.constellationPosition)
+            }
+          })
 
-          const constellationPos: [number, number, number] = [
-            xyRadius * Math.cos(theta),
-            xyRadius * Math.sin(theta),
-            zPosition,
-          ]
+          // Try to find a position with good spacing (minimum 6 units apart)
+          const minDistance = 6
+          let constellationPos: [number, number, number] | null = null
+          let attempts = 0
+          const maxAttempts = 50
+
+          while (!constellationPos && attempts < maxAttempts) {
+            attempts++
+            
+            const theta = Math.random() * Math.PI * 2
+            const xyRadius = min + Math.random() * (max - min)
+            const zPosition =
+              zRange.min + Math.random() * (zRange.max - zRange.min)
+
+            const candidate: [number, number, number] = [
+              xyRadius * Math.cos(theta),
+              xyRadius * Math.sin(theta),
+              zPosition,
+            ]
+
+            // Check distance to all existing positions
+            let tooClose = false
+            for (const existing of existingPositions) {
+              const dx = candidate[0] - existing[0]
+              const dy = candidate[1] - existing[1]
+              const dz = candidate[2] - existing[2]
+              const distance = Math.sqrt(dx * dx + dy * dy + dz * dz)
+              
+              if (distance < minDistance) {
+                tooClose = true
+                break
+              }
+            }
+
+            if (!tooClose) {
+              constellationPos = candidate
+            }
+          }
+
+          // Fallback: if we couldn't find a good position after max attempts, use last candidate
+          if (!constellationPos) {
+            const theta = Math.random() * Math.PI * 2
+            const xyRadius = min + Math.random() * (max - min)
+            const zPosition =
+              zRange.min + Math.random() * (zRange.max - zRange.min)
+            constellationPos = [
+              xyRadius * Math.cos(theta),
+              xyRadius * Math.sin(theta),
+              zPosition,
+            ]
+          }
 
           newStars.set(person.id, {
             ...starData,
