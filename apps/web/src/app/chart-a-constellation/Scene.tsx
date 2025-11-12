@@ -236,10 +236,8 @@ export default function Scene({
     // Handle manual controls toggle
     if (manualControlsEnabled !== previousManualControlsEnabled.current) {
       if (manualControlsEnabled) {
-        // Switching TO manual mode: save current auto-pilot camera state
-        autoPilotCameraPos.current.copy(camera.position)
-        camera.getWorldDirection(autoPilotCameraTarget.current)
-        autoPilotCameraTarget.current.multiplyScalar(10).add(camera.position)
+        // Switching TO manual mode: camera position already saved at end of return animation
+        // No need to update camera - it's already in the correct position
       } else {
         // Switching FROM manual mode back to auto-pilot: restore saved camera state
         camera.position.copy(autoPilotCameraPos.current)
@@ -545,6 +543,12 @@ export default function Scene({
         // Camera is positioned far back on Z axis, looking at constellation center
         camera.position.set(_centerX, _centerY + yOffset, _centerZ + zDistance)
         camera.lookAt(_centerX, _centerY, _centerZ)
+        
+        // Save the final auto-pilot camera position for manual mode toggle
+        // This prevents stars from jumping when user switches to manual mode
+        autoPilotCameraPos.current.copy(camera.position)
+        autoPilotCameraTarget.current.set(_centerX, _centerY, _centerZ)
+        
         onReturnComplete()
       } else {
         // Animate return (progress < 1)
@@ -952,17 +956,17 @@ export default function Scene({
       {/* 3D HUD - follows camera */}
       <HUD3D />
 
-      {/* Orbit controls - only enabled when manual mode is active */}
-      {journeyPhase === 'returning' && manualControlsEnabled && (
+      {/* Orbit controls - always present in returning phase, but only enabled in manual mode */}
+      {journeyPhase === 'returning' && (
         <OrbitControls
+          makeDefault={false}
           target={constellationCenter.current}
-          enableZoom={true}
+          enabled={manualControlsEnabled}
+          enableZoom={manualControlsEnabled}
           enablePan={false}
-          enableRotate={true}
+          enableRotate={manualControlsEnabled}
           minDistance={30}
-          maxDistance={80}
-          minPolarAngle={Math.PI / 6}
-          maxPolarAngle={(Math.PI * 5) / 6}
+          maxDistance={100}
           enableDamping={true}
           dampingFactor={0.05}
           rotateSpeed={0.5}

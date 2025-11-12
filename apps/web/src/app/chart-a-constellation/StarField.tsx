@@ -307,7 +307,7 @@ export default function StarField() {
             } else {
               setNarratorMessage(
                 `Viewing constellation... ${chartedCount} of ${totalCount} stars charted. Proceed with your journey or 
-                turn off Auto-Pilot to manually explore.`,
+                explore with 🧑‍🚀.`,
               )
             }
           }}
@@ -379,26 +379,55 @@ export default function StarField() {
                     Navigation System
                   </span>
                 </div>
-                {/* Zoom Out button - show during journey when stars are charted */}
-                {placements.size > 0 &&
-                  placements.size < MOCK_PEOPLE.length &&
-                  (journeyPhase === 'flying' ||
-                    journeyPhase === 'approaching' ||
-                    journeyPhase === 'arrived' ||
-                    journeyPhase === 'takeoff') && (
-                    <button
-                      onClick={() => {
-                        setNarratorMessage(
-                          `Viewing constellation... ${placements.size} of ${MOCK_PEOPLE.length} stars charted.`,
-                        )
-                        setUseConstellationPositions(true)
-                        setJourneyPhase('returning')
-                      }}
-                      className="text-xs px-2 py-1 rounded border border-indigo-400/50 bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20 hover:border-indigo-400 transition-colors"
-                    >
-                      ⊙ Zoom Out
-                    </button>
+                <div className="flex items-center gap-2">
+                  {/* Mode toggle buttons - show in constellation view */}
+                  {journeyPhase === 'returning' && (
+                    <div className="flex gap-1">
+                      <button
+                        onClick={() => setManualControlsEnabled(false)}
+                        className={`px-2 py-1 rounded text-base transition-all ${
+                          !manualControlsEnabled
+                            ? 'bg-indigo-500/30 border border-indigo-400/50'
+                            : 'bg-transparent border border-transparent hover:bg-indigo-500/10'
+                        }`}
+                        title="Auto-Pilot"
+                      >
+                        🚀
+                      </button>
+                      <button
+                        onClick={() => setManualControlsEnabled(true)}
+                        className={`px-2 py-1 rounded text-base transition-all ${
+                          manualControlsEnabled
+                            ? 'bg-cyan-500/30 border border-cyan-400/50'
+                            : 'bg-transparent border border-transparent hover:bg-cyan-500/10'
+                        }`}
+                        title="Manual-Pilot"
+                      >
+                        🧑‍🚀
+                      </button>
+                    </div>
                   )}
+                  {/* Zoom Out button - show during journey when stars are charted */}
+                  {placements.size > 0 &&
+                    placements.size < MOCK_PEOPLE.length &&
+                    (journeyPhase === 'flying' ||
+                      journeyPhase === 'approaching' ||
+                      journeyPhase === 'arrived' ||
+                      journeyPhase === 'takeoff') && (
+                      <button
+                        onClick={() => {
+                          setNarratorMessage(
+                            `Viewing constellation... ${placements.size} of ${MOCK_PEOPLE.length} stars charted. Explore with 🧑‍🚀 or...`,
+                          )
+                          setUseConstellationPositions(true)
+                          setJourneyPhase('returning')
+                        }}
+                        className="text-xs px-2 py-1 rounded border border-indigo-400/50 bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20 hover:border-indigo-400 transition-colors"
+                      >
+                        ⊙ Zoom Out
+                      </button>
+                    )}
+                </div>
               </div>
               <p
                 className="font-mono text-xs leading-relaxed tracking-wide text-indigo-100 sm:text-sm pt-2"
@@ -637,7 +666,7 @@ export default function StarField() {
                       <button
                         onClick={() => {
                           setNarratorMessage(
-                            `Viewing constellation... ${placements.size} of ${MOCK_PEOPLE.length} stars charted.`,
+                            `Viewing constellation... ${placements.size} of ${MOCK_PEOPLE.length} stars charted. Explore with 🧑‍🚀 or...`,
                           )
                           setUseConstellationPositions(true)
                           setJourneyPhase('returning')
