@@ -70,6 +70,7 @@ export default function Scene({
   const previousManualControlsEnabled = useRef(manualControlsEnabled)
   const orbitControlsRef = useRef<any>(null)
   const initialPositionsGenerated = useRef(false)
+  const lastTargetStarIndex = useRef(-1)
 
   // OrbitControls is always enabled to stay in sync, but user interaction is controlled
   // by enableZoom and enableRotate props based on manualControlsEnabled
@@ -779,6 +780,12 @@ export default function Scene({
       targetStarIndex < MOCK_PEOPLE.length
     ) {
       const targetPos = new THREE.Vector3(...starPositions[targetStarIndex])
+
+      // Reset flight state when target changes (new star selected)
+      if (targetStarIndex !== lastTargetStarIndex.current) {
+        isFlying.current = false
+        lastTargetStarIndex.current = targetStarIndex
+      }
 
       // Initialize flight path when starting new journey
       const currentDist = camera.position.distanceTo(targetPos)
