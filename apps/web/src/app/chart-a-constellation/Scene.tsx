@@ -1,7 +1,6 @@
 import { useRef, useState, useMemo, useEffect } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
-import { OrbitControls } from '@react-three/drei'
 import { StarOverlay, StarData, JourneyPhase } from './types'
 import { MOCK_PEOPLE } from './mockData'
 import { getStarRadius } from './starData'
@@ -44,7 +43,7 @@ export default function Scene({
   viewportDimensions,
   manualControlsEnabled,
 }: SceneProps) {
-  const { camera, size } = useThree()
+  const { camera, size, gl } = useThree()
   const [nearestStarId, setNearestStarId] = useState<string | null>(null)
   const [texturesLoaded, setTexturesLoaded] = useState(false)
   const targetPosition = useRef(new THREE.Vector3())
@@ -68,12 +67,175 @@ export default function Scene({
   const autoPilotCameraPos = useRef(new THREE.Vector3())
   const autoPilotCameraTarget = useRef(new THREE.Vector3())
   const previousManualControlsEnabled = useRef(manualControlsEnabled)
-  const orbitControlsRef = useRef<any>(null)
   const initialPositionsGenerated = useRef(false)
   const lastTargetStarIndex = useRef(-1)
+  const manualControlsEnabledRef = useRef(manualControlsEnabled)
+  
+  // Update ref on every render so useFrame has current value
+  manualControlsEnabledRef.current = manualControlsEnabled
+  
+  // Custom camera controls state
+  const isDragging = useRef(false)
+  const previousMousePosition = useRef({ x: 0, y: 0 })
+  const cameraSpherical = useRef({ radius: 50, theta: 0, phi: Math.PI / 2 })
+  const touchStartDistance = useRef(0)
+  const initialPinchRadius = useRef(0)
 
-  // OrbitControls is always enabled to stay in sync, but user interaction is controlled
-  // by enableZoom and enableRotate props based on manualControlsEnabled
+  // Set up custom camera controls event listeners
+  useEffect(() => {
+    if (!manualControlsEnabled || journeyPhase !== 'returning') {
+      return
+    }
+
+    const canvas = gl.domElement
+    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0
+    console.log('✅ Setting up manual controls:', { isTouchDevice })
+
+    // Mobile touch handlers for pinch-to-zoom
+    const getTouchDistance = (touches: TouchList) => {
+      if (touches.length < 2) return 0
+      const dx = touches[0].clientX - touches[1].clientX
+      const dy = touches[0].clientY - touches[1].clientY
+      return Math.sqrt(dx * dx + dy * dy)
+    }
+
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 2) {
+        // Two fingers - pinch zoom
+        e.preventDefault()
+        touchStartDistance.current = getTouchDistance(e.touches)
+        initialPinchRadius.current = cameraSpherical.current.radius
+      } else if (e.touches.length === 1) {
+        // Single finger - rotation
+        e.preventDefault()
+        isDragging.current = true
+        previousMousePosition.current = {
+          x: e.touches[0].clientX,
+          y: e.touches[0].clientY,
+        }
+      }
+    }
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length === 2) {
+        // Pinch zoom
+        e.preventDefault()
+        const currentDistance = getTouchDistance(e.touches)
+        const distanceChange = touchStartDistance.current - currentDistance
+        const zoomSpeed = 0.5
+        const newRadius = Math.max(
+          15,
+          Math.min(150, initialPinchRadius.current + distanceChange * zoomSpeed)
+        )
+        console.log('🤏 Pinch zoom:', { currentDistance, distanceChange, newRadius })
+        cameraSpherical.current.radius = newRadius
+      } else if (e.touches.length === 1 && isDragging.current) {
+        // Single finger rotation
+        e.preventDefault()
+        const deltaX = e.touches[0].clientX - previousMousePosition.current.x
+        const deltaY = e.touches[0].clientY - previousMousePosition.current.y
+
+        cameraSpherical.current.theta -= deltaX * 0.005
+        cameraSpherical.current.phi = Math.max(
+          0.1,
+          Math.min(Math.PI - 0.1, cameraSpherical.current.phi + deltaY * 0.005)
+        )
+
+        previousMousePosition.current = {
+          x: e.touches[0].clientX,
+          y: e.touches[0].clientY,
+        }
+      }
+    }
+
+    const handleTouchEnd = () => {
+      isDragging.current = false
+      touchStartDistance.current = 0
+    }
+
+    // Desktop mouse handlers
+    const handlePointerDown = (e: PointerEvent) => {
+      isDragging.current = true
+      previousMousePosition.current = { x: e.clientX, y: e.clientY }
+      canvas.style.cursor = 'grabbing'
+    }
+
+    const handlePointerMove = (e: PointerEvent) => {
+      if (!isDragging.current) return
+
+      const deltaX = e.clientX - previousMousePosition.current.x
+      const deltaY = e.clientY - previousMousePosition.current.y
+
+      cameraSpherical.current.theta -= deltaX * 0.005
+      cameraSpherical.current.phi = Math.max(
+        0.1,
+        Math.min(Math.PI - 0.1, cameraSpherical.current.phi + deltaY * 0.005)
+      )
+
+      previousMousePosition.current = { x: e.clientX, y: e.clientY }
+    }
+
+    const handlePointerUp = () => {
+      isDragging.current = false
+      canvas.style.cursor = 'grab'
+    }
+
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault()
+      const zoomSpeed = 0.1
+      cameraSpherical.current.radius = Math.max(
+        15,
+        Math.min(150, cameraSpherical.current.radius + e.deltaY * zoomSpeed)
+      )
+    }
+
+    if (isTouchDevice) {
+      // Touch device - use touch events only
+      canvas.addEventListener('touchstart', handleTouchStart, { passive: false })
+      canvas.addEventListener('touchmove', handleTouchMove, { passive: false })
+      canvas.addEventListener('touchend', handleTouchEnd)
+      canvas.addEventListener('touchcancel', handleTouchEnd)
+    } else {
+      // Desktop - use pointer and wheel events
+      canvas.addEventListener('pointerdown', handlePointerDown)
+      canvas.addEventListener('pointermove', handlePointerMove)
+      canvas.addEventListener('pointerup', handlePointerUp)
+      canvas.addEventListener('pointerleave', handlePointerUp)
+      canvas.addEventListener('wheel', handleWheel, { passive: false })
+      canvas.style.cursor = 'grab'
+    }
+
+    return () => {
+      if (isTouchDevice) {
+        canvas.removeEventListener('touchstart', handleTouchStart)
+        canvas.removeEventListener('touchmove', handleTouchMove)
+        canvas.removeEventListener('touchend', handleTouchEnd)
+        canvas.removeEventListener('touchcancel', handleTouchEnd)
+      } else {
+        canvas.removeEventListener('pointerdown', handlePointerDown)
+        canvas.removeEventListener('pointermove', handlePointerMove)
+        canvas.removeEventListener('pointerup', handlePointerUp)
+        canvas.removeEventListener('pointerleave', handlePointerUp)
+        canvas.removeEventListener('wheel', handleWheel)
+        canvas.style.cursor = 'default'
+      }
+    }
+  }, [manualControlsEnabled, journeyPhase, gl.domElement])
+
+  // Initialize spherical coordinates when entering manual mode
+  useEffect(() => {
+    if (manualControlsEnabled && journeyPhase === 'returning') {
+      const target = constellationCenter.current
+      const dx = camera.position.x - target.x
+      const dy = camera.position.y - target.y
+      const dz = camera.position.z - target.z
+
+      cameraSpherical.current.radius = Math.sqrt(dx * dx + dy * dy + dz * dz)
+      cameraSpherical.current.theta = Math.atan2(dx, dz)
+      cameraSpherical.current.phi = Math.acos(Math.max(-1, Math.min(1, dy / cameraSpherical.current.radius)))
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [manualControlsEnabled, journeyPhase])
 
   // Preload all textures before rendering any stars
   const textures = useMemo(() => {
@@ -332,13 +494,8 @@ export default function Scene({
       previousManualControlsEnabled.current = manualControlsEnabled
     }
     
-    // Skip auto-pilot camera updates when manual controls are enabled
-    if (manualControlsEnabled) {
-      return
-    }
-    
     // First time: set overview position
-    if (!hasInitialized.current) {
+    if (!hasInitialized.current && !manualControlsEnabledRef.current) {
       // Position camera further back to show all stars in HUD initially
       const isMobile = viewportDimensions.width < 640
 
@@ -484,7 +641,7 @@ export default function Scene({
     }
 
     // Handle return to constellation view
-    if (journeyPhase === 'returning' && !manualControlsEnabled) {
+    if (journeyPhase === 'returning' && !manualControlsEnabledRef.current) {
       if (returnProgress.current === 0) {
         // Initialize return flight
         returnStartPos.current.copy(camera.position)
@@ -492,9 +649,9 @@ export default function Scene({
       }
 
       // Only animate if not yet complete
-      if (returnProgress.current >= 1 && returnProgress.current < 1.5) {
+      if (returnProgress.current >= 1 && returnProgress.current < 1.5 && !manualControlsEnabled) {
         // Return complete - stop animating but stay in returning phase
-        // Only call once
+        // Only call once (unless manual controls are enabled, then skip this)
         returnProgress.current = 1.5 // Lock to prevent re-calling
 
         // Calculate bounding box from stars with constellation positions only
@@ -772,6 +929,28 @@ export default function Scene({
       }
     }
 
+    // Apply manual camera controls when enabled
+    if (journeyPhase === 'returning' && manualControlsEnabledRef.current) {
+      const target = constellationCenter.current
+      const { radius, theta, phi } = cameraSpherical.current
+      
+      // Convert spherical to Cartesian coordinates
+      const targetX = target.x + radius * Math.sin(phi) * Math.sin(theta)
+      const targetY = target.y + radius * Math.cos(phi)
+      const targetZ = target.z + radius * Math.sin(phi) * Math.cos(theta)
+      
+      // Smooth damping - lerp toward target position (like OrbitControls damping)
+      const dampingFactor = 0.08 // Higher = more responsive, lower = smoother
+      camera.position.x += (targetX - camera.position.x) * dampingFactor
+      camera.position.y += (targetY - camera.position.y) * dampingFactor
+      camera.position.z += (targetZ - camera.position.z) * dampingFactor
+      
+      camera.lookAt(target)
+      
+      // Skip all auto-pilot code below
+      return
+    }
+
     // Fly to target star (only after intro phase, not during takeoff)
     if (
       journeyPhase !== 'intro' &&
@@ -1010,6 +1189,11 @@ export default function Scene({
       }
     }
 
+    // Skip overlay calculations when in manual mode to prevent flickering
+    if (manualControlsEnabledRef.current && journeyPhase === 'returning') {
+      return
+    }
+
     // Find nearest star and calculate screen positions
     let minDist = Infinity
     let nearestId: string | null = null
@@ -1056,25 +1240,6 @@ export default function Scene({
     <>
       {/* 3D HUD - follows camera */}
       <HUD3D />
-
-      {/* Orbit controls - only enabled in manual mode to prevent interference with auto-pilot */}
-      {journeyPhase === 'returning' && (
-        <OrbitControls
-          ref={orbitControlsRef}
-          makeDefault={false}
-          regress={false}
-          target={constellationCenter.current}
-          enabled={manualControlsEnabled}
-          enableZoom={manualControlsEnabled}
-          enablePan={false}
-          enableRotate={manualControlsEnabled}
-          minDistance={15}
-          maxDistance={150}
-          enableDamping={false}
-          rotateSpeed={0.5}
-          zoomSpeed={0.8}
-        />
-      )}
 
       {/* Ambient light */}
       <ambientLight intensity={0.3} />
