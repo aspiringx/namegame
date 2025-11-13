@@ -69,6 +69,7 @@ export default function Scene({
   const autoPilotCameraTarget = useRef(new THREE.Vector3())
   const previousManualControlsEnabled = useRef(manualControlsEnabled)
   const orbitControlsRef = useRef<any>(null)
+  const initialPositionsGenerated = useRef(false)
 
   // OrbitControls is always enabled to stay in sync, but user interaction is controlled
   // by enableZoom and enableRotate props based on manualControlsEnabled
@@ -111,6 +112,15 @@ export default function Scene({
     return textureMap
   }, [])
 
+  // Cleanup textures on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      textures.forEach((texture) => {
+        texture.dispose()
+      })
+    }
+  }, [textures])
+
   // Gaussian random helper for organic clustering
   const _gaussianRandom = (mean = 0, stdev = 1) => {
     const u1 = Math.random()
@@ -121,64 +131,84 @@ export default function Scene({
 
   // Generate positions if they don't exist yet
   useEffect(() => {
-    const starsArray = Array.from(stars.values())
-    const needsInitialPositions = starsArray.some((s) => !s.initialPosition)
-    const needsConstellationPositions =
-      useConstellationPositions &&
-      starsArray.some((s) => s.placement && !s.constellationPosition)
+    // Only generate initial positions once on mount
+    if (!initialPositionsGenerated.current) {
+      initialPositionsGenerated.current = true
+      
+      onUpdateStars((prevStars) => {
+        const starsArray = Array.from(prevStars.values())
+        const needsInitialPositions = starsArray.some((s) => !s.initialPosition)
+        
+        if (!needsInitialPositions) return prevStars
+        
+        const newStars = new Map(prevStars)
+        const positions: [number, number, number][] = []
+        const minDistance = 15
+        const maxAttempts = 50
 
-    if (!needsInitialPositions && !needsConstellationPositions) return
+        MOCK_PEOPLE.forEach((person) => {
+          const starData = newStars.get(person.id)!
+
+          // Generate initial position if missing
+          if (!starData.initialPosition) {
+            let attempts = 0
+            let validPosition = false
+            let newPos: [number, number, number]
+            const { min, max } = getStarRadius(undefined)
+
+            while (!validPosition && attempts < maxAttempts) {
+              const theta = Math.random() * Math.PI * 2
+              const maxPhi = Math.PI / 4
+              const phi = Math.random() * maxPhi
+              const radius = min + Math.random() * (max - min)
+
+              newPos = [
+                radius * Math.sin(phi) * Math.cos(theta),
+                -10 + radius * Math.sin(phi) * Math.sin(theta),
+                radius * Math.cos(phi),
+              ]
+
+              validPosition = positions.every((existingPos) => {
+                const dx = newPos[0] - existingPos[0]
+                const dy = newPos[1] - existingPos[1]
+                const dz = newPos[2] - existingPos[2]
+                const distance = Math.sqrt(dx * dx + dy * dy + dz * dz)
+                return distance >= minDistance
+              })
+              attempts++
+            }
+
+            positions.push(newPos!)
+            newStars.set(person.id, { ...starData, initialPosition: newPos! })
+          } else {
+            positions.push(starData.initialPosition)
+          }
+        })
+
+        return newStars
+      })
+    }
+  }, [onUpdateStars])
+
+  // Generate constellation positions when user places stars
+  useEffect(() => {
+    if (!useConstellationPositions) return
 
     onUpdateStars((prevStars) => {
+      const starsArray = Array.from(prevStars.values())
+      const needsConstellationPositions = starsArray.some(
+        (s) => s.placement && !s.constellationPosition
+      )
+
+      if (!needsConstellationPositions) return prevStars
+
       const newStars = new Map(prevStars)
-      const positions: [number, number, number][] = []
-      const minDistance = 15
-      const maxAttempts = 50
 
       MOCK_PEOPLE.forEach((person) => {
         const starData = newStars.get(person.id)!
 
-        // Generate initial position if missing
-        if (!starData.initialPosition) {
-          let attempts = 0
-          let validPosition = false
-          let newPos: [number, number, number]
-          const { min, max } = getStarRadius(undefined)
-
-          while (!validPosition && attempts < maxAttempts) {
-            const theta = Math.random() * Math.PI * 2
-            const maxPhi = Math.PI / 4
-            const phi = Math.random() * maxPhi
-            const radius = min + Math.random() * (max - min)
-
-            newPos = [
-              radius * Math.sin(phi) * Math.cos(theta),
-              -10 + radius * Math.sin(phi) * Math.sin(theta),
-              radius * Math.cos(phi),
-            ]
-
-            validPosition = positions.every((existingPos) => {
-              const dx = newPos[0] - existingPos[0]
-              const dy = newPos[1] - existingPos[1]
-              const dz = newPos[2] - existingPos[2]
-              const distance = Math.sqrt(dx * dx + dy * dy + dz * dz)
-              return distance >= minDistance
-            })
-            attempts++
-          }
-
-          positions.push(newPos!)
-          newStars.set(person.id, { ...starData, initialPosition: newPos! })
-        } else {
-          positions.push(starData.initialPosition)
-        }
-
         // Generate constellation position if placed and missing
-        if (
-          useConstellationPositions &&
-          starData.placement &&
-          !starData.constellationPosition
-        ) {
+        if (starData.placement && !starData.constellationPosition) {
           const { min, max } = getStarRadius(starData.placement)
 
           // Z-depth ranges: closer stars have higher z-values (toward camera)
@@ -259,7 +289,8 @@ export default function Scene({
 
       return newStars
     })
-  }, [stars, useConstellationPositions, onUpdateStars])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [useConstellationPositions])
 
   // Get current positions from StarData
   // During journey: ALWAYS use initialPosition
