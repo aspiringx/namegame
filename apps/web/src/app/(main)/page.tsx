@@ -14,7 +14,7 @@ export default function Home() {
       <div className="container mx-auto max-w-3xl p-8 pt-4">
         <header className="mt-2 mb-8 text-center">
           <Image
-            src="/images/logos/relationstar_dark-400x268.png?x=2"
+            src="/images/logos/relationstar_dark-400x268.png"
             alt="Relation Star logo"
             width={200}
             height={134}
