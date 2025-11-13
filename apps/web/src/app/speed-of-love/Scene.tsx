@@ -187,7 +187,6 @@ export default function Scene({ currentScene, randomSeed }: SceneProps) {
 
       // Calculate duration AFTER Theatre.js is ready and sheets are initialized
       const duration = getSceneDuration(currentScene.scene)
-      console.log(`Scene ${currentScene.scene} duration:`, duration)
 
       if (duration > 0) {
         sheet.sequence.play({ range: [0, duration] })
@@ -312,12 +311,12 @@ export default function Scene({ currentScene, randomSeed }: SceneProps) {
     if (values.wavePhase !== undefined) {
       setTheatreWavePhase(values.wavePhase)
     }
-    
+
     // Flash intensity (Scene 5)
     if (values.flashIntensity !== undefined) {
       setTheatreFlashIntensity(values.flashIntensity)
     }
-    
+
     // Logo opacity (Scene 8)
     if (values.logoOpacity !== undefined) {
       setTheatreLogoOpacity(values.logoOpacity)
@@ -348,7 +347,7 @@ export default function Scene({ currentScene, randomSeed }: SceneProps) {
     <>
       <ambientLight intensity={0.3} />
       <pointLight position={[0, 0, 0]} intensity={1} />
-      
+
       {/* Flash overlay for explosion effect (Scene 5) */}
       {theatreFlashIntensity > 0 && (
         <mesh position={[0, 0, -10]} renderOrder={999}>

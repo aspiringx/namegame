@@ -14,38 +14,50 @@ export default function Home() {
       <div className="container mx-auto max-w-3xl p-8 pt-4">
         <header className="mt-2 mb-8 text-center">
           <Image
-            src="/images/NameGame-600x267.png"
-            alt="NameGame logo"
-            width={600}
-            height={267}
-            className="mx-auto -mt-6 h-auto md:max-w-[500px]"
+            src="/images/logos/relationstar_dark-400x268.png?x=2"
+            alt="Relation Star logo"
+            width={200}
+            height={134}
+            className="mx-auto -mt-6 w-[200px] h-[134px]"
           />
           <p className="mx-auto max-w-[240px] text-xl text-gray-600 italic sm:max-w-[500px] dark:text-gray-400">
-            The relationship game that starts with a name
+            Your universe at the speed of love
           </p>
         </header>
 
         <section className="space-y-4 text-lg leading-relaxed">
-          <p>
-            NameGame is the fun, easy, non-scary, no-stress way for people in
-            groups to:
-          </p>
-          <ul className="ml-4 list-inside list-disc">
-            <li>Meet</li>
-            <li>Remember names</li>
-            <li>Get to know each other</li>
-            <li>Do stuff together</li>
-          </ul>
-          <p>
-            You don&apos;t have to be a social butterfly to break the ice or get
-            to know people. Just play.
-          </p>
+          <p className="text-center italic">NameGame is now Relation Star.</p>
+          <div className="flex flex-col w-full sm:mx-auto text-center space-y-4">
+            <p className="text-left mt-4">What is Relation Star?</p>
+            <Link
+              href="/speed-of-love"
+              className="rounded border border-cyan-400/50 bg-cyan-500/10 px-6 py-3 font-mono text-sm font-medium text-cyan-400 transition-colors hover:border-cyan-400 hover:bg-cyan-500/20 sm:w-[300px]"
+            >
+              ⭐ Speed of Love Intro ⭐
+            </Link>
+            <p className="text-left mt-4">
+              What does it mean to chart a constellation?
+            </p>
+            <Link
+              href="/chart-a-constellation"
+              className="rounded border border-cyan-400/50 bg-cyan-500/10 px-6 py-3 font-mono text-sm font-medium text-cyan-400 transition-colors hover:border-cyan-400 hover:bg-cyan-500/20 sm:w-[300px]"
+            >
+              ⭐ Chart a Constellation ⭐
+            </Link>
+            <p className="text-left mt-4">What does it mean to chart a star?</p>
+            <Link
+              href="/relation-star-demo"
+              className="rounded border border-cyan-400/50 bg-cyan-500/10 px-6 py-3 font-mono text-sm font-medium text-cyan-400 transition-colors hover:border-cyan-400 hover:bg-cyan-500/20 sm:w-[300px]"
+            >
+              ⭐ Chart a Star ⭐
+            </Link>
+          </div>
         </section>
 
         <section className="mt-8 space-y-4 text-lg leading-relaxed">
           <Image
-            src="/images/butterflies.png"
-            alt="NameGame social butterflies"
+            src="/images/logos/relationstar_icon_purple-128.png"
+            alt="Relation Star"
             width={70}
             height={70}
             className="center mx-auto h-auto w-auto"
@@ -53,8 +65,13 @@ export default function Home() {
         </section>
 
         <section className="mt-8 space-y-4 text-lg leading-relaxed">
-          <h2 className="mb-6 text-center text-3xl font-bold">How to Play</h2>
-          <p>Start with people you know.</p>
+          <h2 className="mb-6 text-center text-3xl font-bold">
+            Where to Begin
+          </h2>
+          <p>
+            Start with familiar constellations. Family, friends, or a community
+            you belong to.
+          </p>
           <ul className="ml-4 list-inside list-disc">
             <li>
               <Link
@@ -99,8 +116,8 @@ export default function Home() {
           </p>
           <p>What happens next depends on the type of group you make.</p>
           <Image
-            src="/images/butterflies.png"
-            alt="NameGame social butterflies"
+            src="/images/logos/relationstar_icon_purple-128.png"
+            alt="Relation Star"
             width={48}
             height={48}
             className="mx-auto mt-8 h-auto w-auto"
@@ -191,7 +208,7 @@ export default function Home() {
                   <i>parent / child</i> or <i>spouse / partner</i>.
                 </p>
                 <p>
-                  NameGame does the rest, connecting everyone to your{' '}
+                  Relation Star does the rest, connecting everyone to your{' '}
                   <i>shared roots</i> and showing how everyone is related.
                 </p>
                 <p>
@@ -200,8 +217,8 @@ export default function Home() {
                   their own account, etc.
                 </p>
                 <p>
-                  NameGame helps extended families stay connected, learn names,
-                  communicate, plan events, share memories, and more.
+                  Relation Star helps extended families stay connected, learn
+                  names, communicate, plan events, share memories, and more.
                 </p>
                 <button
                   type="button"
@@ -216,8 +233,8 @@ export default function Home() {
           </div>
           <p>
             <Image
-              src="/images/butterflies.png"
-              alt="NameGame social butterflies"
+              src="/images/logos/relationstar_icon_purple-128.png"
+              alt="Relation Star"
               width={48}
               height={48}
               className="mx-auto mt-12 h-auto w-auto"

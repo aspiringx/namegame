@@ -22,6 +22,7 @@ export interface StarData {
 // Journey phases
 export type JourneyPhase =
   | 'intro'
+  | 'selecting'
   | 'flying'
   | 'approaching'
   | 'arrived'
@@ -29,6 +30,7 @@ export type JourneyPhase =
   | 'takeoff'
   | 'complete'
   | 'returning'
+  | 'constellation-review'
 
 // Star overlay for 2D UI
 export interface StarOverlay {

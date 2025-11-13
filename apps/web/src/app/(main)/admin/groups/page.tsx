@@ -17,7 +17,7 @@ export default async function AdminGroupsPage() {
       <div className="mb-6 flex items-center justify-between">
         <div className="flex flex-col gap-2 pr-4">
           <h1 className="text-2xl font-bold">Parent Groups</h1>
-          <p>Top-level NameGame groups.</p>
+          <p>Top-level Relation Star groups.</p>
         </div>
         <Link
           href="/admin/groups/create"

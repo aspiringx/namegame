@@ -57,18 +57,16 @@ export const EmailTemplate = ({ children, preview }: EmailTemplateProps) => (
         <Container style={container} className="container">
           <Section style={headingSection}>
             <Heading style={h1} className="h1">
-              NameGame
+              Relation Star
               <br />
-              <span style={h2}>
-                Life is relationships
-              </span>
+              <span style={h2}>Life is relationships</span>
             </Heading>
           </Section>
           {children}
           <Hr style={hr} />
           <Section style={footer} className="footer">
             <Text className="text">
-              &copy; {new Date().getFullYear()} NameGame
+              &copy; {new Date().getFullYear()} Relation Star
             </Text>
           </Section>
         </Container>

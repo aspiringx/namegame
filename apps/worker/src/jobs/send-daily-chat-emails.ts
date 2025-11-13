@@ -1,16 +1,17 @@
-import { PrismaClient } from "@namegame/db";
-import { JobHandler } from "@namegame/queue";
+import { PrismaClient } from '@namegame/db'
+import { JobHandler } from '@namegame/queue'
 import {
   getNotificationUrl,
   getRandomNotificationText,
-} from "@namegame/notifications";
-import { nanoid } from "nanoid";
-import { Resend } from "resend";
+} from '@namegame/notifications'
+import { nanoid } from 'nanoid'
+import { Resend } from 'resend'
 
-const prisma = new PrismaClient();
-const resend = new Resend(process.env.RESEND_API_KEY);
+const prisma = new PrismaClient()
+const resend = new Resend(process.env.RESEND_API_KEY)
 const fromEmail =
-  process.env.FROM_EMAIL_NO_REPLY || "NameGame <no-reply@mail.namegame.app>";
+  process.env.FROM_EMAIL_NO_REPLY ||
+  'Relation Star <no-reply@mail.relationstar.com>'
 
 /**
  * Generate HTML email for daily chat notification
@@ -21,10 +22,10 @@ function generateEmailHtml(
   firstName: string | undefined,
   notificationTitle: string,
   notificationBody: string,
-  emoji: string
+  emoji: string,
 ): string {
-  const name = firstName || "there";
-  const year = new Date().getFullYear();
+  const name = firstName || 'there'
+  const year = new Date().getFullYear()
 
   return `
 <!DOCTYPE html>
@@ -113,7 +114,7 @@ function generateEmailHtml(
   <div class="container">
     <div class="header">
       <h1>
-        NameGame
+        Relation Star
         <br>
         <span class="tagline">Life is relationships</span>
       </h1>
@@ -132,14 +133,14 @@ function generateEmailHtml(
       <p style="margin-bottom: 8px;">
         <a href="${unsubscribeLink}" style="color: #8898aa; text-decoration: underline;">Unsubscribe</a> from daily digest emails
       </p>
-      <p style="margin: 4px 0;">NameGame</p>
+      <p style="margin: 4px 0;">Relation Star</p>
       <p style="margin: 4px 0;">Sandy, UT 84070</p>
-      <p style="margin: 4px 0;">&copy; ${year} NameGame</p>
+      <p style="margin: 4px 0;">&copy; ${year} Relation Star</p>
     </div>
   </div>
 </body>
 </html>
-  `.trim();
+  `.trim()
 }
 
 /**
@@ -149,10 +150,10 @@ function generateEmailText(
   ssoLink: string,
   unsubscribeLink: string,
   firstName: string | undefined,
-  notificationBody: string
+  notificationBody: string,
 ): string {
-  const name = firstName || "there";
-  const year = new Date().getFullYear();
+  const name = firstName || 'there'
+  const year = new Date().getFullYear()
 
   return `
 Hi ${name},
@@ -165,26 +166,26 @@ We only send this if you have new messages and no more than daily.
 
 Unsubscribe: ${unsubscribeLink}
 
-NameGame
+Relation Star
 Sandy, UT 84070
-${year} NameGame
-  `.trim();
+${year} Relation Star
+  `.trim()
 }
 
 /**
  * Generate a one-time login code for email SSO links
  */
 async function generateOneTimeLoginCode(userId: string): Promise<string> {
-  const code = nanoid(32);
+  const code = nanoid(32)
 
   await prisma.code.create({
     data: {
       userId,
       code,
     },
-  });
+  })
 
-  return code;
+  return code
 }
 
 /**
@@ -193,18 +194,18 @@ async function generateOneTimeLoginCode(userId: string): Promise<string> {
  * Only sends to users with verified emails who have unread messages
  */
 export const sendDailyChatEmails: JobHandler = async () => {
-  const startTime = Date.now();
+  const startTime = Date.now()
 
   try {
-    console.log("[DailyChatEmails] Starting daily chat email job");
+    console.log('[DailyChatEmails] Starting daily chat email job')
 
     // Find users with unread messages AND verified emails
     // Excludes messages sent by the user themselves
     const usersWithUnread = await prisma.$queryRaw<
       Array<{
-        userId: string;
-        email: string;
-        firstName: string | null;
+        userId: string
+        email: string
+        firstName: string | null
       }>
     >`
       SELECT DISTINCT 
@@ -218,42 +219,42 @@ export const sendDailyChatEmails: JobHandler = async () => {
       AND cm."authorId" != cp."userId"
       AND u.email IS NOT NULL
       AND u."emailVerified" IS NOT NULL
-    `;
+    `
 
     console.log(
-      `[DailyChatEmails] Found ${usersWithUnread.length} users with unread messages and verified emails`
-    );
+      `[DailyChatEmails] Found ${usersWithUnread.length} users with unread messages and verified emails`,
+    )
 
     if (usersWithUnread.length === 0) {
-      console.log("[DailyChatEmails] No users to notify");
-      return;
+      console.log('[DailyChatEmails] No users to notify')
+      return
     }
 
-    let totalSuccess = 0;
-    let totalFailure = 0;
+    let totalSuccess = 0
+    let totalFailure = 0
 
     // Generate random notification text once for this batch
-    const notificationText = getRandomNotificationText();
+    const notificationText = getRandomNotificationText()
     console.log(
-      `[DailyChatEmails] Using notification text: "${notificationText.title}" / "${notificationText.body}"`
-    );
+      `[DailyChatEmails] Using notification text: "${notificationText.title}" / "${notificationText.body}"`,
+    )
 
     // Extract emoji from the body (first emoji before the text)
-    const emojiMatch = notificationText.body.match(/^([\p{Emoji}]+)/u);
-    const emoji = emojiMatch ? emojiMatch[1].charAt(0) : "💬";
+    const emojiMatch = notificationText.body.match(/^([\p{Emoji}]+)/u)
+    const emoji = emojiMatch ? emojiMatch[1].charAt(0) : '💬'
 
     // Send email to each user
     for (const { userId, email, firstName } of usersWithUnread) {
       try {
         // Generate one-time login code for SSO
-        const loginCode = await generateOneTimeLoginCode(userId);
+        const loginCode = await generateOneTimeLoginCode(userId)
         // Use centralized URL helper (falls back to NEXT_PUBLIC_APP_URL in worker context)
         const ssoUrl = getNotificationUrl(
-          `/one-time-login/${loginCode}?openChat=true`
-        );
+          `/one-time-login/${loginCode}?openChat=true`,
+        )
         const unsubscribeUrl = getNotificationUrl(
-          `/one-time-login/${loginCode}?emailUnsubscribe=true`
-        );
+          `/one-time-login/${loginCode}?emailUnsubscribe=true`,
+        )
 
         // Generate email HTML and text
         const emailHtml = generateEmailHtml(
@@ -262,15 +263,15 @@ export const sendDailyChatEmails: JobHandler = async () => {
           firstName || undefined,
           notificationText.title,
           notificationText.body,
-          emoji
-        );
+          emoji,
+        )
 
         const emailText = generateEmailText(
           ssoUrl,
           unsubscribeUrl,
           firstName || undefined,
-          notificationText.body
-        );
+          notificationText.body,
+        )
 
         // Send via Resend
         await resend.emails.send({
@@ -279,24 +280,24 @@ export const sendDailyChatEmails: JobHandler = async () => {
           subject: `${emoji} ${notificationText.title} ${emoji}`,
           html: emailHtml,
           text: emailText,
-        });
+        })
 
-        totalSuccess++;
-        console.log(`[DailyChatEmails] Email sent to ${email}`);
+        totalSuccess++
+        console.log(`[DailyChatEmails] Email sent to ${email}`)
       } catch (error) {
-        console.error(`[DailyChatEmails] Error for user ${userId}: ${error}`);
-        totalFailure++;
+        console.error(`[DailyChatEmails] Error for user ${userId}: ${error}`)
+        totalFailure++
       }
     }
 
-    const duration = Date.now() - startTime;
+    const duration = Date.now() - startTime
     console.log(
-      `[DailyChatEmails] Completed in ${duration}ms. Sent: ${totalSuccess}, Failed: ${totalFailure}`
-    );
+      `[DailyChatEmails] Completed in ${duration}ms. Sent: ${totalSuccess}, Failed: ${totalFailure}`,
+    )
   } catch (error) {
-    console.error(`[DailyChatEmails] Job failed: ${error}`);
-    throw error;
+    console.error(`[DailyChatEmails] Job failed: ${error}`)
+    throw error
   } finally {
-    await prisma.$disconnect();
+    await prisma.$disconnect()
   }
-};
+}

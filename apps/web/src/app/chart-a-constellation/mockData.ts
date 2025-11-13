@@ -22,7 +22,7 @@ export const MOCK_PEOPLE: Person[] = [
   },
   {
     id: '4',
-    name: 'Liam O\'Brien',
+    name: 'Noah Kim',
     photo: '/images/chart-your-stars-demo/profile-pics/person-04-male.jpg',
   },
   {
@@ -52,7 +52,7 @@ export const MOCK_PEOPLE: Person[] = [
   },
   {
     id: '10',
-    name: 'Noah Kim',
+    name: "Liam O'Brien",
     photo: '/images/chart-your-stars-demo/profile-pics/person-10-male.jpg',
   },
   {

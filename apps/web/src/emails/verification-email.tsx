@@ -11,24 +11,24 @@ export const VerificationEmail = ({
   confirmLink,
   firstName,
 }: VerificationEmailProps) => (
-  <EmailTemplate preview="Confirm your NameGame email address">
+  <EmailTemplate preview="Confirm your Relation Star email address">
     <Section>
       <Text style={text} className="text">
         {'Hi ' + firstName + ',' || 'Hi,'}
       </Text>
       <Text style={text} className="text">
-        You&apos;ve joined a NameGame group! Please click this link to verify
-        your email address and unlock features.
+        You&apos;ve joined a Relation Star group! Please click this link to
+        verify your email address and unlock features.
       </Text>
       <Button style={button} href={confirmLink} className="button text-center">
         Verify Email
       </Button>
       <Text style={text} className="text bg-yellow-100 p-2 font-bold">
         NOTICE: Be sure to open this link in the same browser you used to save
-        this email address in your NameGame user profile.
+        this email address in your Relation Star user profile.
       </Text>
       <Text style={text} className="text">
-        If you did not sign up for NameGame, please ignore this email.
+        If you did not sign up for Relation Star, please ignore this email.
       </Text>
     </Section>
   </EmailTemplate>
@@ -50,15 +50,15 @@ export const getVerificationEmailText = (
 ) => `
 Hi ${firstName || ''},
 
-Thanks for signing up for NameGame! Please verify your email address by visiting this link:
+Thanks for signing up for Relation Star! Please verify your email address by visiting this link:
 ${confirmLink}
 
 NOTICE: Be sure to open this link in the same browser you used to save
-this email address in your NameGame user profile.
+this email address in your Relation Star user profile.
 
-If you did not sign up for NameGame, please ignore this email.
+If you did not sign up for Relation Star, please ignore this email.
 
-${new Date().getFullYear()} NameGame
+${new Date().getFullYear()} Relation Star
 `
 
 const text = {

@@ -24,14 +24,14 @@ const inter = localFont({
 })
 
 export const metadata: Metadata = {
-  applicationName: 'NameGame',
-  title: 'NameGame',
+  applicationName: 'Relation Star',
+  title: 'Relation Star',
   description: 'Life is relationships',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'NameGame',
+    title: 'Relation Star',
     startupImage: [
       // Light mode splash screens
       {
