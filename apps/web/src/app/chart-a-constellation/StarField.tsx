@@ -284,6 +284,7 @@ export default function StarField() {
           targetStarIndex={targetStarIndex}
           previousStarIndex={previousStarIndex}
           viewportDimensions={viewportDimensions}
+          layoutMeasurements={layoutMeasurements}
           onApproaching={(name: string) => {
             setNarratorMessage(`Approaching ${name}...`)
             setJourneyPhase('approaching')
@@ -321,6 +322,7 @@ export default function StarField() {
       {journeyPhase === 'returning' && (
         <div className="fixed right-4 top-4 sm:right-6 sm:top-6 z-20">
           <button
+            data-testid="manual-controls-toggle"
             onClick={() => {
               // Simply toggle manual controls - Scene.tsx handles camera state
               setManualControlsEnabled(!manualControlsEnabled)
@@ -380,33 +382,6 @@ export default function StarField() {
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  {/* Mode toggle buttons - show in constellation view */}
-                  {journeyPhase === 'returning' && (
-                    <div className="flex gap-1">
-                      <button
-                        onClick={() => setManualControlsEnabled(false)}
-                        className={`px-2 py-1 rounded text-base transition-all ${
-                          !manualControlsEnabled
-                            ? 'bg-indigo-500/30 border border-indigo-400/50'
-                            : 'bg-transparent border border-transparent hover:bg-indigo-500/10'
-                        }`}
-                        title="Auto-Pilot"
-                      >
-                        🚀
-                      </button>
-                      <button
-                        onClick={() => setManualControlsEnabled(true)}
-                        className={`px-2 py-1 rounded text-base transition-all ${
-                          manualControlsEnabled
-                            ? 'bg-cyan-500/30 border border-cyan-400/50'
-                            : 'bg-transparent border border-transparent hover:bg-cyan-500/10'
-                        }`}
-                        title="Manual-Pilot"
-                      >
-                        🧑‍🚀
-                      </button>
-                    </div>
-                  )}
                   {/* Zoom Out button - show during journey when stars are charted */}
                   {placements.size > 0 &&
                     placements.size < MOCK_PEOPLE.length &&
@@ -415,6 +390,7 @@ export default function StarField() {
                       journeyPhase === 'arrived' ||
                       journeyPhase === 'takeoff') && (
                       <button
+                        data-testid="zoom-out-button"
                         onClick={() => {
                           setNarratorMessage(
                             `Viewing constellation... ${placements.size} of ${MOCK_PEOPLE.length} stars charted. Explore with 🧑‍🚀 or...`,
@@ -476,6 +452,7 @@ export default function StarField() {
                         return (
                           <button
                             key={person.id}
+                            data-testid={`person-card-${person.id}`}
                             onClick={() => {
                               const newSelection = new Set(selectedStarIds)
                               if (isSelected) {
@@ -513,18 +490,21 @@ export default function StarField() {
               {journeyPhase === 'arrived' && (
                 <div className="mt-3 flex gap-2">
                   <button
+                    data-testid="placement-close"
                     onClick={() => handlePlacePerson('inner')}
                     className="flex-1 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg transition-colors hover:bg-indigo-700 active:bg-indigo-800"
                   >
                     Close
                   </button>
                   <button
+                    data-testid="placement-near"
                     onClick={() => handlePlacePerson('close')}
                     className="flex-1 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg transition-colors hover:bg-indigo-700 active:bg-indigo-800"
                   >
                     Near
                   </button>
                   <button
+                    data-testid="placement-far"
                     onClick={() => handlePlacePerson('outer')}
                     className="flex-1 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg transition-colors hover:bg-indigo-700 active:bg-indigo-800"
                   >
@@ -551,6 +531,7 @@ export default function StarField() {
                   )}
                   {/* Proceed button */}
                   <button
+                    data-testid="proceed-button"
                     onClick={
                       journeyPhase === 'placed'
                         ? handleProceedAfterPlacement
@@ -664,6 +645,7 @@ export default function StarField() {
                         ✦ Review
                       </button>
                       <button
+                        data-testid="zoom-out-after-placement"
                         onClick={() => {
                           setNarratorMessage(
                             `Viewing constellation... ${placements.size} of ${MOCK_PEOPLE.length} stars charted. Explore with 🧑‍🚀 or...`,
