@@ -159,7 +159,7 @@ export function useManualCamera({
 
       const handleWheel = (e: WheelEvent) => {
         e.preventDefault()
-        const zoomSpeed = 0.001
+        const zoomSpeed = 0.05
         cameraSpherical.current.radius += e.deltaY * zoomSpeed
         cameraSpherical.current.radius = Math.max(
           10,

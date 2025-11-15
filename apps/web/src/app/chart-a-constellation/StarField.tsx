@@ -9,6 +9,7 @@ import { initializeStars } from './starData'
 import Scene from './Scene'
 
 export default function StarField() {
+  const [groupName, _] = useState('Hypothetical Group')
   const [_overlays, setOverlays] = useState<StarOverlay[]>([])
   const [useConstellationPositions, setUseConstellationPositions] =
     useState(false)
@@ -122,7 +123,7 @@ export default function StarField() {
     if (journeyPhase === 'intro') {
       // Multi-step intro messages
       const introMessages = [
-        `Hi Mindy, welcome to the Hypothetical Group star cluster!`,
+        `Hi Mindy, welcome to the  ${groupName} star cluster!`,
         `Our sensors vaguely detect ${MOCK_PEOPLE.length} stars you may (or may not) know.`,
         `<b>Your mission:</b> Chart the <i>current position</i> of stars in this cluster, in relation to you, to make a constellation.`,
         `Positions:<br /><br /><b>• Close</b>: Close friend, family<br /><b>• Near</b>: Passive friend, acquaintance<br /><b>• Far</b>: Unknown, distant`,
@@ -231,14 +232,12 @@ export default function StarField() {
       const unchartedCount = MOCK_PEOPLE.length - placedCount
       if (unchartedCount > 0) {
         setNarratorMessage(
-          `You've charted ${placedCount} stars! ${unchartedCount} 
-          remain${
-            unchartedCount === 1 ? 's' : ''
-          } uncharted. Continue your journey, review stars, or zoom out to see your current constellation.`,
+          `You've charted ${placedCount} of ${unchartedCount} stars!
+          Continue or zoom out to see your constellation.`,
         )
       } else {
         setNarratorMessage(
-          `Journey complete! You've charted all ${MOCK_PEOPLE.length} stars in your constellation.`,
+          `Journey complete! You've charted all ${MOCK_PEOPLE.length} stars.`,
         )
       }
       setJourneyPhase('complete')
@@ -307,8 +306,8 @@ export default function StarField() {
               )
             } else {
               setNarratorMessage(
-                `Viewing constellation... ${chartedCount} of ${totalCount} stars charted. Proceed with your journey or 
-                explore with 🧑‍🚀.`,
+                `${chartedCount} of ${totalCount} stars charted. Proceed or 
+                explore with 🧑‍🚀 manual controls.`,
               )
             }
           }}
@@ -418,7 +417,7 @@ export default function StarField() {
                         data-testid="zoom-out-button"
                         onClick={() => {
                           setNarratorMessage(
-                            `Viewing constellation... ${placements.size} of ${MOCK_PEOPLE.length} stars charted. Explore with 🧑‍🚀 or...`,
+                            `Viewing constellation... ${placements.size} of ${MOCK_PEOPLE.length} stars charted.`,
                           )
                           setUseConstellationPositions(true)
                           setJourneyPhase('returning')
