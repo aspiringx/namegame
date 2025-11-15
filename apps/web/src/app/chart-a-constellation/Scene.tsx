@@ -509,15 +509,20 @@ export default function Scene({
       }
     }
 
-    // Reset return progress when leaving constellation view
+    // Simple approach: reset return progress whenever we're NOT in returning phase
+    // This ensures fresh calculation every time we enter returning
     if (journeyPhase !== 'returning' && returnProgress.current > 0) {
       returnProgress.current = 0
     }
 
     // Handle return to constellation view
     if (journeyPhase === 'returning' && !manualControlsEnabledRef.current) {
-      if (returnProgress.current === 0) {
-        // Initialize return flight
+      if (returnProgress.current === 0 || returnProgress.current >= 1.5) {
+        // Initialize return flight (first time or re-entering after visiting star)
+        console.log(
+          '🔄 Initializing return flight, returnProgress was:',
+          returnProgress.current,
+        )
         returnStartPos.current.copy(camera.position)
         returnProgress.current = 0.001 // Start slightly above 0
       }
