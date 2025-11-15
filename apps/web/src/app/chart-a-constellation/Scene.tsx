@@ -461,7 +461,7 @@ export default function Scene({
           takeoffStartPos.current.copy(camera.position)
         }
 
-        takeoffProgress.current += 0.0225 // Takeoff speed (1.5x faster for snappier feel)
+        takeoffProgress.current += 0.04 // Takeoff speed
       }
 
       if (takeoffProgress.current >= 1) {
@@ -720,29 +720,22 @@ export default function Scene({
           journeyPhase === 'approaching' ||
           journeyPhase === 'arrived')
       ) {
-        // Variable speed: different behavior for first flight vs subsequent flights
+        // Flight speed tiers based on distance to target star
+        // (slower when closer for smooth arrival)
         let baseSpeed
-
-        if (initialFlightDistance.current > 40) {
-          // First flight from intro - start fast, slow down as photos become visible
-          baseSpeed =
-            currentDist < 15
-              ? 0.006 // Slow final approach (1.5x)
-              : currentDist < 25
-              ? 0.015 // Medium approach (1.5x)
-              : currentDist < 50
-              ? 0.03 // Fast when photos visible (1.5x)
-              : 0.06 // Very fast when far away (1.5x)
+        if (currentDist < 15) {
+          baseSpeed = 0.05 // Final approach to star
+        } else if (currentDist < 25) {
+          baseSpeed = 0.06 // Approaching star
+        } else if (currentDist < 40) {
+          baseSpeed = 0.075 // Medium distance flight
         } else {
-          // Subsequent flights between stars - faster speeds
-          baseSpeed =
-            currentDist < 15
-              ? 0.009 // Final approach (1.5x)
-              : currentDist < 25
-              ? 0.0225 // Approach speed (1.5x)
-              : currentDist < 40
-              ? 0.0375 // Medium speed (1.5x)
-              : 0.0525 // Fast initial flight (1.5x)
+          baseSpeed = 0.105 // Far distance flight
+        }
+
+        // Slow down initial flight from intro (longer distance, more dramatic)
+        if (initialFlightDistance.current > 40) {
+          baseSpeed *= 0.7
         }
 
         flightProgress.current = Math.min(1, flightProgress.current + baseSpeed)
