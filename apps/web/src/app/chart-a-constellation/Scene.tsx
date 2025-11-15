@@ -29,6 +29,7 @@ interface SceneProps {
   viewportDimensions: { width: number; height: number }
   layoutMeasurements: { headerHeight: number; navPanelHeight: number }
   manualControlsEnabled: boolean
+  shouldResetCameraRef: React.MutableRefObject<boolean>
 }
 
 export default function Scene({
@@ -46,6 +47,7 @@ export default function Scene({
   viewportDimensions,
   layoutMeasurements,
   manualControlsEnabled,
+  shouldResetCameraRef,
 }: SceneProps) {
   const { camera, size } = useThree()
   const { calculateSphericalForConstellation } = useCameraPositioning()
@@ -509,8 +511,13 @@ export default function Scene({
       }
     }
 
-    // Simple approach: reset return progress whenever we're NOT in returning phase
-    // This ensures fresh calculation every time we enter returning
+    // Check if we need to reset camera (signaled by state machine)
+    if (shouldResetCameraRef.current && journeyPhase === 'returning') {
+      returnProgress.current = 0
+      shouldResetCameraRef.current = false
+    }
+
+    // Reset return progress when leaving constellation view
     if (journeyPhase !== 'returning' && returnProgress.current > 0) {
       returnProgress.current = 0
     }
@@ -518,11 +525,7 @@ export default function Scene({
     // Handle return to constellation view
     if (journeyPhase === 'returning' && !manualControlsEnabledRef.current) {
       if (returnProgress.current === 0 || returnProgress.current >= 1.5) {
-        // Initialize return flight (first time or re-entering after visiting star)
-        console.log(
-          '🔄 Initializing return flight, returnProgress was:',
-          returnProgress.current,
-        )
+        // Initialize return flight
         returnStartPos.current.copy(camera.position)
         returnProgress.current = 0.001 // Start slightly above 0
       }
