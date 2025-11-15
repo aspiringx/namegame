@@ -382,13 +382,38 @@ export default function StarField() {
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  {/* Zoom Out button - show during journey when stars are charted */}
+                  {/* Auto-Pilot/Manual toggle - show when in returning mode */}
+                  {journeyPhase === 'returning' && placements.size > 0 && (
+                    <>
+                      <button
+                        onClick={() => setManualControlsEnabled(false)}
+                        className={`text-base px-2 py-1 rounded border transition-colors ${
+                          !manualControlsEnabled
+                            ? 'border-indigo-400 bg-indigo-500/40 text-indigo-100 shadow-sm'
+                            : 'border-indigo-400/50 bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20 hover:border-indigo-400'
+                        }`}
+                        title="Auto-Pilot"
+                      >
+                        🚀
+                      </button>
+                      <button
+                        onClick={() => setManualControlsEnabled(true)}
+                        className={`text-base px-2 py-1 rounded border transition-colors ${
+                          manualControlsEnabled
+                            ? 'border-indigo-400 bg-indigo-500/40 text-indigo-100 shadow-sm'
+                            : 'border-indigo-400/50 bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20 hover:border-indigo-400'
+                        }`}
+                        title="Manual"
+                      >
+                        🧑‍🚀
+                      </button>
+                    </>
+                  )}
+
+                  {/* Zoom Out button - show only when arrived at a star */}
                   {placements.size > 0 &&
                     placements.size < MOCK_PEOPLE.length &&
-                    (journeyPhase === 'flying' ||
-                      journeyPhase === 'approaching' ||
-                      journeyPhase === 'arrived' ||
-                      journeyPhase === 'takeoff') && (
+                    journeyPhase === 'arrived' && (
                       <button
                         data-testid="zoom-out-button"
                         onClick={() => {
