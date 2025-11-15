@@ -85,10 +85,10 @@ export default function StarField() {
       initialNavPanelHeight.current = currentNavPanelHeight
     }
 
-    // Use initial height to prevent HUD jumping when nav panel text changes
+    // Use current height for accurate HUD positioning
     const measurements = {
       headerHeight: headerBottom,
-      navPanelHeight: initialNavPanelHeight.current || currentNavPanelHeight,
+      navPanelHeight: currentNavPanelHeight,
     }
     setLayoutMeasurements(measurements)
   }, [])

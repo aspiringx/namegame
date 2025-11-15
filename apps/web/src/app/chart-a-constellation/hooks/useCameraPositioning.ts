@@ -11,12 +11,11 @@ interface LayoutMeasurements {
   navPanelHeight: number
 }
 
-interface CameraPosition {
-  position: THREE.Vector3
-  lookAt: THREE.Vector3
-  constellationCenter: THREE.Vector3
-  geometricCenter: THREE.Vector3
-  yOffsetWorld: number  // Y offset to translate constellation for HUD centering
+interface SphericalPosition {
+  radius: number // Distance from target
+  theta: number // Horizontal angle (radians)
+  phi: number // Vertical angle from Y axis (radians)
+  target: THREE.Vector3 // Point to orbit around
 }
 
 /**
@@ -25,17 +24,20 @@ interface CameraPosition {
 export function useCameraPositioning() {
   const calculateConstellationBounds = (
     stars: Map<string, StarData>,
-    starPositions: [number, number, number][]
+    starPositions: [number, number, number][],
   ) => {
-    let minX = Infinity, maxX = -Infinity
-    let minY = Infinity, maxY = -Infinity
-    let minZ = Infinity, maxZ = -Infinity
+    let minX = Infinity,
+      maxX = -Infinity
+    let minY = Infinity,
+      maxY = -Infinity
+    let minZ = Infinity,
+      maxZ = -Infinity
     let placedStarCount = 0
 
     starPositions.forEach((pos, index) => {
       const starId = Array.from(stars.keys())[index]
       const starData = stars.get(starId)
-      
+
       // Only include stars with constellation positions
       if (starData?.constellationPosition) {
         minX = Math.min(minX, pos[0])
@@ -63,13 +65,13 @@ export function useCameraPositioning() {
       center: new THREE.Vector3(centerX, centerY, centerZ),
       dimensions: { width, height, depth },
       maxDimension: Math.max(width, height, depth),
-      placedStarCount
+      placedStarCount,
     }
   }
 
   const calculateHUDBounds = (
     viewportDimensions: ViewportDimensions,
-    layoutMeasurements: LayoutMeasurements
+    layoutMeasurements: LayoutMeasurements,
   ) => {
     const { width: viewportWidth, height: viewportHeight } = viewportDimensions
     const { headerHeight, navPanelHeight } = layoutMeasurements
@@ -88,7 +90,6 @@ export function useCameraPositioning() {
     const hudCenterY = topPosition + hudHeight / 2
     const viewportCenterY = viewportHeight / 2
     const hudOffsetPx = hudCenterY - viewportCenterY
-
     const hudWidthPx = Math.min(900, viewportWidth * 0.8)
 
     return {
@@ -97,90 +98,94 @@ export function useCameraPositioning() {
       hudOffsetPx,
       isMobile,
       viewportWidth,
-      viewportHeight
+      viewportHeight,
     }
   }
 
-  const positionCameraForConstellation = (
+  const calculateSphericalForConstellation = (
     stars: Map<string, StarData>,
     starPositions: [number, number, number][],
     viewportDimensions: ViewportDimensions,
-    layoutMeasurements: LayoutMeasurements
-  ): CameraPosition | null => {
+    layoutMeasurements: LayoutMeasurements,
+  ): SphericalPosition | null => {
     const bounds = calculateConstellationBounds(stars, starPositions)
     if (!bounds) {
       // No stars placed yet - return default position
       return {
-        position: new THREE.Vector3(0, 0, 25),
-        lookAt: new THREE.Vector3(0, 0, 0),
-        constellationCenter: new THREE.Vector3(0, 0, 0),
-        geometricCenter: new THREE.Vector3(0, 0, 0),
-        yOffsetWorld: 0
+        radius: 25,
+        theta: 0,
+        phi: Math.PI / 2, // Looking straight ahead
+        target: new THREE.Vector3(0, 0, 0),
       }
     }
 
     const hud = calculateHUDBounds(viewportDimensions, layoutMeasurements)
-    const { center, dimensions, maxDimension } = bounds
+    const { dimensions, maxDimension } = bounds
     const { width, height, depth } = dimensions
 
-    console.log('🔍 HUD Calculation:', {
-      viewportHeight: viewportDimensions.height,
-      headerHeight: layoutMeasurements.headerHeight,
-      navPanelHeight: layoutMeasurements.navPanelHeight,
-      availableSpace: viewportDimensions.height - layoutMeasurements.headerHeight - layoutMeasurements.navPanelHeight,
-      hudHeight: hud.hudHeight,
-      hudOffsetPx: hud.hudOffsetPx
-    })
-
     const fovRadians = (60 * Math.PI) / 180
-    const targetFillPercent = 0.75  // Reduced to ensure stars fit with margin
+    const targetFillPercent = 0.75
 
-    // Calculate distance to fit constellation within HUD bounds
-    // Use HUD dimensions, not viewport dimensions
+    // First, calculate initial Z distance to fit constellation in viewport
     const aspectRatio = hud.viewportWidth / hud.viewportHeight
     const horizontalFov = 2 * Math.atan(Math.tan(fovRadians / 2) * aspectRatio)
 
-    // Distance needed to fit width within HUD width
-    const hudWidthWorld = hud.hudWidthPx / hud.viewportWidth * 2 * Math.tan(horizontalFov / 2)
-    const distanceForWidth = (width / (hudWidthWorld * targetFillPercent))
+    // Calculate world size at distance = 1
+    const viewportHeightWorldAt1 = 2 * Math.tan(fovRadians / 2)
+    const viewportWidthWorldAt1 = 2 * Math.tan(horizontalFov / 2)
 
-    // Distance needed to fit height within HUD height  
-    const hudHeightWorld = hud.hudHeight / hud.viewportHeight * 2 * Math.tan(fovRadians / 2)
-    const distanceForHeight = (height / (hudHeightWorld * targetFillPercent))
+    // HUD size as fraction of viewport
+    const hudHeightFraction = hud.hudHeight / hud.viewportHeight
+    const hudWidthFraction = hud.hudWidthPx / hud.viewportWidth
 
-    const baseDistance = Math.max(distanceForWidth, distanceForHeight, depth * 2)
+    // Distance needed to fit constellation in HUD
+    const distanceForWidth =
+      width / (viewportWidthWorldAt1 * hudWidthFraction * targetFillPercent)
+    const distanceForHeight =
+      height / (viewportHeightWorldAt1 * hudHeightFraction * targetFillPercent)
+
+    const baseDistance = Math.max(
+      distanceForWidth,
+      distanceForHeight,
+      depth * 2,
+    )
 
     // Ensure minimum distance so stars show as photos
     const maxStarRadius = 10
     const minDistanceForPhotos = 20 + maxDimension / 2 + maxStarRadius
     const zDistance = Math.max(baseDistance, minDistanceForPhotos)
 
-    // Calculate Y offset for HUD centering
+    // Calculate Y offset to center constellation in HUD
+    // When camera at (0, Y, Z) looks at (0, 0, 0), the origin projects to viewport center
+    // To make origin appear at HUD center instead, offset camera Y by HUD's offset
     const worldHeightAtDistance = 2 * zDistance * Math.tan(fovRadians / 2)
     const pixelsToWorldUnits = worldHeightAtDistance / hud.viewportHeight
-    const yOffsetWorld = hud.hudOffsetPx * pixelsToWorldUnits
 
-    // Apply Y offset to camera and lookAt (constellation stays at origin)
-    const cameraX = 0
-    const cameraY = yOffsetWorld  // Move camera to account for HUD offset
-    const cameraZ = zDistance
+    // If HUD center is above viewport center (negative hudOffsetPx),
+    // move camera UP (positive Y) so we look down at origin to see it in HUD
+    // Negate because: hudOffsetPx negative → camera Y positive
+    // Multiply by 1.3 to fine-tune centering
+    const yOffsetWorld = -hud.hudOffsetPx * pixelsToWorldUnits * 1.3
 
-    const lookAtX = 0
-    const lookAtY = yOffsetWorld  // Look at same Y as camera to keep constellation centered
-    const lookAtZ = 0
+    // Target is constellation origin (0, 0, 0)
+    // Camera at (0, yOffsetWorld, zDistance) looking at (0, 0, 0)
+    const target = new THREE.Vector3(0, 0, 0)
 
-    return {
-      position: new THREE.Vector3(cameraX, cameraY, cameraZ),
-      lookAt: new THREE.Vector3(lookAtX, lookAtY, lookAtZ),
-      constellationCenter: new THREE.Vector3(0, 0, 0),
-      geometricCenter: new THREE.Vector3(0, 0, 0),
-      yOffsetWorld  // Return for logging purposes
-    }
+    // Calculate spherical coords from camera position relative to target
+    const dx = 0
+    const dy = yOffsetWorld
+    const dz = zDistance
+
+    const radius = Math.sqrt(dx * dx + dy * dy + dz * dz)
+    const theta = Math.atan2(dx, dz) // 0 (looking down +Z axis)
+    const phi = Math.acos(dy / radius) // Angle from +Y axis
+
+    return { radius, theta, phi, target }
   }
 
   return {
-    positionCameraForConstellation,
+    calculateSphericalForConstellation,
     calculateConstellationBounds,
-    calculateHUDBounds
+    calculateHUDBounds,
   }
 }
