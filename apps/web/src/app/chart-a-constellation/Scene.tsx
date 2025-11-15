@@ -825,24 +825,8 @@ export default function Scene({
         // Complete flight when reached
         if (flightProgress.current >= 1) {
           isFlying.current = false
-
-          // Apply visual correction to center star in HUD (same for all screen sizes)
-          const visualCorrectionPx = -65
-          const fovRadians = (60 * Math.PI) / 180
-          const starDistance = 5.5
-          const worldHeightAtStarDistance =
-            2 * starDistance * Math.tan(fovRadians / 2)
-          const pixelsToWorldUnits =
-            worldHeightAtStarDistance / viewportDimensions.height
-          const yAdjustment = visualCorrectionPx * pixelsToWorldUnits
-
-          const finalLookAt = new THREE.Vector3(
-            targetPos.x,
-            targetPos.y + yAdjustment,
-            targetPos.z,
-          )
-
-          camera.lookAt(finalLookAt)
+          // Use the same finalTarget from flight (already has correction applied)
+          camera.lookAt(finalTarget)
           camera.rotation.z = 0 // Reset roll
         }
       } else if (journeyPhase !== 'flying' && journeyPhase !== 'approaching') {
@@ -854,6 +838,7 @@ export default function Scene({
       if (
         !isFlying.current &&
         currentDist > 0.1 &&
+        journeyPhase !== 'approaching' &&
         journeyPhase !== 'arrived' &&
         journeyPhase !== 'placed' &&
         journeyPhase !== 'complete' &&

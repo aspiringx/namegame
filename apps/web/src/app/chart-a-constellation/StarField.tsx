@@ -373,7 +373,7 @@ export default function StarField() {
             <div className="absolute right-0 bottom-0 h-1 w-full bg-gradient-to-l from-indigo-500 via-cyan-400 to-indigo-500"></div>
 
             {/* Content */}
-            <div className="relative px-4 py-3 sm:px-6 sm:py-4">
+            <div className="relative px-4 py-3 sm:px-6 sm:py-4 min-h-[120px]">
               <div className="mb-1 flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <div className="h-2 w-2 animate-pulse rounded-full bg-cyan-400"></div>
