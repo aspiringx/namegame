@@ -501,7 +501,7 @@ export default function StarField() {
                             <img
                               src={person.photo}
                               alt={person.name}
-                              className="w-10 h-10 rounded-full object-cover"
+                              className="w-14 h-14 rounded-full object-cover"
                             />
                             <span className="text-xs text-left text-white flex-1">
                               {person.name}
@@ -815,7 +815,7 @@ export default function StarField() {
                             <img
                               src={person.photo}
                               alt={person.name}
-                              className="w-8 h-8 rounded-full object-cover"
+                              className="w-14 h-14 rounded-full object-cover"
                             />
                             <span className="text-xs text-white flex-1 text-left">
                               {person.name}
@@ -871,7 +871,7 @@ export default function StarField() {
                             <img
                               src={person.photo}
                               alt={person.name}
-                              className="w-8 h-8 rounded-full object-cover"
+                              className="w-14 h-14 rounded-full object-cover"
                             />
                             <span className="text-xs text-white flex-1 text-left">
                               {person.name}
@@ -927,7 +927,7 @@ export default function StarField() {
                             <img
                               src={person.photo}
                               alt={person.name}
-                              className="w-8 h-8 rounded-full object-cover"
+                              className="w-14 h-14 rounded-full object-cover"
                             />
                             <span className="text-xs text-white flex-1 text-left">
                               {person.name}
@@ -985,7 +985,7 @@ export default function StarField() {
                             <img
                               src={person.photo}
                               alt={person.name}
-                              className="w-8 h-8 rounded-full object-cover"
+                              className="w-14 h-14 rounded-full object-cover"
                             />
                             <span className="text-xs text-white flex-1 text-left">
                               {person.name}

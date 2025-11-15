@@ -18,10 +18,8 @@ const StarField = dynamic(() => import('./StarField'), {
 })
 
 export default function MakeConstellation() {
-  // Mode selection screen removed - always auto-pilot
-
   return (
-    <div className="relative h-screen w-full overflow-hidden bg-gray-900">
+    <div className="relative h-dvh w-full overflow-hidden bg-gray-900">
       {/* Header */}
       <header className="absolute left-0 right-0 top-0 z-10 bg-gradient-to-b from-gray-900/90 to-transparent p-4 sm:p-6">
         <div className="flex items-start justify-between">
