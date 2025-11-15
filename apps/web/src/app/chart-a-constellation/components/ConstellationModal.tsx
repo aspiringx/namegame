@@ -1,3 +1,11 @@
+/**
+ * ConstellationModal
+ *
+ * The "Review" modal that shows all stars organized by placement category.
+ * Allows users to select stars to visit from the constellation view.
+ * Stars are grouped into: Close, Familiar, Distant, and Uncharted.
+ */
+
 import { StarData } from '../types'
 import { MOCK_PEOPLE } from '../mockData'
 

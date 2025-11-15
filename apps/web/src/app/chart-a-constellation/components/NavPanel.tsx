@@ -1,3 +1,15 @@
+/**
+ * NavPanel
+ *
+ * The bottom navigation panel that shows narrator messages and action buttons.
+ * Displays different buttons based on the current journey phase:
+ * - Intro: Proceed button to advance through intro steps
+ * - Selecting: Visit selected stars button
+ * - Arrived: Zoom Out button (top right)
+ * - Complete: Continue Journey, Review, and Zoom Out buttons
+ * - Returning: Auto-Pilot/Manual toggle, Proceed, and Review buttons
+ */
+
 import { JourneyPhase } from '../hooks/useJourneyStateMachine'
 import { MOCK_PEOPLE } from '../mockData'
 

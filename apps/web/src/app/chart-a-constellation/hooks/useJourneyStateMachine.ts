@@ -1,3 +1,20 @@
+/**
+ * useJourneyStateMachine
+ *
+ * Central state management for the star charting journey.
+ * Manages all journey phases, star selection, and navigation flow.
+ *
+ * This hook ensures that all state transitions are atomic and consistent.
+ * Instead of scattered setState calls throughout the app, all journey actions
+ * (like zoomOut, placeStar, continueJourney) are handled here with guaranteed
+ * state consistency.
+ *
+ * Returns:
+ * - state: Current journey state (phase, selected stars, target star, etc.)
+ * - actions: Functions to trigger state transitions (zoomOut, placeStar, etc.)
+ * - shouldResetCamera: Ref that signals Scene.tsx when to recalculate constellation position
+ */
+
 import { useState, useCallback, useRef } from 'react'
 import { StarData } from '../types'
 import { MOCK_PEOPLE } from '../mockData'
