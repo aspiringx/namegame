@@ -164,17 +164,18 @@ export function useCameraPositioning() {
     // If HUD center is above viewport center (negative hudOffsetPx),
     // move camera UP (positive Y) so we look down at origin to see it in HUD
     // Negate because: hudOffsetPx negative → camera Y positive
-    // Multiply by 1.3 to fine-tune centering
-    const yOffsetWorld = -hud.hudOffsetPx * pixelsToWorldUnits * 1.3
+    // Add same visual correction as individual stars (-65px)
+    const visualCorrectionPx = -65
+    const yOffsetWorld =
+      (-hud.hudOffsetPx + visualCorrectionPx) * pixelsToWorldUnits
 
-    // Target is constellation origin (0, 0, 0)
-    // Camera at (0, yOffsetWorld, zDistance) looking at (0, 0, 0)
-    const target = new THREE.Vector3(0, 0, 0)
+    // Target is constellation's actual center point
+    const target = bounds.center.clone()
 
-    // Calculate spherical coords from camera position relative to target
+    // Camera positioned relative to constellation center
     const dx = 0
-    const dy = yOffsetWorld
-    const dz = zDistance
+    const dy = target.y + yOffsetWorld
+    const dz = target.z + zDistance
 
     const radius = Math.sqrt(dx * dx + dy * dy + dz * dz)
     const theta = Math.atan2(dx, dz) // 0 (looking down +Z axis)

@@ -66,7 +66,10 @@ export default function StarField() {
   // Track viewport dimensions and measure actual DOM elements
   const measureLayout = useCallback(() => {
     const width = window.innerWidth
-    const height = window.innerHeight
+    // Measure actual canvas container height (100dvh) instead of window.innerHeight
+    // This accounts for mobile browser chrome that affects innerHeight but not dvh
+    const container = document.getElementById('canvas-container')
+    const height = container?.clientHeight || window.innerHeight
 
     setViewportDimensions({ width, height })
 
@@ -271,7 +274,10 @@ export default function StarField() {
   }
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100dvh' }}>
+    <div
+      id="canvas-container"
+      style={{ position: 'relative', width: '100%', height: '100dvh' }}
+    >
       <Canvas
         camera={{ position: [0, 0, 25], fov: 60 }}
         style={{ width: '100%', height: '100dvh' }}
@@ -582,7 +588,7 @@ export default function StarField() {
               {/* Buttons in constellation view when not all stars charted */}
               {journeyPhase === 'returning' &&
                 placements.size < MOCK_PEOPLE.length && (
-                  <div className="mt-3 space-y-2">
+                  <div className="mt-3 flex gap-2">
                     <button
                       onClick={() => {
                         // Disable manual controls and return to auto-pilot
@@ -608,7 +614,7 @@ export default function StarField() {
                           setUseConstellationPositions(false)
                         }
                       }}
-                      className="w-full rounded-lg bg-cyan-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg transition-colors hover:bg-cyan-700 active:bg-cyan-800"
+                      className="flex-1 rounded-lg bg-cyan-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg transition-colors hover:bg-cyan-700 active:bg-indigo-800"
                     >
                       → Proceed
                     </button>
@@ -617,7 +623,7 @@ export default function StarField() {
                         setSelectedStarIds(new Set())
                         setShowConstellationModal(true)
                       }}
-                      className="w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg transition-colors hover:bg-indigo-700 active:bg-indigo-800"
+                      className="flex-1 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg transition-colors hover:bg-indigo-700 active:bg-indigo-800"
                     >
                       ✦ Review
                     </button>
