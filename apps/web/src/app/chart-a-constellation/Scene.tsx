@@ -67,21 +67,21 @@ export default function Scene({
   const initialFlightDistance = useRef(0)
   const returnProgress = useRef(0)
   const returnStartPos = useRef(new THREE.Vector3())
-  const constellationCenter = useRef(new THREE.Vector3(0, 0, 0))  // Offset lookAt point
-  const geometricCenter = useRef(new THREE.Vector3(0, 0, 0))      // Actual center for orbiting
+  const constellationCenter = useRef(new THREE.Vector3(0, 0, 0)) // Offset lookAt point
+  const geometricCenter = useRef(new THREE.Vector3(0, 0, 0)) // Actual center for orbiting
   const autoPilotCameraPos = useRef(new THREE.Vector3())
   const autoPilotCameraTarget = useRef(new THREE.Vector3())
-  const hudOffsetY = useRef(0)  // Y offset to apply for HUD centering
+  const hudOffsetY = useRef(0) // Y offset to apply for HUD centering
   const manualModeJustInitialized = useRef(false)
   const hasLoggedManualInit = useRef(false)
   const previousManualControlsEnabled = useRef(manualControlsEnabled)
   const initialPositionsGenerated = useRef(false)
   const lastTargetStarIndex = useRef(-1)
   const manualControlsEnabledRef = useRef(manualControlsEnabled)
-  
+
   // Update ref on every render so useFrame has current value
   manualControlsEnabledRef.current = manualControlsEnabled
-  
+
   // Custom camera controls state
   const isDragging = useRef(false)
   const previousMousePosition = useRef({ x: 0, y: 0 })
@@ -96,7 +96,8 @@ export default function Scene({
     }
 
     const canvas = gl.domElement
-    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0
+    const isTouchDevice =
+      'ontouchstart' in window || navigator.maxTouchPoints > 0
 
     // Mobile touch handlers for pinch-to-zoom
     const getTouchDistance = (touches: TouchList) => {
@@ -132,7 +133,10 @@ export default function Scene({
         const zoomSpeed = 0.5
         cameraSpherical.current.radius = Math.max(
           15,
-          Math.min(150, initialPinchRadius.current + distanceChange * zoomSpeed)
+          Math.min(
+            150,
+            initialPinchRadius.current + distanceChange * zoomSpeed,
+          ),
         )
       } else if (e.touches.length === 1 && isDragging.current) {
         // Single finger rotation
@@ -143,7 +147,7 @@ export default function Scene({
         cameraSpherical.current.theta -= deltaX * 0.005
         cameraSpherical.current.phi = Math.max(
           0.1,
-          Math.min(Math.PI - 0.1, cameraSpherical.current.phi + deltaY * 0.005)
+          Math.min(Math.PI - 0.1, cameraSpherical.current.phi + deltaY * 0.005),
         )
 
         previousMousePosition.current = {
@@ -174,7 +178,7 @@ export default function Scene({
       cameraSpherical.current.theta -= deltaX * 0.005
       cameraSpherical.current.phi = Math.max(
         0.1,
-        Math.min(Math.PI - 0.1, cameraSpherical.current.phi + deltaY * 0.005)
+        Math.min(Math.PI - 0.1, cameraSpherical.current.phi + deltaY * 0.005),
       )
 
       previousMousePosition.current = { x: e.clientX, y: e.clientY }
@@ -190,13 +194,15 @@ export default function Scene({
       const zoomSpeed = 0.1
       cameraSpherical.current.radius = Math.max(
         15,
-        Math.min(150, cameraSpherical.current.radius + e.deltaY * zoomSpeed)
+        Math.min(150, cameraSpherical.current.radius + e.deltaY * zoomSpeed),
       )
     }
 
     if (isTouchDevice) {
       // Touch device - use touch events only
-      canvas.addEventListener('touchstart', handleTouchStart, { passive: false })
+      canvas.addEventListener('touchstart', handleTouchStart, {
+        passive: false,
+      })
       canvas.addEventListener('touchmove', handleTouchMove, { passive: false })
       canvas.addEventListener('touchend', handleTouchEnd)
       canvas.addEventListener('touchcancel', handleTouchEnd)
@@ -232,13 +238,13 @@ export default function Scene({
     if (manualControlsEnabled && journeyPhase === 'returning') {
       const savedPos = autoPilotCameraPos.current
       const savedTarget = autoPilotCameraTarget.current
-      
+
       // Only initialize if we have valid saved positions from return animation
       if (savedPos.z === 0) {
         console.warn('Manual mode enabled but camera position not saved yet')
         return
       }
-      
+
       // Orbit around the saved target (which includes HUD Y offset)
       const dx = savedPos.x - savedTarget.x
       const dy = savedPos.y - savedTarget.y
@@ -246,11 +252,13 @@ export default function Scene({
 
       cameraSpherical.current.radius = Math.sqrt(dx * dx + dy * dy + dz * dz)
       cameraSpherical.current.theta = Math.atan2(dx, dz)
-      cameraSpherical.current.phi = Math.acos(Math.max(-1, Math.min(1, dy / cameraSpherical.current.radius)))
+      cameraSpherical.current.phi = Math.acos(
+        Math.max(-1, Math.min(1, dy / cameraSpherical.current.radius)),
+      )
       manualModeJustInitialized.current = true
-      
+
       hasLoggedManualInit.current = false // Reset so we log on first frame
-      
+
       console.log('🔵 Manual mode init:', {
         savedPosX: savedPos.x,
         savedPosY: savedPos.y,
@@ -260,7 +268,7 @@ export default function Scene({
         savedTargetZ: savedTarget.z,
         radius: cameraSpherical.current.radius,
         theta: cameraSpherical.current.theta,
-        phi: cameraSpherical.current.phi
+        phi: cameraSpherical.current.phi,
       })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -326,13 +334,13 @@ export default function Scene({
     // Only generate initial positions once on mount
     if (!initialPositionsGenerated.current) {
       initialPositionsGenerated.current = true
-      
+
       onUpdateStars((prevStars) => {
         const starsArray = Array.from(prevStars.values())
         const needsInitialPositions = starsArray.some((s) => !s.initialPosition)
-        
+
         if (!needsInitialPositions) return prevStars
-        
+
         const newStars = new Map(prevStars)
         const positions: [number, number, number][] = []
         const minDistance = 15
@@ -389,7 +397,7 @@ export default function Scene({
     onUpdateStars((prevStars) => {
       const starsArray = Array.from(prevStars.values())
       const needsConstellationPositions = starsArray.some(
-        (s) => s.placement && !s.constellationPosition
+        (s) => s.placement && !s.constellationPosition,
       )
 
       if (!needsConstellationPositions) return prevStars
@@ -411,7 +419,7 @@ export default function Scene({
           }
 
           const zRange = getZRange(starData.placement)
-          
+
           // Collect existing constellation positions to avoid clustering
           const existingPositions: [number, number, number][] = []
           newStars.forEach((star) => {
@@ -428,7 +436,7 @@ export default function Scene({
 
           while (!constellationPos && attempts < maxAttempts) {
             attempts++
-            
+
             const theta = Math.random() * Math.PI * 2
             const xyRadius = min + Math.random() * (max - min)
             const zPosition =
@@ -447,7 +455,7 @@ export default function Scene({
               const dy = candidate[1] - existing[1]
               const dz = candidate[2] - existing[2]
               const distance = Math.sqrt(dx * dx + dy * dy + dz * dz)
-              
+
               if (distance < minDistance) {
                 tooClose = true
                 break
@@ -489,12 +497,16 @@ export default function Scene({
 
       if (constellationPositions.length > 0) {
         // Calculate center in X and Y
-        const centerX = constellationPositions.reduce((sum, pos) => sum + pos[0], 0) / constellationPositions.length
-        const centerY = constellationPositions.reduce((sum, pos) => sum + pos[1], 0) / constellationPositions.length
+        const centerX =
+          constellationPositions.reduce((sum, pos) => sum + pos[0], 0) /
+          constellationPositions.length
+        const centerY =
+          constellationPositions.reduce((sum, pos) => sum + pos[1], 0) /
+          constellationPositions.length
 
         console.log('🔄 Translating constellation to origin:', {
           originalCenter: { x: centerX, y: centerY },
-          numPositions: constellationPositions.length
+          numPositions: constellationPositions.length,
         })
 
         // Translate all positions so center is at (0, 0, z)
@@ -503,7 +515,7 @@ export default function Scene({
             const [x, y, z] = star.constellationPosition
             newStars.set(id, {
               ...star,
-              constellationPosition: [x - centerX, y - centerY, z]
+              constellationPosition: [x - centerX, y - centerY, z],
             })
           }
         })
@@ -515,9 +527,16 @@ export default function Scene({
             translatedPositions.push(star.constellationPosition)
           }
         })
-        const newCenterX = translatedPositions.reduce((sum, pos) => sum + pos[0], 0) / translatedPositions.length
-        const newCenterY = translatedPositions.reduce((sum, pos) => sum + pos[1], 0) / translatedPositions.length
-        console.log('✅ Translation complete, new center:', { x: newCenterX, y: newCenterY })
+        const newCenterX =
+          translatedPositions.reduce((sum, pos) => sum + pos[0], 0) /
+          translatedPositions.length
+        const newCenterY =
+          translatedPositions.reduce((sum, pos) => sum + pos[1], 0) /
+          translatedPositions.length
+        console.log('✅ Translation complete, new center:', {
+          x: newCenterX,
+          y: newCenterY,
+        })
       }
 
       return newStars
@@ -550,7 +569,7 @@ export default function Scene({
   // Auto-pilot: initialize with overview, then move to target star
   useFrame((state) => {
     const frameId = state.clock.elapsedTime
-    
+
     // Handle manual controls toggle
     if (manualControlsEnabled !== previousManualControlsEnabled.current) {
       if (manualControlsEnabled) {
@@ -563,7 +582,7 @@ export default function Scene({
       }
       previousManualControlsEnabled.current = manualControlsEnabled
     }
-    
+
     // First time: set overview position
     if (!hasInitialized.current && !manualControlsEnabledRef.current) {
       // Position camera further back to show all stars in HUD initially
@@ -571,9 +590,7 @@ export default function Scene({
 
       // Measure actual DOM elements to match StarField.tsx
       const header =
-        typeof window !== 'undefined'
-          ? document.querySelector('h1')?.parentElement
-          : null
+        typeof window !== 'undefined' ? document.querySelector('header') : null
       const headerRect = header?.getBoundingClientRect()
       const headerBottom = headerRect ? headerRect.bottom : 0
 
@@ -719,7 +736,7 @@ export default function Scene({
           stars,
           starPositions,
           viewportDimensions,
-          layoutMeasurements
+          layoutMeasurements,
         )
 
         if (!cameraPos) {
@@ -733,23 +750,35 @@ export default function Scene({
         // Apply HUD offset by moving camera, not constellation
         // If HUD is above viewport (negative yOffsetWorld), move camera DOWN (negative Y)
         // This makes constellation appear higher on screen
-        const cameraYOffset = cameraPos.yOffsetWorld  // Use directly, don't negate
-        
+        const cameraYOffset = cameraPos.yOffsetWorld // Use directly, don't negate
+
         // Position camera using calculated position
-        camera.position.set(cameraPos.position.x, cameraPos.position.y, cameraPos.position.z)
-        camera.lookAt(cameraPos.lookAt.x, cameraPos.lookAt.y, cameraPos.lookAt.z)
-        
+        camera.position.set(
+          cameraPos.position.x,
+          cameraPos.position.y,
+          cameraPos.position.z,
+        )
+        camera.lookAt(
+          cameraPos.lookAt.x,
+          cameraPos.lookAt.y,
+          cameraPos.lookAt.z,
+        )
+
         // Save centers (constellation stays at origin)
         constellationCenter.current.set(0, 0, 0)
         geometricCenter.current.set(0, 0, 0)
-        
+
         // Save the final auto-pilot camera position and target for manual mode toggle
         autoPilotCameraPos.current.copy(camera.position)
-        autoPilotCameraTarget.current.set(cameraPos.lookAt.x, cameraPos.lookAt.y, cameraPos.lookAt.z)
-        
+        autoPilotCameraTarget.current.set(
+          cameraPos.lookAt.x,
+          cameraPos.lookAt.y,
+          cameraPos.lookAt.z,
+        )
+
         // Clear hudOffsetY since we're not using it for star positions
         hudOffsetY.current = 0
-        
+
         // Log to verify offset calculation
         const sampleStar = Array.from(stars.values())[0]
         const sampleBasePos = sampleStar?.constellationPosition
@@ -761,9 +790,9 @@ export default function Scene({
           cameraPosZ: camera.position.z,
           lookAtX: 0,
           lookAtY: hudOffsetY.current,
-          lookAtZ: 0
+          lookAtZ: 0,
         })
-        
+
         onReturnComplete()
       } else if (returnProgress.current < 1) {
         // Animate return (progress < 1)
@@ -779,7 +808,7 @@ export default function Scene({
           stars,
           starPositions,
           viewportDimensions,
-          layoutMeasurements
+          layoutMeasurements,
         )
 
         if (!cameraPos) {
@@ -796,8 +825,12 @@ export default function Scene({
         }
 
         // Lerp camera position to target
-        camera.position.lerpVectors(returnStartPos.current, cameraPos.position, easedT)
-        
+        camera.position.lerpVectors(
+          returnStartPos.current,
+          cameraPos.position,
+          easedT,
+        )
+
         // Lerp lookAt direction
         const currentLookAt = new THREE.Vector3()
         camera.getWorldDirection(currentLookAt)
@@ -815,12 +848,12 @@ export default function Scene({
     if (journeyPhase === 'returning' && manualControlsEnabledRef.current) {
       const { radius, theta, phi } = cameraSpherical.current
       const target = autoPilotCameraTarget.current
-      
+
       // Convert spherical to Cartesian coordinates (orbit around saved target)
       const targetX = target.x + radius * Math.sin(phi) * Math.sin(theta)
       const targetY = target.y + radius * Math.cos(phi)
       const targetZ = target.z + radius * Math.sin(phi) * Math.cos(theta)
-      
+
       // On first frame after initialization, set position directly to avoid shift
       if (manualModeJustInitialized.current) {
         if (!hasLoggedManualInit.current) {
@@ -833,7 +866,7 @@ export default function Scene({
             currentCameraZ: camera.position.z,
             targetX: target.x,
             targetY: target.y,
-            targetZ: target.z
+            targetZ: target.z,
           })
           hasLoggedManualInit.current = true
         }
@@ -846,9 +879,9 @@ export default function Scene({
         camera.position.y += (targetY - camera.position.y) * dampingFactor
         camera.position.z += (targetZ - camera.position.z) * dampingFactor
       }
-      
+
       camera.lookAt(target.x, target.y, target.z)
-      
+
       // Skip all auto-pilot code below
       return
     }

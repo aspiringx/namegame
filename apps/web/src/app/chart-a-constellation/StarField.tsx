@@ -70,7 +70,7 @@ export default function StarField() {
     setViewportDimensions({ width, height })
 
     // Measure actual header bottom position
-    const header = document.querySelector('h1')?.parentElement
+    const header = document.querySelector('header')
     const headerRect = header?.getBoundingClientRect()
     const headerBottom = headerRect ? headerRect.bottom : 0
 
