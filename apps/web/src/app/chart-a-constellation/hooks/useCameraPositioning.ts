@@ -108,6 +108,7 @@ export function useCameraPositioning() {
     viewportDimensions: ViewportDimensions,
     layoutMeasurements: LayoutMeasurements,
   ): SphericalPosition | null => {
+    const isMobile = viewportDimensions.width < 640
     const bounds = calculateConstellationBounds(stars, starPositions)
     if (!bounds) {
       // No stars placed yet - return default position
@@ -124,7 +125,10 @@ export function useCameraPositioning() {
     const { width, height, depth } = dimensions
 
     const fovRadians = (60 * Math.PI) / 180
-    const targetFillPercent = 0.75
+    // targetFillPercent controls how much of the viewport to fill with the
+    // constellation (0.5 = half, 1.0 = full). In other words, how much of the
+    // HUD the constellation fills.
+    const targetFillPercent = isMobile ? 1.25 : 1.1
 
     // First, calculate initial Z distance to fit constellation in viewport
     const aspectRatio = hud.viewportWidth / hud.viewportHeight
@@ -162,14 +166,15 @@ export function useCameraPositioning() {
     const pixelsToWorldUnits = worldHeightAtDistance / hud.viewportHeight
 
     // Apply the same visual correction to vertically center placed star
-    // constellations in the HUD.
+    // constellations in the HUD. A higher number (like -15) causes it to shift
+    // up more in the HUD.
     // Related:
     // - adjustmentFactor for centering the cluster of primary stars that are
     //   not placed (Scene.tsx).
     // - visualCorrectionPx for centering individual star in HUD (Scene.tsx).
     // - viewDistance for the size of the star in the HUD (Scene.tsx).
-    const isMobile = viewportDimensions.width < 640
-    const visualCorrectionPx = isMobile ? -35 : -25
+    // - targetFillPercent for size of constellation in the HUD (in this file).
+    const visualCorrectionPx = isMobile ? -15 : -20
     const yOffsetWorld =
       (-hud.hudOffsetPx + visualCorrectionPx) * pixelsToWorldUnits
 
