@@ -205,6 +205,7 @@ export function useJourneyStateMachine(
         phase: 'flying',
         narratorMessage: `Travelling to ${firstPerson.name}...`,
         useConstellationPositions: false,
+        manualControlsEnabled: false,
       }
     })
   }, [])
