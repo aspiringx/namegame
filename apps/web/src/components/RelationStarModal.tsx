@@ -322,9 +322,9 @@ export default function RelationStarModal({
                           <button
                             onClick={() => {
                               if (deviceInfo.isPWA) {
-                                router.push('/relation-star-demo')
+                                router.push('/stars')
                               } else {
-                                window.open('/relation-star-demo', '_blank')
+                                window.open('/stars', '_blank')
                               }
                             }}
                             className="flex-1 sm:flex-initial sm:w-auto flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 whitespace-nowrap"
@@ -586,7 +586,9 @@ export default function RelationStarModal({
                                         <button
                                           onClick={() => {
                                             if (deviceInfo.isPWA) {
-                                              router.push(`/cosmic-insights/${currentAssessmentId}`)
+                                              router.push(
+                                                `/cosmic-insights/${currentAssessmentId}`,
+                                              )
                                             } else {
                                               window.open(
                                                 `/cosmic-insights/${currentAssessmentId}`,
@@ -996,7 +998,9 @@ export default function RelationStarModal({
                                 <button
                                   onClick={() => {
                                     if (deviceInfo.isPWA) {
-                                      router.push(`/cosmic-insights/${selectedSnapshot.id}`)
+                                      router.push(
+                                        `/cosmic-insights/${selectedSnapshot.id}`,
+                                      )
                                     } else {
                                       window.open(
                                         `/cosmic-insights/${selectedSnapshot.id}`,

@@ -20,36 +20,44 @@ export default function Home() {
             height={134}
             className="mx-auto -mt-6 w-[200px] h-[134px]"
           />
-          <p className="mx-auto max-w-[240px] text-xl text-gray-600 italic sm:max-w-[500px] dark:text-gray-400">
+          <p className="mx-auto max-w-[240px] text-xl text-gray-600 italic sm:max-w-[500px] dark:text-gray-400 mt-1">
             Your universe at the speed of love
           </p>
         </header>
 
         <section className="space-y-4 text-lg leading-relaxed">
-          <p className="text-center italic">NameGame is now Relation Star.</p>
+          <p className="text-center italic text-sm text-gray-500">
+            NameGame is now Relation Star.
+          </p>
           <div className="flex flex-col w-full sm:mx-auto text-center space-y-4">
-            <p className="text-left mt-4">What is Relation Star?</p>
+            <p className="text-left mt-4">
+              What is Relation Star and the speed of love?
+            </p>
             <Link
               href="/speed-of-love"
-              className="rounded border border-cyan-400/50 bg-cyan-500/10 px-6 py-3 font-mono text-sm font-medium text-cyan-400 transition-colors hover:border-cyan-400 hover:bg-cyan-500/20 sm:w-[300px]"
+              className="mx-auto rounded border border-cyan-400/50 bg-cyan-500/10 px-6 py-3 font-mono text-sm font-medium text-cyan-400 transition-colors hover:border-cyan-400 hover:bg-cyan-500/20 sm:w-[300px] w-full"
             >
               ⭐ Speed of Love Intro ⭐
             </Link>
             <p className="text-left mt-4">
-              What does it mean to chart a constellation?
+              In your universe, clusters of stars surround you (family, friends,
+              etc.). But only only share energy with a few, your constellations!
             </p>
             <Link
-              href="/chart-a-constellation"
-              className="rounded border border-cyan-400/50 bg-cyan-500/10 px-6 py-3 font-mono text-sm font-medium text-cyan-400 transition-colors hover:border-cyan-400 hover:bg-cyan-500/20 sm:w-[300px]"
+              href="/constellations"
+              className="mx-auto rounded border border-cyan-400/50 bg-cyan-500/10 px-6 py-3 font-mono text-sm font-medium text-cyan-400 transition-colors hover:border-cyan-400 hover:bg-cyan-500/20 sm:w-[300px] w-full"
             >
-              ⭐ Chart a Constellation ⭐
+              ⭐ Constellations ⭐
             </Link>
-            <p className="text-left mt-4">What does it mean to chart a star?</p>
+            <p className="text-left mt-4">
+              Chart the five points of a star to better understand the
+              relationship and access cosmic insights!
+            </p>
             <Link
-              href="/relation-star-demo"
-              className="rounded border border-cyan-400/50 bg-cyan-500/10 px-6 py-3 font-mono text-sm font-medium text-cyan-400 transition-colors hover:border-cyan-400 hover:bg-cyan-500/20 sm:w-[300px]"
+              href="/stars"
+              className="mx-auto rounded border border-cyan-400/50 bg-cyan-500/10 px-6 py-3 font-mono text-sm font-medium text-cyan-400 transition-colors hover:border-cyan-400 hover:bg-cyan-500/20 sm:w-[300px] w-full"
             >
-              ⭐ Chart a Star ⭐
+              ⭐ Charting Stars ⭐
             </Link>
           </div>
         </section>

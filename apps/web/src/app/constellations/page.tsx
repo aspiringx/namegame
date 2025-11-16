@@ -10,5 +10,9 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic'
 
 export default function MakeConstellationDemoPage() {
-  return <MakeConstellation />
+  return (
+    <div className="overflow-hidden">
+      <MakeConstellation />
+    </div>
+  )
 }

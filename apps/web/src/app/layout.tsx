@@ -301,7 +301,7 @@ export default async function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${inter.variable} bg-background text-foreground overflow-hidden font-sans`}
+        className={`${inter.variable} bg-background text-foreground font-sans`}
       >
         <Providers>
           <AuthProvider session={session}>

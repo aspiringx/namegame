@@ -157,7 +157,7 @@ Once both users have created assessments, enable comparison feature.
 - Add "Share Your Perspective" button in `RelationStarModal.tsx`
 - Opens chat with pre-filled message (if chat prefill exists) OR copies
   shareable link
-- Message contains link to member's profile or `/relation-star-demo`
+- Message contains link to member's profile or `/stars`
 - No special landing page - just encourages recipient to create their own
 
 **Files:**
