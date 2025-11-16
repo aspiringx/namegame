@@ -3,7 +3,7 @@
  *
  * REFACTORED STRUCTURE:
  * - Uses useJourneyStateMachine hook for centralized state management
- * - UI components extracted to /components (NavPanel, ConstellationModal, PlacementOverlay)
+ * - UI components extracted to /components (NavPanel, ConstellationModal)
  * - All journey phase transitions handled atomically by the state machine
  * - Scene.tsx receives shouldResetCameraRef for simple constellation recalculation signaling
  *
@@ -16,23 +16,22 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Canvas } from '@react-three/fiber'
-import { StarOverlay } from './types'
 import { initializeStars } from './starData'
 import Scene from './Scene'
 import { NavPanel } from './components/NavPanel'
 import { ConstellationModal } from './components/ConstellationModal'
-import { PlacementOverlay } from './components/PlacementOverlay'
 import { useJourneyStateMachine } from './hooks/useJourneyStateMachine'
 import { MOCK_PEOPLE } from './mockData'
 
 export default function StarField() {
+  const [groupName] = useState('Hypothetical Group')
   const [stars, setStars] = useState(initializeStars)
-  const [overlays, setOverlays] = useState<StarOverlay[]>([])
 
   // Journey state machine - single source of truth
   const { state, actions, shouldResetCamera } = useJourneyStateMachine(
     stars,
     setStars,
+    groupName,
   )
 
   // Track viewport dimensions for precise positioning
@@ -87,6 +86,15 @@ export default function StarField() {
     return () => window.removeEventListener('resize', measureLayout)
   }, [measureLayout])
 
+  // Remeasure when narrator message changes (nav panel appears/updates)
+  useEffect(() => {
+    if (state.narratorMessage) {
+      // Small delay to ensure nav panel is rendered
+      const timer = setTimeout(measureLayout, 50)
+      return () => clearTimeout(timer)
+    }
+  }, [state.narratorMessage, measureLayout])
+
   // Handle placement selection
   const handlePlacePerson = useCallback(
     (placement: 'inner' | 'close' | 'outer') => {
@@ -108,7 +116,6 @@ export default function StarField() {
         <Scene
           stars={stars}
           onUpdateStars={setStars}
-          onUpdateOverlays={setOverlays}
           targetStarIndex={state.targetStarIndex}
           previousStarIndex={state.previousStarIndex}
           viewportDimensions={viewportDimensions}
@@ -126,50 +133,19 @@ export default function StarField() {
 
       {/* Manual Controls Toggle - Only in constellation view */}
       {state.phase === 'returning' && (
-        <div className="pointer-events-auto fixed right-4 top-20 z-20 sm:right-6 sm:top-24">
-          <div className="rounded-lg border-2 border-indigo-500/50 bg-slate-900/90 p-2 shadow-xl backdrop-blur-sm">
-            <button
-              onClick={() =>
-                actions.enableManualControls(!state.manualControlsEnabled)
-              }
-              className={`rounded px-3 py-1.5 text-sm font-medium transition-colors ${
-                state.manualControlsEnabled
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30'
-              }`}
-            >
-              {state.manualControlsEnabled ? '🧑‍🚀 Manual' : '🚀 Auto-Pilot'}
-            </button>
-          </div>
+        <div className="pointer-events-auto fixed right-4 top-4 z-20">
+          <button
+            onClick={() =>
+              actions.enableManualControls(!state.manualControlsEnabled)
+            }
+            className="rounded-lg border-2 border-indigo-500/50 bg-slate-900/90 px-4 py-2 text-sm font-medium text-white shadow-xl backdrop-blur-sm transition-colors hover:bg-slate-800/90"
+          >
+            {state.manualControlsEnabled ? '🧑‍🚀 Manual' : '🚀 Auto-Pilot'}
+          </button>
         </div>
       )}
 
-      {/* Placement Overlay */}
-      {state.phase === 'arrived' && (
-        <PlacementOverlay
-          personName={MOCK_PEOPLE[state.targetStarIndex].name}
-          onPlacement={handlePlacePerson}
-        />
-      )}
-
-      {/* HUD Overlays */}
-      {overlays.map((overlay) => (
-        <div
-          key={overlay.person.id}
-          style={{
-            position: 'absolute',
-            left: `${overlay.screenX}px`,
-            top: `${overlay.screenY}px`,
-            transform: 'translate(-50%, -50%)',
-            pointerEvents: 'none',
-            zIndex: 10,
-          }}
-        >
-          <div className="rounded-full border-2 border-cyan-400/50 bg-slate-900/80 px-3 py-1 text-xs text-cyan-300 backdrop-blur-sm">
-            {overlay.person.name}
-          </div>
-        </div>
-      ))}
+      {/* HUD Overlays - removed, names shown in nav panel instead */}
 
       {/* Nav Panel */}
       <NavPanel
@@ -181,8 +157,13 @@ export default function StarField() {
         visitQueueLength={state.visitQueue.length}
         manualControlsEnabled={state.manualControlsEnabled}
         onAdvanceIntro={actions.advanceIntro}
+        onBackIntro={actions.backIntro}
         onStartSelection={actions.startSelection}
+        onToggleStarSelection={actions.toggleStarSelection}
+        onSelectAllStars={actions.selectAllStars}
+        onClearStars={actions.clearStars}
         onVisitSelectedStars={actions.startVisitingSelectedStars}
+        onPlaceStar={handlePlacePerson}
         onProceedAfterPlacement={actions.proceedAfterPlacement}
         onZoomOut={actions.zoomOut}
         onContinueJourney={actions.continueJourney}

@@ -15,7 +15,7 @@
  * - shouldResetCamera: Ref that signals Scene.tsx when to recalculate constellation position
  */
 
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useMemo } from 'react'
 import { StarData } from '../types'
 import { MOCK_PEOPLE } from '../mockData'
 
@@ -46,10 +46,13 @@ interface JourneyState {
 interface JourneyActions {
   // Intro flow
   advanceIntro: () => void
+  backIntro: () => void
   startSelection: () => void
 
   // Star selection
   toggleStarSelection: (starId: string) => void
+  selectAllStars: () => void
+  clearStars: () => void
   startVisitingSelectedStars: () => void
 
   // Journey flow
@@ -75,7 +78,19 @@ export function useJourneyStateMachine(
   onStarsUpdate: (
     updater: (prev: Map<string, StarData>) => Map<string, StarData>,
   ) => void,
+  groupName: string,
 ) {
+  const INTRO_MESSAGES = useMemo(
+    () => [
+      `Hi Mindy, welcome to the ${groupName} star cluster!`,
+      `Our sensors vaguely detect ${MOCK_PEOPLE.length} stars you may (or may not) know.`,
+      `<b>Your mission:</b> Chart the <i>current position</i> of stars in this cluster, in relation to you, to make a constellation.`,
+      `Positions:<br /><br /><b>• Close</b>: Close friend, family<br /><b>• Near</b>: Passive friend, acquaintance<br /><b>• Far</b>: Unknown, distant`,
+      'As you chart each star, a constellation will form, shaped by how you perceive relationships today.<br /><br />Ready?',
+    ],
+    [groupName],
+  )
+
   const [state, setState] = useState<JourneyState>({
     phase: 'intro',
     introStep: 0,
@@ -85,7 +100,7 @@ export function useJourneyStateMachine(
     visitQueue: [],
     useConstellationPositions: false,
     manualControlsEnabled: false,
-    narratorMessage: '',
+    narratorMessage: INTRO_MESSAGES[0],
   })
 
   // Track if we need to reset camera (used by Scene.tsx)
@@ -94,7 +109,12 @@ export function useJourneyStateMachine(
   const advanceIntro = useCallback(() => {
     setState((prev) => {
       if (prev.introStep < 4) {
-        return { ...prev, introStep: prev.introStep + 1 }
+        const nextStep = prev.introStep + 1
+        return {
+          ...prev,
+          introStep: nextStep,
+          narratorMessage: INTRO_MESSAGES[nextStep],
+        }
       }
       return {
         ...prev,
@@ -103,7 +123,31 @@ export function useJourneyStateMachine(
           'Select stars to chart. You can begin with those you know or select all.',
       }
     })
-  }, [])
+  }, [INTRO_MESSAGES])
+
+  const backIntro = useCallback(() => {
+    setState((prev) => {
+      // If in selecting phase, go back to last intro message
+      if (prev.phase === 'selecting') {
+        return {
+          ...prev,
+          phase: 'intro',
+          introStep: 4, // Last intro step
+          narratorMessage: INTRO_MESSAGES[4],
+        }
+      }
+      // If in intro phase, go to previous step
+      if (prev.introStep > 0) {
+        const prevStep = prev.introStep - 1
+        return {
+          ...prev,
+          introStep: prevStep,
+          narratorMessage: INTRO_MESSAGES[prevStep],
+        }
+      }
+      return prev
+    })
+  }, [INTRO_MESSAGES])
 
   const startSelection = useCallback(() => {
     setState((prev) => ({
@@ -111,6 +155,20 @@ export function useJourneyStateMachine(
       phase: 'selecting',
       narratorMessage:
         'Select stars to chart. You can begin with those you know or select all.',
+    }))
+  }, [])
+
+  const selectAllStars = useCallback(() => {
+    setState((prev) => ({
+      ...prev,
+      selectedStarIds: new Set(MOCK_PEOPLE.map((p) => p.id)),
+    }))
+  }, [])
+
+  const clearStars = useCallback(() => {
+    setState((prev) => ({
+      ...prev,
+      selectedStarIds: new Set(),
     }))
   }, [])
 
@@ -367,8 +425,11 @@ export function useJourneyStateMachine(
 
   const actions: JourneyActions = {
     advanceIntro,
+    backIntro,
     startSelection,
     toggleStarSelection,
+    selectAllStars,
+    clearStars,
     startVisitingSelectedStars,
     onApproaching,
     onArrived,

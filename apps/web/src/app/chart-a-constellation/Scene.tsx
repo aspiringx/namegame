@@ -17,7 +17,6 @@ interface SceneProps {
   onUpdateStars: (
     updater: (prev: Map<string, StarData>) => Map<string, StarData>,
   ) => void
-  onUpdateOverlays: (overlays: StarOverlay[]) => void
   targetStarIndex: number
   previousStarIndex: number
   onApproaching: (personName: string) => void
@@ -35,7 +34,6 @@ interface SceneProps {
 export default function Scene({
   stars,
   onUpdateStars,
-  onUpdateOverlays,
   targetStarIndex,
   previousStarIndex,
   onApproaching,
@@ -425,11 +423,9 @@ export default function Scene({
       const pixelsToWorldUnits =
         worldHeightAtDistance / viewportDimensions.height
 
-      // Screen Y increases downward, World Y increases upward
-      // If HUD is BELOW viewport center (positive offset), camera moves UP (positive Y)
-      // to make stars appear higher on screen
-      // Add adjustment to center better (larger on mobile due to URL bar)
-      const adjustmentFactor = isMobile ? 1.3 : 1.15
+      // Add adjustmentFactor to center initial constellation in the HUD. This
+      // accounts for the HUDs position above the viewport center.
+      const adjustmentFactor = isMobile ? 1.5 : 3
       const yOffset = hudOffsetPx * pixelsToWorldUnits * adjustmentFactor
 
       camera.position.set(0, yOffset, zDistance)
@@ -789,7 +785,8 @@ export default function Scene({
 
         // Calculate final lookAt target with visual correction
         // Apply correction for all screen sizes, gradually blend in during second half of flight
-        const visualCorrectionPx = -65
+        const isMobile = viewportDimensions.width < 640
+        const visualCorrectionPx = isMobile ? -35 : -25
         const fovRadians = (60 * Math.PI) / 180
         const starDistance = 5.5
         const worldHeightAtStarDistance =
@@ -898,8 +895,6 @@ export default function Scene({
     // Only update state if nearest star changed to prevent unnecessary re-renders
     if (nearestId !== nearestStarId) {
       setNearestStarId(nearestId)
-      // Only update overlays when nearest star changes to avoid constant re-renders
-      onUpdateOverlays(overlays)
     }
   })
 
