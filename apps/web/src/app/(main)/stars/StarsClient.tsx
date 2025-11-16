@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { TooltipProvider } from '@/components/ui/tooltip'
@@ -113,9 +113,28 @@ export default function RelationshipStarPage() {
   const [aiInsight, setAiInsight] = useState<string | null>(null)
   const [isLoadingAI, setIsLoadingAI] = useState(false)
   const [aiError, setAiError] = useState<string | null>(null)
+  const [isChartVisible, setIsChartVisible] = useState(false)
 
   const isSignedIn = status === 'authenticated'
   const isLoadingSession = status === 'loading'
+
+  // Track if chart is in viewport to hide/show View Chart button
+  useEffect(() => {
+    if (!isInteractive) return
+
+    const handleScroll = () => {
+      const chartElement = document.getElementById('interactive-chart')
+      if (chartElement) {
+        const rect = chartElement.getBoundingClientRect()
+        // Chart is visible if its top is in the viewport (with some margin)
+        setIsChartVisible(rect.top < window.innerHeight - 100)
+      }
+    }
+
+    handleScroll() // Check initial state
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [isInteractive])
 
   const current = isInteractive
     ? {
@@ -198,8 +217,8 @@ export default function RelationshipStarPage() {
         <h1 className="text-2xl font-bold">Chart a Star</h1>
       </div>
       <p className="mb-8">
-        A star's points describe your relationship at a point in time. Compare
-        the examples and try it.
+        A star's five points illustrate your relationship today. See examples
+        and try it.
       </p>
 
       {/* Selector - Mobile: Compact Button Group, Desktop: Full Buttons */}
@@ -269,45 +288,45 @@ export default function RelationshipStarPage() {
           <div className="mb-8 grid gap-8 lg:grid-cols-2">
             {/* Left: Sliders */}
             <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
-              <p className="text-center text-3xl mb-2">⭐</p>
-              <p className="text-sm text-gray-700 dark:text-gray-300 mb-4">
-                Pick a star in your life and chart its points as you perceive
-                them today.
+              <p className="text-center text-4xl mb-4">⭐</p>
+              <p className="text-sm text-gray-700 dark:text-gray-300 mb-6">
+                Think of a star in your life. Indicate how you see the
+                relationship today.
               </p>
               <div className="space-y-6">
                 {[
                   {
                     key: 'proximity',
                     label: 'How often are you near this person?',
-                    hint: 'Physical and/or virtual proximity',
+                    hint: 'Physical and/or virtual proximity.',
                     minLabel: 'Never',
                     maxLabel: 'Daily',
                   },
                   {
                     key: 'commonGround',
                     label: 'How much common ground do you share?',
-                    hint: 'Interests, values, experiences',
+                    hint: 'Interests, values, experiences, hobbies, goals, etc.',
                     minLabel: 'None',
                     maxLabel: 'A lot',
                   },
                   {
                     key: 'familiarity',
                     label: 'How well do you know them?',
-                    hint: 'From name recognition to deep understanding',
+                    hint: 'From just met to deep understanding.',
                     minLabel: 'Not at all',
                     maxLabel: 'Very well',
                   },
                   {
                     key: 'interest',
                     label: 'How interested are you in this relationship?',
-                    hint: 'Desire, ability, commitment',
+                    hint: 'Your desire, ability, and commitment. Relationships take time and energy. Your interest should align with stars you value most.',
                     minLabel: 'Not at all',
                     maxLabel: 'Very interested',
                   },
                   {
                     key: 'personalTime',
                     label: 'How much personal time do you spend together?',
-                    hint: 'Time focused on each other where you can talk freely. Not formal/bigger gatherings or doing required tasks.',
+                    hint: "Time focused on each other where you can talk freely. Being in the same place focused on other things doesn't count.",
                     minLabel: 'None',
                     maxLabel: 'A lot',
                   },
@@ -330,202 +349,204 @@ export default function RelationshipStarPage() {
               {!Object.values(interactiveScores).every((v) => v === 0) && (
                 <div className="mt-8">
                   <h3 className="mb-4 text-xl font-bold">Cosmic Insights</h3>
+                  <div className="text-sm text-gray-700 dark:text-gray-300">
+                    <p className="mb-4">
+                      Stars are always moving through space and time.
+                    </p>
+                    <ul className="text-sm list-disc list-outside mb-6 pl-5 space-y-2">
+                      <li>
+                        <b>Star Charts</b> capture relationships at points in
+                        time to see how they evolve.
+                      </li>
+                      <li>
+                        <b>Cosmic Insights</b> give specific ways to strengthen
+                        the five dimensions.
+                      </li>
+                    </ul>
 
-                  <p className="text-sm mb-4">
-                    Relationships are dynamic, always changing.
-                  </p>
-                  <ul className="text-sm list-disc list-outside mb-6 pl-5">
-                    <li>
-                      <b>Star Charts</b> and their scores are how you see key
-                      relationships at a point in time. Use them to periodically
-                      think about relationships and watch them evolve.
-                    </li>
-                    <li>
-                      <b>Cosmic Insights</b> provide specific ways to nurture
-                      your most important relationships to maintain or improve
-                      its health.
-                    </li>
-                  </ul>
-
-                  {!isSignedIn ? (
-                    /* Not authenticated - show login prompt */
-                    <>
-                      <Link
-                        href={`/auth/signin?callbackUrl=${encodeURIComponent(
-                          '/relation-star-demo',
-                        )}`}
-                        className="block w-full rounded-lg bg-indigo-600 px-4 py-3 text-center text-sm font-medium text-white transition-colors hover:bg-indigo-700"
-                      >
-                        Log in for Cosmic Insights
-                      </Link>
-                      <p className="mt-2 text-center text-xs text-gray-600 dark:text-gray-400">
-                        Don't have an account?{' '}
+                    {!isSignedIn ? (
+                      /* Not authenticated - show login prompt */
+                      <>
                         <Link
-                          href="/auth/signup"
-                          className="text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
+                          href={`/auth/signin?callbackUrl=${encodeURIComponent(
+                            '/relation-star-demo',
+                          )}`}
+                          className="block w-full rounded-lg bg-indigo-600 px-4 py-3 text-center text-sm font-medium text-white transition-colors hover:bg-indigo-700"
                         >
-                          Sign up for free
+                          Log in for Cosmic Insights
                         </Link>
-                      </p>
-                    </>
-                  ) : (
-                    /* Authenticated - show full form */
-                    <>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Relationship context
-                      </label>
-                      <div className="mt-1 mb-2 text-xs text-gray-500 dark:text-gray-400">
-                        Describe the current relationship (status, dynamics,
-                        hopes, etc.) for personalized insights.
-                      </div>
-                      <textarea
-                        value={relationshipGoals}
-                        onChange={(e) => setRelationshipGoals(e.target.value)}
-                        placeholder="e.g., I'd like to feel closer to my teenage daughter, or I want to maintain this friendship despite living far apart..."
-                        maxLength={500}
-                        rows={3}
-                        className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500"
-                      />
-                      <div className="text-xs text-gray-500 dark:text-gray-400 text-right">
-                        {relationshipGoals.length}/500 characters
-                      </div>
+                        <p className="mt-2 text-center text-xs text-gray-600 dark:text-gray-400">
+                          Don't have an account?{' '}
+                          <Link
+                            href="/auth/signup"
+                            className="text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
+                          >
+                            Sign up for free
+                          </Link>
+                        </p>
+                      </>
+                    ) : (
+                      /* Authenticated - show full form */
+                      <>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Relationship context
+                        </label>
+                        <div className="mt-1 mb-2 text-xs text-gray-500 dark:text-gray-400">
+                          Describe the current relationship (status, dynamics,
+                          hopes, etc.) for personalized insights.
+                        </div>
+                        <textarea
+                          value={relationshipGoals}
+                          onChange={(e) => setRelationshipGoals(e.target.value)}
+                          placeholder="e.g., I'd like to feel closer to my teenage daughter, or I want to maintain this friendship despite living far apart..."
+                          maxLength={500}
+                          rows={3}
+                          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500"
+                        />
+                        <div className="text-xs text-gray-500 dark:text-gray-400 text-right">
+                          {relationshipGoals.length}/500 characters
+                        </div>
 
-                      {/* Privacy Notice - Only show when at least one slider has a value */}
-                      {!Object.values(interactiveScores).every(
-                        (v) => v === 0,
-                      ) && (
-                        <div className="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
-                          <div className="flex items-start gap-2">
-                            <svg
-                              className="h-5 w-5 flex-shrink-0 text-gray-600 dark:text-gray-400"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                              />
-                            </svg>
-                            <div className="text-xs text-gray-700 dark:text-gray-300">
-                              <strong className="font-semibold">
-                                Your privacy matters.
-                              </strong>{' '}
-                              Your responses and AI insights are completely
-                              private and only visible to you.
+                        {/* Privacy Notice - Only show when at least one slider has a value */}
+                        {!Object.values(interactiveScores).every(
+                          (v) => v === 0,
+                        ) && (
+                          <div className="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
+                            <div className="flex items-start gap-2">
+                              <svg
+                                className="h-5 w-5 flex-shrink-0 text-gray-600 dark:text-gray-400"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                                />
+                              </svg>
+                              <div className="text-xs text-gray-700 dark:text-gray-300">
+                                <strong className="font-semibold">
+                                  Your privacy matters.
+                                </strong>{' '}
+                                Your responses and AI insights are completely
+                                private and only visible to you.
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      )}
+                        )}
 
-                      {/* AI Assessment Button - Only show when at least one slider has a value */}
-                      {!Object.values(interactiveScores).every(
-                        (v) => v === 0,
-                      ) && (
-                        <div className="mt-6">
-                          <button
-                            onClick={
-                              aiInsight
-                                ? () => {
-                                    setAiInsight(null)
-                                    setRelationshipGoals('')
-                                    setAiError(null)
-                                  }
-                                : handleAIAssessment
-                            }
-                            disabled={
-                              !aiInsight && (isLoadingAI || isLoadingSession)
-                            }
-                            className="w-full rounded-lg bg-indigo-600 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500 dark:disabled:bg-gray-700 dark:disabled:text-gray-400"
-                          >
-                            {aiInsight ? (
-                              'Start Over'
-                            ) : isLoadingAI ? (
-                              <span className="flex items-center justify-center gap-2">
-                                <svg
-                                  className="h-4 w-4 animate-spin"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <circle
-                                    className="opacity-25"
-                                    cx="12"
-                                    cy="12"
-                                    r="10"
-                                    stroke="currentColor"
-                                    strokeWidth="4"
-                                    fill="none"
-                                  />
-                                  <path
-                                    className="opacity-75"
-                                    fill="currentColor"
-                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                  />
-                                </svg>
-                                Gathering wisdom...
-                              </span>
-                            ) : (
-                              'Get Cosmic Insights'
+                        {/* AI Assessment Button - Only show when at least one slider has a value */}
+                        {!Object.values(interactiveScores).every(
+                          (v) => v === 0,
+                        ) && (
+                          <div className="mt-6">
+                            <button
+                              onClick={
+                                aiInsight
+                                  ? () => {
+                                      setAiInsight(null)
+                                      setRelationshipGoals('')
+                                      setAiError(null)
+                                    }
+                                  : handleAIAssessment
+                              }
+                              disabled={
+                                !aiInsight && (isLoadingAI || isLoadingSession)
+                              }
+                              className="w-full rounded-lg bg-indigo-600 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500 dark:disabled:bg-gray-700 dark:disabled:text-gray-400"
+                            >
+                              {aiInsight ? (
+                                'Start Over'
+                              ) : isLoadingAI ? (
+                                <span className="flex items-center justify-center gap-2">
+                                  <svg
+                                    className="h-4 w-4 animate-spin"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <circle
+                                      className="opacity-25"
+                                      cx="12"
+                                      cy="12"
+                                      r="10"
+                                      stroke="currentColor"
+                                      strokeWidth="4"
+                                      fill="none"
+                                    />
+                                    <path
+                                      className="opacity-75"
+                                      fill="currentColor"
+                                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                    />
+                                  </svg>
+                                  Gathering wisdom...
+                                </span>
+                              ) : (
+                                'Get Cosmic Insights'
+                              )}
+                            </button>
+
+                            {aiError && (
+                              <div className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-200">
+                                {aiError}
+                              </div>
                             )}
-                          </button>
 
-                          {aiError && (
-                            <div className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-200">
-                              {aiError}
-                            </div>
-                          )}
-
-                          {aiInsight && (
-                            <div className="mt-4 rounded-lg border border-indigo-200 bg-indigo-50 p-6 dark:border-indigo-900 dark:bg-indigo-950">
-                              <h4 className="mb-4 text-lg font-semibold text-indigo-900 dark:text-indigo-100">
-                                Your Cosmic Insights
-                              </h4>
-                              <div
-                                className="prose prose-sm prose-indigo dark:prose-invert max-w-none text-indigo-800 dark:text-indigo-200 [&>p]:mb-8 [&>div]:space-y-2 [&_ul]:space-y-3 [&_li]:leading-relaxed"
-                                dangerouslySetInnerHTML={{ __html: aiInsight }}
-                              />
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </>
-                  )}
+                            {aiInsight && (
+                              <div className="mt-4 rounded-lg border border-indigo-200 bg-indigo-50 p-6 dark:border-indigo-900 dark:bg-indigo-950">
+                                <h4 className="mb-4 text-lg font-semibold text-indigo-900 dark:text-indigo-100">
+                                  Your Cosmic Insights
+                                </h4>
+                                <div
+                                  className="prose prose-sm prose-indigo dark:prose-invert max-w-none text-indigo-800 dark:text-indigo-200 [&>p]:mb-8 [&>div]:space-y-2 [&_ul]:space-y-3 [&_li]:leading-relaxed"
+                                  dangerouslySetInnerHTML={{
+                                    __html: aiInsight,
+                                  }}
+                                />
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
                 </div>
               )}
 
-              {/* Floating "View Chart" button - Mobile only, appears after first score */}
-              {!Object.values(interactiveScores).every((v) => v === 0) && (
-                <button
-                  onClick={() => {
-                    const chartElement =
-                      document.getElementById('interactive-chart')
-                    if (chartElement) {
-                      const yOffset = -80
-                      const y =
-                        chartElement.getBoundingClientRect().top +
-                        window.pageYOffset +
-                        yOffset
-                      window.scrollTo({ top: y, behavior: 'smooth' })
-                    }
-                  }}
-                  className="lg:hidden fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-full bg-indigo-600 px-5 py-3 text-sm font-medium text-white shadow-lg hover:bg-indigo-700 transition-all"
-                >
-                  View Star Chart
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                    className="w-4 h-4"
+              {/* Floating "View Chart" button - Mobile only, appears after first score, hides when chart visible */}
+              {!Object.values(interactiveScores).every((v) => v === 0) &&
+                !isChartVisible && (
+                  <button
+                    onClick={() => {
+                      const chartElement =
+                        document.getElementById('interactive-chart')
+                      if (chartElement) {
+                        const yOffset = -80
+                        const y =
+                          chartElement.getBoundingClientRect().top +
+                          window.pageYOffset +
+                          yOffset
+                        window.scrollTo({ top: y, behavior: 'smooth' })
+                      }
+                    }}
+                    className="lg:hidden fixed bottom-[10px] right-2 z-50 flex items-center gap-2 rounded-full bg-indigo-600 px-5 py-3 text-sm font-medium text-white shadow-lg hover:bg-indigo-700 transition-all"
                   >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 3a.75.75 0 01.75.75v10.638l3.96-4.158a.75.75 0 111.08 1.04l-5.25 5.5a.75.75 0 01-1.08 0l-5.25-5.5a.75.75 0 111.08-1.04l3.96 4.158V3.75A.75.75 0 0110 3z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </button>
-              )}
+                    View Star Chart
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                      className="w-4 h-4"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M10 3a.75.75 0 01.75.75v10.638l3.96-4.158a.75.75 0 111.08 1.04l-5.25 5.5a.75.75 0 01-1.08 0l-5.25-5.5a.75.75 0 111.08-1.04l3.96 4.158V3.75A.75.75 0 0110 3z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </button>
+                )}
             </div>
 
             {/* Right: Chart and Score */}
@@ -542,7 +563,7 @@ export default function RelationshipStarPage() {
                     onClick={() => {
                       window.scrollTo({ top: 0, behavior: 'smooth' })
                     }}
-                    className="lg:hidden absolute top-4 right-4 flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-200 transition-colors dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                    className="lg:hidden absolute top-4 right-4 flex items-center gap-1 rounded-full bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700 transition-colors shadow-md"
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
