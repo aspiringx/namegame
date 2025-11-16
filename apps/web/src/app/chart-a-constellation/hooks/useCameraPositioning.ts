@@ -161,11 +161,15 @@ export function useCameraPositioning() {
     const worldHeightAtDistance = 2 * zDistance * Math.tan(fovRadians / 2)
     const pixelsToWorldUnits = worldHeightAtDistance / hud.viewportHeight
 
-    // If HUD center is above viewport center (negative hudOffsetPx),
-    // move camera UP (positive Y) so we look down at origin to see it in HUD
-    // Negate because: hudOffsetPx negative → camera Y positive
-    // Add same visual correction as individual stars (-65px)
-    const visualCorrectionPx = -65
+    // Apply the same visual correction to vertically center placed star
+    // constellations in the HUD.
+    // Related:
+    // - adjustmentFactor for centering the cluster of primary stars that are
+    //   not placed (Scene.tsx).
+    // - visualCorrectionPx for centering individual star in HUD (Scene.tsx).
+    // - viewDistance for the size of the star in the HUD (Scene.tsx).
+    const isMobile = viewportDimensions.width < 640
+    const visualCorrectionPx = isMobile ? -35 : -25
     const yOffsetWorld =
       (-hud.hudOffsetPx + visualCorrectionPx) * pixelsToWorldUnits
 

@@ -423,8 +423,8 @@ export default function Scene({
       const pixelsToWorldUnits =
         worldHeightAtDistance / viewportDimensions.height
 
-      // Add adjustmentFactor to center initial constellation in the HUD. This
-      // accounts for the HUDs position above the viewport center.
+      // Add adjustmentFactor to center initial cluster of primary stars in the
+      // HUD. This accounts for the HUDs position above the viewport center.
       const adjustmentFactor = isMobile ? 1.5 : 3
       const yOffset = hudOffsetPx * pixelsToWorldUnits * adjustmentFactor
 
@@ -668,9 +668,9 @@ export default function Scene({
           cameFromTakeoff.current = false // Will use constellation center as start lookAt
         }
 
-        // Position camera straight-on to star for HUD centering
         const isMobile = viewportDimensions.width < 640
-        const viewDistance = isMobile ? 5.5 : 6.5 // Mobile: farther for smaller appearance
+        // Size of arrived-at star in the HUD. Smaller number makes it bigger.
+        const viewDistance = isMobile ? 4.5 : 6.5
 
         // Camera target position: directly in front of star
         targetPosition.current.set(
@@ -784,7 +784,7 @@ export default function Scene({
             : 1 - Math.pow(-2 * lookProgress + 2, 2) / 2
 
         // Calculate final lookAt target with visual correction
-        // Apply correction for all screen sizes, gradually blend in during second half of flight
+        // Apply correction to center a star in the HUD.
         const isMobile = viewportDimensions.width < 640
         const visualCorrectionPx = isMobile ? -35 : -25
         const fovRadians = (60 * Math.PI) / 180
