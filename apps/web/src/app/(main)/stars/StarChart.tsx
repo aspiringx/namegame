@@ -150,10 +150,10 @@ export default function StarChart({ data, size = 'large' }: StarChartProps) {
                 </>
               )}
 
-              {/* Labels - always show, with smart positioning */}
+              {/* Labels - always show at outer ring for consistency */}
               {(() => {
-                // Use minimum distance of 60px from center for low values to avoid overlap
-                const labelDistance = Math.max(length - 30, isSmall ? 25 : 60)
+                // Always position labels near outer ring (radius 145) to avoid crowding
+                const labelDistance = 145
                 const labelX = 160 + labelDistance * Math.cos(angle)
                 const labelY = 160 + labelDistance * Math.sin(angle)
 
@@ -173,19 +173,8 @@ export default function StarChart({ data, size = 'large' }: StarChartProps) {
                           Personal
                         </text>
                         <text
-                          x={
-                            isSmall
-                              ? 160 +
-                                Math.max(length - 30, 25) * Math.cos(angle)
-                              : labelX
-                          }
-                          y={
-                            isSmall
-                              ? 160 +
-                                Math.max(length - 30, 25) * Math.sin(angle) +
-                                6
-                              : labelY + 6
-                          }
+                          x={labelX}
+                          y={labelY + 6}
                           textAnchor="middle"
                           fontSize="14"
                           fontWeight="600"
