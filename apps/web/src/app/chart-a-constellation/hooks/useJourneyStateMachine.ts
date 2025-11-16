@@ -16,20 +16,8 @@
  */
 
 import { useState, useCallback, useRef, useMemo } from 'react'
-import { StarData } from '../types'
+import { StarData, JourneyPhase } from '../types'
 import { MOCK_PEOPLE } from '../mockData'
-
-export type JourneyPhase =
-  | 'intro'
-  | 'selecting'
-  | 'flying'
-  | 'approaching'
-  | 'arrived'
-  | 'placed'
-  | 'takeoff'
-  | 'complete'
-  | 'returning'
-  | 'constellation-review'
 
 interface JourneyState {
   phase: JourneyPhase
@@ -253,10 +241,12 @@ export function useJourneyStateMachine(
 
         // Check if journey is complete
         if (placedCount === MOCK_PEOPLE.length) {
+          shouldResetCamera.current = true // Signal to Scene.tsx to zoom out
           return {
             ...prev,
             visitQueue: updatedQueue,
-            phase: 'complete',
+            phase: 'returning-journey-complete',
+            useConstellationPositions: true,
             narratorMessage: `Journey complete! You've charted all ${MOCK_PEOPLE.length} stars in your constellation.`,
           }
         }
@@ -280,11 +270,13 @@ export function useJourneyStateMachine(
         }
 
         // Queue is empty - all selected stars visited
+        shouldResetCamera.current = true // Signal to Scene.tsx to zoom out
         const unchartedCount = MOCK_PEOPLE.length - placedCount
         return {
           ...prev,
           visitQueue: updatedQueue,
-          phase: 'complete',
+          phase: 'returning-batch-complete',
+          useConstellationPositions: true,
           narratorMessage:
             unchartedCount > 0
               ? `${placedCount} of ${MOCK_PEOPLE.length} stars charted. ${unchartedCount} remain.`
@@ -361,11 +353,24 @@ export function useJourneyStateMachine(
   }, [])
 
   const closeReviewModal = useCallback(() => {
-    setState((prev) => ({
-      ...prev,
-      phase: 'returning',
-    }))
-  }, [])
+    setState((prev) => {
+      // Restore the appropriate returning phase based on completion status
+      const placedCount = Array.from(stars.values()).filter(
+        (s) => s.placement !== null,
+      ).length
+      const isJourneyComplete = placedCount === MOCK_PEOPLE.length
+      const isBatchComplete = prev.visitQueue.length === 0 && !isJourneyComplete
+
+      return {
+        ...prev,
+        phase: isJourneyComplete
+          ? 'returning-journey-complete'
+          : isBatchComplete
+          ? 'returning-batch-complete'
+          : 'returning',
+      }
+    })
+  }, [stars])
 
   const continueJourney = useCallback(() => {
     setState((prev) => {
@@ -412,7 +417,7 @@ export function useJourneyStateMachine(
 
       let message = ''
       if (chartedCount === totalCount) {
-        message = `${chartedCount} of ${totalCount} stars charted.`
+        message = `Journey complete! You've charted all ${totalCount} stars in your constellation.`
       } else {
         message = `${chartedCount} of ${totalCount} stars charted. Proceed or explore with 🧑‍🚀 manual controls.`
       }

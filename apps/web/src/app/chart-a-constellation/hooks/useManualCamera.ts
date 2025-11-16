@@ -1,4 +1,4 @@
-import { useEffect, useRef, MutableRefObject } from 'react'
+import { useEffect, useRef, useCallback, MutableRefObject } from 'react'
 import { useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 
@@ -23,6 +23,15 @@ export function useManualCamera({
 }: UseManualCameraProps) {
   const { camera, gl } = useThree()
 
+  // Helper to check if in any returning phase
+  const isReturningPhase = useCallback(
+    () =>
+      journeyPhase === 'returning' ||
+      journeyPhase === 'returning-batch-complete' ||
+      journeyPhase === 'returning-journey-complete',
+    [journeyPhase],
+  )
+
   // Drag state
   const isDragging = useRef(false)
   const previousMousePosition = useRef({ x: 0, y: 0 })
@@ -34,7 +43,7 @@ export function useManualCamera({
 
   // Set up event listeners for manual controls
   useEffect(() => {
-    if (!enabled || journeyPhase !== 'returning') {
+    if (!enabled || !isReturningPhase()) {
       return
     }
 
@@ -184,20 +193,20 @@ export function useManualCamera({
         canvas.style.cursor = 'default'
       }
     }
-  }, [enabled, journeyPhase, gl.domElement, cameraSpherical])
+  }, [enabled, gl.domElement, cameraSpherical, isReturningPhase])
 
   // Initialize manual mode when enabled
   useEffect(() => {
-    if (enabled && journeyPhase === 'returning') {
+    if (enabled && isReturningPhase()) {
       manualModeJustInitialized.current = true
       hasLoggedManualInit.current = false
       manualFrameCount.current = 0
     }
-  }, [enabled, journeyPhase, cameraSpherical, autoPilotCameraTarget])
+  }, [enabled, cameraSpherical, autoPilotCameraTarget, isReturningPhase])
 
   // Update function to be called per-frame
   const updateCamera = () => {
-    if (!enabled || journeyPhase !== 'returning') return
+    if (!enabled || !isReturningPhase()) return
 
     const { radius, theta, phi } = cameraSpherical.current
     const target = autoPilotCameraTarget.current

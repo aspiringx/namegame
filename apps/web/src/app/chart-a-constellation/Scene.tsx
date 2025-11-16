@@ -1,7 +1,7 @@
 import { useRef, useState, useMemo, useEffect } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
-import { StarOverlay, StarData, JourneyPhase } from './types'
+import { StarData, JourneyPhase } from './types'
 import { MOCK_PEOPLE } from './mockData'
 import { getStarRadius } from './starData'
 import Star from './Star'
@@ -47,7 +47,7 @@ export default function Scene({
   manualControlsEnabled,
   shouldResetCameraRef,
 }: SceneProps) {
-  const { camera, size } = useThree()
+  const { camera } = useThree()
   const { calculateSphericalForConstellation } = useCameraPositioning()
   const [nearestStarId, setNearestStarId] = useState<string | null>(null)
   const [texturesLoaded, setTexturesLoaded] = useState(false)
@@ -508,18 +508,33 @@ export default function Scene({
     }
 
     // Check if we need to reset camera (signaled by state machine)
-    if (shouldResetCameraRef.current && journeyPhase === 'returning') {
+    if (
+      shouldResetCameraRef.current &&
+      (journeyPhase === 'returning' ||
+        journeyPhase === 'returning-batch-complete' ||
+        journeyPhase === 'returning-journey-complete')
+    ) {
       returnProgress.current = 0
       shouldResetCameraRef.current = false
     }
 
     // Reset return progress when leaving constellation view
-    if (journeyPhase !== 'returning' && returnProgress.current > 0) {
+    if (
+      journeyPhase !== 'returning' &&
+      journeyPhase !== 'returning-batch-complete' &&
+      journeyPhase !== 'returning-journey-complete' &&
+      returnProgress.current > 0
+    ) {
       returnProgress.current = 0
     }
 
     // Handle return to constellation view
-    if (journeyPhase === 'returning' && !manualControlsEnabledRef.current) {
+    if (
+      (journeyPhase === 'returning' ||
+        journeyPhase === 'returning-batch-complete' ||
+        journeyPhase === 'returning-journey-complete') &&
+      !manualControlsEnabledRef.current
+    ) {
       if (returnProgress.current === 0 || returnProgress.current >= 1.5) {
         // Initialize return flight
         returnStartPos.current.copy(camera.position)
@@ -630,7 +645,12 @@ export default function Scene({
     }
 
     // Apply manual camera controls when enabled
-    if (journeyPhase === 'returning' && manualControlsEnabledRef.current) {
+    if (
+      (journeyPhase === 'returning' ||
+        journeyPhase === 'returning-batch-complete' ||
+        journeyPhase === 'returning-journey-complete') &&
+      manualControlsEnabledRef.current
+    ) {
       updateManualCamera()
       return
     }
@@ -847,22 +867,27 @@ export default function Scene({
         journeyPhase !== 'arrived' &&
         journeyPhase !== 'placed' &&
         journeyPhase !== 'complete' &&
-        journeyPhase !== 'returning' // Don't look at target star when viewing constellation
+        journeyPhase !== 'returning' && // Don't look at target star when viewing constellation
+        journeyPhase !== 'returning-batch-complete' &&
+        journeyPhase !== 'returning-journey-complete'
       ) {
         camera.lookAt(targetPos)
       }
     }
 
     // Skip overlay calculations when in manual mode to prevent flickering
-    if (manualControlsEnabledRef.current && journeyPhase === 'returning') {
+    if (
+      manualControlsEnabledRef.current &&
+      (journeyPhase === 'returning' ||
+        journeyPhase === 'returning-batch-complete' ||
+        journeyPhase === 'returning-journey-complete')
+    ) {
       return
     }
 
-    // Find nearest star and calculate screen positions
+    // Find nearest star (used for highlighting in nav panel)
     let minDist = Infinity
     let nearestId: string | null = null
-
-    const overlays: StarOverlay[] = []
 
     MOCK_PEOPLE.forEach((person, index) => {
       const pos = new THREE.Vector3(...starPositions[index])
@@ -871,24 +896,6 @@ export default function Scene({
       if (dist < minDist) {
         minDist = dist
         nearestId = person.id
-      }
-
-      // Project 3D position to 2D screen coordinates
-      const screenPos = pos.clone().project(camera)
-
-      // Only show if star is in front of camera (not behind)
-      // screenPos.z ranges from -1 (near) to 1 (far), negative means behind camera
-      if (screenPos.z < 1) {
-        const screenX = (screenPos.x * 0.5 + 0.5) * size.width
-        const screenY = (-(screenPos.y * 0.5) + 0.5) * size.height
-
-        overlays.push({
-          person,
-          screenX,
-          screenY,
-          distance: dist,
-          isNear: nearestId === person.id,
-        })
       }
     })
 
@@ -917,18 +924,21 @@ export default function Scene({
       <ShootingStar />
 
       {/* Constellation lines - only show in returning phase, only connect charted stars */}
-      {journeyPhase === 'returning' && texturesLoaded && (
-        <ConstellationLines
-          positions={starPositions}
-          placements={
-            new Map(
-              Array.from(stars.entries())
-                .filter(([_, star]) => star.placement)
-                .map(([id, star]) => [id, star.placement!]),
-            )
-          }
-        />
-      )}
+      {(journeyPhase === 'returning' ||
+        journeyPhase === 'returning-batch-complete' ||
+        journeyPhase === 'returning-journey-complete') &&
+        texturesLoaded && (
+          <ConstellationLines
+            positions={starPositions}
+            placements={
+              new Map(
+                Array.from(stars.entries())
+                  .filter(([_, star]) => star.placement)
+                  .map(([id, star]) => [id, star.placement!]),
+              )
+            }
+          />
+        )}
 
       {/* Person stars - only render when all textures loaded */}
       {texturesLoaded &&

@@ -30,23 +30,16 @@ export type JourneyPhase =
   | 'takeoff'
   | 'complete'
   | 'returning'
+  | 'returning-batch-complete'
+  | 'returning-journey-complete'
   | 'constellation-review'
 
-// Star overlay for 2D UI
-export interface StarOverlay {
-  person: Person
-  screenX: number
-  screenY: number
-  distance: number
-  isNear: boolean
-}
-
-// Star component props
+// Star component props - for rendering individual stars in 3D space
 export interface StarProps {
-  person: Person
-  position: [number, number, number]
-  isTarget: boolean
-  placement?: 'inner' | 'close' | 'outer'
-  texture: THREE.Texture
-  journeyPhase?: JourneyPhase
+  person: Person // Person data (currently unused in Star component, but kept for future features)
+  position: [number, number, number] // 3D world position
+  isTarget: boolean // Whether this is the star being flown to
+  placement?: 'inner' | 'close' | 'outer' // Which ring the star was placed in (undefined = not placed yet)
+  texture: THREE.Texture // Photo texture for the star
+  journeyPhase?: JourneyPhase // Current phase of the journey (affects rendering)
 }

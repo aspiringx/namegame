@@ -157,7 +157,14 @@ export function useCameraPositioning() {
     // Ensure minimum distance so stars show as photos
     const maxStarRadius = 10
     const minDistanceForPhotos = 20 + maxDimension / 2 + maxStarRadius
-    const zDistance = Math.max(baseDistance, minDistanceForPhotos)
+
+    // For single stars (maxDimension = 0), use a fixed comfortable viewing distance
+    // Match the distance used for individual star arrivals (4.5-6.5)
+    const singleStarDistance = isMobile ? 8 : 10
+    const zDistance =
+      bounds.placedStarCount === 1
+        ? singleStarDistance
+        : Math.max(baseDistance, minDistanceForPhotos)
 
     // Calculate Y offset to center constellation in HUD
     // When camera at (0, Y, Z) looks at (0, 0, 0), the origin projects to viewport center

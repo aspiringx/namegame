@@ -132,7 +132,9 @@ export default function StarField() {
       </Canvas>
 
       {/* Manual Controls Toggle - Only in constellation view */}
-      {state.phase === 'returning' && (
+      {(state.phase === 'returning' ||
+        state.phase === 'returning-batch-complete' ||
+        state.phase === 'returning-journey-complete') && (
         <div className="pointer-events-auto fixed right-4 top-4 z-20">
           <button
             onClick={() =>

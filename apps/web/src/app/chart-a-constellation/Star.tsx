@@ -41,22 +41,20 @@ export default function Star({
   const lockedOpacity = useRef<number | null>(null)
   const lockedTransitionProgress = useRef<number | null>(null)
 
+  // Phase checks - define once to avoid duplication
+  const isIntroPhase = journeyPhase === 'intro'
+  const isFlying = journeyPhase === 'flying'
+  const isReturning =
+    journeyPhase === 'returning' ||
+    journeyPhase === 'returning-batch-complete' ||
+    journeyPhase === 'returning-journey-complete'
+
   // Calculate distance and billboard rotation
   useFrame(() => {
     if (groupRef.current) {
       // Update distance to camera
       const dist = camera.position.distanceTo(new THREE.Vector3(...position))
       setDistanceToCamera(dist)
-
-      // Debug: Log Alice's actual rendered position during takeoff
-      if (
-        person.name === 'Alice Johnson' &&
-        journeyPhase === 'takeoff' &&
-        isTarget
-      ) {
-        const worldPos = new THREE.Vector3()
-        groupRef.current.getWorldPosition(worldPos)
-      }
 
       // Billboard - always face camera
       if (isTarget) {
@@ -84,7 +82,7 @@ export default function Star({
     isTarget && (journeyPhase === 'flying' || journeyPhase === 'approaching')
 
   // Reset locks when transitioning away from complete/placed to a new journey
-  if (isTarget && journeyPhase === 'returning') {
+  if (isTarget && isReturning) {
     lockedSize.current = null
     lockedOpacity.current = null
     lockedTransitionProgress.current = null
@@ -126,9 +124,6 @@ export default function Star({
     }
   } else {
     // Constellation stars (non-target) - boost size during intro and returning
-    const isIntroPhase = journeyPhase === 'intro'
-    const isFlying = journeyPhase === 'flying'
-    const isReturning = journeyPhase === 'returning'
     const maxDist = 100
     const distanceFactor = Math.max(
       0,
@@ -189,9 +184,6 @@ export default function Star({
   }
 
   // Force images hidden during intro phase to prevent flash
-  const isIntroPhase = journeyPhase === 'intro'
-  const isReturning = journeyPhase === 'returning'
-  
   if (isIntroPhase) {
     transitionProgress = 0
   } else if (isReturning) {
@@ -242,10 +234,6 @@ export default function Star({
     }
   } else {
     // Constellation stars (non-target) - boost visibility during intro and returning
-    const isIntroPhase = journeyPhase === 'intro'
-    const isFlying = journeyPhase === 'flying'
-    const isReturning = journeyPhase === 'returning'
-
     // Opacity varies with distance
     const maxDist = 100
     const distanceFactor = Math.max(

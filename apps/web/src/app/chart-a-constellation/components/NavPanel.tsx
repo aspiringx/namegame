@@ -10,7 +10,7 @@
  * - Returning: Auto-Pilot/Manual toggle, Proceed, and Review buttons
  */
 
-import { JourneyPhase } from '../hooks/useJourneyStateMachine'
+import { JourneyPhase } from '../types'
 import { MOCK_PEOPLE } from '../mockData'
 
 interface NavPanelProps {
@@ -87,32 +87,35 @@ export function NavPanel({
 
             <div className="flex items-center gap-2">
               {/* Auto-Pilot/Manual toggle - show when in returning mode */}
-              {phase === 'returning' && placementsCount > 0 && (
-                <>
-                  <button
-                    onClick={() => onToggleManualControls(false)}
-                    className={`text-base px-2 py-1 rounded border transition-colors ${
-                      !manualControlsEnabled
-                        ? 'border-indigo-400 bg-indigo-500/40 text-indigo-100 shadow-sm'
-                        : 'border-indigo-400/50 bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20 hover:border-indigo-400'
-                    }`}
-                    title="Auto-Pilot"
-                  >
-                    🚀
-                  </button>
-                  <button
-                    onClick={() => onToggleManualControls(true)}
-                    className={`text-base px-2 py-1 rounded border transition-colors ${
-                      manualControlsEnabled
-                        ? 'border-indigo-400 bg-indigo-500/40 text-indigo-100 shadow-sm'
-                        : 'border-indigo-400/50 bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20 hover:border-indigo-400'
-                    }`}
-                    title="Manual"
-                  >
-                    🧑‍🚀
-                  </button>
-                </>
-              )}
+              {(phase === 'returning' ||
+                phase === 'returning-batch-complete' ||
+                phase === 'returning-journey-complete') &&
+                placementsCount > 0 && (
+                  <>
+                    <button
+                      onClick={() => onToggleManualControls(false)}
+                      className={`text-base px-2 py-1 rounded border transition-colors ${
+                        !manualControlsEnabled
+                          ? 'border-indigo-400 bg-indigo-500/40 text-indigo-100 shadow-sm'
+                          : 'border-indigo-400/50 bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20 hover:border-indigo-400'
+                      }`}
+                      title="Auto-Pilot"
+                    >
+                      🚀
+                    </button>
+                    <button
+                      onClick={() => onToggleManualControls(true)}
+                      className={`text-base px-2 py-1 rounded border transition-colors ${
+                        manualControlsEnabled
+                          ? 'border-indigo-400 bg-indigo-500/40 text-indigo-100 shadow-sm'
+                          : 'border-indigo-400/50 bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20 hover:border-indigo-400'
+                      }`}
+                      title="Manual"
+                    >
+                      🧑‍🚀
+                    </button>
+                  </>
+                )}
 
               {/* Zoom Out button - show only when arrived at a star */}
               {placementsCount > 0 && hasUncharted && phase === 'arrived' && (
@@ -259,7 +262,7 @@ export function NavPanel({
             </div>
           )}
 
-          {/* Buttons in constellation view when not all stars charted */}
+          {/* Buttons in constellation view when not all stars charted (manual zoom out only) */}
           {phase === 'returning' && hasUncharted && (
             <div className="mt-3 flex gap-2">
               <button
@@ -278,7 +281,7 @@ export function NavPanel({
           )}
 
           {/* Action buttons when selected stars complete but uncharted remain */}
-          {phase === 'complete' && hasUncharted && visitQueueLength === 0 && (
+          {phase === 'returning-batch-complete' && hasUncharted && (
             <div className="mt-3 space-y-2">
               <button
                 onClick={onContinueJourney}
@@ -286,32 +289,23 @@ export function NavPanel({
               >
                 → Continue Journey
               </button>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  onClick={onOpenReviewModal}
-                  className="rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg transition-colors hover:bg-indigo-700 active:bg-indigo-800"
-                >
-                  ✦ Review
-                </button>
-                <button
-                  data-testid="zoom-out-after-placement"
-                  onClick={onZoomOut}
-                  className="rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg transition-colors hover:bg-indigo-700 active:bg-indigo-800"
-                >
-                  ⊙ Zoom Out
-                </button>
-              </div>
+              <button
+                onClick={onOpenReviewModal}
+                className="w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg transition-colors hover:bg-indigo-700 active:bg-indigo-800"
+              >
+                ✦ Review
+              </button>
             </div>
           )}
 
-          {/* View Constellation button - large prominent button only when ALL stars charted */}
-          {placementsCount === totalCount && phase === 'complete' && (
+          {/* Journey complete - all stars charted */}
+          {phase === 'returning-journey-complete' && (
             <div className="mt-3">
               <button
-                onClick={onZoomOut}
+                onClick={onOpenReviewModal}
                 className="w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg transition-colors hover:bg-indigo-700 active:bg-indigo-800"
               >
-                ⊙ View Constellation
+                ✦ Review
               </button>
             </div>
           )}
