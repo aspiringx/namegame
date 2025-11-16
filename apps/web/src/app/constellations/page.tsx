@@ -2,7 +2,7 @@ import { Metadata } from 'next'
 import MakeConstellation from './MakeConstellation'
 
 export const metadata: Metadata = {
-  title: 'RelationStar',
+  title: 'RelationStar - Constellations',
   description: 'Chart a constellation',
 }
 
