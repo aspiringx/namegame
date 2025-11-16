@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 
+import StarChart from './StarChart'
+
 // Dummy data for demonstration
 const dummyRelationships = [
   {
@@ -194,8 +196,8 @@ export default function RelationshipStarPage() {
         <h1 className="text-2xl font-bold">Chart a Star</h1>
       </div>
       <p className="mb-8">
-        A star has five points that describe your relationship. The examples
-        show how it works, then <i>Try It</i>!
+        A star's points describe your relationship at a point in time. Compare
+        the examples and try it.
       </p>
 
       {/* Selector - Mobile: Compact Button Group, Desktop: Full Buttons */}
@@ -263,44 +265,45 @@ export default function RelationshipStarPage() {
       {isInteractive && (
         <div className="mb-8 grid gap-8 lg:grid-cols-2">
           {/* Left: Sliders */}
-          <p className=" text-sm text-gray-700 dark:text-gray-300">
-            Think of someone you know and chart the five points as you see them
-            today. Then
-          </p>
           <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
+            <p className="text-center text-3xl mb-2">⭐</p>
+            <p className="text-sm text-gray-700 dark:text-gray-300 mb-4">
+              Pick a star in your life and chart the five points today (they
+              change over time).
+            </p>
             <div className="space-y-6">
               {[
                 {
                   key: 'proximity',
-                  label: '⭐ How often are you near this person?',
+                  label: 'How often are you near this person?',
                   hint: 'Physical and/or virtual proximity',
                   minLabel: 'Never',
                   maxLabel: 'Daily',
                 },
                 {
                   key: 'commonGround',
-                  label: '⭐ How much common ground do you share?',
+                  label: 'How much common ground do you share?',
                   hint: 'Interests, values, experiences',
                   minLabel: 'None',
                   maxLabel: 'A lot',
                 },
                 {
                   key: 'familiarity',
-                  label: '⭐ How well do you know them?',
+                  label: 'How well do you know them?',
                   hint: 'From name recognition to deep understanding',
                   minLabel: 'Not at all',
                   maxLabel: 'Very well',
                 },
                 {
                   key: 'interest',
-                  label: '⭐ How interested are you in this relationship?',
+                  label: 'How interested are you in this relationship?',
                   hint: 'Desire, ability, commitment',
                   minLabel: 'Not at all',
                   maxLabel: 'Very interested',
                 },
                 {
                   key: 'personalTime',
-                  label: '⭐ How much personal time do you spend together?',
+                  label: 'How much personal time do you spend together?',
                   hint: 'Time focused on each other where you can talk freely. Not formal/bigger gatherings or doing required tasks.',
                   minLabel: 'None',
                   maxLabel: 'A lot',
@@ -354,6 +357,22 @@ export default function RelationshipStarPage() {
             {/* Cosmic Insights */}
             <div className="mt-8">
               <h3 className="mb-4 text-xl font-bold">Cosmic Insights</h3>
+
+              <p className="text-sm mb-4">
+                Relationships are dynamic, always changing.
+              </p>
+              <ul className="text-sm list-disc list-outside mb-6 pl-5">
+                <li>
+                  <b>Star Charts</b> and their scores are how you see key
+                  relationships at a point in time. Use them to periodically
+                  think about relationships and watch them evolve.
+                </li>
+                <li>
+                  <b>Cosmic Insights</b> provide specific ways to nurture your
+                  most important relationships to maintain or improve its
+                  health.
+                </li>
+              </ul>
 
               {!isSignedIn ? (
                 /* Not authenticated - show login prompt */
@@ -507,193 +526,7 @@ export default function RelationshipStarPage() {
               <h3 className="mb-3 text-lg font-bold">
                 Star Chart for {current.name.split(' ')[0]}
               </h3>
-              <div className="relative mx-auto aspect-square w-full">
-                <svg viewBox="-10 -10 340 340" className="h-full w-full">
-                  {/* Center point */}
-                  <circle cx="160" cy="160" r="3" fill="#4f46e5" />
-
-                  {/* Concentric circles */}
-                  {[32, 64, 96, 128, 160].map((radius) => (
-                    <circle
-                      key={radius}
-                      cx="160"
-                      cy="160"
-                      r={radius}
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1"
-                      className="stroke-gray-300 dark:stroke-gray-600"
-                    />
-                  ))}
-
-                  {/* Scale labels (0, 5, 10) straight up from center */}
-                  {[0, 5, 10].map((val) => (
-                    <text
-                      key={val}
-                      x="160"
-                      y={160 - val * 16 - (val === 0 ? 12 : 0) + 5}
-                      textAnchor="middle"
-                      fontSize="14"
-                      fontWeight="500"
-                      fill="currentColor"
-                      className="fill-gray-600 dark:fill-gray-400"
-                    >
-                      {val}
-                    </text>
-                  ))}
-
-                  {/* Axes */}
-                  {current.data.map((_, idx) => {
-                    const angle =
-                      (idx * (360 / current.data.length) - 90 + 30) *
-                      (Math.PI / 180)
-                    const x = 160 + 160 * Math.cos(angle)
-                    const y = 160 + 160 * Math.sin(angle)
-                    return (
-                      <line
-                        key={idx}
-                        x1="160"
-                        y1="160"
-                        x2={x}
-                        y2={y}
-                        stroke="currentColor"
-                        strokeWidth="1"
-                        className="stroke-gray-300 dark:stroke-gray-600"
-                      />
-                    )
-                  })}
-
-                  {/* Filled area */}
-                  <path
-                    d={
-                      current.data
-                        .map((item, idx) => {
-                          const angle =
-                            (idx * (360 / current.data.length) - 90 + 30) *
-                            (Math.PI / 180)
-                          const length = item.value * 16
-                          const x = 160 + length * Math.cos(angle)
-                          const y = 160 + length * Math.sin(angle)
-                          return `${idx === 0 ? 'M' : 'L'} ${x} ${y}`
-                        })
-                        .join(' ') + ' Z'
-                    }
-                    fill="#4f46e5"
-                    fillOpacity="0.15"
-                    stroke="#4f46e5"
-                    strokeWidth="3"
-                    opacity="0.6"
-                  />
-
-                  {/* Points */}
-                  {current.data.map((item, idx) => {
-                    const angle =
-                      (idx * (360 / current.data.length) - 90 + 30) *
-                      (Math.PI / 180)
-                    const length = item.value * 16
-                    const x = 160 + length * Math.cos(angle)
-                    const y = 160 + length * Math.sin(angle)
-
-                    return (
-                      <g key={idx}>
-                        <circle
-                          cx={x}
-                          cy={y}
-                          r="6"
-                          fill="#4f46e5"
-                          opacity="0.3"
-                        />
-                        <circle cx={x} cy={y} r="3" fill="#4f46e5" />
-
-                        {/* Labels - always show, with smart positioning */}
-                        {(() => {
-                          // Use minimum distance of 60px from center for low values to avoid overlap
-                          const labelDistance = Math.max(length - 30, 60)
-                          const labelX = 160 + labelDistance * Math.cos(angle)
-                          const labelY = 160 + labelDistance * Math.sin(angle)
-
-                          return (
-                            <>
-                              {item.dimension === 'Personal Time' ? (
-                                <>
-                                  <text
-                                    x={labelX}
-                                    y={labelY - 6}
-                                    textAnchor="middle"
-                                    fontSize="14"
-                                    fontWeight="600"
-                                    fill="currentColor"
-                                    className="fill-gray-900 dark:fill-gray-100"
-                                  >
-                                    Personal
-                                  </text>
-                                  <text
-                                    x={
-                                      160 +
-                                      Math.max(length - 30, 25) *
-                                        Math.cos(angle)
-                                    }
-                                    y={
-                                      160 +
-                                      Math.max(length - 30, 25) *
-                                        Math.sin(angle) +
-                                      6
-                                    }
-                                    textAnchor="middle"
-                                    fontSize="14"
-                                    fontWeight="600"
-                                    fill="currentColor"
-                                    className="fill-gray-900 dark:fill-gray-100"
-                                  >
-                                    Time
-                                  </text>
-                                </>
-                              ) : item.dimension === 'Common Ground' ? (
-                                <>
-                                  <text
-                                    x={labelX}
-                                    y={labelY - 6}
-                                    textAnchor="middle"
-                                    fontSize="14"
-                                    fontWeight="600"
-                                    fill="currentColor"
-                                    className="fill-gray-900 dark:fill-gray-100"
-                                  >
-                                    Common
-                                  </text>
-                                  <text
-                                    x={labelX}
-                                    y={labelY + 6}
-                                    textAnchor="middle"
-                                    fontSize="14"
-                                    fontWeight="600"
-                                    fill="currentColor"
-                                    className="fill-gray-900 dark:fill-gray-100"
-                                  >
-                                    Ground
-                                  </text>
-                                </>
-                              ) : (
-                                <text
-                                  x={labelX}
-                                  y={labelY}
-                                  textAnchor="middle"
-                                  fontSize="14"
-                                  fontWeight="600"
-                                  fill="currentColor"
-                                  className="fill-gray-900 dark:fill-gray-100"
-                                >
-                                  {item.dimension}
-                                </text>
-                              )}
-                            </>
-                          )
-                        })()}
-                      </g>
-                    )
-                  })}
-                </svg>
-              </div>
+              <StarChart data={current.data} size="small" />
             </div>
 
             {/* Mini Score Breakdown */}
@@ -767,184 +600,8 @@ export default function RelationshipStarPage() {
             <h2 className="mb-4 text-xl font-bold">
               {current.name.split(' ')[0]}'s Star Chart
             </h2>
-            <div className="relative mx-auto aspect-square w-full max-w-md">
-              <svg viewBox="-10 -10 340 340" className="h-full w-full">
-                {/* Center point */}
-                <circle cx="160" cy="160" r="3" fill="#4f46e5" />
-
-                {/* Concentric circles */}
-                {[32, 64, 96, 128, 160].map((radius) => (
-                  <circle
-                    key={radius}
-                    cx="160"
-                    cy="160"
-                    r={radius}
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1"
-                    className="stroke-gray-300 dark:stroke-gray-600"
-                  />
-                ))}
-
-                {/* Scale labels (0, 5, 10) straight up from center */}
-                {[0, 5, 10].map((val) => (
-                  <text
-                    key={val}
-                    x="160"
-                    y={160 - val * 16 - (val === 0 ? 12 : 0) + 5}
-                    textAnchor="middle"
-                    fontSize="14"
-                    fontWeight="500"
-                    fill="currentColor"
-                    className="fill-gray-600 dark:fill-gray-400"
-                  >
-                    {val}
-                  </text>
-                ))}
-
-                {/* Axes */}
-                {current.data.map((_, idx) => {
-                  const angle =
-                    (idx * (360 / current.data.length) - 90 + 30) *
-                    (Math.PI / 180)
-                  const x = 160 + 160 * Math.cos(angle)
-                  const y = 160 + 160 * Math.sin(angle)
-                  return (
-                    <line
-                      key={idx}
-                      x1="160"
-                      y1="160"
-                      x2={x}
-                      y2={y}
-                      stroke="currentColor"
-                      strokeWidth="1"
-                      className="stroke-gray-300 dark:stroke-gray-600"
-                    />
-                  )
-                })}
-
-                {/* Filled area with very low opacity */}
-                <path
-                  d={
-                    current.data
-                      .map((item, idx) => {
-                        const angle =
-                          (idx * (360 / current.data.length) - 90 + 30) *
-                          (Math.PI / 180)
-                        const length = item.value * 16
-                        const x = 160 + length * Math.cos(angle)
-                        const y = 160 + length * Math.sin(angle)
-                        return `${idx === 0 ? 'M' : 'L'} ${x} ${y}`
-                      })
-                      .join(' ') + ' Z'
-                  }
-                  fill="#4f46e5"
-                  fillOpacity="0.15"
-                  stroke="#4f46e5"
-                  strokeWidth="3"
-                  opacity="0.6"
-                />
-
-                {/* Points with glow at each dimension */}
-                {current.data.map((item, idx) => {
-                  const angle =
-                    (idx * (360 / current.data.length) - 90 + 30) *
-                    (Math.PI / 180)
-                  const length = item.value * 16
-                  const x = 160 + length * Math.cos(angle)
-                  const y = 160 + length * Math.sin(angle)
-
-                  return (
-                    <g key={idx}>
-                      {/* Glow effect */}
-                      <circle
-                        cx={x}
-                        cy={y}
-                        r="8"
-                        fill="#818cf8"
-                        opacity="0.3"
-                      />
-                      <circle cx={x} cy={y} r="4" fill="#4f46e5" />
-                      <circle cx={x} cy={y} r="3" fill="#c7d2fe" />
-                      {/* Labels - always show, with smart positioning */}
-                      {(() => {
-                        // Use minimum distance of 60px from center for low values to avoid overlap
-                        const labelDistance = Math.max(length - 30, 60)
-                        const labelX = 160 + labelDistance * Math.cos(angle)
-                        const labelY = 160 + labelDistance * Math.sin(angle)
-
-                        return (
-                          <>
-                            {item.dimension === 'Personal Time' ? (
-                              <>
-                                <text
-                                  x={labelX}
-                                  y={labelY - 6}
-                                  textAnchor="middle"
-                                  fontSize="14"
-                                  fontWeight="600"
-                                  fill="currentColor"
-                                  className="fill-gray-900 dark:fill-gray-100"
-                                >
-                                  Personal
-                                </text>
-                                <text
-                                  x={labelX}
-                                  y={labelY + 6}
-                                  textAnchor="middle"
-                                  fontSize="14"
-                                  fontWeight="600"
-                                  fill="currentColor"
-                                  className="fill-gray-900 dark:fill-gray-100"
-                                >
-                                  Time
-                                </text>
-                              </>
-                            ) : item.dimension === 'Common Ground' ? (
-                              <>
-                                <text
-                                  x={labelX}
-                                  y={labelY - 6}
-                                  textAnchor="middle"
-                                  fontSize="14"
-                                  fontWeight="600"
-                                  fill="currentColor"
-                                  className="fill-gray-900 dark:fill-gray-100"
-                                >
-                                  Common
-                                </text>
-                                <text
-                                  x={labelX}
-                                  y={labelY + 6}
-                                  textAnchor="middle"
-                                  fontSize="14"
-                                  fontWeight="600"
-                                  fill="currentColor"
-                                  className="fill-gray-900 dark:fill-gray-100"
-                                >
-                                  Ground
-                                </text>
-                              </>
-                            ) : (
-                              <text
-                                x={labelX}
-                                y={labelY}
-                                textAnchor="middle"
-                                fontSize="14"
-                                fontWeight="600"
-                                fill="currentColor"
-                                className="fill-gray-900 dark:fill-gray-100"
-                              >
-                                {item.dimension}
-                              </text>
-                            )}
-                          </>
-                        )
-                      })()}
-                    </g>
-                  )
-                })}
-              </svg>
+            <div className="max-w-md mx-auto">
+              <StarChart data={current.data} size="large" />
             </div>
           </div>
 
