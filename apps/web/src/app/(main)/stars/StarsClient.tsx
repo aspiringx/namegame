@@ -115,7 +115,7 @@ export default function RelationshipStarPage() {
 
   const current = isInteractive
     ? {
-        name: 'Your Assessment',
+        name: 'Demo Chart',
         data: [
           {
             dimension: 'Proximity',
@@ -188,18 +188,49 @@ export default function RelationshipStarPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8 pb-24">
+    <div className="mx-auto max-w-6xl px-4 pt-4 pb-24">
       {/* Header */}
-      <div className="mb-8 text-center">
-        <h1 className="mb-4 text-4xl font-bold">Relation Star</h1>
-        <p className="text-lg text-gray-600 dark:text-gray-400">
-          A visual framework for understanding and strengthening your
-          relationships
-        </p>
+      <div className="mb-4 text-center">
+        <h1 className="text-2xl font-bold">Chart a Star</h1>
+      </div>
+      <p className="mb-8">
+        A star has five points that describe your relationship. The examples
+        show how it works, then <i>Try It</i>!
+      </p>
+
+      {/* Selector - Mobile: Compact Button Group, Desktop: Full Buttons */}
+      {/* Mobile View */}
+      <div className="mb-8 flex gap-2 sm:hidden">
+        {dummyRelationships.map((rel, idx) => (
+          <button
+            key={idx}
+            onClick={() => {
+              setIsInteractive(false)
+              setSelectedRelationship(idx)
+            }}
+            className={`flex-1 rounded-lg px-2 py-3 text-xs font-medium transition-colors ${
+              !isInteractive && selectedRelationship === idx
+                ? 'bg-indigo-600 text-white hover:bg-indigo-700'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+            }`}
+          >
+            {rel.name.split(' ')[0]}
+          </button>
+        ))}
+        <button
+          onClick={() => setIsInteractive(true)}
+          className={`flex-1 rounded-lg px-2 py-3 text-xs font-medium transition-colors text-white ${
+            isInteractive
+              ? 'bg-green-500 hover:bg-green-600'
+              : 'bg-green-600 hover:bg-green-700'
+          }`}
+        >
+          Try It
+        </button>
       </div>
 
-      {/* Selector */}
-      <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:justify-center sm:gap-4">
+      {/* Desktop View */}
+      <div className="mb-8 hidden sm:flex sm:flex-row sm:justify-center sm:gap-4">
         {dummyRelationships.map((rel, idx) => (
           <button
             key={idx}
@@ -209,7 +240,7 @@ export default function RelationshipStarPage() {
             }}
             className={`rounded-lg px-4 py-3 text-sm font-medium transition-colors sm:px-6 sm:text-base ${
               !isInteractive && selectedRelationship === idx
-                ? 'bg-indigo-600 text-white'
+                ? 'bg-indigo-600 text-white hover:bg-indigo-700'
                 : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
             }`}
           >
@@ -218,10 +249,10 @@ export default function RelationshipStarPage() {
         ))}
         <button
           onClick={() => setIsInteractive(true)}
-          className={`rounded-lg px-4 py-3 text-sm font-medium transition-colors sm:px-6 sm:text-base ${
+          className={`rounded-lg px-4 py-3 text-sm font-medium transition-colors text-white sm:px-6 sm:text-base ${
             isInteractive
-              ? 'bg-green-600 text-white'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+              ? 'bg-green-500 hover:bg-green-600'
+              : 'bg-green-600 hover:bg-green-700'
           }`}
         >
           Try It
@@ -232,13 +263,11 @@ export default function RelationshipStarPage() {
       {isInteractive && (
         <div className="mb-8 grid gap-8 lg:grid-cols-2">
           {/* Left: Sliders */}
+          <p className=" text-sm text-gray-700 dark:text-gray-300">
+            Think of someone you know and chart the five points as you see them
+            today. Then
+          </p>
           <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
-            <h2 className="mb-4 text-xl font-bold text-gray-900 dark:text-gray-100">
-              Map the Relationship
-            </h2>
-            <p className="mb-4 text-sm text-gray-700 dark:text-gray-300">
-              Map your relationship in the stars and get cosmic insights.
-            </p>
             <div className="space-y-6">
               {[
                 {
@@ -272,7 +301,7 @@ export default function RelationshipStarPage() {
                 {
                   key: 'personalTime',
                   label: '⭐ How much personal time do you spend together?',
-                  hint: 'Time together focused on each other in spaces where you can talk freely, not formal/bigger gatherings or doing required tasks',
+                  hint: 'Time focused on each other where you can talk freely. Not formal/bigger gatherings or doing required tasks.',
                   minLabel: 'None',
                   maxLabel: 'A lot',
                 },
@@ -322,61 +351,13 @@ export default function RelationshipStarPage() {
               ))}
             </div>
 
-            {/* Relationship Goals */}
+            {/* Cosmic Insights */}
             <div className="mt-8">
               <h3 className="mb-4 text-xl font-bold">Cosmic Insights</h3>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Relationship context
-              </label>
-              <div className="mt-1 mb-2 text-xs text-gray-500 dark:text-gray-400">
-                Provide relationship context (status, dynamics, hopes, etc.) for
-                personalized insights.
-              </div>
-              <textarea
-                value={relationshipGoals}
-                onChange={(e) => setRelationshipGoals(e.target.value)}
-                placeholder="e.g., I'd like to feel closer to my teenage daughter, or I want to maintain this friendship despite living far apart..."
-                maxLength={500}
-                rows={3}
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500"
-              />
-              <div className="text-xs text-gray-500 dark:text-gray-400 text-right">
-                {relationshipGoals.length}/500 characters
-              </div>
-            </div>
 
-            {/* Privacy Notice - Only show when at least one slider has a value */}
-            {!Object.values(interactiveScores).every((v) => v === 0) && (
-              <div className="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
-                <div className="flex items-start gap-2">
-                  <svg
-                    className="h-5 w-5 flex-shrink-0 text-gray-600 dark:text-gray-400"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                    />
-                  </svg>
-                  <div className="text-xs text-gray-700 dark:text-gray-300">
-                    <strong className="font-semibold">
-                      Your privacy matters.
-                    </strong>{' '}
-                    Your responses and AI insights are completely private and
-                    only visible to you.
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* AI Assessment Button - Only show when at least one slider has a value */}
-            {!Object.values(interactiveScores).every((v) => v === 0) && (
-              <div className="mt-6">
-                {!isSignedIn ? (
+              {!isSignedIn ? (
+                /* Not authenticated - show login prompt */
+                !Object.values(interactiveScores).every((v) => v === 0) && (
                   <>
                     <Link
                       href={`/auth/signin?callbackUrl=${encodeURIComponent(
@@ -396,77 +377,136 @@ export default function RelationshipStarPage() {
                       </Link>
                     </p>
                   </>
-                ) : (
-                  <button
-                    onClick={
-                      aiInsight
-                        ? () => {
-                            setAiInsight(null)
-                            setRelationshipGoals('')
-                            setAiError(null)
-                          }
-                        : handleAIAssessment
-                    }
-                    disabled={!aiInsight && (isLoadingAI || isLoadingSession)}
-                    className="w-full rounded-lg bg-indigo-600 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500 dark:disabled:bg-gray-700 dark:disabled:text-gray-400"
-                  >
-                    {aiInsight ? (
-                      'Start Over'
-                    ) : isLoadingAI ? (
-                      <span className="flex items-center justify-center gap-2">
+                )
+              ) : (
+                /* Authenticated - show full form */
+                <>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Relationship context
+                  </label>
+                  <div className="mt-1 mb-2 text-xs text-gray-500 dark:text-gray-400">
+                    Describe the current relationship (status, dynamics, hopes,
+                    etc.) for personalized insights.
+                  </div>
+                  <textarea
+                    value={relationshipGoals}
+                    onChange={(e) => setRelationshipGoals(e.target.value)}
+                    placeholder="e.g., I'd like to feel closer to my teenage daughter, or I want to maintain this friendship despite living far apart..."
+                    maxLength={500}
+                    rows={3}
+                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500"
+                  />
+                  <div className="text-xs text-gray-500 dark:text-gray-400 text-right">
+                    {relationshipGoals.length}/500 characters
+                  </div>
+
+                  {/* Privacy Notice - Only show when at least one slider has a value */}
+                  {!Object.values(interactiveScores).every((v) => v === 0) && (
+                    <div className="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
+                      <div className="flex items-start gap-2">
                         <svg
-                          className="h-4 w-4 animate-spin"
+                          className="h-5 w-5 flex-shrink-0 text-gray-600 dark:text-gray-400"
+                          fill="none"
                           viewBox="0 0 24 24"
+                          stroke="currentColor"
                         >
-                          <circle
-                            className="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            strokeWidth="4"
-                            fill="none"
-                          />
                           <path
-                            className="opacity-75"
-                            fill="currentColor"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
                           />
                         </svg>
-                        Gathering wisdom...
-                      </span>
-                    ) : (
-                      'Get Cosmic Insights'
-                    )}
-                  </button>
-                )}
+                        <div className="text-xs text-gray-700 dark:text-gray-300">
+                          <strong className="font-semibold">
+                            Your privacy matters.
+                          </strong>{' '}
+                          Your responses and AI insights are completely private
+                          and only visible to you.
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
-                {aiError && (
-                  <div className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-200">
-                    {aiError}
-                  </div>
-                )}
+                  {/* AI Assessment Button - Only show when at least one slider has a value */}
+                  {!Object.values(interactiveScores).every((v) => v === 0) && (
+                    <div className="mt-6">
+                      <button
+                        onClick={
+                          aiInsight
+                            ? () => {
+                                setAiInsight(null)
+                                setRelationshipGoals('')
+                                setAiError(null)
+                              }
+                            : handleAIAssessment
+                        }
+                        disabled={
+                          !aiInsight && (isLoadingAI || isLoadingSession)
+                        }
+                        className="w-full rounded-lg bg-indigo-600 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500 dark:disabled:bg-gray-700 dark:disabled:text-gray-400"
+                      >
+                        {aiInsight ? (
+                          'Start Over'
+                        ) : isLoadingAI ? (
+                          <span className="flex items-center justify-center gap-2">
+                            <svg
+                              className="h-4 w-4 animate-spin"
+                              viewBox="0 0 24 24"
+                            >
+                              <circle
+                                className="opacity-25"
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke="currentColor"
+                                strokeWidth="4"
+                                fill="none"
+                              />
+                              <path
+                                className="opacity-75"
+                                fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                              />
+                            </svg>
+                            Gathering wisdom...
+                          </span>
+                        ) : (
+                          'Get Cosmic Insights'
+                        )}
+                      </button>
 
-                {aiInsight && (
-                  <div className="mt-4 rounded-lg border border-indigo-200 bg-indigo-50 p-6 dark:border-indigo-900 dark:bg-indigo-950">
-                    <h4 className="mb-4 text-lg font-semibold text-indigo-900 dark:text-indigo-100">
-                      Your Cosmic Insights
-                    </h4>
-                    <div
-                      className="prose prose-sm prose-indigo dark:prose-invert max-w-none text-indigo-800 dark:text-indigo-200 [&>p]:mb-8 [&>div]:space-y-2 [&_ul]:space-y-3 [&_li]:leading-relaxed"
-                      dangerouslySetInnerHTML={{ __html: aiInsight }}
-                    />
-                  </div>
-                )}
-              </div>
-            )}
+                      {aiError && (
+                        <div className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-200">
+                          {aiError}
+                        </div>
+                      )}
+
+                      {aiInsight && (
+                        <div className="mt-4 rounded-lg border border-indigo-200 bg-indigo-50 p-6 dark:border-indigo-900 dark:bg-indigo-950">
+                          <h4 className="mb-4 text-lg font-semibold text-indigo-900 dark:text-indigo-100">
+                            Your Cosmic Insights
+                          </h4>
+                          <div
+                            className="prose prose-sm prose-indigo dark:prose-invert max-w-none text-indigo-800 dark:text-indigo-200 [&>p]:mb-8 [&>div]:space-y-2 [&_ul]:space-y-3 [&_li]:leading-relaxed"
+                            dangerouslySetInnerHTML={{ __html: aiInsight }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
           </div>
 
           {/* Right: Chart and Score */}
           <div className="space-y-6">
             {/* Mini Chart */}
             <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
-              <h3 className="mb-3 text-lg font-bold">Star Chart</h3>
+              <h3 className="mb-3 text-lg font-bold">
+                Star Chart for {current.name.split(' ')[0]}
+              </h3>
               <div className="relative mx-auto aspect-square w-full">
                 <svg viewBox="-10 -10 340 340" className="h-full w-full">
                   {/* Center point */}
@@ -724,7 +764,9 @@ export default function RelationshipStarPage() {
         <div className="grid gap-8 lg:grid-cols-2">
           {/* Chart */}
           <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800 sm:p-6">
-            <h2 className="mb-4 text-xl font-bold">Star Chart</h2>
+            <h2 className="mb-4 text-xl font-bold">
+              {current.name.split(' ')[0]}'s Star Chart
+            </h2>
             <div className="relative mx-auto aspect-square w-full max-w-md">
               <svg viewBox="-10 -10 340 340" className="h-full w-full">
                 {/* Center point */}

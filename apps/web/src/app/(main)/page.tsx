@@ -47,17 +47,17 @@ export default function Home() {
               href="/constellations"
               className="mx-auto rounded border border-cyan-400/50 bg-cyan-500/10 px-6 py-3 font-mono text-sm font-medium text-cyan-400 transition-colors hover:border-cyan-400 hover:bg-cyan-500/20 sm:w-[300px] w-full"
             >
-              ⭐ Constellations ⭐
+              ⭐ Your Constellations ⭐
             </Link>
             <p className="text-left mt-4">
-              Chart the five points of a star to better understand the
+              Chart the five points of a star to better understand a
               relationship and access cosmic insights!
             </p>
             <Link
               href="/stars"
               className="mx-auto rounded border border-cyan-400/50 bg-cyan-500/10 px-6 py-3 font-mono text-sm font-medium text-cyan-400 transition-colors hover:border-cyan-400 hover:bg-cyan-500/20 sm:w-[300px] w-full"
             >
-              ⭐ Charting Stars ⭐
+              ⭐ Chart a Star ⭐
             </Link>
           </div>
         </section>
