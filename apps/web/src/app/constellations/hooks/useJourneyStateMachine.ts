@@ -72,7 +72,7 @@ export function useJourneyStateMachine(
     return [
       `Welcome to the ${groupName} cluster. Sensors detect ${MOCK_PEOPLE.length} stars.`,
       `A <b>cluster</b> is a random group of stars in your vicinity.<br /><br />A <b>constellation</b> is a meaningful pattern formed by relationships you perceive.`,
-      `<b>Your mission:</b> Chart the positions of the stars relative to you to form a constellation.`,
+      `<b>Your mission:</b> Map the positions of the stars relative to you to form a constellation.`,
       `Positions:<br /><br /><b>• Close</b>: Close friend, family<br /><b>• Near</b>: Passive friend, acquaintance<br /><b>• Far</b>: Unknown, distant<br /><br />Ready?`,
     ]
   }, [groupName])
@@ -117,7 +117,7 @@ export function useJourneyStateMachine(
         ...prev,
         phase: 'selecting',
         narratorMessage:
-          'Select stars to chart. If you know people, begin with them.',
+          'Select stars to map. If you know people, begin with them.',
       }
     })
   }, [INTRO_MESSAGES])
@@ -152,7 +152,7 @@ export function useJourneyStateMachine(
       ...prev,
       phase: 'selecting',
       narratorMessage:
-        'Select stars to chart. You can begin with those you know or select all.',
+        'Select stars to map. You can begin with those you know or select all.',
     }))
   }, [])
 
@@ -257,7 +257,7 @@ export function useJourneyStateMachine(
             visitQueue: updatedQueue,
             phase: 'returning-journey-complete',
             useConstellationPositions: true,
-            narratorMessage: `Journey complete! You've charted all ${MOCK_PEOPLE.length} stars in your constellation.`,
+            narratorMessage: `Journey complete! You've mapped all ${MOCK_PEOPLE.length} stars in your constellation.`,
           }
         }
 
@@ -289,8 +289,8 @@ export function useJourneyStateMachine(
           useConstellationPositions: true,
           narratorMessage:
             unchartedCount > 0
-              ? `${placedCount} of ${MOCK_PEOPLE.length} stars charted. ${unchartedCount} remain.`
-              : `Journey complete! You've charted all ${MOCK_PEOPLE.length} stars.`,
+              ? `${placedCount} of ${MOCK_PEOPLE.length} stars mapped. ${unchartedCount} remain.`
+              : `Journey complete! You've mapped all ${MOCK_PEOPLE.length} stars.`,
         }
       })
     },
@@ -342,7 +342,7 @@ export function useJourneyStateMachine(
         ...prev,
         phase: 'returning',
         useConstellationPositions: true,
-        narratorMessage: `Viewing constellation... ${placedCount} of ${MOCK_PEOPLE.length} stars charted.`,
+        narratorMessage: `Viewing constellation... ${placedCount} of ${MOCK_PEOPLE.length} stars mapped.`,
       }
     })
   }, [stars])
@@ -427,9 +427,9 @@ export function useJourneyStateMachine(
 
       let message = ''
       if (chartedCount === totalCount) {
-        message = `Journey complete! You've charted all ${totalCount} stars in your constellation.`
+        message = `Journey complete! You've mapped all ${totalCount} stars in your constellation.`
       } else {
-        message = `${chartedCount} of ${totalCount} stars charted. Proceed or explore with 🧑‍🚀 manual controls.`
+        message = `${chartedCount} of ${totalCount} stars mapped. Proceed or explore with 🧑‍🚀 manual controls.`
       }
 
       return {

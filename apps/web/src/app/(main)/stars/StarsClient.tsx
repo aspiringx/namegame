@@ -223,8 +223,8 @@ export default function RelationshipStarPage() {
         </Link>
       </div>
       <p className="mb-8">
-        The five points of a star illuminate your relationship. Review the
-        examples to understand star charts, then try it yourself.
+        The five points of a star reveal your relationship. Review the examples
+        below, then try it yourself.
       </p>
 
       {/* Selector - Mobile: Compact Button Group, Desktop: Full Buttons */}
