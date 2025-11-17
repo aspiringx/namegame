@@ -259,9 +259,6 @@ importers:
       '@faker-js/faker':
         specifier: ^8.4.1
         version: 8.4.1
-      '@playwright/test':
-        specifier: ^1.54.2
-        version: 1.55.1
       '@react-email/preview-server':
         specifier: ^4.2.4
         version: 4.2.12(@opentelemetry/api@1.9.0)(@playwright/test@1.55.1)(postcss@8.5.6)(ts-node@10.9.2(@types/node@20.19.18)(typescript@5.9.2))
@@ -10989,6 +10986,7 @@ snapshots:
   '@playwright/test@1.55.1':
     dependencies:
       playwright: 1.55.1
+    optional: true
 
   '@pm2/agent@2.1.1':
     dependencies:
@@ -16618,13 +16616,15 @@ snapshots:
       exsolve: 1.0.7
       pathe: 2.0.3
 
-  playwright-core@1.55.1: {}
+  playwright-core@1.55.1:
+    optional: true
 
   playwright@1.55.1:
     dependencies:
       playwright-core: 1.55.1
     optionalDependencies:
       fsevents: 2.3.2
+    optional: true
 
   pm2-axon-rpc@0.7.1:
     dependencies:
