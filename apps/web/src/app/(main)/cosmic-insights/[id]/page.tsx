@@ -36,7 +36,9 @@ export default function CosmicInsightsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [creatorPhotoUrl, setCreatorPhotoUrl] = useState<string | null>(null)
-  const [aboutUserPhotoUrl, setAboutUserPhotoUrl] = useState<string | null>(null)
+  const [aboutUserPhotoUrl, setAboutUserPhotoUrl] = useState<string | null>(
+    null,
+  )
 
   useEffect(() => {
     const fetchData = async () => {
@@ -65,7 +67,9 @@ export default function CosmicInsightsPage() {
           setCreatorPhotoUrl(url)
         }
         if (result.aboutUserPhoto) {
-          const url = await getPhotoUrl(result.aboutUserPhoto, { size: 'thumb' })
+          const url = await getPhotoUrl(result.aboutUserPhoto, {
+            size: 'thumb',
+          })
           setAboutUserPhotoUrl(url)
         }
       } catch {
@@ -90,7 +94,7 @@ export default function CosmicInsightsPage() {
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
           <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-indigo-600"></div>
-          <p className="mt-4 text-sm text-gray-600 dark:text-gray-400">
+          <p className="mt-4 text-sm text-gray-400">
             Loading Cosmic Insights...
           </p>
         </div>
@@ -102,10 +106,10 @@ export default function CosmicInsightsPage() {
     return (
       <div className="flex min-h-screen items-center justify-center p-4">
         <div className="max-w-md text-center">
-          <h1 className="mb-4 text-2xl font-bold text-gray-900 dark:text-gray-100">
+          <h1 className="mb-4 text-2xl font-bold text-gray-100">
             Unable to Load Assessment
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">{error}</p>
+          <p className="text-gray-400">{error}</p>
           <button
             onClick={() => router.push('/')}
             className="mt-6 rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700"
@@ -127,11 +131,11 @@ export default function CosmicInsightsPage() {
       <div className="mb-8">
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
           <div className="flex-1">
-            <h1 className="mb-2 text-3xl font-bold text-gray-900 dark:text-gray-100">
+            <h1 className="mb-2 text-3xl font-bold text-gray-100">
               Cosmic Insights
               {data.memberFirstName && ` with ${data.memberFirstName}`}
             </h1>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <p className="text-sm text-gray-400">
               Created {new Date(data.createdAt).toLocaleDateString()} at{' '}
               {new Date(data.createdAt).toLocaleTimeString()} by {data.userName}
             </p>
@@ -190,18 +194,18 @@ export default function CosmicInsightsPage() {
         {/* Left: Context and Insights */}
         <div className="space-y-6">
           {data.relationshipGoals && (
-            <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
+            <div className="rounded-lg border border-gray-200 bg-white p-6 border-gray-700 bg-gray-800">
               <h2 className="mb-4 text-xl font-bold">Relationship Context</h2>
-              <div className="text-sm text-gray-700 dark:text-gray-300">
+              <div className="text-sm text-gray-300">
                 {data.relationshipGoals}
               </div>
             </div>
           )}
 
-          <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
+          <div className="rounded-lg border border-gray-200 bg-white p-6 border-gray-700 bg-gray-800">
             <h2 className="mb-4 text-xl font-bold">Your Cosmic Insights</h2>
             <div
-              className="prose prose-sm prose-indigo dark:prose-invert max-w-none text-gray-800 dark:text-gray-200 [&_li]:leading-relaxed [&_ul]:space-y-3 [&>div]:space-y-2 [&>p]:mb-8"
+              className="prose prose-sm prose-indigo prose-invert max-w-none text-gray-200 [&_li]:leading-relaxed [&_ul]:space-y-3 [&>div]:space-y-2 [&>p]:mb-8"
               dangerouslySetInnerHTML={{ __html: data.response }}
             />
           </div>
@@ -210,7 +214,7 @@ export default function CosmicInsightsPage() {
         {/* Right: Chart and Score */}
         <div className="space-y-6">
           {/* Star Chart */}
-          <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
+          <div className="rounded-lg border border-gray-200 bg-white p-6 border-gray-700 bg-gray-800">
             <h2 className="mb-4 text-xl font-bold">Star Chart</h2>
             <div className="relative mx-auto aspect-square w-full">
               <svg viewBox="-10 -10 340 340" className="h-full w-full">
@@ -227,7 +231,7 @@ export default function CosmicInsightsPage() {
                     fill="none"
                     stroke="currentColor"
                     strokeWidth="1"
-                    className="stroke-gray-300 dark:stroke-gray-600"
+                    className="stroke-gray-300 stroke-gray-600"
                   />
                 ))}
 
@@ -241,7 +245,7 @@ export default function CosmicInsightsPage() {
                     fontSize="14"
                     fontWeight="500"
                     fill="currentColor"
-                    className="fill-gray-500 dark:fill-gray-400"
+                    className="fill-gray-500 fill-gray-400"
                   >
                     {val}
                   </text>
@@ -261,7 +265,7 @@ export default function CosmicInsightsPage() {
                       y2={y}
                       stroke="currentColor"
                       strokeWidth="1"
-                      className="stroke-gray-300 dark:stroke-gray-600"
+                      className="stroke-gray-300 stroke-gray-600"
                     />
                   )
                 })}
@@ -331,7 +335,7 @@ export default function CosmicInsightsPage() {
                       fontSize="14"
                       fontWeight="600"
                       fill="currentColor"
-                      className="fill-gray-700 dark:fill-gray-300"
+                      className="fill-gray-700 fill-gray-300"
                     >
                       {dim.label.split('\n').map((line, i) => (
                         <tspan key={i} x={x} dy={i === 0 ? 0 : 16}>
@@ -346,55 +350,45 @@ export default function CosmicInsightsPage() {
           </div>
 
           {/* Star Score */}
-          <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
+          <div className="rounded-lg border border-gray-200 bg-white p-6 border-gray-700 bg-gray-800">
             <h2 className="mb-4 text-xl font-bold">Star Score</h2>
             <div className="mb-4 text-center">
               <div className="font-bold">
-                <span className="text-4xl text-indigo-600 dark:text-indigo-400">
+                <span className="text-4xl text-indigo-400">
                   {data.starScore}
                 </span>
                 <span className="text-2xl text-gray-400">/10</span>
               </div>
-              <div className="mt-2 text-sm font-medium text-gray-600 dark:text-gray-400">
+              <div className="mt-2 text-sm font-medium text-gray-400">
                 {data.relationshipLabel}
               </div>
             </div>
 
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-400">
-                  Personal Time (30%)
-                </span>
+                <span className="text-gray-400">Personal Time (30%)</span>
                 <span className="font-medium">
                   {data.scores.personalTime}/10
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-400">
-                  Common Ground (25%)
-                </span>
+                <span className="text-gray-400">Common Ground (25%)</span>
                 <span className="font-medium">
                   {data.scores.commonGround}/10
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-400">
-                  Familiarity (20%)
-                </span>
+                <span className="text-gray-400">Familiarity (20%)</span>
                 <span className="font-medium">
                   {data.scores.familiarity}/10
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-400">
-                  Interest (15%)
-                </span>
+                <span className="text-gray-400">Interest (15%)</span>
                 <span className="font-medium">{data.scores.interest}/10</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-400">
-                  Proximity (10%)
-                </span>
+                <span className="text-gray-400">Proximity (10%)</span>
                 <span className="font-medium">{data.scores.proximity}/10</span>
               </div>
             </div>

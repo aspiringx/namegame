@@ -51,26 +51,31 @@ function EmailConsentNotice() {
   const [isExpanded, setIsExpanded] = useState(false)
 
   return (
-    <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+    <div className="mt-1 text-xs text-gray-400">
       <p>
         By saving your email, you consent to receive messages.{' '}
         <button
           type="button"
           onClick={() => setIsExpanded(!isExpanded)}
-          className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 underline inline-flex items-center gap-0.5"
+          className="text-blue-600 hover:text-blue-400 hover:text-blue-300 underline inline-flex items-center gap-0.5"
         >
           {isExpanded ? 'Less' : 'More'}
           <ChevronDown
-            className={`h-3 w-3 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+            className={`h-3 w-3 transition-transform ${
+              isExpanded ? 'rotate-180' : ''
+            }`}
           />
         </button>
       </p>
       {isExpanded && (
         <ul className="mt-2 space-y-1 list-disc list-inside">
-          <li>Daily digest emails (max 1/day), only sent if you have unread messages</li>
+          <li>
+            Daily digest emails (max 1/day), only sent if you have unread
+            messages
+          </li>
           <li>Account and security notifications</li>
-          <li className="list-none mt-2 text-gray-600 dark:text-gray-400">
-            You can unsubscribe anytime by removing your email here. 
+          <li className="list-none mt-2 text-gray-400">
+            You can unsubscribe anytime by removing your email here.
           </li>
         </ul>
       )}
@@ -220,7 +225,10 @@ export default function UserProfileForm({
 
   const formRef = useRef<HTMLFormElement>(null)
 
-  const [state, formAction, isPending] = useActionState(updateUserProfile, initialState)
+  const [state, formAction, isPending] = useActionState(
+    updateUserProfile,
+    initialState,
+  )
 
   const handleDiscard = useCallback(() => {
     setFirstName(user.firstName || '')
@@ -481,12 +489,12 @@ export default function UserProfileForm({
         isOpen={isConfirmModalOpen}
         onClose={() => setConfirmModalOpen(false)}
       >
-        <div className="bg-white p-6 dark:bg-gray-800">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
+        <div className="bg-white p-6 bg-gray-800">
+          <h3 className="text-lg font-medium text-gray-100">
             Confirm Email Deletion
           </h3>
           <div className="mt-2">
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-sm text-gray-400">
               You are about to delete a verified email. If you add a new email
               later, you will have to re-verify it. Are you sure you want to
               continue?
@@ -552,15 +560,19 @@ export default function UserProfileForm({
         className="space-y-6"
       >
         {searchParams.get('emailUnsubscribe') === 'true' && (
-          <Alert variant="default" className="bg-yellow-50 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800">
-            <AlertDescription className="text-yellow-800 dark:text-yellow-200">
-              <strong>To unsubscribe from daily digest emails:</strong> Remove your email address from the field below and save your profile.
+          <Alert
+            variant="default"
+            className="bg-yellow-50 border-yellow-200 bg-yellow-900/20 border-yellow-800"
+          >
+            <AlertDescription className="text-yellow-200">
+              <strong>To unsubscribe from daily digest emails:</strong> Remove
+              your email address from the field below and save your profile.
             </AlertDescription>
           </Alert>
         )}
         {showSuccessMessage && state?.message && (
           <div className="space-y-4">
-            <div className="rounded-md bg-green-50 p-4 dark:bg-green-900/30">
+            <div className="rounded-md bg-green-50 p-4 bg-green-900/30">
               <div className="flex">
                 <div className="flex-shrink-0">
                   <CheckCircleIcon
@@ -569,7 +581,7 @@ export default function UserProfileForm({
                   />
                 </div>
                 <div className="ml-3">
-                  <div className="text-sm font-medium text-green-800 dark:text-green-300">
+                  <div className="text-sm font-medium text-green-300">
                     <p>{state.message}</p>
                   </div>
                 </div>
@@ -578,7 +590,7 @@ export default function UserProfileForm({
                     <button
                       type="button"
                       onClick={() => setShowSuccessMessage(false)}
-                      className="inline-flex rounded-md bg-green-50 p-1.5 text-green-500 hover:bg-green-100 focus:ring-2 focus:ring-green-600 focus:ring-offset-2 focus:ring-offset-green-50 focus:outline-none dark:bg-transparent dark:text-green-400 dark:hover:bg-green-800/50"
+                      className="inline-flex rounded-md bg-green-50 p-1.5 text-green-500 hover:bg-green-100 focus:ring-2 focus:ring-green-600 focus:ring-offset-2 focus:ring-offset-green-50 focus:outline-none bg-transparent text-green-400 hover:bg-green-800/50"
                     >
                       <span className="sr-only">Dismiss</span>
                       <XCircleIcon className="h-5 w-5" aria-hidden="true" />
@@ -590,7 +602,7 @@ export default function UserProfileForm({
           </div>
         )}
         {state?.errors && (
-          <div className="rounded-md bg-red-50 p-4 dark:bg-red-900/30">
+          <div className="rounded-md bg-red-50 p-4 bg-red-900/30">
             <div className="flex">
               <div className="flex-shrink-0">
                 <XCircleIcon
@@ -599,19 +611,23 @@ export default function UserProfileForm({
                 />
               </div>
               <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800 dark:text-red-300">
+                <h3 className="text-sm font-medium text-red-300">
                   Please correct the following issues:
                 </h3>
-                <div className="mt-2 text-sm text-red-700 dark:text-red-200">
+                <div className="mt-2 text-sm text-red-200">
                   <ul role="list" className="list-disc space-y-1 pl-5">
                     {state.errors &&
-                      (Object.entries(state.errors) as [string, string[] | undefined][]).flatMap(
-                        ([field, messages]) =>
-                          messages
-                            ? messages.map((message: string, index: number) => (
-                                <li key={`${field}-${index}`}>{message}</li>
-                              ))
-                            : [],
+                      (
+                        Object.entries(state.errors) as [
+                          string,
+                          string[] | undefined,
+                        ][]
+                      ).flatMap(([field, messages]) =>
+                        messages
+                          ? messages.map((message: string, index: number) => (
+                              <li key={`${field}-${index}`}>{message}</li>
+                            ))
+                          : [],
                       )}
                   </ul>
                 </div>
@@ -624,7 +640,7 @@ export default function UserProfileForm({
           <div className="flex-grow">
             <label
               htmlFor="firstName"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              className="block text-sm font-medium text-gray-300"
             >
               First
             </label>
@@ -635,14 +651,12 @@ export default function UserProfileForm({
               required
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
-              className={`mt-1 block w-full rounded-l-md rounded-r-none border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 ${
-                !firstName || state?.errors?.firstName
-                  ? 'bg-red-100 dark:bg-red-900'
-                  : ''
+              className={`mt-1 block w-full rounded-l-md rounded-r-none border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm border-gray-600 bg-gray-800 text-white placeholder-gray-400 ${
+                !firstName || state?.errors?.firstName ? 'bg-red-900' : ''
               }`}
             />
             {state?.errors?.firstName && (
-              <p className="mt-1 text-xs text-red-500 dark:text-red-400">
+              <p className="mt-1 text-xs text-red-400">
                 {state.errors.firstName[0]}
               </p>
             )}
@@ -651,7 +665,7 @@ export default function UserProfileForm({
           <div className="flex-grow">
             <label
               htmlFor="lastName"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              className="block text-sm font-medium text-gray-300"
             >
               Last
             </label>
@@ -663,14 +677,12 @@ export default function UserProfileForm({
               required
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
-              className={`mt-1 -ml-px block w-full scroll-mt-24 rounded-l-none rounded-r-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 ${
-                !lastName || state?.errors?.lastName
-                  ? 'bg-red-100 dark:bg-red-900'
-                  : ''
+              className={`mt-1 -ml-px block w-full scroll-mt-24 rounded-l-none rounded-r-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm border-gray-600 bg-gray-800 text-white placeholder-gray-400 ${
+                !lastName || state?.errors?.lastName ? 'bg-red-900' : ''
               }`}
             />
             {state?.errors?.lastName && (
-              <p className="mt-1 text-xs text-red-500 dark:text-red-400">
+              <p className="mt-1 text-xs text-red-400">
                 {state.errors.lastName[0]}
               </p>
             )}
@@ -679,7 +691,7 @@ export default function UserProfileForm({
 
         {/* Gender */}
         <div>
-          <label className="mb-3 block text-sm font-medium text-gray-700 dark:text-gray-300">
+          <label className="mb-3 block text-sm font-medium text-gray-300">
             Gender
           </label>
           <div className="flex items-center gap-3">
@@ -690,7 +702,7 @@ export default function UserProfileForm({
               className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
                 gender === Gender.male
                   ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-700 text-gray-300 hover:bg-gray-600'
               }`}
             >
               He
@@ -701,7 +713,7 @@ export default function UserProfileForm({
               className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
                 gender === Gender.female
                   ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-700 text-gray-300 hover:bg-gray-600'
               }`}
             >
               She
@@ -712,7 +724,7 @@ export default function UserProfileForm({
               className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
                 gender === Gender.non_binary
                   ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-700 text-gray-300 hover:bg-gray-600'
               }`}
             >
               They
@@ -721,7 +733,7 @@ export default function UserProfileForm({
               <button
                 type="button"
                 onClick={() => setGender(null)}
-                className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                className="text-sm text-gray-500 hover:text-gray-400 hover:text-gray-200"
               >
                 Clear
               </button>
@@ -737,7 +749,7 @@ export default function UserProfileForm({
         <div id="email" className="scroll-mt-24">
           <label
             htmlFor="email"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+            className="block text-sm font-medium text-gray-300"
           >
             Email
           </label>
@@ -758,9 +770,9 @@ export default function UserProfileForm({
                   setIsEmailValid(result.success)
                 }
               }}
-              className={`block w-full scroll-mt-24 rounded-md border-gray-300 py-2 pr-10 pl-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 ${
+              className={`block w-full scroll-mt-24 rounded-md border-gray-300 py-2 pr-10 pl-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border-gray-600 bg-gray-800 text-white placeholder-gray-400 ${
                 !isEmailValid || (state?.errors?.email && !isDirty)
-                  ? 'bg-red-100 dark:bg-red-900'
+                  ? 'bg-red-900'
                   : ''
               }`}
             />
@@ -797,16 +809,14 @@ export default function UserProfileForm({
             </div>
           </div>
           {state?.errors?.email && (
-            <p className="mt-1 text-xs text-red-500 dark:text-red-400">
-              {state.errors.email[0]}
-            </p>
+            <p className="mt-1 text-xs text-red-400">{state.errors.email[0]}</p>
           )}
           <EmailConsentNotice />
         </div>
         <div id="password" className="scroll-mt-24">
           <label
             htmlFor="password"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+            className="block text-sm font-medium text-gray-300"
           >
             Password
           </label>
@@ -818,11 +828,11 @@ export default function UserProfileForm({
               autoComplete="new-password"
               value={password}
               required={validation.passwordRequired}
-              className={`block w-full min-w-0 flex-1 scroll-mt-24 rounded-none rounded-l-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 ${
+              className={`block w-full min-w-0 flex-1 scroll-mt-24 rounded-none rounded-l-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm border-gray-600 bg-gray-800 text-white placeholder-gray-400 ${
                 passwordError ||
                 (validation.passwordRequired && !password) ||
                 state?.errors?.password
-                  ? 'bg-red-100 dark:bg-red-900'
+                  ? 'bg-red-900'
                   : ''
               }`}
               placeholder={
@@ -840,7 +850,7 @@ export default function UserProfileForm({
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="inline-flex items-center border border-l-0 border-gray-300 bg-gray-50 px-3 text-sm text-gray-500 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                className="inline-flex items-center border border-l-0 border-gray-300 bg-gray-50 px-3 text-sm text-gray-500 hover:bg-gray-100 border-gray-600 bg-gray-700 text-gray-300 hover:bg-gray-600"
               >
                 {showPassword ? (
                   <EyeOff className="h-5 w-5" />
@@ -862,7 +872,7 @@ export default function UserProfileForm({
                         handleCopyPassword()
                         setIsPasswordTooltipOpen(!isPasswordTooltipOpen)
                       }}
-                      className="inline-flex items-center rounded-r-md border border-l-0 border-gray-300 bg-gray-50 px-3 text-sm text-gray-500 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                      className="inline-flex items-center rounded-r-md border border-l-0 border-gray-300 bg-gray-50 px-3 text-sm text-gray-500 hover:bg-gray-100 border-gray-600 bg-gray-700 text-gray-300 hover:bg-gray-600"
                       aria-label="Copy password to clipboard"
                     >
                       {showCopySuccess ? (
@@ -878,7 +888,7 @@ export default function UserProfileForm({
                         handleGeneratePassword()
                         setIsPasswordTooltipOpen(!isPasswordTooltipOpen)
                       }}
-                      className="inline-flex items-center rounded-r-md border border-l-0 border-gray-300 bg-gray-50 px-3 text-sm text-gray-500 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                      className="inline-flex items-center rounded-r-md border border-l-0 border-gray-300 bg-gray-50 px-3 text-sm text-gray-500 hover:bg-gray-100 border-gray-600 bg-gray-700 text-gray-300 hover:bg-gray-600"
                       aria-label="Generate a new password"
                     >
                       <RefreshCw className="h-5 w-5" />
@@ -898,16 +908,14 @@ export default function UserProfileForm({
             </TooltipProvider>
           </div>
           {state?.errors?.password && (
-            <p className="mt-1 text-xs text-red-500 dark:text-red-400">
+            <p className="mt-1 text-xs text-red-400">
               {state.errors.password[0]}
             </p>
           )}
           {passwordError ? (
-            <p className="mt-1 text-xs text-red-500 dark:text-red-400">
-              {passwordError}
-            </p>
+            <p className="mt-1 text-xs text-red-400">{passwordError}</p>
           ) : (
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            <p className="mt-1 text-xs text-gray-400">
               {validation.passwordRequired
                 ? 'Enter or generate a new password with at least six characters, letters, and numbers.'
                 : ''}
@@ -920,11 +928,11 @@ export default function UserProfileForm({
             validation.photoRequired &&
             previewUrl?.includes('dicebear.com') &&
             !fileSelected
-              ? 'bg-red-100 dark:bg-red-900'
+              ? 'bg-red-900'
               : ''
           }`}
         >
-          <label className="block text-sm font-medium text-gray-900 dark:text-gray-100">
+          <label className="block text-sm font-medium text-gray-100">
             Profile Photo
           </label>
           <div className="mt-2 flex flex-col items-start gap-y-3">
@@ -940,7 +948,7 @@ export default function UserProfileForm({
                 />
               ) : (
                 <div
-                  className="h-32 w-32 rounded-full bg-gray-200 dark:bg-gray-700"
+                  className="h-32 w-32 rounded-full bg-gray-700"
                   onClick={handleChoosePhoto}
                 />
               )}
@@ -962,14 +970,14 @@ export default function UserProfileForm({
               id="change-photo-button"
               type="button"
               onClick={handleChoosePhoto}
-              className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm leading-4 font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 dark:focus:ring-offset-gray-800"
+              className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm leading-4 font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none border-gray-600 bg-gray-700 text-gray-300 hover:bg-gray-600 focus:ring-offset-gray-800"
             >
               Change Photo
             </button>
             {validation.photoRequired &&
               previewUrl?.includes('dicebear.com') &&
               !fileSelected && (
-                <p className="text-xs text-gray-500 dark:text-gray-400">
+                <p className="text-xs text-gray-400">
                   Please add a real profile pic.
                 </p>
               )}
@@ -977,12 +985,11 @@ export default function UserProfileForm({
         </div>
 
         {isPushSupported && (
-          <div className="border-t border-gray-200 pt-6 dark:border-gray-700">
-            <h4 className="text-md font-medium text-gray-900 dark:text-gray-100">
-              Notifications
-            </h4>
-            <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-              Enable to see updates in your groups. <i>No more than one per day!</i>
+          <div className="border-t border-gray-200 pt-6 border-gray-700">
+            <h4 className="text-md font-medium text-gray-100">Notifications</h4>
+            <p className="mt-1 text-sm text-gray-400">
+              Enable to see updates in your groups.{' '}
+              <i>No more than one per day!</i>
             </p>
             <div className="mt-4">
               <PushManager />
@@ -992,12 +999,12 @@ export default function UserProfileForm({
 
         <div
           id="optional-details"
-          className="scroll-mt-24 border-t border-gray-200 py-6 dark:border-gray-700"
+          className="scroll-mt-24 border-t border-gray-200 py-6 border-gray-700"
         >
           <button
             type="button"
             onClick={() => setIsOptionalOpen(!isOptionalOpen)}
-            className="flex w-full items-center justify-between text-left text-lg font-medium text-gray-900 dark:text-gray-100"
+            className="flex w-full items-center justify-between text-left text-lg font-medium text-gray-100"
           >
             <div className="flex items-center gap-x-2">
               <span>Optional Fields</span>
@@ -1013,14 +1020,14 @@ export default function UserProfileForm({
           </button>
           {isOptionalOpen && (
             <div className="mt-4 space-y-6">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-sm text-gray-400">
                 Optional info used in family groups. Family members may have
                 provided initial values.
               </p>
               <div>
                 <label
                   htmlFor="birthDate"
-                  className="flex items-center text-sm font-medium text-gray-700 dark:text-gray-300"
+                  className="flex items-center text-sm font-medium text-gray-300"
                 >
                   Birth Date
                   <TooltipProvider>
@@ -1075,15 +1082,15 @@ export default function UserProfileForm({
                     onChange={(e) => {
                       setBirthDate(e.target.value)
                     }}
-                    className={`block w-full rounded-md border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 ${
+                    className={`block w-full rounded-md border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border-gray-600 bg-gray-800 text-white placeholder-gray-400 ${
                       state?.errors?.birthDate
-                        ? 'border-red-500 bg-red-100 dark:bg-red-900'
+                        ? 'border-red-500 bg-red-900'
                         : ''
                     }`}
                     placeholder="July 9, 1969, 7/9/69, 1969, etc."
                   />
                   {state?.errors?.birthDate && (
-                    <p className="mt-1 text-xs text-red-500 dark:text-red-400">
+                    <p className="mt-1 text-xs text-red-400">
                       {state.errors.birthDate[0]}
                     </p>
                   )}
@@ -1093,7 +1100,7 @@ export default function UserProfileForm({
               <div>
                 <label
                   htmlFor="birthPlace"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                  className="block text-sm font-medium text-gray-300"
                 >
                   Birth Place
                 </label>
@@ -1104,7 +1111,7 @@ export default function UserProfileForm({
                     id="birthPlace"
                     value={birthPlace}
                     onChange={(e) => setBirthPlace(e.target.value)}
-                    className="block w-full rounded-md border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+                    className="block w-full rounded-md border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm border-gray-600 bg-gray-700 text-gray-200"
                     placeholder="City, State, Country"
                   />
                 </div>

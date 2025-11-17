@@ -57,9 +57,9 @@ export default async function EditGroupLayout(props: {
   }
 
   return (
-    <div className="mx-auto max-w-4xl p-8 dark:bg-gray-900">
+    <div className="mx-auto max-w-4xl p-8 bg-gray-900">
       <Breadcrumbs />
-      <h1 className="mb-6 text-2xl font-bold dark:text-white">
+      <h1 className="mb-6 text-2xl font-bold text-white">
         Edit Group: {group.name}
       </h1>
       <EditGroupNav group={group} />

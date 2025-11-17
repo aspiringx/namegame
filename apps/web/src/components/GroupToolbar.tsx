@@ -152,7 +152,7 @@ export default function GroupToolbar({
                     <Filter className="mr-2 h-4 w-4" />
                     <span>Filter</span>
                     {activeFilters.length > 0 && (
-                      <span className="ml-2 hidden rounded-md bg-gray-200 px-2 py-0.5 text-xs font-semibold text-gray-700 md:inline dark:bg-gray-700 dark:text-gray-200">
+                      <span className="ml-2 hidden rounded-md bg-gray-200 px-2 py-0.5 text-xs font-semibold text-gray-700 md:inline bg-gray-700 text-gray-200">
                         {activeFilters.join(', ')}
                       </span>
                     )}
@@ -220,7 +220,7 @@ export default function GroupToolbar({
                     <ArrowDown className="mr-2 h-4 w-4" />
                     <span>Sort</span>
                     {currentSortLabel && (
-                      <span className="ml-2 hidden rounded-md bg-gray-200 px-2 py-0.5 text-xs font-semibold text-gray-700 md:inline dark:bg-gray-700 dark:text-gray-200">
+                      <span className="ml-2 hidden rounded-md bg-gray-200 px-2 py-0.5 text-xs font-semibold text-gray-700 md:inline bg-gray-700 text-gray-200">
                         {currentSortLabel}
                       </span>
                     )}

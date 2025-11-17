@@ -52,7 +52,7 @@ export default function SignupForm() {
                 type="text"
                 placeholder="First name"
                 required
-                className="mt-1 block w-full rounded-l-md rounded-r-none border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
+                className="mt-1 block w-full rounded-l-md rounded-r-none border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm border-gray-600 bg-gray-800 text-white placeholder-gray-400"
               />
               {state.errors?.firstName &&
                 state.errors.firstName.map((error: string) => (
@@ -75,7 +75,7 @@ export default function SignupForm() {
                 type="text"
                 placeholder="Last name"
                 required
-                className="mt-1 -ml-px block w-full rounded-l-none rounded-r-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
+                className="mt-1 -ml-px block w-full rounded-l-none rounded-r-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm border-gray-600 bg-gray-800 text-white placeholder-gray-400"
               />
             </div>
           </div>
@@ -97,7 +97,7 @@ export default function SignupForm() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="block w-full rounded-md border-gray-300 py-2 pr-10 pl-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                  className="block w-full rounded-md border-gray-300 py-2 pr-10 pl-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border-gray-600 bg-gray-800 text-white"
                 />
                 <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
                   <TooltipProvider disableHoverableContent={true}>
@@ -121,7 +121,7 @@ export default function SignupForm() {
                 </div>
               </div>
               {email.includes('@') && (
-                <p className="mt-1 rounded-md bg-green-50 p-2 text-sm text-xs text-green-700 dark:bg-green-900 dark:text-green-300">
+                <p className="mt-1 rounded-md bg-green-50 p-2 text-sm text-xs text-green-700 bg-green-900 text-green-300">
                   After submitting, check your email for a verification link.
                 </p>
               )}

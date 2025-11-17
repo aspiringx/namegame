@@ -11,14 +11,14 @@ export const PasswordResetEmail = ({
   resetLink,
   firstName,
 }: PasswordResetEmailProps) => (
-  <EmailTemplate preview="Reset your NameGame password">
+  <EmailTemplate preview="Reset your Relation Star password">
     <Section>
       <Text style={text} className="text">
         {'Hi ' + firstName + ',' || 'Hi,'}
       </Text>
       <Text style={text} className="text">
-        Someone recently requested a password change for your NameGame account.
-        If this was you, you can set a new password here:
+        Someone recently requested a password change for your Relation Star
+        account. If this was you, you can set a new password here:
       </Text>
       <Button style={button} href={resetLink} className="button text-center">
         Reset Password
@@ -51,14 +51,14 @@ export const getPasswordResetEmailText = (
 ) => `
 Hi ${firstName || ''},
 
-Someone recently requested a password change for your NameGame account. If this was you, you can set a new password by visiting this link:
+Someone recently requested a password change for your Relation Star account. If this was you, you can set a new password by visiting this link:
 ${resetLink}
 
 If you don't want to change your password or didn't request this, just ignore and delete this message.
 
 To keep your account secure, please don't forward this email to anyone.
 
-${new Date().getFullYear()} NameGame
+${new Date().getFullYear()} Relation Star
 `
 
 const text = {

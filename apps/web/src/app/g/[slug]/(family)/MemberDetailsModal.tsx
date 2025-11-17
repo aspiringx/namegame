@@ -50,7 +50,7 @@ export function MemberDetailsModal({
         <div className="flex justify-end">
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+            className="text-gray-400 hover:text-gray-600 hover:text-gray-200"
           >
             <X className="h-5 w-5" />
             <span className="sr-only">Close</span>
@@ -66,15 +66,15 @@ export function MemberDetailsModal({
               className="rounded-md"
             />
           </div>
-          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+          <h2 className="text-xl font-bold text-gray-100">
             {member.user.firstName} {member.user.lastName}
             {relationship && (
-              <p className="text-center text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-center text-sm text-gray-400">
                 {relationship}
               </p>
             )}
           </h2>
-          <div className="space-y-1 text-center text-sm text-gray-600 dark:text-gray-300">
+          <div className="space-y-1 text-center text-sm text-gray-300">
             {genderPronoun && (
               <p>
                 <strong>Gender:</strong> {genderPronoun}

@@ -140,19 +140,17 @@ export default function ManageUserModal({
     <>
       <Modal isOpen={isOpen} onClose={onClose}>
         <div className="p-6">
-          <h3 className="mb-4 text-lg leading-6 font-medium text-gray-900 dark:text-gray-100">
+          <h3 className="mb-4 text-lg leading-6 font-medium text-gray-100">
             {`Manage ${managedUser.firstName}`}
           </h3>
           {isCurrentUserMananger && (
-            <div className="space-y-4 border-b border-gray-200 py-4 dark:border-gray-700">
-              <h3 className="text-md font-medium text-gray-900 dark:text-gray-100">
-                Add Manager
-              </h3>
+            <div className="space-y-4 border-b border-gray-200 py-4 border-gray-700">
+              <h3 className="text-md font-medium text-gray-100">Add Manager</h3>
               <div className="flex flex-col space-y-4">
                 <div>
                   <label
                     htmlFor="managerSource"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                    className="block text-sm font-medium text-gray-300"
                   >
                     Select Source
                   </label>
@@ -167,7 +165,7 @@ export default function ManageUserModal({
                 <div>
                   <label
                     htmlFor="managerId"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                    className="block text-sm font-medium text-gray-300"
                   >
                     Choose Manager
                   </label>
@@ -207,11 +205,11 @@ export default function ManageUserModal({
           )}
 
           <div className="mt-6">
-            <h4 className="text-md font-medium text-gray-900 dark:text-gray-100">
+            <h4 className="text-md font-medium text-gray-100">
               Managing Users
             </h4>
             {managers.length > 0 ? (
-              <ul className="mt-2 divide-y divide-gray-200 dark:divide-gray-700">
+              <ul className="mt-2 divide-y divide-gray-200 divide-gray-700">
                 {managers.map((manager) => (
                   <li
                     key={manager.id}
@@ -237,7 +235,7 @@ export default function ManageUserModal({
                         <button
                           type="button"
                           onClick={() => setManagerToDelete(manager)}
-                          className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-500"
+                          className="text-red-500 hover:text-red-400 hover:text-red-500"
                           aria-label={`Remove ${manager.firstName} as a manager`}
                         >
                           <svg
@@ -260,7 +258,7 @@ export default function ManageUserModal({
                 ))}
               </ul>
             ) : (
-              <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+              <p className="mt-2 text-sm text-gray-400">
                 No managers assigned.
               </p>
             )}
@@ -269,7 +267,7 @@ export default function ManageUserModal({
           <div className="mt-6 flex justify-end">
             <button
               type="button"
-              className="inline-flex justify-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:bg-blue-800 dark:text-blue-100 dark:hover:bg-blue-700"
+              className="inline-flex justify-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 bg-blue-800 text-blue-100 hover:bg-blue-700"
               onClick={onClose}
             >
               Close
@@ -283,10 +281,10 @@ export default function ManageUserModal({
           onClose={() => setManagerToDelete(null)}
         >
           <div className="p-6">
-            <h3 className="mb-4 text-lg leading-6 font-medium text-gray-900 dark:text-gray-100">
+            <h3 className="mb-4 text-lg leading-6 font-medium text-gray-100">
               Confirm Removal
             </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <p className="text-sm text-gray-400">
               Are you sure you want to remove{' '}
               <strong>
                 {[managerToDelete.firstName, managerToDelete.lastName]
@@ -298,7 +296,7 @@ export default function ManageUserModal({
             <div className="mt-6 flex justify-end space-x-2">
               <button
                 type="button"
-                className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+                className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 border-gray-600 bg-gray-700 text-gray-200 hover:bg-gray-600"
                 onClick={() => setManagerToDelete(null)}
               >
                 Cancel

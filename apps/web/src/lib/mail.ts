@@ -12,7 +12,7 @@ import React from 'react'
 
 const domain = process.env.NEXT_PUBLIC_APP_URL
 const from_no_reply =
-  process.env.FROM_EMAIL_NO_REPLY || 'NameGame <onboarding@resend.dev>'
+  process.env.FROM_EMAIL_NO_REPLY || 'Relation Star <onboarding@resend.dev>'
 
 export const sendVerificationEmail = async (
   email: string,
@@ -25,7 +25,7 @@ export const sendVerificationEmail = async (
   await resend.emails.send({
     from: from_no_reply,
     to: email,
-    subject: 'Confirm your NameGame email address',
+    subject: 'Confirm your Relation Star email address',
     react: React.createElement(VerificationEmail, { confirmLink, firstName }),
     text: getVerificationEmailText(confirmLink, firstName),
   })

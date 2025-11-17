@@ -21,28 +21,6 @@ export default function SpeedOfLove() {
 
   return (
     <div className="relative h-screen w-full overflow-hidden bg-gray-900">
-      {/* Header */}
-      <div className="absolute left-0 right-0 top-0 z-10 p-4 sm:p-6">
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-white sm:text-xl">
-              Your Universe
-            </h1>
-            <p className="mt-1 text-sm text-gray-300 sm:text-base">
-              {/* At the speed of love */}
-            </p>
-          </div>
-
-          {/* Auto-pilot status indicator (non-interactive) */}
-          <div className="flex items-center gap-2 text-sm font-mono">
-            <span className="text-indigo-400/60">🚀</span>
-            <span className="text-indigo-400/60 uppercase tracking-wider text-xs">
-              Auto-Pilot
-            </span>
-          </div>
-        </div>
-      </div>
-
       {/* 3D Scene */}
       <Suspense
         fallback={

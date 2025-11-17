@@ -1,45 +1,181 @@
 'use client'
 
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { Canvas } from '@react-three/fiber'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { RotateCcw } from 'lucide-react'
 import type { Scene } from './types'
 import SceneComponent from './Scene'
 import { loadScript } from './utils/loadScript'
-import { getSceneDuration } from './theatreConfig'
+import { getSceneDuration, theatreProject, sheets } from './theatreConfig'
+
+const SCENE_PROGRESS_KEY = 'speed-of-love-scene-progress'
+const HAS_LOADED_KEY = 'speed-of-love-has-loaded'
 
 export default function StarField() {
   // Generate random seed once per session for star positions
   const [randomSeed] = useState(() => Math.floor(Math.random() * 1000000))
 
-  // Scene management
+  // Track if this is the first time loading (for full loading screen)
+  const hasLoadedBefore = useRef<boolean>(false)
+  const [isInitialLoad, setIsInitialLoad] = useState(true)
+
+  // Scene management with sessionStorage persistence
   const [scenes, setScenes] = useState<Scene[]>([])
-  const [currentSceneIndex, setCurrentSceneIndex] = useState(1) // First scene is now index 1
+  const [currentSceneIndex, setCurrentSceneIndex] = useState(() => {
+    // Restore scene progress from sessionStorage
+    if (typeof window !== 'undefined') {
+      const saved = sessionStorage.getItem(SCENE_PROGRESS_KEY)
+      if (saved) {
+        const parsed = parseInt(saved, 10)
+        if (!isNaN(parsed) && parsed >= 1) {
+          return parsed
+        }
+      }
+    }
+    return 1 // Default to first scene
+  })
   const [backgroundOpacity, setBackgroundOpacity] = useState(0)
   const [animationComplete, setAnimationComplete] = useState(true)
   const [isFullyLoaded, setIsFullyLoaded] = useState(false)
+  const [isReconnecting, setIsReconnecting] = useState(false)
+  const [showLoadingOverlay, setShowLoadingOverlay] = useState(true)
+  const [showNavPanel, setShowNavPanel] = useState(false)
+  const [showHeader, setShowHeader] = useState(false)
   const currentScene = useMemo(
     () =>
       scenes[currentSceneIndex - 1] || {
         scene: 0,
         description: '',
-        narration: 'Loading...',
+        narration: isInitialLoad
+          ? 'Loading your universe...'
+          : 'Reconnecting...',
         sceneType: '',
       },
-    [scenes, currentSceneIndex],
+    [scenes, currentSceneIndex, isInitialLoad],
   )
 
-  // Load scene script once (no dependencies).
+  // Save scene progress to sessionStorage whenever it changes
   useEffect(() => {
-    loadScript().then((data) => {
-      setScenes(data)
-      // Wait a bit for Theatre.js and textures to initialize
-      setTimeout(() => {
+    if (typeof window !== 'undefined' && currentSceneIndex > 0) {
+      sessionStorage.setItem(SCENE_PROGRESS_KEY, currentSceneIndex.toString())
+    }
+  }, [currentSceneIndex])
+
+  // Check if user has loaded before
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const hasLoaded = sessionStorage.getItem(HAS_LOADED_KEY)
+      if (hasLoaded === 'true') {
+        hasLoadedBefore.current = true
+        setIsInitialLoad(false)
+      }
+    }
+  }, [])
+
+  // Load scene script and wait for Theatre.js to be fully ready
+  useEffect(() => {
+    let mounted = true
+    let hasInitialized = false
+
+    const initialize = async () => {
+      // Prevent double initialization
+      if (hasInitialized) return
+      hasInitialized = true
+
+      try {
+        // Show reconnecting indicator if this is not initial load
+        if (!isInitialLoad && scenes.length === 0) {
+          setIsReconnecting(true)
+        }
+
+        // Load scene data
+        const data = await loadScript()
+        if (!mounted) return
+        setScenes(data)
+
+        // Wait for Theatre.js project to be ready
+        await theatreProject.ready
+
+        // Wait for all scene sheets to be initialized (with timeout)
+        const waitForSheets = new Promise<void>((resolve) => {
+          const checkSheets = () => {
+            // Check if all scene sheets exist
+            const allSheetsReady = data.every((scene) =>
+              sheets.has(scene.scene),
+            )
+            if (allSheetsReady) {
+              resolve()
+            } else {
+              // Check again in 100ms
+              setTimeout(checkSheets, 100)
+            }
+          }
+          checkSheets()
+
+          // Timeout after 10 seconds
+          setTimeout(() => resolve(), 10000)
+        })
+
+        await waitForSheets
+
+        if (!mounted) return
+
+        // Mark as loaded
         setBackgroundOpacity(1)
         setIsFullyLoaded(true)
-      }, 500)
-    })
-  }, [])
+        setIsReconnecting(false)
+
+        // Fade out loading overlay, then remove it
+        setTimeout(() => {
+          setShowLoadingOverlay(false)
+        }, 500) // Wait for fade animation to complete
+
+        // Show header immediately after loading overlay fades
+        setTimeout(() => {
+          setShowHeader(true)
+        }, 500)
+
+        // Show nav panel after stars have fully faded in
+        // Stars fade in over 10 frames at 30fps = ~333ms
+        // Wait for stars to be fully visible before showing nav panel
+        setTimeout(() => {
+          setShowNavPanel(true)
+        }, 1200) // 500ms loading fade + 333ms star fade + 367ms buffer
+
+        // Mark that user has loaded before
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem(HAS_LOADED_KEY, 'true')
+        }
+      } catch (error) {
+        console.error('Failed to initialize Speed of Love:', error)
+        // Still mark as loaded to prevent infinite loading state
+        if (mounted) {
+          setIsFullyLoaded(true)
+          setIsReconnecting(false)
+          // Fade out loading overlay even on error
+          setTimeout(() => {
+            setShowLoadingOverlay(false)
+          }, 500)
+          // Show UI elements even on error
+          setTimeout(() => {
+            setShowHeader(true)
+          }, 500)
+          setTimeout(() => {
+            setShowNavPanel(true)
+          }, 1200)
+        }
+      }
+    }
+
+    initialize()
+
+    return () => {
+      mounted = false
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // Intentionally empty - we only want to initialize once on mount
 
   // Expose console helper for jumping to scenes
   useEffect(() => {
@@ -79,18 +215,31 @@ export default function StarField() {
     }
   }, [currentScene, currentSceneIndex])
 
-  // Navigate to next scene
+  const router = useRouter()
+
+  // Navigate to next scene or home page if on last scene
   const handleNext = useCallback(() => {
-    if (currentSceneIndex < scenes.length) {
+    const isLastScene = currentSceneIndex >= scenes.length
+    if (isLastScene) {
+      // Navigate to home page
+      router.push('/')
+    } else {
       setCurrentSceneIndex((prev) => prev + 1)
     }
-  }, [currentSceneIndex, scenes.length])
+  }, [currentSceneIndex, scenes.length, router])
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100dvh' }}>
-      {/* Loading overlay - stays visible until fully loaded */}
-      {!isFullyLoaded && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-gray-900">
+      {/* Full loading overlay - only on initial load */}
+      {showLoadingOverlay && isInitialLoad && (
+        <div
+          className="absolute inset-0 z-50 flex items-center justify-center bg-gray-900"
+          style={{
+            opacity: isFullyLoaded ? 0 : 1,
+            transition: 'opacity 400ms ease-out',
+            pointerEvents: isFullyLoaded ? 'none' : 'auto',
+          }}
+        >
           <div className="text-center">
             <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-gray-700 border-t-indigo-500"></div>
             <p className="mt-4 text-sm text-gray-400">
@@ -99,6 +248,46 @@ export default function StarField() {
           </div>
         </div>
       )}
+
+      {/* Subtle reconnecting indicator - for mid-experience issues */}
+      {isReconnecting && !isInitialLoad && (
+        <div className="absolute top-4 right-4 z-50 flex items-center gap-2 rounded-lg border border-indigo-500/50 bg-slate-900/90 px-4 py-2 backdrop-blur-sm">
+          <div className="h-3 w-3 animate-spin rounded-full border-2 border-gray-700 border-t-indigo-500"></div>
+          <p className="text-xs text-gray-300">Reconnecting...</p>
+        </div>
+      )}
+
+      {/* Header - fade in after loading completes */}
+      {showHeader && (
+        <div
+          className="absolute left-0 right-0 top-0 z-10 p-4 sm:p-6"
+          style={{
+            animation: 'fadeIn 0.6s ease-out',
+          }}
+        >
+          <div className="flex items-start justify-between">
+            <div>
+              <Link href="/" className="hover:opacity-80 transition-opacity">
+                <h1 className="text-xl font-bold text-white sm:text-xl">
+                  Relation Star
+                </h1>
+              </Link>
+              <p className="mt-1 text-sm text-gray-300 sm:text-base">
+                The speed of love
+              </p>
+            </div>
+
+            {/* Auto-pilot status indicator (non-interactive) */}
+            <div className="flex items-center gap-2 text-sm font-mono">
+              <span className="text-indigo-400/60">🚀</span>
+              <span className="text-indigo-400/60 uppercase tracking-wider text-xs">
+                Auto-Pilot
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
       <style jsx>{`
         @keyframes fade-in {
           from {
@@ -106,6 +295,16 @@ export default function StarField() {
           }
           to {
             opacity: 1;
+          }
+        }
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
           }
         }
         .animate-fade-in {
@@ -139,64 +338,100 @@ export default function StarField() {
         <SceneComponent currentScene={currentScene} randomSeed={randomSeed} />
       </Canvas>
 
-      {isFullyLoaded && (
+      {showNavPanel && (
         <div
           id="nav-panel"
           className="fixed left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-3xl px-2 sm:px-4"
-          style={{ bottom: '1rem' }}
+          style={{
+            bottom: '1rem',
+            animation: 'fadeIn 1s ease-out',
+          }}
         >
-        <div
-          className={`relative overflow-hidden rounded-lg border-2 border-indigo-500/50 bg-gradient-to-b from-slate-900/50 to-slate-950/50 shadow-2xl backdrop-blur-sm`}
-        >
-          {/* Control panel accent lines */}
-          <div className="absolute left-0 top-0 h-full w-1 bg-gradient-to-b from-indigo-500 via-cyan-400 to-indigo-500"></div>
-          <div className="absolute right-0 top-0 h-full w-1 bg-gradient-to-b from-indigo-500 via-cyan-400 to-indigo-500"></div>
-          <div className="absolute left-0 bottom-0 h-1 w-full bg-gradient-to-r from-indigo-500 via-cyan-400 to-indigo-500"></div>
-          <div className="absolute right-0 bottom-0 h-1 w-full bg-gradient-to-l from-indigo-500 via-cyan-400 to-indigo-500"></div>
+          <div
+            className={`relative overflow-hidden rounded-lg border-2 border-indigo-500/50 bg-gradient-to-b from-slate-900/50 to-slate-950/50 shadow-2xl backdrop-blur-sm`}
+          >
+            {/* Control panel accent lines */}
+            <div className="absolute left-0 top-0 h-full w-1 bg-gradient-to-b from-indigo-500 via-cyan-400 to-indigo-500"></div>
+            <div className="absolute right-0 top-0 h-full w-1 bg-gradient-to-b from-indigo-500 via-cyan-400 to-indigo-500"></div>
+            <div className="absolute left-0 bottom-0 h-1 w-full bg-gradient-to-r from-indigo-500 via-cyan-400 to-indigo-500"></div>
+            <div className="absolute right-0 bottom-0 h-1 w-full bg-gradient-to-l from-indigo-500 via-cyan-400 to-indigo-500"></div>
 
-          {/* Content */}
-          <div className="relative px-4 py-3 sm:px-6 sm:py-4 transition-all duration-300 ease-in-out">
-            <div className="mb-1 flex items-center justify-between gap-2">
-              <span className="text-xs font-mono uppercase tracking-wider text-cyan-400/70">
-                Navigation System
-              </span>
-              <button
-                onClick={() => window.location.reload()}
-                className="rounded border border-cyan-400/50 bg-cyan-500/10 p-1.5 text-cyan-400 transition-colors hover:bg-cyan-500/20 hover:border-cyan-400"
-                title="Restart"
-              >
-                <RotateCcw size={16} />
-              </button>
-            </div>
-            <div className="relative min-h-[3rem] transition-all duration-300 ease-in-out">
-              <p
-                key={currentScene.scene}
-                className="font-mono text-xs leading-relaxed tracking-wide text-indigo-100 sm:text-sm pt-2 animate-fade-in"
-                style={{ letterSpacing: '0.03em' }}
-              >
-                {currentScene.narration}
-              </p>
-            </div>
+            {/* Content */}
+            <div className="relative px-4 py-3 sm:px-6 sm:py-4 transition-all duration-300 ease-in-out">
+              <div className="mb-1 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-2 animate-pulse rounded-full bg-cyan-400"></div>
+                  <span className="text-xs font-mono uppercase tracking-wider text-cyan-400/70">
+                    Navigation System
+                  </span>
+                </div>
+                <button
+                  onClick={() => {
+                    // Clear session storage to restart from beginning
+                    if (typeof window !== 'undefined') {
+                      sessionStorage.removeItem(SCENE_PROGRESS_KEY)
+                      sessionStorage.removeItem(HAS_LOADED_KEY)
+                    }
+                    window.location.reload()
+                  }}
+                  className="rounded border border-cyan-400/50 bg-cyan-500/10 p-1.5 text-cyan-400 transition-colors hover:bg-cyan-500/20 hover:border-cyan-400"
+                  title="Restart from beginning"
+                >
+                  <RotateCcw size={16} />
+                </button>
+              </div>
+              <div className="relative min-h-[3rem] transition-all duration-300 ease-in-out">
+                <p
+                  key={currentScene.scene}
+                  className="font-mono text-xs leading-relaxed tracking-wide text-indigo-100 sm:text-sm pt-2 animate-fade-in"
+                  style={{ letterSpacing: '0.03em' }}
+                  dangerouslySetInnerHTML={{ __html: currentScene.narration }}
+                />
+              </div>
 
-            <div className="mt-3">
-              {/* Proceed button */}
-              <button
-                onClick={handleNext}
-                disabled={
-                  !animationComplete || currentSceneIndex >= scenes.length
-                }
-                className={`w-full rounded border px-4 py-2 font-mono text-sm font-medium transition-colors ${
-                  animationComplete && currentSceneIndex < scenes.length
-                    ? 'border-cyan-400/50 bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 hover:border-cyan-400 cursor-pointer'
-                    : 'border-cyan-400/20 bg-cyan-500/5 text-cyan-400/40 cursor-not-allowed'
-                }`}
-              >
-                → Proceed
-              </button>
+              <div className="mt-3">
+                {currentSceneIndex >= scenes.length ? (
+                  /* Last scene - show two navigation buttons */
+                  <div className="flex gap-2">
+                    <Link
+                      href="/"
+                      className={`flex-auto rounded border px-4 py-2 font-mono text-sm font-medium text-center transition-colors whitespace-nowrap ${
+                        animationComplete
+                          ? 'border-cyan-400/50 bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 hover:border-cyan-400 cursor-pointer'
+                          : 'border-cyan-400/20 bg-cyan-500/5 text-cyan-400/40 cursor-not-allowed pointer-events-none'
+                      }`}
+                    >
+                      ← Home
+                    </Link>
+                    <Link
+                      href="/constellations"
+                      className={`flex-auto rounded border px-4 py-2 font-mono text-sm font-medium text-center transition-colors whitespace-nowrap ${
+                        animationComplete
+                          ? 'border-cyan-400/50 bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 hover:border-cyan-400 cursor-pointer'
+                          : 'border-cyan-400/20 bg-cyan-500/5 text-cyan-400/40 cursor-not-allowed pointer-events-none'
+                      }`}
+                    >
+                      Constellations →
+                    </Link>
+                  </div>
+                ) : (
+                  /* Regular proceed button */
+                  <button
+                    onClick={handleNext}
+                    disabled={!animationComplete}
+                    className={`w-full rounded border px-4 py-2 font-mono text-sm font-medium transition-colors ${
+                      animationComplete
+                        ? 'border-cyan-400/50 bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 hover:border-cyan-400 cursor-pointer'
+                        : 'border-cyan-400/20 bg-cyan-500/5 text-cyan-400/40 cursor-not-allowed'
+                    }`}
+                  >
+                    → Proceed
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
-      </div>
       )}
     </div>
   )

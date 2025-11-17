@@ -18,7 +18,7 @@ export function PushManager() {
     isReady,
     error,
   } = usePushNotificationsContext()
-  
+
   const deviceInfo = useDeviceInfoContext()
   const { showPrompt } = useA2HS()
   const [isInstallStepDismissed, setIsInstallStepDismissed] = useState(true)
@@ -26,7 +26,9 @@ export function PushManager() {
 
   useEffect(() => {
     setHasMounted(true)
-    const dismissed = localStorage.getItem(NAMEGAME_PWA_INSTALL_STEP_DISMISSED_KEY)
+    const dismissed = localStorage.getItem(
+      NAMEGAME_PWA_INSTALL_STEP_DISMISSED_KEY,
+    )
     setIsInstallStepDismissed(dismissed === 'true')
   }, [])
 
@@ -52,8 +54,9 @@ export function PushManager() {
 
   // If push is supported but not enabled, show enable button
   if (isSupported) {
-    const isServiceWorkerLoading = error?.message === 'Service worker not ready.'
-    
+    const isServiceWorkerLoading =
+      error?.message === 'Service worker not ready.'
+
     return (
       <div className="space-y-2">
         <Button
@@ -67,8 +70,9 @@ export function PushManager() {
           Enable Notifications
         </Button>
         {isServiceWorkerLoading && (
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Loading notification system... (this takes a few seconds on first load)
+          <p className="text-sm text-gray-400">
+            Loading notification system... (this takes a few seconds on first
+            load)
           </p>
         )}
       </div>
@@ -111,9 +115,7 @@ export function PushManager() {
             Already Done
           </Button>
         </div>
-        <p className="text-sm text-gray-600 dark:text-gray-400">
-          {deviceInfo.a2hs.instructions}
-        </p>
+        <p className="text-sm text-gray-400">{deviceInfo.a2hs.instructions}</p>
       </div>
     )
   }

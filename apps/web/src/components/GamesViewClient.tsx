@@ -31,7 +31,7 @@ const GamesViewClient: React.FC<GamesViewClientProps> = ({
         onSwitchToGrid={onSwitchToGrid}
         groupType={group?.groupType?.code}
       />
-      <p className="mt-4 text-center text-gray-500 italic dark:text-gray-400">
+      <p className="mt-4 text-center text-gray-500 italic text-gray-400">
         Coming soon... more group games!
       </p>
     </>

@@ -68,7 +68,7 @@ export default function Header({
                 <button
                   onClick={() => router.back()}
                   disabled={!canGoBack}
-                  className="text-gray-600 hover:text-gray-900 disabled:text-gray-400 disabled:cursor-not-allowed dark:text-gray-400 dark:hover:text-gray-100 dark:disabled:text-gray-600"
+                  className="text-gray-600 hover:text-gray-900 disabled:text-gray-400 disabled:cursor-not-allowed text-gray-400 hover:text-gray-100 disabled:text-gray-600"
                   aria-label="Go back"
                 >
                   <ArrowLeft size={24} />
@@ -76,7 +76,7 @@ export default function Header({
                 <button
                   onClick={() => router.forward()}
                   disabled={!canGoForward}
-                  className="text-gray-600 hover:text-gray-900 disabled:text-gray-400 disabled:cursor-not-allowed dark:text-gray-400 dark:hover:text-gray-100 dark:disabled:text-gray-600"
+                  className="text-gray-600 hover:text-gray-900 disabled:text-gray-400 disabled:cursor-not-allowed text-gray-400 hover:text-gray-100 disabled:text-gray-600"
                   aria-label="Go forward"
                 >
                   <ArrowRight size={24} />
@@ -103,7 +103,7 @@ export default function Header({
                 )}
                 {/* Show group name on desktop, hide on mobile */}
                 <span
-                  className={`block max-w-[200px] truncate text-xl font-bold text-gray-600 dark:text-gray-200 ${
+                  className={`block max-w-[200px] truncate text-xl font-bold text-gray-200 ${
                     deviceInfo.isMobile ? 'hidden' : 'sm:max-w-none'
                   }`}
                 >
@@ -113,17 +113,17 @@ export default function Header({
             ) : (
               <Link
                 href="/"
-                className="flex items-center gap-1 text-xl font-bold text-gray-600 dark:text-gray-200"
+                className="flex items-center gap-1 text-xl font-bold text-gray-200"
               >
                 <Image
-                  src="/images/butterfly.png"
-                  alt="NameGame social butterfly"
+                  src="/images/logos/relationstar_icon_purple-star-256.png"
+                  alt="Relation Star: Your Universe at the Speed of Love"
                   width={32}
                   height={32}
-                  className="h-auto md:max-w-[32px]"
+                  className="h-auto md:max-w-[32px] sm:mr-1"
                 />
                 {/* Show app name text only on desktop */}
-                <span className="hidden md:inline">NameGame</span>
+                <span className="hidden md:inline">Relation Star</span>
               </Link>
             )}
           </div>
@@ -131,7 +131,7 @@ export default function Header({
             {isGroupAdmin && groupSlug && (
               <Link
                 href={`/g/${groupSlug}/admin`}
-                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white"
+                className="text-gray-500 hover:text-gray-400 hover:text-white"
               >
                 <Settings size={24} />
               </Link>

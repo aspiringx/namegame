@@ -24,14 +24,14 @@ const inter = localFont({
 })
 
 export const metadata: Metadata = {
-  applicationName: 'NameGame',
-  title: 'NameGame',
+  applicationName: 'Relation Star',
+  title: 'Relation Star',
   description: 'Life is relationships',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'NameGame',
+    title: 'Relation Star',
     startupImage: [
       // Light mode splash screens
       {
@@ -301,7 +301,7 @@ export default async function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${inter.variable} bg-background text-foreground overflow-visible font-sans`}
+        className={`${inter.variable} bg-background text-foreground font-sans`}
       >
         <Providers>
           <AuthProvider session={session}>
@@ -311,7 +311,7 @@ export default async function RootLayout({
                   <A2HSProvider>
                     <ServiceWorkerProvider>
                       <PushNotificationsProvider>
-                        <div className="relative min-h-screen">{children}</div>
+                        <div className="relative min-h-dvh">{children}</div>
                         <ClientOnly>
                           <PullToRefresh />
                           <InstallAppPrompt />

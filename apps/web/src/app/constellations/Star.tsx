@@ -41,22 +41,20 @@ export default function Star({
   const lockedOpacity = useRef<number | null>(null)
   const lockedTransitionProgress = useRef<number | null>(null)
 
+  // Phase checks - define once to avoid duplication
+  const isIntroPhase = journeyPhase === 'intro'
+  const isFlying = journeyPhase === 'flying'
+  const isReturning =
+    journeyPhase === 'returning' ||
+    journeyPhase === 'returning-batch-complete' ||
+    journeyPhase === 'returning-journey-complete'
+
   // Calculate distance and billboard rotation
   useFrame(() => {
     if (groupRef.current) {
       // Update distance to camera
       const dist = camera.position.distanceTo(new THREE.Vector3(...position))
       setDistanceToCamera(dist)
-
-      // Debug: Log Alice's actual rendered position during takeoff
-      if (
-        person.name === 'Alice Johnson' &&
-        journeyPhase === 'takeoff' &&
-        isTarget
-      ) {
-        const worldPos = new THREE.Vector3()
-        groupRef.current.getWorldPosition(worldPos)
-      }
 
       // Billboard - always face camera
       if (isTarget) {
@@ -84,7 +82,7 @@ export default function Star({
     isTarget && (journeyPhase === 'flying' || journeyPhase === 'approaching')
 
   // Reset locks when transitioning away from complete/placed to a new journey
-  if (isTarget && journeyPhase === 'returning') {
+  if (isTarget && isReturning) {
     lockedSize.current = null
     lockedOpacity.current = null
     lockedTransitionProgress.current = null
@@ -126,9 +124,6 @@ export default function Star({
     }
   } else {
     // Constellation stars (non-target) - boost size during intro and returning
-    const isIntroPhase = journeyPhase === 'intro'
-    const isFlying = journeyPhase === 'flying'
-    const isReturning = journeyPhase === 'returning'
     const maxDist = 100
     const distanceFactor = Math.max(
       0,
@@ -189,9 +184,15 @@ export default function Star({
   }
 
   // Force images hidden during intro phase to prevent flash
-  const isIntroPhase = journeyPhase === 'intro'
   if (isIntroPhase) {
     transitionProgress = 0
+  } else if (isReturning) {
+    // During constellation view: charted stars show photos, uncharted stay as dots
+    if (placement) {
+      transitionProgress = 1.0 // Force charted stars to show photos
+    } else {
+      transitionProgress = 0 // Force uncharted stars to stay as white dots
+    }
   }
 
   // Calculate opacity based on distance for depth perception
@@ -233,10 +234,6 @@ export default function Star({
     }
   } else {
     // Constellation stars (non-target) - boost visibility during intro and returning
-    const isIntroPhase = journeyPhase === 'intro'
-    const isFlying = journeyPhase === 'flying'
-    const isReturning = journeyPhase === 'returning'
-
     // Opacity varies with distance
     const maxDist = 100
     const distanceFactor = Math.max(
@@ -307,14 +304,15 @@ export default function Star({
       groupOpacity = Math.max(groupOpacity, 0.2 + transitionProgress * 0.5) // 0.2 to 0.7
     }
 
-    // Dim unplaced stars when arrived/approaching/placed/takeoff to focus on target
+    // Dim unplaced stars when arrived/approaching/placed/takeoff/complete to focus on target
     // But keep placed/charted stars visible
     if (
       !placement &&
       (journeyPhase === 'arrived' ||
         journeyPhase === 'approaching' ||
         journeyPhase === 'placed' ||
-        journeyPhase === 'takeoff')
+        journeyPhase === 'takeoff' ||
+        journeyPhase === 'complete')
     ) {
       groupOpacity *= 0.05 // Reduce to 5% to minimize distraction from target
     }

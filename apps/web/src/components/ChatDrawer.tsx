@@ -466,33 +466,31 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
         storageKey="chat-drawer-width"
       >
         {/* New Message Buttons */}
-        <div className="p-4 border-b border-gray-200 dark:border-gray-700 space-y-2">
+        <div className="p-4 border-b border-gray-700 space-y-2">
           {group && (
             <button
               onClick={handleNewGroupMessage}
-              className="w-full flex items-center gap-3 p-3 text-left bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
+              className="w-full flex items-center gap-3 p-3 text-left bg-blue-50 hover:bg-blue-900/20 hover:bg-blue-900/30 rounded-lg transition-colors"
             >
-              <Users size={20} className="text-blue-600 dark:text-blue-400" />
-              <span className="text-blue-600 dark:text-blue-400 font-medium">
+              <Users size={20} className="text-blue-400" />
+              <span className="text-blue-400 font-medium">
                 New chat in {group.name}
               </span>
             </button>
           )}
           <button
             onClick={handleNewGlobalMessage}
-            className="w-full flex items-center gap-3 p-3 text-left bg-gray-50 hover:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-lg transition-colors"
+            className="w-full flex items-center gap-3 p-3 text-left bg-gray-50 hover:bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
           >
-            <User size={20} className="text-gray-600 dark:text-gray-400" />
-            <span className="text-gray-600 dark:text-gray-400 font-medium">
-              New direct chat
-            </span>
+            <User size={20} className="text-gray-400" />
+            <span className="text-gray-400 font-medium">New direct chat</span>
           </button>
 
           {/* Mark all as read button - only show if there are unread conversations */}
           {conversations.some((c) => c.hasUnread) && (
             <button
               onClick={handleMarkAllAsRead}
-              className="w-full flex items-center justify-center gap-2 p-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+              className="w-full flex items-center justify-center gap-2 p-2 text-sm text-gray-400 hover:text-gray-900 hover:text-white transition-colors"
             >
               Mark all as read
             </button>
@@ -502,23 +500,23 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
         {/* Conversation List */}
         <div ref={conversationsListRef} className="flex-1 overflow-y-auto">
           {isLoadingConversations ? (
-            <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400">
+            <div className="flex flex-col items-center justify-center h-full text-gray-400">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
               <p>Loading conversations...</p>
             </div>
           ) : conversations.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400">
+            <div className="flex flex-col items-center justify-center h-full text-gray-400">
               <MessageCircle size={48} className="mb-4 opacity-50" />
               <p>No conversations yet</p>
               <p className="text-sm">Start a new message to get chatting!</p>
             </div>
           ) : (
-            <div className="divide-y divide-gray-200 dark:divide-gray-700">
+            <div className="divide-y divide-gray-200 divide-gray-700">
               {conversations.map((conversation) => (
                 <button
                   key={conversation.id}
                   onClick={() => handleOpenConversation(conversation)}
-                  className="w-full p-4 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                  className="w-full p-4 text-left hover:bg-gray-50 hover:bg-gray-700 transition-colors"
                 >
                   <div className="flex items-center gap-2">
                     {conversation.isGroup ? (
@@ -529,7 +527,7 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
                     ) : (
                       <User size={16} className="text-gray-400 flex-shrink-0" />
                     )}
-                    <p className="font-medium text-gray-900 dark:text-white truncate">
+                    <p className="font-medium text-gray-900 text-white truncate">
                       {conversation.name}
                     </p>
                     {conversation.hasUnread && (

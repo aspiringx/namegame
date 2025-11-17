@@ -7,7 +7,7 @@ import { Person } from './types'
 export const MOCK_PEOPLE: Person[] = [
   {
     id: '1',
-    name: 'Sophia Chen',
+    name: 'Sophia Miyasaki',
     photo: '/images/chart-your-stars-demo/profile-pics/person-01-female.jpg',
   },
   {
@@ -22,7 +22,7 @@ export const MOCK_PEOPLE: Person[] = [
   },
   {
     id: '4',
-    name: 'Liam O\'Brien',
+    name: 'Noah Malone',
     photo: '/images/chart-your-stars-demo/profile-pics/person-04-male.jpg',
   },
   {
@@ -52,7 +52,7 @@ export const MOCK_PEOPLE: Person[] = [
   },
   {
     id: '10',
-    name: 'Noah Kim',
+    name: "Liam O'Brien",
     photo: '/images/chart-your-stars-demo/profile-pics/person-10-male.jpg',
   },
   {
@@ -82,7 +82,7 @@ export const MOCK_PEOPLE: Person[] = [
   },
   {
     id: '16',
-    name: 'Hassan Ibrahim',
+    name: 'Robert Johnson',
     photo: '/images/chart-your-stars-demo/profile-pics/person-16-male.jpg',
   },
   {
@@ -97,12 +97,12 @@ export const MOCK_PEOPLE: Person[] = [
   },
   {
     id: '19',
-    name: 'Zara Khan',
+    name: 'Shelly Kirkham',
     photo: '/images/chart-your-stars-demo/profile-pics/person-19-female.jpg',
   },
   {
     id: '20',
-    name: 'Alexander Petrov',
+    name: 'Alex Davis',
     photo: '/images/chart-your-stars-demo/profile-pics/person-20-male.jpg',
   },
 ]

@@ -7,6 +7,7 @@ import { useDeviceInfoContext } from '@/context/DeviceInfoContext'
 import { Button } from './ui/button'
 import { ArrowDownToLine, Share } from 'lucide-react'
 import { useA2HS } from '@/context/A2HSContext'
+import { useSession } from 'next-auth/react'
 
 const TOAST_ID = 'install-prompt'
 
@@ -63,13 +64,15 @@ export function InstallAppPrompt() {
   const a2hs = useA2HS()
   const deviceInfo = useDeviceInfoContext()
   const pathname = usePathname()
+  const { data: session } = useSession()
 
   useEffect(() => {
     let toastId: string | number | undefined
 
     const isGreetPage = pathname.startsWith('/greet')
+    const isAuthenticated = !!session
 
-    if (a2hs.isPromptVisible && deviceInfo?.a2hs.canInstall && !isGreetPage) {
+    if (a2hs.isPromptVisible && deviceInfo?.a2hs.canInstall && !isGreetPage && isAuthenticated) {
       toastId = toast(<InstallPromptContent a2hs={a2hs} />, {
         id: TOAST_ID,
         duration: Infinity,

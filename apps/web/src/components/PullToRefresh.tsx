@@ -21,10 +21,13 @@ export default function PullToRefresh() {
     const handleTouchStart = (e: TouchEvent) => {
       // Don't trigger in chat interface (has its own scroll container)
       const target = e.target as HTMLElement
-      if (target.closest('[data-messages-container]') || target.closest('[data-chat-interface]')) {
+      if (
+        target.closest('[data-messages-container]') ||
+        target.closest('[data-chat-interface]')
+      ) {
         return
       }
-      
+
       // Only trigger if at top of page
       if (window.scrollY === 0) {
         startY.current = e.touches[0].clientY
@@ -41,7 +44,7 @@ export default function PullToRefresh() {
       // Only pull down (positive distance) and limit to 150px
       if (distance > 0) {
         setPullDistance(Math.min(distance, 150))
-        
+
         // Prevent default scroll if pulling more than 10px
         if (distance > 10) {
           e.preventDefault()
@@ -96,9 +99,9 @@ export default function PullToRefresh() {
         transition: isPulling.current ? 'none' : 'all 0.3s ease-out',
       }}
     >
-      <div className="mt-4 rounded-full bg-white p-3 shadow-lg dark:bg-gray-800">
+      <div className="mt-4 rounded-full bg-white p-3 shadow-lg bg-gray-800">
         <RefreshCw
-          className={`h-6 w-6 text-gray-600 dark:text-gray-300 ${
+          className={`h-6 w-6 text-gray-300 ${
             isRefreshing ? 'animate-spin' : ''
           }`}
           style={{

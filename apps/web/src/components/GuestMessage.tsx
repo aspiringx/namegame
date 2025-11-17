@@ -45,7 +45,7 @@ export function GuestMessage({
     <div className="p-6">
       <button
         onClick={handleClose}
-        className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+        className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 hover:text-gray-200"
         aria-label="Close"
       >
         <X className="h-6 w-6" />
@@ -57,18 +57,18 @@ export function GuestMessage({
         height={70}
         className="center mx-auto mb-4 h-auto w-auto"
       />
-      <h3 className="mb-4 text-center text-xl font-semibold text-gray-900 dark:text-gray-100">
+      <h3 className="mb-4 text-center text-xl font-semibold text-gray-100">
         Welcome {firstName}!
       </h3>
       <div className="space-y-2">
         <p className="mb-4 text-center">
           You&apos;re in the private {groupName} group!
         </p>
-        <div className="my-4 flex items-center gap-4 rounded-md bg-green-200 p-4 dark:bg-green-900">
+        <div className="my-4 flex items-center gap-4 rounded-md bg-green-200 p-4 bg-green-900">
           <HelpCircle size={32} />
           <p>Click the help icon above for a quick tour.</p>
         </div>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
+        <p className="text-sm text-gray-400">
           Complete your profile to help others recognize you, enable game
           features, and to stop seeing this reminder.
         </p>
@@ -90,7 +90,7 @@ export function GuestMessage({
 
   // For the /me page, show an inline message
   return (
-    <div className="my-2 rounded-md bg-blue-200 p-4 dark:bg-blue-900">
+    <div className="my-2 rounded-md bg-blue-200 p-4 bg-blue-900">
       <h3 className="mb-2 text-center text-lg font-semibold">
         Hi {firstName}!
       </h3>

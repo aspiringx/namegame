@@ -173,10 +173,8 @@ export default function GreetPageClient({
               <p className="text-2xl mb-4">
                 {codeData.user.firstName} just greeted you.
               </p>
-              <div className="mb-8 rounded-lg border border-gray-200 bg-gray-50 px-6 py-4 dark:border-gray-700 dark:bg-gray-800/50">
-                <p className="text text-left italic">
-                  {randomQuestion}
-                </p>
+              <div className="mb-8 rounded-lg border border-gray-200 bg-gray-50 px-6 py-4 border-gray-700 bg-gray-800/50">
+                <p className="text text-left italic">{randomQuestion}</p>
               </div>
 
               {signInFailed ? (
@@ -184,9 +182,9 @@ export default function GreetPageClient({
                   <h2 className="text-2xl font-bold">Connection Issue</h2>
                   <p className="text-left">
                     It looks like your internet connection is slow or sporadic.
-                    We&apos;ve created your account and will attempt to proceed when
-                    this improves. If you have access to WiFi, consider enabling
-                    it and tap Refresh.
+                    We&apos;ve created your account and will attempt to proceed
+                    when this improves. If you have access to WiFi, consider
+                    enabling it and tap Refresh.
                   </p>
                   <button
                     onClick={() => window.location.reload()}
@@ -207,7 +205,7 @@ export default function GreetPageClient({
                   </div>
                   <div className="pt-8">
                     <p className="mb-4 text-center">
-                      Already have a NameGame login?
+                      Already have a Relation Star login?
                     </p>
                     <button
                       onClick={handleLogin}
@@ -224,7 +222,7 @@ export default function GreetPageClient({
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
                     placeholder="Enter with just your first name"
-                    className="w-full rounded-md border px-4 py-2 dark:bg-gray-800"
+                    className="w-full rounded-md border px-4 py-2 bg-gray-800"
                     required
                   />
                   <button

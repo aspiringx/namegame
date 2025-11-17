@@ -1,6 +1,13 @@
 'use client'
 
-import { useState, useEffect, useImperativeHandle, forwardRef, useRef, useCallback } from 'react'
+import {
+  useState,
+  useEffect,
+  useImperativeHandle,
+  forwardRef,
+  useRef,
+  useCallback,
+} from 'react'
 import { MessageCircle } from 'lucide-react'
 import ChatDrawer from './ChatDrawer'
 import { useSession } from 'next-auth/react'
@@ -16,7 +23,10 @@ export interface ChatIconRef {
   openChat: () => void
 }
 
-const ChatIcon = forwardRef<ChatIconRef, ChatIconProps>(function ChatIcon({}, ref) {
+const ChatIcon = forwardRef<ChatIconRef, ChatIconProps>(function ChatIcon(
+  {},
+  ref,
+) {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [hasUnread, setHasUnread] = useState(false)
   const { data: session } = useSession()
@@ -29,35 +39,40 @@ const ChatIcon = forwardRef<ChatIconRef, ChatIconProps>(function ChatIcon({}, re
   // Expose openChat method via ref (now toggles)
   useImperativeHandle(ref, () => ({
     openChat: () => {
-      setIsModalOpen(prev => !prev)
+      setIsModalOpen((prev) => !prev)
       if (!isModalOpen) {
         updateURL('open')
       } else {
         updateURL(null)
       }
-    }
+    },
   }))
 
   // Helper to update URL without adding to history
-  const updateURL = useCallback((chatState: string | null) => {
-    const params = new URLSearchParams(window.location.search)
-    
-    if (chatState) {
-      params.set('chat', chatState)
-    } else {
-      params.delete('chat')
-      params.delete('msg') // Also clear message param when closing
-    }
-    
-    const newURL = params.toString() ? `?${params.toString()}` : window.location.pathname
-    router.replace(newURL, { scroll: false })
-  }, [router])
+  const updateURL = useCallback(
+    (chatState: string | null) => {
+      const params = new URLSearchParams(window.location.search)
+
+      if (chatState) {
+        params.set('chat', chatState)
+      } else {
+        params.delete('chat')
+        params.delete('msg') // Also clear message param when closing
+      }
+
+      const newURL = params.toString()
+        ? `?${params.toString()}`
+        : window.location.pathname
+      router.replace(newURL, { scroll: false })
+    },
+    [router],
+  )
 
   // Read URL params on mount to restore chat state
   useEffect(() => {
     if (!isInitialMount.current) return
     isInitialMount.current = false
-    
+
     const chatParam = searchParams.get('chat')
     if (chatParam) {
       setIsModalOpen(true)
@@ -81,7 +96,7 @@ const ChatIcon = forwardRef<ChatIconRef, ChatIconProps>(function ChatIcon({}, re
   // Sync URL when drawer opens/closes
   useEffect(() => {
     if (isInitialMount.current) return
-    
+
     if (isModalOpen) {
       const chatParam = searchParams.get('chat')
       // Only update if not already set (to preserve conversation ID)
@@ -102,11 +117,11 @@ const ChatIcon = forwardRef<ChatIconRef, ChatIconProps>(function ChatIcon({}, re
       hasUnreadMessages().then(setHasUnread)
     }
   }, [session?.user, isModalOpen])
-  
+
   // Listen for conversation read events via BroadcastChannel
   useEffect(() => {
     if (!session?.user) return
-    
+
     const channel = new BroadcastChannel('chat_read_updates')
     const handleReadUpdate = () => {
       // Cancel any pending timeout that would show green dot
@@ -118,17 +133,17 @@ const ChatIcon = forwardRef<ChatIconRef, ChatIconProps>(function ChatIcon({}, re
       hasUnreadMessages().then(setHasUnread)
     }
     channel.addEventListener('message', handleReadUpdate)
-    
+
     return () => {
       channel.removeEventListener('message', handleReadUpdate)
       channel.close()
     }
   }, [session?.user])
-  
+
   // Listen for new messages and reactions via socket to update unread indicator
   useEffect(() => {
     if (!socket || !session?.user) return
-    
+
     const handleNewMessage = (message: any) => {
       // If the message is from someone else, delay showing green dot
       // This allows auto-mark-as-read to complete first if conversation is open
@@ -145,11 +160,15 @@ const ChatIcon = forwardRef<ChatIconRef, ChatIconProps>(function ChatIcon({}, re
       }
       // If user sent the message themselves, no need to update
     }
-    
+
     const handleReaction = (data: any) => {
       // Only show green dot when someone ADDS a reaction to YOUR message
       // Check: action is 'add', message author is you, and reactor is not you
-      if (data.action === 'add' && data.messageAuthorId === session.user?.id && data.userId !== session.user?.id) {
+      if (
+        data.action === 'add' &&
+        data.messageAuthorId === session.user?.id &&
+        data.userId !== session.user?.id
+      ) {
         // Clear any existing timeout first
         if (pendingUnreadTimeoutRef.current) {
           clearTimeout(pendingUnreadTimeoutRef.current)
@@ -161,10 +180,10 @@ const ChatIcon = forwardRef<ChatIconRef, ChatIconProps>(function ChatIcon({}, re
         }, 400)
       }
     }
-    
+
     socket.on('message', handleNewMessage)
     socket.on('reaction', handleReaction)
-    
+
     return () => {
       socket.off('message', handleNewMessage)
       socket.off('reaction', handleReaction)
@@ -183,8 +202,8 @@ const ChatIcon = forwardRef<ChatIconRef, ChatIconProps>(function ChatIcon({}, re
   return (
     <>
       <button
-        onClick={() => setIsModalOpen(prev => !prev)}
-        className="relative text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white"
+        onClick={() => setIsModalOpen((prev) => !prev)}
+        className="relative text-gray-500 hover:text-gray-400 hover:text-white"
         aria-label={`Chat${hasUnread ? ' (unread messages)' : ''}`}
       >
         <MessageCircle size={24} />
@@ -192,7 +211,7 @@ const ChatIcon = forwardRef<ChatIconRef, ChatIconProps>(function ChatIcon({}, re
           <span className="absolute top-0 right-0 w-2 h-2 bg-green-500 rounded-full" />
         )}
       </button>
-      
+
       <ChatDrawer isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </>
   )

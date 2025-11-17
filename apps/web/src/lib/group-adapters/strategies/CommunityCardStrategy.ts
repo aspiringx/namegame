@@ -8,10 +8,14 @@ export class CommunityCardStrategy implements MemberCardStrategy {
   showRelationship = false
   relationshipClassName = ''
   relationshipClickable = false
-  availableActions: Array<'relate' | 'connect' | 'admin'> = ['relate', 'connect', 'admin']
+  availableActions: Array<'relate' | 'connect' | 'admin'> = [
+    'relate',
+    'connect',
+    'admin',
+  ]
   cardClassName = 'community-member-card'
-  
+
   // Community-specific: show connected time instead of relationships
   showConnectedTime = true
-  connectedTimeClassName = 'cursor-pointer text-xs text-gray-500 dark:text-gray-400'
+  connectedTimeClassName = 'cursor-pointer text-xs text-gray-400'
 }

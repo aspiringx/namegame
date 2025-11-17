@@ -5,7 +5,7 @@ export default function AdminPage() {
   return (
     <div className="mx-auto max-w-4xl p-8">
       <Breadcrumbs />
-      <h1 className="mb-8 text-center text-3xl font-bold dark:text-white">
+      <h1 className="mb-8 text-center text-3xl font-bold text-white">
         Admin Dashboard
       </h1>
       <div className="grid grid-cols-1 gap-8 md:grid-cols-2">

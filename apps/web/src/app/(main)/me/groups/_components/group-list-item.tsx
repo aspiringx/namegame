@@ -78,15 +78,14 @@ export function GroupListItem({ group }: GroupListItemProps) {
       </div>
 
       {isModalOpen && (
-        <Modal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-        >
+        <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
           <div className="p-6">
-            <h3 className="text-lg font-medium leading-6 text-gray-900 dark:text-gray-100 mb-4">
+            <h3 className="text-lg font-medium leading-6 text-gray-100 mb-4">
               Confirm Leaving Group
             </h3>
-            <p>Are you sure you want to leave the group &quot;{group.name}&quot;?</p>
+            <p>
+              Are you sure you want to leave the group &quot;{group.name}&quot;?
+            </p>
           </div>
           <div className="flex justify-end space-x-2 p-6 pt-0">
             <Button

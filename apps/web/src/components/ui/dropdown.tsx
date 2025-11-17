@@ -3,12 +3,12 @@
 import { Menu, Transition } from '@headlessui/react'
 import { Fragment } from 'react'
 
-export function Dropdown({ 
-  trigger, 
-  children, 
+export function Dropdown({
+  trigger,
+  children,
   triggerClassName,
-  menuClassName 
-}: { 
+  menuClassName,
+}: {
   trigger: React.ReactNode
   children: React.ReactNode
   triggerClassName?: string
@@ -17,9 +17,7 @@ export function Dropdown({
   return (
     <Menu as="div" className="relative inline-block text-left">
       <div>
-        <Menu.Button className={triggerClassName}>
-          {trigger}
-        </Menu.Button>
+        <Menu.Button className={triggerClassName}>{trigger}</Menu.Button>
       </div>
       <Transition
         as={Fragment}
@@ -30,10 +28,13 @@ export function Dropdown({
         leaveFrom="transform opacity-100 scale-100"
         leaveTo="transform opacity-0 scale-95"
       >
-        <Menu.Items className={menuClassName || "absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md border border-gray-200 bg-white text-gray-900 shadow-lg focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"}>
-          <div className="px-1 py-1 ">
-            {children}
-          </div>
+        <Menu.Items
+          className={
+            menuClassName ||
+            'absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md border border-gray-200 bg-white text-gray-900 shadow-lg focus:outline-none border-gray-700 bg-gray-800 text-gray-200'
+          }
+        >
+          <div className="px-1 py-1 ">{children}</div>
         </Menu.Items>
       </Transition>
     </Menu>
@@ -57,11 +58,11 @@ export function DropdownItem({
           onClick={onClick}
           disabled={disabled}
           className={`group flex w-full items-center rounded-md px-2 py-2 text-sm transition-colors ${
-            disabled 
-              ? 'cursor-not-allowed opacity-50 text-gray-900 dark:text-gray-100' 
+            disabled
+              ? 'cursor-not-allowed opacity-50 text-gray-100'
               : active
-              ? 'bg-indigo-600 text-white dark:bg-indigo-500 dark:text-white'
-              : 'text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800'
+              ? 'bg-indigo-600 text-white bg-indigo-500 text-white'
+              : 'text-gray-100 bg-white bg-gray-800'
           }`}
         >
           {children}

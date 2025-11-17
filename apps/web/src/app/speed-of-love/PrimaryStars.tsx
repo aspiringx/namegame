@@ -240,9 +240,11 @@ export default function PrimaryStars({
       const explosionProgress = wavePhase * wavePhase
       const maxDistance = 500 // Stars fly up to 500 units away
       
-      // Fade out stars as they fly away (reaches 0 at wavePhase = 1)
+      // Keep stars bright and scale them up during explosion
       const fadeOut = Math.max(0, 1 - wavePhase)
       shaderMaterial.uniforms.opacity.value = currentOpacity.current * fadeOut
+      // Scale stars 2x during explosion for more dramatic effect
+      shaderMaterial.uniforms.baseSize.value = size * 2
 
       for (let i = 0; i < responsiveCount; i++) {
         const idx = i * 3
@@ -267,7 +269,7 @@ export default function PrimaryStars({
 
       posAttr.needsUpdate = true
       
-      // Update trails
+      // Update trails - simple thin bright lines
       if (trailsRef.current) {
         trailsRef.current.children.forEach((line, i) => {
           const lineMesh = line as THREE.Line
@@ -285,9 +287,11 @@ export default function PrimaryStars({
           const speed = explosionSpeeds.current![i]
           
           const displacement = explosionProgress * maxDistance * speed
-          const trailLength = Math.min(displacement * 0.3, 50) // Trail is 30% of travel distance, max 50 units
+          // Fixed trail length - doesn't grow indefinitely
+          const maxTrailLength = 60
+          const trailLength = Math.min(maxTrailLength, displacement * 0.5)
           
-          // Current position (end of trail)
+          // Current position (end of trail at star)
           const currentX = origX + dirX * displacement
           const currentY = origY + dirY * displacement
           const currentZ = origZ + dirZ * displacement
@@ -306,14 +310,15 @@ export default function PrimaryStars({
           linePos.array[5] = currentZ
           linePos.needsUpdate = true
           
-          // Fade trail with explosion (trails fade out completely with stars)
+          // Keep trails bright white
           const material = lineMesh.material as THREE.LineBasicMaterial
-          material.opacity = fadeOut * 0.6 // Max 0.6 opacity, reaches 0 when fadeOut = 0
+          material.opacity = fadeOut * 0.8 // Bright trails
         })
       }
     } else {
-      // Normal opacity when not exploding
+      // Normal opacity and size when not exploding
       shaderMaterial.uniforms.opacity.value = currentOpacity.current
+      shaderMaterial.uniforms.baseSize.value = size
       
       // Hide trails when not exploding
       if (trailsRef.current) {
@@ -352,18 +357,21 @@ export default function PrimaryStars({
         material={shaderMaterial}
         renderOrder={3}
       />
-      {/* Star trails for explosion effect */}
+      {/* Star trails for explosion effect - simple thin bright lines */}
       <group ref={trailsRef} visible={wavePhase > 0}>
         {Array.from({ length: responsiveCount }).map((_, i) => {
           const trailGeometry = new THREE.BufferGeometry()
           const trailPositions = new Float32Array(6) // 2 points (start and end)
           trailGeometry.setAttribute('position', new THREE.BufferAttribute(trailPositions, 3))
           
+          // Bright white trail with additive blending
           const trailMaterial = new THREE.LineBasicMaterial({
             color: 0xffffff,
-            opacity: 0.6,
+            opacity: 0.8,
             transparent: true,
             blending: THREE.AdditiveBlending,
+            depthWrite: false,
+            depthTest: false,
           })
           
           return (

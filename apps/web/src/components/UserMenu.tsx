@@ -61,10 +61,10 @@ export default function UserMenu() {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={toggleDropdown}
-        className="flex items-center rounded-lg px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800"
+        className="flex items-center rounded-lg px-4 py-2 hover:bg-gray-100 hover:bg-gray-800"
       >
         {user && (
-          <p className="mr-4 hidden text-gray-700 sm:block dark:text-gray-300">
+          <p className="mr-4 hidden text-gray-700 sm:block text-gray-300">
             {user.firstName}
           </p>
         )}
@@ -79,23 +79,23 @@ export default function UserMenu() {
           />
         ) : (
           // This placeholder is shown during initial load, before context is ready.
-          <div className="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-700" />
+          <div className="h-10 w-10 rounded-full bg-gray-700" />
         )}
       </button>
       {isDropdownOpen && (
-        <div className="absolute top-full right-0 z-50 mt-2 w-48 rounded-md bg-white py-2 shadow-lg dark:bg-gray-800">
+        <div className="absolute top-full right-0 z-50 mt-2 w-48 rounded-md bg-white py-2 shadow-lg bg-gray-800">
           {user ? (
             <>
               <Link
                 href={`/me`}
-                className="block px-4 py-2 text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
+                className="block px-4 py-2 text-gray-800 hover:bg-gray-100 text-gray-200 hover:bg-gray-700"
                 onClick={closeDropdown}
               >
                 Me
               </Link>
               <Link
                 href="/me/groups"
-                className="block px-4 py-2 text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
+                className="block px-4 py-2 text-gray-800 hover:bg-gray-100 text-gray-200 hover:bg-gray-700"
                 onClick={closeDropdown}
               >
                 My Groups
@@ -106,7 +106,7 @@ export default function UserMenu() {
                     <Link
                       key={group.slug}
                       href={`/g/${group.slug}`}
-                      className="block py-3 pr-4 pl-8 text-sm text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
+                      className="block py-3 pr-4 pl-8 text-sm text-gray-600 hover:bg-gray-100 text-gray-400 hover:bg-gray-700"
                       onClick={closeDropdown}
                     >
                       {group.name}
@@ -116,31 +116,31 @@ export default function UserMenu() {
               )}
               {isSuperAdmin && (
                 <>
-                  <hr className="my-2 border-gray-200 dark:border-gray-700" />
+                  <hr className="my-2 border-gray-700" />
                   <Link
                     href="/admin"
-                    className="block px-4 py-2 text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
+                    className="block px-4 py-2 text-gray-800 hover:bg-gray-100 text-gray-200 hover:bg-gray-700"
                     onClick={closeDropdown}
                   >
                     Global Admin
                   </Link>
                   <Link
                     href="/admin/groups"
-                    className="block py-3 pr-4 pl-8 text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
+                    className="block py-3 pr-4 pl-8 text-gray-800 hover:bg-gray-100 text-gray-200 hover:bg-gray-700"
                     onClick={closeDropdown}
                   >
                     Groups
                   </Link>
                   <Link
                     href="/admin/users"
-                    className="block py-3 pr-4 pl-8 text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
+                    className="block py-3 pr-4 pl-8 text-gray-800 hover:bg-gray-100 text-gray-200 hover:bg-gray-700"
                     onClick={closeDropdown}
                   >
                     Users
                   </Link>
                   <Link
                     href="/me/push-test"
-                    className="block py-3 pr-4 pl-8 text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
+                    className="block py-3 pr-4 pl-8 text-gray-800 hover:bg-gray-100 text-gray-200 hover:bg-gray-700"
                     onClick={closeDropdown}
                   >
                     Push Test
@@ -150,7 +150,7 @@ export default function UserMenu() {
 
               {deviceInfo.a2hs.canInstall && (
                 <>
-                  <hr className="my-2 border-gray-200 dark:border-gray-700" />
+                  <hr className="my-2 border-gray-700" />
                   <button
                     onClick={() => {
                       if (deviceInfo.pwaPrompt.isReady) {
@@ -166,7 +166,7 @@ export default function UserMenu() {
                       }
                       closeDropdown()
                     }}
-                    className="block w-full px-4 py-2 text-left text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
+                    className="block w-full px-4 py-2 text-left text-gray-800 hover:bg-gray-100 text-gray-200 hover:bg-gray-700"
                   >
                     {deviceInfo.a2hs.actionLabel}
                   </button>
@@ -174,14 +174,14 @@ export default function UserMenu() {
               )}
 
               {/* Logout */}
-              <hr className="my-2 border-gray-200 dark:border-gray-700" />
+              <hr className="my-2 border-gray-700" />
               <button
                 onClick={() => {
                   const callbackUrl = `${window.location.origin}/`
                   signOut({ callbackUrl })
                   closeDropdown()
                 }}
-                className="block w-full px-4 py-2 text-left text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
+                className="block w-full px-4 py-2 text-left text-gray-800 hover:bg-gray-100 text-gray-200 hover:bg-gray-700"
               >
                 Logout
               </button>
@@ -190,14 +190,14 @@ export default function UserMenu() {
             <>
               <Link
                 href="/login"
-                className="block px-4 py-2 text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
+                className="block px-4 py-2 text-gray-800 hover:bg-gray-100 text-gray-200 hover:bg-gray-700"
                 onClick={closeDropdown}
               >
                 Login
               </Link>
               <Link
                 href="/signup"
-                className="block px-4 py-2 text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
+                className="block px-4 py-2 text-gray-800 hover:bg-gray-100 text-gray-200 hover:bg-gray-700"
                 onClick={closeDropdown}
               >
                 Sign Up

@@ -35,16 +35,16 @@ export default function QRCodeModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/25 p-4 backdrop-blur-sm">
-      <div className="relative my-8 max-w-xl rounded-lg bg-white p-8 text-center shadow-xl dark:bg-gray-800">
+      <div className="relative my-8 max-w-xl rounded-lg bg-white p-8 text-center shadow-xl bg-gray-800">
         <button
           onClick={onClose}
-          className="absolute top-3 right-3 flex h-8 w-8 items-center justify-center rounded-full text-3xl text-gray-500 hover:bg-gray-200 hover:text-gray-800 dark:hover:bg-gray-700 dark:hover:text-gray-200"
+          className="absolute top-3 right-3 flex h-8 w-8 items-center justify-center rounded-full text-3xl text-gray-500 hover:bg-gray-200 hover:text-gray-800 hover:bg-gray-700 hover:text-gray-200"
           aria-label="Close modal"
         >
           <span className="mb-1">&times;</span>
         </button>
         <h2 className="mb-4 text-2xl font-bold">Greeting Code</h2>
-        <p className="mb-4 text-left text-sm text-gray-600 dark:text-gray-300">
+        <p className="mb-4 text-left text-sm text-gray-300">
           {isFamilyGroup
             ? 'Share this greeting code or link to invite family here.'
             : 'Share this greeting code or link to invite people here.'}{' '}
@@ -53,13 +53,17 @@ export default function QRCodeModal({
         <div className="inline-block rounded-md bg-white p-4">
           <QRCode value={url} size={200} />
         </div>
-        <div className="mt-4 flex items-center rounded-lg bg-gray-100 p-2 dark:bg-gray-700">
-          <p className="mr-2 flex-grow text-sm break-all text-gray-600 dark:text-gray-300">
+        <div className="mt-4 flex items-center rounded-lg bg-gray-100 p-2 bg-gray-700">
+          <p className="mr-2 flex-grow text-sm break-all text-gray-300">
             {url}
           </p>
           <button
             onClick={handleCopy}
-            className={`rounded-md px-4 py-2 text-sm font-semibold ${isCopied ? 'bg-green-500 text-white' : 'bg-blue-500 text-white hover:bg-blue-600'}`}
+            className={`rounded-md px-4 py-2 text-sm font-semibold ${
+              isCopied
+                ? 'bg-green-500 text-white'
+                : 'bg-blue-500 text-white hover:bg-blue-600'
+            }`}
           >
             {isCopied ? 'Copied!' : 'Copy'}
           </button>

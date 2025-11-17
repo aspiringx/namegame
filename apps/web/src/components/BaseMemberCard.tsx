@@ -109,7 +109,7 @@ export default function BaseMemberCard({
         <div className="items-top mt-2 flex justify-between gap-2">
           <div className="w-8">&nbsp;</div>
           <div className="w-7/10">
-            <div className="truncate text-xs text-gray-800 dark:text-gray-200">
+            <div className="truncate text-xs text-gray-200">
               {member.user.name}
             </div>
             {/* Strategy-specific relationship rendering */}
@@ -148,7 +148,7 @@ export default function BaseMemberCard({
           <div className="vertical-align-top">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="rounded-full p-1 hover:bg-gray-200 dark:hover:bg-gray-700">
+                <button className="rounded-full p-1 hover:bg-gray-200 hover:bg-gray-700">
                   <MoreVertical size={16} />
                 </button>
               </DropdownMenuTrigger>

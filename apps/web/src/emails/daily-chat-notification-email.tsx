@@ -40,7 +40,7 @@ export const DailyChatNotificationEmail = ({
           </Link>{' '}
           <br />
           <br />
-          NameGame
+          Relation Star
           <br />
           Sandy, UT 84070
         </Text>

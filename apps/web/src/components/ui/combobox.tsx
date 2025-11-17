@@ -1,4 +1,4 @@
-"use client"
+'use client'
 
 import { useState } from 'react'
 import { Combobox as HeadlessCombobox } from '@headlessui/react'
@@ -27,41 +27,44 @@ interface ComboboxProps {
   zIndex?: string
 }
 
-export function Combobox({ 
-  options, 
-  selectedValue, 
-  onSelectValue, 
-  placeholder, 
+export function Combobox({
+  options,
+  selectedValue,
+  onSelectValue,
+  placeholder,
   name,
-  zIndex = 'z-10'
+  zIndex = 'z-10',
 }: ComboboxProps) {
   const [query, setQuery] = useState('')
 
   const getOptionLabel = (value: string) => {
-    const option = options.find((opt) => !('isDivider' in opt) && opt.value === value) as ComboboxOption | undefined;
-    return option ? option.label : '';
-  };
+    const option = options.find(
+      (opt) => !('isDivider' in opt) && opt.value === value,
+    ) as ComboboxOption | undefined
+    return option ? option.label : ''
+  }
 
-  const filteredOptions = query === ''
+  const filteredOptions =
+    query === ''
       ? options
       : options.filter((option) => {
           if ('isDivider' in option) {
-            return true; // Keep dividers in filtered list
+            return true // Keep dividers in filtered list
           }
-          return option.label.toLowerCase().includes(query.toLowerCase());
-        });
+          return option.label.toLowerCase().includes(query.toLowerCase())
+        })
 
   return (
-    <HeadlessCombobox 
-      value={selectedValue} 
-      onChange={(value) => value && onSelectValue(value)} 
+    <HeadlessCombobox
+      value={selectedValue}
+      onChange={(value) => value && onSelectValue(value)}
       name={name}
     >
       <div className="relative mt-1">
         <input type="hidden" name={name} value={selectedValue} />
-        <div className="relative w-full cursor-default overflow-hidden rounded-md border bg-white text-left shadow-sm focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 dark:border-gray-600 dark:bg-gray-700">
+        <div className="relative w-full cursor-default overflow-hidden rounded-md border bg-white text-left shadow-sm focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 border-gray-600 bg-gray-700">
           <HeadlessCombobox.Input
-            className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-gray-900 focus:ring-0 dark:bg-gray-700 dark:text-white"
+            className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-gray-900 focus:ring-0 bg-gray-700 text-white"
             onChange={(event) => setQuery(event.target.value)}
             placeholder={placeholder}
             displayValue={getOptionLabel}
@@ -73,12 +76,14 @@ export function Combobox({
             />
           </HeadlessCombobox.Button>
         </div>
-        <HeadlessCombobox.Options className={cn(
-          "absolute mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm dark:bg-gray-700",
-          zIndex
-        )}>
+        <HeadlessCombobox.Options
+          className={cn(
+            'absolute mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm bg-gray-700',
+            zIndex,
+          )}
+        >
           {filteredOptions.length === 0 && query !== '' ? (
-            <div className="relative cursor-default select-none px-4 py-2 text-gray-700 dark:text-gray-300">
+            <div className="relative cursor-default select-none px-4 py-2 text-gray-300">
               Nothing found.
             </div>
           ) : (
@@ -86,30 +91,48 @@ export function Combobox({
               if ('isDivider' in option) {
                 if (option.label) {
                   return (
-                    <div key={`divider-label-${index}`} className="px-4 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400">
+                    <div
+                      key={`divider-label-${index}`}
+                      className="px-4 py-2 text-xs font-semibold text-gray-400"
+                    >
                       {option.label}
                     </div>
                   )
                 }
-                return <div key={`divider-${index}`} className="my-1 h-px bg-gray-200 dark:bg-gray-600" />
+                return (
+                  <div
+                    key={`divider-${index}`}
+                    className="my-1 h-px bg-gray-600"
+                  />
+                )
               }
               return (
                 <HeadlessCombobox.Option
                   key={option.value}
                   className={({ active }) =>
-                    `relative cursor-default select-none py-2 pl-10 pr-4 ${active ? 'bg-teal-600 text-white' : 'text-gray-900 dark:text-white'}`
+                    `relative cursor-default select-none py-2 pl-10 pr-4 ${
+                      active
+                        ? 'bg-teal-600 text-white'
+                        : 'text-gray-900 text-white'
+                    }`
                   }
                   value={option.value}
                 >
                   {({ selected, active }) => (
                     <>
                       <span
-                        className={`block truncate ${selected ? 'font-medium' : 'font-normal'}`}>
+                        className={`block truncate ${
+                          selected ? 'font-medium' : 'font-normal'
+                        }`}
+                      >
                         {option.label}
                       </span>
                       {selected ? (
                         <span
-                          className={`absolute inset-y-0 left-0 flex items-center pl-3 ${active ? 'text-white' : 'text-teal-600'}`}>
+                          className={`absolute inset-y-0 left-0 flex items-center pl-3 ${
+                            active ? 'text-white' : 'text-teal-600'
+                          }`}
+                        >
                           <Check className="h-5 w-5" aria-hidden="true" />
                         </span>
                       ) : null}
