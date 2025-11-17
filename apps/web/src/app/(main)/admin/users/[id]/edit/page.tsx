@@ -37,7 +37,8 @@ export default async function EditUserPage(props: {
   })
 
   const publicPhotoUrl = await getPhotoUrl(primaryPhoto, { size: 'thumb' })
-  const hasPhoto = !!publicPhotoUrl && !publicPhotoUrl.includes('default-avatar')
+  const hasPhoto =
+    !!publicPhotoUrl && !publicPhotoUrl.includes('default-avatar')
 
   const breadcrumbs = [
     { label: 'Users', href: '/admin/users' },
@@ -49,9 +50,9 @@ export default async function EditUserPage(props: {
   ]
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6 p-8 dark:bg-gray-900">
+    <div className="mx-auto max-w-2xl space-y-6 p-8 bg-gray-900">
       <Breadcrumbs breadcrumbs={breadcrumbs} />
-      <h1 className="mb-6 text-2xl font-bold dark:text-white">Edit User</h1>
+      <h1 className="mb-6 text-2xl font-bold text-white">Edit User</h1>
       <EditUserForm
         user={user}
         photoUrl={publicPhotoUrl || '/images/default-avatar.png'}

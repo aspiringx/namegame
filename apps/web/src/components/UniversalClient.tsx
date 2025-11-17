@@ -296,7 +296,12 @@ function UniversalClientContent({
     })
 
     return sortedMembers
-  }, [initialMembers, settings, relationshipMap, groupContext?.group?.groupType?.code])
+  }, [
+    initialMembers,
+    settings,
+    relationshipMap,
+    groupContext?.group?.groupType?.code,
+  ])
 
   // Relationship modal handler with permission logic
   const handleOpenRelateModal = async (member: MemberWithUser) => {
@@ -516,11 +521,9 @@ function UniversalClientContent({
       {isConnectModalOpen && memberToConnect && (
         <Modal isOpen={isConnectModalOpen} onClose={handleCloseConnectModal}>
           <div className="p-6">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
-              Connect
-            </h3>
+            <h3 className="text-lg font-medium text-gray-100">Connect</h3>
             <div className="mt-2">
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-sm text-gray-400">
                 If you already know {memberToConnect.user.name}, connect.
               </p>
             </div>
@@ -576,11 +579,7 @@ export function UniversalClient(props: UniversalClientProps) {
   }, [adapter, isMobile, view])
 
   if (!hasMounted || !adapter) {
-    return (
-      <div className="py-8 text-center text-gray-500 dark:text-gray-400">
-        Loading...
-      </div>
-    )
+    return <div className="py-8 text-center text-gray-400">Loading...</div>
   }
 
   return (

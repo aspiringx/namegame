@@ -92,7 +92,7 @@ export default function GroupsClient({
       </div>
       <GroupsTable groups={paginatedGroups} sort={sort} onSort={handleSort} />
       <div className="mt-4 flex items-center justify-between">
-        <span className="text-sm text-gray-700 dark:text-gray-400">
+        <span className="text-sm text-gray-400">
           Page {currentPage} of {totalPages}
         </span>
         <div className="flex items-center gap-2">

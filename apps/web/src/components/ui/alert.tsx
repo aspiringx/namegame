@@ -8,14 +8,10 @@ import { XCircle as XCircleIcon } from 'lucide-react'
 const alertVariants = cva('rounded-md p-4', {
   variants: {
     variant: {
-      default:
-        'bg-gray-50 dark:bg-gray-900/30 text-gray-800 dark:text-gray-300',
-      success:
-        'bg-green-50 dark:bg-green-900/30 text-green-800 dark:text-green-300',
-      destructive:
-        'bg-red-50 dark:bg-red-900/30 text-red-800 dark:text-red-300',
-      warning:
-        'bg-yellow-50 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300',
+      default: 'bg-gray-900/30 text-gray-300',
+      success: 'bg-green-900/30 text-green-300',
+      destructive: 'bg-red-900/30 text-red-300',
+      warning: 'bg-yellow-900/30 text-yellow-300',
     },
   },
   defaultVariants: {
@@ -25,13 +21,13 @@ const alertVariants = cva('rounded-md p-4', {
 
 const dismissButtonColorVariants = {
   success:
-    'bg-green-50 text-green-500 hover:bg-green-100 dark:bg-transparent dark:text-green-400 dark:hover:bg-green-800/50',
+    'bg-green-50 text-green-500 hover:bg-green-100 bg-transparent text-green-400 hover:bg-green-800/50',
   destructive:
-    'bg-red-50 text-red-500 hover:bg-red-100 dark:bg-transparent dark:text-red-400 dark:hover:bg-red-800/50',
+    'bg-red-50 text-red-500 hover:bg-red-100 bg-transparent text-red-400 hover:bg-red-800/50',
   warning:
-    'bg-yellow-50 text-yellow-500 hover:bg-yellow-100 dark:bg-transparent dark:text-yellow-400 dark:hover:bg-yellow-800/50',
+    'bg-yellow-50 text-yellow-500 hover:bg-yellow-100 bg-transparent text-yellow-400 hover:bg-yellow-800/50',
   default:
-    'bg-gray-50 text-gray-500 hover:bg-gray-100 dark:bg-transparent dark:text-gray-400 dark:hover:bg-gray-800/50',
+    'bg-gray-50 text-gray-500 hover:bg-gray-100 bg-transparent text-gray-400 hover:bg-gray-800/50',
 }
 
 const Alert = React.forwardRef<
@@ -105,7 +101,7 @@ const Alert = React.forwardRef<
             className={cn(
               'absolute top-1 right-1 inline-flex rounded-md p-1.5 focus:ring-2 focus:ring-offset-2 focus:outline-none',
               dismissButtonColorVariants[variant || 'default'],
-              'focus:ring-offset-gray-50 dark:focus:ring-offset-gray-900',
+              'focus:ring-offset-gray-50 focus:ring-offset-gray-900',
             )}
           >
             <span className="sr-only">Dismiss</span>

@@ -21,7 +21,7 @@ export function UndeleteUserButton({ userId }: { userId: string }) {
       type="button"
       onClick={handleClick}
       disabled={isPending}
-      className="inline-flex items-center font-medium text-green-600 hover:text-green-900 disabled:text-gray-400 dark:text-green-500 dark:hover:text-green-400"
+      className="inline-flex items-center font-medium text-green-600 hover:text-green-900 disabled:text-gray-400 text-green-500 hover:text-green-400"
       title={isPending ? 'Restoring...' : 'Undelete user'}
     >
       <RotateCcw className="h-4 w-4" />

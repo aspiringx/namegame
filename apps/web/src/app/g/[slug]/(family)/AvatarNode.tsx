@@ -64,10 +64,10 @@ const AvatarNode = ({ data, selected }: NodeProps<AvatarNodeData>) => {
               ? 'h-48 w-48'
               : 'h-32 w-32',
             isFocalUser
-              ? 'border-yellow-400 shadow-md ring-1 shadow-yellow-400/30 ring-yellow-400/50 dark:border-yellow-500 dark:shadow-yellow-500/30 dark:ring-yellow-500/50'
+              ? 'border-yellow-400 shadow-md ring-1 shadow-yellow-400/30 ring-yellow-400/50 border-yellow-500 shadow-yellow-500/30 ring-yellow-500/50'
               : isCurrentUser
-                ? 'border-primary'
-                : 'border-transparent',
+              ? 'border-primary'
+              : 'border-transparent',
             selected && 'ring-ring ring-offset-background ring-2 ring-offset-2',
           )}
         >
@@ -98,7 +98,7 @@ const AvatarNode = ({ data, selected }: NodeProps<AvatarNodeData>) => {
           {relationship && (
             <div
               className={cn(
-                'font-medium text-slate-500 dark:text-slate-400',
+                'font-medium text-slate-400',
                 isFocalUser || isFocalUserSpouseOrPartner
                   ? 'text-sm'
                   : 'text-xs',

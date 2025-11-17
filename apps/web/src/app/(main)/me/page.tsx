@@ -60,7 +60,6 @@ export default async function UserProfilePage(props: {
     },
   })
 
-
   const isInFamilyGroup = user.groupMemberships.some(
     (mem) => mem.group.groupTypeId === groupTypes.family.id,
   )
@@ -76,7 +75,7 @@ export default async function UserProfilePage(props: {
     <>
       {searchParams?.sso === 'true' && <AddToHomescreenPrompt />}
       {searchParams?.welcome === 'true' ? (
-        <div className="mb-4 rounded-md bg-green-50 p-4 text-sm text-green-700 dark:bg-green-900 dark:text-green-300">
+        <div className="mb-4 rounded-md bg-green-50 p-4 text-sm text-green-700 bg-green-900 text-green-300">
           Welcome, {user.firstName}!
         </div>
       ) : null}

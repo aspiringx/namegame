@@ -98,8 +98,8 @@ export default async function UsersTable({
 
   return (
     <>
-      <div className="ring-opacity-5 dark:ring-opacity-10 -mx-4 mt-8 overflow-hidden shadow ring-1 ring-black sm:-mx-6 md:mx-0 md:rounded-lg dark:ring-white">
-        <table className="w-full table-fixed divide-y divide-gray-300 dark:divide-gray-700">
+      <div className="ring-opacity-5 ring-opacity-10 -mx-4 mt-8 overflow-hidden shadow ring-1 ring-black sm:-mx-6 md:mx-0 md:rounded-lg ring-white">
+        <table className="w-full table-fixed divide-y divide-gray-300 divide-gray-700">
           <thead>
             <tr>
               <th scope="col" className="w-24 px-4 py-3.5">
@@ -129,12 +129,9 @@ export default async function UsersTable({
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-800">
+          <tbody className="divide-y divide-gray-200 bg-white divide-gray-700 bg-gray-800">
             {usersWithPhotos.map((user) => (
-              <tr
-                key={user.id}
-                className={user.deletedAt ? 'bg-gray-200 dark:bg-gray-700' : ''}
-              >
+              <tr key={user.id} className={user.deletedAt ? 'bg-gray-700' : ''}>
                 <td className="px-4 py-4 text-sm whitespace-nowrap">
                   <div className="flex items-center">
                     <div className="h-16 w-16 flex-shrink-0">
@@ -149,35 +146,35 @@ export default async function UsersTable({
                   </div>
                 </td>
                 {/* Desktop: Show separate first and last name columns */}
-                <td className="hidden px-3 py-4 text-sm font-medium text-gray-900 sm:table-cell dark:text-white">
+                <td className="hidden px-3 py-4 text-sm font-medium text-gray-900 sm:table-cell text-white">
                   <div className="min-w-0">
                     <span className="block truncate">{user.firstName}</span>
                   </div>
                 </td>
-                <td className="hidden px-3 py-4 text-sm font-medium text-gray-900 sm:table-cell dark:text-white">
+                <td className="hidden px-3 py-4 text-sm font-medium text-gray-900 sm:table-cell text-white">
                   <span className="block truncate">{user.lastName}</span>
                 </td>
                 {/* Mobile: Show combined name with email below if exists */}
-                <td className="px-3 py-4 text-sm font-medium text-gray-900 sm:hidden dark:text-white">
+                <td className="px-3 py-4 text-sm font-medium text-gray-900 sm:hidden text-white">
                   <div className="min-w-0">
                     <span className="block truncate">
                       {user.firstName} {user.lastName}
                     </span>
                     {user.email && (
-                      <span className="mt-1 block truncate text-sm text-gray-500 dark:text-gray-400">
+                      <span className="mt-1 block truncate text-sm text-gray-400">
                         {user.email}
                       </span>
                     )}
                   </div>
                 </td>
                 {/* Desktop: Show email in separate column */}
-                <td className="hidden px-3 py-4 text-sm text-gray-500 sm:table-cell dark:text-gray-400">
+                <td className="hidden px-3 py-4 text-sm text-gray-500 sm:table-cell text-gray-400">
                   {user.email && (
                     <span className="block truncate">{user.email}</span>
                   )}
                 </td>
                 {/* Desktop: Show updated date in separate column */}
-                <td className="hidden px-3 py-4 text-sm text-gray-500 sm:table-cell dark:text-gray-400">
+                <td className="hidden px-3 py-4 text-sm text-gray-500 sm:table-cell text-gray-400">
                   {new Date(user.updatedAt).toLocaleDateString()}
                 </td>
                 <td className="relative py-4 pr-4 pl-3 text-right text-sm font-medium whitespace-nowrap sm:pr-6">
@@ -186,15 +183,13 @@ export default async function UsersTable({
                   ) : (
                     <Link
                       href={`/admin/users/${user.id}/edit`}
-                      className="inline-flex items-center text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-200"
+                      className="inline-flex items-center text-indigo-600 hover:text-indigo-400 hover:text-indigo-200"
                       title="Edit user"
                     >
                       <Edit className="h-4 w-4" />
                     </Link>
                   )}
-                  <span className="mx-2 text-gray-300 dark:text-gray-600">
-                    |
-                  </span>
+                  <span className="mx-2 text-gray-600">|</span>
                   <DeleteUserButton userId={user.id} />
                 </td>
               </tr>
@@ -203,12 +198,14 @@ export default async function UsersTable({
         </table>
       </div>
       <div className="mt-4 flex items-center justify-between">
-        <span className="text-sm text-gray-700 dark:text-gray-400">
+        <span className="text-sm text-gray-400">
           Page {page} of {totalPages}
         </span>
         <div className="flex items-center gap-2">
           <Link
-            href={`/admin/users?page=${page - 1}&sort=${sort}&order=${order}&query=${query}`}
+            href={`/admin/users?page=${
+              page - 1
+            }&sort=${sort}&order=${order}&query=${query}`}
             className={`rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 ${
               page <= 1 ? 'pointer-events-none opacity-50' : ''
             }`}
@@ -216,7 +213,9 @@ export default async function UsersTable({
             Previous
           </Link>
           <Link
-            href={`/admin/users?page=${page + 1}&sort=${sort}&order=${order}&query=${query}`}
+            href={`/admin/users?page=${
+              page + 1
+            }&sort=${sort}&order=${order}&query=${query}`}
             className={`rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 ${
               page >= totalPages ? 'pointer-events-none opacity-50' : ''
             }`}

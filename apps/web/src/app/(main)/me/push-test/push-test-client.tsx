@@ -191,10 +191,10 @@ export function PushTestClientPage() {
       <h1 className="mb-6 text-2xl font-bold">Push Notification Test</h1>
 
       {/* Device Selection */}
-      <div className="mb-6 rounded-lg border p-4 dark:border-gray-700">
+      <div className="mb-6 rounded-lg border p-4 border-gray-700">
         <div className="mb-6 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            <h3 className="text-sm font-medium text-gray-300">
               Select Devices ({selectedEndpoints.length} selected)
             </h3>
           </div>
@@ -291,13 +291,13 @@ export function PushTestClientPage() {
           Send {selectedEndpoints.length} Daily Chat Notification
           {selectedEndpoints.length !== 1 ? 's' : ''}
         </Button>
-        <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+        <p className="mt-2 text-sm text-gray-400">
           Sends the same notification as the daily job: &quot;New Messages&quot;
           with link to chat
         </p>
       </div>
 
-      <hr className="my-6 dark:border-gray-700" />
+      <hr className="my-6 border-gray-700" />
 
       {/* Custom Notification Section */}
       <h2 className="mb-4 text-xl font-semibold">Custom Notification</h2>
@@ -305,7 +305,7 @@ export function PushTestClientPage() {
       <div className="mb-4 space-y-2">
         <label
           htmlFor="title-input"
-          className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          className="block text-sm font-medium text-gray-300"
         >
           Title
         </label>
@@ -319,7 +319,7 @@ export function PushTestClientPage() {
       <div className="mb-4 space-y-2">
         <label
           htmlFor="body-textarea"
-          className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          className="block text-sm font-medium text-gray-300"
         >
           Body
         </label>
@@ -329,7 +329,7 @@ export function PushTestClientPage() {
           onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
             setBody(e.target.value)
           }
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border-gray-600 bg-gray-800 text-white"
           rows={3}
         />
       </div>
@@ -337,7 +337,7 @@ export function PushTestClientPage() {
       <div className="mb-4 space-y-2">
         <label
           htmlFor="url-input"
-          className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          className="block text-sm font-medium text-gray-300"
         >
           URL
         </label>
@@ -357,12 +357,12 @@ export function PushTestClientPage() {
         {selectedEndpoints.length !== 1 ? 's' : ''}
       </Button>
 
-      <div className="mt-6 rounded-md bg-gray-100 p-4 text-xs text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+      <div className="mt-6 rounded-md bg-gray-100 p-4 text-xs text-gray-600 bg-gray-800 text-gray-400">
         <p className="mb-2 font-semibold">Developer Notes:</p>
         <ul className="list-inside list-disc space-y-1">
           <li>
             File:{' '}
-            <code className="rounded bg-gray-200 px-1 dark:bg-gray-700">
+            <code className="rounded bg-gray-200 px-1 bg-gray-700">
               apps/web/src/app/(main)/me/push-test/push-test-client.tsx
             </code>
           </li>

@@ -232,9 +232,9 @@ export default function RelationStarModal({
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="relative w-full max-w-5xl transform overflow-hidden rounded-2xl bg-white text-left align-middle shadow-xl transition-all dark:bg-gray-900">
+              <Dialog.Panel className="relative w-full max-w-5xl transform overflow-hidden rounded-2xl bg-white text-left align-middle shadow-xl transition-all bg-gray-900">
                 {/* Header */}
-                <div className="border-b border-gray-200 p-4 sm:p-6 dark:border-gray-700">
+                <div className="border-b border-gray-200 p-4 sm:p-6 border-gray-700">
                   {/* Top row: Title and Close button */}
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
@@ -247,17 +247,17 @@ export default function RelationStarModal({
                         />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <Dialog.Title className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100 truncate">
+                        <Dialog.Title className="text-lg sm:text-xl font-bold text-gray-100 truncate">
                           ⭐ Cosmic Insights
                         </Dialog.Title>
-                        <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                        <p className="text-xs sm:text-sm text-gray-400">
                           Reflect on your relationship with {memberName}
                         </p>
                       </div>
                     </div>
                     <button
                       onClick={onClose}
-                      className="flex-shrink-0 rounded-full p-2 hover:bg-gray-100 dark:hover:bg-gray-800"
+                      className="flex-shrink-0 rounded-full p-2 hover:bg-gray-100 hover:bg-gray-800"
                     >
                       <X className="h-5 w-5" />
                     </button>
@@ -268,7 +268,7 @@ export default function RelationStarModal({
                     <div className="mt-4 flex flex-col sm:flex-row items-stretch gap-3 sm:gap-4">
                       <Dropdown
                         trigger={
-                          <div className="flex w-full items-center justify-between rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700">
+                          <div className="flex w-full items-center justify-between rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 hover:bg-gray-50 border-gray-600 bg-gray-800 text-gray-100 hover:bg-gray-700">
                             <span className="truncate">
                               {selectedSnapshot
                                 ? `${new Date(
@@ -282,12 +282,12 @@ export default function RelationStarModal({
                           </div>
                         }
                         triggerClassName="w-full sm:flex-1"
-                        menuClassName="absolute left-0 z-10 mt-2 w-full origin-top-left rounded-md border border-gray-200 bg-white text-gray-900 shadow-lg focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
+                        menuClassName="absolute left-0 z-10 mt-2 w-full origin-top-left rounded-md border border-gray-200 bg-white text-gray-900 shadow-lg focus:outline-none border-gray-700 bg-gray-800 text-gray-200"
                       >
                         {snapshots.map((snapshot, index) => (
                           <div key={snapshot.id}>
                             {index > 0 && (
-                              <div className="my-1 border-t border-gray-200 dark:border-gray-700" />
+                              <div className="my-1 border-t border-gray-700" />
                             )}
                             <DropdownItem
                               onClick={() => {
@@ -327,7 +327,7 @@ export default function RelationStarModal({
                                 window.open('/stars', '_blank')
                               }
                             }}
-                            className="flex-1 sm:flex-initial sm:w-auto flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 whitespace-nowrap"
+                            className="flex-1 sm:flex-initial sm:w-auto flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 border-gray-600 bg-gray-800 text-gray-300 hover:bg-gray-700 whitespace-nowrap"
                           >
                             <Info className="h-4 w-4" />
                             Help
@@ -345,7 +345,7 @@ export default function RelationStarModal({
                     <div className="flex items-center justify-center py-24">
                       <div className="text-center">
                         <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-indigo-600"></div>
-                        <p className="mt-4 text-sm text-gray-600 dark:text-gray-400">
+                        <p className="mt-4 text-sm text-gray-400">
                           Loading history...
                         </p>
                       </div>
@@ -361,7 +361,7 @@ export default function RelationStarModal({
                             onClick={() =>
                               setIsSlidersCollapsed(!isSlidersCollapsed)
                             }
-                            className="mb-4 flex w-full items-center justify-between text-xl font-semibold text-gray-900 hover:text-indigo-600 dark:text-gray-100 dark:hover:text-indigo-400"
+                            className="mb-4 flex w-full items-center justify-between text-xl font-semibold text-gray-900 hover:text-indigo-600 text-gray-100 hover:text-indigo-400"
                           >
                             <span>Map the Relationship</span>
                             {isSlidersCollapsed ? (
@@ -373,7 +373,7 @@ export default function RelationStarModal({
 
                           {!isSlidersCollapsed && (
                             <div className="space-y-6">
-                              <p className="mb-6 text-sm text-gray-700 dark:text-gray-300">
+                              <p className="mb-6 text-sm text-gray-300">
                                 Map your relationship in the stars and get
                                 cosmic insights.
                               </p>
@@ -423,14 +423,14 @@ export default function RelationStarModal({
                                   <div key={key}>
                                     <div className="mb-2 flex items-start justify-between gap-4">
                                       <div className="flex-1">
-                                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                        <label className="text-sm font-medium text-gray-300">
                                           {label}
                                         </label>
-                                        <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                        <div className="mt-1 text-xs text-gray-400">
                                           {hint}
                                         </div>
                                       </div>
-                                      <span className="flex-shrink-0 text-lg font-bold text-indigo-700 dark:text-indigo-300">
+                                      <span className="flex-shrink-0 text-lg font-bold text-indigo-300">
                                         {
                                           interactiveScores[
                                             key as keyof typeof interactiveScores
@@ -453,9 +453,9 @@ export default function RelationStarModal({
                                           parseInt(e.target.value),
                                         )
                                       }
-                                      className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-200 dark:bg-gray-700 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-indigo-600 [&::-moz-range-thumb]:dark:bg-indigo-400 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-indigo-600 [&::-webkit-slider-thumb]:dark:bg-indigo-400"
+                                      className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-700 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-indigo-600 [&::-moz-range-thumb]:bg-indigo-400 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-indigo-600 [&::-webkit-slider-thumb]:bg-indigo-400"
                                     />
-                                    <div className="mt-1 flex justify-between text-xs text-gray-500 dark:text-gray-400">
+                                    <div className="mt-1 flex justify-between text-xs text-gray-400">
                                       <span>0 - {minLabel}</span>
                                       <span>10 - {maxLabel}</span>
                                     </div>
@@ -471,10 +471,10 @@ export default function RelationStarModal({
                           <h3 className="mb-4 text-xl font-bold">
                             Cosmic Insights
                           </h3>
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                          <label className="block text-sm font-medium text-gray-300">
                             Relationship context
                           </label>
-                          <div className="mt-1 mb-2 text-xs text-gray-500 dark:text-gray-400">
+                          <div className="mt-1 mb-2 text-xs text-gray-400">
                             Provide relationship context (status, dynamics,
                             hopes, etc.) for personalized insights.
                           </div>
@@ -486,9 +486,9 @@ export default function RelationStarModal({
                             placeholder={`e.g., I'd like to feel closer to ${memberName}, or I want to maintain this friendship despite living far apart...`}
                             maxLength={500}
                             rows={3}
-                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500"
+                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none border-gray-600 bg-gray-800 text-gray-100 placeholder-gray-500"
                           />
-                          <div className="text-right text-xs text-gray-500 dark:text-gray-400">
+                          <div className="text-right text-xs text-gray-400">
                             {relationshipGoals.length}/500 characters
                           </div>
                         </div>
@@ -497,10 +497,10 @@ export default function RelationStarModal({
                         {!Object.values(interactiveScores).every(
                           (v) => v === 0,
                         ) && (
-                          <div className="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
+                          <div className="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-4 border-gray-700 bg-gray-800">
                             <div className="flex items-start gap-2">
                               <svg
-                                className="h-5 w-5 flex-shrink-0 text-gray-600 dark:text-gray-400"
+                                className="h-5 w-5 flex-shrink-0 text-gray-400"
                                 fill="none"
                                 viewBox="0 0 24 24"
                                 stroke="currentColor"
@@ -512,7 +512,7 @@ export default function RelationStarModal({
                                   d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
                                 />
                               </svg>
-                              <div className="text-xs text-gray-700 dark:text-gray-300">
+                              <div className="text-xs text-gray-300">
                                 <strong className="font-semibold">
                                   Your privacy matters.
                                 </strong>{' '}
@@ -533,7 +533,7 @@ export default function RelationStarModal({
                                 aiInsight ? handleStartOver : handleAIAssessment
                               }
                               disabled={!aiInsight && isLoadingAI}
-                              className="w-full rounded-lg bg-indigo-600 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500 dark:disabled:bg-gray-700 dark:disabled:text-gray-400"
+                              className="w-full rounded-lg bg-indigo-600 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500 disabled:bg-gray-700 disabled:text-gray-400"
                             >
                               {aiInsight ? (
                                 'Start Over'
@@ -566,7 +566,7 @@ export default function RelationStarModal({
                             </button>
 
                             {aiError && (
-                              <div className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-200">
+                              <div className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-800 bg-red-900/20 text-red-200">
                                 {aiError}
                               </div>
                             )}
@@ -574,12 +574,12 @@ export default function RelationStarModal({
                             {aiInsight && (
                               <>
                                 {/* Divider before AI Insights */}
-                                <div className="my-6 border-t-2 border-gray-300 dark:border-gray-600" />
+                                <div className="my-6 border-t-2 border-gray-600" />
 
-                                <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-6 dark:border-indigo-900 dark:bg-indigo-950">
+                                <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-6 border-indigo-900 bg-indigo-950">
                                   <div className="mb-4">
                                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                                      <h4 className="text-lg font-semibold text-indigo-900 dark:text-indigo-100">
+                                      <h4 className="text-lg font-semibold text-indigo-100">
                                         Your Cosmic Insights
                                       </h4>
                                       {currentAssessmentId && (
@@ -617,7 +617,7 @@ export default function RelationStarModal({
                                     </div>
                                   </div>
                                   <div
-                                    className="prose prose-sm prose-indigo dark:prose-invert max-w-none text-indigo-800 dark:text-indigo-200 [&_li]:leading-relaxed [&_ul]:space-y-3 [&>div]:space-y-2 [&>p]:mb-8"
+                                    className="prose prose-sm prose-indigo prose-invert max-w-none text-indigo-200 [&_li]:leading-relaxed [&_ul]:space-y-3 [&>div]:space-y-2 [&>p]:mb-8"
                                     dangerouslySetInnerHTML={{
                                       __html: aiInsight,
                                     }}
@@ -632,7 +632,7 @@ export default function RelationStarModal({
                       {/* Right: Chart and Score */}
                       <div className="space-y-6">
                         {/* Mini Chart */}
-                        <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
+                        <div className="rounded-lg border border-gray-200 bg-white p-6 border-gray-700 bg-gray-800">
                           <h3 className="mb-4 text-xl font-bold">Star Chart</h3>
                           <div className="relative mx-auto aspect-square w-full">
                             <svg
@@ -652,7 +652,7 @@ export default function RelationStarModal({
                                   fill="none"
                                   stroke="currentColor"
                                   strokeWidth="1"
-                                  className="stroke-gray-300 dark:stroke-gray-600"
+                                  className="stroke-gray-300 stroke-gray-600"
                                 />
                               ))}
 
@@ -666,7 +666,7 @@ export default function RelationStarModal({
                                   fontSize="14"
                                   fontWeight="500"
                                   fill="currentColor"
-                                  className="fill-gray-600 dark:fill-gray-400"
+                                  className="fill-gray-600 fill-gray-400"
                                 >
                                   {val}
                                 </text>
@@ -693,7 +693,7 @@ export default function RelationStarModal({
                                     y2={y}
                                     stroke="currentColor"
                                     strokeWidth="1"
-                                    className="stroke-gray-300 dark:stroke-gray-600"
+                                    className="stroke-gray-300 stroke-gray-600"
                                   />
                                 )
                               })}
@@ -835,7 +835,7 @@ export default function RelationStarModal({
                                                 fontSize="14"
                                                 fontWeight="600"
                                                 fill="currentColor"
-                                                className="fill-gray-900 dark:fill-gray-100"
+                                                className="fill-gray-900 fill-gray-100"
                                               >
                                                 Personal
                                               </text>
@@ -846,7 +846,7 @@ export default function RelationStarModal({
                                                 fontSize="14"
                                                 fontWeight="600"
                                                 fill="currentColor"
-                                                className="fill-gray-900 dark:fill-gray-100"
+                                                className="fill-gray-900 fill-gray-100"
                                               >
                                                 Time
                                               </text>
@@ -861,7 +861,7 @@ export default function RelationStarModal({
                                                 fontSize="14"
                                                 fontWeight="600"
                                                 fill="currentColor"
-                                                className="fill-gray-900 dark:fill-gray-100"
+                                                className="fill-gray-900 fill-gray-100"
                                               >
                                                 Common
                                               </text>
@@ -872,7 +872,7 @@ export default function RelationStarModal({
                                                 fontSize="14"
                                                 fontWeight="600"
                                                 fill="currentColor"
-                                                className="fill-gray-900 dark:fill-gray-100"
+                                                className="fill-gray-900 fill-gray-100"
                                               >
                                                 Ground
                                               </text>
@@ -885,7 +885,7 @@ export default function RelationStarModal({
                                               fontSize="14"
                                               fontWeight="600"
                                               fill="currentColor"
-                                              className="fill-gray-900 dark:fill-gray-100"
+                                              className="fill-gray-900 fill-gray-100"
                                             >
                                               {item.dimension}
                                             </text>
@@ -901,21 +901,21 @@ export default function RelationStarModal({
                         </div>
 
                         {/* Divider */}
-                        <div className="border-t border-gray-200 dark:border-gray-700" />
+                        <div className="border-t border-gray-700" />
 
                         {/* Star Score */}
-                        <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+                        <div className="rounded-lg border border-gray-200 bg-white p-4 border-gray-700 bg-gray-800">
                           <h3 className="mb-4 text-xl font-bold">Star Score</h3>
                           <div className="mb-4 text-center">
                             <div className="font-bold">
-                              <span className="text-4xl text-indigo-600 dark:text-indigo-400">
+                              <span className="text-4xl text-indigo-400">
                                 {starScore.toFixed(1)}
                               </span>
-                              <span className="text-2xl text-gray-400 dark:text-gray-600">
+                              <span className="text-2xl text-gray-600">
                                 /10
                               </span>
                             </div>
-                            <div className="text-sm text-gray-600 dark:text-gray-400">
+                            <div className="text-sm text-gray-400">
                               {starScore >= 8
                                 ? 'Close Friend'
                                 : starScore >= 5
@@ -929,7 +929,7 @@ export default function RelationStarModal({
                           </div>
                           <div className="space-y-2 text-sm">
                             <div className="flex justify-between">
-                              <span className="text-gray-600 dark:text-gray-400">
+                              <span className="text-gray-400">
                                 Personal Time (30%)
                               </span>
                               <span className="font-medium">
@@ -937,7 +937,7 @@ export default function RelationStarModal({
                               </span>
                             </div>
                             <div className="flex justify-between">
-                              <span className="text-gray-600 dark:text-gray-400">
+                              <span className="text-gray-400">
                                 Common Ground (25%)
                               </span>
                               <span className="font-medium">
@@ -945,7 +945,7 @@ export default function RelationStarModal({
                               </span>
                             </div>
                             <div className="flex justify-between">
-                              <span className="text-gray-600 dark:text-gray-400">
+                              <span className="text-gray-400">
                                 Familiarity (20%)
                               </span>
                               <span className="font-medium">
@@ -953,7 +953,7 @@ export default function RelationStarModal({
                               </span>
                             </div>
                             <div className="flex justify-between">
-                              <span className="text-gray-600 dark:text-gray-400">
+                              <span className="text-gray-400">
                                 Interest (15%)
                               </span>
                               <span className="font-medium">
@@ -961,7 +961,7 @@ export default function RelationStarModal({
                               </span>
                             </div>
                             <div className="flex justify-between">
-                              <span className="text-gray-600 dark:text-gray-400">
+                              <span className="text-gray-400">
                                 Proximity (10%)
                               </span>
                               <span className="font-medium">
@@ -982,17 +982,17 @@ export default function RelationStarModal({
                             <h3 className="mb-4 text-xl font-bold">
                               Relationship Context
                             </h3>
-                            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700 border-gray-700 bg-gray-800 text-gray-300">
                               {selectedSnapshot.relationshipGoals}
                             </div>
                           </div>
                         )}
 
                         <div>
-                          <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-6 dark:border-indigo-900 dark:bg-indigo-950">
+                          <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-6 border-indigo-900 bg-indigo-950">
                             <div className="mb-4">
                               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                                <h3 className="text-xl font-bold text-indigo-900 dark:text-indigo-100">
+                                <h3 className="text-xl font-bold text-indigo-100">
                                   Your Cosmic Insights
                                 </h3>
                                 <button
@@ -1028,7 +1028,7 @@ export default function RelationStarModal({
                               </div>
                             </div>
                             <div
-                              className="prose prose-sm prose-indigo dark:prose-invert max-w-none text-indigo-800 dark:text-indigo-200 [&_li]:leading-relaxed [&_ul]:space-y-3 [&>div]:space-y-2 [&>p]:mb-8"
+                              className="prose prose-sm prose-indigo prose-invert max-w-none text-indigo-200 [&_li]:leading-relaxed [&_ul]:space-y-3 [&>div]:space-y-2 [&>p]:mb-8"
                               dangerouslySetInnerHTML={{
                                 __html: selectedSnapshot.response,
                               }}
@@ -1040,7 +1040,7 @@ export default function RelationStarModal({
                       {/* Right: Chart and Score */}
                       <div className="space-y-6">
                         {/* Star Chart */}
-                        <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
+                        <div className="rounded-lg border border-gray-200 bg-white p-6 border-gray-700 bg-gray-800">
                           <h3 className="mb-4 text-xl font-bold">Star Chart</h3>
                           <div className="relative mx-auto aspect-square w-full">
                             <svg
@@ -1060,7 +1060,7 @@ export default function RelationStarModal({
                                   fill="none"
                                   stroke="currentColor"
                                   strokeWidth="1"
-                                  className="stroke-gray-300 dark:stroke-gray-600"
+                                  className="stroke-gray-300 stroke-gray-600"
                                 />
                               ))}
 
@@ -1074,7 +1074,7 @@ export default function RelationStarModal({
                                   fontSize="14"
                                   fontWeight="500"
                                   fill="currentColor"
-                                  className="fill-gray-500 dark:fill-gray-400"
+                                  className="fill-gray-500 fill-gray-400"
                                 >
                                   {val}
                                 </text>
@@ -1097,7 +1097,7 @@ export default function RelationStarModal({
                                       y2={y}
                                       stroke="currentColor"
                                       strokeWidth="1"
-                                      className="stroke-gray-300 dark:stroke-gray-600"
+                                      className="stroke-gray-300 stroke-gray-600"
                                     />
                                   )
                                 },
@@ -1182,7 +1182,7 @@ export default function RelationStarModal({
                                     fontSize="14"
                                     fontWeight="600"
                                     fill="currentColor"
-                                    className="fill-gray-700 dark:fill-gray-300"
+                                    className="fill-gray-700 fill-gray-300"
                                   >
                                     {dim.label.split('\n').map((line, i) => (
                                       <tspan
@@ -1201,25 +1201,25 @@ export default function RelationStarModal({
                         </div>
 
                         {/* Star Score */}
-                        <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+                        <div className="rounded-lg border border-gray-200 bg-white p-4 border-gray-700 bg-gray-800">
                           <h3 className="mb-4 text-xl font-bold">Star Score</h3>
                           <div className="mb-4 text-center">
                             <div className="font-bold">
-                              <span className="text-4xl text-indigo-600 dark:text-indigo-400">
+                              <span className="text-4xl text-indigo-400">
                                 {selectedSnapshot.starScore.toFixed(1)}
                               </span>
                               <span className="text-2xl text-gray-400">
                                 /10
                               </span>
                             </div>
-                            <div className="mt-2 text-sm font-medium text-gray-600 dark:text-gray-400">
+                            <div className="mt-2 text-sm font-medium text-gray-400">
                               {selectedSnapshot.relationshipLabel}
                             </div>
                           </div>
 
                           <div className="space-y-2 text-sm">
                             <div className="flex justify-between">
-                              <span className="text-gray-600 dark:text-gray-400">
+                              <span className="text-gray-400">
                                 Personal Time (30%)
                               </span>
                               <span className="font-medium">
@@ -1227,7 +1227,7 @@ export default function RelationStarModal({
                               </span>
                             </div>
                             <div className="flex justify-between">
-                              <span className="text-gray-600 dark:text-gray-400">
+                              <span className="text-gray-400">
                                 Common Ground (25%)
                               </span>
                               <span className="font-medium">
@@ -1235,7 +1235,7 @@ export default function RelationStarModal({
                               </span>
                             </div>
                             <div className="flex justify-between">
-                              <span className="text-gray-600 dark:text-gray-400">
+                              <span className="text-gray-400">
                                 Familiarity (20%)
                               </span>
                               <span className="font-medium">
@@ -1243,7 +1243,7 @@ export default function RelationStarModal({
                               </span>
                             </div>
                             <div className="flex justify-between">
-                              <span className="text-gray-600 dark:text-gray-400">
+                              <span className="text-gray-400">
                                 Interest (15%)
                               </span>
                               <span className="font-medium">
@@ -1251,7 +1251,7 @@ export default function RelationStarModal({
                               </span>
                             </div>
                             <div className="flex justify-between">
-                              <span className="text-gray-600 dark:text-gray-400">
+                              <span className="text-gray-400">
                                 Proximity (10%)
                               </span>
                               <span className="font-medium">

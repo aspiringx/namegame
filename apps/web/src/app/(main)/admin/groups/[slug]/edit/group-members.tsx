@@ -198,7 +198,7 @@ export default function GroupMembers({
         groupId={group.id}
         groupSlug={group.slug}
       />
-      <div className="mb-8 rounded-lg border p-4 dark:border-gray-700">
+      <div className="mb-8 rounded-lg border p-4 border-gray-700">
         <h2 className="mb-4 text-xl font-semibold">Add New Member</h2>
         <div className="max-w-lg">
           <input
@@ -206,7 +206,7 @@ export default function GroupMembers({
             value={searchQuery}
             onChange={handleSearch}
             placeholder="Search for users by name, email, or username..."
-            className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
+            className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm border-gray-600 bg-gray-800 text-white placeholder-gray-400"
           />
           {isSearching && (
             <p className="mt-2 text-sm text-gray-500">Searching...</p>
@@ -216,7 +216,7 @@ export default function GroupMembers({
               {searchResults.map((user) => (
                 <li
                   key={user.id}
-                  className="flex flex-col items-stretch gap-y-4 rounded-md border p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-y-0 sm:p-2 dark:border-gray-600"
+                  className="flex flex-col items-stretch gap-y-4 rounded-md border p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-y-0 sm:p-2 border-gray-600"
                 >
                   <div className="flex flex-col items-end gap-y-3 md:flex-row md:items-center md:justify-end md:gap-4">
                     <Image
@@ -288,44 +288,44 @@ export default function GroupMembers({
             value={memberSearchQuery}
             onChange={(e) => setMemberSearchQuery(e.target.value)}
             placeholder="Search current members by name or email..."
-            className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
+            className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm border-gray-600 bg-gray-800 text-white placeholder-gray-400"
           />
         </div>
         <div className="ring-opacity-5 -mx-4 mt-8 overflow-hidden shadow ring-1 ring-black sm:-mx-6 md:mx-0 md:rounded-lg">
-          <table className="w-full divide-y divide-gray-300 lg:table-fixed dark:divide-gray-700">
-            <thead className="bg-gray-50 dark:bg-gray-700">
+          <table className="w-full divide-y divide-gray-300 lg:table-fixed divide-gray-700">
+            <thead className="bg-gray-700">
               <tr>
                 <th
                   scope="col"
-                  className="py-3.5 pr-3 pl-4 text-left text-sm font-semibold text-gray-900 sm:pl-6 dark:text-white"
+                  className="py-3.5 pr-3 pl-4 text-left text-sm font-semibold text-gray-900 sm:pl-6 text-white"
                 >
                   <button
                     onClick={() => requestSort('name')}
                     className="group inline-flex"
                   >
                     Name
-                    <span className="ml-2 flex-none rounded text-gray-400 group-hover:bg-gray-200 dark:group-hover:bg-gray-600">
+                    <span className="ml-2 flex-none rounded text-gray-400 group-hover:bg-gray-200 group-hover:bg-gray-600">
                       {getSortIndicator('name')}
                     </span>
                   </button>
                 </th>
                 <th
                   scope="col"
-                  className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 sm:table-cell dark:text-white"
+                  className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 sm:table-cell text-white"
                 >
                   <button
                     onClick={() => requestSort('email')}
                     className="group inline-flex"
                   >
                     Email
-                    <span className="ml-2 flex-none rounded text-gray-400 group-hover:bg-gray-200 dark:group-hover:bg-gray-600">
+                    <span className="ml-2 flex-none rounded text-gray-400 group-hover:bg-gray-200 group-hover:bg-gray-600">
                       {getSortIndicator('email')}
                     </span>
                   </button>
                 </th>
                 <th
                   scope="col"
-                  className="hidden w-24 px-3 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell dark:text-gray-200"
+                  className="hidden w-24 px-3 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell text-gray-200"
                 >
                   Role
                 </th>
@@ -334,10 +334,10 @@ export default function GroupMembers({
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-800">
+            <tbody className="divide-y divide-gray-200 bg-white divide-gray-700 bg-gray-800">
               {paginatedMembers.map((member) => (
                 <tr key={member.userId}>
-                  <td className="w-full max-w-0 py-4 pr-3 pl-4 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6 dark:text-white">
+                  <td className="w-full max-w-0 py-4 pr-3 pl-4 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6 text-white">
                     <div className="flex items-center gap-4">
                       <Image
                         src={member.user.photoUrl}
@@ -352,12 +352,12 @@ export default function GroupMembers({
                         </p>
                         <dl className="font-normal lg:hidden">
                           <dt className="sr-only">Role</dt>
-                          <dd className="mt-1 truncate text-gray-500 dark:text-gray-400">
+                          <dd className="mt-1 truncate text-gray-400">
                             {editingMemberUserId !== member.userId &&
                               member.role.code}
                           </dd>
                           <dt className="sr-only sm:hidden">Email</dt>
-                          <dd className="mt-1 truncate text-gray-500 sm:hidden dark:text-gray-400">
+                          <dd className="mt-1 truncate text-gray-500 sm:hidden text-gray-400">
                             {member.user.email}
                           </dd>
                         </dl>
@@ -415,7 +415,7 @@ export default function GroupMembers({
                               <button
                                 type="submit"
                                 disabled={isUpdating}
-                                className="p-2 text-indigo-600 hover:text-indigo-900 disabled:opacity-50 dark:text-indigo-400 dark:hover:text-indigo-200"
+                                className="p-2 text-indigo-600 hover:text-indigo-900 disabled:opacity-50 text-indigo-400 hover:text-indigo-200"
                               >
                                 <Check className="h-6 w-6" />
                                 <span className="sr-only">
@@ -426,7 +426,7 @@ export default function GroupMembers({
                             <button
                               type="button"
                               onClick={() => setEditingMemberUserId(null)}
-                              className="p-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
+                              className="p-2 text-gray-600 hover:text-gray-400 hover:text-gray-200"
                             >
                               <X className="h-6 w-6" />
                               <span className="sr-only">Cancel</span>
@@ -436,10 +436,10 @@ export default function GroupMembers({
                       </div>
                     </div>
                   </td>
-                  <td className="hidden min-w-0 truncate px-3 py-4 text-sm text-gray-500 sm:table-cell dark:text-gray-400">
+                  <td className="hidden min-w-0 truncate px-3 py-4 text-sm text-gray-500 sm:table-cell text-gray-400">
                     {member.user.email}
                   </td>
-                  <td className="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell dark:text-gray-400">
+                  <td className="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell text-gray-400">
                     {editingMemberUserId === member.userId ? (
                       <Select
                         onValueChange={setEditingRoleId}
@@ -500,7 +500,7 @@ export default function GroupMembers({
                           <button
                             type="submit"
                             disabled={isUpdating}
-                            className="text-indigo-600 hover:text-indigo-900 disabled:opacity-50 dark:text-indigo-400 dark:hover:text-indigo-200"
+                            className="text-indigo-600 hover:text-indigo-900 disabled:opacity-50 text-indigo-400 hover:text-indigo-200"
                           >
                             <Check className="h-5 w-5" />
                             <span className="sr-only">
@@ -511,7 +511,7 @@ export default function GroupMembers({
                         <button
                           type="button"
                           onClick={() => setEditingMemberUserId(null)}
-                          className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
+                          className="text-gray-600 hover:text-gray-400 hover:text-gray-200"
                         >
                           <X className="h-5 w-5" />
                           <span className="sr-only">Cancel</span>
@@ -527,7 +527,7 @@ export default function GroupMembers({
                                   setSelectedUserForLogin(member.user as User)
                                   setIsLoginModalOpen(true)
                                 }}
-                                className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-200"
+                                className="text-indigo-600 hover:text-indigo-400 hover:text-indigo-200"
                               >
                                 <KeyRound className="h-5 w-5" />
                                 <span className="sr-only">Login Link</span>
@@ -546,7 +546,7 @@ export default function GroupMembers({
                                   setEditingMemberUserId(member.userId)
                                   setEditingRoleId(member.roleId.toString()) // Pre-fill the role ID
                                 }}
-                                className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-200"
+                                className="text-indigo-600 hover:text-indigo-400 hover:text-indigo-200"
                               >
                                 <Pencil className="h-5 w-5" />
                                 <span className="sr-only">Edit</span>
@@ -573,7 +573,7 @@ export default function GroupMembers({
                               <TooltipTrigger asChild>
                                 <button
                                   type="submit"
-                                  className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-200"
+                                  className="text-red-600 hover:text-red-400 hover:text-red-200"
                                 >
                                   <Trash2 className="h-5 w-5" />
                                   <span className="sr-only">Remove</span>
@@ -595,7 +595,7 @@ export default function GroupMembers({
         </div>
 
         <div className="mt-4 flex items-center justify-between">
-          <span className="text-sm text-gray-700 dark:text-gray-400">
+          <span className="text-sm text-gray-400">
             Page {currentPage} of {totalPages}
           </span>
           <div className="flex items-center gap-2">

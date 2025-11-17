@@ -217,7 +217,7 @@ export default function RelationshipStarPage() {
         <h1 className="text-2xl font-bold">Chart a Star</h1>
         <Link
           href="/"
-          className="text-sm text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
+          className="text-sm text-indigo-600 hover:text-indigo-300 transition-colors"
         >
           ← Home
         </Link>
@@ -240,7 +240,7 @@ export default function RelationshipStarPage() {
             className={`flex-1 rounded-lg px-2 py-3 text-xs font-medium transition-colors ${
               !isInteractive && selectedRelationship === idx
                 ? 'bg-indigo-600 text-white hover:bg-indigo-700'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-700 text-gray-300 hover:bg-gray-600'
             }`}
           >
             {rel.name.split(' ')[0]}
@@ -270,7 +270,7 @@ export default function RelationshipStarPage() {
             className={`rounded-lg px-4 py-3 text-sm font-medium transition-colors sm:px-6 sm:text-base ${
               !isInteractive && selectedRelationship === idx
                 ? 'bg-indigo-600 text-white hover:bg-indigo-700'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-700 text-gray-300 hover:bg-gray-600'
             }`}
           >
             {rel.name}
@@ -293,9 +293,9 @@ export default function RelationshipStarPage() {
         <TooltipProvider>
           <div className="mb-8 grid gap-8 lg:grid-cols-2">
             {/* Left: Sliders */}
-            <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
+            <div className="rounded-lg border border-gray-200 bg-white p-6 border-gray-700 bg-gray-800">
               <p className="text-center text-4xl mb-4">⭐</p>
-              <p className="text-sm text-gray-700 dark:text-gray-300 mb-6">
+              <p className="text-sm text-gray-300 mb-6">
                 Think of a star in your life. Indicate how you see the
                 relationship today.
               </p>
@@ -355,7 +355,7 @@ export default function RelationshipStarPage() {
               {!Object.values(interactiveScores).every((v) => v === 0) && (
                 <div className="mt-8">
                   <h3 className="mb-4 text-xl font-bold">Cosmic Insights</h3>
-                  <div className="text-sm text-gray-700 dark:text-gray-300">
+                  <div className="text-sm text-gray-300">
                     <p className="mb-4">
                       Stars are always moving through space and time.
                     </p>
@@ -381,11 +381,11 @@ export default function RelationshipStarPage() {
                         >
                           Log in for Cosmic Insights
                         </Link>
-                        <p className="mt-2 text-center text-xs text-gray-600 dark:text-gray-400">
+                        <p className="mt-2 text-center text-xs text-gray-400">
                           Don't have an account?{' '}
                           <Link
                             href="/auth/signup"
-                            className="text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
+                            className="text-indigo-600 hover:text-indigo-400"
                           >
                             Sign up for free
                           </Link>
@@ -394,10 +394,10 @@ export default function RelationshipStarPage() {
                     ) : (
                       /* Authenticated - show full form */
                       <>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        <label className="block text-sm font-medium text-gray-300">
                           Relationship context
                         </label>
-                        <div className="mt-1 mb-2 text-xs text-gray-500 dark:text-gray-400">
+                        <div className="mt-1 mb-2 text-xs text-gray-400">
                           Describe the current relationship (status, dynamics,
                           hopes, etc.) for personalized insights.
                         </div>
@@ -407,9 +407,9 @@ export default function RelationshipStarPage() {
                           placeholder="e.g., I'd like to feel closer to my teenage daughter, or I want to maintain this friendship despite living far apart..."
                           maxLength={500}
                           rows={3}
-                          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500"
+                          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 border-gray-600 bg-gray-800 text-gray-100 placeholder-gray-500"
                         />
-                        <div className="text-xs text-gray-500 dark:text-gray-400 text-right">
+                        <div className="text-xs text-gray-400 text-right">
                           {relationshipGoals.length}/500 characters
                         </div>
 
@@ -417,10 +417,10 @@ export default function RelationshipStarPage() {
                         {!Object.values(interactiveScores).every(
                           (v) => v === 0,
                         ) && (
-                          <div className="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
+                          <div className="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-4 border-gray-700 bg-gray-800">
                             <div className="flex items-start gap-2">
                               <svg
-                                className="h-5 w-5 flex-shrink-0 text-gray-600 dark:text-gray-400"
+                                className="h-5 w-5 flex-shrink-0 text-gray-400"
                                 fill="none"
                                 viewBox="0 0 24 24"
                                 stroke="currentColor"
@@ -432,7 +432,7 @@ export default function RelationshipStarPage() {
                                   d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
                                 />
                               </svg>
-                              <div className="text-xs text-gray-700 dark:text-gray-300">
+                              <div className="text-xs text-gray-300">
                                 <strong className="font-semibold">
                                   Your privacy matters.
                                 </strong>{' '}
@@ -461,7 +461,7 @@ export default function RelationshipStarPage() {
                               disabled={
                                 !aiInsight && (isLoadingAI || isLoadingSession)
                               }
-                              className="w-full rounded-lg bg-indigo-600 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500 dark:disabled:bg-gray-700 dark:disabled:text-gray-400"
+                              className="w-full rounded-lg bg-indigo-600 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500 disabled:bg-gray-700 disabled:text-gray-400"
                             >
                               {aiInsight ? (
                                 'Start Over'
@@ -494,18 +494,18 @@ export default function RelationshipStarPage() {
                             </button>
 
                             {aiError && (
-                              <div className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-200">
+                              <div className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-800 bg-red-900/20 text-red-200">
                                 {aiError}
                               </div>
                             )}
 
                             {aiInsight && (
-                              <div className="mt-4 rounded-lg border border-indigo-200 bg-indigo-50 p-6 dark:border-indigo-900 dark:bg-indigo-950">
-                                <h4 className="mb-4 text-lg font-semibold text-indigo-900 dark:text-indigo-100">
+                              <div className="mt-4 rounded-lg border border-indigo-200 bg-indigo-50 p-6 border-indigo-900 bg-indigo-950">
+                                <h4 className="mb-4 text-lg font-semibold text-indigo-100">
                                   Your Cosmic Insights
                                 </h4>
                                 <div
-                                  className="prose prose-sm prose-indigo dark:prose-invert max-w-none text-indigo-800 dark:text-indigo-200 [&>p]:mb-8 [&>div]:space-y-2 [&_ul]:space-y-3 [&_li]:leading-relaxed"
+                                  className="prose prose-sm prose-indigo prose-invert max-w-none text-indigo-200 [&>p]:mb-8 [&>div]:space-y-2 [&_ul]:space-y-3 [&_li]:leading-relaxed"
                                   dangerouslySetInnerHTML={{
                                     __html: aiInsight,
                                   }}
@@ -558,7 +558,7 @@ export default function RelationshipStarPage() {
             {/* Right: Chart and Score */}
             <div className="space-y-6" id="interactive-chart">
               {/* Mini Chart */}
-              <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800 relative">
+              <div className="rounded-lg border border-gray-200 bg-white p-4 border-gray-700 bg-gray-800 relative">
                 <h3 className="mb-3 text-lg font-bold">
                   Star Chart for {current.name.split(' ')[0]}
                 </h3>
@@ -591,58 +591,46 @@ export default function RelationshipStarPage() {
               </div>
 
               {/* Mini Score Breakdown */}
-              <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+              <div className="rounded-lg border border-gray-200 bg-white p-4 border-gray-700 bg-gray-800">
                 <h3 className="mb-3 text-lg font-bold">Star Score</h3>
                 <div className="mb-4 text-center">
                   <div className="font-bold">
-                    <span className="text-4xl text-indigo-600 dark:text-indigo-400">
+                    <span className="text-4xl text-indigo-400">
                       {starScore.total}
                     </span>
-                    <span className="text-2xl text-gray-400 dark:text-gray-600">
-                      /10
-                    </span>
+                    <span className="text-2xl text-gray-600">/10</span>
                   </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
+                  <div className="text-sm text-gray-400">
                     {getRelationshipLabel(parseFloat(starScore.total))}
                   </div>
                 </div>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-gray-400">
-                      Personal Time (30%)
-                    </span>
+                    <span className="text-gray-400">Personal Time (30%)</span>
                     <span className="font-medium">
                       {starScore.breakdown.personalTime}/10
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-gray-400">
-                      Common Ground (25%)
-                    </span>
+                    <span className="text-gray-400">Common Ground (25%)</span>
                     <span className="font-medium">
                       {starScore.breakdown.commonGround}/10
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-gray-400">
-                      Familiarity (20%)
-                    </span>
+                    <span className="text-gray-400">Familiarity (20%)</span>
                     <span className="font-medium">
                       {starScore.breakdown.familiarity}/10
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-gray-400">
-                      Interest (15%)
-                    </span>
+                    <span className="text-gray-400">Interest (15%)</span>
                     <span className="font-medium">
                       {starScore.breakdown.interest}/10
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-gray-400">
-                      Proximity (10%)
-                    </span>
+                    <span className="text-gray-400">Proximity (10%)</span>
                     <span className="font-medium">
                       {starScore.breakdown.proximity}/10
                     </span>
@@ -658,7 +646,7 @@ export default function RelationshipStarPage() {
       {!isInteractive && (
         <div className="grid gap-8 lg:grid-cols-2">
           {/* Chart */}
-          <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800 sm:p-6">
+          <div className="rounded-lg border border-gray-200 bg-white p-4 border-gray-700 bg-gray-800 sm:p-6">
             <h2 className="mb-4 text-xl font-bold">
               {current.name.split(' ')[0]}'s Star Chart
             </h2>
@@ -668,64 +656,52 @@ export default function RelationshipStarPage() {
           </div>
 
           {/* Star Score */}
-          <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800 sm:p-6">
+          <div className="rounded-lg border border-gray-200 bg-white p-4 border-gray-700 bg-gray-800 sm:p-6">
             <h2 className="mb-4 text-xl font-bold">Star Score</h2>
             <div className="mb-6">
               <div className="mb-2 text-5xl font-bold text-indigo-600">
                 {starScore.total}
                 <span className="text-2xl text-gray-500">/10</span>
               </div>
-              <div className="text-lg font-medium text-gray-700 dark:text-gray-300">
+              <div className="text-lg font-medium text-gray-300">
                 {getRelationshipLabel(parseFloat(starScore.total))}
               </div>
             </div>
 
             <div className="space-y-3">
-              <h3 className="font-semibold text-gray-700 dark:text-gray-300">
-                Score Breakdown:
-              </h3>
+              <h3 className="font-semibold text-gray-300">Score Breakdown:</h3>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">
-                    Personal Time (30%)
-                  </span>
+                  <span className="text-gray-400">Personal Time (30%)</span>
                   <span className="font-medium">
                     {starScore.breakdown.personalTime}/10
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">
-                    Common Ground (25%)
-                  </span>
+                  <span className="text-gray-400">Common Ground (25%)</span>
                   <span className="font-medium">
                     {starScore.breakdown.commonGround}/10
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">
-                    Familiarity (20%)
-                  </span>
+                  <span className="text-gray-400">Familiarity (20%)</span>
                   <span className="font-medium">
                     {starScore.breakdown.familiarity}/10
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">
-                    Interest (15%)
-                  </span>
+                  <span className="text-gray-400">Interest (15%)</span>
                   <span className="font-medium">
                     {starScore.breakdown.interest}/10
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">
-                    Proximity (10%)
-                  </span>
+                  <span className="text-gray-400">Proximity (10%)</span>
                   <span className="font-medium">
                     {starScore.breakdown.proximity}/10
                   </span>
                 </div>
-                <div className="border-t border-gray-200 pt-2 dark:border-gray-700">
+                <div className="border-t border-gray-200 pt-2 border-gray-700">
                   <div className="flex justify-between font-bold">
                     <span>Total</span>
                     <span>{starScore.total}</span>
@@ -739,11 +715,11 @@ export default function RelationshipStarPage() {
 
       {/* Educational Content */}
       <div className="mt-12 space-y-8">
-        <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
+        <div className="rounded-lg border border-gray-200 bg-white p-6 border-gray-700 bg-gray-800">
           <h2 className="mb-4 text-2xl font-bold">
             How to Read the Star Chart
           </h2>
-          <div className="space-y-4 text-gray-700 dark:text-gray-300">
+          <div className="space-y-4 text-gray-300">
             <p>
               The <strong>Relation Star Chart</strong> visualizes five key
               dimensions of your relationship, scored from 0-10. Dimensions are
@@ -797,15 +773,15 @@ export default function RelationshipStarPage() {
           </div>
         </div>
 
-        <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
+        <div className="rounded-lg border border-gray-200 bg-white p-6 border-gray-700 bg-gray-800">
           <h2 className="mb-4 text-2xl font-bold">
             Understanding Your Star Score
           </h2>
-          <div className="space-y-4 text-gray-700 dark:text-gray-300">
+          <div className="space-y-4 text-gray-300">
             <p>
               The <strong>Star Score</strong> is determined like this:
             </p>
-            <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-900">
+            <div className="rounded-lg bg-gray-50 p-4 bg-gray-900">
               <div className="space-y-2 font-mono text-sm">
                 <div>Star Score = </div>
                 <div className="ml-4">Personal Time × 30%</div>
@@ -846,7 +822,7 @@ export default function RelationshipStarPage() {
           </div>
         </div>
 
-        <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
+        <div className="rounded-lg border border-gray-200 bg-white p-6 border-gray-700 bg-gray-800">
           <h2 className="mb-4 text-2xl font-bold">Example Insights</h2>
           <div className="space-y-6">
             {/* Sarah Example */}
@@ -855,7 +831,7 @@ export default function RelationshipStarPage() {
                 Sarah (Close Friend) - Score:{' '}
                 {calculateStarScore(dummyRelationships[0].scores).total}
               </h3>
-              <p className="text-gray-700 dark:text-gray-300">
+              <p className="text-gray-300">
                 Sarah's star is large and well-balanced. High scores across all
                 dimensions indicate a strong, healthy friendship. You've
                 invested significant personal time together (8/10), shared
@@ -870,7 +846,7 @@ export default function RelationshipStarPage() {
                 Mike (Work Colleague) - Score:{' '}
                 {calculateStarScore(dummyRelationships[1].scores).total}
               </h3>
-              <p className="text-gray-700 dark:text-gray-300">
+              <p className="text-gray-300">
                 Mike's star shows high proximity (9/10) but low personal time
                 (2/10). This is typical of work relationships—you see each other
                 often and collaborate on tasks, but haven't spent much
@@ -886,7 +862,7 @@ export default function RelationshipStarPage() {
                 Alex (Acquaintance) - Score:{' '}
                 {calculateStarScore(dummyRelationships[2].scores).total}
               </h3>
-              <p className="text-gray-700 dark:text-gray-300">
+              <p className="text-gray-300">
                 Alex's star is smaller and more evenly distributed at moderate
                 levels. You have some desire to deepen the relationship (6/10)
                 but haven't yet invested much personal time (3/10) or built deep
@@ -897,11 +873,11 @@ export default function RelationshipStarPage() {
           </div>
         </div>
 
-        <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-6 dark:border-indigo-900 dark:bg-indigo-950">
-          <h2 className="mb-4 text-2xl font-bold text-indigo-900 dark:text-indigo-100">
+        <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-6 border-indigo-900 bg-indigo-950">
+          <h2 className="mb-4 text-2xl font-bold text-indigo-100">
             Key Insight: Personal Time Matters Most
           </h2>
-          <p className="text-indigo-800 dark:text-indigo-200">
+          <p className="text-indigo-200">
             Notice how Mike (work colleague) has high proximity but a low Star
             Score. This is intentional. The algorithm heavily weights{' '}
             <strong>Personal Time</strong> (30%), followed by{' '}

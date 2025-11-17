@@ -115,12 +115,14 @@ export default function UsersList({
             onClick={() => setShowInfo(!showInfo)}
             className="-my-2 ml-2 inline-flex items-center rounded-full p-2 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
           >
-            <Info className="h-6 w-6 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" />
+            <Info className="h-6 w-6 text-gray-400 hover:text-gray-600 hover:text-gray-200" />
           </button>
         </div>
         <Button
           asChild
-          className={`flex-shrink-0 ${!hasAgreed ? 'cursor-not-allowed opacity-50' : ''}`}
+          className={`flex-shrink-0 ${
+            !hasAgreed ? 'cursor-not-allowed opacity-50' : ''
+          }`}
         >
           <Link
             href={hasAgreed ? '/me/users/create' : '#'}
@@ -139,7 +141,7 @@ export default function UsersList({
       </div>
       <h4 className="mb-4">Users I Manage</h4>
       {showSuccess && successMessage && (
-        <div className="mb-4 rounded-md border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/30">
+        <div className="mb-4 rounded-md border border-green-200 bg-green-50 p-4 border-green-800 bg-green-900/30">
           <div className="flex">
             <div className="flex-shrink-0">
               <CheckCircle
@@ -148,7 +150,7 @@ export default function UsersList({
               />
             </div>
             <div className="ml-3">
-              <p className="text-sm font-medium text-green-800 dark:text-green-200">
+              <p className="text-sm font-medium text-green-200">
                 {successMessage}
               </p>
             </div>
@@ -157,7 +159,7 @@ export default function UsersList({
                 <button
                   type="button"
                   onClick={() => setShowSuccess(false)}
-                  className="inline-flex rounded-md bg-green-50 p-1.5 text-green-500 hover:bg-green-100 focus:ring-2 focus:ring-green-600 focus:ring-offset-2 focus:ring-offset-green-50 focus:outline-none dark:bg-transparent dark:text-green-300 dark:hover:bg-green-800/50"
+                  className="inline-flex rounded-md bg-green-50 p-1.5 text-green-500 hover:bg-green-100 focus:ring-2 focus:ring-green-600 focus:ring-offset-2 focus:ring-offset-green-50 focus:outline-none bg-transparent text-green-300 hover:bg-green-800/50"
                 >
                   <span className="sr-only">Dismiss</span>
                   <X className="h-5 w-5" aria-hidden="true" />
@@ -170,25 +172,25 @@ export default function UsersList({
       {showInfo && (
         <div
           id="managed-user-info"
-          className="mb-6 rounded-md border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800"
+          className="mb-6 rounded-md border border-gray-200 bg-gray-50 p-4 border-gray-700 bg-gray-800"
         >
-          <p className="mb-4 text-sm text-gray-700 dark:text-gray-300">
+          <p className="mb-4 text-sm text-gray-300">
             Create and manage users who can&apos;t or shouldn&apos;t yet have
             their own accounts.
           </p>
-          <p className="mb-4 text-sm text-gray-700 dark:text-gray-300">
+          <p className="mb-4 text-sm text-gray-300">
             Examples: Minor children, deceased relatives, disabled individuals,
             people without internet access, pets, etc.
           </p>
-          <p className="mb-4 text-sm text-gray-700 dark:text-gray-300">
+          <p className="mb-4 text-sm text-gray-300">
             Multiple people can manage the same account (e.g. parents managing a
             child account, etc). After you create a user, Edit them to add
             others.
           </p>
-          <p className="mb-4 text-sm text-gray-700 dark:text-gray-300">
+          <p className="mb-4 text-sm text-gray-300">
             You can add managed users to your groups.
           </p>
-          <p className="mb-4 text-sm text-red-700 italic dark:text-red-400">
+          <p className="mb-4 text-sm text-red-700 italic text-red-400">
             You must have permission or authority to create managed users, such
             as being a child&apos;s parent, direct descendent of a deceased
             person, permission from a living adult, etc.
@@ -197,7 +199,7 @@ export default function UsersList({
             <button
               type="button"
               onClick={() => setShowInfo(false)}
-              className="mx-auto flex items-center pt-2 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              className="mx-auto flex items-center pt-2 text-sm text-gray-500 hover:text-gray-400 hover:text-gray-200"
             >
               <ChevronUp className="mr-1 h-4 w-4" />
               Close
@@ -219,31 +221,35 @@ export default function UsersList({
             <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
               <ul
                 role="list"
-                className="divide-y divide-gray-200 dark:divide-gray-700"
+                className="divide-y divide-gray-200 divide-gray-700"
               >
                 {managedUsers.map((user) => (
                   <li key={user.id} className="flex items-center gap-x-6 py-5">
                     <Image
-                      className="h-12 w-12 flex-none rounded-full bg-gray-50 dark:bg-gray-800"
-                      src={user.primaryPhoto?.url_thumb || user.primaryPhoto?.url || '/images/default-avatar.png'}
+                      className="h-12 w-12 flex-none rounded-full bg-gray-800"
+                      src={
+                        user.primaryPhoto?.url_thumb ||
+                        user.primaryPhoto?.url ||
+                        '/images/default-avatar.png'
+                      }
                       alt=""
                       width={48}
                       height={48}
                     />
                     <div className="min-w-0">
-                      <p className="text-sm leading-6 font-semibold text-gray-900 dark:text-white">
+                      <p className="text-sm leading-6 font-semibold text-gray-900 text-white">
                         {[user.firstName, user.lastName]
                           .filter(Boolean)
                           .join(' ')}
                       </p>
-                      <p className="mt-1 truncate text-xs leading-5 text-gray-500 dark:text-gray-400">
+                      <p className="mt-1 truncate text-xs leading-5 text-gray-400">
                         {getManagedStatusText(user.managedStatus)}
                       </p>
                     </div>
                     <div className="ml-auto flex items-center gap-x-4">
                       <Button asChild variant="ghost" size="icon">
                         <Link href={`/me/users/${user.id}/edit`}>
-                          <Edit className="h-5 w-5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200" />
+                          <Edit className="h-5 w-5 text-gray-500 hover:text-gray-400 hover:text-gray-200" />
                           <span className="sr-only">Edit</span>
                         </Link>
                       </Button>
@@ -251,7 +257,7 @@ export default function UsersList({
                         variant="ghost"
                         size="icon"
                         onClick={() => setUserToDelete(user)}
-                        className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-500"
+                        className="text-red-600 hover:text-red-400 hover:text-red-500"
                       >
                         <Trash2 className="h-5 w-5" />
                         <span className="sr-only">Delete</span>
@@ -265,15 +271,13 @@ export default function UsersList({
         </div>
       ) : (
         <div className="mt-8 text-center">
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            No managed users.
-          </p>
+          <p className="text-sm text-gray-400">No managed users.</p>
         </div>
       )}
 
       <div className="mt-6 mb-4 flex flex-col">
         <h4 className="">Users Who Can Manage Me</h4>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
+        <p className="text-sm text-gray-400">
           Allow a trusted person to manage your account in case you become
           unable/unavailable.
         </p>
@@ -323,7 +327,7 @@ export default function UsersList({
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-gray-400">
             No users are currently managing you.
           </p>
         )}
@@ -332,10 +336,10 @@ export default function UsersList({
       {userToRevoke && (
         <Modal isOpen={!!userToRevoke} onClose={() => setUserToRevoke(null)}>
           <div className="p-6">
-            <h3 className="mb-4 text-lg leading-6 font-medium text-gray-900 dark:text-gray-100">
+            <h3 className="mb-4 text-lg leading-6 font-medium text-gray-100">
               Confirm Revoke
             </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <p className="text-sm text-gray-400">
               Are you sure you want to revoke management permissions for{' '}
               <strong>
                 {[userToRevoke.firstName, userToRevoke.lastName]
@@ -395,7 +399,7 @@ export default function UsersList({
                   })
                 }}
                 disabled={isPending}
-                className="bg-red-600 text-white hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600"
+                className="bg-red-600 text-white hover:bg-red-500 hover:bg-red-600"
               >
                 {isPending ? 'Deleting...' : 'Delete'}
               </AlertDialogAction>

@@ -41,12 +41,12 @@ export default function GroupInfoModal({
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-md rounded-lg bg-white shadow-2xl dark:bg-gray-900"
+        className="relative w-full max-w-md rounded-lg bg-white shadow-2xl bg-gray-900"
         onClick={(e) => e.stopPropagation()}
       >
         <button
           onClick={onClose}
-          className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+          className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 hover:text-gray-200"
         >
           <X size={24} />
         </button>
@@ -61,34 +61,32 @@ export default function GroupInfoModal({
               />
             </div>
           )}
-          <h2 className="mb-4 text-center text-2xl font-bold text-gray-800 dark:text-gray-100">
+          <h2 className="mb-4 text-center text-2xl font-bold text-gray-100">
             {group.name}
           </h2>
           {group.description && (
-            <p className="mb-4 max-h-24 overflow-y-scroll whitespace-pre-wrap rounded-md bg-gray-100 p-2 shadow-inner dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+            <p className="mb-4 max-h-24 overflow-y-scroll whitespace-pre-wrap rounded-md bg-gray-100 p-2 shadow-inner bg-gray-700 text-gray-300">
               {group.description}
             </p>
           )}
           {group.address && (
-            <p className="mb-2 text-gray-600 dark:text-gray-300">
+            <p className="mb-2 text-gray-300">
               <strong>Address:</strong> {group.address}
             </p>
           )}
           {group.phone && (
-            <p className="mb-4 text-gray-600 dark:text-gray-300">
+            <p className="mb-4 text-gray-300">
               <strong>Phone:</strong> {group.phone}
             </p>
           )}
 
-          <h3 className="mt-6 mb-2 text-lg font-semibold text-gray-700 dark:text-gray-200">
+          <h3 className="mt-6 mb-2 text-lg font-semibold text-gray-200">
             Admins
           </h3>
           {isLoading ? (
-            <p className="text-gray-500 dark:text-gray-400">
-              Loading admins...
-            </p>
+            <p className="text-gray-400">Loading admins...</p>
           ) : (
-            <ul className="list-inside list-disc text-gray-600 dark:text-gray-300">
+            <ul className="list-inside list-disc text-gray-300">
               {admins.map((admin) => (
                 <li key={admin.id}>
                   {admin.firstName} {admin.lastName}

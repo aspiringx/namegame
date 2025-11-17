@@ -145,8 +145,18 @@ export default function ChatInterface({
   }>({ isOpen: false, type: 'delete', messageId: null })
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null)
   const [editedContent, setEditedContent] = useState('')
-  const [editedImages, setEditedImages] = useState<Array<{ base64: string; width: number; height: number; size: number }>>([])
-  const [editedLinks, setEditedLinks] = useState<Array<{ url: string; title?: string; description?: string; image?: string; siteName?: string }>>([])
+  const [editedImages, setEditedImages] = useState<
+    Array<{ base64: string; width: number; height: number; size: number }>
+  >([])
+  const [editedLinks, setEditedLinks] = useState<
+    Array<{
+      url: string
+      title?: string
+      description?: string
+      image?: string
+      siteName?: string
+    }>
+  >([])
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -203,21 +213,21 @@ export default function ChatInterface({
   useEffect(() => {
     if (isOpen) {
       inputRef.current?.focus()
-      
+
       // Lock scroll on body and drawer to prevent background scrolling
       const scrollY = window.scrollY
       document.body.style.overflow = 'hidden'
       document.body.style.position = 'fixed'
       document.body.style.top = `-${scrollY}px`
       document.body.style.width = '100%'
-      
+
       // Also lock the drawer if it exists
       const drawer = document.querySelector('[data-chat-drawer]') as HTMLElement
       if (drawer) {
         drawer.style.overflow = 'hidden'
         drawer.style.position = 'fixed'
       }
-      
+
       // Store scroll position
       document.body.dataset.scrollY = String(scrollY)
     } else {
@@ -227,18 +237,18 @@ export default function ChatInterface({
       document.body.style.position = ''
       document.body.style.top = ''
       document.body.style.width = ''
-      
+
       if (scrollY) {
         window.scrollTo(0, parseInt(scrollY))
       }
-      
+
       const drawer = document.querySelector('[data-chat-drawer]') as HTMLElement
       if (drawer) {
         drawer.style.overflow = ''
         drawer.style.position = ''
       }
     }
-    
+
     return () => {
       // Cleanup on unmount
       const scrollY = document.body.dataset.scrollY
@@ -246,11 +256,11 @@ export default function ChatInterface({
       document.body.style.position = ''
       document.body.style.top = ''
       document.body.style.width = ''
-      
+
       if (scrollY) {
         window.scrollTo(0, parseInt(scrollY))
       }
-      
+
       const drawer = document.querySelector('[data-chat-drawer]') as HTMLElement
       if (drawer) {
         drawer.style.overflow = ''
@@ -498,10 +508,15 @@ export default function ChatInterface({
       const MIN_WIDTH = 400
       const MAX_WIDTH_VW = 40
       const maxWidth = window.innerWidth * (MAX_WIDTH_VW / 100)
-      const newWidth = Math.max(MIN_WIDTH, Math.min(window.innerWidth - e.clientX, maxWidth))
-      
+      const newWidth = Math.max(
+        MIN_WIDTH,
+        Math.min(window.innerWidth - e.clientX, maxWidth),
+      )
+
       // Update parent drawer width
-      const drawerEl = document.querySelector('[data-chat-drawer]') as HTMLElement
+      const drawerEl = document.querySelector(
+        '[data-chat-drawer]',
+      ) as HTMLElement
       if (drawerEl) {
         drawerEl.style.width = `${newWidth}px`
       }
@@ -510,11 +525,16 @@ export default function ChatInterface({
     const handleMouseUp = () => {
       setIsResizingDrawer(false)
       onResize(false)
-      
+
       // Save to localStorage
-      const drawerEl = document.querySelector('[data-chat-drawer]') as HTMLElement
+      const drawerEl = document.querySelector(
+        '[data-chat-drawer]',
+      ) as HTMLElement
       if (drawerEl && typeof window !== 'undefined') {
-        localStorage.setItem('chat-drawer-width', drawerEl.style.width.replace('px', ''))
+        localStorage.setItem(
+          'chat-drawer-width',
+          drawerEl.style.width.replace('px', ''),
+        )
       }
     }
 
@@ -608,21 +628,26 @@ export default function ChatInterface({
         // Add or update message
         setMessages((prev) => {
           // Check if this is replacing an optimistic message (temp ID)
-          const optimisticIndex = prev.findIndex((m) => m.id.startsWith('temp-'))
-          if (optimisticIndex !== -1 && chatMessage.authorId === session?.user?.id) {
+          const optimisticIndex = prev.findIndex((m) =>
+            m.id.startsWith('temp-'),
+          )
+          if (
+            optimisticIndex !== -1 &&
+            chatMessage.authorId === session?.user?.id
+          ) {
             // Replace optimistic message with real one (has real ID now)
             const updated = [...prev]
             updated[optimisticIndex] = chatMessage
             return updated
           }
-          
+
           // Check if message already exists with this ID
           const existingIndex = prev.findIndex((m) => m.id === chatMessage.id)
           if (existingIndex !== -1) {
             // Already have this message, don't duplicate
             return prev
           }
-          
+
           // New message - add it
           return [...prev, chatMessage]
         })
@@ -806,10 +831,11 @@ export default function ChatInterface({
       // Use multiple attempts to ensure scroll happens after keyboard animation
       const scrollToBottom = () => {
         if (messagesContainerRef.current) {
-          messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight
+          messagesContainerRef.current.scrollTop =
+            messagesContainerRef.current.scrollHeight
         }
       }
-      
+
       setTimeout(scrollToBottom, 50)
       setTimeout(scrollToBottom, 150)
       setTimeout(scrollToBottom, 300)
@@ -892,11 +918,17 @@ export default function ChatInterface({
     }) => {
       // Only update if it's for this conversation and not from current user
       if (data.conversationId === conversationId) {
-        setMessages(prev => prev.map(m => 
-          m.id === data.messageId 
-            ? { ...m, content: data.content, updatedAt: new Date(data.updatedAt) }
-            : m
-        ))
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === data.messageId
+              ? {
+                  ...m,
+                  content: data.content,
+                  updatedAt: new Date(data.updatedAt),
+                }
+              : m,
+          ),
+        )
         // Don't scroll - just update in place
       }
     }
@@ -922,7 +954,7 @@ export default function ChatInterface({
     const handleContextMenu = (e: Event) => {
       const target = e.target as HTMLElement
       const bubble = target.closest('[data-message-bubble]')
-      
+
       // Prevent if on message bubble OR if emoji picker is open
       if (bubble || emojiPickerState.isOpen) {
         e.preventDefault()
@@ -932,10 +964,14 @@ export default function ChatInterface({
     }
 
     // Use capture phase to catch event before it bubbles
-    document.addEventListener('contextmenu', handleContextMenu, { capture: true })
+    document.addEventListener('contextmenu', handleContextMenu, {
+      capture: true,
+    })
 
     return () => {
-      document.removeEventListener('contextmenu', handleContextMenu, { capture: true })
+      document.removeEventListener('contextmenu', handleContextMenu, {
+        capture: true,
+      })
     }
   }, [emojiPickerState.isOpen])
 
@@ -981,7 +1017,7 @@ export default function ChatInterface({
     const handleClickOutside = () => {
       // Don't clear if we're in edit mode - keep the padding consistent
       if (editingMessageId) return
-      
+
       setModerationMenuMessageId(null)
       setModerationButtonVisibleId(null)
     }
@@ -1010,7 +1046,7 @@ export default function ChatInterface({
             className={`inline px-1.5 py-0.5 mx-0.5 my-1 rounded font-normal underline decoration-1 underline-offset-2 break-all ${
               isCurrentUser
                 ? 'bg-white/20 text-white hover:bg-white/30'
-                : 'bg-blue-500/10 dark:bg-blue-400/20 text-blue-600 dark:text-blue-300 hover:bg-blue-500/20 dark:hover:bg-blue-400/30'
+                : 'bg-blue-500/10 bg-blue-400/20 text-blue-300 hover:bg-blue-500/20 hover:bg-blue-400/30'
             }`}
           >
             {displayUrl}
@@ -1286,7 +1322,7 @@ export default function ChatInterface({
       '[data-messages-container]',
     ) as HTMLElement
     const scrollTop = messagesContainer?.scrollTop || 0
-    
+
     // Force restore scroll capability
     if (messagesContainer) {
       messagesContainer.style.overflow = 'auto'
@@ -1564,29 +1600,38 @@ export default function ChatInterface({
   if (!isOpen) return null
 
   return (
-    <div 
+    <div
       data-chat-interface
-      className="md:absolute md:inset-0 fixed left-0 right-0 bg-white dark:bg-gray-900 flex flex-col overflow-hidden transition-all duration-200 ease-out"
-      style={isMobile ? {
-        top: viewportOffset.top > 0 ? `${viewportOffset.top - 1}px` : '0px',
-        bottom: '0px',
-        height: viewportOffset.height > 0 ? `${viewportOffset.height}px` : '100vh',
-        overscrollBehavior: 'contain', // Prevent overscroll bounce/jitter
-        zIndex: 9999, // Ensure above everything including drawer
-        transform: swipeOffset > 0 ? `translateX(${swipeOffset}px)` : undefined,
-      } : {
-        zIndex: 50,
-      }}
+      className="md:absolute md:inset-0 fixed left-0 right-0 bg-white bg-gray-900 flex flex-col overflow-hidden transition-all duration-200 ease-out"
+      style={
+        isMobile
+          ? {
+              top:
+                viewportOffset.top > 0 ? `${viewportOffset.top - 1}px` : '0px',
+              bottom: '0px',
+              height:
+                viewportOffset.height > 0
+                  ? `${viewportOffset.height}px`
+                  : '100vh',
+              overscrollBehavior: 'contain', // Prevent overscroll bounce/jitter
+              zIndex: 9999, // Ensure above everything including drawer
+              transform:
+                swipeOffset > 0 ? `translateX(${swipeOffset}px)` : undefined,
+            }
+          : {
+              zIndex: 50,
+            }
+      }
       onTouchStart={(e) => {
         if (isMobile && isOpen) {
           const startX = e.touches[0].clientX
           const screenWidth = window.innerWidth
-          
+
           // Allow swipe from left 2/3 of screen to go back to drawer
           if (startX < screenWidth * 0.66) {
             setSwipeStartX(startX)
           }
-          
+
           // Always stop propagation to prevent drawer from handling it
           e.stopPropagation()
         }
@@ -1595,11 +1640,11 @@ export default function ChatInterface({
         if (isMobile) {
           // Always stop propagation to prevent drawer scroll
           e.stopPropagation()
-          
+
           if (swipeStartX !== null) {
             const currentX = e.touches[0].clientX
             const diff = currentX - swipeStartX
-            
+
             // Only allow swiping right (positive diff)
             if (diff > 0) {
               setSwipeOffset(diff)
@@ -1611,7 +1656,7 @@ export default function ChatInterface({
         if (isMobile) {
           // Always stop propagation to prevent drawer from handling it
           e.stopPropagation()
-          
+
           if (swipeOffset > 0) {
             // Close if swiped more than 100px - go back to drawer
             if (swipeOffset > 100) {
@@ -1638,7 +1683,7 @@ export default function ChatInterface({
 
       {/* Header - Fixed at top, outside scroll container */}
       <div
-        className={`flex-shrink-0 z-10 flex items-center justify-between border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 transition-all ${
+        className={`flex-shrink-0 z-10 flex items-center justify-between border-b border-gray-700 bg-white bg-gray-800 transition-all ${
           isKeyboardOpen ? 'p-2' : 'p-4'
         }`}
       >
@@ -1647,7 +1692,7 @@ export default function ChatInterface({
             {/* Dot indicator - green when unread messages in other conversations, gray otherwise */}
             <span
               className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                hasOtherUnread ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'
+                hasOtherUnread ? 'bg-green-500' : 'bg-gray-600'
               }`}
             />
             <button
@@ -1655,7 +1700,7 @@ export default function ChatInterface({
                 setHasOtherUnread(false)
                 onBack()
               }}
-              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white flex-shrink-0 md:block"
+              className="text-gray-500 hover:text-gray-400 hover:text-white flex-shrink-0 md:block"
             >
               <ArrowLeft size={24} />
             </button>
@@ -1673,18 +1718,18 @@ export default function ChatInterface({
                     if (e.key === 'Escape') handleCancelEdit()
                   }}
                   maxLength={30}
-                  className="flex-1 px-2 py-1 text-lg font-semibold bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded text-gray-900 dark:text-white"
+                  className="flex-1 px-2 py-1 text-lg font-semibold bg-white bg-gray-700 border border-gray-600 rounded text-gray-900 text-white"
                   placeholder="Conversation name"
                 />
                 <button
                   onClick={handleSaveName}
-                  className="p-2 text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300"
+                  className="p-2 text-green-600 hover:text-green-400 hover:text-green-300"
                 >
                   <Check size={24} />
                 </button>
                 <button
                   onClick={handleCancelEdit}
-                  className="p-2 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                  className="p-2 text-red-600 hover:text-red-400 hover:text-red-300"
                 >
                   <X size={24} />
                 </button>
@@ -1692,7 +1737,7 @@ export default function ChatInterface({
             ) : (
               <div className="flex items-center gap-2">
                 <h2
-                  className={`font-semibold text-gray-900 dark:text-white truncate ${
+                  className={`font-semibold text-gray-900 text-white truncate ${
                     isKeyboardOpen ? 'text-base' : 'text-lg'
                   }`}
                 >
@@ -1701,7 +1746,7 @@ export default function ChatInterface({
                 {conversationId && (
                   <button
                     onClick={() => setIsEditingName(true)}
-                    className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                    className="p-2 text-gray-400 hover:text-gray-600 hover:text-gray-300"
                   >
                     <Pencil size={20} />
                   </button>
@@ -1716,7 +1761,7 @@ export default function ChatInterface({
                 >
                   <TooltipTrigger asChild>
                     <button
-                      className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+                      className="text-sm text-gray-400 hover:text-gray-700 hover:text-gray-300"
                       onClick={() =>
                         setShowParticipantList(!showParticipantList)
                       }
@@ -1732,7 +1777,7 @@ export default function ChatInterface({
                 </Tooltip>
               </TooltipProvider>
             ) : (
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-sm text-gray-400">
                 {participantCount} participant{participantCount > 1 ? 's' : ''}
               </p>
             )}
@@ -1742,7 +1787,7 @@ export default function ChatInterface({
         {/* Close button - visible on all screens */}
         <button
           onClick={onClose}
-          className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white flex-shrink-0"
+          className="text-gray-500 hover:text-gray-400 hover:text-white flex-shrink-0"
           aria-label="Close chat"
         >
           <X size={24} />
@@ -1791,7 +1836,7 @@ export default function ChatInterface({
         onMouseMove={(e) => {
           // Don't show timestamps if in edit mode
           if (editingMessageId) return
-          
+
           if (dragStartX > 0) {
             const deltaX = dragStartX - e.clientX
             if (Math.abs(deltaX) > 5) {
@@ -1821,7 +1866,7 @@ export default function ChatInterface({
         )}
 
         {isLoadingMessages ? (
-          <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400">
+          <div className="flex flex-col items-center justify-center h-full text-gray-400">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
             <p>Loading messages...</p>
           </div>
@@ -1830,8 +1875,8 @@ export default function ChatInterface({
             <div key={dateKey}>
               {/* Date separator */}
               <div className="flex items-center justify-center my-4">
-                <div className="bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full">
-                  <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                <div className="bg-gray-700 px-3 py-1 rounded-full">
+                  <span className="text-xs text-gray-400 font-medium">
                     {formatDate(new Date(dateKey))}
                   </span>
                 </div>
@@ -1861,7 +1906,7 @@ export default function ChatInterface({
                     {/* Centered timestamp separator */}
                     {showCenteredTimestamp && (
                       <div className="flex justify-center my-3">
-                        <span className="text-xs text-gray-400 dark:text-gray-500">
+                        <span className="text-xs text-gray-500">
                           {formatTime(message.timestamp)}
                         </span>
                       </div>
@@ -1888,8 +1933,8 @@ export default function ChatInterface({
                                 unoptimized={false}
                               />
                             ) : (
-                              <div className="w-12 h-12 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center">
-                                <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                              <div className="w-12 h-12 bg-gray-600 rounded-full flex items-center justify-center">
+                                <span className="text-xs font-medium text-gray-300">
                                   {message.authorName
                                     .split(' ')
                                     .map((n) => n[0])
@@ -1906,7 +1951,7 @@ export default function ChatInterface({
                         } max-w-[85%]`}
                       >
                         {!isCurrentUser && showAvatar && (
-                          <span className="text-xs text-gray-500 dark:text-gray-400 mb-1 px-3">
+                          <span className="text-xs text-gray-400 mb-1 px-3">
                             {message.authorName}
                           </span>
                         )}
@@ -1920,25 +1965,23 @@ export default function ChatInterface({
                               : isModerated
                               ? 'pr-4'
                               : 'pr-4'
-                          } ${
-                            isCurrentUser
-                              ? 'bg-blue-500'
-                              : 'bg-gray-100 dark:bg-gray-700'
-                          } ${
+                          } ${isCurrentUser ? 'bg-blue-500' : 'bg-gray-700'} ${
                             isModerated
                               ? isCurrentUser
-                                ? 'text-blue-200 dark:text-blue-300 italic'
-                                : 'text-gray-400 dark:text-gray-500 italic'
+                                ? 'text-blue-300 italic'
+                                : 'text-gray-500 italic'
                               : isCurrentUser
                               ? 'text-white'
-                              : 'text-gray-900 dark:text-white'
+                              : 'text-gray-900 text-white'
                           }`}
-                          style={{
-                            WebkitTouchCallout: 'none',
-                            WebkitUserSelect: 'none',
-                            userSelect: 'none',
-                            touchAction: 'pan-y', // Allow vertical scrolling but prevent long-press menu
-                          } as React.CSSProperties}
+                          style={
+                            {
+                              WebkitTouchCallout: 'none',
+                              WebkitUserSelect: 'none',
+                              userSelect: 'none',
+                              touchAction: 'pan-y', // Allow vertical scrolling but prevent long-press menu
+                            } as React.CSSProperties
+                          }
                           onClick={(e) => {
                             // Don't handle click if user was dragging or if long press was triggered
                             const target = e.currentTarget as any
@@ -2102,20 +2145,24 @@ export default function ChatInterface({
                           }}
                         >
                           {/* Content wrapper to prevent overlap with button */}
-                          <div className={
-                            editingMessageId === message.id ||
-                            moderationMenuMessageId === message.id ||
-                            moderationButtonVisibleId === message.id
-                              ? 'pr-12'
-                              : ''
-                          }>
+                          <div
+                            className={
+                              editingMessageId === message.id ||
+                              moderationMenuMessageId === message.id ||
+                              moderationButtonVisibleId === message.id
+                                ? 'pr-12'
+                                : ''
+                            }
+                          >
                             {/* Message text content or edit textarea */}
                             {editingMessageId === message.id ? (
                               <div className="space-y-2">
                                 <textarea
                                   value={editedContent}
-                                  onChange={(e) => setEditedContent(e.target.value)}
-                                  className="w-full px-3 py-2 text-xl bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg resize-none"
+                                  onChange={(e) =>
+                                    setEditedContent(e.target.value)
+                                  }
+                                  className="w-full px-3 py-2 text-xl bg-white bg-gray-900 border border-gray-600 rounded-lg resize-none"
                                   rows={3}
                                   autoFocus
                                   onClick={(e) => e.stopPropagation()}
@@ -2133,7 +2180,7 @@ export default function ChatInterface({
                                       setEditedLinks([])
                                       setModerationButtonVisibleId(null)
                                     }}
-                                    className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 flex items-center gap-2"
+                                    className="px-4 py-2 bg-gray-700 text-gray-900 text-white rounded-lg hover:bg-gray-300 hover:bg-gray-600 flex items-center gap-2"
                                   >
                                     <X size={16} />
                                     Cancel
@@ -2141,14 +2188,20 @@ export default function ChatInterface({
                                   <button
                                     onClick={async () => {
                                       // Require at least content or images or links
-                                      if (!editedContent.trim() && editedImages.length === 0 && editedLinks.length === 0) return
-                                      
+                                      if (
+                                        !editedContent.trim() &&
+                                        editedImages.length === 0 &&
+                                        editedLinks.length === 0
+                                      )
+                                        return
+
                                       // Calculate new message type based on what's left
                                       let newType: string = 'text'
-                                      const hasText = editedContent.trim().length > 0
+                                      const hasText =
+                                        editedContent.trim().length > 0
                                       const hasImages = editedImages.length > 0
                                       const hasLinks = editedLinks.length > 0
-                                      
+
                                       if (hasText && hasImages && hasLinks) {
                                         newType = 'mixed'
                                       } else if (hasText && hasImages) {
@@ -2164,41 +2217,52 @@ export default function ChatInterface({
                                       } else {
                                         newType = 'text'
                                       }
-                                      
+
                                       // Save edit
                                       try {
-                                        const response = await fetch(`/api/chat/message/${message.id}`, {
-                                          method: 'PATCH',
-                                          headers: { 'Content-Type': 'application/json' },
-                                          body: JSON.stringify({ 
-                                            content: editedContent.trim(),
-                                            type: newType,
-                                            metadata: {
-                                              images: editedImages,
-                                              links: editedLinks,
-                                            }
-                                          }),
-                                        })
-                                        
+                                        const response = await fetch(
+                                          `/api/chat/message/${message.id}`,
+                                          {
+                                            method: 'PATCH',
+                                            headers: {
+                                              'Content-Type':
+                                                'application/json',
+                                            },
+                                            body: JSON.stringify({
+                                              content: editedContent.trim(),
+                                              type: newType,
+                                              metadata: {
+                                                images: editedImages,
+                                                links: editedLinks,
+                                              },
+                                            }),
+                                          },
+                                        )
+
                                         if (response.ok) {
                                           const updated = await response.json()
-                                          
+
                                           // Optimistic update
-                                          setMessages(prev => prev.map(m => 
-                                            m.id === message.id 
-                                              ? { 
-                                                  ...m, 
-                                                  content: editedContent.trim(), 
-                                                  type: newType,
-                                                  metadata: {
-                                                    images: editedImages,
-                                                    links: editedLinks,
-                                                  },
-                                                  updatedAt: new Date(updated.updatedAt) 
-                                                }
-                                              : m
-                                          ))
-                                          
+                                          setMessages((prev) =>
+                                            prev.map((m) =>
+                                              m.id === message.id
+                                                ? {
+                                                    ...m,
+                                                    content:
+                                                      editedContent.trim(),
+                                                    type: newType,
+                                                    metadata: {
+                                                      images: editedImages,
+                                                      links: editedLinks,
+                                                    },
+                                                    updatedAt: new Date(
+                                                      updated.updatedAt,
+                                                    ),
+                                                  }
+                                                : m,
+                                            ),
+                                          )
+
                                           // Emit socket event for real-time update
                                           if (socket && isConnected) {
                                             socket.emit('message-edited', {
@@ -2213,7 +2277,7 @@ export default function ChatInterface({
                                               updatedAt: updated.updatedAt,
                                             })
                                           }
-                                          
+
                                           setEditingMessageId(null)
                                           setEditedContent('')
                                           setEditedImages([])
@@ -2221,7 +2285,10 @@ export default function ChatInterface({
                                           setModerationButtonVisibleId(null)
                                         }
                                       } catch (error) {
-                                        console.error('[Chat] Error editing message:', error)
+                                        console.error(
+                                          '[Chat] Error editing message:',
+                                          error,
+                                        )
                                       }
                                     }}
                                     className="px-4 py-2 bg-blue-500 text-white border-2 border-white rounded-lg hover:bg-blue-600 flex items-center gap-2"
@@ -2232,7 +2299,8 @@ export default function ChatInterface({
                                 </div>
                               </div>
                             ) : (
-                              message.content && message.content.trim() && (
+                              message.content &&
+                              message.content.trim() && (
                                 <div>
                                   <p
                                     className="text-xl whitespace-pre-wrap"
@@ -2244,72 +2312,90 @@ export default function ChatInterface({
                                     )}
                                   </p>
                                   {/* Show (edited) indicator if message was edited */}
-                                  {message.updatedAt && message.createdAt && 
-                                   message.updatedAt.getTime() > message.createdAt.getTime() && (
-                                    <span className={`text-xs italic ml-2 ${
-                                      isCurrentUser 
-                                        ? 'text-blue-100' 
-                                        : 'text-gray-400 dark:text-gray-500'
-                                    }`}>
-                                      (edited)
-                                    </span>
-                                  )}
+                                  {message.updatedAt &&
+                                    message.createdAt &&
+                                    message.updatedAt.getTime() >
+                                      message.createdAt.getTime() && (
+                                      <span
+                                        className={`text-xs italic ml-2 ${
+                                          isCurrentUser
+                                            ? 'text-blue-100'
+                                            : 'text-gray-500'
+                                        }`}
+                                      >
+                                        (edited)
+                                      </span>
+                                    )}
                                 </div>
                               )
                             )}
 
                             {/* Message images */}
-                            {((editingMessageId === message.id && editedImages.length > 0) ||
-                              (editingMessageId !== message.id && message.metadata?.images && message.metadata.images.length > 0)) && (
-                                <div
-                                  className={`mt-2 grid gap-2 ${
-                                    (editingMessageId === message.id ? editedImages.length : message.metadata!.images!.length) === 1
-                                      ? 'grid-cols-1'
-                                      : (editingMessageId === message.id ? editedImages.length : message.metadata!.images!.length) === 2
-                                      ? 'grid-cols-2'
-                                      : 'grid-cols-3'
-                                  }`}
-                                >
-                                  {(editingMessageId === message.id ? editedImages : message.metadata!.images!).map((image, idx) => (
-                                    <div
-                                      key={idx}
-                                      className="relative aspect-square max-w-xs"
-                                    >
-                                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                                      <img
-                                        src={image.base64}
-                                        alt={`Image ${idx + 1}`}
-                                        className={`w-full h-full object-cover rounded-lg ${
-                                          editingMessageId === message.id 
-                                            ? '' 
-                                            : 'cursor-pointer hover:opacity-90'
-                                        } transition-opacity`}
+                            {((editingMessageId === message.id &&
+                              editedImages.length > 0) ||
+                              (editingMessageId !== message.id &&
+                                message.metadata?.images &&
+                                message.metadata.images.length > 0)) && (
+                              <div
+                                className={`mt-2 grid gap-2 ${
+                                  (editingMessageId === message.id
+                                    ? editedImages.length
+                                    : message.metadata!.images!.length) === 1
+                                    ? 'grid-cols-1'
+                                    : (editingMessageId === message.id
+                                        ? editedImages.length
+                                        : message.metadata!.images!.length) ===
+                                      2
+                                    ? 'grid-cols-2'
+                                    : 'grid-cols-3'
+                                }`}
+                              >
+                                {(editingMessageId === message.id
+                                  ? editedImages
+                                  : message.metadata!.images!
+                                ).map((image, idx) => (
+                                  <div
+                                    key={idx}
+                                    className="relative aspect-square max-w-xs"
+                                  >
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img
+                                      src={image.base64}
+                                      alt={`Image ${idx + 1}`}
+                                      className={`w-full h-full object-cover rounded-lg ${
+                                        editingMessageId === message.id
+                                          ? ''
+                                          : 'cursor-pointer hover:opacity-90'
+                                      } transition-opacity`}
+                                      onClick={() => {
+                                        // Don't open lightbox in edit mode
+                                        if (editingMessageId === message.id)
+                                          return
+
+                                        setLightboxState({
+                                          isOpen: true,
+                                          images: message.metadata!.images!,
+                                          currentIndex: idx,
+                                        })
+                                      }}
+                                    />
+                                    {/* X button in edit mode */}
+                                    {editingMessageId === message.id && (
+                                      <button
                                         onClick={() => {
-                                          // Don't open lightbox in edit mode
-                                          if (editingMessageId === message.id) return
-                                          
-                                          setLightboxState({
-                                            isOpen: true,
-                                            images: message.metadata!.images!,
-                                            currentIndex: idx,
-                                          })
+                                          setEditedImages((prev) =>
+                                            prev.filter((_, i) => i !== idx),
+                                          )
                                         }}
-                                      />
-                                      {/* X button in edit mode */}
-                                      {editingMessageId === message.id && (
-                                        <button
-                                          onClick={() => {
-                                            setEditedImages(prev => prev.filter((_, i) => i !== idx))
-                                          }}
-                                          className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 shadow-lg transition-colors"
-                                        >
-                                          <X size={16} />
-                                        </button>
-                                      )}
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
+                                        className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 shadow-lg transition-colors"
+                                      >
+                                        <X size={16} />
+                                      </button>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
 
                             {/* Link preview */}
                             {message.metadata?.links &&
@@ -2323,41 +2409,41 @@ export default function ChatInterface({
                                       rel="noopener noreferrer"
                                       className={`block rounded-lg border overflow-hidden hover:opacity-90 transition-opacity ${
                                         isCurrentUser
-                                          ? 'border-blue-400 bg-blue-50 dark:bg-blue-900/20'
-                                          : 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800'
+                                          ? 'border-blue-400 bg-blue-900/20'
+                                          : 'border-gray-600 bg-gray-800'
                                       }`}
                                     >
-                                    {link.image && (
-                                      <div className="w-full h-48 bg-gray-200 dark:bg-gray-700">
-                                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                                        <img
-                                          src={link.image}
-                                          alt={link.title || 'Link preview'}
-                                          className="w-full h-full object-cover"
-                                        />
+                                      {link.image && (
+                                        <div className="w-full h-48 bg-gray-700">
+                                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                                          <img
+                                            src={link.image}
+                                            alt={link.title || 'Link preview'}
+                                            className="w-full h-full object-cover"
+                                          />
+                                        </div>
+                                      )}
+                                      <div className="p-3">
+                                        {link.siteName && (
+                                          <p className="text-xs text-gray-400 mb-1">
+                                            {link.siteName}
+                                          </p>
+                                        )}
+                                        {link.title && (
+                                          <p className="font-semibold text-gray-900 text-white mb-1 line-clamp-2">
+                                            {link.title}
+                                          </p>
+                                        )}
+                                        {link.description && (
+                                          <p className="text-sm text-gray-300 line-clamp-2">
+                                            {link.description}
+                                          </p>
+                                        )}
                                       </div>
-                                    )}
-                                    <div className="p-3">
-                                      {link.siteName && (
-                                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                                          {link.siteName}
-                                        </p>
-                                      )}
-                                      {link.title && (
-                                        <p className="font-semibold text-gray-900 dark:text-white mb-1 line-clamp-2">
-                                          {link.title}
-                                        </p>
-                                      )}
-                                      {link.description && (
-                                        <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2">
-                                          {link.description}
-                                        </p>
-                                      )}
-                                    </div>
-                                  </a>
-                                ))}
-                              </div>
-                            )}
+                                    </a>
+                                  ))}
+                                </div>
+                              )}
                           </div>
 
                           {/* Moderation menu button - top-right corner inside bubble */}
@@ -2379,7 +2465,7 @@ export default function ChatInterface({
                               className={`absolute top-1/2 -translate-y-1/2 right-2 p-2.5 rounded-full transition-all ${
                                 isCurrentUser
                                   ? 'hover:bg-blue-600'
-                                  : 'hover:bg-gray-200 dark:hover:bg-gray-600'
+                                  : 'hover:bg-gray-200 hover:bg-gray-600'
                               } ${
                                 // Hide button when editing, show if menu is open OR on mobile if button visibility toggled
                                 editingMessageId === message.id
@@ -2393,9 +2479,7 @@ export default function ChatInterface({
                               <MoreVertical
                                 size={24}
                                 className={
-                                  isCurrentUser
-                                    ? 'text-white'
-                                    : 'text-gray-500 dark:text-gray-400'
+                                  isCurrentUser ? 'text-white' : 'text-gray-400'
                                 }
                               />
                             </button>
@@ -2403,7 +2487,7 @@ export default function ChatInterface({
 
                           {/* Moderation menu dropdown */}
                           {moderationMenuMessageId === message.id && (
-                            <div className="absolute top-10 right-2 z-30 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 min-w-[140px]">
+                            <div className="absolute top-10 right-2 z-30 bg-white bg-gray-800 rounded-lg shadow-lg border border-gray-700 min-w-[140px]">
                               <div className="py-2">
                                 {/* Edit - only for message owner */}
                                 {isCurrentUser && (
@@ -2412,11 +2496,15 @@ export default function ChatInterface({
                                       e.stopPropagation()
                                       setEditingMessageId(message.id)
                                       setEditedContent(message.content)
-                                      setEditedImages(message.metadata?.images || [])
-                                      setEditedLinks(message.metadata?.links || [])
+                                      setEditedImages(
+                                        message.metadata?.images || [],
+                                      )
+                                      setEditedLinks(
+                                        message.metadata?.links || [],
+                                      )
                                       setModerationMenuMessageId(null)
                                     }}
-                                    className="w-full px-4 py-3 text-left text-base text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3"
+                                    className="w-full px-4 py-3 text-left text-base text-gray-900 text-white hover:bg-gray-100 hover:bg-gray-700 flex items-center gap-3"
                                   >
                                     <Edit2 size={18} />
                                     Edit
@@ -2433,7 +2521,7 @@ export default function ChatInterface({
                                     })
                                     setModerationMenuMessageId(null)
                                   }}
-                                  className="w-full px-4 py-3 text-left text-base text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3"
+                                  className="w-full px-4 py-3 text-left text-base text-gray-900 text-white hover:bg-gray-100 hover:bg-gray-700 flex items-center gap-3"
                                 >
                                   <EyeOff size={18} />
                                   Hide
@@ -2450,7 +2538,7 @@ export default function ChatInterface({
                                       })
                                       setModerationMenuMessageId(null)
                                     }}
-                                    className="w-full px-4 py-3 text-left text-base text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3"
+                                    className="w-full px-4 py-3 text-left text-base text-red-400 hover:bg-gray-100 hover:bg-gray-700 flex items-center gap-3"
                                   >
                                     <Trash2 size={18} />
                                     Delete
@@ -2475,8 +2563,8 @@ export default function ChatInterface({
                                 }
                                 className={`flex items-center gap-1 px-2 py-1 rounded-full text-sm transition-all ${
                                   reaction.userIds.includes(currentUserId || '')
-                                    ? 'bg-blue-100 dark:bg-blue-900 border-2 border-blue-500'
-                                    : 'bg-gray-100 dark:bg-gray-700 border-2 border-transparent hover:border-gray-300 dark:hover:border-gray-600'
+                                    ? 'bg-blue-900 border-2 border-blue-500'
+                                    : 'bg-gray-700 border-2 border-transparent hover:border-gray-300 hover:border-gray-600'
                                 }`}
                                 title={reaction.users
                                   .map((u) => u.name)
@@ -2500,7 +2588,7 @@ export default function ChatInterface({
                             : 'opacity-0 translate-x-0 pointer-events-none'
                         }`}
                       >
-                        <span className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">
+                        <span className="text-xs text-gray-500 whitespace-nowrap">
                           {formatTime(message.timestamp)}
                         </span>
                       </div>
@@ -2516,7 +2604,7 @@ export default function ChatInterface({
       </div>
 
       {/* Message Input */}
-      <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+      <div className="p-4 border-t border-gray-700 bg-white bg-gray-800">
         {/* Image previews - dynamic grid layout */}
         {pendingImages.length > 0 && (
           <div
@@ -2539,7 +2627,7 @@ export default function ChatInterface({
                 />
                 <button
                   onClick={() => handleRemoveImage(index)}
-                  className="absolute -top-1 -right-1 w-5 h-5 bg-gray-600 dark:bg-gray-500 text-white rounded-full flex items-center justify-center hover:bg-gray-700 dark:hover:bg-gray-600 shadow-md"
+                  className="absolute -top-1 -right-1 w-5 h-5 bg-gray-500 text-white rounded-full flex items-center justify-center hover:bg-gray-700 hover:bg-gray-600 shadow-md"
                 >
                   <X size={12} />
                 </button>
@@ -2565,10 +2653,10 @@ export default function ChatInterface({
             type="button"
             onClick={() => imageInputRef.current?.click()}
             disabled={isProcessingImage}
-            className="w-12 h-12 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50 relative"
+            className="w-12 h-12 bg-gray-700 text-gray-300 rounded-full flex items-center justify-center hover:bg-gray-200 hover:bg-gray-600 transition-colors disabled:opacity-50 relative"
           >
             {isProcessingImage ? (
-              <div className="w-5 h-5 border-2 border-gray-600 dark:border-gray-300 border-t-transparent rounded-full animate-spin" />
+              <div className="w-5 h-5 border-2 border-gray-300 border-t-transparent rounded-full animate-spin" />
             ) : (
               <ImagePlus size={20} />
             )}
@@ -2582,7 +2670,7 @@ export default function ChatInterface({
               onKeyPress={handleKeyPress}
               placeholder="Type a message..."
               rows={1}
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-2xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              className="w-full px-4 py-3 border border-gray-600 rounded-2xl bg-white bg-gray-700 text-gray-900 text-white placeholder-gray-500 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
               style={{ minHeight: '48px', maxHeight: '120px' }}
             />
           </div>

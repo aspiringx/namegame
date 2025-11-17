@@ -133,11 +133,7 @@ const GamesView: React.FC<GamesViewProps> = ({
   }
 
   if (members.length === 0) {
-    return (
-      <div className="py-8 text-center text-gray-500 dark:text-gray-400">
-        Loading quiz...
-      </div>
-    )
+    return <div className="py-8 text-center text-gray-400">Loading quiz...</div>
   }
 
   if (eligibleMembers.length === 0) {
@@ -150,11 +146,7 @@ const GamesView: React.FC<GamesViewProps> = ({
   }
 
   if (!question) {
-    return (
-      <div className="py-8 text-center text-gray-500 dark:text-gray-400">
-        Loading quiz...
-      </div>
-    )
+    return <div className="py-8 text-center text-gray-400">Loading quiz...</div>
   }
 
   return (
@@ -180,7 +172,7 @@ const GamesView: React.FC<GamesViewProps> = ({
           <p className="mb-4">
             You&apos;ve remembered {modalPerson?.user.name} three times!
           </p>
-          <div className="mb-8 space-y-1 text-sm text-gray-600 dark:text-gray-400">
+          <div className="mb-8 space-y-1 text-sm text-gray-400">
             <p>
               Keep at It: Keep {modalPerson?.user.firstName} here to remember.
             </p>
@@ -192,7 +184,7 @@ const GamesView: React.FC<GamesViewProps> = ({
           <div className="flex justify-end space-x-4">
             <Button
               onClick={handleKeepAtIt}
-              className="bg-gray-200 text-gray-800 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+              className="bg-gray-200 text-gray-800 hover:bg-gray-700 text-gray-200 hover:bg-gray-600"
             >
               Keep at It
             </Button>

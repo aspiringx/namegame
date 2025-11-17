@@ -33,8 +33,9 @@ export default function MembersClient({
     if (!searchTerm) return initialMembers
 
     return initialMembers.filter((member) => {
-      const name =
-        `${member.user.firstName || ''} ${member.user.lastName || ''}`.toLowerCase()
+      const name = `${member.user.firstName || ''} ${
+        member.user.lastName || ''
+      }`.toLowerCase()
       const email = (member.user.email || '').toLowerCase()
       const query = searchTerm.toLowerCase()
 
@@ -63,7 +64,7 @@ export default function MembersClient({
         <MembersTable groupUsers={paginatedMembers} allRoles={allRoles} />
       </div>
       <div className="mt-4 flex items-center justify-between">
-        <span className="text-sm text-gray-700 dark:text-gray-400">
+        <span className="text-sm text-gray-400">
           Page {currentPage} of {totalPages}
         </span>
         <div className="flex items-center gap-2">

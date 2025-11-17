@@ -34,7 +34,7 @@ function SubmitButton() {
     <button
       type="submit"
       disabled={pending}
-      className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none disabled:bg-indigo-400 dark:disabled:bg-indigo-800"
+      className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none disabled:bg-indigo-400 disabled:bg-indigo-800"
     >
       {pending ? 'Creating...' : 'Create Group'}
     </button>
@@ -93,8 +93,9 @@ export default function CreateGroupForm({
       }
 
       const compressedFile = await imageCompression(file, options)
-      const base64String =
-        await imageCompression.getDataUrlFromFile(compressedFile)
+      const base64String = await imageCompression.getDataUrlFromFile(
+        compressedFile,
+      )
       const sizeInBytes = new Blob([base64String]).size
 
       if (sizeInBytes > 1024 * 1024) {
@@ -124,7 +125,7 @@ export default function CreateGroupForm({
       <div>
         <label
           htmlFor="name"
-          className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          className="block text-sm font-medium text-gray-300"
         >
           Group Name <span className="text-red-500">*</span>
         </label>
@@ -133,7 +134,7 @@ export default function CreateGroupForm({
           id="name"
           name="name"
           required
-          className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
+          className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm border-gray-600 bg-gray-800 text-white placeholder-gray-400"
           defaultValue={state.values?.name}
         />
         {state.errors?.name && (
@@ -144,7 +145,7 @@ export default function CreateGroupForm({
       <div>
         <label
           htmlFor="slug"
-          className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          className="block text-sm font-medium text-gray-300"
         >
           Slug <span className="text-red-500">*</span>
         </label>
@@ -153,7 +154,7 @@ export default function CreateGroupForm({
           id="slug"
           name="slug"
           required
-          className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
+          className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm border-gray-600 bg-gray-800 text-white placeholder-gray-400"
           defaultValue={state.values?.slug}
         />
         {state.errors?.slug && (
@@ -164,7 +165,7 @@ export default function CreateGroupForm({
       <div>
         <label
           htmlFor="groupTypeId"
-          className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          className="block text-sm font-medium text-gray-300"
         >
           Group Type <span className="text-red-500">*</span>
         </label>
@@ -195,7 +196,7 @@ export default function CreateGroupForm({
       <div>
         <label
           htmlFor="description"
-          className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          className="block text-sm font-medium text-gray-300"
         >
           Description
         </label>
@@ -203,7 +204,7 @@ export default function CreateGroupForm({
           id="description"
           name="description"
           rows={3}
-          className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
+          className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm border-gray-600 bg-gray-800 text-white placeholder-gray-400"
           defaultValue={state.values?.description}
         />
         {state.errors?.description && (
@@ -216,13 +217,13 @@ export default function CreateGroupForm({
       <div>
         <label
           htmlFor="logo-upload"
-          className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          className="block text-sm font-medium text-gray-300"
         >
           Logo
         </label>
         <div className="mt-1 space-y-3">
           <div className="justify-left flex">
-            <span className="inline-block h-30 w-30 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700">
+            <span className="inline-block h-30 w-30 overflow-hidden rounded-full bg-gray-700">
               <Image
                 src={logoBase64 || '/images/default-avatar.png'}
                 alt="Group logo preview"
@@ -238,7 +239,7 @@ export default function CreateGroupForm({
             name="logo-upload"
             accept="image/*"
             onChange={handleLogoChange}
-            className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm leading-4 font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 dark:focus:ring-offset-gray-800"
+            className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm leading-4 font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none border-gray-600 bg-gray-700 text-gray-300 hover:bg-gray-600 focus:ring-offset-gray-800"
           />
         </div>
         {logoError && <p className="mt-1 text-sm text-red-500">{logoError}</p>}
@@ -247,7 +248,7 @@ export default function CreateGroupForm({
       <div>
         <label
           htmlFor="address"
-          className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          className="block text-sm font-medium text-gray-300"
         >
           Address
         </label>
@@ -255,7 +256,7 @@ export default function CreateGroupForm({
           type="text"
           id="address"
           name="address"
-          className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
+          className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm border-gray-600 bg-gray-800 text-white placeholder-gray-400"
           defaultValue={state.values?.address}
         />
         {state.errors?.address && (
@@ -266,7 +267,7 @@ export default function CreateGroupForm({
       <div>
         <label
           htmlFor="phone"
-          className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          className="block text-sm font-medium text-gray-300"
         >
           Phone
         </label>
@@ -274,7 +275,7 @@ export default function CreateGroupForm({
           type="text"
           id="phone"
           name="phone"
-          className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
+          className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm border-gray-600 bg-gray-800 text-white placeholder-gray-400"
           defaultValue={state.values?.phone}
         />
         {state.errors?.phone && (

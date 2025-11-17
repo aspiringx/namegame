@@ -17,20 +17,20 @@ const widthClasses = {
   sm: 'w-full md:w-[300px]',
   md: 'w-full md:w-[400px]',
   lg: 'w-full md:w-[600px]',
-  full: 'w-full'
+  full: 'w-full',
 }
 
 const MIN_WIDTH = 400
 const MAX_WIDTH_VW = 40
 
-export default function Drawer({ 
-  isOpen, 
-  onClose, 
-  children, 
+export default function Drawer({
+  isOpen,
+  onClose,
+  children,
   title,
   width = 'md',
   resizable = false,
-  storageKey = 'drawer-width'
+  storageKey = 'drawer-width',
 }: DrawerProps) {
   const [drawerWidth, setDrawerWidth] = useState<number | null>(null)
   const [isResizing, setIsResizing] = useState(false)
@@ -65,7 +65,10 @@ export default function Drawer({
 
     const handleMouseMove = (e: MouseEvent) => {
       const maxWidth = window.innerWidth * (MAX_WIDTH_VW / 100)
-      const newWidth = Math.max(MIN_WIDTH, Math.min(window.innerWidth - e.clientX, maxWidth))
+      const newWidth = Math.max(
+        MIN_WIDTH,
+        Math.min(window.innerWidth - e.clientX, maxWidth),
+      )
       setDrawerWidth(newWidth)
     }
 
@@ -88,25 +91,29 @@ export default function Drawer({
   if (!isOpen) return null
 
   // Only apply custom width on desktop, let mobile use full width
-  const drawerStyle = isDesktop && drawerWidth ? { width: `${drawerWidth}px` } : undefined
+  const drawerStyle =
+    isDesktop && drawerWidth ? { width: `${drawerWidth}px` } : undefined
 
   return (
     <>
       {/* Backdrop - only on mobile, allows interaction on desktop */}
-      <div 
-        className="fixed inset-0 bg-black/50 z-40 md:bg-transparent md:pointer-events-none transition-opacity"
-      />
+      <div className="fixed inset-0 bg-black/50 z-40 md:bg-transparent md:pointer-events-none transition-opacity" />
 
       {/* Drawer - slides in from right */}
-      <div 
+      <div
         ref={drawerRef}
         data-chat-drawer
-        className={`fixed top-0 md:top-[64px] right-0 h-full md:h-[calc(100vh-64px)] z-50 bg-white dark:bg-gray-800 shadow-2xl ${!drawerWidth ? widthClasses[width] : 'w-full'} flex flex-col ${isResizing || swipeOffset > 0 ? '' : 'transition-transform duration-300'} ${
-          isOpen ? 'translate-x-0' : 'translate-x-full'
-        }`}
+        className={`fixed top-0 md:top-[64px] right-0 h-full md:h-[calc(100vh-64px)] z-50 bg-white bg-gray-800 shadow-2xl ${
+          !drawerWidth ? widthClasses[width] : 'w-full'
+        } flex flex-col ${
+          isResizing || swipeOffset > 0
+            ? ''
+            : 'transition-transform duration-300'
+        } ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
         style={{
           ...drawerStyle,
-          transform: swipeOffset > 0 ? `translateX(${swipeOffset}px)` : undefined,
+          transform:
+            swipeOffset > 0 ? `translateX(${swipeOffset}px)` : undefined,
         }}
         onTouchStart={(e) => {
           if (!isDesktop && isOpen) {
@@ -117,7 +124,7 @@ export default function Drawer({
           if (!isDesktop && swipeStartX !== null) {
             const currentX = e.touches[0].clientX
             const diff = currentX - swipeStartX
-            
+
             // Only allow swiping right (positive diff)
             if (diff > 0) {
               setSwipeOffset(diff)
@@ -148,11 +155,13 @@ export default function Drawer({
 
         {/* Header */}
         {title && (
-          <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h2>
+          <div className="flex items-center justify-between p-4 border-b border-gray-700">
+            <h2 className="text-lg font-semibold text-gray-900 text-white">
+              {title}
+            </h2>
             <button
               onClick={onClose}
-              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white"
+              className="text-gray-500 hover:text-gray-400 hover:text-white"
             >
               <X size={24} />
             </button>

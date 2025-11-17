@@ -9,7 +9,7 @@ function AnonymousHeader() {
       <div className="container mx-auto flex h-full items-center justify-between px-5 py-4">
         <Link
           href="/"
-          className="flex items-center text-xl font-bold text-gray-600 dark:text-gray-200"
+          className="flex items-center text-xl font-bold text-gray-200"
         >
           <Image
             src="/images/logos/relationstar_icon_purple-star-256.png"

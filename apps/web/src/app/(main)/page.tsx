@@ -2,14 +2,10 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { useState } from 'react'
 
 export default function Home() {
-  const [isCommunityOpen, setIsCommunityOpen] = useState(false)
-  const [isFamilyOpen, setIsFamilyOpen] = useState(false)
-
   return (
-    <div className="font-sans text-gray-800 dark:text-gray-200">
+    <div className="font-sans text-gray-200">
       <div className="container mx-auto max-w-3xl p-8 pt-4">
         <header className="mt-2 mb-8 text-center">
           <Image
@@ -19,21 +15,22 @@ export default function Home() {
             height={134}
             className="mx-auto -mt-6 w-[200px] h-[134px]"
           />
-          <p className="mx-auto max-w-[240px] text-xl text-gray-600 italic sm:max-w-[500px] dark:text-gray-400 mt-1">
+          <p className="mx-auto max-w-[240px] text-xl text-gray-400 italic sm:max-w-[500px] mt-1">
             Your universe at the speed of love
           </p>
         </header>
 
         <section className="space-y-4 text-lg leading-relaxed">
-          <p className="text-center italic text-sm text-gray-500">
+          <p className="text-center italic text-sm text-gray-400">
             NameGame is now Relation Star.
           </p>
           <div className="flex flex-col w-full sm:mx-auto text-center space-y-4">
-            <h2 className="mb-6 text-center text-3xl font-bold">
+            <h2 className="mb-2 text-center text-3xl font-bold">
               What is Relation Star?
             </h2>
-            <p className="text-left mt-4">
-              A universe you can navigate at the speed of love.
+            <p className="text-left">
+              You're a star in a universe of stars. Navigate it at the speed of
+              love.
             </p>
             <Link
               href="/speed-of-love"
@@ -86,14 +83,14 @@ export default function Home() {
             <li>
               <Link
                 href="/signup"
-                className="text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
+                className="text-indigo-400 hover:text-indigo-300"
               >
                 Sign up
               </Link>{' '}
               or{' '}
               <Link
                 href="/login"
-                className="text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
+                className="text-indigo-400 hover:text-indigo-300"
               >
                 login
               </Link>

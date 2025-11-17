@@ -22,9 +22,9 @@ export default function RelationshipSlider({
   onChange,
 }: RelationshipSliderProps) {
   return (
-    <div className="pb-6 border-b border-gray-200 dark:border-gray-700 last:border-0 last:pb-0">
+    <div className="pb-6 border-b border-gray-700 last:border-0 last:pb-0">
       <div className="mb-2 flex items-center gap-3">
-        <label className="flex-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+        <label className="flex-1 text-sm font-medium text-gray-300">
           {label}
         </label>
         <Tooltip delayDuration={0} disableHoverableContent={false}>
@@ -35,7 +35,7 @@ export default function RelationshipSlider({
                 e.preventDefault()
                 e.stopPropagation()
               }}
-              className="inline-flex items-center justify-center rounded-full w-5 h-5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex-shrink-0"
+              className="inline-flex items-center justify-center rounded-full w-5 h-5 text-gray-500 hover:text-gray-400 hover:text-gray-200 hover:bg-gray-100 hover:bg-gray-700 transition-colors flex-shrink-0"
               aria-label="More information"
             >
               <svg
@@ -56,7 +56,7 @@ export default function RelationshipSlider({
             {hint}
           </TooltipContent>
         </Tooltip>
-        <span className="w-6 text-right text-lg font-bold text-indigo-700 dark:text-indigo-300 flex-shrink-0">
+        <span className="w-6 text-right text-lg font-bold text-indigo-300 flex-shrink-0">
           {value}
         </span>
       </div>
@@ -73,7 +73,7 @@ export default function RelationshipSlider({
           }%, #e5e7eb ${value * 10}%, #e5e7eb 100%)`,
         }}
       />
-      <div className="mt-1 flex justify-between text-xs text-gray-500 dark:text-gray-400">
+      <div className="mt-1 flex justify-between text-xs text-gray-400">
         <span>0 - {minLabel}</span>
         <span>10 - {maxLabel}</span>
       </div>

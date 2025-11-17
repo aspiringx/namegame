@@ -214,7 +214,9 @@ export default function UserProfileNextSteps({
       id: 'complete-profile',
       isComplete: false,
       title: 'Complete Your Profile',
-      description: `Add: ${incompleteRequired.map((s) => s.title).join(', ')} to unlock full features.`,
+      description: `Add: ${incompleteRequired
+        .map((s) => s.title)
+        .join(', ')} to unlock full features.`,
       href: incompleteRequired[0].href,
     })
   }
@@ -228,10 +230,7 @@ export default function UserProfileNextSteps({
       description: (
         <>
           <p>
-            <ShieldCheck
-              size={16}
-              className="inline-block text-green-500 dark:text-green-400"
-            />{' '}
+            <ShieldCheck size={16} className="inline-block text-green-400" />{' '}
             Click the email verification link we sent to{' '}
             <strong>{user.email}</strong>. Check spam/junk if you don&apos;t see
             it.
@@ -300,9 +299,10 @@ export default function UserProfileNextSteps({
       id: 'enable-notifications',
       isComplete: false,
       title: 'Enable Notifications',
-      description: error?.message === 'Service worker not ready.' 
-        ? 'Loading notification system... (this takes a few seconds on first load)'
-        : 'Push notifications are the easiest way for your groups to communicate with you.',
+      description:
+        error?.message === 'Service worker not ready.'
+          ? 'Loading notification system... (this takes a few seconds on first load)'
+          : 'Push notifications are the easiest way for your groups to communicate with you.',
       action: subscribe,
       actionLabel: 'Enable Notifications',
     })
@@ -343,9 +343,7 @@ export default function UserProfileNextSteps({
   return (
     <div
       className={`overflow-hidden rounded-md shadow sm:rounded-md ${
-        isCollapsed
-          ? 'bg-yellow-50 dark:bg-yellow-900/30'
-          : 'bg-white dark:bg-gray-800'
+        isCollapsed ? 'bg-yellow-900/30' : 'bg-white bg-gray-800'
       }`}
     >
       <div className="p-4 sm:p-6">
@@ -360,8 +358,8 @@ export default function UserProfileNextSteps({
               <Badge
                 className={
                   isCollapsed
-                    ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100'
-                    : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                    ? 'bg-yellow-100 text-yellow-800 bg-yellow-800 text-yellow-100'
+                    : 'bg-gray-100 text-gray-800 bg-gray-700 text-gray-300'
                 }
               >
                 {nextStepsCount}
@@ -370,11 +368,15 @@ export default function UserProfileNextSteps({
           </h3>
           {isCollapsed ? (
             <ChevronDown
-              className={`h-5 w-5 ${isCollapsed ? 'text-yellow-400' : 'text-gray-400'}`}
+              className={`h-5 w-5 ${
+                isCollapsed ? 'text-yellow-400' : 'text-gray-400'
+              }`}
             />
           ) : (
             <ChevronUp
-              className={`h-5 w-5 ${isCollapsed ? 'text-yellow-400' : 'text-gray-400'}`}
+              className={`h-5 w-5 ${
+                isCollapsed ? 'text-yellow-400' : 'text-gray-400'
+              }`}
             />
           )}
         </button>
@@ -388,17 +390,17 @@ export default function UserProfileNextSteps({
                     <div className="flex items-start">
                       <div className="flex-shrink-0">{getIcon(step.id)}</div>
                       <div className="ml-4">
-                        <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                        <h3 className="text-sm font-semibold text-gray-200">
                           {step.title}
                         </h3>
-                        <div className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                        <div className="mt-1 text-sm text-gray-400">
                           {step.description}
                         </div>
                         {step.href && (
                           <Link
                             href={step.href}
                             onClick={handleSmoothScroll}
-                            className="mt-2 inline-flex items-center gap-x-1 text-sm font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
+                            className="mt-2 inline-flex items-center gap-x-1 text-sm font-medium text-indigo-600 hover:text-indigo-400 hover:text-indigo-300"
                           >
                             Go to section <ChevronRight className="h-4 w-4" />
                           </Link>
@@ -407,14 +409,14 @@ export default function UserProfileNextSteps({
                           <div className="mt-2 flex items-center gap-x-2">
                             <button
                               onClick={step.action}
-                              className="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none dark:focus:ring-offset-gray-800"
+                              className="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none focus:ring-offset-gray-800"
                             >
                               {step.actionLabel}
                             </button>
                             {step.dismiss && step.dismissLabel && (
                               <button
                                 onClick={step.dismiss}
-                                className="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 dark:focus:ring-offset-gray-800"
+                                className="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none border-gray-600 bg-gray-700 text-gray-200 hover:bg-gray-600 focus:ring-offset-gray-800"
                               >
                                 {step.dismissLabel}
                               </button>
@@ -422,7 +424,7 @@ export default function UserProfileNextSteps({
                           </div>
                         )}
                         {error && step.id === 'enable-notifications' && (
-                          <div className="mt-2 text-sm font-semibold text-red-600 dark:text-red-400">
+                          <div className="mt-2 text-sm font-semibold text-red-400">
                             {error.message}
                           </div>
                         )}
