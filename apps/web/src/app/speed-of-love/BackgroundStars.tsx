@@ -66,7 +66,7 @@ export default function BackgroundStars({
       }
     }
     return { positions: pos, starColors: cols }
-  }, []) // Empty deps - generate once and never change
+  }, [radius, responsiveCount]) // Generate based on radius and count
 
   // Generate random phase offsets and indices for twinkling stars
   const twinkleData = useMemo(() => {
@@ -89,7 +89,7 @@ export default function BackgroundStars({
     }
 
     return { indices, phases, baseBrightness }
-  }, [])
+  }, [responsiveCount, starColors])
 
   // Create circular texture for stars - keep center bright
   const starTexture = useMemo(() => {
