@@ -1,9 +1,13 @@
 # Chart Your Stars - 3D Sphere Upgrade Plan
+
 **Date:** January 27, 2025  
 **Status:** Planning
 
 ## Overview
-Transform the Chart Your Stars demo from flat 2D disks to immersive 3D spheres with smooth camera transitions. Goal: Make it feel magical, majestic, and professional - like flying through space in a spaceship.
+
+Transform the Chart Your Stars demo from flat 2D disks to immersive 3D spheres
+with smooth camera transitions. Goal: Make it feel magical, majestic, and
+professional - like flying through space in a spaceship.
 
 ---
 
@@ -11,58 +15,81 @@ Transform the Chart Your Stars demo from flat 2D disks to immersive 3D spheres w
 
 ### Core Concepts
 
-**Star:** React component that renders a person's photo as a celestial sphere in 3D space. Each star represents one person from MOCK_PEOPLE.
+**Star:** React component that renders a person's photo as a celestial sphere in
+3D space. Each star represents one person from MOCK_PEOPLE.
 
 **StarData:** Object containing all state for a single star, keyed by person.id:
+
 - `person`: The person object from MOCK_PEOPLE
 - `index`: Position in MOCK_PEOPLE array (for ordering)
 - `initialPosition`: [x, y, z] coordinates at journey start (random, far away)
-- `constellationPosition`: [x, y, z] coordinates after placement (null until placed)
-- `placement`: Which ring the star belongs to ('inner'=Close, 'close'=Near, 'outer'=Distant, null=unplaced)
+- `constellationPosition`: [x, y, z] coordinates after placement (null until
+  placed)
+- `placement`: Which ring the star belongs to ('inner'=Close, 'close'=Near,
+  'outer'=Far, null=unplaced)
 - `visited`: Boolean - has user visited this star yet
 
-**Placement:** The ring assignment for a star (Close/Near/Distant), stored as 'inner'/'close'/'outer'. Determines constellation position radius.
+**Placement:** The ring assignment for a star (Close/Near/Far), stored as
+'inner'/'close'/'outer'. Determines constellation position radius.
 
-**Journey:** The sequence of visiting each star in MOCK_PEOPLE order, placing them in the constellation.
+**Journey:** The sequence of visiting each star in MOCK_PEOPLE order, placing
+them in the constellation.
 
-**Constellation View:** When `useConstellationPositions` is true, stars render at their `constellationPosition` instead of `initialPosition`.
+**Constellation View:** When `useConstellationPositions` is true, stars render
+at their `constellationPosition` instead of `initialPosition`.
 
 ### Critical: These Factors Work Together
-**NEVER adjust just one factor in isolation.** Changes to any of these affect how users perceive star size, position, and distance. Always consider the full system when making adjustments.
+
+**NEVER adjust just one factor in isolation.** Changes to any of these affect
+how users perceive star size, position, and distance. Always consider the full
+system when making adjustments.
 
 ### The HUD (Heads-Up Display)
-- **Definition:** The rectangle bounded by the four green corner markers visible on screen
+
+- **Definition:** The rectangle bounded by the four green corner markers visible
+  on screen
 - **Center:** The crosshairs in the middle of the HUD rectangle
-- **Important:** "Centering in HUD" means centering in this rectangle, NOT just the viewport
+- **Important:** "Centering in HUD" means centering in this rectangle, NOT just
+  the viewport
 - **Current state:** HUD center = viewport center (aligned for simplicity)
 
 ### Coordinate System & Directions
+
 - **Three.js coordinates:**
   - X-axis: left (-) to right (+)
   - Y-axis: down (-) to up (+)
   - Z-axis: into screen (-) to out of screen (+)
 - **Camera movement effects:**
-  - Subtracting from `camera.position.y` moves camera DOWN → star appears HIGHER on screen
+  - Subtracting from `camera.position.y` moves camera DOWN → star appears HIGHER
+    on screen
   - Adding to `camera.position.y` moves camera UP → star appears LOWER on screen
-  - Subtracting from `camera.position.z` moves camera CLOSER → star appears LARGER
+  - Subtracting from `camera.position.z` moves camera CLOSER → star appears
+    LARGER
   - Adding to `camera.position.z` moves camera FARTHER → star appears SMALLER
-- **Language precision:** Always specify "camera moves down" vs "star appears higher" to avoid confusion
+- **Language precision:** Always specify "camera moves down" vs "star appears
+  higher" to avoid confusion
 
 ### Factors Affecting Star Appearance (Must Consider Together)
-1. **Star size (`baseSize`)** - The 3D object's actual size in world units (currently 3.0)
-2. **Camera distance (`viewDistance`)** - How far camera is from star (currently 6.5)
-3. **Camera FOV (field of view)** - Set at canvas level, affects perspective (60°)
+
+1. **Star size (`baseSize`)** - The 3D object's actual size in world units
+   (currently 3.0)
+2. **Camera distance (`viewDistance`)** - How far camera is from star (currently
+   6.5)
+3. **Camera FOV (field of view)** - Set at canvas level, affects perspective
+   (60°)
 4. **Camera position:**
    - X: horizontal alignment (currently `targetPos.x`)
    - Y: vertical alignment (currently `targetPos.y - 2`)
    - Z: depth (currently `targetPos.z + 6.5`)
-5. **Camera rotation/angle** - Which way camera is looking (currently `lookAt(targetPos)`)
+5. **Camera rotation/angle** - Which way camera is looking (currently
+   `lookAt(targetPos)`)
 6. **Star opacity** - Affects visibility and perceived distance
 7. **Star glow/halo size** - Affects perceived size and brightness
 8. **Transition progress** - Affects multiple properties during animation
 9. **Distance from camera** - Calculated dynamically, affects LOD and rendering
 
 ### Depth Perception Factors
+
 - **Size scaling:** Distant objects appear smaller (perspective)
 - **Opacity:** Distant objects appear dimmer
 - **Glow intensity:** Closer objects have brighter halos
@@ -70,6 +97,7 @@ Transform the Chart Your Stars demo from flat 2D disks to immersive 3D spheres w
 - **Layering:** Z-position affects render order and occlusion
 
 ### Common Mistakes to Avoid
+
 1. ❌ Adjusting star size without considering camera distance
 2. ❌ Changing camera position without checking HUD alignment
 3. ❌ Modifying one opacity value without checking related opacity calculations
@@ -83,13 +111,16 @@ Transform the Chart Your Stars demo from flat 2D disks to immersive 3D spheres w
 ### If Windsurf Crashes or You Need to Restart
 
 **User Actions (do these first):**
-1. ✅ Open this plan doc: `/docs/plans/2025-10-27-chart-your-stars-3d-upgrade.md`
+
+1. ✅ Open this plan doc:
+   `/docs/plans/2025-10-27-chart-your-stars-3d-upgrade.md`
 2. ✅ Share the "Progress Log" section showing what's been completed
 3. ✅ Run: `git log --oneline -10` to see recent commits
 4. ✅ Run: `git diff` to see any uncommitted changes
 5. ✅ If there were specific issues, describe them briefly
 
 **Cascade Actions (I will do these):**
+
 1. 🤖 Read this entire plan document first
 2. 🤖 Review the "Terminology and Star Perception Factors" section
 3. 🤖 Check my memories for Chart Your Stars context
@@ -99,6 +130,7 @@ Transform the Chart Your Stars demo from flat 2D disks to immersive 3D spheres w
 ### Quick Context Recovery Template
 
 **User says:**
+
 ```
 Context recovery needed:
 - Last working on: [Phase/task from plan doc]
@@ -108,6 +140,7 @@ Context recovery needed:
 ```
 
 **I will respond:**
+
 ```
 Context recovered. I've reviewed:
 ✅ Plan doc progress
@@ -120,6 +153,7 @@ Confirm before I proceed?
 ```
 
 ### Key Documents to Reference
+
 1. **This plan:** `/docs/plans/2025-10-27-chart-your-stars-3d-upgrade.md`
 2. **Main files:**
    - `/apps/web/src/app/chart-your-stars-demo/StarField.tsx`
@@ -127,6 +161,7 @@ Confirm before I proceed?
 3. **Memory tag:** Search my memories for `chart_your_stars`
 
 ### Git Commands for Context
+
 ```bash
 # See recent commits
 git log --oneline -10
@@ -145,6 +180,7 @@ git log --oneline --graph chart-your-stars-demo
 ```
 
 ### What NOT to Do After Restart
+
 - ❌ Don't start making changes immediately
 - ❌ Don't assume I remember the current state
 - ❌ Don't skip reviewing the plan doc
@@ -153,9 +189,11 @@ git log --oneline --graph chart-your-stars-demo
 ---
 
 ## Phase 1: Fix Critical Bugs (Do First)
+
 **Goal:** Make current experience smooth and professional
 
 ### 1A. Smooth Camera Transitions Between Stars 🔄
+
 - **Problem:** Stars disappear/reappear, camera jumps
 - **Fix:** Implement smooth camera flight path from star A → star B
   - Keep both stars visible during transition
@@ -166,26 +204,33 @@ git log --oneline --graph chart-your-stars-demo
 - **Implementation:**
   - ✅ Added 'takeoff' phase to journeyPhase state
   - ✅ Added takeoff refs (takeoffProgress, takeoffStartPos, previousStarPos)
-  - ✅ Implemented takeoff animation in useFrame (pulls camera back 15 units along Z-axis)
+  - ✅ Implemented takeoff animation in useFrame (pulls camera back 15 units
+    along Z-axis)
   - ✅ Added onTakeoffComplete callback to transition from takeoff → flying
-  - ✅ Modified handleProceedAfterPlacement to initiate takeoff instead of direct flying
-  - ⏳ Need to test: Camera should pull back from star A, then fly smoothly to star B
+  - ✅ Modified handleProceedAfterPlacement to initiate takeoff instead of
+    direct flying
+  - ⏳ Need to test: Camera should pull back from star A, then fly smoothly to
+    star B
 
 ### 1B. Fix Star Scaling/Opacity During UI Interaction ✅
+
 - **Problem:** Star becomes bigger/transparent when clicking buttons
 - **Fix:** Lock star appearance when "arrived" state is active
   - Disable transition animations during button interaction
   - Only animate during approach/departure phases
 - **Status:** Complete
 - **Implementation:**
-  - ✅ Added locked appearance refs (lockedSize, lockedOpacity, lockedTransitionProgress)
+  - ✅ Added locked appearance refs (lockedSize, lockedOpacity,
+    lockedTransitionProgress)
   - ✅ Lock values when `isTarget && (journeyPhase === 'arrived' || 'placed')`
   - ✅ Reset locks when transitioning out of arrived/placed phase
-  - ✅ Star now maintains consistent size, opacity, and transition state during UI interaction
+  - ✅ Star now maintains consistent size, opacity, and transition state during
+    UI interaction
 
 ### 1C. Improve Constellation Visibility on Mobile ✅
+
 - **Problem:** 15 constellation stars hard to distinguish from background
-- **Fix:** 
+- **Fix:**
   - Increase constellation star brightness (0.9+ opacity vs 0.3 for background)
   - Larger base size for constellation stars
   - Optional: subtle pulsing glow animation
@@ -193,31 +238,42 @@ git log --oneline --graph chart-your-stars-demo
 - **Implementation:**
   - ✅ Boosted opacity during intro phase: 0.6-0.9 (was 0.15-0.7)
   - ✅ Increased size during intro phase: 2.0-3.5 (was 1.5-3.0)
-  - ✅ Stars automatically dim/shrink when journey starts to focus on target star
+  - ✅ Stars automatically dim/shrink when journey starts to focus on target
+    star
 
 ---
 
 ## Phase 2: Convert to 3D Spheres
+
 **Goal:** Transform flat disks into 3D celestial spheres
 
 ### 2A. Hybrid 3D Effect ✅
-- ~~Change `circleGeometry` → `sphereGeometry`~~ **Decision: Keep flat circles with 3D shading**
+
+- ~~Change `circleGeometry` → `sphereGeometry`~~ **Decision: Keep flat circles
+  with 3D shading**
 - Keep texture mapping working with aspect ratio preservation
 - Maintain billboard behavior (face always points to camera)
 - **Status:** Complete
-- **Decision:** Hybrid approach - flat circles with sphere-like shading when distant
+- **Decision:** Hybrid approach - flat circles with sphere-like shading when
+  distant
 - **Implementation:**
   - ✅ Kept circle geometry for performance and image quality
-  - ✅ Added sphere-like shading shader to star core (radial gradient + lighting)
+  - ✅ Added sphere-like shading shader to star core (radial gradient +
+    lighting)
   - ✅ 3D effect visible when distant, fades as images appear
   - ✅ Improved shader to preserve aspect ratio (no stretching)
   - ✅ Billboard behavior maintained through existing lookAt logic
   - ✅ Smooth transition from "3D sphere" to flat image
-- **Why hybrid approach:** True spheres caused image quality issues. Flat circles with radial gradient shading provide the illusion of 3D depth when distant, while maintaining clear, high-quality images when close. Best of both worlds with better performance.
+- **Why hybrid approach:** True spheres caused image quality issues. Flat
+  circles with radial gradient shading provide the illusion of 3D depth when
+  distant, while maintaining clear, high-quality images when close. Best of both
+  worlds with better performance.
 
 ### 2B. Add Atmospheric Effects ✅
+
 - Glowing halo around each sphere (shader or layered meshes)
-- ~~Subtle rotation animation when idle~~ **Skipped - not visible with billboard behavior**
+- ~~Subtle rotation animation when idle~~ **Skipped - not visible with billboard
+  behavior**
 - Depth-based fog/glow intensity
 - **Status:** Complete
 - **Implementation:**
@@ -227,13 +283,13 @@ git log --oneline --graph chart-your-stars-demo
   - ⏭️ Rotation skipped - not visible on billboarded flat circles
 
 ### 2C. Camera Behavior Enhancement ✅
+
 - **Initial flight from overview:**
   1. ✅ Gradual pan from constellation center to target star
   2. ✅ Delayed look direction transition (starts at t=0.2)
   3. ✅ Ease-in-out curve for smooth, cinematic movement
   4. ✅ Constellation stars stay visible and gradually fade
   5. ✅ Photo appears only when close (distance < 40)
-  
 - **Star-to-star transitions (takeoff sequence):**
   1. ✅ Pull back from current star (30 units in Z)
   2. ✅ Move laterally toward next target (30% of distance in X/Y)
@@ -242,8 +298,8 @@ git log --oneline --graph chart-your-stars-demo
   5. ✅ Previous star moves out of viewport smoothly (no jump)
   6. ✅ Smooth transition to flying phase
   7. ✅ Gradual pan to center next target in HUD during flight
-  
 - **Landing sequence:**
+
   1. ✅ Variable speed approach (fast → medium → slow)
   2. ✅ Smooth deceleration as approaching
   3. ✅ Final position: centered in HUD
@@ -264,9 +320,11 @@ git log --oneline --graph chart-your-stars-demo
 ---
 
 ## Phase 3: Polish & Magic
+
 **Goal:** Make it feel majestic and professional
 
 ### 3A. Visual Polish ⏳
+
 - Particle trail during flight (stars streaking past)
 - Constellation lines that connect stars (fade in when zoomed out)
 - Lens flare effect when passing close to bright stars
@@ -274,12 +332,14 @@ git log --oneline --graph chart-your-stars-demo
 - **Status:** Not started
 
 ### 3B. Animation Refinement ⏳
+
 - Easing functions for all movements (no linear motion)
 - Face texture fades in as you approach (not instant)
 - Sphere rotation slows as you arrive (gives weight/presence)
 - **Status:** Not started
 
 ### 3C. Performance ⏳
+
 - LOD (Level of Detail) for distant spheres
 - Optimize texture loading
 - Ensure 60fps on mobile
@@ -290,16 +350,19 @@ git log --oneline --graph chart-your-stars-demo
 ## Implementation Order
 
 **Session 1: Phase 1 (Critical Fixes)**
+
 1. Fix camera transitions - smooth flight between stars
 2. Fix star appearance during UI interaction
 3. Improve constellation visibility
 
 **Session 2: Phase 2A-B (3D Conversion)**
+
 1. Convert to sphere geometry
 2. Implement billboard textures
 3. Add atmospheric glow
 
 **Session 3: Phase 2C + 3 (Polish)**
+
 1. Takeoff/landing sequences
 2. Visual effects (particles, trails)
 3. Final polish and performance
@@ -309,13 +372,16 @@ git log --oneline --graph chart-your-stars-demo
 ## Notes & Decisions
 
 ### Key Insight: Spaceship Landing/Takeoff
+
 After arriving at a star, the transition to the next should feel like:
+
 1. A spaceship that landed on a moon
 2. Takes off (pulls back, rotates)
 3. Flies to the next celestial sphere
 4. Lands gently in front of it
 
 ### Technical Constraints
+
 - Must work on mobile (performance critical)
 - WebP textures work with Three.js TextureLoader
 - Currently using 15 unique real user photos (thumb.webp)
@@ -325,6 +391,7 @@ After arriving at a star, the transition to the next should feel like:
 ## Progress Log
 
 ### 2025-01-27
+
 - ✅ Created plan document
 - ✅ Replaced dicebear avatars with 15 unique real user photos
 - 🔄 Ready to start Phase 1
@@ -332,6 +399,7 @@ After arriving at a star, the transition to the next should feel like:
 ---
 
 ## Legend
+
 - ⏳ Not started
 - 🔄 In progress
 - ✅ Complete

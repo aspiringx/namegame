@@ -256,7 +256,7 @@ export default function Star({
             placement === 'inner' ? 1.0 : placement === 'close' ? 0.75 : 0.5
           groupOpacity = baseBrightness
         } else {
-          // Uncharted stars: visible but less prominent (match intro "Distant" brightness)
+          // Uncharted stars: visible but less prominent (match intro "Far" brightness)
           groupOpacity = 0.7
         }
       }

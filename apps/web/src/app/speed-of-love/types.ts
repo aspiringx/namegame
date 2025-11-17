@@ -16,7 +16,7 @@ export interface StarData {
   index: number // Index in MOCK_PEOPLE array for ordering
   initialPosition: [number, number, number] | null // Random position at journey start
   constellationPosition: [number, number, number] | null // Position after placement
-  placement: 'inner' | 'close' | 'outer' | null // Which ring (Close/Near/Distant)
+  placement: 'inner' | 'close' | 'outer' | null // Which ring (Close/Near/Far)
   visited: boolean // Has user visited this star yet
 }
 

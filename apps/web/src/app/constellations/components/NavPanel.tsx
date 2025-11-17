@@ -21,11 +21,11 @@ interface NavPanelProps {
   narratorMessage: string
   selectedStarIds: Set<string>
   placementsCount: number
-  visitQueueLength: number
+  _visitQueueLength: number
   manualControlsEnabled: boolean
   onAdvanceIntro: () => void
   onBackIntro: () => void
-  onStartSelection: () => void
+  _onStartSelection: () => void
   onToggleStarSelection: (starId: string) => void
   onSelectAllStars: () => void
   onClearStars: () => void
@@ -44,11 +44,11 @@ export function NavPanel({
   narratorMessage,
   selectedStarIds,
   placementsCount,
-  visitQueueLength,
+  _visitQueueLength,
   manualControlsEnabled,
   onAdvanceIntro,
   onBackIntro,
-  onStartSelection,
+  _onStartSelection,
   onToggleStarSelection,
   onSelectAllStars,
   onClearStars,
@@ -62,7 +62,7 @@ export function NavPanel({
 }: NavPanelProps) {
   const totalCount = MOCK_PEOPLE.length
   const hasUncharted = placementsCount < totalCount
-  const [inputValue, setInputValue] = useState('')
+  const [_inputValue, _setInputValue] = useState('')
 
   return (
     <div
