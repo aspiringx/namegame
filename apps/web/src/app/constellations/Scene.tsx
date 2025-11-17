@@ -806,7 +806,7 @@ export default function Scene({
         // Calculate final lookAt target with visual correction
         // visualCorrectionPx vertically centers one star in the HUD.
         const isMobile = viewportDimensions.width < 640
-        const visualCorrectionPx = isMobile ? -70 : -60
+        const visualCorrectionPx = isMobile ? -35 : -25
 
         const fovRadians = (60 * Math.PI) / 180
         const starDistance = 5.5

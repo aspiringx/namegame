@@ -181,7 +181,7 @@ export function useCameraPositioning() {
     // - visualCorrectionPx for centering individual star in HUD (Scene.tsx).
     // - viewDistance for the size of the star in the HUD (Scene.tsx).
     // - targetFillPercent for size of constellation in the HUD (in this file).
-    const visualCorrectionPx = isMobile ? -100 : -95
+    const visualCorrectionPx = isMobile ? -15 : -20
     const yOffsetWorld =
       (-hud.hudOffsetPx + visualCorrectionPx) * pixelsToWorldUnits
 
