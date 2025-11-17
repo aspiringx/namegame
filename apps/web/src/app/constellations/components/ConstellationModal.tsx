@@ -3,7 +3,7 @@
  *
  * The "Review" modal that shows all stars organized by placement category.
  * Allows users to select stars to visit from the constellation view.
- * Stars are grouped into: Close, Familiar, Distant, and Uncharted.
+ * Stars are grouped into: Close, Near, Far, and Uncharted.
  */
 
 import { StarData } from '../types'
@@ -74,20 +74,20 @@ export function ConstellationModal({
             />
           )}
 
-          {/* Familiar/warm stars */}
+          {/* Near stars */}
           {closeStars.length > 0 && (
             <StarSection
-              title={`● Familiar (${closeStars.length})`}
+              title={`● Near (${closeStars.length})`}
               stars={closeStars}
               selectedStarIds={selectedStarIds}
               onToggleSelection={onToggleSelection}
             />
           )}
 
-          {/* Distant stars */}
+          {/* Far stars */}
           {outerStars.length > 0 && (
             <StarSection
-              title={`● Distant (${outerStars.length})`}
+              title={`● Far (${outerStars.length})`}
               stars={outerStars}
               selectedStarIds={selectedStarIds}
               onToggleSelection={onToggleSelection}

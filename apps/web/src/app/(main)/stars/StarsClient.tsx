@@ -795,7 +795,7 @@ export default function RelationshipStarPage() {
               <strong>Why these weights?</strong> Personal time is the primary
               way deep relationships are built (30%). Common ground provides
               essential connection points (25%). Familiarity enables trust
-              (20%). Your interest matters, but actions or more important than
+              (20%). Your interest matters, but actions are more important than
               intentions (15%). Proximity creates opportunities but doesn't
               guarantee depth (10%).
             </p>

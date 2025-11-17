@@ -8,7 +8,7 @@ export const getStarRadius = (placement?: 'inner' | 'close' | 'outer') => {
   if (!placement) return { min: 25, max: 35 } // Unplaced - very far
   if (placement === 'inner') return { min: 5, max: 10 } // Close - inner circle
   if (placement === 'close') return { min: 10, max: 18 } // Near - middle circle
-  return { min: 18, max: 25 } // Distant - outer circle
+  return { min: 18, max: 25 } // Far - outer circle
 }
 
 // Generate random position within a radius range
@@ -70,7 +70,9 @@ export const getVisitedCount = (stars: Map<string, StarData>): number => {
 }
 
 // Find next unvisited star index
-export const findNextUnvisitedIndex = (stars: Map<string, StarData>): number => {
+export const findNextUnvisitedIndex = (
+  stars: Map<string, StarData>,
+): number => {
   return MOCK_PEOPLE.findIndex((p) => {
     const starData = stars.get(p.id)!
     return !starData.visited
