@@ -745,11 +745,9 @@ export default function RelationshipStarPage() {
           </h2>
           <div className="space-y-4 text-gray-700 dark:text-gray-300">
             <p>
-              The <strong>Relationship Star Chart</strong> visualizes five key
-              dimensions of your relationships. Each axis represents a different
-              aspect, scored from 0-10. The dimensions are weighted differently
-              in the final Star Score because they have different impacts on
-              relationship depth:
+              The <strong>Relation Star Chart</strong> visualizes five key
+              dimensions of your relationship, scored from 0-10. Dimensions are
+              weighted differently in the score based on their relative impact.
             </p>
             <ul className="ml-6 list-disc space-y-2">
               <li>
@@ -783,8 +781,7 @@ export default function RelationshipStarPage() {
               </li>
               <li>
                 <strong>Proximity (10%)</strong>: How often you're near this
-                person—physically (neighbors, coworkers), emotionally (frequent
-                calls/texts), or through shared groups (church, school, clubs).{' '}
+                person physically, emotionally, and through shared groups.
                 <em>
                   Proximity creates opportunities, but doesn't guarantee depth.
                 </em>
@@ -793,9 +790,9 @@ export default function RelationshipStarPage() {
             <p>
               <strong>The star points matter!</strong> Each glowing point
               extends outward from the center based on that dimension's
-              strength. A larger star constellation with points reaching further
-              out indicates a stronger relationship. Shorter points reveal areas
-              where the relationship could grow.
+              strength. A larger star with points reaching further out indicates
+              a stronger relationship. Shorter points reveal areas where the
+              relationship could grow.
             </p>
           </div>
         </div>
@@ -806,8 +803,7 @@ export default function RelationshipStarPage() {
           </h2>
           <div className="space-y-4 text-gray-700 dark:text-gray-300">
             <p>
-              The <strong>Star Score</strong> is a weighted calculation that
-              reflects relationship strength:
+              The <strong>Star Score</strong> is determined like this:
             </p>
             <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-900">
               <div className="space-y-2 font-mono text-sm">
@@ -822,8 +818,8 @@ export default function RelationshipStarPage() {
             <p>
               <strong>Why these weights?</strong> Personal time is the primary
               way deep relationships are built (30%). Common ground provides
-              essential connection points (25%). Deep knowledge enables trust
-              (20%). Your investment matters, but actions matter more than
+              essential connection points (25%). Familiarity enables trust
+              (20%). Your interest matters, but actions or more important than
               intentions (15%). Proximity creates opportunities but doesn't
               guarantee depth (10%).
             </p>
@@ -907,7 +903,7 @@ export default function RelationshipStarPage() {
           </h2>
           <p className="text-indigo-800 dark:text-indigo-200">
             Notice how Mike (work colleague) has high proximity but a low Star
-            Score. This is intentional—the algorithm heavily weights{' '}
+            Score. This is intentional. The algorithm heavily weights{' '}
             <strong>Personal Time</strong> (30%), followed by{' '}
             <strong>Common Ground</strong> (25%) and{' '}
             <strong>Familiarity</strong> (20%). You can spend 40 hours a week
