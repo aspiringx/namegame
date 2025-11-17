@@ -58,10 +58,10 @@ input.relationship-slider[type='range']::-moz-range-track {
 }
 
 /* Dark mode adjustments */
-.dark input.relationship-slider[type='range']::-webkit-slider-thumb {
+input.relationship-slider[type='range']::-webkit-slider-thumb {
   border-color: #1f2937;
 }
 
-.dark input.relationship-slider[type='range']::-moz-range-thumb {
+input.relationship-slider[type='range']::-moz-range-thumb {
   border-color: #1f2937;
 }

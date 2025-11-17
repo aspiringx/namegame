@@ -223,7 +223,7 @@
     {
       "scene": 5,
       "description": "Explosive disruption sends stars flying in all directions. The constellation from scene 4 shatters.",
-      "narration": "But life can be unpredictable, hurling you to unknown places when you least expect it.",
+      "narration": "Life can be unpredictable, hurling you to unknown places when you least expect it.",
       "sceneType": "cosmicWave",
       "cameraPosition": [250, -100, 100],
       "cameraFOV": 50,

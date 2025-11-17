@@ -26,7 +26,7 @@ export default function StarChart({ data, size = 'large' }: StarChartProps) {
             fill="none"
             stroke="currentColor"
             strokeWidth="1"
-            className="stroke-gray-300 stroke-gray-600"
+            className="stroke-gray-600"
           />
         ))}
 
@@ -40,7 +40,7 @@ export default function StarChart({ data, size = 'large' }: StarChartProps) {
             fontSize="14"
             fontWeight="500"
             fill="currentColor"
-            className="fill-gray-600 fill-gray-400"
+            className="fill-gray-400"
           >
             {val}
           </text>
@@ -60,7 +60,7 @@ export default function StarChart({ data, size = 'large' }: StarChartProps) {
               y2={y}
               stroke="currentColor"
               strokeWidth="1"
-              className="stroke-gray-300 stroke-gray-600"
+              className="stroke-gray-600"
             />
           )
         })}
@@ -168,7 +168,7 @@ export default function StarChart({ data, size = 'large' }: StarChartProps) {
                           fontSize="14"
                           fontWeight="600"
                           fill="currentColor"
-                          className="fill-gray-900 fill-gray-100"
+                          className="fill-gray-100"
                         >
                           Personal
                         </text>
@@ -179,7 +179,7 @@ export default function StarChart({ data, size = 'large' }: StarChartProps) {
                           fontSize="14"
                           fontWeight="600"
                           fill="currentColor"
-                          className="fill-gray-900 fill-gray-100"
+                          className="fill-gray-100"
                         >
                           Time
                         </text>
@@ -193,7 +193,7 @@ export default function StarChart({ data, size = 'large' }: StarChartProps) {
                           fontSize="14"
                           fontWeight="600"
                           fill="currentColor"
-                          className="fill-gray-900 fill-gray-100"
+                          className="fill-gray-100"
                         >
                           Common
                         </text>
@@ -204,7 +204,7 @@ export default function StarChart({ data, size = 'large' }: StarChartProps) {
                           fontSize="14"
                           fontWeight="600"
                           fill="currentColor"
-                          className="fill-gray-900 fill-gray-100"
+                          className="fill-gray-100"
                         >
                           Ground
                         </text>
@@ -217,7 +217,7 @@ export default function StarChart({ data, size = 'large' }: StarChartProps) {
                         fontSize="14"
                         fontWeight="600"
                         fill="currentColor"
-                        className="fill-gray-900 fill-gray-100"
+                        className="fill-gray-100"
                       >
                         {item.dimension}
                       </text>
