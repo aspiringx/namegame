@@ -27,7 +27,8 @@ export default function Home() {
 
         <section className="space-y-4 text-lg leading-relaxed">
           <p className="text-center italic text-sm text-gray-500">
-            NameGame is now Relation Star.
+            NameGame is now Relation Star and in transition for a bit of
+            anything seems odd.
           </p>
           <div className="flex flex-col w-full sm:mx-auto text-center space-y-4">
             <p className="text-left mt-4">

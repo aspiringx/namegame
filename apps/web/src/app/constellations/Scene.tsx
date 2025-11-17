@@ -804,9 +804,10 @@ export default function Scene({
             : 1 - Math.pow(-2 * lookProgress + 2, 2) / 2
 
         // Calculate final lookAt target with visual correction
-        // Apply correction to center a star in the HUD.
+        // visualCorrectionPx vertically centers one star in the HUD.
         const isMobile = viewportDimensions.width < 640
-        const visualCorrectionPx = isMobile ? -35 : -25
+        const visualCorrectionPx = isMobile ? -70 : -60
+
         const fovRadians = (60 * Math.PI) / 180
         const starDistance = 5.5
         const worldHeightAtStarDistance =

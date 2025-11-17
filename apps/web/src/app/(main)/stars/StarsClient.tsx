@@ -213,10 +213,17 @@ export default function RelationshipStarPage() {
   return (
     <div className="mx-auto max-w-6xl px-4 pt-4 pb-24">
       {/* Header */}
-      <div className="mb-4 text-center">
+      <div className="mb-4 flex items-center justify-between">
+        <Link
+          href="/"
+          className="text-sm text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
+        >
+          ← Return Home
+        </Link>
         <h1 className="text-2xl font-bold">Chart a Star</h1>
+        <div className="w-24"></div> {/* Spacer for centering */}
       </div>
-      <p className="mb-8">
+      <p className="mb-8 text-center">
         A star's five points illustrate your relationship today. See examples
         and try it.
       </p>

@@ -15,7 +15,7 @@
  * - shouldResetCamera: Ref that signals Scene.tsx when to recalculate constellation position
  */
 
-import { useState, useCallback, useRef, useMemo } from 'react'
+import { useState, useCallback, useRef, useMemo, useEffect } from 'react'
 import { StarData, JourneyPhase } from '../types'
 import { MOCK_PEOPLE } from '../mockData'
 
@@ -67,17 +67,22 @@ export function useJourneyStateMachine(
     updater: (prev: Map<string, StarData>) => Map<string, StarData>,
   ) => void,
   groupName: string,
+  firstName: string,
 ) {
-  const INTRO_MESSAGES = useMemo(
-    () => [
-      `Hi Mindy, welcome to the ${groupName} star cluster!`,
-      `Our sensors vaguely detect ${MOCK_PEOPLE.length} stars you may (or may not) know.`,
-      `<b>Your mission:</b> Chart the <i>current position</i> of stars in this cluster, in relation to you, to make a constellation.`,
+  const INTRO_MESSAGES = useMemo(() => {
+    // If no firstName, show prompt message
+    if (!firstName) {
+      return ['Welcome! Please enter your first name to begin your journey.']
+    }
+
+    // Use firstName in welcome message
+    return [
+      `Hi ${firstName}, welcome to the ${groupName} star cluster! Our sensors detect ${MOCK_PEOPLE.length} stars.<br /><br />A cluster is a group of nearby people you may or may not know. Neighbors, co-workers, classmates, etc.`,
+      `<b>Your mission:</b> Chart the <i>current positions</i> of stars in relation to you to form a constellation.<br /><br />Constellations are stellar patterns that form when you exchange positive energy with stars in a cluster.`,
       `Positions:<br /><br /><b>• Close</b>: Close friend, family<br /><b>• Near</b>: Passive friend, acquaintance<br /><b>• Far</b>: Unknown, distant`,
-      'As you chart each star, a constellation will form, shaped by how you perceive relationships today.<br /><br />Ready?',
-    ],
-    [groupName],
-  )
+      'As you chart stars, your constellation will form in the shape of the relationships you currently perceive.<br /><br />Star clusters are cold and distant until you form constellations.<br /><br />Ready?',
+    ]
+  }, [groupName, firstName])
 
   const [state, setState] = useState<JourneyState>({
     phase: 'intro',
@@ -94,9 +99,20 @@ export function useJourneyStateMachine(
   // Track if we need to reset camera (used by Scene.tsx)
   const shouldResetCamera = useRef(false)
 
+  // When firstName changes from empty to filled, update to show the first real intro message
+  useEffect(() => {
+    if (firstName && state.phase === 'intro' && state.introStep === 0) {
+      setState((prev) => ({
+        ...prev,
+        narratorMessage: INTRO_MESSAGES[0],
+      }))
+    }
+  }, [firstName, state.phase, state.introStep, INTRO_MESSAGES])
+
   const advanceIntro = useCallback(() => {
     setState((prev) => {
-      if (prev.introStep < 4) {
+      const lastIntroStep = INTRO_MESSAGES.length - 1
+      if (prev.introStep < lastIntroStep) {
         const nextStep = prev.introStep + 1
         return {
           ...prev,
@@ -108,7 +124,7 @@ export function useJourneyStateMachine(
         ...prev,
         phase: 'selecting',
         narratorMessage:
-          'Select stars to chart. You can begin with those you know or select all.',
+          'Select stars to chart. If you know people, begin with them.',
       }
     })
   }, [INTRO_MESSAGES])
@@ -117,11 +133,12 @@ export function useJourneyStateMachine(
     setState((prev) => {
       // If in selecting phase, go back to last intro message
       if (prev.phase === 'selecting') {
+        const lastIntroStep = INTRO_MESSAGES.length - 1
         return {
           ...prev,
           phase: 'intro',
-          introStep: 4, // Last intro step
-          narratorMessage: INTRO_MESSAGES[4],
+          introStep: lastIntroStep,
+          narratorMessage: INTRO_MESSAGES[lastIntroStep],
         }
       }
       // If in intro phase, go to previous step

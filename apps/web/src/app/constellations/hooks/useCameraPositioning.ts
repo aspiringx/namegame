@@ -128,7 +128,7 @@ export function useCameraPositioning() {
     // targetFillPercent controls how much of the viewport to fill with the
     // constellation (0.5 = half, 1.0 = full). In other words, how much of the
     // HUD the constellation fills.
-    const targetFillPercent = isMobile ? 1.25 : 1.1
+    const targetFillPercent = isMobile ? 1.15 : 1
 
     // First, calculate initial Z distance to fit constellation in viewport
     const aspectRatio = hud.viewportWidth / hud.viewportHeight
@@ -181,7 +181,7 @@ export function useCameraPositioning() {
     // - visualCorrectionPx for centering individual star in HUD (Scene.tsx).
     // - viewDistance for the size of the star in the HUD (Scene.tsx).
     // - targetFillPercent for size of constellation in the HUD (in this file).
-    const visualCorrectionPx = isMobile ? -15 : -20
+    const visualCorrectionPx = isMobile ? -100 : -95
     const yOffsetWorld =
       (-hud.hudOffsetPx + visualCorrectionPx) * pixelsToWorldUnits
 

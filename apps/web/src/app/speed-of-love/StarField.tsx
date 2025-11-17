@@ -273,7 +273,7 @@ export default function StarField() {
                 </h1>
               </Link>
               <p className="mt-1 text-sm text-gray-300 sm:text-base">
-                Speed of love
+                The speed of love
               </p>
             </div>
 
@@ -390,20 +390,44 @@ export default function StarField() {
               </div>
 
               <div className="mt-3">
-                {/* Proceed button - shows different text on last scene */}
-                <button
-                  onClick={handleNext}
-                  disabled={!animationComplete}
-                  className={`w-full rounded border px-4 py-2 font-mono text-sm font-medium transition-colors ${
-                    animationComplete
-                      ? 'border-cyan-400/50 bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 hover:border-cyan-400 cursor-pointer'
-                      : 'border-cyan-400/20 bg-cyan-500/5 text-cyan-400/40 cursor-not-allowed'
-                  }`}
-                >
-                  {currentSceneIndex >= scenes.length
-                    ? '→ Fly Home'
-                    : '→ Proceed'}
-                </button>
+                {currentSceneIndex >= scenes.length ? (
+                  /* Last scene - show two navigation buttons */
+                  <div className="flex gap-2">
+                    <Link
+                      href="/"
+                      className={`flex-1 rounded border px-4 py-2 font-mono text-sm font-medium text-center transition-colors ${
+                        animationComplete
+                          ? 'border-cyan-400/50 bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 hover:border-cyan-400 cursor-pointer'
+                          : 'border-cyan-400/20 bg-cyan-500/5 text-cyan-400/40 cursor-not-allowed pointer-events-none'
+                      }`}
+                    >
+                      ← Return Home
+                    </Link>
+                    <Link
+                      href="/constellations"
+                      className={`flex-1 rounded border px-4 py-2 font-mono text-sm font-medium text-center transition-colors ${
+                        animationComplete
+                          ? 'border-cyan-400/50 bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 hover:border-cyan-400 cursor-pointer'
+                          : 'border-cyan-400/20 bg-cyan-500/5 text-cyan-400/40 cursor-not-allowed pointer-events-none'
+                      }`}
+                    >
+                      Your Constellations →
+                    </Link>
+                  </div>
+                ) : (
+                  /* Regular proceed button */
+                  <button
+                    onClick={handleNext}
+                    disabled={!animationComplete}
+                    className={`w-full rounded border px-4 py-2 font-mono text-sm font-medium transition-colors ${
+                      animationComplete
+                        ? 'border-cyan-400/50 bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 hover:border-cyan-400 cursor-pointer'
+                        : 'border-cyan-400/20 bg-cyan-500/5 text-cyan-400/40 cursor-not-allowed'
+                    }`}
+                  >
+                    → Proceed
+                  </button>
+                )}
               </div>
             </div>
           </div>

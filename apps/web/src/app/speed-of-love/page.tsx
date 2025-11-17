@@ -2,7 +2,7 @@ import { Metadata } from 'next'
 import SpeedOfLove from './SpeedOfLove'
 
 export const metadata: Metadata = {
-  title: 'RelationStar - Speed of Love',
+  title: 'RelationStar - The speed of love',
   description: 'Your universe at the speed of love',
 }
 

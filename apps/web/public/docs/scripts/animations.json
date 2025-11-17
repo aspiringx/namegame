@@ -475,7 +475,7 @@
     {
       "scene": 8,
       "description": "Camera pulls back and logo fades in with twinkling stars",
-      "narration": "What is Relation Star? A simple way to see, remember, and be with the stars in your universe... at the speed of love.",
+      "narration": "Relation Star is your vast, ever-changing universe, at the speed of love! Learn more about constellations.",
       "sceneType": "logoReveal",
       "cameraPosition": [0, 0, 150],
       "cameraFOV": 50,
