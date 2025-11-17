@@ -23,8 +23,6 @@ interface NavPanelProps {
   placementsCount: number
   visitQueueLength: number
   manualControlsEnabled: boolean
-  firstName: string
-  onSetFirstName: (name: string) => void
   onAdvanceIntro: () => void
   onBackIntro: () => void
   onStartSelection: () => void
@@ -48,8 +46,6 @@ export function NavPanel({
   placementsCount,
   visitQueueLength,
   manualControlsEnabled,
-  firstName,
-  onSetFirstName,
   onAdvanceIntro,
   onBackIntro,
   onStartSelection,
@@ -67,18 +63,6 @@ export function NavPanel({
   const totalCount = MOCK_PEOPLE.length
   const hasUncharted = placementsCount < totalCount
   const [inputValue, setInputValue] = useState('')
-
-  const toTitleCase = (str: string) => {
-    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase()
-  }
-
-  const handleSubmitName = () => {
-    if (inputValue.trim()) {
-      const titleCaseName = toTitleCase(inputValue.trim())
-      onSetFirstName(titleCaseName)
-      setInputValue('')
-    }
-  }
 
   return (
     <div
@@ -155,33 +139,6 @@ export function NavPanel({
             style={{ letterSpacing: '0.03em' }}
             dangerouslySetInnerHTML={{ __html: narratorMessage }}
           />
-
-          {/* First name input - show during intro if firstName is not set */}
-          {phase === 'intro' && !firstName && (
-            <div className="mt-4">
-              <input
-                type="text"
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                placeholder="Enter your first name"
-                maxLength={20}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    handleSubmitName()
-                  }
-                }}
-                className="w-full rounded-lg border border-indigo-400/50 bg-indigo-950/50 px-4 py-2.5 text-sm font-medium text-white placeholder-indigo-300/50 shadow-lg transition-colors focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/50"
-                autoFocus
-              />
-              <button
-                onClick={handleSubmitName}
-                disabled={!inputValue.trim()}
-                className="mt-2 w-full rounded-lg bg-cyan-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg transition-colors hover:bg-cyan-700 active:bg-cyan-800 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                → Begin Journey
-              </button>
-            </div>
-          )}
 
           {/* Star selection grid - show during selection phase */}
           {phase === 'selecting' && (
@@ -272,7 +229,7 @@ export function NavPanel({
           )}
 
           {/* Navigation buttons - show when waiting for user to advance (and firstName is set for intro) */}
-          {((phase === 'intro' && firstName) ||
+          {(phase === 'intro' ||
             phase === 'selecting' ||
             (phase === 'placed' && hasUncharted)) && (
             <div className="mt-3 flex gap-2">

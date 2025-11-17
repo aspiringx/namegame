@@ -411,7 +411,7 @@ export default function StarField() {
                           : 'border-cyan-400/20 bg-cyan-500/5 text-cyan-400/40 cursor-not-allowed pointer-events-none'
                       }`}
                     >
-                      Your Constellations →
+                      Constellations →
                     </Link>
                   </div>
                 ) : (

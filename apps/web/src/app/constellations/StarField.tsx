@@ -23,33 +23,15 @@ import { ConstellationModal } from './components/ConstellationModal'
 import { useJourneyStateMachine } from './hooks/useJourneyStateMachine'
 import { MOCK_PEOPLE } from './mockData'
 
-const FIRST_NAME_KEY = 'constellation-first-name'
-
 export default function StarField() {
   const [groupName] = useState('Hypothetical Group')
   const [stars, setStars] = useState(initializeStars)
-
-  // First name management with localStorage persistence
-  const [firstName, setFirstName] = useState<string>(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem(FIRST_NAME_KEY) || ''
-    }
-    return ''
-  })
-
-  // Save firstName to localStorage when it changes
-  useEffect(() => {
-    if (typeof window !== 'undefined' && firstName) {
-      localStorage.setItem(FIRST_NAME_KEY, firstName)
-    }
-  }, [firstName])
 
   // Journey state machine - single source of truth
   const { state, actions, shouldResetCamera } = useJourneyStateMachine(
     stars,
     setStars,
     groupName,
-    firstName,
   )
 
   // Track viewport dimensions for precise positioning
@@ -183,8 +165,6 @@ export default function StarField() {
         placementsCount={placementsCount}
         visitQueueLength={state.visitQueue.length}
         manualControlsEnabled={state.manualControlsEnabled}
-        firstName={firstName}
-        onSetFirstName={setFirstName}
         onAdvanceIntro={actions.advanceIntro}
         onBackIntro={actions.backIntro}
         onStartSelection={actions.startSelection}
