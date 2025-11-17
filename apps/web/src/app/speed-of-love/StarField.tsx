@@ -395,17 +395,17 @@ export default function StarField() {
                   <div className="flex gap-2">
                     <Link
                       href="/"
-                      className={`flex-1 rounded border px-4 py-2 font-mono text-sm font-medium text-center transition-colors ${
+                      className={`flex-auto rounded border px-4 py-2 font-mono text-sm font-medium text-center transition-colors whitespace-nowrap ${
                         animationComplete
                           ? 'border-cyan-400/50 bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 hover:border-cyan-400 cursor-pointer'
                           : 'border-cyan-400/20 bg-cyan-500/5 text-cyan-400/40 cursor-not-allowed pointer-events-none'
                       }`}
                     >
-                      ← Return Home
+                      ← Home
                     </Link>
                     <Link
                       href="/constellations"
-                      className={`flex-1 rounded border px-4 py-2 font-mono text-sm font-medium text-center transition-colors ${
+                      className={`flex-auto rounded border px-4 py-2 font-mono text-sm font-medium text-center transition-colors whitespace-nowrap ${
                         animationComplete
                           ? 'border-cyan-400/50 bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 hover:border-cyan-400 cursor-pointer'
                           : 'border-cyan-400/20 bg-cyan-500/5 text-cyan-400/40 cursor-not-allowed pointer-events-none'

@@ -214,18 +214,17 @@ export default function RelationshipStarPage() {
     <div className="mx-auto max-w-6xl px-4 pt-4 pb-24">
       {/* Header */}
       <div className="mb-4 flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Chart a Star</h1>
         <Link
           href="/"
           className="text-sm text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
         >
-          ← Return Home
+          ← Home
         </Link>
-        <h1 className="text-2xl font-bold">Chart a Star</h1>
-        <div className="w-24"></div> {/* Spacer for centering */}
       </div>
-      <p className="mb-8 text-center">
-        A star's five points illustrate your relationship today. See examples
-        and try it.
+      <p className="mb-8">
+        The five points of a star illuminate your relationship. Review the
+        examples to understand star charts, then try it yourself.
       </p>
 
       {/* Selector - Mobile: Compact Button Group, Desktop: Full Buttons */}
@@ -318,8 +317,8 @@ export default function RelationshipStarPage() {
                   },
                   {
                     key: 'familiarity',
-                    label: 'How well do you know them?',
-                    hint: 'From just met to deep understanding.',
+                    label: 'How well do you know this person?',
+                    hint: 'Stranger -> acquaintance -> friend -> close friend -> family or like-family. This changes over time.',
                     minLabel: 'Not at all',
                     maxLabel: 'Very well',
                   },
