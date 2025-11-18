@@ -2,28 +2,31 @@
 
 ## Overview
 
-System for notifying users of activity (starting with chat messages but extending
-to other info like new group members, content, etc.) outside the app via push
-notifications and email. Designed to prevent spam while keeping users engaged.
+System for notifying users of activity (starting with chat messages but
+extending to other info like new group members, content, etc.) outside the app
+via push notifications and email. Designed to prevent spam while keeping users
+engaged.
 
 ## Guiding Principles
 
-1. **Push First**: Push notifications are more immediate and less intrusive than email, but only possible for users who have enabled notifications in their user profile.
+1. **Push First**: Push notifications are more immediate and less intrusive than
+   email, but only possible for users who have enabled notifications in their
+   user profile.
 
 We need to make this more visible while also reassuring users about our limits.
 Last night my wife's first response was "I hate push notifications and never
 choose them... my phone starts going crazy." She's referring (at least in part)
-to a large family Telegram chat group where everyone starts responding and buzzing
-everyone with every new message.
+to a large family Telegram chat group where everyone starts responding and
+buzzing everyone with every new message.
 
-We need a good way for people to immediately know
-this doesn't work this way. Maybe even branding it. Instead of "Enable Notifications"
-call it something like "Enable Non-Annoying Notifications" and clearly say why,
-maybe in an expandable "Learn More" section.
+We need a good way for people to immediately know this doesn't work this way.
+Maybe even branding it. Instead of "Enable Notifications" call it something like
+"Enable Non-Annoying Notifications" and clearly say why, maybe in an expandable
+"Learn More" section.
 
-Also reassure people that they can turn it off any time by just tapping
-"Disable Non-Annoying Notifications" in their profile. They don't need to go dig
-into phone or browser settings to remember how to turn them off.
+Also reassure people that they can turn it off any time by just tapping "Disable
+Non-Annoying Notifications" in their profile. They don't need to go dig into
+phone or browser settings to remember how to turn them off.
 
 **Suggested UI for "Learn More" expandable section:**
 
@@ -51,10 +54,14 @@ When expanded:
 - Privacy angle (no message content, just sender names)
 - Reinforces the easy opt-out
 
-2. **Digest Over Individual**: Batch multiple events into a single notification to reduce noise
-3. **Strict Rate Limiting**: Guarantee users won't be overwhelmed with notifications
-4. **Multi-Channel Support**: One notification event can be delivered via multiple channels (push, email, SMS future)
-5. **Timezone Aware**: Respect user's local time to avoid notifications during sleep hours
+2. **Digest Over Individual**: Batch multiple events into a single notification
+   to reduce noise
+3. **Strict Rate Limiting**: Guarantee users won't be overwhelmed with
+   notifications
+4. **Multi-Channel Support**: One notification event can be delivered via
+   multiple channels (push, email, SMS future)
+5. **Timezone Aware**: Respect user's local time to avoid notifications during
+   sleep hours
 
 ## Current Delivery Channels
 
@@ -70,7 +77,8 @@ When expanded:
 
 ### Future Consideration
 
-- **SMS/Text**: Not planned due to complexity and cost of allowing app users to initiate texts
+- **SMS/Text**: Not planned due to complexity and cost of allowing app users to
+  initiate texts
 
 ## Phase 1: Push Notifications (Current Implementation)
 
@@ -81,7 +89,8 @@ When expanded:
 - First unread message triggers a 15-30 minute delay timer
 - Additional messages within that window are batched into the same notification
 - Maximum frequency: 1 notification per 24 hours per user (daily limit)
-- Timezone-aware delivery: Notifications delayed if user is in "quiet hours" (e.g., 10 PM - 7 AM local time)
+- Timezone-aware delivery: Notifications delayed if user is in "quiet hours"
+  (e.g., 10 PM - 7 AM local time)
 
 ### Notification Content
 
@@ -105,7 +114,7 @@ When expanded:
 - No counts (gentler, less anxiety-inducing than "You have 47 unread messages")
 - Shows sender names to provide context without being overwhelming
 - "and others" when more than 2-3 senders (keeps it brief)
-- Links to app with chat drawer open (via `?openChat=true` query param)
+- Links to app with chat drawer open (via `?chat=open` query param)
 - User sees green dots and can choose which conversations to read
 - No specific conversation links (keeps it simple, encourages app engagement)
 
@@ -176,7 +185,8 @@ model User {
 
 1. Query pending notifications due for delivery
 2. For each notification:
-   - Check rate limit: Has user received a notification in last 24 hours? (query `NotificationLog`)
+   - Check rate limit: Has user received a notification in last 24 hours? (query
+     `NotificationLog`)
    - If rate limited: Cancel or reschedule
    - Determine delivery channels:
      - **Push**: Check `PushSubscription` table for active subscriptions
@@ -194,7 +204,8 @@ model User {
    - Check if they have unread messages
    - Check if a pending notification already exists for this user
    - If no pending notification:
-     - Create `NotificationQueue` entry with `scheduledFor = NOW() + 15-30 minutes`
+     - Create `NotificationQueue` entry with
+       `scheduledFor = NOW() + 15-30 minutes`
    - If pending notification exists:
      - Update metadata to include new message count
      - Don't change `scheduledFor` (batching window)
@@ -205,16 +216,16 @@ model User {
 
 ```typescript
 async function canSendNotification(userId: string): Promise<boolean> {
-  const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
 
   const recentNotifications = await prisma.notificationLog.count({
     where: {
       userId,
       sentAt: { gte: oneDayAgo },
     },
-  });
+  })
 
-  return recentNotifications === 0;
+  return recentNotifications === 0
 }
 ```
 
@@ -229,25 +240,26 @@ async function canSendNotification(userId: string): Promise<boolean> {
 
 ```typescript
 function isQuietHours(user: User): boolean {
-  const userTime = new Date().toLocaleString("en-US", {
-    timeZone: user.timezone || "America/Denver",
-  });
-  const hour = new Date(userTime).getHours();
+  const userTime = new Date().toLocaleString('en-US', {
+    timeZone: user.timezone || 'America/Denver',
+  })
+  const hour = new Date(userTime).getHours()
 
-  const start = user.quietHoursStart || 22;
-  const end = user.quietHoursEnd || 7;
+  const start = user.quietHoursStart || 22
+  const end = user.quietHoursEnd || 7
 
   // Handle overnight quiet hours (e.g., 10 PM - 7 AM)
   if (start > end) {
-    return hour >= start || hour < end;
+    return hour >= start || hour < end
   }
-  return hour >= start && hour < end;
+  return hour >= start && hour < end
 }
 ```
 
 **Rescheduling:**
 
-- If notification is due during quiet hours, reschedule to `quietHoursEnd` in user's timezone
+- If notification is due during quiet hours, reschedule to `quietHoursEnd` in
+  user's timezone
 - Ensures user wakes up to notification rather than being woken by it
 
 ## Deep Linking to Chat
@@ -256,8 +268,8 @@ function isQuietHours(user: User): boolean {
 
 **Implementation:**
 
-- Add `?openChat=true` query parameter to notification links
-- Example: `https://namegame.app?openChat=true`
+- Add `?chat=open` query parameter to notification links
+- Example: `https://namegame.app?chat=open`
 - On app load, check for this parameter and automatically open the chat drawer
 - User sees their conversation list with green dots indicating unread messages
 - User can choose which conversations to read
@@ -265,28 +277,29 @@ function isQuietHours(user: User): boolean {
 **Code Locations:**
 
 - `apps/web/src/worker/index.ts` - Service worker handles notification clicks
-- `apps/web/src/components/ChatDeepLink.tsx` - Detects query param and opens chat
+- `apps/web/src/components/ChatDeepLink.tsx` - Detects query param and opens
+  chat
 - `apps/web/src/components/Header.tsx` - Renders ChatDeepLink component
 
 **Service Worker Notification Click Handler:**
 
 ```typescript
-self.addEventListener("notificationclick", (event: NotificationEvent) => {
-  event.notification.close();
-  const urlToOpen = event.notification.data.url || "/";
+self.addEventListener('notificationclick', (event: NotificationEvent) => {
+  event.notification.close()
+  const urlToOpen = event.notification.data.url || '/'
 
   event.waitUntil(
-    self.clients.matchAll({ type: "window" }).then((clientList) => {
+    self.clients.matchAll({ type: 'window' }).then((clientList) => {
       if (clientList.length > 0) {
         // Focus existing window and navigate
-        return clientList[0].focus().then((c) => c.navigate(urlToOpen));
+        return clientList[0].focus().then((c) => c.navigate(urlToOpen))
       } else {
         // Open new window
-        return self.clients.openWindow(urlToOpen);
+        return self.clients.openWindow(urlToOpen)
       }
-    })
-  );
-});
+    }),
+  )
+})
 ```
 
 **Push Notification Payload Structure:**
@@ -298,12 +311,14 @@ self.addEventListener("notificationclick", (event: NotificationEvent) => {
   icon: '/icon.png',
   badge: '/icon.png',
   data: {
-    url: 'https://namegame.app?openChat=true'  // Full URL with query param
+    url: 'https://namegame.app?chat=open'  // Full URL with query param
   }
 }
 ```
 
-**Important:** The service worker accesses the URL via `event.notification.data.url`, so the payload must have the URL in `data.url`, not nested deeper.
+**Important:** The service worker accesses the URL via
+`event.notification.data.url`, so the payload must have the URL in `data.url`,
+not nested deeper.
 
 **Benefits:**
 
@@ -331,12 +346,12 @@ self.addEventListener("notificationclick", (event: NotificationEvent) => {
 ### Sending Push Notifications
 
 ```typescript
-import webpush from "web-push";
+import webpush from 'web-push'
 
 async function sendPushNotification(userId: string, payload: object) {
   const subscriptions = await prisma.pushSubscription.findMany({
     where: { userId },
-  });
+  })
 
   const results = await Promise.allSettled(
     subscriptions.map((sub) =>
@@ -348,10 +363,10 @@ async function sendPushNotification(userId: string, payload: object) {
             auth: sub.auth,
           },
         },
-        JSON.stringify(payload)
-      )
-    )
-  );
+        JSON.stringify(payload),
+      ),
+    ),
+  )
 
   // Clean up failed subscriptions (expired/invalid)
   // Log successful deliveries
@@ -362,14 +377,17 @@ async function sendPushNotification(userId: string, payload: object) {
 
 ### Using Resend
 
-We use [Resend](https://resend.com) for email delivery. Configuration is in `apps/web/src/lib/resend.ts`.
+We use [Resend](https://resend.com) for email delivery. Configuration is in
+`apps/web/src/lib/resend.ts`.
 
 **Key Principles:**
 
-- **Weekly digest only** - Not per-message, but a summary (e.g., Sundays at 6 PM MT)
+- **Weekly digest only** - Not per-message, but a summary (e.g., Sundays at 6 PM
+  MT)
 - **No counts** - Avoid anxiety-inducing numbers like "47 unread messages"
 - **Warm, friendly tone** - Conversational and non-urgent
-- **No direct message links** - Opens app with chat drawer, user chooses what to read
+- **No direct message links** - Opens app with chat drawer, user chooses what to
+  read
 - **Easy opt-out** - One-click unsubscribe in every email
 
 ### Email Template (Conceptual)
@@ -409,7 +427,8 @@ This is your weekly digest. We'll never send more than one per week.
 - Send to verified email addresses only
 - Track last email sent to prevent duplicates
 - Respect user's email notification preferences
-- To start, send weekly on Saturday mornings at 7:00 AM Mountain Time (America/Denver).
+- To start, send weekly on Saturday mornings at 7:00 AM Mountain Time
+  (America/Denver).
 
 ## Future Enhancements
 
@@ -434,7 +453,8 @@ This is your weekly digest. We'll never send more than one per week.
 - Per-conversation notification settings (mute specific conversations)
 - VIP contacts (always notify immediately)
 - Smart bundling (group related notifications)
-- Read receipts integration (cancel notification if user reads in-app before delivery)
+- Read receipts integration (cancel notification if user reads in-app before
+  delivery)
 
 ## Implementation Checklist
 

@@ -132,15 +132,21 @@ export async function sendNotification(
   try {
     // Use the centralized push notification function with proper error handling
     const { sendPushNotification } = await import('@namegame/notifications')
-    
+
     const result = await sendPushNotification(payload, { endpoint, prisma: db })
-    
+
     if (result.successCount > 0) {
       return { success: true, message: 'Notification sent successfully.' }
     } else if (result.failureCount > 0) {
-      return { success: false, message: 'Failed to send notification. Check server logs for details.' }
+      return {
+        success: false,
+        message: 'Failed to send notification. Check server logs for details.',
+      }
     } else {
-      return { success: false, message: 'No subscriptions found for this endpoint.' }
+      return {
+        success: false,
+        message: 'No subscriptions found for this endpoint.',
+      }
     }
   } catch (error) {
     console.error('Error sending notification:', error)
@@ -200,7 +206,12 @@ export async function getSubscriptions(params?: {
   limit?: number
   search?: string
 }): Promise<{
-  subscriptions: { endpoint: string; userName: string; userId: string; createdAt: Date }[]
+  subscriptions: {
+    endpoint: string
+    userName: string
+    userId: string
+    createdAt: Date
+  }[]
   hasMore: boolean
   nextCursor: string | null
 }> {
@@ -240,7 +251,9 @@ export async function getSubscriptions(params?: {
   return {
     subscriptions: items.map((sub) => ({
       endpoint: sub.endpoint,
-      userName: `${sub.user.firstName}${sub.user.lastName ? ' ' + sub.user.lastName : ''}`,
+      userName: `${sub.user.firstName}${
+        sub.user.lastName ? ' ' + sub.user.lastName : ''
+      }`,
       userId: sub.userId,
       createdAt: sub.createdAt,
     })),
@@ -250,11 +263,21 @@ export async function getSubscriptions(params?: {
 }
 
 export async function sendDailyChatNotifications(
-  endpoints: string[]
-): Promise<{ success: boolean; sent: number; failed: number; message: string }> {
+  endpoints: string[],
+): Promise<{
+  success: boolean
+  sent: number
+  failed: number
+  message: string
+}> {
   const session = await auth()
   if (!session?.user?.id) {
-    return { success: false, sent: 0, failed: 0, message: 'User not authenticated.' }
+    return {
+      success: false,
+      sent: 0,
+      failed: 0,
+      message: 'User not authenticated.',
+    }
   }
 
   // Check if user is super admin
@@ -279,8 +302,8 @@ export async function sendDailyChatNotifications(
   }
 
   // Check which users actually have unread messages
-  const userIds = [...new Set(subscriptions.map(s => s.userId))]
-  
+  const userIds = [...new Set(subscriptions.map((s) => s.userId))]
+
   if (userIds.length === 0) {
     return {
       success: true,
@@ -289,7 +312,7 @@ export async function sendDailyChatNotifications(
       message: 'No users found for selected devices.',
     }
   }
-  
+
   const usersWithUnread = await db.$queryRaw<Array<{ userId: string }>>`
     SELECT DISTINCT cp."userId"
     FROM chat_participants cp
@@ -299,10 +322,12 @@ export async function sendDailyChatNotifications(
     AND cp."userId" = ANY(${userIds}::text[])
   `
 
-  const userIdsWithUnread = new Set(usersWithUnread.map(u => u.userId))
-  
+  const userIdsWithUnread = new Set(usersWithUnread.map((u) => u.userId))
+
   // Filter subscriptions to only include users with unread messages
-  const subscriptionsToNotify = subscriptions.filter(s => userIdsWithUnread.has(s.userId))
+  const subscriptionsToNotify = subscriptions.filter((s) =>
+    userIdsWithUnread.has(s.userId),
+  )
 
   if (subscriptionsToNotify.length === 0) {
     return {
@@ -314,15 +339,19 @@ export async function sendDailyChatNotifications(
   }
 
   // Use centralized push notification function
-  const { sendPushNotification, getNotificationUrl, getRandomNotificationText } = await import('@namegame/notifications')
-  
+  const {
+    sendPushNotification,
+    getNotificationUrl,
+    getRandomNotificationText,
+  } = await import('@namegame/notifications')
+
   // Get the notification URL using centralized helper
   const headersList = await headers()
-  const notificationUrl = getNotificationUrl('/me?openChat=true', headersList)
-  
+  const notificationUrl = getNotificationUrl('/me?chat=open', headersList)
+
   // Generate random notification text
   const notificationText = getRandomNotificationText()
-  
+
   const payload = {
     title: notificationText.title,
     body: notificationText.body,
@@ -338,7 +367,10 @@ export async function sendDailyChatNotifications(
 
   // Send to each subscription individually to track success/failure
   for (const sub of subscriptionsToNotify) {
-    const result = await sendPushNotification(payload, { endpoint: sub.endpoint, prisma: db })
+    const result = await sendPushNotification(payload, {
+      endpoint: sub.endpoint,
+      prisma: db,
+    })
     sent += result.successCount
     failed += result.failureCount
   }
