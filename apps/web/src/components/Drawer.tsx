@@ -103,7 +103,7 @@ export default function Drawer({
       <div
         ref={drawerRef}
         data-chat-drawer
-        className={`fixed top-0 md:top-[64px] right-0 h-full md:h-[calc(100vh-64px)] z-50 bg-white bg-gray-800 shadow-2xl ${
+        className={`fixed top-0 md:top-[64px] right-0 h-full md:h-[calc(100vh-64px)] z-50 bg-gray-800 shadow-2xl ${
           !drawerWidth ? widthClasses[width] : 'w-full'
         } flex flex-col ${
           isResizing || swipeOffset > 0

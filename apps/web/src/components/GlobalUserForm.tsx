@@ -692,7 +692,7 @@ export default function GlobalUserForm({
                   <button
                     type="button"
                     onClick={handleCopyPassword}
-                    className={`inline-flex items-center border border-l-0 border-gray-300 bg-gray-50 px-3 text-sm text-gray-500 hover:bg-gray-100 border-gray-600 bg-gray-700 text-gray-300 hover:bg-gray-600 ${
+                    className={`inline-flex items-center border border-l-0 border-gray-600 bg-gray-700 px-3 text-sm text-gray-300 hover:bg-gray-600 ${
                       formState.password ? 'rounded-r-md' : ''
                     }`}
                     aria-label="Copy password to clipboard"
@@ -707,7 +707,7 @@ export default function GlobalUserForm({
                   <button
                     type="button"
                     onClick={handleGeneratePassword}
-                    className="inline-flex items-center rounded-r-md border border-l-0 border-gray-300 bg-gray-50 px-3 text-sm text-gray-500 hover:bg-gray-100 border-gray-600 bg-gray-700 text-gray-300 hover:bg-gray-600"
+                    className="inline-flex items-center rounded-r-md border border-l-0 border-gray-600 bg-gray-700 px-3 text-sm text-gray-300 hover:bg-gray-600"
                     aria-label="Generate a new password"
                   >
                     <RefreshCw className="h-5 w-5" />

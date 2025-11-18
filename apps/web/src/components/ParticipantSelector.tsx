@@ -272,7 +272,7 @@ export default function ParticipantSelector({
                   className={`w-full p-4 text-left transition-colors ${
                     isDisabled
                       ? 'opacity-50 cursor-not-allowed'
-                      : 'hover:bg-gray-50 hover:bg-gray-700'
+                      : 'hover:bg-gray-700'
                   }`}
                 >
                   <div className="flex items-center justify-between">
