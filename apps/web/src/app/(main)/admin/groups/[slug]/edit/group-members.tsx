@@ -206,7 +206,7 @@ export default function GroupMembers({
             value={searchQuery}
             onChange={handleSearch}
             placeholder="Search for users by name, email, or username..."
-            className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm border-gray-600 bg-gray-800 text-white placeholder-gray-400"
+            className="block w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-200 placeholder-gray-400 focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none"
           />
           {isSearching && (
             <p className="mt-2 text-sm text-gray-500">Searching...</p>
@@ -288,7 +288,7 @@ export default function GroupMembers({
             value={memberSearchQuery}
             onChange={(e) => setMemberSearchQuery(e.target.value)}
             placeholder="Search current members by name or email..."
-            className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm border-gray-600 bg-gray-800 text-white placeholder-gray-400"
+            className="block w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-200 placeholder-gray-400 focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none"
           />
         </div>
         <div className="ring-opacity-5 -mx-4 mt-8 overflow-hidden shadow ring-1 ring-black sm:-mx-6 md:mx-0 md:rounded-lg">

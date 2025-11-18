@@ -232,7 +232,7 @@ export default function RelationStarModal({
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="relative w-full max-w-5xl transform overflow-hidden rounded-2xl bg-white text-left align-middle shadow-xl transition-all bg-gray-900">
+              <Dialog.Panel className="relative w-full max-w-5xl transform overflow-hidden rounded-2xl bg-gray-900 text-left align-middle shadow-xl transition-all">
                 {/* Header */}
                 <div className="border-b border-gray-200 p-4 sm:p-6 border-gray-700">
                   {/* Top row: Title and Close button */}
@@ -904,7 +904,7 @@ export default function RelationStarModal({
                         <div className="border-t border-gray-700" />
 
                         {/* Star Score */}
-                        <div className="rounded-lg border border-gray-200 bg-white p-4 border-gray-700 bg-gray-800">
+                        <div className="rounded-lg border border-gray-700 bg-gray-800 p-4">
                           <h3 className="mb-4 text-xl font-bold">Star Score</h3>
                           <div className="mb-4 text-center">
                             <div className="font-bold">
@@ -1201,7 +1201,7 @@ export default function RelationStarModal({
                         </div>
 
                         {/* Star Score */}
-                        <div className="rounded-lg border border-gray-200 bg-white p-4 border-gray-700 bg-gray-800">
+                        <div className="rounded-lg border border-gray-700 bg-gray-800 p-4">
                           <h3 className="mb-4 text-xl font-bold">Star Score</h3>
                           <div className="mb-4 text-center">
                             <div className="font-bold">

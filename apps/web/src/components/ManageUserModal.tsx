@@ -296,7 +296,7 @@ export default function ManageUserModal({
             <div className="mt-6 flex justify-end space-x-2">
               <button
                 type="button"
-                className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 border-gray-600 bg-gray-700 text-gray-200 hover:bg-gray-600"
+                className="inline-flex justify-center rounded-md border border-gray-600 bg-gray-700 px-4 py-2 text-sm font-medium text-gray-200 shadow-sm hover:bg-gray-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
                 onClick={() => setManagerToDelete(null)}
               >
                 Cancel

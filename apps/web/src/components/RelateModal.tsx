@@ -508,7 +508,7 @@ function RelateModalContent({
                         className={`rounded-md px-3 py-1 text-sm font-medium transition-colors ${
                           memberGender === value
                             ? 'border-transparent bg-indigo-600 text-white shadow-sm hover:bg-indigo-700'
-                            : 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 border-gray-600 bg-gray-800 text-gray-300 hover:bg-gray-700'
+                            : 'border border-gray-600 bg-gray-800 text-gray-300 hover:bg-gray-700'
                         }`}
                       >
                         {label}
