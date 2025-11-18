@@ -209,69 +209,13 @@ export default function ChatInterface({
     }
   }, [isEditingName])
 
-  // Focus input when chat opens and lock background scroll
+  // Focus input when chat opens
+  // Note: Scroll locking is handled by parent ChatDrawer component
   useEffect(() => {
     if (isOpen) {
       inputRef.current?.focus()
     }
-
-    // Only lock scroll on mobile - desktop should allow page scrolling with drawer open
-    const isMobileWidth = window.innerWidth < 768
-    if (isOpen && isMobileWidth) {
-      // Lock scroll on body and drawer to prevent background scrolling
-      const scrollY = window.scrollY
-      document.body.style.overflow = 'hidden'
-      document.body.style.position = 'fixed'
-      document.body.style.top = `-${scrollY}px`
-      document.body.style.width = '100%'
-
-      // Also lock the drawer if it exists
-      const drawer = document.querySelector('[data-chat-drawer]') as HTMLElement
-      if (drawer) {
-        drawer.style.overflow = 'hidden'
-        drawer.style.position = 'fixed'
-      }
-
-      // Store scroll position
-      document.body.dataset.scrollY = String(scrollY)
-    } else {
-      // Restore scroll when chat closes or on desktop
-      const scrollY = document.body.dataset.scrollY
-      document.body.style.overflow = ''
-      document.body.style.position = ''
-      document.body.style.top = ''
-      document.body.style.width = ''
-
-      if (scrollY) {
-        window.scrollTo(0, parseInt(scrollY))
-      }
-
-      const drawer = document.querySelector('[data-chat-drawer]') as HTMLElement
-      if (drawer) {
-        drawer.style.overflow = ''
-        drawer.style.position = ''
-      }
-    }
-
-    return () => {
-      // Cleanup on unmount
-      const scrollY = document.body.dataset.scrollY
-      document.body.style.overflow = ''
-      document.body.style.position = ''
-      document.body.style.top = ''
-      document.body.style.width = ''
-
-      if (scrollY) {
-        window.scrollTo(0, parseInt(scrollY))
-      }
-
-      const drawer = document.querySelector('[data-chat-drawer]') as HTMLElement
-      if (drawer) {
-        drawer.style.overflow = ''
-        drawer.style.position = ''
-      }
-    }
-  }, [isOpen, isMobile])
+  }, [isOpen])
 
   const loadMessages = useCallback(
     async (cursor?: string) => {
