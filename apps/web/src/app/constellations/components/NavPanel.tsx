@@ -21,11 +21,11 @@ interface NavPanelProps {
   narratorMessage: string
   selectedStarIds: Set<string>
   placementsCount: number
-  _visitQueueLength: number
+  visitQueueLength: number
   manualControlsEnabled: boolean
   onAdvanceIntro: () => void
   onBackIntro: () => void
-  _onStartSelection: () => void
+  onStartSelection: () => void
   onToggleStarSelection: (starId: string) => void
   onSelectAllStars: () => void
   onClearStars: () => void
@@ -44,11 +44,11 @@ export function NavPanel({
   narratorMessage,
   selectedStarIds,
   placementsCount,
-  _visitQueueLength,
+  visitQueueLength: _visitQueueLength,
   manualControlsEnabled,
   onAdvanceIntro,
   onBackIntro,
-  _onStartSelection,
+  onStartSelection: _onStartSelection,
   onToggleStarSelection,
   onSelectAllStars,
   onClearStars,
