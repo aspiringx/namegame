@@ -201,7 +201,7 @@ const FamilyTreeComponent = forwardRef<
             {isFullScreen && (
               <button
                 onClick={handleExitFullScreen}
-                className="absolute top-4 right-4 z-50 rounded-full bg-white p-2 shadow-lg"
+                className="absolute top-4 right-4 z-50 rounded-full bg-gray-800 p-2 shadow-lg"
                 aria-label="Exit full screen"
               >
                 <X className="h-6 w-6 text-gray-700" />

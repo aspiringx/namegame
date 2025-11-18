@@ -173,7 +173,7 @@ export default function GreetPageClient({
               <p className="text-2xl mb-4">
                 {codeData.user.firstName} just greeted you.
               </p>
-              <div className="mb-8 rounded-lg border border-gray-200 bg-gray-50 px-6 py-4 border-gray-700 bg-gray-800/50">
+              <div className="mb-8 rounded-lg border border-gray-700 bg-gray-800/50 px-6 py-4">
                 <p className="text text-left italic">{randomQuestion}</p>
               </div>
 

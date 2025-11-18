@@ -26,8 +26,7 @@ const dismissButtonColorVariants = {
     'bg-red-50 text-red-500 hover:bg-red-100 bg-transparent text-red-400 hover:bg-red-800/50',
   warning:
     'bg-yellow-50 text-yellow-500 hover:bg-yellow-100 bg-transparent text-yellow-400 hover:bg-yellow-800/50',
-  default:
-    'bg-gray-50 text-gray-500 hover:bg-gray-100 bg-transparent text-gray-400 hover:bg-gray-800/50',
+  default: 'bg-transparent text-gray-400 hover:bg-gray-800/50',
 }
 
 const Alert = React.forwardRef<

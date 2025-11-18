@@ -235,7 +235,7 @@ export default function ManageUserModal({
                         <button
                           type="button"
                           onClick={() => setManagerToDelete(manager)}
-                          className="text-red-500 hover:text-red-400 hover:text-red-500"
+                          className="text-red-500 hover:text-red-400"
                           aria-label={`Remove ${manager.firstName} as a manager`}
                         >
                           <svg
@@ -267,7 +267,7 @@ export default function ManageUserModal({
           <div className="mt-6 flex justify-end">
             <button
               type="button"
-              className="inline-flex justify-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 bg-blue-800 text-blue-100 hover:bg-blue-700"
+              className="inline-flex justify-center rounded-md border border-transparent bg-blue-800 px-4 py-2 text-sm font-medium text-blue-100 hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
               onClick={onClose}
             >
               Close
@@ -296,7 +296,7 @@ export default function ManageUserModal({
             <div className="mt-6 flex justify-end space-x-2">
               <button
                 type="button"
-                className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 border-gray-600 bg-gray-700 text-gray-200 hover:bg-gray-600"
+                className="inline-flex justify-center rounded-md border border-gray-600 bg-gray-700 px-4 py-2 text-sm font-medium text-gray-200 shadow-sm hover:bg-gray-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
                 onClick={() => setManagerToDelete(null)}
               >
                 Cancel

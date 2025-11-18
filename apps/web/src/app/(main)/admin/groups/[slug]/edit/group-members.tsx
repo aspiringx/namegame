@@ -206,7 +206,7 @@ export default function GroupMembers({
             value={searchQuery}
             onChange={handleSearch}
             placeholder="Search for users by name, email, or username..."
-            className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm border-gray-600 bg-gray-800 text-white placeholder-gray-400"
+            className="block w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-200 placeholder-gray-400 focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none"
           />
           {isSearching && (
             <p className="mt-2 text-sm text-gray-500">Searching...</p>
@@ -288,7 +288,7 @@ export default function GroupMembers({
             value={memberSearchQuery}
             onChange={(e) => setMemberSearchQuery(e.target.value)}
             placeholder="Search current members by name or email..."
-            className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm border-gray-600 bg-gray-800 text-white placeholder-gray-400"
+            className="block w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-200 placeholder-gray-400 focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none"
           />
         </div>
         <div className="ring-opacity-5 -mx-4 mt-8 overflow-hidden shadow ring-1 ring-black sm:-mx-6 md:mx-0 md:rounded-lg">
@@ -297,7 +297,7 @@ export default function GroupMembers({
               <tr>
                 <th
                   scope="col"
-                  className="py-3.5 pr-3 pl-4 text-left text-sm font-semibold text-gray-900 sm:pl-6 text-white"
+                  className="py-3.5 pr-3 pl-4 text-left text-sm font-semibold text-white sm:pl-6"
                 >
                   <button
                     onClick={() => requestSort('name')}
@@ -311,7 +311,7 @@ export default function GroupMembers({
                 </th>
                 <th
                   scope="col"
-                  className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 sm:table-cell text-white"
+                  className="hidden px-3 py-3.5 text-left text-sm font-semibold text-white sm:table-cell"
                 >
                   <button
                     onClick={() => requestSort('email')}
@@ -334,10 +334,10 @@ export default function GroupMembers({
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 bg-white divide-gray-700 bg-gray-800">
+            <tbody className="divide-y divide-gray-700 bg-gray-800">
               {paginatedMembers.map((member) => (
                 <tr key={member.userId}>
-                  <td className="w-full max-w-0 py-4 pr-3 pl-4 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6 text-white">
+                  <td className="w-full max-w-0 py-4 pr-3 pl-4 text-sm font-medium text-white sm:w-auto sm:max-w-none sm:pl-6">
                     <div className="flex items-center gap-4">
                       <Image
                         src={member.user.photoUrl}

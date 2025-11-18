@@ -10,7 +10,10 @@ interface LoginHandlerProps {
   searchParams: { [key: string]: string | string[] | undefined }
 }
 
-export default function LoginHandler({ code, searchParams }: LoginHandlerProps) {
+export default function LoginHandler({
+  code,
+  searchParams,
+}: LoginHandlerProps) {
   const router = useRouter()
 
   useEffect(() => {
@@ -27,11 +30,15 @@ export default function LoginHandler({ code, searchParams }: LoginHandlerProps) 
 
         if (result?.ok) {
           toast.success('Login successful! Welcome back.')
-          
-          // Preserve query params (like ?openChat=true) when redirecting
-          const queryString = new URLSearchParams(searchParams as Record<string, string>).toString();
-          const redirectUrl = queryString ? `/me?${queryString}` : '/me?sso=true';
-          
+
+          // Preserve query params (like ?chat=open) when redirecting
+          const queryString = new URLSearchParams(
+            searchParams as Record<string, string>,
+          ).toString()
+          const redirectUrl = queryString
+            ? `/me?${queryString}`
+            : '/me?sso=true'
+
           router.push(redirectUrl)
           router.refresh() // Refresh the page to update session state
         }

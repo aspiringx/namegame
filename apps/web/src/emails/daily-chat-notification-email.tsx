@@ -52,7 +52,7 @@ export const DailyChatNotificationEmail = ({
 const DailyChatNotificationEmailPreview = () => (
   <DailyChatNotificationEmail
     firstName="Joe"
-    ssoLink="https://namegame.app/one-time-login/mock_code?openChat=true"
+    ssoLink="https://namegame.app/one-time-login/mock_code?chat=open"
     unsubscribeLink="https://namegame.app/one-time-login/mock_code?emailUnsubscribe=true"
     notificationTitle="Tantalizing Messages"
     notificationBody="🦋🦋 someone said something 🦋🦋"

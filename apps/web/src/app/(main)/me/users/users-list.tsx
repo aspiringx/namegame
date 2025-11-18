@@ -172,7 +172,7 @@ export default function UsersList({
       {showInfo && (
         <div
           id="managed-user-info"
-          className="mb-6 rounded-md border border-gray-200 bg-gray-50 p-4 border-gray-700 bg-gray-800"
+          className="mb-6 rounded-md border border-gray-700 bg-gray-800 p-4"
         >
           <p className="mb-4 text-sm text-gray-300">
             Create and manage users who can&apos;t or shouldn&apos;t yet have
@@ -237,7 +237,7 @@ export default function UsersList({
                       height={48}
                     />
                     <div className="min-w-0">
-                      <p className="text-sm leading-6 font-semibold text-gray-900 text-white">
+                      <p className="text-sm leading-6 font-semibold text-white">
                         {[user.firstName, user.lastName]
                           .filter(Boolean)
                           .join(' ')}

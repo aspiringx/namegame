@@ -35,10 +35,10 @@ export default function QRCodeModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/25 p-4 backdrop-blur-sm">
-      <div className="relative my-8 max-w-xl rounded-lg bg-white p-8 text-center shadow-xl bg-gray-800">
+      <div className="relative my-8 max-w-xl rounded-lg bg-gray-800 p-8 text-center shadow-xl">
         <button
           onClick={onClose}
-          className="absolute top-3 right-3 flex h-8 w-8 items-center justify-center rounded-full text-3xl text-gray-500 hover:bg-gray-200 hover:text-gray-800 hover:bg-gray-700 hover:text-gray-200"
+          className="absolute top-3 right-3 flex h-8 w-8 items-center justify-center rounded-full text-3xl text-gray-500 hover:bg-gray-700 hover:text-gray-200"
           aria-label="Close modal"
         >
           <span className="mb-1">&times;</span>
@@ -53,7 +53,7 @@ export default function QRCodeModal({
         <div className="inline-block rounded-md bg-white p-4">
           <QRCode value={url} size={200} />
         </div>
-        <div className="mt-4 flex items-center rounded-lg bg-gray-100 p-2 bg-gray-700">
+        <div className="mt-4 flex items-center rounded-lg bg-gray-700 p-2">
           <p className="mr-2 flex-grow text-sm break-all text-gray-300">
             {url}
           </p>

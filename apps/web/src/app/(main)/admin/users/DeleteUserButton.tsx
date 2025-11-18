@@ -38,7 +38,7 @@ export function DeleteUserButton({ userId }: { userId: string }) {
 
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/25 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl bg-gray-800">
+          <div className="w-full max-w-md rounded-lg bg-gray-800 p-6 shadow-xl">
             <h3 className="mb-4 text-lg font-bold text-white">Delete User</h3>
             <p className="mb-6 text-left text-wrap text-gray-300">
               Are you sure? Soft-deleting will disable the user while
@@ -49,7 +49,7 @@ export function DeleteUserButton({ userId }: { userId: string }) {
               <button
                 type="button"
                 onClick={() => setShowModal(false)}
-                className="rounded-md border border-gray-300 bg-white px-4 py-2 text-gray-700 hover:bg-gray-50 border-gray-600 bg-gray-700 text-gray-300 hover:bg-gray-600"
+                className="rounded-md border border-gray-600 bg-gray-700 px-4 py-2 text-gray-300 hover:bg-gray-600"
                 disabled={isPending}
               >
                 Cancel

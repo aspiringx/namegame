@@ -65,7 +65,7 @@ export default function GroupsSection({
           {authdUserGroups.map((group) => (
             <div
               key={group.id}
-              className="flex items-center justify-between rounded-md bg-gray-50 p-3 bg-gray-800"
+              className="flex items-center justify-between rounded-md bg-gray-800 p-3"
             >
               <span className="font-medium text-gray-200">{group.name}</span>
               {managedUserGroupIds.has(group.id) ? (

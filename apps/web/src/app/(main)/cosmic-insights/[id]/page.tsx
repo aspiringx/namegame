@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import Image from 'next/image'
 import { getPhotoUrl } from '@/lib/photos'
+import StarChart from '../../stars/StarChart'
 
 interface CosmicInsightsData {
   id: string
@@ -194,7 +195,7 @@ export default function CosmicInsightsPage() {
         {/* Left: Context and Insights */}
         <div className="space-y-6">
           {data.relationshipGoals && (
-            <div className="rounded-lg border border-gray-200 bg-white p-6 border-gray-700 bg-gray-800">
+            <div className="rounded-lg border border-gray-700 bg-gray-800 p-6">
               <h2 className="mb-4 text-xl font-bold">Relationship Context</h2>
               <div className="text-sm text-gray-300">
                 {data.relationshipGoals}
@@ -202,7 +203,7 @@ export default function CosmicInsightsPage() {
             </div>
           )}
 
-          <div className="rounded-lg border border-gray-200 bg-white p-6 border-gray-700 bg-gray-800">
+          <div className="rounded-lg border border-gray-700 bg-gray-800 p-6">
             <h2 className="mb-4 text-xl font-bold">Your Cosmic Insights</h2>
             <div
               className="prose prose-sm prose-indigo prose-invert max-w-none text-gray-200 [&_li]:leading-relaxed [&_ul]:space-y-3 [&>div]:space-y-2 [&>p]:mb-8"
@@ -214,143 +215,42 @@ export default function CosmicInsightsPage() {
         {/* Right: Chart and Score */}
         <div className="space-y-6">
           {/* Star Chart */}
-          <div className="rounded-lg border border-gray-200 bg-white p-6 border-gray-700 bg-gray-800">
+          <div className="rounded-lg border border-gray-700 bg-gray-800 p-6">
             <h2 className="mb-4 text-xl font-bold">Star Chart</h2>
-            <div className="relative mx-auto aspect-square w-full">
-              <svg viewBox="-10 -10 340 340" className="h-full w-full">
-                {/* Center point */}
-                <circle cx="160" cy="160" r="3" fill="#4f46e5" />
-
-                {/* Concentric circles */}
-                {[32, 64, 96, 128, 160].map((radius) => (
-                  <circle
-                    key={radius}
-                    cx="160"
-                    cy="160"
-                    r={radius}
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1"
-                    className="stroke-gray-300 stroke-gray-600"
-                  />
-                ))}
-
-                {/* Scale labels */}
-                {[0, 5, 10].map((val) => (
-                  <text
-                    key={val}
-                    x="160"
-                    y={160 - val * 16 - (val === 0 ? 12 : 0) + 5}
-                    textAnchor="middle"
-                    fontSize="14"
-                    fontWeight="500"
-                    fill="currentColor"
-                    className="fill-gray-500 fill-gray-400"
-                  >
-                    {val}
-                  </text>
-                ))}
-
-                {/* Axes */}
-                {Object.keys(data.scores).map((_, idx) => {
-                  const angle = (idx * (360 / 5) - 90 + 30) * (Math.PI / 180)
-                  const x = 160 + 160 * Math.cos(angle)
-                  const y = 160 + 160 * Math.sin(angle)
-                  return (
-                    <line
-                      key={idx}
-                      x1="160"
-                      y1="160"
-                      x2={x}
-                      y2={y}
-                      stroke="currentColor"
-                      strokeWidth="1"
-                      className="stroke-gray-300 stroke-gray-600"
-                    />
-                  )
-                })}
-
-                {/* Filled area */}
-                <path
-                  d={
-                    Object.values(data.scores)
-                      .map((value, idx) => {
-                        const angle =
-                          (idx * (360 / 5) - 90 + 30) * (Math.PI / 180)
-                        const length = value * 16
-                        const x = 160 + length * Math.cos(angle)
-                        const y = 160 + length * Math.sin(angle)
-                        return `${idx === 0 ? 'M' : 'L'} ${x} ${y}`
-                      })
-                      .join(' ') + ' Z'
-                  }
-                  fill="#4f46e5"
-                  fillOpacity="0.15"
-                  stroke="#4f46e5"
-                  strokeWidth="3"
-                  opacity="0.6"
-                />
-
-                {/* Points */}
-                {Object.values(data.scores).map((value, idx) => {
-                  const angle = (idx * (360 / 5) - 90 + 30) * (Math.PI / 180)
-                  const length = value * 16
-                  const x = 160 + length * Math.cos(angle)
-                  const y = 160 + length * Math.sin(angle)
-
-                  return (
-                    <g key={idx}>
-                      <circle
-                        cx={x}
-                        cy={y}
-                        r="6"
-                        fill="#4f46e5"
-                        stroke="white"
-                        strokeWidth="2"
-                      />
-                    </g>
-                  )
-                })}
-
-                {/* Labels */}
-                {[
-                  { key: 'proximity', label: 'Proximity' },
-                  { key: 'interest', label: 'Interest' },
-                  { key: 'personalTime', label: 'Personal\nTime' },
-                  { key: 'commonGround', label: 'Common\nGround' },
-                  { key: 'familiarity', label: 'Familiarity' },
-                ].map((dim, idx) => {
-                  const angle = (idx * (360 / 5) - 90 + 30) * (Math.PI / 180)
-                  const labelDistance = 145
-                  const x = 160 + labelDistance * Math.cos(angle)
-                  const y = 160 + labelDistance * Math.sin(angle)
-
-                  return (
-                    <text
-                      key={dim.key}
-                      x={x}
-                      y={y}
-                      textAnchor="middle"
-                      dominantBaseline="middle"
-                      fontSize="14"
-                      fontWeight="600"
-                      fill="currentColor"
-                      className="fill-gray-700 fill-gray-300"
-                    >
-                      {dim.label.split('\n').map((line, i) => (
-                        <tspan key={i} x={x} dy={i === 0 ? 0 : 16}>
-                          {line}
-                        </tspan>
-                      ))}
-                    </text>
-                  )
-                })}
-              </svg>
-            </div>
+            <StarChart
+              data={[
+                {
+                  dimension: 'Proximity',
+                  value: data.scores.proximity,
+                  max: 10,
+                },
+                {
+                  dimension: 'Interest',
+                  value: data.scores.interest,
+                  max: 10,
+                },
+                {
+                  dimension: 'Personal Time',
+                  value: data.scores.personalTime,
+                  max: 10,
+                },
+                {
+                  dimension: 'Common Ground',
+                  value: data.scores.commonGround,
+                  max: 10,
+                },
+                {
+                  dimension: 'Familiarity',
+                  value: data.scores.familiarity,
+                  max: 10,
+                },
+              ]}
+              size="large"
+            />
           </div>
 
           {/* Star Score */}
-          <div className="rounded-lg border border-gray-200 bg-white p-6 border-gray-700 bg-gray-800">
+          <div className="rounded-lg border border-gray-700 bg-gray-800 p-6">
             <h2 className="mb-4 text-xl font-bold">Star Score</h2>
             <div className="mb-4 text-center">
               <div className="font-bold">

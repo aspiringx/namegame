@@ -209,63 +209,11 @@ export default function ChatInterface({
     }
   }, [isEditingName])
 
-  // Focus input when chat opens and lock background scroll
+  // Focus input when chat opens
+  // Note: Scroll locking is handled by parent ChatDrawer component
   useEffect(() => {
     if (isOpen) {
       inputRef.current?.focus()
-
-      // Lock scroll on body and drawer to prevent background scrolling
-      const scrollY = window.scrollY
-      document.body.style.overflow = 'hidden'
-      document.body.style.position = 'fixed'
-      document.body.style.top = `-${scrollY}px`
-      document.body.style.width = '100%'
-
-      // Also lock the drawer if it exists
-      const drawer = document.querySelector('[data-chat-drawer]') as HTMLElement
-      if (drawer) {
-        drawer.style.overflow = 'hidden'
-        drawer.style.position = 'fixed'
-      }
-
-      // Store scroll position
-      document.body.dataset.scrollY = String(scrollY)
-    } else {
-      // Restore scroll when chat closes
-      const scrollY = document.body.dataset.scrollY
-      document.body.style.overflow = ''
-      document.body.style.position = ''
-      document.body.style.top = ''
-      document.body.style.width = ''
-
-      if (scrollY) {
-        window.scrollTo(0, parseInt(scrollY))
-      }
-
-      const drawer = document.querySelector('[data-chat-drawer]') as HTMLElement
-      if (drawer) {
-        drawer.style.overflow = ''
-        drawer.style.position = ''
-      }
-    }
-
-    return () => {
-      // Cleanup on unmount
-      const scrollY = document.body.dataset.scrollY
-      document.body.style.overflow = ''
-      document.body.style.position = ''
-      document.body.style.top = ''
-      document.body.style.width = ''
-
-      if (scrollY) {
-        window.scrollTo(0, parseInt(scrollY))
-      }
-
-      const drawer = document.querySelector('[data-chat-drawer]') as HTMLElement
-      if (drawer) {
-        drawer.style.overflow = ''
-        drawer.style.position = ''
-      }
     }
   }, [isOpen])
 
@@ -1045,8 +993,8 @@ export default function ChatInterface({
             rel="noopener noreferrer"
             className={`inline px-1.5 py-0.5 mx-0.5 my-1 rounded font-normal underline decoration-1 underline-offset-2 break-all ${
               isCurrentUser
-                ? 'bg-white/20 text-white hover:bg-white/30'
-                : 'bg-blue-500/10 bg-blue-400/20 text-blue-300 hover:bg-blue-500/20 hover:bg-blue-400/30'
+                ? 'bg-gray-700/50 text-white hover:bg-gray-700/70'
+                : 'bg-blue-400/20 text-blue-300 hover:bg-blue-400/30'
             }`}
           >
             {displayUrl}
@@ -1602,7 +1550,7 @@ export default function ChatInterface({
   return (
     <div
       data-chat-interface
-      className="md:absolute md:inset-0 fixed left-0 right-0 bg-white bg-gray-900 flex flex-col overflow-hidden transition-all duration-200 ease-out"
+      className="md:absolute md:inset-0 fixed left-0 right-0 bg-gray-900 flex flex-col overflow-hidden transition-all duration-200 ease-out"
       style={
         isMobile
           ? {
@@ -1672,7 +1620,7 @@ export default function ChatInterface({
       {/* Resize handle - only on desktop */}
       {onResize && (
         <div
-          className="hidden md:block absolute left-0 top-0 bottom-0 w-1 hover:w-2 cursor-col-resize bg-transparent hover:bg-blue-500 transition-all z-[60]"
+          className="hidden md:block absolute left-0 top-0 bottom-0 w-1 hover:w-2 cursor-col-resize bg-transparent hover:bg-blue-600 transition-all z-[60]"
           onMouseDown={(e) => {
             e.preventDefault()
             setIsResizingDrawer(true)
@@ -1683,7 +1631,7 @@ export default function ChatInterface({
 
       {/* Header - Fixed at top, outside scroll container */}
       <div
-        className={`flex-shrink-0 z-10 flex items-center justify-between border-b border-gray-700 bg-white bg-gray-800 transition-all ${
+        className={`flex-shrink-0 z-10 flex items-center justify-between border-b border-gray-700 bg-gray-800 transition-all ${
           isKeyboardOpen ? 'p-2' : 'p-4'
         }`}
       >
@@ -1718,7 +1666,7 @@ export default function ChatInterface({
                     if (e.key === 'Escape') handleCancelEdit()
                   }}
                   maxLength={30}
-                  className="flex-1 px-2 py-1 text-lg font-semibold bg-white bg-gray-700 border border-gray-600 rounded text-gray-900 text-white"
+                  className="flex-1 px-2 py-1 text-lg font-semibold bg-gray-700 border border-gray-600 rounded text-white"
                   placeholder="Conversation name"
                 />
                 <button
@@ -1737,7 +1685,7 @@ export default function ChatInterface({
             ) : (
               <div className="flex items-center gap-2">
                 <h2
-                  className={`font-semibold text-gray-900 text-white truncate ${
+                  className={`font-semibold text-white truncate ${
                     isKeyboardOpen ? 'text-base' : 'text-lg'
                   }`}
                 >
@@ -1965,14 +1913,14 @@ export default function ChatInterface({
                               : isModerated
                               ? 'pr-4'
                               : 'pr-4'
-                          } ${isCurrentUser ? 'bg-blue-500' : 'bg-gray-700'} ${
+                          } ${isCurrentUser ? 'bg-blue-600' : 'bg-gray-700'} ${
                             isModerated
                               ? isCurrentUser
                                 ? 'text-blue-300 italic'
                                 : 'text-gray-500 italic'
                               : isCurrentUser
                               ? 'text-white'
-                              : 'text-gray-900 text-white'
+                              : 'text-white'
                           }`}
                           style={
                             {
@@ -2162,7 +2110,7 @@ export default function ChatInterface({
                                   onChange={(e) =>
                                     setEditedContent(e.target.value)
                                   }
-                                  className="w-full px-3 py-2 text-xl bg-white bg-gray-900 border border-gray-600 rounded-lg resize-none"
+                                  className="w-full px-3 py-2 text-xl bg-gray-900 border border-gray-600 rounded-lg resize-none"
                                   rows={3}
                                   autoFocus
                                   onClick={(e) => e.stopPropagation()}
@@ -2180,7 +2128,7 @@ export default function ChatInterface({
                                       setEditedLinks([])
                                       setModerationButtonVisibleId(null)
                                     }}
-                                    className="px-4 py-2 bg-gray-700 text-gray-900 text-white rounded-lg hover:bg-gray-300 hover:bg-gray-600 flex items-center gap-2"
+                                    className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 flex items-center gap-2"
                                   >
                                     <X size={16} />
                                     Cancel
@@ -2291,7 +2239,7 @@ export default function ChatInterface({
                                         )
                                       }
                                     }}
-                                    className="px-4 py-2 bg-blue-500 text-white border-2 border-white rounded-lg hover:bg-blue-600 flex items-center gap-2"
+                                    className="px-4 py-2 bg-blue-600 text-white border-2 border-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
                                   >
                                     <Check size={16} />
                                     Save
@@ -2430,7 +2378,7 @@ export default function ChatInterface({
                                           </p>
                                         )}
                                         {link.title && (
-                                          <p className="font-semibold text-gray-900 text-white mb-1 line-clamp-2">
+                                          <p className="font-semibold text-white mb-1 line-clamp-2">
                                             {link.title}
                                           </p>
                                         )}
@@ -2487,7 +2435,7 @@ export default function ChatInterface({
 
                           {/* Moderation menu dropdown */}
                           {moderationMenuMessageId === message.id && (
-                            <div className="absolute top-10 right-2 z-30 bg-white bg-gray-800 rounded-lg shadow-lg border border-gray-700 min-w-[140px]">
+                            <div className="absolute top-10 right-2 z-30 bg-gray-800 rounded-lg shadow-lg border border-gray-700 min-w-[140px]">
                               <div className="py-2">
                                 {/* Edit - only for message owner */}
                                 {isCurrentUser && (
@@ -2504,7 +2452,7 @@ export default function ChatInterface({
                                       )
                                       setModerationMenuMessageId(null)
                                     }}
-                                    className="w-full px-4 py-3 text-left text-base text-gray-900 text-white hover:bg-gray-100 hover:bg-gray-700 flex items-center gap-3"
+                                    className="w-full px-4 py-3 text-left text-base text-white hover:bg-gray-700 flex items-center gap-3"
                                   >
                                     <Edit2 size={18} />
                                     Edit
@@ -2521,7 +2469,7 @@ export default function ChatInterface({
                                     })
                                     setModerationMenuMessageId(null)
                                   }}
-                                  className="w-full px-4 py-3 text-left text-base text-gray-900 text-white hover:bg-gray-100 hover:bg-gray-700 flex items-center gap-3"
+                                  className="w-full px-4 py-3 text-left text-base text-white hover:bg-gray-700 flex items-center gap-3"
                                 >
                                   <EyeOff size={18} />
                                   Hide
@@ -2604,7 +2552,7 @@ export default function ChatInterface({
       </div>
 
       {/* Message Input */}
-      <div className="p-4 border-t border-gray-700 bg-white bg-gray-800">
+      <div className="p-4 border-t border-gray-700 bg-gray-800">
         {/* Image previews - dynamic grid layout */}
         {pendingImages.length > 0 && (
           <div
@@ -2627,7 +2575,7 @@ export default function ChatInterface({
                 />
                 <button
                   onClick={() => handleRemoveImage(index)}
-                  className="absolute -top-1 -right-1 w-5 h-5 bg-gray-500 text-white rounded-full flex items-center justify-center hover:bg-gray-700 hover:bg-gray-600 shadow-md"
+                  className="absolute -top-1 -right-1 w-5 h-5 bg-gray-500 text-white rounded-full flex items-center justify-center hover:bg-gray-600 shadow-md"
                 >
                   <X size={12} />
                 </button>
@@ -2670,7 +2618,7 @@ export default function ChatInterface({
               onKeyPress={handleKeyPress}
               placeholder="Type a message..."
               rows={1}
-              className="w-full px-4 py-3 border border-gray-600 rounded-2xl bg-white bg-gray-700 text-gray-900 text-white placeholder-gray-500 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              className="w-full px-4 py-3 border border-gray-600 rounded-2xl bg-gray-700 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
               style={{ minHeight: '48px', maxHeight: '120px' }}
             />
           </div>
@@ -2682,7 +2630,7 @@ export default function ChatInterface({
               isSendingMessage ||
               isProcessingImage
             }
-            className="w-12 h-12 bg-blue-500 text-white rounded-full flex items-center justify-center disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-blue-600 disabled:hover:bg-gray-300 transition-colors relative"
+            className="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center disabled:bg-gray-600 disabled:cursor-not-allowed hover:bg-blue-700 disabled:hover:bg-gray-600 transition-colors relative"
           >
             {isSendingMessage || isProcessingImage ? (
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />

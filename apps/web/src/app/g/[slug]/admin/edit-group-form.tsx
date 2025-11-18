@@ -43,7 +43,7 @@ export default function EditGroupForm({
           name="name"
           defaultValue={group.name}
           required
-          className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm border-gray-600 bg-gray-800 text-white placeholder-gray-400"
+          className="mt-1 block w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-white placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm"
         />
       </div>
       <div>
@@ -60,7 +60,7 @@ export default function EditGroupForm({
           defaultValue={group.slug}
           onChange={(e) => setSlugValue(e.target.value)}
           required
-          className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm border-gray-600 bg-gray-800 text-white placeholder-gray-400"
+          className="mt-1 block w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-white placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm"
         />
         {slugValue !== group.slug && (
           <p className="mt-2 text-sm text-red-400">
@@ -81,7 +81,7 @@ export default function EditGroupForm({
           name="description"
           defaultValue={group.description || ''}
           rows={3}
-          className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm border-gray-600 bg-gray-800 text-white placeholder-gray-400"
+          className="mt-1 block w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-white placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm"
         ></textarea>
       </div>
       <div>
@@ -96,7 +96,7 @@ export default function EditGroupForm({
           id="address"
           name="address"
           defaultValue={group.address || ''}
-          className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm border-gray-600 bg-gray-800 text-white placeholder-gray-400"
+          className="mt-1 block w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-white placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm"
         />
       </div>
       <div>
@@ -111,7 +111,7 @@ export default function EditGroupForm({
           id="phone"
           name="phone"
           defaultValue={group.phone || ''}
-          className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm border-gray-600 bg-gray-800 text-white placeholder-gray-400"
+          className="mt-1 block w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-white placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm"
         />
       </div>
       <div>
@@ -136,7 +136,7 @@ export default function EditGroupForm({
           id="logo"
           name="logo"
           onChange={handleFileChange}
-          className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:rounded-full file:border-0 file:bg-indigo-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-indigo-600 hover:file:bg-indigo-100 text-gray-400 file:bg-indigo-700 file:text-indigo-200 hover:file:bg-indigo-600"
+          className="mt-1 block w-full text-sm text-gray-300 file:mr-4 file:rounded-full file:border-0 file:bg-indigo-600 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-indigo-700"
         />
       </div>
       <button

@@ -489,7 +489,7 @@ export default function UserProfileForm({
         isOpen={isConfirmModalOpen}
         onClose={() => setConfirmModalOpen(false)}
       >
-        <div className="bg-white p-6 bg-gray-800">
+        <div className="bg-gray-800 p-6">
           <h3 className="text-lg font-medium text-gray-100">
             Confirm Email Deletion
           </h3>
@@ -651,7 +651,7 @@ export default function UserProfileForm({
               required
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
-              className={`mt-1 block w-full rounded-l-md rounded-r-none border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm border-gray-600 bg-gray-800 text-white placeholder-gray-400 ${
+              className={`mt-1 block w-full rounded-l-md rounded-r-none border border-gray-600 bg-gray-800 px-3 py-2 text-white placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm ${
                 !firstName || state?.errors?.firstName ? 'bg-red-900' : ''
               }`}
             />
@@ -850,7 +850,7 @@ export default function UserProfileForm({
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="inline-flex items-center border border-l-0 border-gray-300 bg-gray-50 px-3 text-sm text-gray-500 hover:bg-gray-100 border-gray-600 bg-gray-700 text-gray-300 hover:bg-gray-600"
+                className="inline-flex items-center border border-l-0 border-gray-600 bg-gray-700 px-3 text-sm text-gray-300 hover:bg-gray-600"
               >
                 {showPassword ? (
                   <EyeOff className="h-5 w-5" />
@@ -872,7 +872,7 @@ export default function UserProfileForm({
                         handleCopyPassword()
                         setIsPasswordTooltipOpen(!isPasswordTooltipOpen)
                       }}
-                      className="inline-flex items-center rounded-r-md border border-l-0 border-gray-300 bg-gray-50 px-3 text-sm text-gray-500 hover:bg-gray-100 border-gray-600 bg-gray-700 text-gray-300 hover:bg-gray-600"
+                      className="inline-flex items-center rounded-r-md border border-l-0 border-gray-600 bg-gray-700 px-3 text-sm text-gray-300 hover:bg-gray-600"
                       aria-label="Copy password to clipboard"
                     >
                       {showCopySuccess ? (
@@ -888,7 +888,7 @@ export default function UserProfileForm({
                         handleGeneratePassword()
                         setIsPasswordTooltipOpen(!isPasswordTooltipOpen)
                       }}
-                      className="inline-flex items-center rounded-r-md border border-l-0 border-gray-300 bg-gray-50 px-3 text-sm text-gray-500 hover:bg-gray-100 border-gray-600 bg-gray-700 text-gray-300 hover:bg-gray-600"
+                      className="inline-flex items-center rounded-r-md border border-l-0 border-gray-600 bg-gray-700 px-3 text-sm text-gray-300 hover:bg-gray-600"
                       aria-label="Generate a new password"
                     >
                       <RefreshCw className="h-5 w-5" />
@@ -970,7 +970,7 @@ export default function UserProfileForm({
               id="change-photo-button"
               type="button"
               onClick={handleChoosePhoto}
-              className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm leading-4 font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none border-gray-600 bg-gray-700 text-gray-300 hover:bg-gray-600 focus:ring-offset-gray-800"
+              className="rounded-md border border-gray-600 bg-gray-700 px-3 py-2 text-sm leading-4 font-medium text-gray-300 shadow-sm hover:bg-gray-600 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-800 focus:outline-none"
             >
               Change Photo
             </button>
@@ -1082,10 +1082,10 @@ export default function UserProfileForm({
                     onChange={(e) => {
                       setBirthDate(e.target.value)
                     }}
-                    className={`block w-full rounded-md border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border-gray-600 bg-gray-800 text-white placeholder-gray-400 ${
+                    className={`block w-full rounded-md border px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-white placeholder-gray-400 ${
                       state?.errors?.birthDate
                         ? 'border-red-500 bg-red-900'
-                        : ''
+                        : 'border-gray-600 bg-gray-800'
                     }`}
                     placeholder="July 9, 1969, 7/9/69, 1969, etc."
                   />
@@ -1111,7 +1111,7 @@ export default function UserProfileForm({
                     id="birthPlace"
                     value={birthPlace}
                     onChange={(e) => setBirthPlace(e.target.value)}
-                    className="block w-full rounded-md border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm border-gray-600 bg-gray-700 text-gray-200"
+                    className="block w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm text-gray-200"
                     placeholder="City, State, Country"
                   />
                 </div>

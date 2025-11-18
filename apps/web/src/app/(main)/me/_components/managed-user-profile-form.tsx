@@ -299,7 +299,7 @@ export default function ManagedUserProfileForm({
               placeholder="First name"
               defaultValue={user?.firstName || ''}
               required
-              className={`mt-1 block w-full rounded-l-md rounded-r-none border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm border-gray-600 bg-gray-800 text-white placeholder-gray-400 ${
+              className={`mt-1 block w-full rounded-l-md rounded-r-none border border-gray-600 bg-gray-800 px-3 py-2 text-white placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm ${
                 state?.errors?.firstName ? 'bg-red-900' : ''
               }`}
             />
@@ -323,7 +323,7 @@ export default function ManagedUserProfileForm({
               placeholder="Last name"
               defaultValue={user?.lastName || ''}
               required
-              className={`mt-1 -ml-px block w-full rounded-l-none rounded-r-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm border-gray-600 bg-gray-800 text-white placeholder-gray-400 ${
+              className={`mt-1 -ml-px block w-full rounded-l-none rounded-r-md border border-gray-600 bg-gray-800 px-3 py-2 text-white placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm ${
                 state?.errors?.lastName ? 'bg-red-900' : ''
               }`}
             />
@@ -355,7 +355,7 @@ export default function ManagedUserProfileForm({
                 className={`rounded-md px-3 py-1 text-sm font-medium ${
                   gender === value
                     ? 'border-transparent bg-indigo-600 text-white hover:bg-indigo-700'
-                    : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50 border-gray-600 bg-gray-700 text-gray-300 hover:bg-gray-600'
+                    : 'border-gray-600 bg-gray-700 text-gray-300 hover:bg-gray-600'
                 }`}
               >
                 {label}
@@ -381,7 +381,7 @@ export default function ManagedUserProfileForm({
                 placeholder="Email"
                 defaultValue={user?.email || ''}
                 required={managedStatus === ManagedStatus.partial}
-                className={`mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border-gray-600 bg-gray-800 text-white placeholder-gray-400 ${
+                className={`mt-1 block w-full rounded-md border border-gray-600 bg-gray-800 py-2 pl-3 text-white placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm ${
                   state?.errors?.email ? 'bg-red-900' : ''
                 }`}
               />
@@ -413,7 +413,7 @@ export default function ManagedUserProfileForm({
                     setPassword(e.target.value)
                     validatePassword(e.target.value)
                   }}
-                  className={`block w-full min-w-0 flex-1 rounded-none rounded-l-md border border-gray-300 bg-white px-3 py-2 focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm border-gray-600 bg-gray-800 text-white placeholder-gray-400 ${
+                  className={`block w-full min-w-0 flex-1 rounded-none rounded-l-md border border-gray-600 bg-gray-800 px-3 py-2 text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm ${
                     state?.errors?.password ? 'bg-red-900' : ''
                   }`}
                   placeholder={
@@ -423,7 +423,7 @@ export default function ManagedUserProfileForm({
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="inline-flex items-center border border-l-0 border-gray-300 bg-gray-50 px-3 text-sm text-gray-500 hover:bg-gray-100 border-gray-600 bg-gray-700 text-gray-300 hover:bg-gray-600"
+                  className="inline-flex items-center border border-l-0 border-gray-600 bg-gray-700 px-3 text-sm text-gray-300 hover:bg-gray-600"
                 >
                   {showPassword ? (
                     <EyeOff className="h-5 w-5" />
@@ -438,7 +438,7 @@ export default function ManagedUserProfileForm({
                         <button
                           type="button"
                           onClick={handleCopyPassword}
-                          className="inline-flex items-center rounded-r-md border border-l-0 border-gray-300 bg-gray-50 px-3 text-sm text-gray-500 hover:bg-gray-100 border-gray-600 bg-gray-700 text-gray-300 hover:bg-gray-600"
+                          className="inline-flex items-center rounded-r-md border border-l-0 border-gray-600 bg-gray-700 px-3 text-sm text-gray-300 hover:bg-gray-600"
                           aria-label="Copy password to clipboard"
                         >
                           {showCopySuccess ? (
@@ -451,7 +451,7 @@ export default function ManagedUserProfileForm({
                         <button
                           type="button"
                           onClick={handleGeneratePassword}
-                          className="inline-flex items-center rounded-r-md border border-l-0 border-gray-300 bg-gray-50 px-3 text-sm text-gray-500 hover:bg-gray-100 border-gray-600 bg-gray-700 text-gray-300 hover:bg-gray-600"
+                          className="inline-flex items-center rounded-r-md border border-l-0 border-gray-600 bg-gray-700 px-3 text-sm text-gray-300 hover:bg-gray-600"
                           aria-label="Generate a new password"
                         >
                           <RefreshCw className="h-5 w-5" />
@@ -520,7 +520,7 @@ export default function ManagedUserProfileForm({
             <button
               type="button"
               onClick={handleChoosePhoto}
-              className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium leading-4 text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none border-gray-600 bg-gray-700 text-gray-300 hover:bg-gray-600 focus:ring-offset-gray-800"
+              className="rounded-md border border-gray-600 bg-gray-700 px-3 py-2 text-sm font-medium leading-4 text-gray-300 shadow-sm hover:bg-gray-600 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-800 focus:outline-none"
             >
               Change Photo
             </button>
@@ -597,7 +597,7 @@ export default function ManagedUserProfileForm({
                         setBirthDate,
                         setBirthDatePrecision,
                       )}
-                      className="block w-full rounded-md border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm border-gray-600 bg-gray-800 text-white"
+                      className="block w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm"
                       placeholder="YYYY, YYYY-MM, or YYYY-MM-DD"
                     />
                     <input
@@ -621,7 +621,7 @@ export default function ManagedUserProfileForm({
                       name="birthPlace"
                       value={birthPlace}
                       onChange={(e) => setBirthPlace(e.target.value)}
-                      className="block w-full rounded-md border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm border-gray-600 bg-gray-800 text-white"
+                      className="block w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm"
                     />
                   </div>
                 </div>
@@ -645,7 +645,7 @@ export default function ManagedUserProfileForm({
                         setDeathDate,
                         setDeathDatePrecision,
                       )}
-                      className="block w-full rounded-md border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm border-gray-600 bg-gray-800 text-white"
+                      className="block w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm"
                       placeholder="YYYY, YYYY-MM, or YYYY-MM-DD"
                     />
                     <input
@@ -669,7 +669,7 @@ export default function ManagedUserProfileForm({
                       name="deathPlace"
                       value={deathPlace}
                       onChange={(e) => setDeathPlace(e.target.value)}
-                      className="block w-full rounded-md border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm border-gray-600 bg-gray-800 text-white"
+                      className="block w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm"
                     />
                   </div>
                 </div>
@@ -716,7 +716,7 @@ export default function ManagedUserProfileForm({
                     className={`rounded-md px-3 py-1 text-sm font-medium ${
                       managedStatus === ManagedStatus.full
                         ? 'border-transparent bg-indigo-600 text-white hover:bg-indigo-700'
-                        : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50 border-gray-600 bg-gray-700 text-gray-300 hover:bg-gray-600'
+                        : 'border-gray-600 bg-gray-700 text-gray-300 hover:bg-gray-600'
                     }`}
                   >
                     Full
@@ -727,7 +727,7 @@ export default function ManagedUserProfileForm({
                     className={`rounded-md px-3 py-1 text-sm font-medium ${
                       managedStatus === ManagedStatus.partial
                         ? 'border-transparent bg-indigo-600 text-white hover:bg-indigo-700'
-                        : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50 border-gray-600 bg-gray-700 text-gray-300 hover:bg-gray-600'
+                        : 'border-gray-600 bg-gray-700 text-gray-300 hover:bg-gray-600'
                     }`}
                   >
                     Partial
@@ -752,7 +752,7 @@ export default function ManagedUserProfileForm({
           <button
             type="button"
             onClick={() => router.back()}
-            className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none border-gray-600 bg-gray-700 text-gray-300 hover:bg-gray-600 focus:ring-offset-gray-800"
+            className="inline-flex justify-center rounded-md border border-gray-600 bg-gray-700 px-4 py-2 text-sm font-medium text-gray-300 shadow-sm hover:bg-gray-600 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-800 focus:outline-none"
           >
             Cancel
           </button>

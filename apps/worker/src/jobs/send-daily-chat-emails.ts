@@ -250,7 +250,7 @@ export const sendDailyChatEmails: JobHandler = async () => {
         const loginCode = await generateOneTimeLoginCode(userId)
         // Use centralized URL helper (falls back to NEXT_PUBLIC_APP_URL in worker context)
         const ssoUrl = getNotificationUrl(
-          `/one-time-login/${loginCode}?openChat=true`,
+          `/one-time-login/${loginCode}?chat=open`,
         )
         const unsubscribeUrl = getNotificationUrl(
           `/one-time-login/${loginCode}?emailUnsubscribe=true`,

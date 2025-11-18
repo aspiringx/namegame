@@ -257,9 +257,10 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
     }
   }, [socket, isOpen, session?.user, batchUpdateConversations])
 
-  // Lock body scroll when modal is open
+  // Lock body scroll when drawer is open - only on mobile to prevent background scrolling
   useEffect(() => {
-    if (isOpen) {
+    const isMobileWidth = window.innerWidth < 768
+    if (isOpen && isMobileWidth) {
       document.body.style.overflow = 'hidden'
     } else {
       document.body.style.overflow = 'unset'
@@ -470,7 +471,7 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
           {group && (
             <button
               onClick={handleNewGroupMessage}
-              className="w-full flex items-center gap-3 p-3 text-left bg-blue-50 hover:bg-blue-900/20 hover:bg-blue-900/30 rounded-lg transition-colors"
+              className="w-full flex items-center gap-3 p-3 text-left bg-blue-900/20 hover:bg-blue-900/30 rounded-lg transition-colors"
             >
               <Users size={20} className="text-blue-400" />
               <span className="text-blue-400 font-medium">
@@ -480,7 +481,7 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
           )}
           <button
             onClick={handleNewGlobalMessage}
-            className="w-full flex items-center gap-3 p-3 text-left bg-gray-50 hover:bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
+            className="w-full flex items-center gap-3 p-3 text-left bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
           >
             <User size={20} className="text-gray-400" />
             <span className="text-gray-400 font-medium">New direct chat</span>
@@ -490,7 +491,7 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
           {conversations.some((c) => c.hasUnread) && (
             <button
               onClick={handleMarkAllAsRead}
-              className="w-full flex items-center justify-center gap-2 p-2 text-sm text-gray-400 hover:text-gray-900 hover:text-white transition-colors"
+              className="w-full flex items-center justify-center gap-2 p-2 text-sm text-gray-400 hover:text-white transition-colors"
             >
               Mark all as read
             </button>
@@ -516,7 +517,7 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
                 <button
                   key={conversation.id}
                   onClick={() => handleOpenConversation(conversation)}
-                  className="w-full p-4 text-left hover:bg-gray-50 hover:bg-gray-700 transition-colors"
+                  className="w-full p-4 text-left hover:bg-gray-700 transition-colors"
                 >
                   <div className="flex items-center gap-2">
                     {conversation.isGroup ? (
@@ -527,7 +528,7 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
                     ) : (
                       <User size={16} className="text-gray-400 flex-shrink-0" />
                     )}
-                    <p className="font-medium text-gray-900 text-white truncate">
+                    <p className="font-medium text-white truncate">
                       {conversation.name}
                     </p>
                     {conversation.hasUnread && (

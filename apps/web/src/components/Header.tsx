@@ -9,7 +9,6 @@ import { GroupData } from '@/types'
 import { Settings, ArrowLeft, ArrowRight } from 'lucide-react'
 import GroupInfoModal from './GroupInfoModal'
 import ChatIcon, { ChatIconRef } from './ChatIcon'
-import ChatDeepLink from './ChatDeepLink'
 import RefreshButton from './ui/RefreshButton'
 import { useSession } from 'next-auth/react'
 import { useDeviceInfo } from '@/hooks/useDeviceInfo'
@@ -49,13 +48,8 @@ export default function Header({
     return () => window.removeEventListener('popstate', updateNavState)
   }, [])
 
-  const handleOpenChat = () => {
-    chatIconRef.current?.openChat()
-  }
-
   return (
     <>
-      <ChatDeepLink onOpenChat={handleOpenChat} />
       <header
         id="page-header"
         className="bg-background border-border sticky top-0 left-0 z-50 w-full border-b"

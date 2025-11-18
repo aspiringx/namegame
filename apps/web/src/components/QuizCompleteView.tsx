@@ -24,7 +24,7 @@ const QuizCompleteView: React.FC<QuizCompleteViewProps> = ({
           Or switch back to{' '}
           <button
             onClick={onSwitchToGrid}
-            className="underline hover:text-gray-700 hover:text-gray-200"
+            className="underline hover:text-gray-200"
           >
             Grid
           </button>{' '}

@@ -129,7 +129,7 @@ export default async function UsersTable({
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200 bg-white divide-gray-700 bg-gray-800">
+          <tbody className="divide-y divide-gray-700 bg-gray-800">
             {usersWithPhotos.map((user) => (
               <tr key={user.id} className={user.deletedAt ? 'bg-gray-700' : ''}>
                 <td className="px-4 py-4 text-sm whitespace-nowrap">
@@ -146,16 +146,16 @@ export default async function UsersTable({
                   </div>
                 </td>
                 {/* Desktop: Show separate first and last name columns */}
-                <td className="hidden px-3 py-4 text-sm font-medium text-gray-900 sm:table-cell text-white">
+                <td className="hidden px-3 py-4 text-sm font-medium text-white sm:table-cell">
                   <div className="min-w-0">
                     <span className="block truncate">{user.firstName}</span>
                   </div>
                 </td>
-                <td className="hidden px-3 py-4 text-sm font-medium text-gray-900 sm:table-cell text-white">
+                <td className="hidden px-3 py-4 text-sm font-medium text-white sm:table-cell">
                   <span className="block truncate">{user.lastName}</span>
                 </td>
                 {/* Mobile: Show combined name with email below if exists */}
-                <td className="px-3 py-4 text-sm font-medium text-gray-900 sm:hidden text-white">
+                <td className="px-3 py-4 text-sm font-medium text-white sm:hidden">
                   <div className="min-w-0">
                     <span className="block truncate">
                       {user.firstName} {user.lastName}

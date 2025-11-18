@@ -56,7 +56,7 @@ export default function MembersTable({
                 <tr>
                   <th
                     scope="col"
-                    className="w-1/2 px-2 py-3.5 text-left text-sm font-semibold text-gray-900 text-white"
+                    className="w-1/2 px-2 py-3.5 text-left text-sm font-semibold text-white"
                   >
                     Name
                   </th>
@@ -97,7 +97,7 @@ export default function MembersTable({
                           />
                         </div>
                         <div className="ml-4 flex-1">
-                          <div className="font-medium break-all text-gray-900 sm:max-w-[25ch] sm:truncate text-white">
+                          <div className="font-medium break-all text-white sm:max-w-[25ch] sm:truncate">
                             {[groupUser.user.firstName, groupUser.user.lastName]
                               .filter(Boolean)
                               .join(' ')}

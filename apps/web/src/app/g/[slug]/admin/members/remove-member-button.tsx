@@ -44,7 +44,7 @@ export default function RemoveMemberButton({
 
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/25 backdrop-blur-sm">
-          <div className="mx-4 w-full max-w-md rounded-lg bg-white p-6 shadow-xl bg-gray-800 sm:mx-0">
+          <div className="mx-4 w-full max-w-md rounded-lg bg-gray-800 p-6 shadow-xl sm:mx-0">
             <h3 className="mb-4 text-lg font-bold text-white">Remove Member</h3>
             <p className="mb-6 text-left text-wrap text-gray-300">
               Are you sure you want to remove this member from the group? This
@@ -54,7 +54,7 @@ export default function RemoveMemberButton({
               <button
                 type="button"
                 onClick={() => setShowModal(false)}
-                className="rounded-md border border-gray-300 bg-white px-4 py-2 text-gray-700 hover:bg-gray-50 border-gray-600 bg-gray-700 text-gray-300 hover:bg-gray-600"
+                className="rounded-md border border-gray-600 bg-gray-700 px-4 py-2 text-gray-300 hover:bg-gray-600"
                 disabled={isPending}
               >
                 Cancel

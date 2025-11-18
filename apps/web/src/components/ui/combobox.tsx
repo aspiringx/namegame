@@ -62,9 +62,9 @@ export function Combobox({
     >
       <div className="relative mt-1">
         <input type="hidden" name={name} value={selectedValue} />
-        <div className="relative w-full cursor-default overflow-hidden rounded-md border bg-white text-left shadow-sm focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 border-gray-600 bg-gray-700">
+        <div className="relative w-full cursor-default overflow-hidden rounded-md border border-gray-600 bg-gray-700 text-left shadow-sm focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
           <HeadlessCombobox.Input
-            className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-gray-900 focus:ring-0 bg-gray-700 text-white"
+            className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 focus:ring-0 bg-gray-700 text-white"
             onChange={(event) => setQuery(event.target.value)}
             placeholder={placeholder}
             displayValue={getOptionLabel}
@@ -78,7 +78,7 @@ export function Combobox({
         </div>
         <HeadlessCombobox.Options
           className={cn(
-            'absolute mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm bg-gray-700',
+            'absolute mt-1 max-h-60 w-full overflow-auto rounded-md bg-gray-700 py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm',
             zIndex,
           )}
         >
@@ -111,9 +111,7 @@ export function Combobox({
                   key={option.value}
                   className={({ active }) =>
                     `relative cursor-default select-none py-2 pl-10 pr-4 ${
-                      active
-                        ? 'bg-teal-600 text-white'
-                        : 'text-gray-900 text-white'
+                      active ? 'bg-teal-600 text-white' : 'text-white'
                     }`
                   }
                   value={option.value}
