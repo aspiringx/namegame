@@ -136,7 +136,7 @@ export default function EditGroupForm({
           id="logo"
           name="logo"
           onChange={handleFileChange}
-          className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:rounded-full file:border-0 file:bg-indigo-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-indigo-600 hover:file:bg-indigo-100 text-gray-400 file:bg-indigo-700 file:text-indigo-200 hover:file:bg-indigo-600"
+          className="mt-1 block w-full text-sm text-gray-300 file:mr-4 file:rounded-full file:border-0 file:bg-indigo-600 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-indigo-700"
         />
       </div>
       <button
