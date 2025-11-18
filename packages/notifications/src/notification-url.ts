@@ -29,7 +29,7 @@ export function getAppOrigin(headers?: Headers): string {
 
 /**
  * Generate a notification URL with the correct origin
- * @param path - The path to append to the origin (e.g., '/me?chat=open')
+ * @param path - The path to append to the origin (e.g., '/?chat=open')
  * @param headers - Optional headers from server action context
  */
 export function getNotificationUrl(path: string, headers?: Headers): string {

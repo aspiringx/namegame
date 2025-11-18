@@ -262,9 +262,7 @@ export async function getSubscriptions(params?: {
   }
 }
 
-export async function sendDailyChatNotifications(
-  endpoints: string[],
-): Promise<{
+export async function sendDailyChatNotifications(endpoints: string[]): Promise<{
   success: boolean
   sent: number
   failed: number
@@ -347,7 +345,7 @@ export async function sendDailyChatNotifications(
 
   // Get the notification URL using centralized helper
   const headersList = await headers()
-  const notificationUrl = getNotificationUrl('/me?chat=open', headersList)
+  const notificationUrl = getNotificationUrl('/?chat=open', headersList)
 
   // Generate random notification text
   const notificationText = getRandomNotificationText()
