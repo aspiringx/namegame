@@ -87,7 +87,7 @@ export function LoginCodeModal({
               <div className="inline-block rounded-md bg-white p-2">
                 <QRCode value={loginUrl} size={150} />
               </div>
-              <div className="mt-4 flex w-full items-center rounded-lg bg-gray-100 p-2 bg-gray-700">
+              <div className="mt-4 flex w-full items-center rounded-lg bg-gray-700 p-2">
                 <p className="mr-2 flex-grow overflow-hidden text-ellipsis whitespace-nowrap text-sm text-gray-300">
                   {loginUrl}
                 </p>

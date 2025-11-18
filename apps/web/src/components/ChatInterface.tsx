@@ -213,7 +213,11 @@ export default function ChatInterface({
   useEffect(() => {
     if (isOpen) {
       inputRef.current?.focus()
+    }
 
+    // Only lock scroll on mobile - desktop should allow page scrolling with drawer open
+    const isMobileWidth = window.innerWidth < 768
+    if (isOpen && isMobileWidth) {
       // Lock scroll on body and drawer to prevent background scrolling
       const scrollY = window.scrollY
       document.body.style.overflow = 'hidden'
@@ -231,7 +235,7 @@ export default function ChatInterface({
       // Store scroll position
       document.body.dataset.scrollY = String(scrollY)
     } else {
-      // Restore scroll when chat closes
+      // Restore scroll when chat closes or on desktop
       const scrollY = document.body.dataset.scrollY
       document.body.style.overflow = ''
       document.body.style.position = ''
@@ -267,7 +271,7 @@ export default function ChatInterface({
         drawer.style.position = ''
       }
     }
-  }, [isOpen])
+  }, [isOpen, isMobile])
 
   const loadMessages = useCallback(
     async (cursor?: string) => {
@@ -1046,7 +1050,7 @@ export default function ChatInterface({
             className={`inline px-1.5 py-0.5 mx-0.5 my-1 rounded font-normal underline decoration-1 underline-offset-2 break-all ${
               isCurrentUser
                 ? 'bg-gray-700/50 text-white hover:bg-gray-700/70'
-                : 'bg-blue-500/10 bg-blue-400/20 text-blue-300 hover:bg-blue-500/20 hover:bg-blue-400/30'
+                : 'bg-blue-400/20 text-blue-300 hover:bg-blue-400/30'
             }`}
           >
             {displayUrl}
@@ -1672,7 +1676,7 @@ export default function ChatInterface({
       {/* Resize handle - only on desktop */}
       {onResize && (
         <div
-          className="hidden md:block absolute left-0 top-0 bottom-0 w-1 hover:w-2 cursor-col-resize bg-transparent hover:bg-blue-500 transition-all z-[60]"
+          className="hidden md:block absolute left-0 top-0 bottom-0 w-1 hover:w-2 cursor-col-resize bg-transparent hover:bg-blue-600 transition-all z-[60]"
           onMouseDown={(e) => {
             e.preventDefault()
             setIsResizingDrawer(true)
@@ -1965,7 +1969,7 @@ export default function ChatInterface({
                               : isModerated
                               ? 'pr-4'
                               : 'pr-4'
-                          } ${isCurrentUser ? 'bg-blue-500' : 'bg-gray-700'} ${
+                          } ${isCurrentUser ? 'bg-blue-600' : 'bg-gray-700'} ${
                             isModerated
                               ? isCurrentUser
                                 ? 'text-blue-300 italic'
@@ -2291,7 +2295,7 @@ export default function ChatInterface({
                                         )
                                       }
                                     }}
-                                    className="px-4 py-2 bg-blue-500 text-white border-2 border-white rounded-lg hover:bg-blue-600 flex items-center gap-2"
+                                    className="px-4 py-2 bg-blue-600 text-white border-2 border-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
                                   >
                                     <Check size={16} />
                                     Save
@@ -2521,7 +2525,7 @@ export default function ChatInterface({
                                     })
                                     setModerationMenuMessageId(null)
                                   }}
-                                  className="w-full px-4 py-3 text-left text-base text-gray-900 text-white hover:bg-gray-100 hover:bg-gray-700 flex items-center gap-3"
+                                  className="w-full px-4 py-3 text-left text-base text-white hover:bg-gray-700 flex items-center gap-3"
                                 >
                                   <EyeOff size={18} />
                                   Hide
@@ -2627,7 +2631,7 @@ export default function ChatInterface({
                 />
                 <button
                   onClick={() => handleRemoveImage(index)}
-                  className="absolute -top-1 -right-1 w-5 h-5 bg-gray-500 text-white rounded-full flex items-center justify-center hover:bg-gray-700 hover:bg-gray-600 shadow-md"
+                  className="absolute -top-1 -right-1 w-5 h-5 bg-gray-500 text-white rounded-full flex items-center justify-center hover:bg-gray-600 shadow-md"
                 >
                   <X size={12} />
                 </button>
@@ -2682,7 +2686,7 @@ export default function ChatInterface({
               isSendingMessage ||
               isProcessingImage
             }
-            className="w-12 h-12 bg-blue-500 text-white rounded-full flex items-center justify-center disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-blue-600 disabled:hover:bg-gray-300 transition-colors relative"
+            className="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center disabled:bg-gray-600 disabled:cursor-not-allowed hover:bg-blue-700 disabled:hover:bg-gray-600 transition-colors relative"
           >
             {isSendingMessage || isProcessingImage ? (
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />

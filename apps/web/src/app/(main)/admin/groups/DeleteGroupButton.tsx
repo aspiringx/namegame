@@ -38,7 +38,7 @@ export function DeleteGroupButton({ groupId }: { groupId: number }) {
 
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/25 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl bg-gray-800">
+          <div className="w-full max-w-md rounded-lg bg-gray-800 p-6 shadow-xl">
             <h3 className="mb-4 text-lg font-bold text-white">Delete Group</h3>
             <p className="mb-6 text-left text-wrap text-gray-300">
               Are you sure? Soft-deleting will disable the group while

@@ -129,7 +129,7 @@ export default async function UsersTable({
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200 bg-white divide-gray-700 bg-gray-800">
+          <tbody className="divide-y divide-gray-700 bg-gray-800">
             {usersWithPhotos.map((user) => (
               <tr key={user.id} className={user.deletedAt ? 'bg-gray-700' : ''}>
                 <td className="px-4 py-4 text-sm whitespace-nowrap">

@@ -103,9 +103,7 @@ export default async function GroupLayout({
           isGroupAdmin={groupForProvider.isGroupAdmin}
           groupSlug={params.slug}
         />
-        <main className="flex-grow bg-gray-50 pb-20 bg-gray-900">
-          {children}
-        </main>
+        <main className="flex-grow bg-gray-900 pb-20">{children}</main>
         <Footer />
       </div>
     </GroupProvider>

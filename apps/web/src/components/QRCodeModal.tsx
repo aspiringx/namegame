@@ -53,7 +53,7 @@ export default function QRCodeModal({
         <div className="inline-block rounded-md bg-white p-4">
           <QRCode value={url} size={200} />
         </div>
-        <div className="mt-4 flex items-center rounded-lg bg-gray-100 p-2 bg-gray-700">
+        <div className="mt-4 flex items-center rounded-lg bg-gray-700 p-2">
           <p className="mr-2 flex-grow text-sm break-all text-gray-300">
             {url}
           </p>

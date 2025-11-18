@@ -257,9 +257,10 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
     }
   }, [socket, isOpen, session?.user, batchUpdateConversations])
 
-  // Lock body scroll when modal is open
+  // Lock body scroll when drawer is open - only on mobile to prevent background scrolling
   useEffect(() => {
-    if (isOpen) {
+    const isMobileWidth = window.innerWidth < 768
+    if (isOpen && isMobileWidth) {
       document.body.style.overflow = 'hidden'
     } else {
       document.body.style.overflow = 'unset'

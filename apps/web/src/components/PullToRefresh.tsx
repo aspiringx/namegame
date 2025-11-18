@@ -99,7 +99,7 @@ export default function PullToRefresh() {
         transition: isPulling.current ? 'none' : 'all 0.3s ease-out',
       }}
     >
-      <div className="mt-4 rounded-full bg-white p-3 shadow-lg bg-gray-800">
+      <div className="mt-4 rounded-full bg-gray-800 p-3 shadow-lg">
         <RefreshCw
           className={`h-6 w-6 text-gray-300 ${
             isRefreshing ? 'animate-spin' : ''

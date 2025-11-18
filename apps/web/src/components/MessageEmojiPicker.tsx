@@ -66,7 +66,7 @@ export default function MessageEmojiPicker({
 
       {/* Picker */}
       <div
-        className="fixed z-[70] bg-white bg-gray-800 rounded-lg shadow-2xl overflow-hidden"
+        className="fixed z-[70] bg-gray-800 rounded-lg shadow-2xl overflow-hidden"
         style={{
           top: `${position.y}px`,
           left: `${position.x}px`,

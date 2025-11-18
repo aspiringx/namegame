@@ -75,7 +75,7 @@ export default function SignupForm() {
                 type="text"
                 placeholder="Last name"
                 required
-                className="mt-1 -ml-px block w-full rounded-l-none rounded-r-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm border-gray-600 bg-gray-800 text-white placeholder-gray-400"
+                className="mt-1 -ml-px block w-full rounded-l-none rounded-r-md border border-gray-600 bg-gray-800 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm text-white placeholder-gray-400"
               />
             </div>
           </div>

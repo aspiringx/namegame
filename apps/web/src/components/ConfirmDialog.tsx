@@ -44,7 +44,7 @@ export default function ConfirmDialog({
       <div className="absolute inset-0 bg-black/50" onClick={onCancel} />
 
       {/* Dialog */}
-      <div className="relative bg-white bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
+      <div className="relative bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
         <h3 className="text-lg font-semibold text-white mb-2">{title}</h3>
         <p className="text-sm text-gray-300 mb-6">{message}</p>
 

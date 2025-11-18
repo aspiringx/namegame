@@ -43,7 +43,7 @@ export default async function MyGroupsPage() {
         Visit one of your groups.
       </p>
       {user.groupMemberships.length > 0 ? (
-        <div className="overflow-hidden bg-white shadow sm:rounded-md bg-gray-800">
+        <div className="overflow-hidden bg-gray-800 shadow sm:rounded-md">
           <ul className="divide-y divide-gray-200 divide-gray-700">
             {user.groupMemberships.map((membership) => (
               <li key={membership.groupId}>

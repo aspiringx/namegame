@@ -228,7 +228,7 @@ export default function ParticipantSelector({
                 selectedParticipants.length === filteredParticipants.length ||
                 isAtLimit
               }
-              className="flex-1 px-3 py-1.5 text-sm border border-gray-600 rounded-lg text-gray-300 hover:bg-gray-50 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="flex-1 px-3 py-1.5 text-sm border border-gray-600 rounded-lg text-gray-300 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {wouldExceedLimit
                 ? `Select up to ${maxRecipients}`
@@ -237,7 +237,7 @@ export default function ParticipantSelector({
             <button
               onClick={handleDeselectAll}
               disabled={selectedParticipants.length === 0}
-              className="flex-1 px-3 py-1.5 text-sm border border-gray-600 rounded-lg text-gray-300 hover:bg-gray-50 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="flex-1 px-3 py-1.5 text-sm border border-gray-600 rounded-lg text-gray-300 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               Deselect All
             </button>

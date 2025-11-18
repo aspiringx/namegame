@@ -343,7 +343,7 @@ export default function UserProfileNextSteps({
   return (
     <div
       className={`overflow-hidden rounded-md shadow sm:rounded-md ${
-        isCollapsed ? 'bg-yellow-900/30' : 'bg-white bg-gray-800'
+        isCollapsed ? 'bg-yellow-900/30' : 'bg-gray-800'
       }`}
     >
       <div className="p-4 sm:p-6">

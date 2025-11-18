@@ -44,7 +44,7 @@ export default function RemoveMemberButton({
 
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/25 backdrop-blur-sm">
-          <div className="mx-4 w-full max-w-md rounded-lg bg-white p-6 shadow-xl bg-gray-800 sm:mx-0">
+          <div className="mx-4 w-full max-w-md rounded-lg bg-gray-800 p-6 shadow-xl sm:mx-0">
             <h3 className="mb-4 text-lg font-bold text-white">Remove Member</h3>
             <p className="mb-6 text-left text-wrap text-gray-300">
               Are you sure you want to remove this member from the group? This

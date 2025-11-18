@@ -41,7 +41,7 @@ export default function GroupInfoModal({
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-md rounded-lg bg-white shadow-2xl bg-gray-900"
+        className="relative w-full max-w-md rounded-lg bg-gray-900 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <button

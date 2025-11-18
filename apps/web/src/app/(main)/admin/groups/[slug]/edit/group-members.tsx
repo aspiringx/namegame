@@ -334,7 +334,7 @@ export default function GroupMembers({
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 bg-white divide-gray-700 bg-gray-800">
+            <tbody className="divide-y divide-gray-700 bg-gray-800">
               {paginatedMembers.map((member) => (
                 <tr key={member.userId}>
                   <td className="w-full max-w-0 py-4 pr-3 pl-4 text-sm font-medium text-white sm:w-auto sm:max-w-none sm:pl-6">
