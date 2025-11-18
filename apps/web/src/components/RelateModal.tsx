@@ -145,7 +145,7 @@ function RelationshipEditor({
       value={currentValue}
       onChange={handleRelationChange}
       disabled={isUpdating}
-      className="rounded-md border border-gray-300 bg-white px-2 py-1 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-50 border-gray-600 bg-gray-800 text-gray-300"
+      className="rounded-md border border-gray-600 bg-gray-800 px-2 py-1 text-sm text-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
       aria-label={`Edit relationship with ${relation.relatedUser.firstName}`}
     >
       {relationTypes.map((rt) => (
@@ -476,7 +476,7 @@ function RelateModalContent({
     <Modal isOpen={isOpen} onClose={onClose} title="">
       <button
         type="button"
-        className="absolute top-4 right-4 z-10 text-gray-400 hover:text-gray-400 hover:text-gray-300"
+        className="absolute top-4 right-4 z-10 text-gray-400 hover:text-gray-300"
         onClick={onClose}
       >
         <span className="sr-only">Close</span>
@@ -525,7 +525,7 @@ function RelateModalContent({
                       value={memberBirthDate}
                       onChange={(e) => setMemberBirthDate(e.target.value)}
                       placeholder="Birth year or date"
-                      className="mt-1 block w-full max-w-xs rounded-md border-gray-300 bg-white px-3 py-1 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border-gray-600 bg-gray-800 text-gray-300"
+                      className="mt-1 block w-full max-w-xs rounded-md border border-gray-600 bg-gray-800 px-3 py-1 text-sm text-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                     />
                   </div>
                 )}
@@ -599,7 +599,7 @@ function RelateModalContent({
                           className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
                             selectedGender === value
                               ? 'bg-indigo-600 text-white'
-                              : 'bg-white text-gray-700 ring-1 ring-gray-300 ring-inset hover:bg-gray-700 text-gray-200 ring-gray-600 hover:bg-gray-600'
+                              : 'bg-gray-700 text-gray-200 ring-1 ring-gray-600 ring-inset hover:bg-gray-600'
                           }`}
                         >
                           {label}
@@ -627,7 +627,7 @@ function RelateModalContent({
                           setRelatedPersonBirthDate(e.target.value)
                         }
                         placeholder="Birth year or date"
-                        className="block w-full rounded-md border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border-gray-600 bg-gray-800 text-gray-300"
+                        className="block w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                       />
                     </div>
                   </div>
@@ -659,7 +659,7 @@ function RelateModalContent({
                 <div className="mb-4">
                   <button
                     type="button"
-                    className="flex w-full items-center justify-between rounded-md bg-gray-200 px-3 py-2 text-left text-sm font-semibold text-gray-700 hover:bg-gray-700 text-gray-300 hover:bg-gray-600"
+                    className="flex w-full items-center justify-between rounded-md bg-gray-700 px-3 py-2 text-left text-sm font-semibold text-gray-300 hover:bg-gray-600"
                     onClick={() => setIsFamilyExpanded(!isFamilyExpanded)}
                   >
                     <span>Family</span>
@@ -702,7 +702,7 @@ function RelateModalContent({
                               <button
                                 type="button"
                                 onClick={() => setRelationToDelete(r)}
-                                className="text-red-500 hover:text-red-400 hover:text-red-500"
+                                className="text-red-500 hover:text-red-400"
                                 aria-label={`Delete relationship with ${r.relatedUser.firstName} ${r.relatedUser.lastName}`}
                               >
                                 <svg
@@ -732,7 +732,7 @@ function RelateModalContent({
                 <div>
                   <button
                     type="button"
-                    className="flex w-full items-center justify-between rounded-md bg-gray-200 px-3 py-2 text-left text-sm font-semibold text-gray-700 hover:bg-gray-700 text-gray-300 hover:bg-gray-600"
+                    className="flex w-full items-center justify-between rounded-md bg-gray-700 px-3 py-2 text-left text-sm font-semibold text-gray-300 hover:bg-gray-600"
                     onClick={() => setIsFriendsExpanded(!isFriendsExpanded)}
                   >
                     <span>Friends</span>
@@ -775,7 +775,7 @@ function RelateModalContent({
                               <button
                                 type="button"
                                 onClick={() => setRelationToDelete(r)}
-                                className="text-red-500 hover:text-red-400 hover:text-red-500"
+                                className="text-red-500 hover:text-red-400"
                                 aria-label={`Delete relationship with ${r.relatedUser.firstName} ${r.relatedUser.lastName}`}
                               >
                                 <svg
@@ -836,7 +836,7 @@ function RelateModalContent({
             <div className="mt-6 flex justify-end space-x-3">
               <button
                 type="button"
-                className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none border-gray-600 bg-gray-800 text-gray-300 hover:bg-gray-700"
+                className="inline-flex justify-center rounded-md border border-gray-600 bg-gray-800 px-4 py-2 text-sm font-medium text-gray-300 shadow-sm hover:bg-gray-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
                 onClick={() => setRelationToDelete(null)}
                 disabled={isDeleting}
               >

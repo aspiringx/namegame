@@ -356,11 +356,11 @@ export default function UserProfileNextSteps({
             <span>Next Steps</span>
             {!isLoading && (
               <Badge
-                className={
+                className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
                   isCollapsed
-                    ? 'bg-yellow-100 text-yellow-800 bg-yellow-800 text-yellow-100'
-                    : 'bg-gray-100 text-gray-800 bg-gray-700 text-gray-300'
-                }
+                    ? 'bg-yellow-800 text-yellow-100'
+                    : 'bg-gray-700 text-gray-300'
+                }`}
               >
                 {nextStepsCount}
               </Badge>
@@ -416,7 +416,7 @@ export default function UserProfileNextSteps({
                             {step.dismiss && step.dismissLabel && (
                               <button
                                 onClick={step.dismiss}
-                                className="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none border-gray-600 bg-gray-700 text-gray-200 hover:bg-gray-600 focus:ring-offset-gray-800"
+                                className="inline-flex items-center justify-center rounded-md border border-gray-600 bg-gray-700 px-3 py-1.5 text-sm font-medium text-gray-200 shadow-sm hover:bg-gray-600 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-800 focus:outline-none"
                               >
                                 {step.dismissLabel}
                               </button>

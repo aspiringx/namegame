@@ -46,7 +46,7 @@ const Breadcrumbs = ({
           <li key={breadcrumb.href} className="flex items-center">
             <span className="mx-2">/</span>
             {breadcrumb.isLast ? (
-              <span className="max-w-[120px] truncate text-gray-700 sm:max-w-none">
+              <span className="max-w-[120px] truncate text-gray-300 sm:max-w-none">
                 {breadcrumb.label}
               </span>
             ) : (

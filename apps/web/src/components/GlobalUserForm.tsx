@@ -476,7 +476,7 @@ export default function GlobalUserForm({
           id="username"
           name="username"
           required
-          className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm border-gray-600 bg-gray-800 text-white placeholder-gray-400"
+          className="mt-1 block w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-white placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm"
           value={formState.username}
           onChange={handleInputChange}
         />
@@ -500,7 +500,7 @@ export default function GlobalUserForm({
           id="firstName"
           name="firstName"
           required
-          className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm border-gray-600 bg-gray-800 text-white placeholder-gray-400"
+          className="mt-1 block w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-white placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm"
           value={formState.firstName}
           onChange={handleInputChange}
         />
@@ -523,7 +523,7 @@ export default function GlobalUserForm({
           type="text"
           id="lastName"
           name="lastName"
-          className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm border-gray-600 bg-gray-800 text-white placeholder-gray-400"
+          className="mt-1 block w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-white placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm"
           value={formState.lastName}
           onChange={handleInputChange}
         />
@@ -546,7 +546,7 @@ export default function GlobalUserForm({
             className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
               formState.gender === Gender.male
                 ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-700 text-gray-300 hover:bg-gray-600'
+                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
             }`}
           >
             He
@@ -557,7 +557,7 @@ export default function GlobalUserForm({
             className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
               formState.gender === Gender.female
                 ? 'bg-pink-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-700 text-gray-300 hover:bg-gray-600'
+                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
             }`}
           >
             She
@@ -568,7 +568,7 @@ export default function GlobalUserForm({
             className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
               formState.gender === Gender.non_binary
                 ? 'bg-purple-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-700 text-gray-300 hover:bg-gray-600'
+                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
             }`}
           >
             They
@@ -577,7 +577,7 @@ export default function GlobalUserForm({
             <button
               type="button"
               onClick={() => handleGenderChange(null)}
-              className="rounded-md px-3 py-2 text-sm text-gray-500 hover:text-gray-400 hover:text-gray-200"
+              className="text-sm text-gray-500 hover:text-gray-200"
             >
               Clear
             </button>
@@ -602,7 +602,7 @@ export default function GlobalUserForm({
             type="email"
             id="email"
             name="email"
-            className="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 pr-10 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm border-gray-600 bg-gray-800 text-white placeholder-gray-400"
+            className="block w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 pr-10 text-white placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm"
             value={formState.email}
             onChange={handleInputChange}
           />
@@ -659,7 +659,7 @@ export default function GlobalUserForm({
             type={showPassword ? 'text' : 'password'}
             id="password"
             name="password"
-            className="block w-full min-w-0 flex-1 rounded-none rounded-l-md border border-gray-300 bg-white px-3 py-2 focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm border-gray-600 bg-gray-800 text-white placeholder-gray-400"
+            className="block w-full min-w-0 flex-1 rounded-none rounded-l-md border border-gray-600 bg-gray-800 px-3 py-2 text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm"
             placeholder={
               passwordRequired
                 ? 'New password required'
@@ -673,7 +673,7 @@ export default function GlobalUserForm({
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="inline-flex items-center border border-l-0 border-gray-300 bg-gray-50 px-3 text-sm text-gray-500 hover:bg-gray-100 border-gray-600 bg-gray-700 text-gray-300 hover:bg-gray-600"
+              className="inline-flex items-center border border-l-0 border-gray-600 bg-gray-700 px-3 text-sm text-gray-300 hover:bg-gray-600"
             >
               {showPassword ? (
                 <EyeOff className="h-5 w-5" />
@@ -772,7 +772,7 @@ export default function GlobalUserForm({
           <button
             type="button"
             onClick={handleChoosePhoto}
-            className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm leading-4 font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none border-gray-600 bg-gray-700 text-gray-300 hover:bg-gray-600 focus:ring-offset-gray-800"
+            className="rounded-md border border-gray-600 bg-gray-700 px-3 py-2 text-sm leading-4 font-medium text-gray-300 shadow-sm hover:bg-gray-600 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-800 focus:outline-none"
           >
             Change Photo
           </button>
@@ -794,7 +794,7 @@ export default function GlobalUserForm({
           type="tel"
           id="phone"
           name="phone"
-          className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm border-gray-600 bg-gray-800 text-white placeholder-gray-400"
+          className="mt-1 block w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-white placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm"
           value={formState.phone}
           onChange={handleInputChange}
         />
@@ -815,7 +815,7 @@ export default function GlobalUserForm({
           type="date"
           id="birthDate"
           name="birthDate"
-          className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm border-gray-600 bg-gray-800 text-white placeholder-gray-400"
+          className="mt-1 block w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-white placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm"
           value={formState.birthDate}
           onChange={handleInputChange}
         />
@@ -838,7 +838,7 @@ export default function GlobalUserForm({
           type="text"
           id="birthPlace"
           name="birthPlace"
-          className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm border-gray-600 bg-gray-800 text-white placeholder-gray-400"
+          className="mt-1 block w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-white placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm"
           value={formState.birthPlace}
           onChange={handleInputChange}
           placeholder="e.g., New York, NY"
@@ -862,7 +862,7 @@ export default function GlobalUserForm({
           type="date"
           id="deathDate"
           name="deathDate"
-          className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm border-gray-600 bg-gray-800 text-white placeholder-gray-400"
+          className="mt-1 block w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-white placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm"
           value={formState.deathDate}
           onChange={handleInputChange}
         />
@@ -876,7 +876,7 @@ export default function GlobalUserForm({
       <div className="flex items-center justify-end space-x-4 pt-8">
         <Link
           href="/admin/users"
-          className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 border-gray-600 bg-gray-700 text-gray-300 hover:bg-gray-600"
+          className="inline-flex justify-center rounded-md border border-gray-600 bg-gray-700 px-4 py-2 text-sm font-medium text-gray-300 shadow-sm hover:bg-gray-600"
         >
           Cancel
         </Link>

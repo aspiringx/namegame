@@ -257,7 +257,7 @@ export default function RelationStarModal({
                     </div>
                     <button
                       onClick={onClose}
-                      className="flex-shrink-0 rounded-full p-2 hover:bg-gray-100 hover:bg-gray-800"
+                      className="flex-shrink-0 rounded-full p-2 hover:bg-gray-800"
                     >
                       <X className="h-5 w-5" />
                     </button>
@@ -268,7 +268,7 @@ export default function RelationStarModal({
                     <div className="mt-4 flex flex-col sm:flex-row items-stretch gap-3 sm:gap-4">
                       <Dropdown
                         trigger={
-                          <div className="flex w-full items-center justify-between rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 hover:bg-gray-50 border-gray-600 bg-gray-800 text-gray-100 hover:bg-gray-700">
+                          <div className="flex w-full items-center justify-between rounded-lg border border-gray-600 bg-gray-800 px-4 py-2.5 text-sm text-gray-100 hover:bg-gray-700">
                             <span className="truncate">
                               {selectedSnapshot
                                 ? `${new Date(
@@ -282,7 +282,7 @@ export default function RelationStarModal({
                           </div>
                         }
                         triggerClassName="w-full sm:flex-1"
-                        menuClassName="absolute left-0 z-10 mt-2 w-full origin-top-left rounded-md border border-gray-200 bg-white text-gray-900 shadow-lg focus:outline-none border-gray-700 bg-gray-800 text-gray-200"
+                        menuClassName="absolute left-0 z-10 mt-2 w-full origin-top-left rounded-md border border-gray-700 bg-gray-800 text-gray-200 shadow-lg focus:outline-none"
                       >
                         {snapshots.map((snapshot, index) => (
                           <div key={snapshot.id}>
@@ -327,7 +327,7 @@ export default function RelationStarModal({
                                 window.open('/stars', '_blank')
                               }
                             }}
-                            className="flex-1 sm:flex-initial sm:w-auto flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 border-gray-600 bg-gray-800 text-gray-300 hover:bg-gray-700 whitespace-nowrap"
+                            className="flex-1 sm:flex-initial sm:w-auto flex items-center justify-center gap-2 rounded-lg border border-gray-600 bg-gray-800 px-4 py-2.5 text-sm font-medium text-gray-300 transition-colors hover:bg-gray-700 whitespace-nowrap"
                           >
                             <Info className="h-4 w-4" />
                             Help
@@ -486,7 +486,7 @@ export default function RelationStarModal({
                             placeholder={`e.g., I'd like to feel closer to ${memberName}, or I want to maintain this friendship despite living far apart...`}
                             maxLength={500}
                             rows={3}
-                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none border-gray-600 bg-gray-800 text-gray-100 placeholder-gray-500"
+                            className="w-full rounded-lg border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100 placeholder-gray-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
                           />
                           <div className="text-right text-xs text-gray-400">
                             {relationshipGoals.length}/500 characters
@@ -497,7 +497,7 @@ export default function RelationStarModal({
                         {!Object.values(interactiveScores).every(
                           (v) => v === 0,
                         ) && (
-                          <div className="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-4 border-gray-700 bg-gray-800">
+                          <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-4">
                             <div className="flex items-start gap-2">
                               <svg
                                 className="h-5 w-5 flex-shrink-0 text-gray-400"
@@ -566,7 +566,7 @@ export default function RelationStarModal({
                             </button>
 
                             {aiError && (
-                              <div className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-800 bg-red-900/20 text-red-200">
+                              <div className="mt-3 rounded-lg bg-red-900/20 p-3 text-sm text-red-200">
                                 {aiError}
                               </div>
                             )}
@@ -576,7 +576,7 @@ export default function RelationStarModal({
                                 {/* Divider before AI Insights */}
                                 <div className="my-6 border-t-2 border-gray-600" />
 
-                                <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-6 border-indigo-900 bg-indigo-950">
+                                <div className="rounded-lg border border-indigo-900 bg-indigo-950 p-6">
                                   <div className="mb-4">
                                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                                       <h4 className="text-lg font-semibold text-indigo-100">

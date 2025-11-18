@@ -134,7 +134,7 @@ export default function CreateGroupForm({
           id="name"
           name="name"
           required
-          className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm border-gray-600 bg-gray-800 text-white placeholder-gray-400"
+          className="mt-1 block w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-white placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm"
           defaultValue={state.values?.name}
         />
         {state.errors?.name && (
@@ -154,7 +154,7 @@ export default function CreateGroupForm({
           id="slug"
           name="slug"
           required
-          className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm border-gray-600 bg-gray-800 text-white placeholder-gray-400"
+          className="mt-1 block w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-white placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm"
           defaultValue={state.values?.slug}
         />
         {state.errors?.slug && (
@@ -204,7 +204,7 @@ export default function CreateGroupForm({
           id="description"
           name="description"
           rows={3}
-          className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm border-gray-600 bg-gray-800 text-white placeholder-gray-400"
+          className="mt-1 block w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-white placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm"
           defaultValue={state.values?.description}
         />
         {state.errors?.description && (
@@ -239,7 +239,7 @@ export default function CreateGroupForm({
             name="logo-upload"
             accept="image/*"
             onChange={handleLogoChange}
-            className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm leading-4 font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none border-gray-600 bg-gray-700 text-gray-300 hover:bg-gray-600 focus:ring-offset-gray-800"
+            className="w-full rounded-md border border-gray-600 bg-gray-700 px-3 py-2 text-sm leading-4 font-medium text-gray-300 shadow-sm hover:bg-gray-600 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-800 focus:outline-none"
           />
         </div>
         {logoError && <p className="mt-1 text-sm text-red-500">{logoError}</p>}
@@ -256,7 +256,7 @@ export default function CreateGroupForm({
           type="text"
           id="address"
           name="address"
-          className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm border-gray-600 bg-gray-800 text-white placeholder-gray-400"
+          className="mt-1 block w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-white placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm"
           defaultValue={state.values?.address}
         />
         {state.errors?.address && (
@@ -275,7 +275,7 @@ export default function CreateGroupForm({
           type="text"
           id="phone"
           name="phone"
-          className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm border-gray-600 bg-gray-800 text-white placeholder-gray-400"
+          className="mt-1 block w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-white placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm"
           defaultValue={state.values?.phone}
         />
         {state.errors?.phone && (

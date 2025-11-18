@@ -184,7 +184,7 @@ const GamesView: React.FC<GamesViewProps> = ({
           <div className="flex justify-end space-x-4">
             <Button
               onClick={handleKeepAtIt}
-              className="bg-gray-200 text-gray-800 hover:bg-gray-700 text-gray-200 hover:bg-gray-600"
+              className="bg-gray-700 text-gray-200 hover:bg-gray-600"
             >
               Keep at It
             </Button>
