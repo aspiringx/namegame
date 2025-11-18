@@ -632,7 +632,7 @@ export default function RelationStarModal({
                       {/* Right: Chart and Score */}
                       <div className="space-y-6">
                         {/* Mini Chart */}
-                        <div className="rounded-lg border border-gray-200 bg-white p-6 border-gray-700 bg-gray-800">
+                        <div className="rounded-lg border border-gray-700 bg-gray-800 p-6">
                           <h3 className="mb-4 text-xl font-bold">Star Chart</h3>
                           <div className="relative mx-auto aspect-square w-full">
                             <svg
@@ -982,7 +982,7 @@ export default function RelationStarModal({
                             <h3 className="mb-4 text-xl font-bold">
                               Relationship Context
                             </h3>
-                            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700 border-gray-700 bg-gray-800 text-gray-300">
+                            <div className="rounded-lg border border-gray-700 bg-gray-800 p-4 text-sm text-gray-300">
                               {selectedSnapshot.relationshipGoals}
                             </div>
                           </div>
@@ -1040,7 +1040,7 @@ export default function RelationStarModal({
                       {/* Right: Chart and Score */}
                       <div className="space-y-6">
                         {/* Star Chart */}
-                        <div className="rounded-lg border border-gray-200 bg-white p-6 border-gray-700 bg-gray-800">
+                        <div className="rounded-lg border border-gray-700 bg-gray-800 p-6">
                           <h3 className="mb-4 text-xl font-bold">Star Chart</h3>
                           <div className="relative mx-auto aspect-square w-full">
                             <svg

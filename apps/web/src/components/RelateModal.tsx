@@ -649,7 +649,7 @@ function RelateModalContent({
           </form>
         )}
 
-        <div className="mt-6 border-t border-gray-200 pt-6 border-gray-700">
+        <div className="mt-6 border-t border-gray-700 pt-6">
           <h4 className="text-md font-medium text-gray-100">
             Existing Relationships
           </h4>

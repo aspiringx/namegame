@@ -1045,7 +1045,7 @@ export default function ChatInterface({
             rel="noopener noreferrer"
             className={`inline px-1.5 py-0.5 mx-0.5 my-1 rounded font-normal underline decoration-1 underline-offset-2 break-all ${
               isCurrentUser
-                ? 'bg-white/20 text-white hover:bg-white/30'
+                ? 'bg-gray-700/50 text-white hover:bg-gray-700/70'
                 : 'bg-blue-500/10 bg-blue-400/20 text-blue-300 hover:bg-blue-500/20 hover:bg-blue-400/30'
             }`}
           >
@@ -1602,7 +1602,7 @@ export default function ChatInterface({
   return (
     <div
       data-chat-interface
-      className="md:absolute md:inset-0 fixed left-0 right-0 bg-white bg-gray-900 flex flex-col overflow-hidden transition-all duration-200 ease-out"
+      className="md:absolute md:inset-0 fixed left-0 right-0 bg-gray-900 flex flex-col overflow-hidden transition-all duration-200 ease-out"
       style={
         isMobile
           ? {
@@ -1683,7 +1683,7 @@ export default function ChatInterface({
 
       {/* Header - Fixed at top, outside scroll container */}
       <div
-        className={`flex-shrink-0 z-10 flex items-center justify-between border-b border-gray-700 bg-white bg-gray-800 transition-all ${
+        className={`flex-shrink-0 z-10 flex items-center justify-between border-b border-gray-700 bg-gray-800 transition-all ${
           isKeyboardOpen ? 'p-2' : 'p-4'
         }`}
       >
@@ -1718,7 +1718,7 @@ export default function ChatInterface({
                     if (e.key === 'Escape') handleCancelEdit()
                   }}
                   maxLength={30}
-                  className="flex-1 px-2 py-1 text-lg font-semibold bg-white bg-gray-700 border border-gray-600 rounded text-gray-900 text-white"
+                  className="flex-1 px-2 py-1 text-lg font-semibold bg-gray-700 border border-gray-600 rounded text-white"
                   placeholder="Conversation name"
                 />
                 <button
@@ -2162,7 +2162,7 @@ export default function ChatInterface({
                                   onChange={(e) =>
                                     setEditedContent(e.target.value)
                                   }
-                                  className="w-full px-3 py-2 text-xl bg-white bg-gray-900 border border-gray-600 rounded-lg resize-none"
+                                  className="w-full px-3 py-2 text-xl bg-gray-900 border border-gray-600 rounded-lg resize-none"
                                   rows={3}
                                   autoFocus
                                   onClick={(e) => e.stopPropagation()}
@@ -2487,7 +2487,7 @@ export default function ChatInterface({
 
                           {/* Moderation menu dropdown */}
                           {moderationMenuMessageId === message.id && (
-                            <div className="absolute top-10 right-2 z-30 bg-white bg-gray-800 rounded-lg shadow-lg border border-gray-700 min-w-[140px]">
+                            <div className="absolute top-10 right-2 z-30 bg-gray-800 rounded-lg shadow-lg border border-gray-700 min-w-[140px]">
                               <div className="py-2">
                                 {/* Edit - only for message owner */}
                                 {isCurrentUser && (
@@ -2604,7 +2604,7 @@ export default function ChatInterface({
       </div>
 
       {/* Message Input */}
-      <div className="p-4 border-t border-gray-700 bg-white bg-gray-800">
+      <div className="p-4 border-t border-gray-700 bg-gray-800">
         {/* Image previews - dynamic grid layout */}
         {pendingImages.length > 0 && (
           <div
@@ -2670,7 +2670,7 @@ export default function ChatInterface({
               onKeyPress={handleKeyPress}
               placeholder="Type a message..."
               rows={1}
-              className="w-full px-4 py-3 border border-gray-600 rounded-2xl bg-white bg-gray-700 text-gray-900 text-white placeholder-gray-500 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              className="w-full px-4 py-3 border border-gray-600 rounded-2xl bg-gray-700 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
               style={{ minHeight: '48px', maxHeight: '120px' }}
             />
           </div>
