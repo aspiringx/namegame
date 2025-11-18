@@ -237,7 +237,7 @@ export default function UsersList({
                       height={48}
                     />
                     <div className="min-w-0">
-                      <p className="text-sm leading-6 font-semibold text-gray-900 text-white">
+                      <p className="text-sm leading-6 font-semibold text-white">
                         {[user.firstName, user.lastName]
                           .filter(Boolean)
                           .join(' ')}

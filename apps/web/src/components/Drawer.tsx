@@ -156,9 +156,7 @@ export default function Drawer({
         {/* Header */}
         {title && (
           <div className="flex items-center justify-between p-4 border-b border-gray-700">
-            <h2 className="text-lg font-semibold text-gray-900 text-white">
-              {title}
-            </h2>
+            <h2 className="text-lg font-semibold text-white">{title}</h2>
             <button
               onClick={onClose}
               className="text-gray-500 hover:text-gray-400 hover:text-white"

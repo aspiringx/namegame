@@ -297,7 +297,7 @@ export default function GroupMembers({
               <tr>
                 <th
                   scope="col"
-                  className="py-3.5 pr-3 pl-4 text-left text-sm font-semibold text-gray-900 sm:pl-6 text-white"
+                  className="py-3.5 pr-3 pl-4 text-left text-sm font-semibold text-white sm:pl-6"
                 >
                   <button
                     onClick={() => requestSort('name')}
@@ -311,7 +311,7 @@ export default function GroupMembers({
                 </th>
                 <th
                   scope="col"
-                  className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 sm:table-cell text-white"
+                  className="hidden px-3 py-3.5 text-left text-sm font-semibold text-white sm:table-cell"
                 >
                   <button
                     onClick={() => requestSort('email')}
@@ -337,7 +337,7 @@ export default function GroupMembers({
             <tbody className="divide-y divide-gray-200 bg-white divide-gray-700 bg-gray-800">
               {paginatedMembers.map((member) => (
                 <tr key={member.userId}>
-                  <td className="w-full max-w-0 py-4 pr-3 pl-4 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6 text-white">
+                  <td className="w-full max-w-0 py-4 pr-3 pl-4 text-sm font-medium text-white sm:w-auto sm:max-w-none sm:pl-6">
                     <div className="flex items-center gap-4">
                       <Image
                         src={member.user.photoUrl}

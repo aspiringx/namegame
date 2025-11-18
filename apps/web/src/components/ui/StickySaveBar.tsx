@@ -23,7 +23,7 @@ export default function StickySaveBar({
   }
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-50 border-t border-gray-200 bg-white/80 p-4 backdrop-blur-sm border-gray-700 bg-gray-900/80">
+    <div className="fixed inset-x-0 bottom-0 z-50 border-t border-gray-700 bg-gray-900/80 p-4 backdrop-blur-sm">
       <div className="container mx-auto flex items-center justify-between">
         <p className="text-sm font-medium text-gray-300">
           {isSaving ? 'Saving your changes...' : 'You have unsaved changes.'}

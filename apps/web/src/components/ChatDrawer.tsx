@@ -490,7 +490,7 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
           {conversations.some((c) => c.hasUnread) && (
             <button
               onClick={handleMarkAllAsRead}
-              className="w-full flex items-center justify-center gap-2 p-2 text-sm text-gray-400 hover:text-gray-900 hover:text-white transition-colors"
+              className="w-full flex items-center justify-center gap-2 p-2 text-sm text-gray-400 hover:text-white transition-colors"
             >
               Mark all as read
             </button>
@@ -527,7 +527,7 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
                     ) : (
                       <User size={16} className="text-gray-400 flex-shrink-0" />
                     )}
-                    <p className="font-medium text-gray-900 text-white truncate">
+                    <p className="font-medium text-white truncate">
                       {conversation.name}
                     </p>
                     {conversation.hasUnread && (

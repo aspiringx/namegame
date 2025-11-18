@@ -1737,7 +1737,7 @@ export default function ChatInterface({
             ) : (
               <div className="flex items-center gap-2">
                 <h2
-                  className={`font-semibold text-gray-900 text-white truncate ${
+                  className={`font-semibold text-white truncate ${
                     isKeyboardOpen ? 'text-base' : 'text-lg'
                   }`}
                 >
@@ -1972,7 +1972,7 @@ export default function ChatInterface({
                                 : 'text-gray-500 italic'
                               : isCurrentUser
                               ? 'text-white'
-                              : 'text-gray-900 text-white'
+                              : 'text-white'
                           }`}
                           style={
                             {
@@ -2180,7 +2180,7 @@ export default function ChatInterface({
                                       setEditedLinks([])
                                       setModerationButtonVisibleId(null)
                                     }}
-                                    className="px-4 py-2 bg-gray-700 text-gray-900 text-white rounded-lg hover:bg-gray-300 hover:bg-gray-600 flex items-center gap-2"
+                                    className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 flex items-center gap-2"
                                   >
                                     <X size={16} />
                                     Cancel
@@ -2430,7 +2430,7 @@ export default function ChatInterface({
                                           </p>
                                         )}
                                         {link.title && (
-                                          <p className="font-semibold text-gray-900 text-white mb-1 line-clamp-2">
+                                          <p className="font-semibold text-white mb-1 line-clamp-2">
                                             {link.title}
                                           </p>
                                         )}
@@ -2504,7 +2504,7 @@ export default function ChatInterface({
                                       )
                                       setModerationMenuMessageId(null)
                                     }}
-                                    className="w-full px-4 py-3 text-left text-base text-gray-900 text-white hover:bg-gray-100 hover:bg-gray-700 flex items-center gap-3"
+                                    className="w-full px-4 py-3 text-left text-base text-white hover:bg-gray-700 flex items-center gap-3"
                                   >
                                     <Edit2 size={18} />
                                     Edit

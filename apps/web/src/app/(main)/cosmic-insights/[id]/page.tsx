@@ -194,7 +194,7 @@ export default function CosmicInsightsPage() {
         {/* Left: Context and Insights */}
         <div className="space-y-6">
           {data.relationshipGoals && (
-            <div className="rounded-lg border border-gray-200 bg-white p-6 border-gray-700 bg-gray-800">
+            <div className="rounded-lg border border-gray-700 bg-gray-800 p-6">
               <h2 className="mb-4 text-xl font-bold">Relationship Context</h2>
               <div className="text-sm text-gray-300">
                 {data.relationshipGoals}
@@ -202,7 +202,7 @@ export default function CosmicInsightsPage() {
             </div>
           )}
 
-          <div className="rounded-lg border border-gray-200 bg-white p-6 border-gray-700 bg-gray-800">
+          <div className="rounded-lg border border-gray-700 bg-gray-800 p-6">
             <h2 className="mb-4 text-xl font-bold">Your Cosmic Insights</h2>
             <div
               className="prose prose-sm prose-indigo prose-invert max-w-none text-gray-200 [&_li]:leading-relaxed [&_ul]:space-y-3 [&>div]:space-y-2 [&>p]:mb-8"
@@ -214,7 +214,7 @@ export default function CosmicInsightsPage() {
         {/* Right: Chart and Score */}
         <div className="space-y-6">
           {/* Star Chart */}
-          <div className="rounded-lg border border-gray-200 bg-white p-6 border-gray-700 bg-gray-800">
+          <div className="rounded-lg border border-gray-700 bg-gray-800 p-6">
             <h2 className="mb-4 text-xl font-bold">Star Chart</h2>
             <div className="relative mx-auto aspect-square w-full">
               <svg viewBox="-10 -10 340 340" className="h-full w-full">
@@ -350,7 +350,7 @@ export default function CosmicInsightsPage() {
           </div>
 
           {/* Star Score */}
-          <div className="rounded-lg border border-gray-200 bg-white p-6 border-gray-700 bg-gray-800">
+          <div className="rounded-lg border border-gray-700 bg-gray-800 p-6">
             <h2 className="mb-4 text-xl font-bold">Star Score</h2>
             <div className="mb-4 text-center">
               <div className="font-bold">

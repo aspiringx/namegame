@@ -45,9 +45,7 @@ export default function ConfirmDialog({
 
       {/* Dialog */}
       <div className="relative bg-white bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 text-white mb-2">
-          {title}
-        </h3>
+        <h3 className="text-lg font-semibold text-white mb-2">{title}</h3>
         <p className="text-sm text-gray-300 mb-6">{message}</p>
 
         <div className="flex gap-3 justify-end">
