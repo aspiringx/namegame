@@ -9,6 +9,7 @@ import { Fragment } from 'react'
 import { X, ChevronDown, ChevronUp, Plus, Info } from 'lucide-react'
 import Image from 'next/image'
 import { Dropdown, DropdownItem } from '@/components/ui/dropdown'
+import StarChart from '@/app/(main)/stars/StarChart'
 
 interface RelationStarModalProps {
   isOpen: boolean
@@ -634,270 +635,36 @@ export default function RelationStarModal({
                         {/* Mini Chart */}
                         <div className="rounded-lg border border-gray-700 bg-gray-800 p-6">
                           <h3 className="mb-4 text-xl font-bold">Star Chart</h3>
-                          <div className="relative mx-auto aspect-square w-full">
-                            <svg
-                              viewBox="-10 -10 340 340"
-                              className="h-full w-full"
-                            >
-                              {/* Center point */}
-                              <circle cx="160" cy="160" r="3" fill="#4f46e5" />
-
-                              {/* Concentric circles */}
-                              {[32, 64, 96, 128, 160].map((radius) => (
-                                <circle
-                                  key={radius}
-                                  cx="160"
-                                  cy="160"
-                                  r={radius}
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="1"
-                                  className="stroke-gray-300 stroke-gray-600"
-                                />
-                              ))}
-
-                              {/* Scale labels (0, 5, 10) straight up from center */}
-                              {[0, 5, 10].map((val) => (
-                                <text
-                                  key={val}
-                                  x="160"
-                                  y={160 - val * 16 - (val === 0 ? 12 : 0) + 5}
-                                  textAnchor="middle"
-                                  fontSize="14"
-                                  fontWeight="500"
-                                  fill="currentColor"
-                                  className="fill-gray-600 fill-gray-400"
-                                >
-                                  {val}
-                                </text>
-                              ))}
-
-                              {/* Axes */}
-                              {[
-                                { key: 'proximity', label: 'Proximity' },
-                                { key: 'interest', label: 'Interest' },
-                                { key: 'personalTime', label: 'Personal Time' },
-                                { key: 'commonGround', label: 'Common Ground' },
-                                { key: 'familiarity', label: 'Familiarity' },
-                              ].map((_, idx) => {
-                                const angle =
-                                  (idx * (360 / 5) - 90 + 30) * (Math.PI / 180)
-                                const x = 160 + 160 * Math.cos(angle)
-                                const y = 160 + 160 * Math.sin(angle)
-                                return (
-                                  <line
-                                    key={idx}
-                                    x1="160"
-                                    y1="160"
-                                    x2={x}
-                                    y2={y}
-                                    stroke="currentColor"
-                                    strokeWidth="1"
-                                    className="stroke-gray-300 stroke-gray-600"
-                                  />
-                                )
-                              })}
-
-                              {/* Filled area */}
-                              <path
-                                d={
-                                  [
-                                    {
-                                      key: 'proximity',
-                                      value: interactiveScores.proximity,
-                                    },
-                                    {
-                                      key: 'interest',
-                                      value: interactiveScores.interest,
-                                    },
-                                    {
-                                      key: 'personalTime',
-                                      value: interactiveScores.personalTime,
-                                    },
-                                    {
-                                      key: 'commonGround',
-                                      value: interactiveScores.commonGround,
-                                    },
-                                    {
-                                      key: 'familiarity',
-                                      value: interactiveScores.familiarity,
-                                    },
-                                  ]
-                                    .map((item, idx) => {
-                                      const angle =
-                                        (idx * (360 / 5) - 90 + 30) *
-                                        (Math.PI / 180)
-                                      const length = item.value * 16
-                                      const x = 160 + length * Math.cos(angle)
-                                      const y = 160 + length * Math.sin(angle)
-                                      return `${
-                                        idx === 0 ? 'M' : 'L'
-                                      } ${x} ${y}`
-                                    })
-                                    .join(' ') + ' Z'
-                                }
-                                fill="#4f46e5"
-                                fillOpacity="0.15"
-                                stroke="#4f46e5"
-                                strokeWidth="3"
-                                opacity="0.6"
-                              />
-
-                              {/* Points */}
-                              {[
-                                {
-                                  key: 'proximity',
-                                  value: interactiveScores.proximity,
-                                  dimension: 'Proximity',
-                                },
-                                {
-                                  key: 'interest',
-                                  value: interactiveScores.interest,
-                                  dimension: 'Interest',
-                                },
-                                {
-                                  key: 'personalTime',
-                                  value: interactiveScores.personalTime,
-                                  dimension: 'Personal Time',
-                                },
-                                {
-                                  key: 'commonGround',
-                                  value: interactiveScores.commonGround,
-                                  dimension: 'Common Ground',
-                                },
-                                {
-                                  key: 'familiarity',
-                                  value: interactiveScores.familiarity,
-                                  dimension: 'Familiarity',
-                                },
-                              ].map((item, idx) => {
-                                const angle =
-                                  (idx * (360 / 5) - 90 + 30) * (Math.PI / 180)
-                                const length = item.value * 16
-                                // No offset needed now that chart is rotated away from edges
-                                const offset = 0
-                                const x =
-                                  160 + (length + offset) * Math.cos(angle)
-                                const y =
-                                  160 + (length + offset) * Math.sin(angle)
-
-                                return (
-                                  <g key={idx}>
-                                    {/* Dots - drawn before labels */}
-                                    <circle
-                                      cx={x}
-                                      cy={y}
-                                      r="8"
-                                      fill="#4f46e5"
-                                      opacity="0.3"
-                                    />
-                                    <circle
-                                      cx={x}
-                                      cy={y}
-                                      r="4"
-                                      fill="#4f46e5"
-                                    />
-                                    {/* Twinkle effect - white flash */}
-                                    <circle
-                                      cx={x}
-                                      cy={y}
-                                      r="3"
-                                      fill="white"
-                                      opacity="0"
-                                    >
-                                      <animate
-                                        attributeName="opacity"
-                                        values="0;0;0.8;0;0"
-                                        dur="2.5s"
-                                        repeatCount="indefinite"
-                                        begin={`${idx * 0.5}s`}
-                                      />
-                                    </circle>
-
-                                    {/* Labels - always show, with smart positioning */}
-                                    {(() => {
-                                      // Use a smaller distance to keep labels within viewBox
-                                      const labelDistance = 145
-                                      const labelX =
-                                        160 + labelDistance * Math.cos(angle)
-                                      const labelY =
-                                        160 + labelDistance * Math.sin(angle)
-
-                                      return (
-                                        <>
-                                          {item.dimension ===
-                                          'Personal Time' ? (
-                                            <>
-                                              <text
-                                                x={labelX}
-                                                y={labelY - 6}
-                                                textAnchor="middle"
-                                                fontSize="14"
-                                                fontWeight="600"
-                                                fill="currentColor"
-                                                className="fill-gray-900 fill-gray-100"
-                                              >
-                                                Personal
-                                              </text>
-                                              <text
-                                                x={labelX}
-                                                y={labelY + 6}
-                                                textAnchor="middle"
-                                                fontSize="14"
-                                                fontWeight="600"
-                                                fill="currentColor"
-                                                className="fill-gray-900 fill-gray-100"
-                                              >
-                                                Time
-                                              </text>
-                                            </>
-                                          ) : item.dimension ===
-                                            'Common Ground' ? (
-                                            <>
-                                              <text
-                                                x={labelX}
-                                                y={labelY - 6}
-                                                textAnchor="middle"
-                                                fontSize="14"
-                                                fontWeight="600"
-                                                fill="currentColor"
-                                                className="fill-gray-900 fill-gray-100"
-                                              >
-                                                Common
-                                              </text>
-                                              <text
-                                                x={labelX}
-                                                y={labelY + 6}
-                                                textAnchor="middle"
-                                                fontSize="14"
-                                                fontWeight="600"
-                                                fill="currentColor"
-                                                className="fill-gray-900 fill-gray-100"
-                                              >
-                                                Ground
-                                              </text>
-                                            </>
-                                          ) : (
-                                            <text
-                                              x={labelX}
-                                              y={labelY}
-                                              textAnchor="middle"
-                                              fontSize="14"
-                                              fontWeight="600"
-                                              fill="currentColor"
-                                              className="fill-gray-900 fill-gray-100"
-                                            >
-                                              {item.dimension}
-                                            </text>
-                                          )}
-                                        </>
-                                      )
-                                    })()}
-                                  </g>
-                                )
-                              })}
-                            </svg>
-                          </div>
+                          <StarChart
+                            data={[
+                              {
+                                dimension: 'Proximity',
+                                value: interactiveScores.proximity,
+                                max: 10,
+                              },
+                              {
+                                dimension: 'Interest',
+                                value: interactiveScores.interest,
+                                max: 10,
+                              },
+                              {
+                                dimension: 'Personal Time',
+                                value: interactiveScores.personalTime,
+                                max: 10,
+                              },
+                              {
+                                dimension: 'Common Ground',
+                                value: interactiveScores.commonGround,
+                                max: 10,
+                              },
+                              {
+                                dimension: 'Familiarity',
+                                value: interactiveScores.familiarity,
+                                max: 10,
+                              },
+                            ]}
+                            size="large"
+                          />
                         </div>
 
                         {/* Divider */}
@@ -1042,162 +809,36 @@ export default function RelationStarModal({
                         {/* Star Chart */}
                         <div className="rounded-lg border border-gray-700 bg-gray-800 p-6">
                           <h3 className="mb-4 text-xl font-bold">Star Chart</h3>
-                          <div className="relative mx-auto aspect-square w-full">
-                            <svg
-                              viewBox="-10 -10 340 340"
-                              className="h-full w-full"
-                            >
-                              {/* Center point */}
-                              <circle cx="160" cy="160" r="3" fill="#4f46e5" />
-
-                              {/* Concentric circles */}
-                              {[32, 64, 96, 128, 160].map((radius) => (
-                                <circle
-                                  key={radius}
-                                  cx="160"
-                                  cy="160"
-                                  r={radius}
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="1"
-                                  className="stroke-gray-300 stroke-gray-600"
-                                />
-                              ))}
-
-                              {/* Scale labels */}
-                              {[0, 5, 10].map((val) => (
-                                <text
-                                  key={val}
-                                  x="160"
-                                  y={160 - val * 16 - (val === 0 ? 12 : 0) + 5}
-                                  textAnchor="middle"
-                                  fontSize="14"
-                                  fontWeight="500"
-                                  fill="currentColor"
-                                  className="fill-gray-500 fill-gray-400"
-                                >
-                                  {val}
-                                </text>
-                              ))}
-
-                              {/* Axes */}
-                              {Object.keys(selectedSnapshot.scores).map(
-                                (_, idx) => {
-                                  const angle =
-                                    (idx * (360 / 5) - 90 + 30) *
-                                    (Math.PI / 180)
-                                  const x = 160 + 160 * Math.cos(angle)
-                                  const y = 160 + 160 * Math.sin(angle)
-                                  return (
-                                    <line
-                                      key={idx}
-                                      x1="160"
-                                      y1="160"
-                                      x2={x}
-                                      y2={y}
-                                      stroke="currentColor"
-                                      strokeWidth="1"
-                                      className="stroke-gray-300 stroke-gray-600"
-                                    />
-                                  )
-                                },
-                              )}
-
-                              {/* Filled area */}
-                              <path
-                                d={
-                                  Object.values(selectedSnapshot.scores)
-                                    .map((value: number, idx) => {
-                                      const angle =
-                                        (idx * (360 / 5) - 90 + 30) *
-                                        (Math.PI / 180)
-                                      const length = value * 16
-                                      const x = 160 + length * Math.cos(angle)
-                                      const y = 160 + length * Math.sin(angle)
-                                      return `${
-                                        idx === 0 ? 'M' : 'L'
-                                      } ${x} ${y}`
-                                    })
-                                    .join(' ') + ' Z'
-                                }
-                                fill="#4f46e5"
-                                fillOpacity="0.15"
-                                stroke="#4f46e5"
-                                strokeWidth="3"
-                                opacity="0.6"
-                              />
-
-                              {/* Points */}
-                              {Object.values(selectedSnapshot.scores).map(
-                                (value: number, idx) => {
-                                  const angle =
-                                    (idx * (360 / 5) - 90 + 30) *
-                                    (Math.PI / 180)
-                                  const length = value * 16
-                                  const x = 160 + length * Math.cos(angle)
-                                  const y = 160 + length * Math.sin(angle)
-
-                                  return (
-                                    <g key={idx}>
-                                      <circle
-                                        cx={x}
-                                        cy={y}
-                                        r="6"
-                                        fill="#4f46e5"
-                                        stroke="white"
-                                        strokeWidth="2"
-                                      />
-                                    </g>
-                                  )
-                                },
-                              )}
-
-                              {/* Labels */}
-                              {[
-                                { key: 'proximity', label: 'Proximity' },
-                                { key: 'interest', label: 'Interest' },
-                                {
-                                  key: 'personalTime',
-                                  label: 'Personal\nTime',
-                                },
-                                {
-                                  key: 'commonGround',
-                                  label: 'Common\nGround',
-                                },
-                                { key: 'familiarity', label: 'Familiarity' },
-                              ].map((dim, idx) => {
-                                const angle =
-                                  (idx * (360 / 5) - 90 + 30) * (Math.PI / 180)
-                                const labelDistance = 145
-                                const x = 160 + labelDistance * Math.cos(angle)
-                                const y = 160 + labelDistance * Math.sin(angle)
-
-                                return (
-                                  <text
-                                    key={dim.key}
-                                    x={x}
-                                    y={y}
-                                    textAnchor="middle"
-                                    dominantBaseline="middle"
-                                    fontSize="14"
-                                    fontWeight="600"
-                                    fill="currentColor"
-                                    className="fill-gray-700 fill-gray-300"
-                                  >
-                                    {dim.label.split('\n').map((line, i) => (
-                                      <tspan
-                                        key={i}
-                                        x={x}
-                                        dy={i === 0 ? 0 : 16}
-                                      >
-                                        {line}
-                                      </tspan>
-                                    ))}
-                                  </text>
-                                )
-                              })}
-                            </svg>
-                          </div>
+                          <StarChart
+                            data={[
+                              {
+                                dimension: 'Proximity',
+                                value: selectedSnapshot.scores.proximity,
+                                max: 10,
+                              },
+                              {
+                                dimension: 'Interest',
+                                value: selectedSnapshot.scores.interest,
+                                max: 10,
+                              },
+                              {
+                                dimension: 'Personal Time',
+                                value: selectedSnapshot.scores.personalTime,
+                                max: 10,
+                              },
+                              {
+                                dimension: 'Common Ground',
+                                value: selectedSnapshot.scores.commonGround,
+                                max: 10,
+                              },
+                              {
+                                dimension: 'Familiarity',
+                                value: selectedSnapshot.scores.familiarity,
+                                max: 10,
+                              },
+                            ]}
+                            size="large"
+                          />
                         </div>
 
                         {/* Star Score */}
