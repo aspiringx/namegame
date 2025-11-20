@@ -25,6 +25,7 @@ interface ConstellationModalProps {
   isOpen: boolean
   onClose: () => void
   groupName?: string
+  currentUserName?: string
   people?: Array<{
     id: string
     name: string
@@ -36,6 +37,7 @@ export default function ConstellationModal({
   isOpen,
   onClose,
   groupName,
+  currentUserName,
   people,
 }: ConstellationModalProps) {
   // Handle escape key
@@ -79,7 +81,12 @@ export default function ConstellationModal({
       </div>
 
       {/* Constellation experience */}
-      <MakeConstellation people={people} hideHeader={true} />
+      <MakeConstellation
+        people={people}
+        hideHeader={true}
+        groupName={groupName}
+        currentUserName={currentUserName}
+      />
     </div>
   )
 }

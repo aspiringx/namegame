@@ -24,11 +24,15 @@ interface MakeConstellationProps {
     photo: string
   }>
   hideHeader?: boolean
+  groupName?: string
+  currentUserName?: string
 }
 
 export default function MakeConstellation({
   people,
   hideHeader = false,
+  groupName,
+  currentUserName,
 }: MakeConstellationProps) {
   return (
     <div className="relative h-dvh w-full overflow-hidden bg-gray-900">
@@ -63,7 +67,11 @@ export default function MakeConstellation({
           </div>
         }
       >
-        <StarField people={people} />
+        <StarField
+          people={people}
+          groupName={groupName}
+          currentUserName={currentUserName}
+        />
       </Suspense>
     </div>
   )

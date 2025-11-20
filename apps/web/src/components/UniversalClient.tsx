@@ -547,6 +547,9 @@ function UniversalClientContent({
         isOpen={isConstellationOpen}
         onClose={() => setIsConstellationOpen(false)}
         groupName={groupContext.group.name}
+        currentUserName={
+          currentUserMember?.user?.firstName || currentUserMember?.user?.name
+        }
         people={initialMembers.map((m) => ({
           id: m.userId,
           name: m.user.name || 'Unknown',

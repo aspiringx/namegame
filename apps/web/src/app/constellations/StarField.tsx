@@ -26,10 +26,16 @@ import { Person } from './types'
 
 interface StarFieldProps {
   people?: Person[]
+  groupName?: string
+  currentUserName?: string
 }
 
-export default function StarField({ people }: StarFieldProps) {
-  const [groupName] = useState('Hypothetical Group')
+export default function StarField({
+  people,
+  groupName,
+  currentUserName,
+}: StarFieldProps) {
+  const actualGroupName = groupName || 'Hypothetical Group'
   // Use provided people or fall back to mock data
   const peopleData = people || MOCK_PEOPLE
   const [stars, setStars] = useState(() => initializeStars(peopleData))
@@ -38,8 +44,9 @@ export default function StarField({ people }: StarFieldProps) {
   const { state, actions, shouldResetCamera } = useJourneyStateMachine(
     stars,
     setStars,
-    groupName,
+    actualGroupName,
     peopleData,
+    currentUserName,
   )
 
   // Track viewport dimensions for precise positioning

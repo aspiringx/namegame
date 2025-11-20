@@ -68,15 +68,19 @@ export function useJourneyStateMachine(
   ) => void,
   groupName: string,
   people: Person[] = MOCK_PEOPLE,
+  currentUserName?: string,
 ) {
   const INTRO_MESSAGES = useMemo(() => {
+    const greeting = currentUserName
+      ? `Hi ${currentUserName}, welcome to the ${groupName} cluster. Sensors detect ${people.length} stars.`
+      : `Welcome to the ${groupName} cluster. Sensors detect ${people.length} stars.`
     return [
-      `Welcome to the ${groupName} cluster. Sensors detect ${people.length} stars.`,
+      greeting,
       `A <b>cluster</b> is a random group of stars in your vicinity.<br /><br />A <b>constellation</b> is a meaningful pattern formed by relationships you perceive.`,
       `<b>Your mission:</b> Map the positions of the stars relative to you to form a constellation.`,
       `Positions:<br /><br /><b>• Close</b>: Close friend, family<br /><b>• Near</b>: Passive friend, acquaintance<br /><b>• Far</b>: Unknown, distant<br /><br />Ready?`,
     ]
-  }, [groupName, people.length])
+  }, [groupName, people.length, currentUserName])
 
   const [state, setState] = useState<JourneyState>({
     phase: 'intro',
