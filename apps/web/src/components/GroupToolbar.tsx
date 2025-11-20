@@ -28,6 +28,11 @@ import {
   DropdownMenuTrigger,
   DropdownMenuCheckboxItem,
 } from '@/components/ui/dropdown-menu'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 
 // Universal sort option type
 interface SortOption {
@@ -255,14 +260,19 @@ export default function GroupToolbar({
         )}
 
         {/* Help/Tour button */}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setTourOpen(true)}
-          data-tour="tour-button"
-        >
-          <HelpCircle className="h-4 w-4" />
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setTourOpen(true)}
+              data-tour="tour-button"
+            >
+              <HelpCircle className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Help</TooltipContent>
+        </Tooltip>
       </div>
 
       {/* View Mode Buttons */}
@@ -282,20 +292,23 @@ export default function GroupToolbar({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              {config.viewModes.map((mode) => (
-                <Link key={mode.key} href={mode.href}>
-                  <DropdownMenuItem>
-                    <mode.icon className="mr-2 h-4 w-4" />
-                    <span>{mode.label}</span>
-                  </DropdownMenuItem>
-                </Link>
+              {config.viewModes.map((mode, index) => (
+                <>
+                  <Link key={mode.key} href={mode.href}>
+                    <DropdownMenuItem>
+                      <mode.icon className="mr-2 h-4 w-4" />
+                      <span>{mode.label}</span>
+                    </DropdownMenuItem>
+                  </Link>
+                  {/* Insert Constellation after first item (Photo Album) */}
+                  {index === 0 && onOpenConstellation && (
+                    <DropdownMenuItem onClick={onOpenConstellation}>
+                      <Sparkles className="mr-2 h-4 w-4" />
+                      <span>Constellations</span>
+                    </DropdownMenuItem>
+                  )}
+                </>
               ))}
-              {onOpenConstellation && (
-                <DropdownMenuItem onClick={onOpenConstellation}>
-                  <Sparkles className="mr-2 h-4 w-4" />
-                  <span>Constellation</span>
-                </DropdownMenuItem>
-              )}
               {isGridView && (
                 <>
                   <DropdownMenuSeparator />
@@ -368,51 +381,73 @@ export default function GroupToolbar({
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Link href={`/g/${groupSlug}`}>
-                <Button variant="ghost" size="sm" data-tour="grid-button">
-                  <LayoutGrid className="h-4 w-4" />
-                </Button>
-              </Link>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link href={`/g/${groupSlug}`}>
+                    <Button variant="ghost" size="sm" data-tour="grid-button">
+                      <LayoutGrid className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent>Photo Album</TooltipContent>
+              </Tooltip>
             )}
 
             {/* Constellation button */}
             {onOpenConstellation && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onOpenConstellation}
-                data-tour="constellation-button"
-              >
-                <Sparkles className="h-4 w-4" />
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={onOpenConstellation}
+                    data-tour="constellation-button"
+                  >
+                    <Sparkles className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Constellations</TooltipContent>
+              </Tooltip>
             )}
 
             {/* Family tree button (if enabled) */}
             {config.features.familyTree && (
-              <Link href={`/g/${groupSlug}/tree`}>
-                <Button
-                  variant={pathname.includes('/tree') ? 'secondary' : 'ghost'}
-                  size="sm"
-                  data-tour="tree-button"
-                >
-                  <GitFork className="h-4 w-4" />
-                </Button>
-              </Link>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link href={`/g/${groupSlug}/tree`}>
+                    <Button
+                      variant={
+                        pathname.includes('/tree') ? 'secondary' : 'ghost'
+                      }
+                      size="sm"
+                      data-tour="tree-button"
+                    >
+                      <GitFork className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent>Family Tree</TooltipContent>
+              </Tooltip>
             )}
           </>
         )}
 
         {/* Games button (desktop only - mobile has it in dropdown) */}
         {!isMobile && config.features.games && (
-          <Link href={`/g/${groupSlug}/games`}>
-            <Button
-              variant={pathname.includes('/games') ? 'secondary' : 'ghost'}
-              size="sm"
-              data-tour="game-button"
-            >
-              <Gamepad2 className="h-4 w-4" />
-            </Button>
-          </Link>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link href={`/g/${groupSlug}/games`}>
+                <Button
+                  variant={pathname.includes('/games') ? 'secondary' : 'ghost'}
+                  size="sm"
+                  data-tour="game-button"
+                >
+                  <Gamepad2 className="h-4 w-4" />
+                </Button>
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent>Games</TooltipContent>
+          </Tooltip>
         )}
       </div>
     </div>
