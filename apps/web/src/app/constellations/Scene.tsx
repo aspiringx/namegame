@@ -93,48 +93,115 @@ export default function Scene({
     autoPilotCameraTarget,
   })
 
-  // Preload all textures before rendering any stars
+  // Helper function to get thumbnail-sized photo URL for better performance
+  const getPhotoUrlForSize = (
+    photoUrl: string,
+    size: 'thumb' | 'small' = 'thumb',
+  ): string => {
+    if (!photoUrl || photoUrl.includes('default-avatar')) {
+      return photoUrl
+    }
+
+    // If it's an external URL (http/https), return as-is
+    if (photoUrl.startsWith('http')) {
+      return photoUrl
+    }
+
+    // Replace existing size suffix with desired size
+    // Pattern: .{timestamp}.{size}.webp or .{timestamp}.webp
+    const sizePattern = /\.(thumb|small|medium|large)\.webp$/
+    if (sizePattern.test(photoUrl)) {
+      // Already has a size, replace it
+      return photoUrl.replace(sizePattern, `.${size}.webp`)
+    }
+
+    // No size suffix yet, insert before .webp
+    if (photoUrl.endsWith('.webp')) {
+      return photoUrl.replace(/\.webp$/, `.${size}.webp`)
+    }
+
+    // Try other common extensions
+    const match = photoUrl.match(/\.(jpg|jpeg|png)$/i)
+    if (match) {
+      return photoUrl.replace(match[0], `.${size}${match[0]}`)
+    }
+
+    // Fallback: return original URL
+    console.warn('Could not transform photo URL for size:', photoUrl)
+    return photoUrl
+  }
+
+  // Preload textures - thumb for distant stars, small for close-up hero star
   const textures = useMemo(() => {
     const loader = new THREE.TextureLoader()
-    const textureMap = new Map<string, THREE.Texture>()
+    const thumbTextureMap = new Map<string, THREE.Texture>()
+    const smallTextureMap = new Map<string, THREE.Texture>()
     let loadedCount = 0
+    const totalToLoad = people.length * 2 // Both thumb and small for each person
+
+    const configureTexture = (tex: THREE.Texture) => {
+      tex.colorSpace = THREE.SRGBColorSpace
+      tex.minFilter = THREE.LinearFilter
+      tex.magFilter = THREE.LinearFilter
+      tex.wrapS = THREE.ClampToEdgeWrapping
+      tex.wrapT = THREE.ClampToEdgeWrapping
+      tex.needsUpdate = true
+    }
 
     people.forEach((person) => {
-      const texture = loader.load(
-        person.photo,
+      // Load thumb texture for distant view
+      const thumbUrl = getPhotoUrlForSize(person.photo, 'thumb')
+      const thumbTexture = loader.load(
+        thumbUrl,
         (tex) => {
-          tex.colorSpace = THREE.SRGBColorSpace
-          // Use better filtering to avoid edge artifacts
-          tex.minFilter = THREE.LinearFilter
-          tex.magFilter = THREE.LinearFilter
-          tex.wrapS = THREE.ClampToEdgeWrapping
-          tex.wrapT = THREE.ClampToEdgeWrapping
-          tex.needsUpdate = true
+          configureTexture(tex)
           loadedCount++
-          if (loadedCount === people.length) {
+          if (loadedCount === totalToLoad) {
             setTexturesLoaded(true)
           }
         },
         undefined,
         (_error) => {
-          // Texture load error - will retry or use fallback
-          // Don't log in production as these are expected during initial load
           loadedCount++
-          if (loadedCount === people.length) {
+          if (loadedCount === totalToLoad) {
             setTexturesLoaded(true)
           }
         },
       )
-      textureMap.set(person.id, texture)
+      thumbTextureMap.set(person.id, thumbTexture)
+
+      // Load small texture for close-up view
+      const smallUrl = getPhotoUrlForSize(person.photo, 'small')
+      const smallTexture = loader.load(
+        smallUrl,
+        (tex) => {
+          configureTexture(tex)
+          loadedCount++
+          if (loadedCount === totalToLoad) {
+            setTexturesLoaded(true)
+          }
+        },
+        undefined,
+        (_error) => {
+          loadedCount++
+          if (loadedCount === totalToLoad) {
+            setTexturesLoaded(true)
+          }
+        },
+      )
+      smallTextureMap.set(person.id, smallTexture)
     })
 
-    return textureMap
+    return { thumb: thumbTextureMap, small: smallTextureMap }
   }, [people])
 
   // Cleanup textures on unmount to prevent memory leaks
   useEffect(() => {
     return () => {
-      textures.forEach((texture) => {
+      textures.thumb.forEach((texture) => {
+        texture.dispose()
+      })
+      textures.small.forEach((texture) => {
         texture.dispose()
       })
     }
@@ -961,6 +1028,11 @@ export default function Scene({
 
           const starData = stars.get(person.id)!
 
+          // Use small texture for hero star (close-up), thumb for others (distant)
+          const texture = isTargetStar
+            ? textures.small.get(person.id)!
+            : textures.thumb.get(person.id)!
+
           return (
             <Star
               key={person.id}
@@ -968,7 +1040,7 @@ export default function Scene({
               position={starPositions[index]}
               isTarget={isTargetStar}
               placement={starData.placement || undefined}
-              texture={textures.get(person.id)!}
+              texture={texture}
               journeyPhase={journeyPhase}
             />
           )

@@ -145,8 +145,8 @@ export default function Star({
             placement === 'inner' ? 4.5 : placement === 'close' ? 3.0 : 2.0
           baseSize = sizeMultiplier
         } else {
-          // Uncharted stars: small and distant
-          baseSize = 0.8
+          // Uncharted stars: very small and distant to appear far away
+          baseSize = 0.5
         }
       }
     } else if (isFlying && distanceToCamera < 40) {
@@ -256,8 +256,8 @@ export default function Star({
             placement === 'inner' ? 1.0 : placement === 'close' ? 0.75 : 0.5
           groupOpacity = baseBrightness
         } else {
-          // Uncharted stars: visible but less prominent (match intro "Far" brightness)
-          groupOpacity = 0.7
+          // Uncharted stars: dim and distant to appear far away
+          groupOpacity = 0.4
         }
       }
     } else if (placement && journeyPhase === 'takeoff') {
