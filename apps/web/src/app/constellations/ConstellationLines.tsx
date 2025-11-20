@@ -1,25 +1,29 @@
 import { useMemo } from 'react'
 import * as THREE from 'three'
 import { Line } from '@react-three/drei'
+import { Person } from './types'
 import { MOCK_PEOPLE } from './mockData'
 
 // Constellation lines component - draws glowing lines connecting stars
 export function ConstellationLines({
   positions,
   placements,
+  people = MOCK_PEOPLE,
 }: {
   positions: [number, number, number][]
   placements: Map<string, 'inner' | 'close' | 'outer'>
+  people?: Person[]
 }) {
   // Create line segments using minimum spanning tree to ensure all stars are connected
   const lineSegments = useMemo(() => {
     const segments: Array<[THREE.Vector3, THREE.Vector3]> = []
 
     // Only connect charted stars (those with placements)
-    const chartedIndices = MOCK_PEOPLE.map((person, index) => ({
-      person,
-      index,
-    }))
+    const chartedIndices = people
+      .map((person, index) => ({
+        person,
+        index,
+      }))
       .filter(({ person }) => placements.has(person.id))
       .map(({ index }) => index)
 
@@ -44,13 +48,13 @@ export function ConstellationLines({
       // Find the shortest edge from tree to a non-tree star
       for (const inIndex of inTree) {
         const pos1 = new THREE.Vector3(...positions[inIndex])
-        
+
         for (const outIndex of chartedIndices) {
           if (inTree.has(outIndex)) continue
-          
+
           const pos2 = new THREE.Vector3(...positions[outIndex])
           const distance = pos1.distanceTo(pos2)
-          
+
           if (distance < minDistance) {
             minDistance = distance
             bestEdge = { from: inIndex, to: outIndex, distance }
@@ -76,7 +80,7 @@ export function ConstellationLines({
     }
 
     return segments
-  }, [positions, placements])
+  }, [positions, placements, people])
 
   return (
     <group>

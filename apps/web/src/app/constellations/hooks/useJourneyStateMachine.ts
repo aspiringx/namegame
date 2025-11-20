@@ -16,7 +16,7 @@
  */
 
 import { useState, useCallback, useRef, useMemo, useEffect } from 'react'
-import { StarData, JourneyPhase } from '../types'
+import { StarData, JourneyPhase, Person } from '../types'
 import { MOCK_PEOPLE } from '../mockData'
 
 interface JourneyState {
@@ -67,15 +67,16 @@ export function useJourneyStateMachine(
     updater: (prev: Map<string, StarData>) => Map<string, StarData>,
   ) => void,
   groupName: string,
+  people: Person[] = MOCK_PEOPLE,
 ) {
   const INTRO_MESSAGES = useMemo(() => {
     return [
-      `Welcome to the ${groupName} cluster. Sensors detect ${MOCK_PEOPLE.length} stars.`,
+      `Welcome to the ${groupName} cluster. Sensors detect ${people.length} stars.`,
       `A <b>cluster</b> is a random group of stars in your vicinity.<br /><br />A <b>constellation</b> is a meaningful pattern formed by relationships you perceive.`,
       `<b>Your mission:</b> Map the positions of the stars relative to you to form a constellation.`,
       `Positions:<br /><br /><b>• Close</b>: Close friend, family<br /><b>• Near</b>: Passive friend, acquaintance<br /><b>• Far</b>: Unknown, distant<br /><br />Ready?`,
     ]
-  }, [groupName])
+  }, [groupName, people.length])
 
   const [state, setState] = useState<JourneyState>({
     phase: 'intro',
@@ -159,7 +160,7 @@ export function useJourneyStateMachine(
   const selectAllStars = useCallback(() => {
     setState((prev) => ({
       ...prev,
-      selectedStarIds: new Set(MOCK_PEOPLE.map((p) => p.id)),
+      selectedStarIds: new Set(people.map((p) => p.id)),
     }))
   }, [])
 
@@ -190,10 +191,8 @@ export function useJourneyStateMachine(
       // Shuffle selected stars for random visit order
       const shuffled = [...selectedIds].sort(() => Math.random() - 0.5)
       const firstPersonId = shuffled[0]
-      const firstPersonIndex = MOCK_PEOPLE.findIndex(
-        (p) => p.id === firstPersonId,
-      )
-      const firstPerson = MOCK_PEOPLE[firstPersonIndex]
+      const firstPersonIndex = people.findIndex((p) => p.id === firstPersonId)
+      const firstPerson = people[firstPersonIndex]
 
       return {
         ...prev,
@@ -250,24 +249,22 @@ export function useJourneyStateMachine(
             .length + 1 // +1 for the star we just placed
 
         // Check if journey is complete
-        if (placedCount === MOCK_PEOPLE.length) {
+        if (placedCount === people.length) {
           shouldResetCamera.current = true // Signal to Scene.tsx to zoom out
           return {
             ...prev,
             visitQueue: updatedQueue,
             phase: 'returning-journey-complete',
             useConstellationPositions: true,
-            narratorMessage: `Journey complete! You've mapped all ${MOCK_PEOPLE.length} stars in your constellation.`,
+            narratorMessage: `Journey complete! You've mapped all ${people.length} stars in your constellation.`,
           }
         }
 
         // Check if there are more stars in the current queue
         if (updatedQueue.length > 0) {
           const nextPersonId = updatedQueue[0]
-          const nextPersonIndex = MOCK_PEOPLE.findIndex(
-            (p) => p.id === nextPersonId,
-          )
-          const nextPerson = MOCK_PEOPLE[nextPersonIndex]
+          const nextPersonIndex = people.findIndex((p) => p.id === nextPersonId)
+          const nextPerson = people[nextPersonIndex]
 
           return {
             ...prev,

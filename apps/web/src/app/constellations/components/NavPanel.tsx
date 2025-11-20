@@ -12,7 +12,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { JourneyPhase } from '../types'
+import { JourneyPhase, Person } from '../types'
 import { MOCK_PEOPLE } from '../mockData'
 
 interface NavPanelProps {
@@ -36,6 +36,7 @@ interface NavPanelProps {
   onContinueJourney: () => void
   onOpenReviewModal: () => void
   onToggleManualControls: (enabled: boolean) => void
+  people?: Person[]
 }
 
 export function NavPanel({
@@ -59,8 +60,9 @@ export function NavPanel({
   onContinueJourney,
   onOpenReviewModal,
   onToggleManualControls,
+  people = MOCK_PEOPLE,
 }: NavPanelProps) {
-  const totalCount = MOCK_PEOPLE.length
+  const totalCount = people.length
   const hasUncharted = placementsCount < totalCount
   const [_inputValue, _setInputValue] = useState('')
 
@@ -161,7 +163,8 @@ export function NavPanel({
                 </div>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-[40vh] overflow-y-auto">
-                {MOCK_PEOPLE.slice()
+                {people
+                  .slice()
                   .sort((a, b) => {
                     const aLast = a.name.split(' ').slice(-1)[0]
                     const aFirst = a.name.split(' ').slice(0, -1).join(' ')

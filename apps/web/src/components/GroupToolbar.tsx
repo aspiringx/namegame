@@ -15,6 +15,7 @@ import {
   Filter,
   Gamepad2,
   GitFork,
+  Sparkles,
 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -81,6 +82,8 @@ interface GroupToolbarProps {
   // Family-specific props (optional)
   familyTreeRef?: RefObject<any>
   isResetDisabled?: boolean
+  // Constellation modal handler
+  onOpenConstellation?: () => void
 }
 
 export default function GroupToolbar({
@@ -95,6 +98,7 @@ export default function GroupToolbar({
   config,
   familyTreeRef,
   isResetDisabled = false,
+  onOpenConstellation,
 }: GroupToolbarProps) {
   const pathname = usePathname()
 
@@ -286,6 +290,12 @@ export default function GroupToolbar({
                   </DropdownMenuItem>
                 </Link>
               ))}
+              {onOpenConstellation && (
+                <DropdownMenuItem onClick={onOpenConstellation}>
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  <span>Constellation</span>
+                </DropdownMenuItem>
+              )}
               {isGridView && (
                 <>
                   <DropdownMenuSeparator />
@@ -363,6 +373,18 @@ export default function GroupToolbar({
                   <LayoutGrid className="h-4 w-4" />
                 </Button>
               </Link>
+            )}
+
+            {/* Constellation button */}
+            {onOpenConstellation && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onOpenConstellation}
+                data-tour="constellation-button"
+              >
+                <Sparkles className="h-4 w-4" />
+              </Button>
             )}
 
             {/* Family tree button (if enabled) */}

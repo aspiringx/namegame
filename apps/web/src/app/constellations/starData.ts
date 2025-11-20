@@ -1,6 +1,6 @@
 // Star data management utilities
 
-import { StarData } from './types'
+import { StarData, Person } from './types'
 import { MOCK_PEOPLE } from './mockData'
 
 // Get star radius range based on placement
@@ -29,11 +29,13 @@ export const generateRandomPosition = (
 }
 
 // Initialize all star data with random positions
-export const initializeStars = (): Map<string, StarData> => {
+export const initializeStars = (
+  people: Person[] = MOCK_PEOPLE,
+): Map<string, StarData> => {
   const stars = new Map<string, StarData>()
   const { min, max } = getStarRadius(undefined) // Unplaced stars start far away
 
-  MOCK_PEOPLE.forEach((person, index) => {
+  people.forEach((person, index) => {
     stars.set(person.id, {
       person,
       index,
@@ -72,8 +74,9 @@ export const getVisitedCount = (stars: Map<string, StarData>): number => {
 // Find next unvisited star index
 export const findNextUnvisitedIndex = (
   stars: Map<string, StarData>,
+  people: Person[] = MOCK_PEOPLE,
 ): number => {
-  return MOCK_PEOPLE.findIndex((p) => {
+  return people.findIndex((p) => {
     const starData = stars.get(p.id)!
     return !starData.visited
   })

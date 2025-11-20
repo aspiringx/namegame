@@ -30,6 +30,7 @@ import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { FocalUserSearch } from '@/app/g/[slug]/(family)/FocalUserSearch'
 import GamesView from '@/components/GamesView'
+import ConstellationModal from '@/components/ConstellationModal'
 
 interface UniversalClientProps {
   view: 'grid' | 'tree' | 'games'
@@ -78,6 +79,9 @@ function UniversalClientContent({
   // Tree view state
   const [isResetDisabled, setIsResetDisabled] = useState(true)
   const treeRef = useRef<any>(null)
+
+  // Constellation modal state
+  const [isConstellationOpen, setIsConstellationOpen] = useState(false)
 
   // Get adapter-specific default settings
   const [settings, setSettings] = useLocalStorage<GroupPageSettings>(
@@ -388,6 +392,7 @@ function UniversalClientContent({
             config={adapter.getToolbarConfig(groupSlug)}
             familyTreeRef={treeRef}
             isResetDisabled={isResetDisabled}
+            onOpenConstellation={() => setIsConstellationOpen(true)}
           />
 
           {/* Search input */}
@@ -536,6 +541,18 @@ function UniversalClientContent({
           </div>
         </Modal>
       )}
+
+      {/* Constellation Modal */}
+      <ConstellationModal
+        isOpen={isConstellationOpen}
+        onClose={() => setIsConstellationOpen(false)}
+        groupName={groupContext.group.name}
+        people={initialMembers.map((m) => ({
+          id: m.userId,
+          name: m.user.name || 'Unknown',
+          photo: m.user.photoUrl || '/images/default-avatar.png',
+        }))}
+      />
     </>
   )
 }

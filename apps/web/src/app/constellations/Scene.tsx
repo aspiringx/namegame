@@ -1,7 +1,7 @@
 import { useRef, useState, useMemo, useEffect } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
-import { StarData, JourneyPhase } from './types'
+import { StarData, JourneyPhase, Person } from './types'
 import { MOCK_PEOPLE } from './mockData'
 import { getStarRadius } from './starData'
 import Star from './Star'
@@ -29,6 +29,7 @@ interface SceneProps {
   layoutMeasurements: { headerHeight: number; navPanelHeight: number }
   manualControlsEnabled: boolean
   shouldResetCameraRef: React.MutableRefObject<boolean>
+  people?: Person[]
 }
 
 export default function Scene({
@@ -46,6 +47,7 @@ export default function Scene({
   layoutMeasurements,
   manualControlsEnabled,
   shouldResetCameraRef,
+  people = MOCK_PEOPLE,
 }: SceneProps) {
   const { camera } = useThree()
   const { calculateSphericalForConstellation } = useCameraPositioning()
@@ -97,7 +99,7 @@ export default function Scene({
     const textureMap = new Map<string, THREE.Texture>()
     let loadedCount = 0
 
-    MOCK_PEOPLE.forEach((person) => {
+    people.forEach((person) => {
       const texture = loader.load(
         person.photo,
         (tex) => {
@@ -109,7 +111,7 @@ export default function Scene({
           tex.wrapT = THREE.ClampToEdgeWrapping
           tex.needsUpdate = true
           loadedCount++
-          if (loadedCount === MOCK_PEOPLE.length) {
+          if (loadedCount === people.length) {
             setTexturesLoaded(true)
           }
         },
@@ -118,7 +120,7 @@ export default function Scene({
           // Texture load error - will retry or use fallback
           // Don't log in production as these are expected during initial load
           loadedCount++
-          if (loadedCount === MOCK_PEOPLE.length) {
+          if (loadedCount === people.length) {
             setTexturesLoaded(true)
           }
         },
@@ -127,7 +129,7 @@ export default function Scene({
     })
 
     return textureMap
-  }, [])
+  }, [people])
 
   // Cleanup textures on unmount to prevent memory leaks
   useEffect(() => {
@@ -163,7 +165,7 @@ export default function Scene({
         const minDistance = 15
         const maxAttempts = 50
 
-        MOCK_PEOPLE.forEach((person) => {
+        people.forEach((person) => {
           const starData = newStars.get(person.id)!
 
           // Generate initial position if missing
@@ -221,7 +223,7 @@ export default function Scene({
 
       const newStars = new Map(prevStars)
 
-      MOCK_PEOPLE.forEach((person) => {
+      people.forEach((person) => {
         const starData = newStars.get(person.id)!
 
         // Generate constellation position if placed and missing
@@ -350,7 +352,7 @@ export default function Scene({
   // During journey: ALWAYS use initialPosition
   // During constellation view: use constellationPosition if available
   const starPositions = useMemo(() => {
-    const positions = MOCK_PEOPLE.map((person) => {
+    const positions = people.map((person) => {
       const starData = stars.get(person.id)!
 
       // ONLY use constellation positions when explicitly in constellation view mode
@@ -364,7 +366,7 @@ export default function Scene({
       return pos
     })
     return positions
-  }, [stars, useConstellationPositions])
+  }, [stars, useConstellationPositions, people])
 
   // Auto-pilot: initialize with overview, then move to target star
   useFrame((state) => {
@@ -437,7 +439,7 @@ export default function Scene({
     if (
       journeyPhase === 'takeoff' &&
       previousStarIndex >= 0 &&
-      previousStarIndex < MOCK_PEOPLE.length
+      previousStarIndex < people.length
     ) {
       const currentStarPos = new THREE.Vector3(
         ...starPositions[previousStarIndex],
@@ -660,7 +662,7 @@ export default function Scene({
       journeyPhase !== 'intro' &&
       journeyPhase !== 'takeoff' &&
       targetStarIndex >= 0 &&
-      targetStarIndex < MOCK_PEOPLE.length
+      targetStarIndex < people.length
     ) {
       const targetPos = new THREE.Vector3(...starPositions[targetStarIndex])
 
@@ -729,7 +731,7 @@ export default function Scene({
         journeyPhase === 'flying'
       ) {
         hasTriggeredApproaching.current = true
-        onApproaching(MOCK_PEOPLE[targetStarIndex].name)
+        onApproaching(people[targetStarIndex].name)
       }
 
       // Reset approaching trigger when moving to new star
@@ -771,7 +773,7 @@ export default function Scene({
           !hasTriggeredArrival.current
         ) {
           hasTriggeredArrival.current = true
-          onArrived(MOCK_PEOPLE[targetStarIndex].name)
+          onArrived(people[targetStarIndex].name)
           // Don't stop flying yet - let it complete to center the star
         }
 
@@ -890,7 +892,7 @@ export default function Scene({
     let minDist = Infinity
     let nearestId: string | null = null
 
-    MOCK_PEOPLE.forEach((person, index) => {
+    people.forEach((person, index) => {
       const pos = new THREE.Vector3(...starPositions[index])
       const dist = camera.position.distanceTo(pos)
 
@@ -938,12 +940,13 @@ export default function Scene({
                   .map(([id, star]) => [id, star.placement!]),
               )
             }
+            people={people}
           />
         )}
 
       {/* Person stars - only render when all textures loaded */}
       {texturesLoaded &&
-        MOCK_PEOPLE.map((person, index) => {
+        people.map((person, index) => {
           // Check if this star is the current target
           // During takeoff: show previous star as target (we're backing away from it)
           // During flying/approaching/arrived/placed/complete: show current target
