@@ -17,6 +17,8 @@ export default function Star({
   const { camera } = useThree()
   const [distanceToCamera, setDistanceToCamera] = useState(0)
   const [fadeIn, setFadeIn] = useState(0)
+  const frameCount = useRef(0)
+  const lastDistance = useRef(0)
 
   // Stable random variation per star (based on person.id for consistency)
   const starVariation = useMemo(() => {
@@ -68,11 +70,24 @@ export default function Star({
     journeyPhase === 'returning-journey-complete'
 
   // Calculate distance and billboard rotation
+  // Throttle updates for distant stars to reduce per-frame work
   useFrame(() => {
-    if (groupRef.current) {
-      // Update distance to camera
+    if (!groupRef.current) return
+
+    frameCount.current++
+
+    // Target star: update every frame (smooth)
+    // Placed stars: update every 2 frames
+    // Distant unplaced: update every 4 frames
+    const updateInterval = isTarget ? 1 : placement ? 2 : 4
+
+    if (frameCount.current % updateInterval === 0) {
+      // Update distance to camera (memoized - only if changed significantly)
       const dist = camera.position.distanceTo(new THREE.Vector3(...position))
-      setDistanceToCamera(dist)
+      if (Math.abs(dist - lastDistance.current) > 1) {
+        setDistanceToCamera(dist)
+        lastDistance.current = dist
+      }
 
       // Billboard - always face camera
       if (isTarget) {
@@ -365,8 +380,9 @@ export default function Star({
       return distanceToCamera < 30 ? 48 : 32
     }
 
-    // Unplaced distant stars: lower detail (they're small and dim anyway)
-    return 16
+    // Unplaced distant stars: very low detail for performance
+    // They're small, dim, and numerous - use minimal geometry
+    return distanceToCamera < 40 ? 12 : 8
   }
 
   const circleSegments = getCircleSegments()

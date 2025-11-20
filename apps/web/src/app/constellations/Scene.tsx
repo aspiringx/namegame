@@ -830,21 +830,21 @@ export default function Scene({
           journeyPhase === 'arrived')
       ) {
         // Flight speed tiers based on distance to target star
-        // (slower when closer for smooth arrival)
+        // Increased speeds for snappier feel with large groups
         let baseSpeed
         if (currentDist < 15) {
-          baseSpeed = 0.05 // Final approach to star
+          baseSpeed = 0.08 // Final approach to star (was 0.05)
         } else if (currentDist < 25) {
-          baseSpeed = 0.06 // Approaching star
+          baseSpeed = 0.1 // Approaching star (was 0.06)
         } else if (currentDist < 40) {
-          baseSpeed = 0.075 // Medium distance flight
+          baseSpeed = 0.12 // Medium distance flight (was 0.075)
         } else {
-          baseSpeed = 0.105 // Far distance flight
+          baseSpeed = 0.15 // Far distance flight (was 0.105)
         }
 
-        // Slow down initial flight from intro (longer distance, more dramatic)
+        // Slow down initial flight from intro slightly less
         if (initialFlightDistance.current > 40) {
-          baseSpeed *= 0.7
+          baseSpeed *= 0.85 // (was 0.7)
         }
 
         flightProgress.current = Math.min(1, flightProgress.current + baseSpeed)
