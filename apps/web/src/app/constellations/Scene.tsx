@@ -131,13 +131,14 @@ export default function Scene({
     return photoUrl
   }
 
-  // Preload textures - thumb for distant stars, small for close-up hero star
+  // Preload only thumb textures upfront for fast initial render
+  // Small textures loaded on-demand when approaching a star
   const textures = useMemo(() => {
     const loader = new THREE.TextureLoader()
     const thumbTextureMap = new Map<string, THREE.Texture>()
     const smallTextureMap = new Map<string, THREE.Texture>()
     let loadedCount = 0
-    const totalToLoad = people.length * 2 // Both thumb and small for each person
+    const totalToLoad = people.length // Only thumbs initially
 
     const configureTexture = (tex: THREE.Texture) => {
       tex.colorSpace = THREE.SRGBColorSpace
@@ -149,7 +150,7 @@ export default function Scene({
     }
 
     people.forEach((person) => {
-      // Load thumb texture for distant view
+      // Load thumb texture for distant view (immediate)
       const thumbUrl = getPhotoUrlForSize(person.photo, 'thumb')
       const thumbTexture = loader.load(
         thumbUrl,
@@ -170,30 +171,45 @@ export default function Scene({
       )
       thumbTextureMap.set(person.id, thumbTexture)
 
-      // Load small texture for close-up view
-      const smallUrl = getPhotoUrlForSize(person.photo, 'small')
-      const smallTexture = loader.load(
+      // Small texture placeholder (will be loaded on-demand)
+      smallTextureMap.set(person.id, thumbTexture) // Use thumb as placeholder
+    })
+
+    return {
+      thumb: thumbTextureMap,
+      small: smallTextureMap,
+      loader, // Expose loader for on-demand loading
+      configureTexture, // Expose config function
+    }
+  }, [people])
+
+  // Lazy load small texture when approaching a star
+  useEffect(() => {
+    if (targetStarIndex === -1 || !texturesLoaded) return
+
+    const targetPerson = people[targetStarIndex]
+    if (!targetPerson) return
+
+    // Check if small texture is already loaded (not just placeholder)
+    const currentSmallTexture = textures.small.get(targetPerson.id)
+    const thumbTexture = textures.thumb.get(targetPerson.id)
+
+    // If small texture is same as thumb, it's a placeholder - load the real one
+    if (currentSmallTexture === thumbTexture) {
+      const smallUrl = getPhotoUrlForSize(targetPerson.photo, 'small')
+      textures.loader.load(
         smallUrl,
         (tex) => {
-          configureTexture(tex)
-          loadedCount++
-          if (loadedCount === totalToLoad) {
-            setTexturesLoaded(true)
-          }
+          textures.configureTexture(tex)
+          textures.small.set(targetPerson.id, tex)
         },
         undefined,
         (_error) => {
-          loadedCount++
-          if (loadedCount === totalToLoad) {
-            setTexturesLoaded(true)
-          }
+          // Keep using thumb as fallback on error
         },
       )
-      smallTextureMap.set(person.id, smallTexture)
-    })
-
-    return { thumb: thumbTextureMap, small: smallTextureMap }
-  }, [people])
+    }
+  }, [targetStarIndex, texturesLoaded, people, textures])
 
   // Cleanup textures on unmount to prevent memory leaks
   useEffect(() => {
@@ -1027,6 +1043,22 @@ export default function Scene({
                 journeyPhase === 'complete'))
 
           const starData = stars.get(person.id)!
+
+          // Frustum culling: Skip rendering stars that are far off-screen during flight
+          // Always render target star and placed constellation stars
+          if (
+            !isTargetStar &&
+            !starData.placement &&
+            journeyPhase === 'flying'
+          ) {
+            const starPos = new THREE.Vector3(...starPositions[index])
+            const distanceToCamera = camera.position.distanceTo(starPos)
+
+            // Skip very distant unplaced stars during flight (they're not visible anyway)
+            if (distanceToCamera > 60) {
+              return null
+            }
+          }
 
           // Use small texture for hero star (close-up), thumb for others (distant)
           const texture = isTargetStar
