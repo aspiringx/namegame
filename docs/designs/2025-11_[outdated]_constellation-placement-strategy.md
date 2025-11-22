@@ -1,3 +1,5 @@
+OUTDATED. See docs/designs/2025-11_relationship_strategy.md
+
 # Constellation Placement Persistence Strategy
 
 **Date**: November 2025  
