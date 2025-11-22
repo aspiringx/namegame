@@ -17,24 +17,42 @@ const StarField = dynamic(() => import('./StarField'), {
   ),
 })
 
-export default function MakeConstellation() {
+interface MakeConstellationProps {
+  people?: Array<{
+    id: string
+    name: string
+    photo: string
+  }>
+  hideHeader?: boolean
+  groupName?: string
+  currentUserName?: string
+}
+
+export default function MakeConstellation({
+  people,
+  hideHeader = false,
+  groupName,
+  currentUserName,
+}: MakeConstellationProps) {
   return (
     <div className="relative h-dvh w-full overflow-hidden bg-gray-900">
-      {/* Header */}
-      <header className="absolute left-0 right-0 top-0 z-10 bg-gradient-to-b from-gray-900/90 to-transparent p-4 sm:p-6">
-        <div className="flex items-start justify-between">
-          <div>
-            <Link href="/" className="hover:opacity-80 transition-opacity">
-              <h1 className="text-xl font-bold text-white sm:text-xl">
-                Relation Star
-              </h1>
-            </Link>
-            <p className="mt-1 text-sm text-gray-300 sm:text-base">
-              Constellations
-            </p>
+      {/* Header - only show in standalone demo mode */}
+      {!hideHeader && (
+        <header className="absolute left-0 right-0 top-0 z-10 bg-gradient-to-b from-gray-900/90 to-transparent p-4 sm:p-6">
+          <div className="flex items-start justify-between">
+            <div>
+              <Link href="/" className="hover:opacity-80 transition-opacity">
+                <h1 className="text-xl font-bold text-white sm:text-xl">
+                  Relation Star
+                </h1>
+              </Link>
+              <p className="mt-1 text-sm text-gray-300 sm:text-base">
+                Constellations
+              </p>
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
+      )}
 
       {/* 3D Scene */}
       <Suspense
@@ -49,7 +67,11 @@ export default function MakeConstellation() {
           </div>
         }
       >
-        <StarField />
+        <StarField
+          people={people}
+          groupName={groupName}
+          currentUserName={currentUserName}
+        />
       </Suspense>
     </div>
   )

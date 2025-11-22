@@ -6,7 +6,7 @@
  * Stars are grouped into: Close, Near, Far, and Uncharted.
  */
 
-import { StarData } from '../types'
+import { StarData, Person } from '../types'
 import { MOCK_PEOPLE } from '../mockData'
 
 interface ConstellationModalProps {
@@ -15,6 +15,7 @@ interface ConstellationModalProps {
   onToggleSelection: (starId: string) => void
   onVisitSelected: () => void
   onClose: () => void
+  people?: Person[]
 }
 
 export function ConstellationModal({
@@ -23,6 +24,7 @@ export function ConstellationModal({
   onToggleSelection,
   onVisitSelected,
   onClose,
+  people = MOCK_PEOPLE,
 }: ConstellationModalProps) {
   const placements = new Map(
     Array.from(stars.entries())
@@ -50,8 +52,7 @@ export function ConstellationModal({
         <div className="sticky top-0 bg-slate-900/95 border-b border-indigo-500/30 p-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-bold text-white">
-              Your Constellation ({placements.size}/{MOCK_PEOPLE.length}{' '}
-              charted)
+              Your Constellation ({placements.size}/{people.length} charted)
             </h2>
             <button
               onClick={onClose}
@@ -67,41 +68,45 @@ export function ConstellationModal({
           {/* Close stars */}
           {innerStars.length > 0 && (
             <StarSection
-              title={`● Close (${innerStars.length})`}
+              title="Close"
               stars={innerStars}
               selectedStarIds={selectedStarIds}
               onToggleSelection={onToggleSelection}
+              people={people}
             />
           )}
 
           {/* Near stars */}
           {closeStars.length > 0 && (
             <StarSection
-              title={`● Near (${closeStars.length})`}
+              title="Near"
               stars={closeStars}
               selectedStarIds={selectedStarIds}
               onToggleSelection={onToggleSelection}
+              people={people}
             />
           )}
 
           {/* Far stars */}
           {outerStars.length > 0 && (
             <StarSection
-              title={`● Far (${outerStars.length})`}
+              title="Far"
               stars={outerStars}
               selectedStarIds={selectedStarIds}
               onToggleSelection={onToggleSelection}
+              people={people}
             />
           )}
 
           {/* Uncharted stars */}
           {unchartedStars.length > 0 && (
             <StarSection
-              title={`○ Uncharted (${unchartedStars.length})`}
+              title="Uncharted"
               stars={unchartedStars}
               selectedStarIds={selectedStarIds}
               onToggleSelection={onToggleSelection}
               dimmed
+              people={people}
             />
           )}
         </div>
@@ -135,6 +140,7 @@ interface StarSectionProps {
   selectedStarIds: Set<string>
   onToggleSelection: (starId: string) => void
   dimmed?: boolean
+  people: Person[]
 }
 
 function StarSection({
@@ -143,13 +149,14 @@ function StarSection({
   selectedStarIds,
   onToggleSelection,
   dimmed = false,
+  people,
 }: StarSectionProps) {
   return (
     <div>
       <h3 className="text-sm font-bold text-cyan-400 mb-2">{title}</h3>
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
         {stars.map(([id]) => {
-          const person = MOCK_PEOPLE.find((p) => p.id === id)!
+          const person = people.find((p) => p.id === id)!
           const isSelected = selectedStarIds.has(id)
           return (
             <button

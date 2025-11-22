@@ -8,7 +8,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { MoreVertical, Link, KeyRound, Users } from 'lucide-react'
+import { MoreVertical, Link, KeyRound, Users, Sparkles } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -158,7 +158,7 @@ export default function BaseMemberCard({
                   <DropdownMenuItem
                     onClick={() => setIsRelationStarModalOpen(true)}
                   >
-                    <span className="mr-2">⭐</span>
+                    <Sparkles className="mr-2 h-4 w-4" />
                     Cosmic Insights
                   </DropdownMenuItem>
                 )}

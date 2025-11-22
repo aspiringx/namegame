@@ -1,7 +1,7 @@
 import { useRef, useState, useMemo, useEffect } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
-import { StarData, JourneyPhase } from './types'
+import { StarData, JourneyPhase, Person } from './types'
 import { MOCK_PEOPLE } from './mockData'
 import { getStarRadius } from './starData'
 import Star from './Star'
@@ -29,6 +29,7 @@ interface SceneProps {
   layoutMeasurements: { headerHeight: number; navPanelHeight: number }
   manualControlsEnabled: boolean
   shouldResetCameraRef: React.MutableRefObject<boolean>
+  people?: Person[]
 }
 
 export default function Scene({
@@ -46,6 +47,7 @@ export default function Scene({
   layoutMeasurements,
   manualControlsEnabled,
   shouldResetCameraRef,
+  people = MOCK_PEOPLE,
 }: SceneProps) {
   const { camera } = useThree()
   const { calculateSphericalForConstellation } = useCameraPositioning()
@@ -91,48 +93,131 @@ export default function Scene({
     autoPilotCameraTarget,
   })
 
-  // Preload all textures before rendering any stars
+  // Helper function to get thumbnail-sized photo URL for better performance
+  const getPhotoUrlForSize = (
+    photoUrl: string,
+    size: 'thumb' | 'small' = 'thumb',
+  ): string => {
+    if (!photoUrl || photoUrl.includes('default-avatar')) {
+      return photoUrl
+    }
+
+    // If it's an external URL (http/https), return as-is
+    if (photoUrl.startsWith('http')) {
+      return photoUrl
+    }
+
+    // Replace existing size suffix with desired size
+    // Pattern: .{timestamp}.{size}.webp or .{timestamp}.webp
+    const sizePattern = /\.(thumb|small|medium|large)\.webp$/
+    if (sizePattern.test(photoUrl)) {
+      // Already has a size, replace it
+      return photoUrl.replace(sizePattern, `.${size}.webp`)
+    }
+
+    // No size suffix yet, insert before .webp
+    if (photoUrl.endsWith('.webp')) {
+      return photoUrl.replace(/\.webp$/, `.${size}.webp`)
+    }
+
+    // Try other common extensions
+    const match = photoUrl.match(/\.(jpg|jpeg|png)$/i)
+    if (match) {
+      return photoUrl.replace(match[0], `.${size}${match[0]}`)
+    }
+
+    // Fallback: return original URL
+    console.warn('Could not transform photo URL for size:', photoUrl)
+    return photoUrl
+  }
+
+  // Preload only thumb textures upfront for fast initial render
+  // Small textures loaded on-demand when approaching a star
   const textures = useMemo(() => {
     const loader = new THREE.TextureLoader()
-    const textureMap = new Map<string, THREE.Texture>()
+    const thumbTextureMap = new Map<string, THREE.Texture>()
+    const smallTextureMap = new Map<string, THREE.Texture>()
     let loadedCount = 0
+    const totalToLoad = people.length // Only thumbs initially
 
-    MOCK_PEOPLE.forEach((person) => {
-      const texture = loader.load(
-        person.photo,
+    const configureTexture = (tex: THREE.Texture) => {
+      tex.colorSpace = THREE.SRGBColorSpace
+      tex.minFilter = THREE.LinearFilter
+      tex.magFilter = THREE.LinearFilter
+      tex.wrapS = THREE.ClampToEdgeWrapping
+      tex.wrapT = THREE.ClampToEdgeWrapping
+      tex.needsUpdate = true
+    }
+
+    people.forEach((person) => {
+      // Load thumb texture for distant view (immediate)
+      const thumbUrl = getPhotoUrlForSize(person.photo, 'thumb')
+      const thumbTexture = loader.load(
+        thumbUrl,
         (tex) => {
-          tex.colorSpace = THREE.SRGBColorSpace
-          // Use better filtering to avoid edge artifacts
-          tex.minFilter = THREE.LinearFilter
-          tex.magFilter = THREE.LinearFilter
-          tex.wrapS = THREE.ClampToEdgeWrapping
-          tex.wrapT = THREE.ClampToEdgeWrapping
-          tex.needsUpdate = true
+          configureTexture(tex)
           loadedCount++
-          if (loadedCount === MOCK_PEOPLE.length) {
+          if (loadedCount === totalToLoad) {
             setTexturesLoaded(true)
           }
         },
         undefined,
         (_error) => {
-          // Texture load error - will retry or use fallback
-          // Don't log in production as these are expected during initial load
           loadedCount++
-          if (loadedCount === MOCK_PEOPLE.length) {
+          if (loadedCount === totalToLoad) {
             setTexturesLoaded(true)
           }
         },
       )
-      textureMap.set(person.id, texture)
+      thumbTextureMap.set(person.id, thumbTexture)
+
+      // Small texture placeholder (will be loaded on-demand)
+      smallTextureMap.set(person.id, thumbTexture) // Use thumb as placeholder
     })
 
-    return textureMap
-  }, [])
+    return {
+      thumb: thumbTextureMap,
+      small: smallTextureMap,
+      loader, // Expose loader for on-demand loading
+      configureTexture, // Expose config function
+    }
+  }, [people])
+
+  // Lazy load small texture when approaching a star
+  useEffect(() => {
+    if (targetStarIndex === -1 || !texturesLoaded) return
+
+    const targetPerson = people[targetStarIndex]
+    if (!targetPerson) return
+
+    // Check if small texture is already loaded (not just placeholder)
+    const currentSmallTexture = textures.small.get(targetPerson.id)
+    const thumbTexture = textures.thumb.get(targetPerson.id)
+
+    // If small texture is same as thumb, it's a placeholder - load the real one
+    if (currentSmallTexture === thumbTexture) {
+      const smallUrl = getPhotoUrlForSize(targetPerson.photo, 'small')
+      textures.loader.load(
+        smallUrl,
+        (tex) => {
+          textures.configureTexture(tex)
+          textures.small.set(targetPerson.id, tex)
+        },
+        undefined,
+        (_error) => {
+          // Keep using thumb as fallback on error
+        },
+      )
+    }
+  }, [targetStarIndex, texturesLoaded, people, textures])
 
   // Cleanup textures on unmount to prevent memory leaks
   useEffect(() => {
     return () => {
-      textures.forEach((texture) => {
+      textures.thumb.forEach((texture) => {
+        texture.dispose()
+      })
+      textures.small.forEach((texture) => {
         texture.dispose()
       })
     }
@@ -163,7 +248,7 @@ export default function Scene({
         const minDistance = 15
         const maxAttempts = 50
 
-        MOCK_PEOPLE.forEach((person) => {
+        people.forEach((person) => {
           const starData = newStars.get(person.id)!
 
           // Generate initial position if missing
@@ -221,7 +306,7 @@ export default function Scene({
 
       const newStars = new Map(prevStars)
 
-      MOCK_PEOPLE.forEach((person) => {
+      people.forEach((person) => {
         const starData = newStars.get(person.id)!
 
         // Generate constellation position if placed and missing
@@ -350,7 +435,7 @@ export default function Scene({
   // During journey: ALWAYS use initialPosition
   // During constellation view: use constellationPosition if available
   const starPositions = useMemo(() => {
-    const positions = MOCK_PEOPLE.map((person) => {
+    const positions = people.map((person) => {
       const starData = stars.get(person.id)!
 
       // ONLY use constellation positions when explicitly in constellation view mode
@@ -364,7 +449,7 @@ export default function Scene({
       return pos
     })
     return positions
-  }, [stars, useConstellationPositions])
+  }, [stars, useConstellationPositions, people])
 
   // Auto-pilot: initialize with overview, then move to target star
   useFrame((state) => {
@@ -437,7 +522,7 @@ export default function Scene({
     if (
       journeyPhase === 'takeoff' &&
       previousStarIndex >= 0 &&
-      previousStarIndex < MOCK_PEOPLE.length
+      previousStarIndex < people.length
     ) {
       const currentStarPos = new THREE.Vector3(
         ...starPositions[previousStarIndex],
@@ -660,7 +745,7 @@ export default function Scene({
       journeyPhase !== 'intro' &&
       journeyPhase !== 'takeoff' &&
       targetStarIndex >= 0 &&
-      targetStarIndex < MOCK_PEOPLE.length
+      targetStarIndex < people.length
     ) {
       const targetPos = new THREE.Vector3(...starPositions[targetStarIndex])
 
@@ -729,7 +814,7 @@ export default function Scene({
         journeyPhase === 'flying'
       ) {
         hasTriggeredApproaching.current = true
-        onApproaching(MOCK_PEOPLE[targetStarIndex].name)
+        onApproaching(people[targetStarIndex].name)
       }
 
       // Reset approaching trigger when moving to new star
@@ -745,21 +830,21 @@ export default function Scene({
           journeyPhase === 'arrived')
       ) {
         // Flight speed tiers based on distance to target star
-        // (slower when closer for smooth arrival)
+        // Increased speeds for snappier feel with large groups
         let baseSpeed
         if (currentDist < 15) {
-          baseSpeed = 0.05 // Final approach to star
+          baseSpeed = 0.08 // Final approach to star (was 0.05)
         } else if (currentDist < 25) {
-          baseSpeed = 0.06 // Approaching star
+          baseSpeed = 0.1 // Approaching star (was 0.06)
         } else if (currentDist < 40) {
-          baseSpeed = 0.075 // Medium distance flight
+          baseSpeed = 0.12 // Medium distance flight (was 0.075)
         } else {
-          baseSpeed = 0.105 // Far distance flight
+          baseSpeed = 0.15 // Far distance flight (was 0.105)
         }
 
-        // Slow down initial flight from intro (longer distance, more dramatic)
+        // Slow down initial flight from intro slightly less
         if (initialFlightDistance.current > 40) {
-          baseSpeed *= 0.7
+          baseSpeed *= 0.85 // (was 0.7)
         }
 
         flightProgress.current = Math.min(1, flightProgress.current + baseSpeed)
@@ -771,7 +856,7 @@ export default function Scene({
           !hasTriggeredArrival.current
         ) {
           hasTriggeredArrival.current = true
-          onArrived(MOCK_PEOPLE[targetStarIndex].name)
+          onArrived(people[targetStarIndex].name)
           // Don't stop flying yet - let it complete to center the star
         }
 
@@ -890,7 +975,7 @@ export default function Scene({
     let minDist = Infinity
     let nearestId: string | null = null
 
-    MOCK_PEOPLE.forEach((person, index) => {
+    people.forEach((person, index) => {
       const pos = new THREE.Vector3(...starPositions[index])
       const dist = camera.position.distanceTo(pos)
 
@@ -938,12 +1023,13 @@ export default function Scene({
                   .map(([id, star]) => [id, star.placement!]),
               )
             }
+            people={people}
           />
         )}
 
       {/* Person stars - only render when all textures loaded */}
       {texturesLoaded &&
-        MOCK_PEOPLE.map((person, index) => {
+        people.map((person, index) => {
           // Check if this star is the current target
           // During takeoff: show previous star as target (we're backing away from it)
           // During flying/approaching/arrived/placed/complete: show current target
@@ -958,6 +1044,27 @@ export default function Scene({
 
           const starData = stars.get(person.id)!
 
+          // Frustum culling: Skip rendering stars that are far off-screen during flight
+          // Always render target star and placed constellation stars
+          if (
+            !isTargetStar &&
+            !starData.placement &&
+            journeyPhase === 'flying'
+          ) {
+            const starPos = new THREE.Vector3(...starPositions[index])
+            const distanceToCamera = camera.position.distanceTo(starPos)
+
+            // Skip very distant unplaced stars during flight (they're not visible anyway)
+            if (distanceToCamera > 60) {
+              return null
+            }
+          }
+
+          // Use small texture for hero star (close-up), thumb for others (distant)
+          const texture = isTargetStar
+            ? textures.small.get(person.id)!
+            : textures.thumb.get(person.id)!
+
           return (
             <Star
               key={person.id}
@@ -965,7 +1072,7 @@ export default function Scene({
               position={starPositions[index]}
               isTarget={isTargetStar}
               placement={starData.placement || undefined}
-              texture={textures.get(person.id)!}
+              texture={texture}
               journeyPhase={journeyPhase}
             />
           )

@@ -30,6 +30,7 @@ import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { FocalUserSearch } from '@/app/g/[slug]/(family)/FocalUserSearch'
 import GamesView from '@/components/GamesView'
+import ConstellationModal from '@/components/ConstellationModal'
 
 interface UniversalClientProps {
   view: 'grid' | 'tree' | 'games'
@@ -78,6 +79,9 @@ function UniversalClientContent({
   // Tree view state
   const [isResetDisabled, setIsResetDisabled] = useState(true)
   const treeRef = useRef<any>(null)
+
+  // Constellation modal state
+  const [isConstellationOpen, setIsConstellationOpen] = useState(false)
 
   // Get adapter-specific default settings
   const [settings, setSettings] = useLocalStorage<GroupPageSettings>(
@@ -376,19 +380,22 @@ function UniversalClientContent({
         className="bg-background border-border sticky top-16 z-10 border-b pt-1 pb-3"
       >
         <div className="container mx-auto px-4">
-          <GroupToolbar
-            settings={settings}
-            setSettings={setSettings}
-            handleSort={handleSort}
-            setTourOpen={setIsOpen}
-            isMobile={isMobile}
-            viewMode={view}
-            groupSlug={groupSlug}
-            gridSizeConfig={getGridSizeConfig(isMobile)}
-            config={adapter.getToolbarConfig(groupSlug)}
-            familyTreeRef={treeRef}
-            isResetDisabled={isResetDisabled}
-          />
+          <TooltipProvider>
+            <GroupToolbar
+              settings={settings}
+              setSettings={setSettings}
+              handleSort={handleSort}
+              setTourOpen={setIsOpen}
+              isMobile={isMobile}
+              viewMode={view}
+              groupSlug={groupSlug}
+              gridSizeConfig={getGridSizeConfig(isMobile)}
+              config={adapter.getToolbarConfig(groupSlug)}
+              familyTreeRef={treeRef}
+              isResetDisabled={isResetDisabled}
+              onOpenConstellation={() => setIsConstellationOpen(true)}
+            />
+          </TooltipProvider>
 
           {/* Search input */}
           {view === 'tree' ? (
@@ -536,6 +543,21 @@ function UniversalClientContent({
           </div>
         </Modal>
       )}
+
+      {/* Constellation Modal */}
+      <ConstellationModal
+        isOpen={isConstellationOpen}
+        onClose={() => setIsConstellationOpen(false)}
+        groupName={groupContext.group.name}
+        currentUserName={
+          currentUserMember?.user?.firstName || currentUserMember?.user?.name
+        }
+        people={initialMembers.map((m) => ({
+          id: m.userId,
+          name: m.user.name || 'Unknown',
+          photo: m.user.photoUrl || '/images/default-avatar.png',
+        }))}
+      />
     </>
   )
 }

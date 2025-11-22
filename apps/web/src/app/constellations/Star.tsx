@@ -17,6 +17,26 @@ export default function Star({
   const { camera } = useThree()
   const [distanceToCamera, setDistanceToCamera] = useState(0)
   const [fadeIn, setFadeIn] = useState(0)
+  const frameCount = useRef(0)
+  const lastDistance = useRef(0)
+
+  // Stable random variation per star (based on person.id for consistency)
+  const starVariation = useMemo(() => {
+    // Use person.id to seed random values (consistent per star)
+    const hash = person.id
+      .split('')
+      .reduce((acc, char) => acc + char.charCodeAt(0), 0)
+    const rng = (seed: number) => {
+      const x = Math.sin(seed) * 10000
+      return x - Math.floor(x)
+    }
+
+    return {
+      sizeMultiplier: 0.7 + rng(hash) * 0.6, // 0.7 to 1.3 (more noticeable)
+      brightnessMultiplier: 0.6 + rng(hash + 1) * 0.8, // 0.6 to 1.4 (much more variation)
+      colorTint: rng(hash + 2) * 0.3, // 0 to 0.3 (more visible color variation)
+    }
+  }, [person.id])
 
   // Fade in animation on mount
   useEffect(() => {
@@ -50,11 +70,24 @@ export default function Star({
     journeyPhase === 'returning-journey-complete'
 
   // Calculate distance and billboard rotation
+  // Throttle updates for distant stars to reduce per-frame work
   useFrame(() => {
-    if (groupRef.current) {
-      // Update distance to camera
+    if (!groupRef.current) return
+
+    frameCount.current++
+
+    // Target star: update every frame (smooth)
+    // Placed stars: update every 2 frames
+    // Distant unplaced: update every 4 frames
+    const updateInterval = isTarget ? 1 : placement ? 2 : 4
+
+    if (frameCount.current % updateInterval === 0) {
+      // Update distance to camera (memoized - only if changed significantly)
       const dist = camera.position.distanceTo(new THREE.Vector3(...position))
-      setDistanceToCamera(dist)
+      if (Math.abs(dist - lastDistance.current) > 1) {
+        setDistanceToCamera(dist)
+        lastDistance.current = dist
+      }
 
       // Billboard - always face camera
       if (isTarget) {
@@ -145,8 +178,8 @@ export default function Star({
             placement === 'inner' ? 4.5 : placement === 'close' ? 3.0 : 2.0
           baseSize = sizeMultiplier
         } else {
-          // Uncharted stars: small and distant
-          baseSize = 0.8
+          // Uncharted stars: very small and distant to appear far away
+          baseSize = 0.5
         }
       }
     } else if (isFlying && distanceToCamera < 40) {
@@ -159,6 +192,11 @@ export default function Star({
       // During journey: smaller to focus on target (1.5 to 3.0)
       baseSize = 1.5 + distanceFactor * 1.5
     }
+  }
+
+  // Apply size variation for non-target stars to add visual interest
+  if (!isTarget) {
+    baseSize *= starVariation.sizeMultiplier
   }
 
   // Distance thresholds for rendering
@@ -256,8 +294,8 @@ export default function Star({
             placement === 'inner' ? 1.0 : placement === 'close' ? 0.75 : 0.5
           groupOpacity = baseBrightness
         } else {
-          // Uncharted stars: visible but less prominent (match intro "Far" brightness)
-          groupOpacity = 0.7
+          // Uncharted stars: dim and distant to appear far away
+          groupOpacity = 0.4
         }
       }
     } else if (placement && journeyPhase === 'takeoff') {
@@ -321,7 +359,33 @@ export default function Star({
   // Apply fade-in animation
   groupOpacity *= fadeIn
 
+  // Apply brightness variation for non-target stars
+  if (!isTarget) {
+    groupOpacity *= starVariation.brightnessMultiplier
+  }
+
   // Texture is preloaded and passed as prop - no need to load here
+
+  // Dynamic geometry detail based on importance and distance
+  // Hero star gets highest detail, distant stars get lower detail for performance
+  const getCircleSegments = () => {
+    if (isTarget) {
+      // Hero star: always high detail when close
+      return distanceToCamera < 20 ? 64 : 32
+    }
+
+    // Constellation stars: reduce detail based on distance and placement
+    if (placement) {
+      // Placed stars in constellation: keep smooth circles (32 min to avoid jagged edges)
+      return distanceToCamera < 30 ? 48 : 32
+    }
+
+    // Unplaced distant stars: very low detail for performance
+    // They're small, dim, and numerous - use minimal geometry
+    return distanceToCamera < 40 ? 12 : 8
+  }
+
+  const circleSegments = getCircleSegments()
 
   // Custom shader for circular clipping with aspect ratio preservation
   const circleMaterial = useMemo(() => {
@@ -450,14 +514,17 @@ export default function Star({
         <>
           {/* Bright white star core with sphere-like shading */}
           <mesh position={[0, 0, -0.02]} renderOrder={renderOrder}>
-            <circleGeometry args={[whiteCoreSize, 64]} />
+            <circleGeometry args={[whiteCoreSize, circleSegments]} />
             <primitive object={sphereShadingMaterial} attach="material" />
           </mesh>
           {/* Soft glow halo */}
           <mesh position={[0, 0, -0.02]} renderOrder={renderOrder}>
-            <circleGeometry args={[baseSize * 0.56, 64]} />
+            <circleGeometry args={[baseSize * 0.56, circleSegments]} />
             <meshBasicMaterial
-              color="#aaccff"
+              color={new THREE.Color(0xaaccff).lerp(
+                new THREE.Color(0xccddff),
+                starVariation.colorTint,
+              )}
               transparent
               opacity={starGlowOpacity * 0.15}
               depthTest={false}
@@ -471,7 +538,7 @@ export default function Star({
         <>
           {/* Opaque backing circle - blocks stars behind */}
           <mesh position={[0, 0, -0.01]} renderOrder={renderOrder}>
-            <circleGeometry args={[baseSize * 0.58, 64]} />
+            <circleGeometry args={[baseSize * 0.58, circleSegments]} />
             <meshBasicMaterial
               color="#1a1a2e"
               transparent
@@ -494,7 +561,9 @@ export default function Star({
 
           {/* White circular border ring - covers sprite edges */}
           <mesh position={[0, 0, 0.01]} renderOrder={renderOrder}>
-            <ringGeometry args={[baseSize * 0.48, baseSize * 0.52, 64]} />
+            <ringGeometry
+              args={[baseSize * 0.48, baseSize * 0.52, circleSegments]}
+            />
             <meshBasicMaterial
               color="#ffffff"
               transparent

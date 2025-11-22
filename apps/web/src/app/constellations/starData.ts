@@ -1,11 +1,11 @@
 // Star data management utilities
 
-import { StarData } from './types'
+import { StarData, Person } from './types'
 import { MOCK_PEOPLE } from './mockData'
 
 // Get star radius range based on placement
 export const getStarRadius = (placement?: 'inner' | 'close' | 'outer') => {
-  if (!placement) return { min: 25, max: 35 } // Unplaced - very far
+  if (!placement) return { min: 30, max: 50 } // Unplaced - spread out more for large groups
   if (placement === 'inner') return { min: 5, max: 10 } // Close - inner circle
   if (placement === 'close') return { min: 10, max: 18 } // Near - middle circle
   return { min: 18, max: 25 } // Far - outer circle
@@ -17,7 +17,7 @@ export const generateRandomPosition = (
   maxRadius: number,
 ): [number, number, number] => {
   const theta = Math.random() * Math.PI * 2 // Full rotation around Y axis
-  const maxPhi = Math.PI / 4 // 45 degree cone for tight clustering
+  const maxPhi = Math.PI / 2.5 // Wider cone (~72 degrees) for better spread
   const phi = Math.random() * maxPhi
   const radius = minRadius + Math.random() * (maxRadius - minRadius)
 
@@ -29,11 +29,13 @@ export const generateRandomPosition = (
 }
 
 // Initialize all star data with random positions
-export const initializeStars = (): Map<string, StarData> => {
+export const initializeStars = (
+  people: Person[] = MOCK_PEOPLE,
+): Map<string, StarData> => {
   const stars = new Map<string, StarData>()
   const { min, max } = getStarRadius(undefined) // Unplaced stars start far away
 
-  MOCK_PEOPLE.forEach((person, index) => {
+  people.forEach((person, index) => {
     stars.set(person.id, {
       person,
       index,
@@ -72,8 +74,9 @@ export const getVisitedCount = (stars: Map<string, StarData>): number => {
 // Find next unvisited star index
 export const findNextUnvisitedIndex = (
   stars: Map<string, StarData>,
+  people: Person[] = MOCK_PEOPLE,
 ): number => {
-  return MOCK_PEOPLE.findIndex((p) => {
+  return people.findIndex((p) => {
     const starData = stars.get(p.id)!
     return !starData.visited
   })

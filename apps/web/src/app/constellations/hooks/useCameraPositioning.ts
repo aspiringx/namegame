@@ -189,7 +189,8 @@ export function useCameraPositioning() {
     const target = bounds.center.clone()
 
     // Camera positioned relative to constellation center
-    const dx = 0
+    // Use target.x to account for horizontal offset of constellation
+    const dx = target.x
     const dy = target.y + yOffsetWorld
     const dz = target.z + zDistance
 

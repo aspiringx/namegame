@@ -22,16 +22,31 @@ import { NavPanel } from './components/NavPanel'
 import { ConstellationModal } from './components/ConstellationModal'
 import { useJourneyStateMachine } from './hooks/useJourneyStateMachine'
 import { MOCK_PEOPLE } from './mockData'
+import { Person } from './types'
 
-export default function StarField() {
-  const [groupName] = useState('Hypothetical Group')
-  const [stars, setStars] = useState(initializeStars)
+interface StarFieldProps {
+  people?: Person[]
+  groupName?: string
+  currentUserName?: string
+}
+
+export default function StarField({
+  people,
+  groupName,
+  currentUserName,
+}: StarFieldProps) {
+  const actualGroupName = groupName || 'Hypothetical Group'
+  // Use provided people or fall back to mock data
+  const peopleData = people || MOCK_PEOPLE
+  const [stars, setStars] = useState(() => initializeStars(peopleData))
 
   // Journey state machine - single source of truth
   const { state, actions, shouldResetCamera } = useJourneyStateMachine(
     stars,
     setStars,
-    groupName,
+    actualGroupName,
+    peopleData,
+    currentUserName,
   )
 
   // Track viewport dimensions for precise positioning
@@ -105,10 +120,10 @@ export default function StarField() {
   // Handle placement selection
   const handlePlacePerson = useCallback(
     (placement: 'inner' | 'close' | 'outer') => {
-      const targetPerson = MOCK_PEOPLE[state.targetStarIndex]
+      const targetPerson = peopleData[state.targetStarIndex]
       actions.placeStar(targetPerson.id, placement)
     },
-    [state.targetStarIndex, actions],
+    [state.targetStarIndex, actions, peopleData],
   )
 
   return (
@@ -135,6 +150,7 @@ export default function StarField() {
           useConstellationPositions={state.useConstellationPositions}
           manualControlsEnabled={state.manualControlsEnabled}
           shouldResetCameraRef={shouldResetCamera}
+          people={peopleData}
         />
       </Canvas>
 
@@ -178,6 +194,7 @@ export default function StarField() {
         onContinueJourney={actions.continueJourney}
         onOpenReviewModal={actions.openReviewModal}
         onToggleManualControls={actions.enableManualControls}
+        people={peopleData}
       />
 
       {/* Constellation Review Modal */}
@@ -191,6 +208,7 @@ export default function StarField() {
             actions.startVisitingSelectedStars()
           }}
           onClose={actions.closeReviewModal}
+          people={peopleData}
         />
       )}
     </div>
